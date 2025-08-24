@@ -97,6 +97,30 @@
   }
 }
 
+@keyframes bee-fly {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.1) rotate(1deg);
+  }
+  50% {
+    transform: scale(0.95) rotate(-1deg);
+  }
+  75% {
+    transform: scale(1.05) rotate(0.5deg);
+  }
+}
+
+@keyframes bee-wing-flutter {
+  0%, 100% {
+    filter: blur(0px) brightness(1);
+  }
+  50% {
+    filter: blur(0.5px) brightness(1.1);
+  }
+}
+
 @keyframes rain-drop {
   0% {
     opacity: 0;
@@ -163,6 +187,14 @@
 
 .animate-bee-buzz {
   animation: bee-buzz 0.5s ease-in-out infinite;
+}
+
+.animate-bee-fly {
+  animation: bee-fly 0.3s ease-in-out infinite;
+}
+
+.animate-bee-wing-flutter {
+  animation: bee-wing-flutter 0.1s ease-in-out infinite;
 }
 
 .animate-rain-drop {

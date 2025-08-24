@@ -290,26 +290,123 @@ function getNextPastureCapacity(current) {
   return current;
 }
 
-// Simple animal traits system
+// Enhanced animal genetics system
 const ANIMAL_TRAITS = {
-  fast: { id: "fast", emoji: "⚡", desc: "-20% production interval" },
-  quality: { id: "quality", emoji: "⭐", desc: "+20% product value" },
-  fertile: { id: "fertile", emoji: "🐣", desc: "-25% breeding time" }
+  // Production traits
+  fast: { id: "fast", emoji: "⚡", desc: "-20% production interval", type: "production", rarity: "common" },
+  quality: { id: "quality", emoji: "⭐", desc: "+20% product value", type: "production", rarity: "uncommon" },
+  prolific: { id: "prolific", emoji: "🎯", desc: "+50% production quantity", type: "production", rarity: "rare" },
+  
+  // Breeding traits
+  fertile: { id: "fertile", emoji: "🐣", desc: "-25% breeding time", type: "breeding", rarity: "common" },
+  nurturing: { id: "nurturing", emoji: "💖", desc: "Offspring have +1 trait", type: "breeding", rarity: "uncommon" },
+  genetic_stability: { id: "genetic_stability", emoji: "🧬", desc: "Passes traits 100%", type: "breeding", rarity: "rare" },
+  
+  // Health traits
+  hardy: { id: "hardy", emoji: "💪", desc: "Never gets sick", type: "health", rarity: "uncommon" },
+  longevity: { id: "longevity", emoji: "🕰️", desc: "Ages 50% slower", type: "health", rarity: "rare" },
+  
+  // Special mutations (very rare)
+  golden: { id: "golden", emoji: "🌟", desc: "Products worth 3x more", type: "mutation", rarity: "legendary" },
+  rainbow: { id: "rainbow", emoji: "🌈", desc: "Produces random products", type: "mutation", rarity: "legendary" },
+  giant: { id: "giant", emoji: "🏔️", desc: "Produces 2x quantity", type: "mutation", rarity: "legendary" }
 };
 
-function assignAnimalTraits() {
+const TRAIT_RARITY_CHANCES = {
+  common: 0.30,      // 30% chance
+  uncommon: 0.15,    // 15% chance  
+  rare: 0.05,        // 5% chance
+  legendary: 0.01    // 1% chance
+};
+
+function assignAnimalTraits(parent1Traits = [], parent2Traits = []) {
   const traits = [];
-  if (Math.random() < 0.35) traits.push("fast");
-  if (Math.random() < 0.35) traits.push("quality");
-  if (Math.random() < 0.25) traits.push("fertile");
+  const maxTraits = 3; // Maximum traits per animal
+  
+  // Inheritance from parents (if breeding)
+  if (parent1Traits.length > 0 || parent2Traits.length > 0) {
+    const allParentTraits = [...parent1Traits, ...parent2Traits];
+    const uniqueParentTraits = [...new Set(allParentTraits)];
+    
+    uniqueParentTraits.forEach(traitId => {
+      const trait = ANIMAL_TRAITS[traitId];
+      if (!trait) return;
+      
+      let inheritChance = 0.5; // Base 50% inheritance chance
+      
+      // Genetic stability trait increases inheritance
+      if (parent1Traits.includes('genetic_stability') || parent2Traits.includes('genetic_stability')) {
+        inheritChance = 1.0; // 100% inheritance with genetic stability
+      }
+      
+      if (Math.random() < inheritChance && traits.length < maxTraits) {
+        traits.push(traitId);
+      }
+    });
+    
+    // Nurturing trait gives offspring extra trait
+    if ((parent1Traits.includes('nurturing') || parent2Traits.includes('nurturing')) && traits.length < maxTraits) {
+      const availableTraits = Object.keys(ANIMAL_TRAITS).filter(id => 
+        !traits.includes(id) && ANIMAL_TRAITS[id].rarity !== 'legendary'
+      );
+      if (availableTraits.length > 0) {
+        const bonusTrait = availableTraits[Math.floor(Math.random() * availableTraits.length)];
+        traits.push(bonusTrait);
+      }
+    }
+  }
+  
+  // Random trait generation (for new animals or additional traits)
+  while (traits.length < maxTraits) {
+    const availableTraits = Object.keys(ANIMAL_TRAITS).filter(id => !traits.includes(id));
+    if (availableTraits.length === 0) break;
+    
+    // Check for mutations first (very rare)
+    const mutationTraits = availableTraits.filter(id => ANIMAL_TRAITS[id].type === 'mutation');
+    if (mutationTraits.length > 0 && Math.random() < 0.001) { // 0.1% mutation chance
+      traits.push(mutationTraits[Math.floor(Math.random() * mutationTraits.length)]);
+      break; // Mutations are exclusive
+    }
+    
+    // Regular trait assignment based on rarity
+    let traitAssigned = false;
+    for (const [rarity, chance] of Object.entries(TRAIT_RARITY_CHANCES)) {
+      if (Math.random() < chance) {
+        const rarityTraits = availableTraits.filter(id => 
+          ANIMAL_TRAITS[id].rarity === rarity && ANIMAL_TRAITS[id].type !== 'mutation'
+        );
+        if (rarityTraits.length > 0) {
+          traits.push(rarityTraits[Math.floor(Math.random() * rarityTraits.length)]);
+          traitAssigned = true;
+          break;
+        }
+      }
+    }
+    
+    if (!traitAssigned) break; // No more traits to assign
+  }
+  
   return Array.from(new Set(traits));
 }
 
 function computeAnimalInterval(animal, rules) {
   const data = (rules.livestock && rules.livestock[animal.type]) || {};
   let interval = Math.max(30, data.interval || 300);
-  if (animal.traits && animal.traits.includes("fast")) interval = Math.floor(interval * 0.8);
-  if (animal.ill) interval = Math.floor(interval * 1.5);
+  
+  if (animal.traits) {
+    // Production traits
+    if (animal.traits.includes("fast")) interval = Math.floor(interval * 0.8);
+    
+    // Health traits
+    if (animal.traits.includes("hardy")) {
+      // Hardy animals never get sick, so no illness penalty
+    } else if (animal.ill) {
+      interval = Math.floor(interval * 1.5);
+    }
+  } else if (animal.ill) {
+    interval = Math.floor(interval * 1.5);
+  }
+  
   return interval;
 }
 
@@ -512,6 +609,300 @@ const LIMITED_TIME_CROPS = {
   }
 };
 
+// NEW: Festival System
+const FESTIVALS = {
+  harvest_festival: {
+    id: "harvest_festival",
+    name: "Harvest Festival",
+    emoji: "🎃",
+    season: "fall",
+    duration: 300000, // 5 minutes
+    bonusMultiplier: 2.0,
+    requirements: { totalHarvested: 50 },
+    rewards: { coins: 200, reputation: 10, specialSeeds: 3 },
+    description: "Celebrate the harvest! Double coin rewards for all harvests.",
+    competitionType: "harvest_volume"
+  },
+  spring_fair: {
+    id: "spring_fair",
+    name: "Spring Fair",
+    emoji: "🌸",
+    season: "spring",
+    duration: 240000, // 4 minutes
+    growthBonus: 0.5, // 50% faster growth
+    requirements: { plantsGrown: 30 },
+    rewards: { coins: 150, reputation: 8, seeds: 10 },
+    description: "Spring planting competition! 50% faster growth for all crops.",
+    competitionType: "planting_speed"
+  },
+  summer_market: {
+    id: "summer_market",
+    name: "Summer Market",
+    emoji: "☀️",
+    season: "summer",
+    duration: 300000, // 5 minutes
+    priceBonus: 0.8, // 80% higher prices
+    requirements: { marketSales: 100 },
+    rewards: { coins: 300, reputation: 12 },
+    description: "Peak market season! 80% higher sell prices.",
+    competitionType: "market_sales"
+  },
+  winter_celebration: {
+    id: "winter_celebration",
+    name: "Winter Celebration",
+    emoji: "❄️",
+    season: "winter",
+    duration: 180000, // 3 minutes
+    animalBonus: 3.0, // Triple animal rewards
+    requirements: { animalProducts: 20 },
+    rewards: { coins: 250, reputation: 15, specialSeeds: 5 },
+    description: "Winter feast! Triple rewards for animal products.",
+    competitionType: "animal_products"
+  }
+};
+
+// NEW: Weather Events System
+const WEATHER_EVENTS = {
+  drought: {
+    id: "drought",
+    name: "Drought",
+    emoji: "🌵",
+    duration: 120000, // 2 minutes
+    effects: { growthRate: 0.5, waterCost: 2.0, witherRate: 1.5 },
+    preparation: ["irrigation", "water_storage"],
+    description: "Crops grow 50% slower and require double water.",
+    warningTime: 30000 // 30 second warning
+  },
+  flood: {
+    id: "flood",
+    name: "Flash Flood",
+    emoji: "🌊",
+    duration: 90000, // 1.5 minutes
+    effects: { diseaseChance: 0.3, harvestLoss: 0.2, growthRate: 0.8 },
+    preparation: ["drainage", "greenhouse"],
+    description: "30% chance of crop disease, 20% harvest loss risk.",
+    warningTime: 45000 // 45 second warning
+  },
+  heatwave: {
+    id: "heatwave",
+    name: "Heat Wave",
+    emoji: "🔥",
+    duration: 150000, // 2.5 minutes
+    effects: { witherRate: 2.0, animalHappiness: 0.7, growthRate: 0.9 },
+    preparation: ["shade", "cooling"],
+    description: "Crops wither twice as fast, animals less happy.",
+    warningTime: 60000 // 1 minute warning
+  },
+  perfect_weather: {
+    id: "perfect_weather",
+    name: "Perfect Weather",
+    emoji: "🌈",
+    duration: 200000, // 3.3 minutes
+    effects: { growthRate: 1.5, qualityBonus: 0.2, animalHappiness: 1.2 },
+    description: "Ideal conditions! 50% faster growth, 20% quality bonus.",
+    warningTime: 15000 // 15 second warning
+  }
+};
+
+// NEW: Town Projects System
+const TOWN_PROJECTS = {
+  school: {
+    id: "school",
+    name: "Town School",
+    emoji: "🏫",
+    totalCost: 500,
+    farmContribution: 200,
+    benefits: { xpBonus: 0.15, researchSpeed: 1.2 },
+    description: "Increases XP gain and research speed for all farmers.",
+    progress: 0,
+    contributors: []
+  },
+  market: {
+    id: "market",
+    name: "Farmers Market",
+    emoji: "🏪",
+    totalCost: 800,
+    farmContribution: 300,
+    benefits: { sellPriceBonus: 0.1, newCustomers: 5 },
+    description: "10% better sell prices and access to premium customers.",
+    progress: 0,
+    contributors: []
+  },
+  hospital: {
+    id: "hospital",
+    name: "Veterinary Hospital",
+    emoji: "🏥",
+    totalCost: 1200,
+    farmContribution: 450,
+    benefits: { animalHealthBonus: 0.25, fasterHealing: 2.0 },
+    description: "Healthier animals and faster recovery from illness.",
+    progress: 0,
+    contributors: []
+  }
+};
+
+// NEW: Irrigation Systems
+const IRRIGATION_SYSTEMS = {
+  sprinkler: {
+    id: "sprinkler",
+    name: "Sprinkler System",
+    emoji: "💦",
+    cost: 150,
+    coverage: 9, // 3x3 area
+    waterSavings: 0.3,
+    growthBonus: 0.1,
+    autoWater: true,
+    description: "Auto-waters 3x3 area, saves 30% water, 10% growth bonus."
+  },
+  drip_irrigation: {
+    id: "drip_irrigation",
+    name: "Drip Irrigation",
+    emoji: "💧",
+    cost: 200,
+    coverage: 16, // 4x4 area
+    waterSavings: 0.5,
+    growthBonus: 0.15,
+    autoWater: true,
+    description: "Efficient watering for 4x4 area, saves 50% water, 15% growth bonus."
+  },
+  smart_irrigation: {
+    id: "smart_irrigation",
+    name: "Smart Irrigation",
+    emoji: "🤖",
+    cost: 350,
+    coverage: 25, // 5x5 area
+    waterSavings: 0.6,
+    growthBonus: 0.2,
+    weatherAdaptive: true,
+    autoWater: true,
+    description: "AI-controlled watering for 5x5 area, adapts to weather conditions."
+  }
+};
+
+// NEW: Neighboring Farms (AI Farmers)
+const NEIGHBOR_FARMS = [
+  {
+    id: "neighbor_1",
+    name: "Emma's Organic Farm",
+    farmer: "Emma",
+    emoji: "👩‍🌾",
+    specialty: "organic_vegetables",
+    reputation: 75,
+    tradingItems: ["carrot", "lettuce", "fertilizer"],
+    personality: "friendly",
+    helpfulness: 0.8
+  },
+  {
+    id: "neighbor_2", 
+    name: "Joe's Livestock Ranch",
+    farmer: "Joe",
+    emoji: "👨‍🌾",
+    specialty: "animals",
+    reputation: 60,
+    tradingItems: ["milk", "eggs", "animalFeed"],
+    personality: "gruff_helpful",
+    helpfulness: 0.6
+  },
+  {
+    id: "neighbor_3",
+    name: "Maria's Flower Garden",
+    farmer: "Maria",
+    emoji: "👩‍🌾",
+    specialty: "flowers",
+    reputation: 85,
+    tradingItems: ["sunflower", "honey", "seeds"],
+    personality: "artistic",
+    helpfulness: 0.9
+  }
+];
+
+// NEW: Wildlife Ecosystem
+const WILDLIFE_TYPES = {
+  fish_pond: {
+    id: "fish_pond",
+    name: "Fish Pond",
+    emoji: "🐟",
+    cost: 200,
+    capacity: 10,
+    products: ["fish", "algae"],
+    productionTime: 300, // 5 minutes
+    description: "Produces fish and algae. Requires regular feeding."
+  },
+  butterfly_garden: {
+    id: "butterfly_garden", 
+    name: "Butterfly Garden",
+    emoji: "🦋",
+    cost: 150,
+    pollinationBonus: 0.15,
+    description: "Attracts butterflies that boost crop pollination by 15%."
+  },
+  bird_house: {
+    id: "bird_house",
+    name: "Bird House",
+    emoji: "🐦",
+    cost: 100,
+    pestControl: 0.25,
+    description: "Birds reduce pest infestations by 25%."
+  },
+  bat_house: {
+    id: "bat_house",
+    name: "Bat House", 
+    emoji: "🦇",
+    cost: 120,
+    nightBonus: 0.2,
+    pestControl: 0.3,
+    description: "Bats provide 20% night growth bonus and 30% pest control."
+  }
+};
+
+const WILD_ANIMALS = {
+  rabbit: {
+    id: "rabbit",
+    name: "Wild Rabbit",
+    emoji: "🐰",
+    rarity: 0.05, // 5% chance to appear
+    effect: "crop_damage",
+    damage: 0.1, // 10% crop damage
+    description: "Cute but eats your crops!"
+  },
+  deer: {
+    id: "deer", 
+    name: "Deer",
+    emoji: "🦌",
+    rarity: 0.02, // 2% chance
+    effect: "crop_damage",
+    damage: 0.2, // 20% crop damage
+    description: "Beautiful but hungry for your vegetables."
+  },
+  fox: {
+    id: "fox",
+    name: "Fox", 
+    emoji: "🦊",
+    rarity: 0.03, // 3% chance
+    effect: "livestock_scare",
+    happinessReduction: 10,
+    description: "Scares livestock, reducing their happiness."
+  },
+  owl: {
+    id: "owl",
+    name: "Wise Owl",
+    emoji: "🦉",
+    rarity: 0.01, // 1% chance
+    effect: "wisdom_bonus",
+    xpBonus: 1.5,
+    description: "Rare visitor that boosts XP gain by 50%."
+  },
+  ladybug: {
+    id: "ladybug",
+    name: "Ladybug",
+    emoji: "🐞", 
+    rarity: 0.08, // 8% chance
+    effect: "pest_control",
+    pestReduction: 0.5,
+    description: "Natural pest control - reduces infestations by 50%."
+  }
+};
+
 function nowSec() { return Math.floor(Date.now() / 1000); }
 
 function newPlot(state = "empty") {
@@ -593,7 +984,9 @@ function saveToSlot(slot) {
       soundEnabled, log, gameTime, lastGrowthTick,
       researchLevel, geneBank, contracts, lastContractsAt,
       merchants, supplyContracts, pastureSize, pastureCapacity,
-      autoCollect, breedingQueue
+      autoCollect, breedingQueue, activeFestival, festivalProgress,
+      neighboringFarms, townProjects, farmReputation, activeWeatherEvents, irrigationSystems,
+      wildlifeStructures, wildAnimalVisits, fishPonds
     };
     localStorage.setItem(SAVE_SLOT_KEYS[idx], JSON.stringify(snapshot));
     addNotification(`💾 Saved to Slot ${idx+1}`, "success");
@@ -736,6 +1129,20 @@ export default function FarmSimCanvas() {
   const [eventProgress, setEventProgress] = useState(saved?.eventProgress || 0);
   const [eventRewards, setEventRewards] = useState(saved?.eventRewards || []);
 
+  // NEW: Festival and Community Features
+  const [activeFestival, setActiveFestival] = useState(saved?.activeFestival || null);
+  const [festivalProgress, setFestivalProgress] = useState(saved?.festivalProgress || 0);
+  const [neighboringFarms, setNeighboringFarms] = useState(saved?.neighboringFarms || []);
+  const [townProjects, setTownProjects] = useState(saved?.townProjects || Object.values(TOWN_PROJECTS));
+  const [farmReputation, setFarmReputation] = useState(saved?.farmReputation || 50);
+  const [activeWeatherEvents, setActiveWeatherEvents] = useState(saved?.activeWeatherEvents || []);
+  const [irrigationSystems, setIrrigationSystems] = useState(saved?.irrigationSystems || []);
+
+  // NEW: Wildlife Ecosystem
+  const [wildlifeStructures, setWildlifeStructures] = useState(saved?.wildlifeStructures || []);
+  const [wildAnimalVisits, setWildAnimalVisits] = useState(saved?.wildAnimalVisits || []);
+  const [fishPonds, setFishPonds] = useState(saved?.fishPonds || []);
+
   // NEW: Farm customization system
   const [farmTheme, setFarmTheme] = useState(saved?.farmTheme || "classic");
   const [decorations, setDecorations] = useState(saved?.decorations || []);
@@ -821,7 +1228,9 @@ export default function FarmSimCanvas() {
           contracts, lastContractsAt, deliveries, vans, selectedVanId, deliveriesLeaderboard,
           merchants, supplyContracts, autoSellRules,
           pastureSize, pastureCapacity,
-          autoCollect, breedingQueue
+          autoCollect, breedingQueue, activeFestival, festivalProgress,
+          neighboringFarms, townProjects, farmReputation, activeWeatherEvents, irrigationSystems,
+          wildlifeStructures, wildAnimalVisits, fishPonds
         };
         saveState(snapshot);
       } catch (e) {
@@ -1011,11 +1420,17 @@ export default function FarmSimCanvas() {
 
     const plot = plots[plotIndex];
     if (plot.state !== "planted" && plot.state !== "growing") return false;
+    
+    // Only pollinate if plot was recently watered
+    if (!plot.watered) return false;
 
     if (Math.random() < 0.3) { // 30% chance per tick
       setPlots(prev => prev.map((p, idx) =>
         idx === plotIndex ? { ...p, beePollinated: true } : p
       ));
+
+      // Trigger flying bees for this pollination event
+      triggerPollinationBees(plotIndex);
 
       // Produce honey
       if (Math.random() < 0.1) { // 10% chance for honey
@@ -1024,7 +1439,6 @@ export default function FarmSimCanvas() {
         addLog(`🍯 Bees produced honey! (+1 honey)`);
       }
 
-      addParticle(plotIndex % gridSize * 120 + 60, Math.floor(plotIndex / gridSize) * 120 + 60, "bee", "🐝");
       return true;
     }
     return false;
@@ -1330,10 +1744,27 @@ export default function FarmSimCanvas() {
             const happinessMult = 1 + Math.min(1, (animal.happiness || 0) / 200); // up to +50%
             const qualityMult = Math.max(1, Number(animal.quality || 1));
             let value = Math.round((data.value || 10) * happinessMult * qualityMult);
-            if (animal.traits && animal.traits.includes("quality")) value = Math.round(value * 1.2);
-            setInventory(inv => ({ ...inv, [data.product]: (inv[data.product] || 0) + 1 }));
+            let quantity = 1;
+            
+            // Apply trait bonuses
+            if (animal.traits) {
+              if (animal.traits.includes("quality")) value = Math.round(value * 1.2);
+              if (animal.traits.includes("prolific")) quantity = Math.floor(quantity * 1.5);
+              if (animal.traits.includes("golden")) value = Math.round(value * 3);
+              if (animal.traits.includes("giant")) quantity = quantity * 2;
+            }
+            setInventory(inv => ({ ...inv, [data.product]: (inv[data.product] || 0) + quantity }));
             setCoins(c => c + value);
             collectedCount++;
+            
+            // NEW: Festival progress tracking for animal products
+            if (activeFestival) {
+              const festival = FESTIVALS[activeFestival.id];
+              if (festival && festival.competitionType === "animal_products") {
+                setFestivalProgress(prev => prev + quantity);
+              }
+            }
+            
             return { ...animal, lastProduced: nowSec(), happiness: Math.max(0, (animal.happiness||0) - 2) };
           }
           return animal;
@@ -1346,6 +1777,9 @@ export default function FarmSimCanvas() {
       // Simple illness tick: small chance an animal becomes ill without feed
       if (livestock.length > 0) {
         setLivestock(prev => prev.map(a => {
+          // Hardy animals never get sick
+          if (a.traits && a.traits.includes("hardy")) return a;
+          
           if (a.happiness <= 10 && Math.random() < 0.01) return { ...a, ill: true };
           return a;
         }));
@@ -1357,9 +1791,172 @@ export default function FarmSimCanvas() {
         const ready = breedingQueue.filter(b => b.readyAt <= now);
         if (ready.length > 0) {
           setBreedingQueue(queue => queue.filter(b => b.readyAt > now));
-          setLivestock(prev => ([...prev, ...ready.map(b => ({ id: Date.now()+Math.random(), type: b.type, lastProduced: now, happiness: 80, quality: 1 }))]));
+          setLivestock(prev => ([...prev, ...ready.map(b => ({ 
+            id: Date.now()+Math.random(), 
+            type: b.type, 
+            lastProduced: now, 
+            happiness: 80, 
+            quality: 1,
+            traits: b.traits || assignAnimalTraits(),
+            age: 0
+          }))]));
           addNotification(`🐣 ${ready.length} new offspring joined the farm!`, "success");
         }
+      }
+
+      // NEW: Festival System Logic
+      if (activeFestival) {
+        const festival = FESTIVALS[activeFestival.id];
+        if (festival && nowSec() > activeFestival.endsAt) {
+          // Festival ended
+          const progress = festivalProgress;
+          const requirement = Object.values(festival.requirements)[0] || 0;
+          if (progress >= requirement) {
+            // Festival completed successfully
+            const rewards = festival.rewards;
+            if (rewards.coins) setCoins(c => c + rewards.coins);
+            if (rewards.reputation) setFarmReputation(r => Math.min(100, r + rewards.reputation));
+            if (rewards.seeds) setInventory(inv => ({ ...inv, seeds: (inv.seeds || 0) + rewards.seeds }));
+            addNotification(`🎉 ${festival.name} completed! Rewards earned!`, "success");
+          } else {
+            addNotification(`😔 ${festival.name} ended. Try harder next time!`, "info");
+          }
+          setActiveFestival(null);
+          setFestivalProgress(0);
+        }
+      } else {
+        // Check if we should start a new festival (10% chance every minute)
+        if (Math.random() < 0.1 && currentTime % 60 === 0) {
+          const currentSeasonFestivals = Object.values(FESTIVALS).filter(f => f.season === currentSeason);
+          if (currentSeasonFestivals.length > 0) {
+            const festival = currentSeasonFestivals[Math.floor(Math.random() * currentSeasonFestivals.length)];
+            setActiveFestival({
+              id: festival.id,
+              endsAt: nowSec() + Math.floor(festival.duration / 1000)
+            });
+            setFestivalProgress(0);
+            addNotification(`🎪 ${festival.name} has started! ${festival.description}`, "success");
+          }
+        }
+      }
+
+      // NEW: Weather Events System
+      if (Math.random() < 0.05 && currentTime % 45 === 0) { // 5% chance every 45 seconds
+        const eventTypes = Object.keys(WEATHER_EVENTS);
+        const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+        const event = WEATHER_EVENTS[eventType];
+        
+        // Start weather event with warning
+        setTimeout(() => {
+          setActiveWeatherEvents(prev => [...prev, {
+            id: eventType + '_' + Date.now(),
+            type: eventType,
+            endsAt: nowSec() + Math.floor(event.duration / 1000)
+          }]);
+          addNotification(`⚠️ ${event.name} incoming! ${event.description}`, "warning");
+        }, event.warningTime);
+      }
+
+      // Process active weather events
+      setActiveWeatherEvents(prev => prev.filter(event => {
+        if (nowSec() > event.endsAt) {
+          addNotification(`🌤️ ${WEATHER_EVENTS[event.type]?.name} has ended`, "info");
+          return false;
+        }
+        return true;
+      }));
+
+      // NEW: Irrigation System Automation
+      if (irrigationSystems.length > 0 && currentTime % 30 === 0) { // Every 30 seconds
+        let irrigatedPlots = 0;
+        irrigationSystems.forEach(system => {
+          const systemData = IRRIGATION_SYSTEMS[system.type];
+          if (systemData && systemData.autoWater) {
+            // Auto-water plots in coverage area (simplified - water all unwatered plots)
+            setPlots(prev => prev.map(p => {
+              if ((p.state === 'planted' || p.state === 'growing') && !p.watered) {
+                irrigatedPlots++;
+                return { ...p, watered: true };
+              }
+              return p;
+            }));
+          }
+        });
+        if (irrigatedPlots > 0) {
+          addNotification(`💧 Irrigation systems watered ${irrigatedPlots} plots`, "info");
+        }
+      }
+
+      // NEW: Wildlife System Logic
+      // Wild animal visits (every 2 minutes, random chance)
+      if (currentTime % 120 === 0) {
+        Object.values(WILD_ANIMALS).forEach(animal => {
+          if (Math.random() < animal.rarity) {
+            // Add wild animal visit
+            setWildAnimalVisits(prev => [...prev, {
+              id: animal.id + '_' + Date.now(),
+              type: animal.id,
+              appearedAt: nowSec(),
+              duration: 180, // 3 minutes
+              active: true
+            }]);
+            
+            // Apply immediate effects
+            if (animal.effect === "crop_damage") {
+              setPlots(prev => prev.map(p => {
+                if (p.state === "growing" || p.state === "grown") {
+                  if (Math.random() < animal.damage) {
+                    addNotification(`${animal.emoji} ${animal.name} damaged your crops!`, "warning");
+                    return { ...p, state: "withered" };
+                  }
+                }
+                return p;
+              }));
+            } else if (animal.effect === "livestock_scare") {
+              setLivestock(prev => prev.map(a => ({
+                ...a,
+                happiness: Math.max(0, (a.happiness || 0) - animal.happinessReduction)
+              })));
+              addNotification(`${animal.emoji} ${animal.name} scared your animals!`, "warning");
+            } else {
+              addNotification(`${animal.emoji} ${animal.name} visited your farm!`, "info");
+            }
+          }
+        });
+      }
+
+      // Process active wild animal visits
+      setWildAnimalVisits(prev => prev.filter(visit => {
+        if (nowSec() - visit.appearedAt > visit.duration) {
+          return false; // Remove expired visits
+        }
+        return true;
+      }));
+
+      // Fish pond production
+      if (fishPonds.length > 0 && currentTime % 300 === 0) { // Every 5 minutes
+        let totalFishProduced = 0;
+        fishPonds.forEach(pond => {
+          const pondData = WILDLIFE_TYPES.fish_pond;
+          if (pond.lastFed && nowSec() - pond.lastFed < 600) { // Fed within 10 minutes
+            const fishCount = Math.floor(Math.random() * 3) + 1; // 1-3 fish
+            setInventory(inv => ({ 
+              ...inv, 
+              fish: (inv.fish || 0) + fishCount,
+              algae: (inv.algae || 0) + 1
+            }));
+            totalFishProduced += fishCount;
+          }
+        });
+        if (totalFishProduced > 0) {
+          addNotification(`🐟 Fish ponds produced ${totalFishProduced} fish!`, "success");
+        }
+      }
+
+      // NEW: Combo timer decay
+      if (comboTimer > 0 && nowSec() > comboTimer) {
+        setCombo(0);
+        setComboTimer(0);
       }
 
       // NEW: Update time of day for visual effects
@@ -1569,14 +2166,17 @@ export default function FarmSimCanvas() {
 
   // Combo system for consecutive harvests
   const triggerCombo = () => {
-    setCombo(c => c + 1);
-    setComboTimer(nowSec() + 5); // 5 second combo window
-    if (combo >= 3) {
-      const bonus = Math.floor(combo * 2);
-      setCoins(c => c + bonus);
-      addNotification(`🔥 ${combo}x Combo! +${bonus}🪙`, "success");
-      playSound("combo");
-    }
+    setCombo(c => {
+      const newCombo = c + 1;
+      setComboTimer(nowSec() + 5); // 5 second combo window
+      if (newCombo >= 3) {
+        const bonus = Math.floor(newCombo * 2);
+        setCoins(coins => coins + bonus);
+        addNotification(`🔥 ${newCombo}x Combo! +${bonus}🪙`, "success");
+        playSound("combo");
+      }
+      return newCombo;
+    });
   };
 
   // Simple time system
@@ -1678,6 +2278,18 @@ export default function FarmSimCanvas() {
     // Specialization modifiers
     if (specialization === "organic") multiplier *= 1.05;
     if (specialization === "artisan" && processedGoods[p.seed]) multiplier *= 1.1;
+    // NEW: Festival bonuses
+    if (activeFestival) {
+      const festival = FESTIVALS[activeFestival.id];
+      if (festival) {
+        if (festival.bonusMultiplier && festival.competitionType === "harvest_volume") {
+          multiplier *= festival.bonusMultiplier;
+        }
+        if (festival.priceBonus && festival.competitionType === "market_sales") {
+          multiplier *= (1 + festival.priceBonus);
+        }
+      }
+    }
     return Math.max(1, Math.round(base * multiplier));
   }
 
@@ -1697,7 +2309,14 @@ export default function FarmSimCanvas() {
     }
     const boostSpeed = p.boosted ? 1.3 : 1;
     const greenhouseSpeed = buildings.greenhouse ? 1.3 : 1;
-    const irrigationSpeed = buildings.irrigation ? (1 + (rules.buildings.irrigation?.bonus || 0.15)) : 1;
+    let irrigationSpeed = buildings.irrigation ? (1 + (rules.buildings.irrigation?.bonus || 0.15)) : 1;
+    // NEW: Add irrigation system bonuses
+    irrigationSystems.forEach(system => {
+      const systemData = IRRIGATION_SYSTEMS[system.type];
+      if (systemData) {
+        irrigationSpeed *= (1 + systemData.growthBonus);
+      }
+    });
     const composterSpeed = buildings.composter ? (1 + (rules.buildings.composter?.bonus || 0.10)) : 1;
     const skillSpeed = skills.horticulture ? 1 + 0.05 * skills.horticulture : 1;
     // Research: Growth
@@ -1765,6 +2384,14 @@ export default function FarmSimCanvas() {
       addLog(`🌱 Planted ${getSeedEmoji(seed)} ${seed} in plot ${i + 1}${isOptimalSeason ? " 🌟" : ""}${greenhouseBonus}${rotationText}`);
       const quality = Math.random() > 0.8 ? 1.2 : 1; // 20% chance for higher quality
       playSound("plant");
+
+      // NEW: Festival progress tracking for planting
+      if (activeFestival) {
+        const festival = FESTIVALS[activeFestival.id];
+        if (festival && festival.competitionType === "planting_speed") {
+          setFestivalProgress(prev => prev + 1);
+        }
+      }
 
       return {
         ...p, state: "planted", seed, growth: 0, watered: false,
@@ -1886,6 +2513,17 @@ export default function FarmSimCanvas() {
       }
       setTotalEarned(t => t + val);
       setTotalHarvests(h => h + 1);
+
+      // NEW: Festival progress tracking
+      if (activeFestival) {
+        const festival = FESTIVALS[activeFestival.id];
+        if (festival && festival.competitionType === "harvest_volume") {
+          setFestivalProgress(prev => prev + 1);
+        }
+        if (festival && festival.competitionType === "market_sales") {
+          setFestivalProgress(prev => prev + val);
+        }
+      }
 
       // NEW: Farm XP system
       setFarmExperience(prev => {
@@ -2144,10 +2782,28 @@ export default function FarmSimCanvas() {
         const happinessMult = 1 + Math.min(1, (animal.happiness || 0) / 200); // up to +50%
         const qualityMult = Math.max(1, Number(animal.quality || 1));
         let value = Math.round((data.value || 10) * happinessMult * qualityMult);
-        if (animal.traits && animal.traits.includes("quality")) value = Math.round(value * 1.2);
-        setInventory(inv => ({ ...inv, [product]: (inv[product] || 0) + 1 }));
+        let quantity = 1;
+        
+        // Apply trait bonuses
+        if (animal.traits) {
+          if (animal.traits.includes("quality")) value = Math.round(value * 1.2);
+          if (animal.traits.includes("prolific")) quantity = Math.floor(quantity * 1.5);
+          if (animal.traits.includes("golden")) value = Math.round(value * 3);
+          if (animal.traits.includes("giant")) quantity = quantity * 2;
+        }
+        
+        setInventory(inv => ({ ...inv, [product]: (inv[product] || 0) + quantity }));
         setCoins(c => c + value);
         collected++;
+        
+        // NEW: Festival progress tracking for animal products
+        if (activeFestival) {
+          const festival = FESTIVALS[activeFestival.id];
+          if (festival && festival.competitionType === "animal_products") {
+            setFestivalProgress(prev => prev + quantity);
+          }
+        }
+        
         return { ...animal, lastProduced: now, happiness: Math.max(0, (animal.happiness||0) - 3) };
       }
       return animal;
@@ -2431,6 +3087,64 @@ export default function FarmSimCanvas() {
           <Zap size={20}/>
           {combo}x COMBO!
         </div>
+      </div>
+    );
+  }
+
+  // NEW: Flying Bees System - only appear during pollination
+  const [flyingBees, setFlyingBees] = useState([]);
+  const [pollinationActive, setPollinationActive] = useState(false);
+
+  // Trigger bees during pollination
+  const triggerPollinationBees = (plotIndex) => {
+    if (!buildings.beehive || beeHappiness < 50) return;
+    
+    setPollinationActive(true);
+    
+    // Create 2-3 bees for this pollination event
+    const beeCount = 2 + Math.floor(Math.random() * 2);
+    const newBees = Array.from({ length: beeCount }, (_, index) => ({
+      id: `pollination_bee_${plotIndex}_${Date.now()}_${index}`,
+      plotIndex,
+      x: (plotIndex % gridSize) * 90 + 45 + Math.random() * 30 - 15,
+      y: Math.floor(plotIndex / gridSize) * 90 + 45 + Math.random() * 30 - 15,
+      opacity: 1,
+      startTime: Date.now()
+    }));
+    
+    setFlyingBees(newBees);
+    
+    // Remove bees after 3 seconds
+    setTimeout(() => {
+      setFlyingBees([]);
+      setPollinationActive(false);
+    }, 3000);
+  };
+
+  function FlyingBees() {
+    if (!pollinationActive || flyingBees.length === 0) return null;
+
+    return (
+      <div className="absolute inset-0 pointer-events-none z-10">
+        {flyingBees.map(bee => {
+          const elapsed = Date.now() - bee.startTime;
+          const fadeOut = elapsed > 2000 ? (3000 - elapsed) / 1000 : 1;
+          
+          return (
+            <div
+              key={bee.id}
+              className="absolute text-lg pointer-events-none"
+              style={{
+                left: bee.x,
+                top: bee.y,
+                opacity: fadeOut,
+                transition: 'opacity 0.5s ease-out'
+              }}
+            >
+              <span className="inline-block animate-bee-buzz">🐝</span>
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -2940,6 +3654,55 @@ export default function FarmSimCanvas() {
           </div>
         </div>
 
+        {/* NEW: Festival Display */}
+        {activeFestival && (
+          <div className="fixed top-32 left-1/2 transform -translate-x-1/2 z-50">
+            <Card className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 shadow-xl">
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <div className="text-2xl mb-2">{FESTIVALS[activeFestival.id]?.emoji}</div>
+                  <h3 className="font-bold text-lg text-purple-800">{FESTIVALS[activeFestival.id]?.name}</h3>
+                  <p className="text-sm text-purple-600 mb-2">{FESTIVALS[activeFestival.id]?.description}</p>
+                  <div className="flex items-center justify-between text-xs">
+                    <span>Progress: {festivalProgress}/{Object.values(FESTIVALS[activeFestival.id]?.requirements || {})[0] || 0}</span>
+                    <span>Time: {Math.max(0, activeFestival.endsAt - currentTime)}s</span>
+                  </div>
+                  <div className="w-full bg-purple-200 rounded-full h-2 mt-2">
+                    <div 
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
+                      style={{ 
+                        width: `${Math.min(100, (festivalProgress / (Object.values(FESTIVALS[activeFestival.id]?.requirements || {})[0] || 1)) * 100)}%` 
+                      }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* NEW: Weather Events Display */}
+        {activeWeatherEvents.length > 0 && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+            {activeWeatherEvents.map(event => (
+              <Card key={event.id} className="mb-2 bg-gradient-to-r from-orange-100 to-red-100 border-2 border-orange-300">
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{WEATHER_EVENTS[event.type]?.emoji}</span>
+                    <div>
+                      <div className="font-bold text-orange-800">{WEATHER_EVENTS[event.type]?.name}</div>
+                      <div className="text-xs text-orange-600">
+                        {WEATHER_EVENTS[event.type]?.description}
+                      </div>
+                      <div className="text-xs">Ends in: {Math.max(0, event.endsAt - currentTime)}s</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
         {/* HUD Pin: Auto toggles */}
         <div className="fixed bottom-4 right-4 z-50">
           <div className="bg-white/90 border rounded-xl shadow p-2 text-xs flex items-center gap-2">
@@ -3104,6 +3867,7 @@ export default function FarmSimCanvas() {
                     <TabsTrigger value="buildings" className="text-xs px-2 py-1">🏗️ Buildings</TabsTrigger>
                     <TabsTrigger value="livestock" className="text-xs px-2 py-1">🐄 Animals</TabsTrigger>
                     <TabsTrigger value="business" className="text-xs px-2 py-1">💼 Business</TabsTrigger>
+                    <TabsTrigger value="community" className="text-xs px-2 py-1">🏘️ Community</TabsTrigger>
                     <TabsTrigger value="events" className="text-xs px-2 py-1">🎉 Events</TabsTrigger>
                   </TabsList>
 
@@ -3547,10 +4311,32 @@ export default function FarmSimCanvas() {
                                     </Button>
                                     <Button
                                       onClick={() => {
-                                        const breedTime = Math.max(120, (data.breedingTime||600));
-                                        const actual = animal.traits && animal.traits.includes("fertile") ? Math.floor(breedTime*0.75) : breedTime;
-                                        setBreedingQueue(q => [...q, { id: animal.id, type: animal.type, readyAt: nowSec() + actual }]);
-                                        addNotification(`${data.name} breeding started (ready in ${(breedTime/60)|0}m)`, "success");
+                                        // Find partner for breeding
+                                        const partner = livestock.find(a => 
+                                          a.type === animal.type && 
+                                          a.id !== animal.id && 
+                                          !a.ill && 
+                                          (a.happiness || 0) >= 50
+                                        );
+                                        
+                                        if (partner) {
+                                          const breedTime = Math.max(120, (data.breedingTime||600));
+                                          const actual = animal.traits && animal.traits.includes("fertile") ? Math.floor(breedTime*0.75) : breedTime;
+                                          
+                                          // Generate offspring traits using genetic inheritance
+                                          const offspringTraits = assignAnimalTraits(animal.traits || [], partner.traits || []);
+                                          
+                                          setBreedingQueue(q => [...q, { 
+                                            id: animal.id + '_' + partner.id + '_' + Date.now(), 
+                                            type: animal.type, 
+                                            readyAt: nowSec() + actual,
+                                            traits: offspringTraits,
+                                            parents: [animal.id, partner.id]
+                                          }]);
+                                          addNotification(`${data.name} breeding with genetic traits! (${(actual/60)|0}m)`, "success");
+                                        } else {
+                                          addNotification("Need another healthy, happy animal of same type for breeding", "warning");
+                                        }
                                       }}
                                       size="sm"
                                       variant="outline"
@@ -3628,10 +4414,21 @@ export default function FarmSimCanvas() {
                         <div className="text-sm font-semibold">Breeding Queue</div>
                         {breedingQueue.map(b => {
                           const d = rules.livestock[b.type] || {}; 
+                          const timeLeft = Math.max(0, (b.readyAt - currentTime));
+                          const totalTime = (d.breedingTime || 600);
+                          const progress = Math.min(100, Math.max(0, (1 - timeLeft / totalTime) * 100));
                           return (
-                            <div key={b.id} className="text-xs flex items-center justify-between bg-white/80 p-2 border rounded">
-                              <div className="flex items-center gap-2"><span className="text-lg">{d.emoji||"🐾"}</span><span>{d.name||b.type}</span></div>
-                              <div>Ready in {Math.max(0, (b.readyAt - currentTime))}s</div>
+                            <div key={b.id} className="text-xs bg-white/80 p-2 border rounded space-y-1">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2"><span className="text-lg">{d.emoji||"🐾"}</span><span>{d.name||b.type}</span></div>
+                                <div>Ready in {timeLeft}s</div>
+                              </div>
+                              <div className="w-full bg-slate-200 rounded-full h-1">
+                                <div 
+                                  className="bg-gradient-to-r from-green-500 to-emerald-500 h-1 rounded-full transition-all duration-300"
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
                             </div>
                           );
                         })}
@@ -3862,6 +4659,293 @@ export default function FarmSimCanvas() {
                         </div>
                       );
                     })()}
+                  </TabsContent>
+
+                  <TabsContent value="community" className="space-y-4">
+                    <div className="text-sm text-green-700 mb-2 p-2 bg-green-50 rounded border border-green-200">
+                      🏘️ Connect with neighboring farms and contribute to town development!
+                    </div>
+
+                    {/* Farm Reputation */}
+                    <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border">
+                      <div className="text-sm font-semibold text-green-800 mb-2">🌟 Farm Reputation</div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-lg font-bold">{farmReputation}/100</span>
+                        <Badge variant={farmReputation >= 80 ? "default" : farmReputation >= 50 ? "secondary" : "destructive"}>
+                          {farmReputation >= 80 ? "Excellent" : farmReputation >= 50 ? "Good" : "Needs Work"}
+                        </Badge>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div
+                          className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${farmReputation}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Neighboring Farms */}
+                    <div className="space-y-2">
+                      <div className="text-sm font-semibold">🏡 Neighboring Farms</div>
+                      <div className="grid gap-2">
+                        {NEIGHBOR_FARMS.map(neighbor => (
+                          <div key={neighbor.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{neighbor.emoji}</span>
+                                <div>
+                                  <div className="font-semibold text-xs">{neighbor.name}</div>
+                                  <div className="text-xs text-slate-600">Specialty: {neighbor.specialty}</div>
+                                </div>
+                              </div>
+                              <Badge variant="secondary" className="text-xs">
+                                Rep: {neighbor.reputation}
+                              </Badge>
+                            </div>
+                            <div className="flex gap-1 flex-wrap mb-2">
+                              {neighbor.tradingItems.slice(0, 3).map(item => (
+                                <Badge key={item} variant="outline" className="text-xs">
+                                  {rules.seeds[item]?.emoji || "📦"} {item}
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" className="text-xs flex-1" 
+                                onClick={() => addNotification(`Visited ${neighbor.name}!`, "info")}>
+                                🏠 Visit
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-xs flex-1"
+                                onClick={() => addNotification(`Trading with ${neighbor.farmer}...`, "info")}>
+                                🤝 Trade
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Town Projects */}
+                    <div className="space-y-2">
+                      <div className="text-sm font-semibold">🏛️ Town Development Projects</div>
+                      <div className="grid gap-2">
+                        {Object.values(TOWN_PROJECTS).map(project => (
+                          <div key={project.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{project.emoji}</span>
+                                <div>
+                                  <div className="font-semibold text-xs">{project.name}</div>
+                                  <div className="text-xs text-slate-600">{project.description}</div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mb-2">
+                              <div className="flex items-center justify-between text-xs mb-1">
+                                <span>Progress: {project.progress}/{project.totalCost}🪙</span>
+                                <span>Your part: {project.farmContribution}🪙</span>
+                              </div>
+                              <div className="w-full bg-slate-200 rounded-full h-2">
+                                <div
+                                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${Math.min(100, (project.progress / project.totalCost) * 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              className="w-full text-xs" 
+                              disabled={coins < project.farmContribution || project.progress >= project.totalCost}
+                              onClick={() => {
+                                if (coins >= project.farmContribution) {
+                                  setCoins(c => c - project.farmContribution);
+                                  // Update project progress
+                                  setTownProjects(prev => prev.map(p => 
+                                    p.id === project.id 
+                                      ? { ...p, progress: Math.min(p.totalCost, p.progress + project.farmContribution) }
+                                      : p
+                                  ));
+                                  setFarmReputation(r => Math.min(100, r + 5));
+                                  addNotification(`Contributed to ${project.name}! +5 reputation`, "success");
+                                }
+                              }}
+                            >
+                              {project.progress >= project.totalCost ? "✅ Completed" : 
+                               coins < project.farmContribution ? "💰 Need more coins" : 
+                               `💝 Contribute ${project.farmContribution}🪙`}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Irrigation Systems */}
+                    <div className="space-y-2">
+                      <div className="text-sm font-semibold">💧 Irrigation Systems</div>
+                      <div className="text-xs text-blue-600 mb-2">Automate watering and boost crop growth!</div>
+                      <div className="grid gap-2">
+                        {Object.values(IRRIGATION_SYSTEMS).map(system => (
+                          <div key={system.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{system.emoji}</span>
+                                <div>
+                                  <div className="font-semibold text-xs">{system.name}</div>
+                                  <div className="text-xs text-slate-600">{system.description}</div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold text-sm">{system.cost}🪙</div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mb-2 text-xs">
+                              <Badge variant="outline">Coverage: {system.coverage} plots</Badge>
+                              <Badge variant="outline">+{Math.round(system.growthBonus * 100)}% growth</Badge>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              className="w-full text-xs" 
+                              disabled={coins < system.cost}
+                              onClick={() => {
+                                if (coins >= system.cost) {
+                                  setCoins(c => c - system.cost);
+                                  setIrrigationSystems(prev => [...prev, {
+                                    id: system.id + '_' + Date.now(),
+                                    type: system.id,
+                                    installedAt: nowSec()
+                                  }]);
+                                  addNotification(`${system.name} installed!`, "success");
+                                }
+                              }}
+                            >
+                              {coins < system.cost ? "💰 Need more coins" : `🛠️ Install ${system.cost}🪙`}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Wildlife Ecosystem */}
+                    <div className="space-y-2">
+                      <div className="text-sm font-semibold">🦋 Wildlife Ecosystem</div>
+                      <div className="text-xs text-green-600 mb-2">Attract beneficial wildlife to your farm!</div>
+                      
+                      {/* Wildlife Structures */}
+                      <div className="grid gap-2">
+                        {Object.values(WILDLIFE_TYPES).map(wildlife => (
+                          <div key={wildlife.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{wildlife.emoji}</span>
+                                <div>
+                                  <div className="font-semibold text-xs">{wildlife.name}</div>
+                                  <div className="text-xs text-slate-600">{wildlife.description}</div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold text-sm">{wildlife.cost}🪙</div>
+                              </div>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              className="w-full text-xs" 
+                              disabled={coins < wildlife.cost}
+                              onClick={() => {
+                                if (coins >= wildlife.cost) {
+                                  setCoins(c => c - wildlife.cost);
+                                  if (wildlife.id === 'fish_pond') {
+                                    setFishPonds(prev => [...prev, {
+                                      id: wildlife.id + '_' + Date.now(),
+                                      type: wildlife.id,
+                                      installedAt: nowSec(),
+                                      lastFed: 0,
+                                      fishCount: 0
+                                    }]);
+                                  } else {
+                                    setWildlifeStructures(prev => [...prev, {
+                                      id: wildlife.id + '_' + Date.now(),
+                                      type: wildlife.id,
+                                      installedAt: nowSec()
+                                    }]);
+                                  }
+                                  addNotification(`${wildlife.name} built!`, "success");
+                                }
+                              }}
+                            >
+                              {coins < wildlife.cost ? "💰 Need more coins" : `🏗️ Build ${wildlife.cost}🪙`}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Active Fish Ponds */}
+                      {fishPonds.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-sm font-semibold">🐟 Your Fish Ponds</div>
+                          {fishPonds.map(pond => (
+                            <div key={pond.id} className="bg-blue-50 rounded-lg p-2 border">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">🐟</span>
+                                  <div className="text-xs">
+                                    <div>Fish Pond</div>
+                                    <div className="opacity-70">
+                                      {pond.lastFed && nowSec() - pond.lastFed < 600 ? 
+                                        `Fed ${Math.floor((nowSec() - pond.lastFed)/60)}m ago` : 
+                                        "Needs feeding"
+                                      }
+                                    </div>
+                                  </div>
+                                </div>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-xs"
+                                  onClick={() => {
+                                    if (coins >= 5) {
+                                      setCoins(c => c - 5);
+                                      setFishPonds(prev => prev.map(p => 
+                                        p.id === pond.id ? { ...p, lastFed: nowSec() } : p
+                                      ));
+                                      addNotification("Fish pond fed!", "success");
+                                    }
+                                  }}
+                                  disabled={coins < 5}
+                                >
+                                  Feed (5🪙)
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Wild Animal Visits */}
+                      {wildAnimalVisits.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-sm font-semibold">🦉 Wild Animal Visitors</div>
+                          {wildAnimalVisits.map(visit => {
+                            const animal = WILD_ANIMALS[visit.type];
+                            const timeLeft = Math.max(0, visit.duration - (nowSec() - visit.appearedAt));
+                            return (
+                              <div key={visit.id} className="bg-yellow-50 rounded-lg p-2 border border-yellow-200">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">{animal?.emoji}</span>
+                                    <div className="text-xs">
+                                      <div className="font-semibold">{animal?.name}</div>
+                                      <div className="opacity-70">{animal?.description}</div>
+                                    </div>
+                                  </div>
+                                  <div className="text-xs text-right">
+                                    <div>Leaves in</div>
+                                    <div className="font-semibold">{Math.floor(timeLeft/60)}m {timeLeft%60}s</div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="customization" className="space-y-4">
@@ -4585,7 +5669,19 @@ export default function FarmSimCanvas() {
                                 </div>
                               </div>
                             ))}
-                            {researchJob && <div className="text-xs opacity-70">In progress: {researchJob.id} • {formatTimeRemaining(researchJob.endsAt, currentTime)}</div>}
+                            {researchJob && (
+                              <div className="text-xs space-y-1">
+                                <div className="opacity-70">In progress: {researchJob.id} • {formatTimeRemaining(researchJob.endsAt, currentTime)}</div>
+                                <div className="w-full bg-slate-200 rounded-full h-2">
+                                  <div 
+                                    className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                                    style={{ 
+                                      width: `${Math.min(100, Math.max(0, (1 - (researchJob.endsAt - currentTime) / 60) * 100))}%` 
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            )}
                             {getActiveSynergies().length>0 && (
                               <div className="mt-2 text-xs">
                                 <div className="font-semibold">Synergies</div>
@@ -4857,6 +5953,7 @@ export default function FarmSimCanvas() {
                   className="grid gap-4 p-2 relative"
                   style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }}
                 >
+                  <FlyingBees/>
                   {plots.map((p, i) => <PlotCard key={i} p={p} i={i} />)}
                   {isSelecting && selectionRect && (
                     <div
