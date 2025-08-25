@@ -285,7 +285,7 @@ const BUILDINGS = {
     cost: 500, 
     description: "Houses livestock and stores feed", 
     capacity: 10,
-    unlockLevel: 2
+    unlockLevel: 1
   },
   greenhouse: { 
     name: "Greenhouse", 
@@ -293,7 +293,7 @@ const BUILDINGS = {
     cost: 1000, 
     description: "Protects crops from weather", 
     effect: { weatherProtection: true, growth: 1.1 },
-    unlockLevel: 3
+    unlockLevel: 2
   },
   silo: { 
     name: "Silo", 
@@ -301,13 +301,38 @@ const BUILDINGS = {
     cost: 300, 
     description: "Stores large amounts of crops", 
     capacity: 1000,
-    unlockLevel: 2
+    unlockLevel: 1
   },
   processingPlant: { 
     name: "Processing Plant", 
     emoji: "🏭", 
     cost: 2000, 
     description: "Converts crops to processed goods", 
+    unlockLevel: 3
+  },
+  greenhouse2: {
+    name: "Greenhouse II",
+    emoji: "🏗️",
+    cost: 2500,
+    description: "+weather immunity, winter growth +25%",
+    effect: { weatherImmunity: true, winterGrowth: 1.25 },
+    unlockLevel: 4
+  },
+  siloExpansion: {
+    name: "Silo Expansion",
+    emoji: "📦",
+    cost: 1200,
+    description: "+1,000 storage, spoilage −30%",
+    capacity: 1000,
+    spoilageReduction: 0.3,
+    unlockLevel: 2
+  },
+  processingPlant2: {
+    name: "Processing Plant II",
+    emoji: "🏭",
+    cost: 3500,
+    description: "parallel queue +1, speed +20%",
+    effect: { queuePlus: 1, speed: 1.2 },
     unlockLevel: 4
   }
 };
@@ -547,10 +572,17 @@ const RIVAL_FARMS = [
 
 // Vehicles and simple logistics
 const VEHICLES = {
-  handcart: { name: "Handcart", capacity: 20, speed: 1, fuelUse: 0, upkeep: 0, cost: 0 },
+  handcart: { name: "Handcart", capacity: 20, speed: 1, fuelUse: 0, upkeep: 0, cost: 50 },
   tractor: { name: "Tractor", capacity: 60, speed: 1.5, fuelUse: 1, upkeep: 2, cost: 800 },
   truck: { name: "Truck", capacity: 150, speed: 2.2, fuelUse: 2, upkeep: 5, cost: 2000 },
   reeferTruck: { name: "Reefer Truck", capacity: 120, speed: 2.0, fuelUse: 3, upkeep: 8, cost: 3500, preserves: true }
+};
+
+// Logistics upgrades
+const LOGISTICS_UPGRADES = {
+  tractorTrailer: { name: "Tractor Trailer", cost: 1000, description: "Capacity +80, +1 fuel per trip" },
+  routePlanner: { name: "Route Planner", cost: 600, description: "Auto-pick best town by net price" },
+  refrigerationKit: { name: "Refrigeration Kit", cost: 900, description: "Deliveries preserve freshness" }
 };
 
 // Disasters with simple growth modifiers
@@ -716,11 +748,13 @@ function loadSave() {
       saveData.availableContracts = availableContracts;
       saveData.rivalScores = rivalScores;
       saveData.vehiclesOwned = vehiclesOwned;
+      saveData.vehicleUpgrades = vehicleUpgrades;
       saveData.fuel = fuel;
       saveData.deliveries = deliveries;
       saveData.forecast = forecast;
       saveData.activeDisaster = activeDisaster;
       saveData.insurance = insurance;
+      saveData.lastSpoilage = lastSpoilage;
     }
   } catch (error) {
     console.error("Failed to load save:", error);
@@ -867,6 +901,9 @@ export default function FarmSimCanvas() {
   const [gamePaused, setGamePaused] = useState(false); // Don't save pause state
   const [actionHistory, setActionHistory] = useState(() => saved?.actionHistory || []);
 
+  // Context menu for plots (right-click actions)
+  const [plotMenu, setPlotMenu] = useState({ open: false, x: 0, y: 0, plotIndex: null });
+
   // Contracts & NPCs
   const [reputation, setReputation] = useState(() => saved?.reputation || 0);
   const [activeContracts, setActiveContracts] = useState(() => saved?.activeContracts || []);
@@ -875,8 +912,10 @@ export default function FarmSimCanvas() {
 
   // Logistics
   const [vehiclesOwned, setVehiclesOwned] = useState(() => saved?.vehiclesOwned || { handcart: 1 });
+  const [vehicleUpgrades, setVehicleUpgrades] = useState(() => saved?.vehicleUpgrades || { tractorTrailer: false, routePlanner: false, refrigerationKit: false });
   const [fuel, setFuel] = useState(() => saved?.fuel || 20);
   const [deliveries, setDeliveries] = useState(() => saved?.deliveries || []);
+  const [lastSpoilage, setLastSpoilage] = useState(() => saved?.lastSpoilage || nowSec());
 
   // Forecast & Disasters
   const [forecast, setForecast] = useState(() => saved?.forecast || []); // [{time, type}]
@@ -1205,6 +1244,49 @@ export default function FarmSimCanvas() {
     addNotification(`Applied ${improvement.name}!`, "success");
   };
 
+  // Water/Fertilize/Pesticide actions for context menu
+  const waterPlot = (plotIndex) => {
+    const newPlots = [...plots];
+    const plot = newPlots[plotIndex];
+    if (!plot || plot.status !== "growing") return;
+    plot.health = Math.min(100, plot.health + 5);
+    // Minor growth speed bump via a temporary improvement
+    plot.improvements = [...(plot.improvements||[]), { type: "watering", appliedAt: nowSec(), expiresAt: nowSec() + 180 }];
+    setPlots(newPlots);
+    addNotification("💧 Watered plot", "success");
+  };
+
+  const fertilizePlot = (plotIndex) => {
+    // Reuse soil improvement stock if available, else apply a lightweight buff
+    if ((soilInventory.compost||0) > 0) {
+      applySoilImprovement(plotIndex, "compost");
+      return;
+    }
+    const newPlots = [...plots];
+    const plot = newPlots[plotIndex];
+    if (!plot) return;
+    plot.improvements = [...(plot.improvements||[]), { type: "temp_fertilizer", appliedAt: nowSec(), expiresAt: nowSec() + 300 }];
+    setPlots(newPlots);
+    addNotification("🌱 Applied fertilizer", "success");
+  };
+
+  const pesticidePlot = (plotIndex) => {
+    // Prefer using treatment inventory
+    const type = Object.keys(TREATMENTS)[0];
+    if (type && (treatmentInventory[type]||0) > 0) {
+      treatPlot(plotIndex, type);
+      return;
+    }
+    const newPlots = [...plots];
+    const plot = newPlots[plotIndex];
+    if (!plot) return;
+    plot.pests = [];
+    plot.diseases = [];
+    plot.health = Math.min(100, plot.health + 10);
+    setPlots(newPlots);
+    addNotification("🧪 Applied pesticide", "success");
+  };
+
   const buySoilImprovement = (type, amount) => {
     const improvement = SOIL_IMPROVEMENTS[type];
     const cost = improvement.cost * amount;
@@ -1251,8 +1333,16 @@ export default function FarmSimCanvas() {
       plot.improvements.forEach(imp => {
         if (nowSec() < imp.expiresAt) {
           const impData = SOIL_IMPROVEMENTS[imp.type];
-          if (impData.effects.fertility) {
+          if (impData && impData.effects && impData.effects.fertility) {
             bonus.growth *= (1 + impData.effects.fertility);
+          }
+          // Temporary buffs from context actions
+          if (imp.type === 'watering') {
+            bonus.growth *= 1.05;
+          }
+          if (imp.type === 'temp_fertilizer') {
+            bonus.growth *= 1.10;
+            bonus.value = (bonus.value || 1) * 1.05;
           }
         }
       });
@@ -1355,7 +1445,9 @@ export default function FarmSimCanvas() {
   };
 
   const getWeatherBonus = () => {
-    const base = WEATHER_TYPES[currentWeather]?.effects || { growth: 1, water: 1 };
+    // Greenhouse II immunity
+    const hasGH2 = buildings.some(b => b.type === 'greenhouse2');
+    const base = hasGH2 ? { growth: 1, water: 1 } : (WEATHER_TYPES[currentWeather]?.effects || { growth: 1, water: 1 });
     if (activeDisaster) {
       const d = DISASTERS[activeDisaster.key];
       if (d) {
@@ -1376,7 +1468,12 @@ export default function FarmSimCanvas() {
   };
 
   const getSeasonBonus = () => {
-    return SEASONS[currentSeason]?.effects || { growth: 1 };
+    const base = SEASONS[currentSeason]?.effects || { growth: 1 };
+    // Greenhouse II winter bonus
+    if (currentSeason === 'winter' && buildings.some(b => b.type === 'greenhouse2')) {
+      return { ...base, growth: (base.growth || 1) * 1.25 };
+    }
+    return base;
   };
 
   // Achievement functions
@@ -1765,14 +1862,24 @@ export default function FarmSimCanvas() {
     });
     
     // Add to processing queue
+    const speedBonus = buildings.some(b => b.type === 'processingPlant2') ? 1.2 : 1;
     const processingItem = {
       id: `${recipeId}_${Date.now()}`,
       recipeId,
       startTime: currentTime,
-      endTime: currentTime + recipe.processingTime
+      endTime: currentTime + Math.ceil(recipe.processingTime / speedBonus)
     };
     
-    setProcessingQueue(prev => [...prev, processingItem]);
+    // Handle parallel queue +1 if upgraded
+    setProcessingQueue(prev => {
+      const queueLimit = 1 + (buildings.some(b => b.type === 'processingPlant2') ? 1 : 0);
+      const activeForRecipe = prev.filter(p => p.recipeId === recipeId).length;
+      if (activeForRecipe >= queueLimit) {
+        addNotification("Queue full for this recipe!", "error");
+        return prev;
+      }
+      return [...prev, processingItem];
+    });
     addNotification(`Started processing ${recipe.name}!`, "success");
   };
 
@@ -1976,6 +2083,22 @@ export default function FarmSimCanvas() {
     completeProcessing();
     completeResearch();
     processAutoHarvest();
+    // Spoilage tick every in-game hour
+    if (currentTime - lastSpoilage >= 3600) {
+      const hasSiloExpansion = buildings.some(b => b.type === 'siloExpansion');
+      const decayRate = hasSiloExpansion ? 0.7 : 1.0; // 30% reduction
+      setInventory(prev => {
+        const next = { ...prev };
+        Object.keys(next).forEach(k => {
+          if (next[k] > 0) {
+            const decay = Math.floor(next[k] * 0.02 * decayRate); // 2% per hour baseline
+            next[k] = Math.max(0, next[k] - decay);
+          }
+        });
+        return next;
+      });
+      setLastSpoilage(currentTime);
+    }
   }, [currentTime]);
 
   // Grid expansion functions
@@ -2340,6 +2463,11 @@ export default function FarmSimCanvas() {
         className={`cursor-pointer transition-all hover:shadow-md ${
           plot.status === "locked" ? "opacity-50" : ""
         }`}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          if (plot.status === 'locked') return;
+          setPlotMenu({ open: true, x: e.clientX, y: e.clientY, plotIndex: index });
+        }}
         onClick={() => {
           if (plot.status === "empty") plant(index);
           else if (plot.status === "ready") harvest(index);
@@ -2402,6 +2530,15 @@ export default function FarmSimCanvas() {
             <Card>
               <CardHeader>
               <CardTitle>🚜 {name}'s Farm</CardTitle>
+              <div className="mt-2">
+                <label className="text-xs text-gray-500 mr-2">Farmer Name:</label>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value.slice(0, 24))}
+                  className="border rounded px-2 py-1 text-sm"
+                  placeholder="Enter name"
+                />
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-sm mt-2">
                 <span className="bg-yellow-50 px-2 py-1 rounded border">💰 {coins}</span>
                 <span className="bg-green-50 px-2 py-1 rounded border">⭐ {score}</span>
@@ -2438,6 +2575,19 @@ export default function FarmSimCanvas() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Context menu for plot actions */}
+            {plotMenu.open && (
+              <div
+                className="fixed z-50 bg-white border rounded shadow-lg text-sm"
+                style={{ left: plotMenu.x, top: plotMenu.y }}
+                onMouseLeave={() => setPlotMenu({ open: false, x: 0, y: 0, plotIndex: null })}
+              >
+                <button className="block w-full text-left px-3 py-2 hover:bg-gray-100" onClick={() => { waterPlot(plotMenu.plotIndex); setPlotMenu({ open: false, x: 0, y: 0, plotIndex: null }); }}>💧 Water</button>
+                <button className="block w-full text-left px-3 py-2 hover:bg-gray-100" onClick={() => { fertilizePlot(plotMenu.plotIndex); setPlotMenu({ open: false, x: 0, y: 0, plotIndex: null }); }}>🌱 Fertilizer</button>
+                <button className="block w-full text-left px-3 py-2 hover:bg-gray-100" onClick={() => { pesticidePlot(plotMenu.plotIndex); setPlotMenu({ open: false, x: 0, y: 0, plotIndex: null }); }}>🧪 Pesticide</button>
+              </div>
+            )}
 
             {/* Farm Command Center */}
             <Card className="mt-4">
@@ -2650,6 +2800,7 @@ export default function FarmSimCanvas() {
                   <TabsTrigger value="research" className="text-xs px-2 py-1 flex-shrink-0">🧪 Research</TabsTrigger>
                   <TabsTrigger value="contracts" className="text-xs px-2 py-1 flex-shrink-0">📜 Contracts</TabsTrigger>
                   <TabsTrigger value="logistics" className="text-xs px-2 py-1 flex-shrink-0">🚚 Logistics</TabsTrigger>
+                  <TabsTrigger value="buildings" className="text-xs px-2 py-1 flex-shrink-0">🏗️ Buildings</TabsTrigger>
                   <TabsTrigger value="events" className="text-xs px-2 py-1 flex-shrink-0">🎉 Events</TabsTrigger>
                   <TabsTrigger value="genetics" className="text-xs px-2 py-1 flex-shrink-0">🧬 Genetics</TabsTrigger>
                   <TabsTrigger value="soil" className="text-xs px-2 py-1 flex-shrink-0">🌱 Soil</TabsTrigger>
@@ -2665,6 +2816,9 @@ export default function FarmSimCanvas() {
                   <div className="bg-gray-50 p-3 rounded border">
                     <h3 className="font-medium">📦 Farm Inventory</h3>
                     <p className="text-sm text-gray-600">Manage all your crops, products, and supplies</p>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {(() => { const base=2; const reduced=buildings.some(b=>b.type==='siloExpansion'); return `Spoilage: ~${reduced? (base*0.7).toFixed(1):base}%/h${reduced?' (Silo Expansion)':''}`; })()}
+                    </div>
                   </div>
 
                   <div>
@@ -2819,6 +2973,30 @@ export default function FarmSimCanvas() {
                   </div>
                 </TabsContent>
 
+                {/* Buildings (extracted for visibility) */}
+                <TabsContent value="buildings" className="space-y-3">
+                  <div className="bg-amber-50 p-3 rounded border">
+                    <h3 className="font-medium">🏗️ Buildings</h3>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {Object.entries(BUILDINGS).map(([type, building]) => {
+                        const hasIt = hasBuilding(type);
+                        const canBuy = level >= building.unlockLevel && coins >= building.cost;
+                        return (
+                          <div key={type} className="text-center p-2 border rounded">
+                            <div className="text-lg">{building.emoji}</div>
+                            <div className="text-xs font-medium">{building.name}</div>
+                            <div className="text-[11px] text-gray-600 mt-1">{building.description}</div>
+                            <div className="text-[11px]">Cost: {building.cost}💰</div>
+                            <Button size="sm" className="text-xs mt-1" disabled={!canBuy || hasIt} onClick={() => buyBuilding(type)}>
+                              {hasIt ? 'Owned' : 'Buy'}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </TabsContent>
+
                 {/* Contracts */}
                 <TabsContent value="contracts" className="space-y-3">
                   <div className="bg-yellow-50 p-3 rounded border">
@@ -2896,10 +3074,24 @@ export default function FarmSimCanvas() {
                         <div key={crop} className="p-2 border rounded">
                           <div className="font-medium">{DEFAULT_RULES.seeds[crop]?.name || crop} × {qty}</div>
                           <Button size="sm" className="text-xs mt-1" onClick={() => {
-                            const vehicleId = Object.keys(vehiclesOwned).find(k => vehiclesOwned[k] > 0) || 'handcart';
-                            const vehicle = VEHICLES[vehicleId];
-                            const quantity = Math.min(qty, vehicle.capacity);
-                            const town = selectedTown;
+                            const bestVehId = Object.keys(vehiclesOwned).reduce((best, id) => {
+                              if ((vehiclesOwned[id]||0) <= 0) return best;
+                              const baseCap = VEHICLES[id].capacity;
+                              const cap = vehicleUpgrades.tractorTrailer ? baseCap + 80 : baseCap;
+                              if (!best) return id;
+                              const bestBase = VEHICLES[best].capacity;
+                              const bestCap = vehicleUpgrades.tractorTrailer ? bestBase + 80 : bestBase;
+                              return cap > bestCap ? id : best;
+                            }, null) || 'handcart';
+                            const vehicle = VEHICLES[bestVehId];
+                            const vehicleCapacity = (vehicleUpgrades.tractorTrailer ? vehicle.capacity + 80 : vehicle.capacity);
+                            const quantity = Math.min(qty, vehicleCapacity);
+                            const candidateTowns = Object.keys(MARKET_TOWNS);
+                            const town = vehicleUpgrades.routePlanner ? (candidateTowns.reduce((best, tid) => {
+                              const ppu = marketPrices[crop] || DEFAULT_RULES.seeds[crop]?.baseValue || 0;
+                              const net = (ppu * quantity) - (MARKET_TOWNS[tid].transportCost * quantity);
+                              return (!best || net > best.net) ? { id: tid, net } : best;
+                            }, null)?.id || selectedTown) : selectedTown;
                             const pricePerUnit = marketPrices[crop] || DEFAULT_RULES.seeds[crop]?.baseValue || 0;
                             const distance = 10;
                             const travel = Math.ceil((distance / vehicle.speed) * 60);
@@ -2907,8 +3099,8 @@ export default function FarmSimCanvas() {
                             const transport = MARKET_TOWNS[town].transportCost * quantity;
                             const netProfit = Math.max(0, totalRevenue - transport);
                             setInventory(prev => ({...prev, [crop]: prev[crop] - quantity }));
-                            setDeliveries(prev => [...prev, { id: `del_${Date.now()}`, crop, quantity, town, arrivesAt: nowSec() + travel, netProfit }]);
-                            addNotification(`Delivery dispatched: ${quantity} ${crop}`, 'info');
+                            setDeliveries(prev => [...prev, { id: `del_${Date.now()}`, crop, quantity, town, arrivesAt: nowSec() + travel, netProfit, preserve: vehicleUpgrades.refrigerationKit }]);
+                            addNotification(`Delivery dispatched: ${quantity} ${crop} → ${MARKET_TOWNS[town].name}`, 'info');
                           }}>Send</Button>
                         </div>
                       ))}
@@ -3655,23 +3847,20 @@ export default function FarmSimCanvas() {
                           <div key={type} className="text-center p-2 border rounded">
                             <div className="text-lg">{building.emoji}</div>
                             <div className="text-xs font-medium">{building.name}</div>
-                            <div className="text-xs text-gray-600 mb-2">{building.description}</div>
-                            {hasIt ? (
-                              <Badge variant="default" className="text-xs">Built</Badge>
-                            ) : (
-                                <Button 
-                                  size="sm" 
-                                onClick={() => buyBuilding(type)}
-                                disabled={!canBuy}
-                                  className="text-xs"
-                              >
-                                Build ({building.cost}💰)
-                                </Button>
-                            )}
-                              </div>
-                            );
-                          })}
-                        </div>
+                            <div className="text-[11px] text-gray-600 mt-1">{building.description}</div>
+                            <div className="text-[11px]">Cost: {building.cost}💰</div>
+                            <Button
+                              size="sm"
+                              className="text-xs mt-1"
+                              disabled={!canBuy || hasIt}
+                              onClick={() => buyBuilding(type)}
+                            >
+                              {hasIt ? 'Owned' : 'Buy'}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
                     </div>
 
                   <div>
