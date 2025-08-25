@@ -75,6 +75,28 @@ const DECORATION_ITEMS = {
   arbor: { name: "Garden Arbor", emoji: "🌿", cost: 350, description: "Romantic garden feature", unlockedLevel: 7 }
 };
 
+// Town Development Constants
+const TOWN_BUILDINGS = {
+  general_store: { name: "General Store", emoji: "🏪", cost: 0, description: "Basic supplies and seeds", unlocked: true },
+  blacksmith: { name: "Blacksmith", emoji: "⚒️", cost: 500, description: "Tools and farm equipment", reputationRequired: 50 },
+  tavern: { name: "Tavern", emoji: "🍺", cost: 800, description: "Social hub and information", reputationRequired: 100 },
+  bank: { name: "Bank", emoji: "🏦", cost: 1200, description: "Loans and savings", reputationRequired: 150 },
+  clinic: { name: "Clinic", emoji: "🏥", cost: 1000, description: "Medical services", reputationRequired: 125 },
+  school: { name: "School", emoji: "🏫", cost: 1500, description: "Education and research", reputationRequired: 200 },
+  library: { name: "Library", emoji: "📚", cost: 900, description: "Knowledge and books", reputationRequired: 175 },
+  market: { name: "Market Hall", emoji: "🏢", cost: 2000, description: "Premium trading", reputationRequired: 250 },
+  festival_grounds: { name: "Festival Grounds", emoji: "🎪", cost: 1800, description: "Event hosting", reputationRequired: 225 },
+  town_hall: { name: "Town Hall", emoji: "🏛️", cost: 3000, description: "Government and permits", reputationRequired: 300 }
+};
+
+const TOWN_EVENTS = [
+  { id: "harvest_festival", name: "Harvest Festival", emoji: "🎉", description: "Celebrate the harvest season", duration: 180, effects: { reputation: 50, coins: 200 } },
+  { id: "market_day", name: "Market Day", emoji: "🛒", description: "Increased market activity", duration: 120, effects: { market_multiplier: 1.3 } },
+  { id: "town_meeting", name: "Town Meeting", emoji: "🏛️", description: "Discuss town improvements", duration: 90, effects: { reputation: 25 } },
+  { id: "craft_fair", name: "Craft Fair", emoji: "🎨", description: "Showcase local crafts", duration: 150, effects: { reputation: 35, processing_bonus: 1.2 } },
+  { id: "charity_drive", name: "Charity Drive", emoji: "❤️", description: "Help the community", duration: 100, effects: { reputation: 40 } }
+];
+
 const DEFAULT_RULES = {
   seeds: {
     carrot: { stages: 3, secondsPerStage: 8, baseValue: 12, shopPrice: 5, emoji: "🥕", rarity: "common", season: "spring", family: "root" },
@@ -341,6 +363,13 @@ export default function FarmSimCanvas() {
   const [farmTheme, setFarmTheme] = useState(saved?.farmTheme || "classic");
   const [decorations, setDecorations] = useState(saved?.decorations || []);
   const [farmLevel, setFarmLevel] = useState(saved?.farmLevel || 1);
+  
+  // Town Development State
+  const [townBuildings, setTownBuildings] = useState(saved?.townBuildings || {});
+  const [townEvents, setTownEvents] = useState(saved?.townEvents || []);
+  const [townReputation, setTownReputation] = useState(saved?.townReputation || 0);
+  
+  // Visual & Animation State
   const [combo, setCombo] = useState(saved?.combo || 0);
   const [comboTimer, setComboTimer] = useState(saved?.comboTimer || 0);
   const [particles, setParticles] = useState(saved?.particles || []);
@@ -370,12 +399,28 @@ export default function FarmSimCanvas() {
     _saveTimeout.current = setTimeout(() => {
       try {
         const snapshot = {
-          version: 1,
+          version: 2, // Updated version for new features
           savedAt: Date.now(),
           rules, gridSize, plots: plots.slice(0, 25), // limit plot size
           coins, score, totalEarned, name, inventory, selectedSeed,
           levelId, levelEndsAt, levelStatus, levelStartedAt,
-          achievements, weather, currentSeason
+          achievements, weather, currentSeason,
+          // Advanced Economy
+          futuresContracts, economicEvents, marketPrices, reputation,
+          competitionsActive, actionHistory,
+          // Farm Customization
+          farmTheme, decorations, farmLevel,
+          // Town Development
+          townBuildings, townEvents, townReputation,
+          // Visual & Animation
+          combo, comboTimer, particles, soundEnabled,
+          // Enhanced Systems
+          buildings, livestock, processedGoods, npcs, events, automation,
+          marketTrends, sprinklers, scarecrows,
+          // Enhanced Visual/Gameplay
+          currentTimeOfDay, weatherForecast, beeHappiness,
+          diseasesCured, rotationUses, weatherPredictions, honeyProduced,
+          seasonEndsAt, log, gameTime, lastGrowthTick
         };
         saveState(snapshot);
       } catch (e) {
@@ -752,6 +797,121 @@ export default function FarmSimCanvas() {
     logAction("futures_purchase", { seedType, contractType, amount, cost });
   };
 
+  const settleFuturesContract = (contract) => {
+    const currentPrice = marketPrices[contract.seedType] || rules.seeds[contract.seedType].baseValue;
+    const priceDifference = currentPrice - contract.entryPrice;
+    
+    let profit = 0;
+    if (contract.contractType === "buy" && priceDifference > 0) {
+      profit = priceDifference * contract.amount;
+    } else if (contract.contractType === "sell" && priceDifference < 0) {
+      profit = Math.abs(priceDifference) * contract.amount;
+    }
+
+    setCoins(prev => prev + Math.round(profit));
+    setFuturesContracts(prev => prev.filter(c => c.id !== contract.id));
+    
+    const message = profit > 0 ? `Profit: +${Math.round(profit)}💰` : `Loss: Contract expired`;
+    addNotification(`Futures contract settled! ${message}`, profit > 0 ? "success" : "error");
+    logAction("futures_settlement", { profit, seedType: contract.seedType });
+  };
+
+  const triggerEconomicEvent = () => {
+    const event = ECONOMIC_EVENTS[Math.floor(Math.random() * ECONOMIC_EVENTS.length)];
+    const newEvent = {
+      ...event,
+      startTime: nowSec(),
+      endTime: nowSec() + event.duration
+    };
+    
+    setEconomicEvents(prev => [...prev, newEvent]);
+    addNotification(`Economic Event: ${event.name}`, "info");
+    logAction("economic_event", { eventId: event.id });
+  };
+
+  const startCompetition = (competitionId) => {
+    const competition = COMPETITION_TYPES[competitionId];
+    if (!competition) return;
+
+    const newCompetition = {
+      id: Date.now(),
+      type: competitionId,
+      startTime: nowSec(),
+      endTime: nowSec() + competition.duration,
+      participants: [{ name, score: 0 }],
+      isActive: true
+    };
+
+    setCompetitionsActive(prev => [...prev, newCompetition]);
+    addNotification(`Competition started: ${competition.name}`, "success");
+    logAction("competition_start", { type: competitionId });
+  };
+
+  const updateCompetitionScore = (competitionId, points) => {
+    setCompetitionsActive(prev => prev.map(comp => {
+      if (comp.id === competitionId) {
+        return {
+          ...comp,
+          participants: comp.participants.map(p => 
+            p.name === name ? { ...p, score: p.score + points } : p
+          )
+        };
+      }
+      return comp;
+    }));
+  };
+
+  // Town Development Functions
+  const buildTownBuilding = (buildingId) => {
+    const building = TOWN_BUILDINGS[buildingId];
+    if (!building) return;
+
+    if (coins < building.cost) {
+      addNotification("Not enough coins for town building!", "error");
+      return;
+    }
+
+    if (building.reputationRequired && reputation < building.reputationRequired) {
+      addNotification(`Need ${building.reputationRequired} reputation for ${building.name}!`, "error");
+      return;
+    }
+
+    setCoins(prev => prev - building.cost);
+    setTownBuildings(prev => ({ ...prev, [buildingId]: true }));
+    setTownReputation(prev => prev + 10);
+    addNotification(`${building.name} built! Town reputation +10`, "success");
+    logAction("town_building", { buildingId, cost: building.cost });
+  };
+
+  const triggerTownEvent = () => {
+    const availableEvents = TOWN_EVENTS.filter(event => 
+      !townEvents.some(active => active.id === event.id)
+    );
+    
+    if (availableEvents.length === 0) return;
+
+    const event = availableEvents[Math.floor(Math.random() * availableEvents.length)];
+    const newEvent = {
+      ...event,
+      startTime: nowSec(),
+      endTime: nowSec() + event.duration,
+      isActive: true
+    };
+
+    setTownEvents(prev => [...prev, newEvent]);
+    addNotification(`Town Event: ${event.name}`, "info");
+    
+    // Apply immediate effects
+    if (event.effects.reputation) {
+      setReputation(prev => prev + event.effects.reputation);
+    }
+    if (event.effects.coins) {
+      setCoins(prev => prev + event.effects.coins);
+    }
+    
+    logAction("town_event", { eventId: event.id });
+  };
+
   const logAction = (actionType, details = {}) => {
     const actionEntry = {
       timestamp: nowSec(),
@@ -861,6 +1021,22 @@ export default function FarmSimCanvas() {
     }, 300000);
     return () => clearInterval(eventInterval);
   }, []);
+
+  // Town Development useEffects
+  useEffect(() => {
+    // Trigger random town events
+    const townEventInterval = setInterval(() => {
+      if (Math.random() < 0.05 && townReputation > 25) { // 5% chance every 5 minutes, need some reputation
+        triggerTownEvent();
+      }
+    }, 300000);
+    return () => clearInterval(townEventInterval);
+  }, [townReputation]);
+
+  useEffect(() => {
+    // Remove expired town events
+    setTownEvents(prev => prev.filter(event => event.endTime > nowSec()));
+  }, [currentTime]);
 
   // Manual season advancement
   const advanceSeason = () => {
@@ -2148,11 +2324,12 @@ export default function FarmSimCanvas() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Tabs defaultValue="seeds">
-                  <TabsList className="grid w-full grid-cols-6">
+                  <TabsList className="grid w-full grid-cols-7">
                     <TabsTrigger value="seeds">🌱 Seeds</TabsTrigger>
                     <TabsTrigger value="tools">🛠️ Tools</TabsTrigger>
                     <TabsTrigger value="buildings">🏗️ Buildings</TabsTrigger>
                     <TabsTrigger value="market">📈 Market</TabsTrigger>
+                    <TabsTrigger value="town">🏛️ Town</TabsTrigger>
                     <TabsTrigger value="expand">📏 Expand</TabsTrigger>
                     <TabsTrigger value="test">🧪 Test</TabsTrigger>
                   </TabsList>
@@ -2338,6 +2515,66 @@ export default function FarmSimCanvas() {
                           ))}
                         </div>
                       )}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="town" className="space-y-2">
+                    <div className="space-y-3">
+                      <div className="text-sm font-semibold">🏛️ Town Buildings</div>
+                      <div className="grid grid-cols-1 gap-2">
+                        {Object.entries(TOWN_BUILDINGS).map(([buildingId, building]) => (
+                          <Button
+                            key={buildingId}
+                            onClick={() => buildTownBuilding(buildingId)}
+                            className="justify-between h-auto p-3"
+                            variant={townBuildings[buildingId] ? "secondary" : "outline"}
+                            disabled={
+                              townBuildings[buildingId] ||
+                              coins < building.cost ||
+                              (building.reputationRequired && reputation < building.reputationRequired)
+                            }
+                          >
+                            <div className="text-left">
+                              <div className="flex items-center gap-2">
+                                <span>{building.emoji}</span>
+                                <span className="font-bold">{building.name}</span>
+                                {townBuildings[buildingId] && <span className="text-green-600">✓</span>}
+                              </div>
+                              <div className="text-xs opacity-75">{building.description}</div>
+                              {building.reputationRequired && (
+                                <div className="text-xs text-orange-600">
+                                  Requires {building.reputationRequired} reputation
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg">{building.cost}💰</div>
+                            </div>
+                          </Button>
+                        ))}
+                      </div>
+                      
+                      <div className="text-sm font-semibold">🎪 Active Town Events</div>
+                      {townEvents.length > 0 ? (
+                        <div className="space-y-2">
+                          {townEvents.map((event, idx) => (
+                            <div key={idx} className="p-2 border rounded bg-purple-50">
+                              <div className="text-xs">{event.emoji} {event.name}</div>
+                              <div className="text-xs text-gray-600">{event.description}</div>
+                              <div className="text-xs">Ends in: {Math.max(0, event.endTime - nowSec())}s</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-500">No active town events</div>
+                      )}
+                      
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm">Town Reputation: {townReputation}</div>
+                        <Button onClick={triggerTownEvent} size="sm" variant="outline">
+                          Test Town Event
+                        </Button>
+                      </div>
                     </div>
                   </TabsContent>
                   
