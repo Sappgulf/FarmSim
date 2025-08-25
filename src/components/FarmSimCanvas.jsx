@@ -969,40 +969,7 @@ const ANIMAL_SHOWS = {
   }
 };
 
-const COMPETITION_TYPES = {
-  breeding_competition: {
-    name: "Breeding Competition",
-    description: "Showcase breeding skills",
-    entryFee: 300,
-    duration: 600,
-    scoring: { genetics: 0.4, offspring: 0.4, diversity: 0.2 },
-    prizes: { 1: 1500, 2: 750, 3: 300 }
-  },
-  production_contest: {
-    name: "Production Contest",
-    description: "Highest production wins",
-    entryFee: 200,
-    duration: 480,
-    scoring: { production: 0.7, efficiency: 0.3 },
-    prizes: { 1: 1000, 2: 500, 3: 200 }
-  },
-  genetics_challenge: {
-    name: "Genetics Challenge",
-    description: "Create superior bloodlines",
-    entryFee: 400,
-    duration: 720,
-    scoring: { traitDiversity: 0.5, traitQuality: 0.5 },
-    prizes: { 1: 2000, 2: 1000, 3: 400 }
-  },
-  endurance_trial: {
-    name: "Endurance Trial",
-    description: "Test animal hardiness",
-    entryFee: 250,
-    duration: 540,
-    scoring: { health: 0.3, performance: 0.4, recovery: 0.3 },
-    prizes: { 1: 1200, 2: 600, 3: 250 }
-  }
-};
+
 
 const FACILITY_UPGRADES = {
   barn: {
@@ -2984,7 +2951,6 @@ export default function FarmSimCanvas() {
   // Game Control State
   const [gameSpeed, setGameSpeed] = useState(() => saved?.gameSpeed || 1); // 0.5x, 1x, 2x, 4x
   const [gamePaused, setGamePaused] = useState(false); // Don't save pause state
-  const [actionHistory, setActionHistory] = useState(() => saved?.actionHistory || []);
 
   // Context menu for plots (right-click actions)
   const [plotMenu, setPlotMenu] = useState({ open: false, x: 0, y: 0, plotIndex: null });
@@ -4461,28 +4427,6 @@ export default function FarmSimCanvas() {
   };
 
   // Advanced economy helper functions
-  const generateMarketPrices = () => {
-    const basePrices = {};
-    Object.keys(DEFAULT_RULES.seeds).forEach(crop => {
-      basePrices[crop] = DEFAULT_RULES.seeds[crop].baseValue;
-    });
-
-    const newMarkets = { ...internationalMarkets };
-    Object.keys(newMarkets).forEach(marketKey => {
-      const market = newMarkets[marketKey];
-      const prices = {};
-      Object.keys(basePrices).forEach(crop => {
-        const basePrice = basePrices[crop];
-        const volatility = market.volatility;
-        const premium = MARKET_TYPES[marketKey].basePremium;
-        const randomFactor = 1 + (Math.random() - 0.5) * volatility;
-        prices[crop] = Math.floor(basePrice * (1 + premium) * randomFactor);
-      });
-      market.prices = prices;
-    });
-
-    setInternationalMarkets(newMarkets);
-  };
 
   const buyFuturesContract = (crop, type, amount, strikePrice) => {
     const contract = {
@@ -4820,28 +4764,7 @@ export default function FarmSimCanvas() {
     }
   };
 
-  const waterPlot = (plotIndex) => {
-    if (!irrigationSystem.enabled || irrigationSystem.waterLevel <= 0) {
-      addNotification("No water available!", "error");
-      return;
-    }
 
-    setIrrigationSystem(prev => ({
-      ...prev,
-      waterLevel: Math.max(0, prev.waterLevel - (10 / prev.efficiency))
-    }));
-
-    setPlotConditions(prev => ({
-      ...prev,
-      [plotIndex]: {
-        ...prev[plotIndex],
-        moisture: Math.min(100, (prev[plotIndex]?.moisture || 50) + 25),
-        lastWatered: Date.now()
-      }
-    }));
-
-    addNotification("💧 Plot watered!", "success");
-  };
 
   const startGeneticsProject = (projectId) => {
     const project = GENETICS_PROJECTS[projectId];
@@ -7321,39 +7244,7 @@ export default function FarmSimCanvas() {
     addNotification(`🏗️ ${facilityType} upgraded to level ${nextLevel}!`, "success");
   };
 
-  const feedAnimals = () => {
-    const hungryAnimals = animalHusbandry.animals.filter(animal =>
-      Date.now() - animal.lastFed > 3600000 // 1 hour
-    );
 
-    if (hungryAnimals.length === 0) {
-      addNotification("All animals are well fed!", "info");
-      return;
-    }
-
-    const feedCost = hungryAnimals.length * 5; // 5 coins per animal
-    if (coins < feedCost) {
-      addNotification("Not enough coins for feed!", "error");
-      return;
-    }
-
-    setCoins(prev => prev - feedCost);
-    setAnimalHusbandry(prev => ({
-      ...prev,
-      animals: prev.animals.map(animal =>
-        Date.now() - animal.lastFed > 3600000
-          ? {
-              ...animal,
-              lastFed: Date.now(),
-              happiness: Math.min(100, animal.happiness + 10),
-              health: Math.min(100, animal.health + 5)
-            }
-          : animal
-      )
-    }));
-
-    addNotification(`🍖 Fed ${hungryAnimals.length} animals!`, "success");
-  };
 
   const collectProducts = () => {
     const productionReady = animalHusbandry.animals.filter(animal => {
@@ -8397,6 +8288,7 @@ export default function FarmSimCanvas() {
               <CardTitle>🏪 Farm Management</CardTitle>
               </CardHeader>
             <CardContent>
+              <div>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full touch-lg">
                                 <TabsList className="flex flex-wrap w-full gap-1 h-auto p-1 sm:static fm-tabs-bottom">
                   <TabsTrigger value="inventory" className="text-xs px-2 py-1 flex-shrink-0">📦 Inventory</TabsTrigger>
@@ -12774,8 +12666,7 @@ export default function FarmSimCanvas() {
                       </>
                     )}
                     </div>
-                                  </TabsContent>
-                
+
                 <TabsContent value="market" className="space-y-3">
                   <div className="bg-green-50 p-3 rounded border">
                     <h3 className="font-medium">🏪 Crop Market</h3>
@@ -13885,14 +13776,16 @@ export default function FarmSimCanvas() {
                         <Button size="sm" className="text-xs mt-1" disabled={marketPerks.contractBureau || coins < 400}
                           onClick={() => { setCoins(prev=>prev-400); setMarketPerks(prev=>({...prev, contractBureau:true})); addNotification('Purchased Contract Bureau','success'); }}> {marketPerks.contractBureau? 'Owned':'Buy (400💰)'} </Button>
                       </div>
-                      <div className="p-2 border rounded">
-                        <div className="font-medium">Festival Booth</div>
-                        <div className="text-gray-600">Festival sales +20%</div>
-                        <Button size="sm" className="text-xs mt-1" disabled={marketPerks.festivalBooth || coins < 300}
-                          onClick={() => { setCoins(prev=>prev-300); setMarketPerks(prev=>({...prev, festivalBooth:true})); addNotification('Purchased Festival Booth','success'); }}> {marketPerks.festivalBooth? 'Owned':'Buy (300💰)'} </Button>
+                        <div className="p-2 border rounded">
+                          <div className="font-medium">Festival Booth</div>
+                          <div className="text-gray-600">Festival sales +20%</div>
+                          <Button size="sm" className="text-xs mt-1" disabled={marketPerks.festivalBooth || coins < 300}
+                            onClick={() => { setCoins(prev=>prev-300); setMarketPerks(prev=>({...prev, festivalBooth:true})); addNotification('Purchased Festival Booth','success'); }}> {marketPerks.festivalBooth? 'Owned':'Buy (300💰)'} </Button>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                </TabsContent>
+              </div>
+              </div>
               </Tabs>
               </CardContent>
             </Card>
