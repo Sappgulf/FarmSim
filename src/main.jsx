@@ -3,6 +3,13 @@ import ReactDOM from "react-dom/client";
 import FarmSimCanvas from "./components/FarmSimCanvas";
 import "./index.css";
 
+// Register a basic service worker for PWA/offline support (no precache list here)
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);

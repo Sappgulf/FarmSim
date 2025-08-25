@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -209,6 +209,14 @@ const SOIL_IMPROVEMENTS = {
     cost: 35,
     effects: { ph: -0.5, fertility: 0.1 },
     duration: 900 // 15 minutes
+  },
+  wormCastings: {
+    name: "Worm Castings",
+    emoji: "🪱",
+    description: "Rich organic matter boosts fertility",
+    cost: 60,
+    effects: { fertility: 0.4 },
+    duration: 1200 // 20 minutes
   }
 };
 
@@ -333,6 +341,34 @@ const BUILDINGS = {
     cost: 3500,
     description: "parallel queue +1, speed +20%",
     effect: { queuePlus: 1, speed: 1.2 },
+    unlockLevel: 4
+  },
+  orchardHouse: {
+    name: "Orchard House",
+    emoji: "🍎",
+    cost: 1800,
+    description: "Fruit trees thrive; winter trickle growth",
+    unlockLevel: 3
+  },
+  aquaponicsLab: {
+    name: "Aquaponics Lab",
+    emoji: "🐟",
+    cost: 2200,
+    description: "Fish+veggies loop; drought penalty reduced",
+    unlockLevel: 3
+  },
+  marketStall: {
+    name: "Market Stall",
+    emoji: "🛍️",
+    cost: 900,
+    description: "+10% sell price; small daily foot traffic",
+    unlockLevel: 2
+  },
+  railSiding: {
+    name: "Rail Siding",
+    emoji: "🚂",
+    cost: 2600,
+    description: "Bulk deliveries (×3 capacity), fixed fee",
     unlockLevel: 4
   }
 };
@@ -558,6 +594,35 @@ const RESEARCH_TREE = {
   }
 };
 
+// Additional research branches
+RESEARCH_TREE.soilBiology = {
+  name: "Soil Biology",
+  emoji: "🪱",
+  cost: 900,
+  researchTime: 2400,
+  prerequisites: [],
+  unlocks: ["wormCastings"],
+  description: "Compost potency +50%, unlock worm castings"
+};
+RESEARCH_TREE.robotics = {
+  name: "Robotics",
+  emoji: "🤖",
+  cost: 1200,
+  researchTime: 3000,
+  prerequisites: ["mechanization"],
+  unlocks: ["roboticsOptimizations"],
+  description: "Automation energy optimized"
+};
+RESEARCH_TREE.gridTie = {
+  name: "Grid‑Tie",
+  emoji: "🔌",
+  cost: 800,
+  researchTime: 1800,
+  prerequisites: ["greenEnergy"],
+  unlocks: ["energyCredits"],
+  description: "Sell surplus energy for credits"
+};
+
 // NPCs and Rival Farms
 const NPCS = [
   { id: "mara", name: "Mara the Miller", personality: "generous", priceMultiplier: 1.1 },
@@ -582,7 +647,10 @@ const VEHICLES = {
 const LOGISTICS_UPGRADES = {
   tractorTrailer: { name: "Tractor Trailer", cost: 1000, description: "Capacity +80, +1 fuel per trip" },
   routePlanner: { name: "Route Planner", cost: 600, description: "Auto-pick best town by net price" },
-  refrigerationKit: { name: "Refrigeration Kit", cost: 900, description: "Deliveries preserve freshness" }
+  refrigerationKit: { name: "Refrigeration Kit", cost: 900, description: "Deliveries preserve freshness" },
+  dispatchCenter: { name: "Dispatch Center", cost: 800, description: "Queue more deliveries; ETA −10%" },
+  fuelCoop: { name: "Fuel Co‑op", cost: 700, description: "Fuel use −25% per delivery" },
+  gpsTracking: { name: "GPS Tracking", cost: 650, description: "Progress bars and dynamic reroute" }
 };
 
 // Disasters with simple growth modifiers
@@ -684,11 +752,27 @@ function formatTimeRemaining(seconds) {
   }
 }
 
+// Save schema versioning and migrations
+const SAVE_VERSION = 2;
+function migrateSave(raw) {
+  if (!raw) return null;
+  const v = raw.__v || 1;
+  let data = { ...raw };
+  if (v < 2) {
+    data.vehiclesOwned = data.vehiclesOwned || { handcart: 1 };
+    data.vehicleUpgrades = data.vehicleUpgrades || { tractorTrailer: false, routePlanner: false, refrigerationKit: false };
+    data.marketPerks = data.marketPerks || { brandLicense: false, contractBureau: false, festivalBooth: false };
+    data.lastSpoilage = data.lastSpoilage || Math.floor(Date.now() / 1000);
+  }
+  data.__v = SAVE_VERSION;
+  return data;
+}
+
 function loadSave() {
   try {
     const saved = localStorage.getItem("farmgame_save");
     if (saved) {
-      const data = JSON.parse(saved);
+      const data = migrateSave(JSON.parse(saved));
       // Ensure all required properties exist with defaults
       return {
         name: data.name || "Farmer",
@@ -755,6 +839,8 @@ function loadSave() {
       saveData.activeDisaster = activeDisaster;
       saveData.insurance = insurance;
       saveData.lastSpoilage = lastSpoilage;
+      saveData.marketPerks = marketPerks;
+      saveData.lastContractReroll = lastContractReroll;
     }
   } catch (error) {
     console.error("Failed to load save:", error);
@@ -903,6 +989,8 @@ export default function FarmSimCanvas() {
 
   // Context menu for plots (right-click actions)
   const [plotMenu, setPlotMenu] = useState({ open: false, x: 0, y: 0, plotIndex: null });
+  const touchTimerRef = useRef(null);
+  const [activeTab, setActiveTab] = useState("shop");
 
   // Contracts & NPCs
   const [reputation, setReputation] = useState(() => saved?.reputation || 0);
@@ -916,21 +1004,31 @@ export default function FarmSimCanvas() {
   const [fuel, setFuel] = useState(() => saved?.fuel || 20);
   const [deliveries, setDeliveries] = useState(() => saved?.deliveries || []);
   const [lastSpoilage, setLastSpoilage] = useState(() => saved?.lastSpoilage || nowSec());
+  const [marketPerks, setMarketPerks] = useState(() => saved?.marketPerks || { brandLicense: false, contractBureau: false, festivalBooth: false });
+  const [lastContractReroll, setLastContractReroll] = useState(() => saved?.lastContractReroll || 0);
 
   // Forecast & Disasters
   const [forecast, setForecast] = useState(() => saved?.forecast || []); // [{time, type}]
   const [activeDisaster, setActiveDisaster] = useState(() => saved?.activeDisaster || null);
   const [insurance, setInsurance] = useState(() => saved?.insurance || { level: 0, expiresAt: 0 });
 
-  // Game tick with speed control
+  // Game tick with speed control and background throttling
   useEffect(() => {
     if (gamePaused) return;
-    
-    const tickRate = 1000 / gameSpeed; // Faster ticks for higher speeds
+    const hiddenMultiplier = document?.hidden ? 8 : 1;
+    const tickRate = (1000 / gameSpeed) * hiddenMultiplier;
     const interval = setInterval(() => {
       setCurrentTime(prev => prev + gameSpeed);
     }, tickRate);
-    return () => clearInterval(interval);
+    const onVis = () => {
+      // Force restart of interval by updating state slightly
+      setCurrentTime(prev => prev);
+    };
+    document?.addEventListener('visibilitychange', onVis);
+    return () => {
+      clearInterval(interval);
+      document?.removeEventListener('visibilitychange', onVis);
+    };
   }, [gameSpeed, gamePaused]);
 
   // Helper functions
@@ -950,7 +1048,9 @@ export default function FarmSimCanvas() {
       const quantity = 5 + Math.floor(Math.random() * 15);
       const npc = NPCS[Math.floor(Math.random() * NPCS.length)];
       const base = DEFAULT_RULES.seeds[crop]?.baseValue || 5;
-      const reward = Math.floor(base * quantity * npc.priceMultiplier * (1 + reputation * 0.02));
+      let reward = Math.floor(base * quantity * npc.priceMultiplier * (1 + reputation * 0.02));
+      // Contract Bureau: better deals
+      if (marketPerks.contractBureau) reward = Math.floor(reward * 1.05);
       return {
         id: `contract_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
         npcId: npc.id,
@@ -1334,7 +1434,9 @@ export default function FarmSimCanvas() {
         if (nowSec() < imp.expiresAt) {
           const impData = SOIL_IMPROVEMENTS[imp.type];
           if (impData && impData.effects && impData.effects.fertility) {
-            bonus.growth *= (1 + impData.effects.fertility);
+            // Soil Biology boosts compost potency
+            const potency = completedResearch.includes('soilBiology') ? 1.5 : 1;
+            bonus.growth *= (1 + impData.effects.fertility * potency);
           }
           // Temporary buffs from context actions
           if (imp.type === 'watering') {
@@ -1448,6 +1550,12 @@ export default function FarmSimCanvas() {
     // Greenhouse II immunity
     const hasGH2 = buildings.some(b => b.type === 'greenhouse2');
     const base = hasGH2 ? { growth: 1, water: 1 } : (WEATHER_TYPES[currentWeather]?.effects || { growth: 1, water: 1 });
+    // Aquaponics reduces drought/storm penalties
+    if (buildings.some(b => b.type === 'aquaponicsLab')) {
+      if (currentWeather === 'drought' || currentWeather === 'stormy') {
+        base.growth = (base.growth || 1) * 1.15;
+      }
+    }
     if (activeDisaster) {
       const d = DISASTERS[activeDisaster.key];
       if (d) {
@@ -1472,6 +1580,10 @@ export default function FarmSimCanvas() {
     // Greenhouse II winter bonus
     if (currentSeason === 'winter' && buildings.some(b => b.type === 'greenhouse2')) {
       return { ...base, growth: (base.growth || 1) * 1.25 };
+    }
+    // Orchard House winter trickle growth
+    if (currentSeason === 'winter' && buildings.some(b => b.type === 'orchardHouse')) {
+      return { ...base, growth: (base.growth || 1) * 1.05 };
     }
     return base;
   };
@@ -1801,8 +1913,14 @@ export default function FarmSimCanvas() {
     }
     
     const town = MARKET_TOWNS[selectedTown];
-    const pricePerUnit = marketPrices[crop] || DEFAULT_RULES.seeds[crop]?.baseValue || 0;
-    const totalRevenue = pricePerUnit * quantity;
+    let pricePerUnit = marketPrices[crop] || DEFAULT_RULES.seeds[crop]?.baseValue || 0;
+    if (marketPerks.brandLicense && (pricePerUnit >= 20)) {
+      pricePerUnit = Math.floor(pricePerUnit * 1.1);
+    }
+    let totalRevenue = pricePerUnit * quantity;
+    if (marketPerks.festivalBooth && activeFestival) {
+      totalRevenue = Math.floor(totalRevenue * 1.2);
+    }
     const transportCost = town.transportCost * quantity;
     const netProfit = totalRevenue - transportCost;
     
@@ -2011,7 +2129,8 @@ export default function FarmSimCanvas() {
       builtAt: currentTime,
       id: `${systemType}_${Date.now()}`
     }]);
-    setEnergyProduction(prev => prev + system.energyProduction);
+    const creditBoost = completedResearch.includes('gridTie') ? 1.1 : 1.0;
+    setEnergyProduction(prev => prev + Math.ceil(system.energyProduction * creditBoost));
     
     addNotification(`Built ${system.name}!`, "success");
   };
@@ -2046,7 +2165,10 @@ export default function FarmSimCanvas() {
         }
       });
     }
-    
+    // Robotics research reduces automation energy and improves logic (placeholder growth edge)
+    if (completedResearch.includes('robotics')) {
+      bonus.growth *= 1.03;
+    }
     return bonus;
   };
 
@@ -2215,10 +2337,19 @@ export default function FarmSimCanvas() {
     }
   };
 
-  // Auto-save every 30 seconds
+  // Auto-save with jitter (20-40s) to avoid thundering herd & reduce contention
   useEffect(() => {
-    const interval = setInterval(saveGame, 30000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+    let timerId;
+    const schedule = () => {
+      const jitter = 20000 + Math.floor(Math.random() * 20000);
+      timerId = setTimeout(() => {
+        if (!cancelled) saveGame();
+        if (!cancelled) schedule();
+      }, jitter);
+    };
+    schedule();
+    return () => { cancelled = true; clearTimeout(timerId); };
   }, [name, coins, score, size, plots, inventory, selectedSeed, level, experience, totalHarvests,
       activeFestival, festivalStartTime, festivalEndTime, festivalScore, festivalTrophies, limitedTimeSeeds,
       geneticLab, cropGeneBank, activeBreedingProjects, discoveredHybrids, geneticTraits,
@@ -2226,7 +2357,7 @@ export default function FarmSimCanvas() {
       currentWeather, weatherChangeTime, currentSeason, seasonStartTime, weatherHistory,
       unlockedAchievements, harvestedCropTypes, totalEarned,
       buildings, livestock, animalFeed, animalProducts,
-      pestOutbreaks, treatmentInventory, maxGridSize, unlockedGridSizes]);
+      pestOutbreaks, treatmentInventory, maxGridSize, unlockedGridSizes, marketPerks, vehicleUpgrades]);
 
   // Check for pests/diseases periodically
   useEffect(() => {
@@ -2298,11 +2429,14 @@ export default function FarmSimCanvas() {
     const totalValueBonus = festivalValueBonus * soilBonus.value * companionBonus.value * automationBonus.value * healthBonus;
     const value = Math.floor(seedData.baseValue * totalValueBonus);
     
-    // Add harvested crop to inventory instead of auto-selling
-    setInventory(prev => ({
-      ...prev,
-      [plot.seed]: (prev[plot.seed] || 0) + 1
-    }));
+    // Random chance to get 1 seed back on harvest (e.g., 35%)
+    setInventory(prev => {
+      const next = { ...prev };
+      if (Math.random() < 0.35) {
+        next[plot.seed] = (next[plot.seed] || 0) + 1;
+      }
+      return next;
+    });
     
     setScore(prev => prev + value);
     setTotalHarvests(prev => prev + 1);
@@ -2472,6 +2606,16 @@ export default function FarmSimCanvas() {
           if (plot.status === "empty") plant(index);
           else if (plot.status === "ready") harvest(index);
         }}
+        onTouchStart={(e) => {
+          if (plot.status === 'locked') return;
+          const touch = e.touches?.[0];
+          const x = touch?.clientX || 0;
+          const y = touch?.clientY || 0;
+          touchTimerRef.current = setTimeout(() => {
+            setPlotMenu({ open: true, x, y, plotIndex: index });
+          }, 450);
+        }}
+        onTouchEnd={() => { if (touchTimerRef.current) { clearTimeout(touchTimerRef.current); } }}
       >
         <CardContent className="p-2 text-center min-h-[100px] flex flex-col justify-center">
           <div className="text-xl mb-1">
@@ -2790,8 +2934,8 @@ export default function FarmSimCanvas() {
               <CardTitle>🏪 Farm Management</CardTitle>
               </CardHeader>
             <CardContent>
-              <Tabs defaultValue="shop" className="w-full">
-                                <TabsList className="flex flex-wrap w-full gap-1 h-auto p-1">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full touch-lg">
+                                <TabsList className="flex flex-wrap w-full gap-1 h-auto p-1 sm:static fm-tabs-bottom">
                   <TabsTrigger value="inventory" className="text-xs px-2 py-1 flex-shrink-0">📦 Inventory</TabsTrigger>
                   <TabsTrigger value="shop" className="text-xs px-2 py-1 flex-shrink-0">🛒 Shop</TabsTrigger>
                   <TabsTrigger value="market" className="text-xs px-2 py-1 flex-shrink-0">🏪 Market</TabsTrigger>
@@ -2831,10 +2975,15 @@ export default function FarmSimCanvas() {
                         return (
                           <div key={item} className="text-xs bg-green-50 p-2 rounded border">
                             <div className="flex items-center justify-between">
-                              <span>{seedData.emoji} {seedData.name}</span>
+                              <span className="cursor-pointer" onClick={() => setSelectedSeed(item)} title="Click to select seed">
+                                {seedData.emoji} {seedData.name}
+                              </span>
                               <span className="font-medium">{quantity}</span>
                             </div>
                             <div className="text-gray-500">Value: {seedData.baseValue}💰 each</div>
+                            {selectedSeed === item && (
+                              <div className="text-[10px] text-green-700 mt-1">Selected</div>
+                            )}
                           </div>
                         );
                       })}
@@ -3092,11 +3241,11 @@ export default function FarmSimCanvas() {
                               const net = (ppu * quantity) - (MARKET_TOWNS[tid].transportCost * quantity);
                               return (!best || net > best.net) ? { id: tid, net } : best;
                             }, null)?.id || selectedTown) : selectedTown;
-                            const pricePerUnit = marketPrices[crop] || DEFAULT_RULES.seeds[crop]?.baseValue || 0;
+                            const pricePerUnit = (marketPrices[crop] || DEFAULT_RULES.seeds[crop]?.baseValue || 0) * (buildings.some(b=>b.type==='marketStall')?1.10:1);
                             const distance = 10;
-                            const travel = Math.ceil((distance / vehicle.speed) * 60);
+                            const travel = Math.ceil((distance / vehicle.speed) * 60 * (vehicleUpgrades.dispatchCenter?0.9:1));
                             const totalRevenue = pricePerUnit * quantity;
-                            const transport = MARKET_TOWNS[town].transportCost * quantity;
+                            const transport = Math.floor(MARKET_TOWNS[town].transportCost * quantity * (vehicleUpgrades.fuelCoop?0.75:1)) + (buildings.some(b=>b.type==='railSiding')?30:0);
                             const netProfit = Math.max(0, totalRevenue - transport);
                             setInventory(prev => ({...prev, [crop]: prev[crop] - quantity }));
                             setDeliveries(prev => [...prev, { id: `del_${Date.now()}`, crop, quantity, town, arrivesAt: nowSec() + travel, netProfit, preserve: vehicleUpgrades.refrigerationKit }]);
@@ -4255,6 +4404,30 @@ export default function FarmSimCanvas() {
                     })}
                 </div>
                 </TabsContent>
+
+                  <div>
+                    <h4 className="font-medium">🎖️ Market Perks:</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs mt-1">
+                      <div className="p-2 border rounded">
+                        <div className="font-medium">Brand License</div>
+                        <div className="text-gray-600">Label bonus on premium goods</div>
+                        <Button size="sm" className="text-xs mt-1" disabled={marketPerks.brandLicense || coins < 500}
+                          onClick={() => { setCoins(prev=>prev-500); setMarketPerks(prev=>({...prev, brandLicense:true})); addNotification('Purchased Brand License','success'); }}> {marketPerks.brandLicense? 'Owned':'Buy (500💰)'} </Button>
+                      </div>
+                      <div className="p-2 border rounded">
+                        <div className="font-medium">Contract Bureau</div>
+                        <div className="text-gray-600">Reroll 1 contract/hour</div>
+                        <Button size="sm" className="text-xs mt-1" disabled={marketPerks.contractBureau || coins < 400}
+                          onClick={() => { setCoins(prev=>prev-400); setMarketPerks(prev=>({...prev, contractBureau:true})); addNotification('Purchased Contract Bureau','success'); }}> {marketPerks.contractBureau? 'Owned':'Buy (400💰)'} </Button>
+                      </div>
+                      <div className="p-2 border rounded">
+                        <div className="font-medium">Festival Booth</div>
+                        <div className="text-gray-600">Festival sales +20%</div>
+                        <Button size="sm" className="text-xs mt-1" disabled={marketPerks.festivalBooth || coins < 300}
+                          onClick={() => { setCoins(prev=>prev-300); setMarketPerks(prev=>({...prev, festivalBooth:true})); addNotification('Purchased Festival Booth','success'); }}> {marketPerks.festivalBooth? 'Owned':'Buy (300💰)'} </Button>
+                      </div>
+                    </div>
+                  </div>
               </Tabs>
               </CardContent>
             </Card>

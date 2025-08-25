@@ -227,3 +227,23 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.5);
 }
+
+/* Mobile bottom tab bar */
+@media (max-width: 640px) {
+  .fm-tabs-bottom {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb; /* gray-200 */
+    padding: 6px;
+    z-index: 30;
+  }
+  .touch-lg button,
+  .touch-lg .TabsTrigger,
+  .touch-lg .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
