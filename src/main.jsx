@@ -17,10 +17,19 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: 16 }}>
+        <div style={{ padding: 16, fontFamily: 'Arial, sans-serif' }}>
           <h1>Something went wrong.</h1>
-          <p>Please reload the page. If this keeps happening, clear save data from the Test tab.</p>
-          <pre style={{ whiteSpace: "pre-wrap" }}>{String(this.state.error)}</pre>
+          <p>The game encountered an error. Try these solutions:</p>
+          <ol>
+            <li><button onClick={() => window.location.reload()}>Reload the page</button></li>
+            <li><button onClick={() => { localStorage.clear(); window.location.reload(); }}>Clear save data and reload</button></li>
+          </ol>
+          <details style={{ marginTop: 16 }}>
+            <summary>Error details:</summary>
+            <pre style={{ whiteSpace: "pre-wrap", background: '#f5f5f5', padding: 8, borderRadius: 4 }}>
+              {String(this.state.error)}
+            </pre>
+          </details>
         </div>
       );
     }
