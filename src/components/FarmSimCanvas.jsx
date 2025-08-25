@@ -24,6 +24,57 @@ const LEVELS = [
   { id: "endless", label: "Endless Farm", targetCoins: 999999, minutes: 9999, reward: 0, difficulty: "∞" },
 ];
 
+// Advanced Economy Constants
+const FUTURES_CONTRACT_TYPES = {
+  buy: "Buy Contract (Bet on price increase)",
+  sell: "Sell Contract (Bet on price decrease)"
+};
+
+const MARKET_TYPES = {
+  domestic: { name: "Local Market", emoji: "🏪", volatility: 0.1, basePremium: 0 },
+  international: { name: "Global Market", emoji: "🌍", volatility: 0.25, basePremium: 0.2 },
+  luxury: { name: "Premium Market", emoji: "💎", volatility: 0.4, basePremium: 0.5 }
+};
+
+const ECONOMIC_EVENTS = [
+  { id: "drought", name: "Drought Season", emoji: "🏜️", description: "Water scarcity increases crop prices", duration: 180, effects: { crop_price: 1.5 } },
+  { id: "boom", name: "Economic Boom", emoji: "📈", description: "High demand boosts all crop values", duration: 120, effects: { crop_price: 1.3 } },
+  { id: "recession", name: "Market Recession", emoji: "📉", description: "Economic slowdown reduces crop prices", duration: 240, effects: { crop_price: 0.7 } },
+  { id: "export_ban", name: "Export Restrictions", emoji: "🚫", description: "International market temporarily closed", duration: 90, effects: { international_closed: true } },
+  { id: "luxury_trend", name: "Luxury Food Trend", emoji: "🍾", description: "Premium market prices soar", duration: 150, effects: { luxury_premium: 2.0 } }
+];
+
+// Competition & Social Features
+const COMPETITION_TYPES = {
+  harvest_race: { name: "Harvest Race", emoji: "🏁", description: "Harvest as many crops as possible", duration: 300, reward: { coins: 500, reputation: 25 } },
+  efficiency_challenge: { name: "Efficiency Challenge", emoji: "⚡", description: "Maximize value per plot", duration: 600, reward: { coins: 750, reputation: 35 } },
+  quality_contest: { name: "Quality Contest", emoji: "🏆", description: "Grow the highest quality crops", duration: 450, reward: { coins: 600, reputation: 30 } },
+  speed_farming: { name: "Speed Farming", emoji: "💨", description: "Fastest growth time", duration: 180, reward: { coins: 400, reputation: 20 } },
+  diversity_competition: { name: "Diversity Competition", emoji: "🌈", description: "Grow the most crop types", duration: 900, reward: { coins: 1000, reputation: 50 } }
+};
+
+// Farm Customization Constants
+const FARM_THEMES = {
+  classic: { name: "Classic Farm", emoji: "🚜", description: "Traditional farming style", unlockedLevel: 1 },
+  modern: { name: "Modern Tech", emoji: "🤖", description: "Futuristic farming technology", unlockedLevel: 5 },
+  magical: { name: "Enchanted Garden", emoji: "✨", description: "Magical and mystical atmosphere", unlockedLevel: 10 },
+  rustic: { name: "Country Rustic", emoji: "🌳", description: "Cozy countryside charm", unlockedLevel: 3 },
+  tropical: { name: "Tropical Paradise", emoji: "🌺", description: "Island paradise theme", unlockedLevel: 8 }
+};
+
+const DECORATION_ITEMS = {
+  fence: { name: "Wooden Fence", emoji: "🚧", cost: 50, description: "Decorative fence around plots", unlockedLevel: 1 },
+  scarecrow: { name: "Scarecrow", emoji: "🪴", cost: 100, description: "Keeps birds away, +10% yield", unlockedLevel: 2 },
+  windmill: { name: "Windmill", emoji: "🌪️", cost: 200, description: "Decorative windmill, generates 1 energy", unlockedLevel: 3 },
+  garden_gnome: { name: "Garden Gnome", emoji: "🧙‍♂️", cost: 150, description: "Lucky garden gnome, +5% luck", unlockedLevel: 4 },
+  fountain: { name: "Garden Fountain", emoji: "⛲", cost: 300, description: "Beautiful fountain, +water efficiency", unlockedLevel: 5 },
+  birdhouse: { name: "Birdhouse", emoji: "🏠", cost: 75, description: "Attracts friendly birds", unlockedLevel: 2 },
+  statue: { name: "Farm Statue", emoji: "🗿", cost: 400, description: "Impressive statue, +reputation", unlockedLevel: 6 },
+  lantern: { name: "Garden Lantern", emoji: "🏮", cost: 125, description: "Lights up at night", unlockedLevel: 3 },
+  bench: { name: "Garden Bench", emoji: "🪑", cost: 200, description: "Peaceful resting spot", unlockedLevel: 4 },
+  arbor: { name: "Garden Arbor", emoji: "🌿", cost: 350, description: "Romantic garden feature", unlockedLevel: 7 }
+};
+
 const DEFAULT_RULES = {
   seeds: {
     carrot: { stages: 3, secondsPerStage: 8, baseValue: 12, shopPrice: 5, emoji: "🥕", rarity: "common", season: "spring", family: "root" },
@@ -277,6 +328,19 @@ export default function FarmSimCanvas() {
   const [marketTrends, setMarketTrends] = useState(saved?.marketTrends || {});
   const [sprinklers, setSprinklers] = useState(saved?.sprinklers || []);
   const [scarecrows, setScarecrows] = useState(saved?.scarecrows || []);
+  
+  // Advanced Economy State
+  const [futuresContracts, setFuturesContracts] = useState(saved?.futuresContracts || []);
+  const [economicEvents, setEconomicEvents] = useState(saved?.economicEvents || []);
+  const [marketPrices, setMarketPrices] = useState(saved?.marketPrices || {});
+  const [reputation, setReputation] = useState(saved?.reputation || 0);
+  const [competitionsActive, setCompetitionsActive] = useState(saved?.competitionsActive || []);
+  const [actionHistory, setActionHistory] = useState(saved?.actionHistory || []);
+  
+  // Farm Customization State
+  const [farmTheme, setFarmTheme] = useState(saved?.farmTheme || "classic");
+  const [decorations, setDecorations] = useState(saved?.decorations || []);
+  const [farmLevel, setFarmLevel] = useState(saved?.farmLevel || 1);
   const [combo, setCombo] = useState(saved?.combo || 0);
   const [comboTimer, setComboTimer] = useState(saved?.comboTimer || 0);
   const [particles, setParticles] = useState(saved?.particles || []);
@@ -651,6 +715,54 @@ export default function FarmSimCanvas() {
     }
   };
 
+  // Advanced Economy Functions
+  const generateMarketPrices = () => {
+    const newPrices = {};
+    Object.keys(rules.seeds).forEach(seedType => {
+      const baseValue = rules.seeds[seedType].baseValue;
+      const volatility = 0.2; // Base volatility
+      const trend = marketTrends[seedType] || 0;
+      const randomChange = (Math.random() - 0.5) * volatility;
+      const newPrice = Math.max(1, baseValue + (baseValue * (trend + randomChange)));
+      newPrices[seedType] = Math.round(newPrice * 100) / 100;
+    });
+    setMarketPrices(newPrices);
+  };
+
+  const buyFuturesContract = (seedType, contractType, amount) => {
+    const cost = amount * 10; // Base cost per contract
+    if (coins < cost) {
+      addNotification("Not enough coins for futures contract!", "error");
+      return;
+    }
+
+    const contract = {
+      id: Date.now(),
+      seedType,
+      contractType,
+      amount,
+      entryPrice: marketPrices[seedType] || rules.seeds[seedType].baseValue,
+      purchaseTime: nowSec(),
+      expiresAt: nowSec() + 300 // 5 minutes
+    };
+
+    setFuturesContracts(prev => [...prev, contract]);
+    setCoins(prev => prev - cost);
+    addNotification(`Futures contract purchased: ${contractType} ${seedType}`, "success");
+    logAction("futures_purchase", { seedType, contractType, amount, cost });
+  };
+
+  const logAction = (actionType, details = {}) => {
+    const actionEntry = {
+      timestamp: nowSec(),
+      type: actionType,
+      details,
+      farmLevel,
+      reputation
+    };
+    setActionHistory(prev => [...prev.slice(-49), actionEntry]); // Keep last 50 actions
+  };
+
   const simulateGrowth = () => {
     setPlots(prev => prev.map(p => {
       if (p.state !== "growing" && p.state !== "planted") return p;
@@ -723,6 +835,32 @@ export default function FarmSimCanvas() {
     }, 1000);
     return () => clearInterval(id);
   }, [currentTime, currentTimeOfDay, plots, buildings.beehive, beeHappiness]);
+
+  // Advanced Economy useEffects
+  useEffect(() => {
+    // Generate initial market prices
+    generateMarketPrices();
+    
+    // Update market prices every 5 minutes
+    const interval = setInterval(generateMarketPrices, 300000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // Check for expired futures contracts
+    const expired = futuresContracts.filter(contract => contract.expiresAt <= nowSec());
+    expired.forEach(settleFuturesContract);
+  }, [currentTime, futuresContracts]);
+
+  useEffect(() => {
+    // Trigger random economic events
+    const eventInterval = setInterval(() => {
+      if (Math.random() < 0.1) { // 10% chance every 5 minutes
+        triggerEconomicEvent();
+      }
+    }, 300000);
+    return () => clearInterval(eventInterval);
+  }, []);
 
   // Manual season advancement
   const advanceSeason = () => {
@@ -2010,10 +2148,11 @@ export default function FarmSimCanvas() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Tabs defaultValue="seeds">
-                  <TabsList className="grid w-full grid-cols-5">
+                  <TabsList className="grid w-full grid-cols-6">
                     <TabsTrigger value="seeds">🌱 Seeds</TabsTrigger>
                     <TabsTrigger value="tools">🛠️ Tools</TabsTrigger>
                     <TabsTrigger value="buildings">🏗️ Buildings</TabsTrigger>
+                    <TabsTrigger value="market">📈 Market</TabsTrigger>
                     <TabsTrigger value="expand">📏 Expand</TabsTrigger>
                     <TabsTrigger value="test">🧪 Test</TabsTrigger>
                   </TabsList>
@@ -2151,6 +2290,55 @@ export default function FarmSimCanvas() {
                         </div>
                       </Button>
                     ))}
+                  </TabsContent>
+                  
+                  <TabsContent value="market" className="space-y-2">
+                    <div className="space-y-3">
+                      <div className="text-sm font-semibold">💰 Market Prices</div>
+                      {Object.entries(marketPrices).length > 0 ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {Object.entries(marketPrices).map(([seedType, price]) => (
+                            <div key={seedType} className="p-2 border rounded bg-gray-50">
+                              <div className="text-xs">{rules.seeds[seedType]?.emoji} {seedType}</div>
+                              <div className="text-sm font-bold">{price}💰</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <Button onClick={generateMarketPrices} className="w-full">
+                          Generate Market Prices
+                        </Button>
+                      )}
+                      
+                      <div className="text-sm font-semibold">📊 Futures Contracts</div>
+                      {futuresContracts.length > 0 ? (
+                        <div className="space-y-2">
+                          {futuresContracts.map(contract => (
+                            <div key={contract.id} className="p-2 border rounded bg-blue-50">
+                              <div className="text-xs">{contract.contractType} {contract.seedType}</div>
+                              <div className="text-xs">Entry: {contract.entryPrice}💰</div>
+                              <div className="text-xs">Expires: {Math.max(0, contract.expiresAt - nowSec())}s</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-500">No active contracts</div>
+                      )}
+                      
+                      <div className="text-sm font-semibold">🏆 Reputation: {reputation}</div>
+                      
+                      {economicEvents.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-sm font-semibold">📰 Economic Events</div>
+                          {economicEvents.map((event, idx) => (
+                            <div key={idx} className="p-2 border rounded bg-yellow-50">
+                              <div className="text-xs">{event.emoji} {event.name}</div>
+                              <div className="text-xs">{event.description}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </TabsContent>
                   
                   <TabsContent value="expand" className="space-y-2">
@@ -2573,6 +2761,7 @@ export default function FarmSimCanvas() {
               <strong>🧪 Pro Tip:</strong> Use the Test tab to get free seeds, change seasons/weather, and speed up growth for experimentation!
             </div>
           </div>
+
         </div>
       </div>
     </div>
