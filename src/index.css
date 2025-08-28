@@ -164,6 +164,57 @@
   }
 }
 
+@keyframes rain-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(-100vh) translateX(0px);
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) translateX(10px);
+  }
+}
+
+@keyframes snow-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(-100vh) translateX(0px) rotate(0deg);
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) translateX(20px) rotate(360deg);
+  }
+}
+
+@keyframes wind-drift {
+  0% {
+    opacity: 0;
+    transform: translateX(-100vw) translateY(0px);
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100vw) translateY(-20px);
+  }
+}
+
 .animate-slide-down {
   animation: slide-down 0.3s ease-out;
 }
@@ -207,6 +258,18 @@
 
 .animate-wind-gust {
   animation: wind-gust 1.5s ease-in-out infinite;
+}
+
+.animate-rain-fall {
+  animation: rain-fall 3s linear infinite;
+}
+
+.animate-snow-fall {
+  animation: snow-fall 4s linear infinite;
+}
+
+.animate-wind-drift {
+  animation: wind-drift 2s linear infinite;
 }
 
 /* Custom scrollbar */

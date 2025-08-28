@@ -8,7 +8,7 @@ import { Progress } from "./ui/progress";
 import { 
   AlertTriangle, CloudDrizzle, Sun, Bug, Sprout, Droplets, Zap, Timer, Store, Hammer, 
   Coins, Trophy, Target, Leaf, Snowflake, Wind, Heart, Star, Gift, ArrowUp, Moon,
-  CloudRain, CloudLightning, Flower, Calendar, Thermometer, Umbrella
+  CloudRain, CloudLightning, Flower, Calendar, Thermometer, Umbrella, Settings as SettingsIcon
 } from "lucide-react";
 
 /**
@@ -143,6 +143,20 @@ const DEFAULT_RULES = {
   // NEW: Disease control and bee management
   fungicide: { shopPrice: 12, description: "Treats crop diseases" },
   beeFeed: { shopPrice: 15, description: "Increases bee happiness and pollination" },
+  // NEW: Soil and workforce systems
+  soil: {
+    fertilityMin: 0.5,
+    fertilityMax: 1.5,
+    decayOnHarvest: 0.05,
+    regenPerMinute: 0.02,
+    compostPrice: 20,
+    compostBoost: 0.2,
+  },
+  workforce: {
+    farmhandPrice: 100,
+    actionsPerHand: 2,
+    actionIntervalSec: 5,
+  },
   dryWitherSeconds: 80,
   tools: {
     fertilizer: { shopPrice: 8, description: "Speeds up crop growth" },
@@ -251,12 +265,16 @@ function newPlot(state = "empty") {
     plantedAt: null, lastWateredAt: null, fertilized: 0, infested: false,
     boosted: false, quality: 1, disease: null, lastCropFamily: null, rotationBonus: 0,
     beePollinated: false, lastHarvested: null,
+    planting: false,
+    soilFertility: 1.0, lastSoilUpdate: nowSec(),
   };
   return {
     state, seed: null, growth: 0, watered: false,
     plantedAt: null, lastWateredAt: null, fertilized: 0, infested: false,
     boosted: false, quality: 1, disease: null, lastCropFamily: null, rotationBonus: 0,
     beePollinated: false, lastHarvested: null,
+    planting: false,
+    soilFertility: 1.0, lastSoilUpdate: nowSec(),
   };
 }
 
@@ -306,9 +324,34 @@ export default function FarmSimCanvas() {
   // --- game state ---
   const saved = useMemo(() => loadSave(), []);
 
-  const [rules, setRules] = useState(saved?.rules || DEFAULT_RULES);
+  const [rules, setRules] = useState(() => {
+    const base = DEFAULT_RULES;
+    const fromSave = saved?.rules || {};
+    return {
+      ...base,
+      ...fromSave,
+      soil: { ...(base.soil || {}), ...(fromSave.soil || {}) },
+      workforce: { ...(base.workforce || {}), ...(fromSave.workforce || {}) },
+      seeds: { ...(base.seeds || {}), ...(fromSave.seeds || {}) },
+      buildings: { ...(base.buildings || {}), ...(fromSave.buildings || {}) },
+      livestock: { ...(base.livestock || {}), ...(fromSave.livestock || {}) },
+      tools: { ...(base.tools || {}), ...(fromSave.tools || {}) },
+      processing: { ...(base.processing || {}), ...(fromSave.processing || {}) },
+    };
+  });
   const [gridSize, setGridSize] = useState(saved?.gridSize || MIN_SIZE);
-  const [plots, setPlots] = useState(saved?.plots || makeGrid(saved?.gridSize || MIN_SIZE));
+  const [plots, setPlots] = useState(() => {
+    if (Array.isArray(saved?.plots)) {
+      const now = nowSec();
+      return saved.plots.map(p => ({
+        ...p,
+        soilFertility: p?.soilFertility ?? 1.0,
+        lastSoilUpdate: p?.lastSoilUpdate ?? now,
+        planting: p?.planting ?? false,
+      }));
+    }
+    return makeGrid(saved?.gridSize || MIN_SIZE);
+  });
   const [coins, setCoins] = useState(saved?.coins || 50);
   const [score, setScore] = useState(saved?.score || 0);
   const [totalEarned, setTotalEarned] = useState(saved?.totalEarned || 0);
@@ -374,6 +417,12 @@ export default function FarmSimCanvas() {
   const [comboTimer, setComboTimer] = useState(saved?.comboTimer || 0);
   const [particles, setParticles] = useState(saved?.particles || []);
   const [soundEnabled, setSoundEnabled] = useState(saved?.soundEnabled ?? true);
+  const [sfxVolume, setSfxVolume] = useState(saved?.sfxVolume ?? 1);
+  const [animationsEnabled, setAnimationsEnabled] = useState(saved?.animationsEnabled ?? true);
+  const [performanceMode, setPerformanceMode] = useState(saved?.performanceMode ?? false);
+  const [autoTimeOfDay, setAutoTimeOfDay] = useState(saved?.autoTimeOfDay ?? true);
+  const [paused, setPaused] = useState(saved?.paused ?? false);
+  const [simSpeed, setSimSpeed] = useState(saved?.simSpeed ?? 1);
 
   const [levelId, setLevelId] = useState(saved?.levelId || LEVELS[0].id);
   const level = useMemo(() => LEVELS.find(l => l.id === levelId), [levelId]);
@@ -385,6 +434,11 @@ export default function FarmSimCanvas() {
   const [log, setLog] = useState(saved?.log || ["🌱 Welcome to your farm! Plant seeds and watch them grow.", "💡 Tip: Right-click plots to fertilize or spray pesticide."]);
   const [notifications, setNotifications] = useState([]);
   const [currentTime, setCurrentTime] = useState(nowSec());
+  const [buying, setBuying] = useState(false);
+  const [farmhands, setFarmhands] = useState(saved?.farmhands || 0);
+  const [lastFarmhandAction, setLastFarmhandAction] = useState(saved?.lastFarmhandAction || nowSec());
+  const [skills, setSkills] = useState(saved?.skills || { growthBoost: 0, valueBoost: 0 });
+  const [shopTab, setShopTab] = useState('seeds');
 
   // Simple growth timer system
   const [gameTime, setGameTime] = useState(saved?.gameTime || 0);
@@ -392,6 +446,50 @@ export default function FarmSimCanvas() {
 
   // persist enhanced state (debounced to avoid excessive writes)
   const _saveTimeout = useRef(null);
+  const _lastAutosaveToastAt = useRef(0);
+  // WebAudio context for SFX
+  const audioCtxRef = useRef(null);
+  const plantingLocks = useRef(new Set());
+  const lastPlantClickAt = useRef({});
+  const buyingRef = useRef(false);
+
+  // --- Sound effects via WebAudio (tiny tones, no assets) ---
+  const ensureAudio = () => {
+    if (!audioCtxRef.current) {
+      try { audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+    }
+    return audioCtxRef.current;
+  };
+
+  const playTone = (freq, durationMs, type = 'sine', volMul = 0.15) => {
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.value = Math.max(0, Math.min(1, sfxVolume)) * volMul;
+    osc.connect(gain).connect(ctx.destination);
+    const t0 = ctx.currentTime;
+    osc.start(t0);
+    osc.stop(t0 + durationMs / 1000);
+  };
+
+  const playSfx = (name) => {
+    if (!soundEnabled) return;
+    switch (name) {
+      case 'plant': // digging/planting
+        playTone(420, 50, 'sine', 0.10);
+        setTimeout(() => playTone(500, 60, 'sine', 0.10), 60);
+        break;
+      case 'water': // watering
+        playTone(260, 120, 'sawtooth', 0.06);
+        break;
+      default:
+        // no other sounds
+        return;
+    }
+  };
   useEffect(() => {
     // debounce saves but avoid infinite loops
     if (typeof window === "undefined") return;
@@ -414,15 +512,25 @@ export default function FarmSimCanvas() {
           townBuildings, townEvents, townReputation,
           // Visual & Animation
           combo, comboTimer, particles, soundEnabled,
+          sfxVolume, animationsEnabled, performanceMode, autoTimeOfDay,
+          paused, simSpeed,
           // Enhanced Systems
           buildings, livestock, processedGoods, npcs, events, automation,
           marketTrends, sprinklers, scarecrows,
           // Enhanced Visual/Gameplay
           currentTimeOfDay, weatherForecast, beeHappiness,
           diseasesCured, rotationUses, weatherPredictions, honeyProduced,
-          seasonEndsAt, log, gameTime, lastGrowthTick
+          seasonEndsAt, log, gameTime, lastGrowthTick,
+          // New systems
+          farmhands, lastFarmhandAction, skills
         };
         saveState(snapshot);
+        // Autosave toast (throttled) to indicate saves without spamming
+        const now = Date.now();
+        if (now - _lastAutosaveToastAt.current > 15000) {
+          try { addNotification('Autosaved', 'info'); } catch {}
+          _lastAutosaveToastAt.current = now;
+        }
       } catch (e) {
         console.error("Save failed:", e);
       }
@@ -491,7 +599,11 @@ export default function FarmSimCanvas() {
   
   const addNotification = (msg, type = "info") => {
     const id = Date.now() + Math.random(); // Ensure unique IDs
-    setNotifications(n => [...n, { id, msg, type }]);
+    setNotifications(n => {
+      const next = [...n, { id, msg, type }];
+      // cap to 3 visible notifications
+      return next.slice(-3);
+    });
     // Use a more reliable timeout mechanism
     setTimeout(() => {
       setNotifications(prev => prev.filter(x => x.id !== id));
@@ -923,37 +1035,17 @@ export default function FarmSimCanvas() {
     setActionHistory(prev => [...prev.slice(-49), actionEntry]); // Keep last 50 actions
   };
 
-  const simulateGrowth = () => {
+  // Growth accelerator for testing: backdate plantedAt so stages progress naturally
+  const simulateGrowth = (seconds = 20) => {
     setPlots(prev => prev.map(p => {
-      if (p.state !== "growing" && p.state !== "planted") return p;
-      
-      let growthAmount = 25;
-      
-      // Greenhouse bonus: +50% growth speed
-      if (buildings.greenhouse) {
-        growthAmount = Math.round(growthAmount * (1 + rules.buildings.greenhouse.bonus));
+      if (p.state === 'planted' || p.state === 'growing') {
+        const planted = p.plantedAt || nowSec();
+        return { ...p, plantedAt: planted - seconds };
       }
-      
-      return {
-        ...p,
-        growth: Math.min(100, p.growth + growthAmount)
-      };
+      return p;
     }));
-    const greenhouseText = buildings.greenhouse ? " (Greenhouse +50%)" : "";
-    addNotification(`Growth accelerated!${greenhouseText}`, "success");
+    addNotification(`Growth accelerated by ${seconds}s`, 'success');
   };
-
-  // Safe automatic growth: call simulateGrowth every 5 seconds
-  useEffect(() => {
-    const id = setInterval(() => {
-      try { 
-        simulateGrowth(); 
-      } catch (e) { 
-        console.error("Growth error:", e);
-      }
-    }, 5000);
-    return () => clearInterval(id);
-  }, []); // run once on mount
 
   // Update current time every second for real-time countdown
   useEffect(() => {
@@ -961,9 +1053,11 @@ export default function FarmSimCanvas() {
       setCurrentTime(nowSec());
       
       // NEW: Update time of day for visual effects
-      const newTimeOfDay = getTimeOfDay();
-      if (newTimeOfDay !== currentTimeOfDay) {
-        setCurrentTimeOfDay(newTimeOfDay);
+      if (autoTimeOfDay) {
+        const newTimeOfDay = getTimeOfDay();
+        if (newTimeOfDay !== currentTimeOfDay) {
+          setCurrentTimeOfDay(newTimeOfDay);
+        }
       }
       
       // NEW: Generate weather forecast every 30 seconds
@@ -994,7 +1088,7 @@ export default function FarmSimCanvas() {
       
     }, 1000);
     return () => clearInterval(id);
-  }, [currentTime, currentTimeOfDay, plots, buildings.beehive, beeHappiness]);
+  }, [currentTime, currentTimeOfDay, plots, buildings.beehive, beeHappiness, autoTimeOfDay]);
 
   // Advanced Economy useEffects
   useEffect(() => {
@@ -1098,8 +1192,9 @@ export default function FarmSimCanvas() {
 
   // NEW: Weather particle effects
   const addWeatherParticles = () => {
+    if (!animationsEnabled || performanceMode) return;
     if (weather.type === "Rain") {
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 12; i++) {
         const x = Math.random() * window.innerWidth;
         const y = -20;
         const particle = {
@@ -1113,7 +1208,7 @@ export default function FarmSimCanvas() {
         setTimeout(() => setParticles(p => p.filter(pt => pt.id !== particle.id)), 3000);
       }
     } else if (weather.type === "Storm") {
-      for (let i = 0; i < 15; i++) {
+      for (let i = 0; i < 8; i++) {
         const x = Math.random() * window.innerWidth;
         const y = -20;
         const particle = {
@@ -1127,7 +1222,7 @@ export default function FarmSimCanvas() {
         setTimeout(() => setParticles(p => p.filter(pt => pt.id !== particle.id)), 2000);
       }
     } else if (weather.type === "Frost") {
-      for (let i = 0; i < 25; i++) {
+      for (let i = 0; i < 14; i++) {
         const x = Math.random() * window.innerWidth;
         const y = -20;
         const particle = {
@@ -1158,7 +1253,7 @@ export default function FarmSimCanvas() {
       const bonus = Math.floor(combo * 2);
       setCoins(c => c + bonus);
       addNotification(`🔥 ${combo}x Combo! +${bonus}🪙`, "success");
-      playSound("combo");
+      playSfx("combo");
     }
   };
 
@@ -1167,13 +1262,51 @@ export default function FarmSimCanvas() {
     return "Game Running"; // Static for now
   };
 
+  // Keyboard shortcuts: [, ] to cycle seeds; M to mute; P to pause; 1/2/3 speed; S to save
+  useEffect(() => {
+    const seedKeys = Object.keys(rules.seeds);
+    function onKey(e) {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
+      if (e.key === '[' || e.key === '{') {
+        e.preventDefault();
+        const idx = seedKeys.indexOf(selectedSeed);
+        const next = (idx - 1 + seedKeys.length) % seedKeys.length;
+        setSelectedSeed(seedKeys[next]);
+      } else if (e.key === ']' || e.key === '}') {
+        e.preventDefault();
+        const idx = seedKeys.indexOf(selectedSeed);
+        const next = (idx + 1) % seedKeys.length;
+        setSelectedSeed(seedKeys[next]);
+      } else if (e.key.toLowerCase() === 'm') {
+        setSoundEnabled(v => !v);
+        addNotification(`Sound ${!soundEnabled ? 'on' : 'muted'}`, 'info');
+      } else if (e.key.toLowerCase() === 'p') {
+        setPaused(v => !v);
+        addNotification(`Simulation ${!paused ? 'paused' : 'resumed'}`, 'info');
+      } else if (e.key === '1' || e.key === '2' || e.key === '3') {
+        const sp = parseInt(e.key, 10);
+        setSimSpeed(sp);
+        addNotification(`Speed set to ${sp}x`, 'info');
+      } else if (e.key.toLowerCase() === 's') {
+        try {
+          const snapshot = loadSave() || {};
+          saveState({ ...snapshot, savedAt: Date.now() });
+          addNotification('Manual save complete', 'success');
+        } catch {}
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [rules.seeds, selectedSeed, soundEnabled, paused]);
+
   // Market price calculation with seasonal and trend modifiers
   const getMarketPrice = (seedType) => {
     const base = rules.seeds[seedType].baseValue;
     const trend = marketTrends[seedType] || "normal";
     const trendMultiplier = MARKET_TRENDS[trend].multiplier;
     const seasonBonus = rules.seeds[seedType].season === currentSeason ? 1.3 : 1.0;
-    return Math.round(base * trendMultiplier * seasonBonus);
+    const skillBonus = 1 + (skills.valueBoost || 0);
+    return Math.round(base * trendMultiplier * seasonBonus * skillBonus);
   };
 
   const checkAchievement = (id) => {
@@ -1185,7 +1318,7 @@ export default function FarmSimCanvas() {
     setCoins(c => c + achievement.reward);
     addNotification(`🏆 Achievement: ${achievement.name} (+${achievement.reward}🪙)`, "success");
     addLog(`🏆 Unlocked: ${achievement.name} - ${achievement.desc}`);
-    playSound("achievement");
+    playSfx("achievement");
     
     // Particle effect for achievement
     addParticle(300, 200, "achievement", achievement.icon);
@@ -1228,7 +1361,9 @@ export default function FarmSimCanvas() {
     const fertSpeed = 1 + Math.min(p.fertilized, rules.fertilizer.maxStacks) * rules.fertilizer.speedBonusPerStack;
     const weatherSpeed = weather.type === "Rain" ? 1.2 : weather.type === "Drought" ? 0.8 : 1;
     const boostSpeed = p.boosted ? 1.3 : 1;
-    return base / (fertSpeed * weatherSpeed * boostSpeed);
+    const soilMult = Math.max(rules.soil.fertilityMin, Math.min(rules.soil.fertilityMax, p.soilFertility || 1));
+    const skillMult = 1 + (skills.growthBoost || 0);
+    return base / (fertSpeed * weatherSpeed * boostSpeed * soilMult * skillMult);
   }
 
   function witherLimit(p) {
@@ -1241,8 +1376,16 @@ export default function FarmSimCanvas() {
 
   // --- enhanced actions ---
   function plant(i, seed) {
+    const nowMs = Date.now();
+    const last = lastPlantClickAt.current[i] || 0;
+    if (nowMs - last < 800) return; // stronger debounce
+    lastPlantClickAt.current[i] = nowMs;
+    if (plantingLocks.current.has(i)) return;
+    plantingLocks.current.add(i);
+    let didPlant = false;
     replacePlot(i, (p) => {
       if (p.state !== "empty") return p;
+      if (!rules.seeds[seed]) { addNotification('Invalid seed selected', 'error'); return p; }
       
       const seedCount = inventory[seed] || 0;
       console.log(`🌱 Attempting to plant ${seed}: current count = ${seedCount}`);
@@ -1252,8 +1395,6 @@ export default function FarmSimCanvas() {
         console.log(`❌ Cannot plant ${seed}: insufficient seeds (${seedCount})`);
         return p;
       }
-      
-      setInventory(inv => ({ ...inv, [seed]: (inv[seed] || 0) - 1 }));
       
       // NEW: Check crop rotation bonus
       const newCropFamily = rules.seeds[seed].family;
@@ -1271,8 +1412,8 @@ export default function FarmSimCanvas() {
       
       addLog(`🌱 Planted ${rules.seeds[seed].emoji} ${seed} in plot ${i + 1}${isOptimalSeason ? " 🌟" : ""}${greenhouseBonus}${rotationText}`);
       const quality = Math.random() > 0.8 ? 1.2 : 1; // 20% chance for higher quality
-      playSound("plant");
-      
+      playSfx("plant");
+      didPlant = true;
       return { 
         ...p, state: "planted", seed, growth: 0, watered: false, 
         plantedAt: nowSec(), lastWateredAt: null, fertilized: 0, 
@@ -1281,9 +1422,22 @@ export default function FarmSimCanvas() {
         disease: null, beePollinated: false
       };
     });
+    if (didPlant) {
+      setInventory(inv => {
+        const have = inv[seed] || 0;
+        if (have <= 0) return inv;
+        const next = { ...inv, [seed]: have - 1 };
+        try { console.log(`[inventory] plant ${seed}: ${have} -> ${next[seed]}`); } catch {}
+        return next;
+      });
+    }
+    setTimeout(() => {
+      plantingLocks.current.delete(i);
+    }, 800);
   }
 
   function water(i) {
+    playSfx('water');
     replacePlot(i, (p) => {
       if (p.state !== "planted" && p.state !== "growing") return p;
       const efficiency = inventory.wateringCan > 0 ? rules.wateringCan.efficiency : 1;
@@ -1313,7 +1467,7 @@ export default function FarmSimCanvas() {
       setInventory(inv => ({ ...inv, pesticide: (inv.pesticide || 0) - 1 }));
       setPestEliminations(prev => prev + 1);
       addLog(`🧽 Sprayed plot ${i + 1}. Pests eliminated!`);
-      playSound("spray");
+      playSfx("spray");
       addParticle(i % gridSize * 120 + 60, Math.floor(i / gridSize) * 120 + 60, "spray", "💨");
       checkAllAchievements();
       return { ...p, infested: false };
@@ -1344,6 +1498,9 @@ export default function FarmSimCanvas() {
       if (p.beePollinated && buildings.beehive) {
         val = Math.round(val * (1 + rules.buildings.beehive.bonus));
       }
+      // Soil fertility lightly affects value
+      const soilMult = Math.max(rules.soil.fertilityMin, Math.min(rules.soil.fertilityMax, p.soilFertility || 1));
+      val = Math.round(val * (0.9 + 0.1 * soilMult));
       
       // Building bonuses
       if (buildings.barn) {
@@ -1378,18 +1535,22 @@ export default function FarmSimCanvas() {
       
       // Trigger combo and effects
       triggerCombo();
-      playSound("harvest");
+      playSfx("harvest");
       addParticle(i % gridSize * 120 + 60, Math.floor(i / gridSize) * 120 + 60, "coins", `+${val}`);
       
       // Check achievements
       checkAllAchievements();
       
-      return { ...newPlot("empty"), lastCropFamily, lastHarvested: nowSec() };
+      const newFert = Math.max(rules.soil.fertilityMin, (p.soilFertility || 1) - (rules.soil.decayOnHarvest || 0.05));
+      return { ...newPlot("empty"), lastCropFamily, lastHarvested: nowSec(), soilFertility: newFert };
     });
   }
 
-  function buy(item, qty = 1) {
+function buy(item, qty = 1) {
     if (qty < 1) qty = 1;
+    if (buyingRef.current) return;
+    buyingRef.current = true; setBuying(true);
+    const release = () => { buyingRef.current = false; setBuying(false); };
     let price = 0;
     
     if (item in rules.seeds) {
@@ -1404,19 +1565,22 @@ export default function FarmSimCanvas() {
     } else if (item in rules.buildings) {
       if (buildings[item]) {
         addNotification(`You already have a ${rules.buildings[item].name}!`, "warning");
+        release();
         return;
       }
       price = rules.buildings[item].price;
-      if (coins < price) return;
+      if (coins < price) { release(); return; }
       
       setCoins(c => c - price);
       setBuildings(prev => ({ ...prev, [item]: true }));
       addLog(`🏗️ Built ${rules.buildings[item].emoji} ${rules.buildings[item].name}!`);
       addNotification(`${rules.buildings[item].name} constructed!`, "success");
+      playSfx('buy');
+      release();
       return;
     } else if (item in rules.livestock) {
       price = rules.livestock[item].price;
-      if (coins < price) return;
+      if (coins < price) { release(); return; }
       
       setCoins(c => c - price);
       const newAnimal = {
@@ -1428,6 +1592,8 @@ export default function FarmSimCanvas() {
       setLivestock(prev => [...prev, newAnimal]);
       addLog(`🐾 Bought ${rules.livestock[item].emoji} ${rules.livestock[item].name}!`);
       addNotification(`New ${rules.livestock[item].name} added to farm!`, "success");
+      playSfx('buy');
+      release();
       return;
     } else if (item === "fungicide") {
       price = rules.fungicide.shopPrice * qty;
@@ -1436,25 +1602,25 @@ export default function FarmSimCanvas() {
     } else if (item === "expand") {
       const next = clamp(gridSize + 1, MIN_SIZE, MAX_SIZE);
       price = EXPANSION_COSTS[next] || 0;
-      if (next === gridSize) return; // already max
-      if (coins < price) return;
+      if (next === gridSize) { release(); return; } // already max
+      if (coins < price) { release(); return; }
       
       setCoins(c => c - price);
       const newSize = next;
       const old = [...plots];
+      const oldSize = gridSize;
       const total = newSize * newSize;
-      const extended = [];
-      
-      for (let i = 0; i < total; i++) {
-        extended[i] = old[i] ? old[i] : newPlot(i < MIN_SIZE * MIN_SIZE ? "empty" : "locked");
-      }
-      
-      // unlock the new ring
+      const extended = new Array(total);
+      // Map old grid by row/col; generate new cells for the new ring and interior
       for (let r = 0; r < newSize; r++) {
         for (let c = 0; c < newSize; c++) {
           const idx = r * newSize + c;
-          if (r === 0 || c === 0 || r === newSize - 1 || c === newSize - 1) {
-            if (extended[idx].state === "locked") extended[idx] = newPlot("empty");
+          if (r < oldSize && c < oldSize) {
+            // copy from old grid preserving state
+            extended[idx] = old[r * oldSize + c];
+          } else {
+            const isRing = (r === 0 || c === 0 || r === newSize - 1 || c === newSize - 1);
+            extended[idx] = newPlot(isRing ? "empty" : "locked");
           }
         }
       }
@@ -1465,17 +1631,26 @@ export default function FarmSimCanvas() {
       addNotification(`Field expanded to ${newSize}×${newSize}!`, "success");
       
       if (newSize === MAX_SIZE) checkAchievement("field_master");
+      playSfx('buy');
+      release();
       return;
     }
     
-    if (price <= 0 || coins < price) return;
+    if (price <= 0 || coins < price) { release(); return; }
     
     setCoins(c => c - price);
-    setInventory(inv => ({ ...inv, [item]: (inv[item] || 0) + qty }));
+    setInventory(inv => {
+      const before = inv[item] || 0;
+      const next = { ...inv, [item]: before + qty };
+      try { console.log(`[inventory] buy ${item}: ${before} -> ${next[item]}`); } catch {}
+      return next;
+    });
+    playSfx('buy');
     
     const emoji = rules.seeds[item]?.emoji || "📦";
     addLog(`🛒 Bought ${qty}x ${emoji} ${item} for ${price}🪙`);
     addNotification(`Bought ${qty}x ${item}`, "info");
+    release();
   }
 
   // Process crops into higher-value products
@@ -1567,6 +1742,7 @@ export default function FarmSimCanvas() {
   // --- Simplified growth tick (no timers) ---
   useEffect(() => {
     const interval = setInterval(() => {
+      if (paused) return;
       // Update particles
       setParticles(prev => prev.filter(p => p.life > 0).map(p => ({
         ...p,
@@ -1641,7 +1817,7 @@ export default function FarmSimCanvas() {
             
             addLog(messages[next] || "Weather changed.");
             addNotification(messages[next], next === "Sunny" ? "success" : "warning");
-            playSound("weather");
+            playSfx("weather");
             
             // NEW: Add weather particles
             setTimeout(() => addWeatherParticles(), 100);
@@ -1664,6 +1840,17 @@ export default function FarmSimCanvas() {
       // Enhanced pest mechanics
       setPlots(prev => {
         let arr = [...prev];
+        // Soil regeneration for empty plots
+        const now = nowSec();
+        arr = arr.map(pl => {
+          if (pl.state === 'empty') {
+            const dtMin = Math.max(0, (now - (pl.lastSoilUpdate || now)) / 60);
+            const regen = dtMin * (rules.soil.regenPerMinute || 0.02);
+            const nf = Math.min(rules.soil.fertilityMax, (pl.soilFertility || 1) + regen);
+            return { ...pl, soilFertility: nf, lastSoilUpdate: now };
+          }
+          return pl;
+        });
         if (weather.type === "Pests") {
           const candidates = arr
             .map((p, i) => ({ p, i }))
@@ -1678,8 +1865,8 @@ export default function FarmSimCanvas() {
         return arr;
       });
 
-              // Enhanced growth & wither system
-        setPlots(prev => prev.map(p => {
+      // Enhanced growth & wither system
+      setPlots(prev => prev.map(p => {
           if (!(p.state === "planted" || p.state === "growing" || p.state === "grown")) return p;
           if (!p.seed || !p.plantedAt) return p;
           
@@ -1710,8 +1897,24 @@ export default function FarmSimCanvas() {
             }
             return { ...p, growth: stg, state: nextState };
           }
-          return p;
-        }));
+        return p;
+      }));
+
+      // Farmhand automation: every workforce.actionIntervalSec do limited actions
+      if (farmhands > 0 && nowSec() - lastFarmhandAction >= (rules.workforce.actionIntervalSec || 5)) {
+        let actions = farmhands * (rules.workforce.actionsPerHand || 2);
+        // harvest grown first
+        for (let idx = 0; idx < plots.length && actions > 0; idx++) {
+          const pl = plots[idx];
+          if (pl.state === 'grown') { harvest(idx); actions--; }
+        }
+        // then water planted/growing not watered
+        for (let idx = 0; idx < plots.length && actions > 0; idx++) {
+          const pl = plots[idx];
+          if ((pl.state === 'planted' || pl.state === 'growing') && !pl.watered) { water(idx); actions--; }
+        }
+        setLastFarmhandAction(nowSec());
+      }
 
               // Enhanced level timer with achievement checks
         if (levelId !== "endless" && levelStatus === "playing" && level) {
@@ -1738,7 +1941,7 @@ export default function FarmSimCanvas() {
         }
     }, 1000);
     return () => clearInterval(interval);
-  }, [weather.type, rules, levelId, levelEndsAt, levelStatus, coins, level, levelStartedAt, weatherEvents, achievements]);
+  }, [weather.type, rules, levelId, levelEndsAt, levelStatus, coins, level, levelStartedAt, weatherEvents, achievements, paused, farmhands, lastFarmhandAction, plots]);
 
   // --- Enhanced UI helpers ---
   function WeatherBadge() {
@@ -1933,6 +2136,17 @@ export default function FarmSimCanvas() {
     let bgClass = "bg-white/70";
     let borderClass = "border-slate-200";
     let textClass = "text-slate-700";
+    const soilMult = Math.max(rules.soil?.fertilityMin || 0.5, Math.min(rules.soil?.fertilityMax || 1.5, p.soilFertility || 1));
+    const etaInfo = (() => {
+      if (!spec || !p.plantedAt || p.state === 'grown' || p.state === 'withered') return null;
+      const sps = secondsPerStage(p);
+      if (!sps || !isFinite(sps) || sps <= 0) return null;
+      const elapsed = Math.max(0, currentTime - (p.plantedAt || currentTime));
+      const stage = Math.floor(elapsed / sps);
+      const next = Math.min(spec.stages, stage + 1);
+      const nextIn = Math.max(0, Math.ceil(next * sps - elapsed));
+      return { next, nextIn };
+    })();
     
     if (p.state === "locked") {
       bgClass = "bg-slate-100/70";
@@ -1955,7 +2169,8 @@ export default function FarmSimCanvas() {
       textClass = "text-amber-800";
     }
 
-    function leftClick() {
+    function leftPointerDown(e) {
+      try { e?.preventDefault?.(); e?.stopPropagation?.(); } catch {}
       if (p.state === "locked") return;
       if (p.state === "grown") return harvest(i);
       if (p.state === "withered") return clearPlot(i);
@@ -1973,10 +2188,13 @@ export default function FarmSimCanvas() {
 
     return (
       <div
-        onClick={leftClick}
+        onPointerDown={leftPointerDown}
         onContextMenu={rightClick}
         className={`group relative rounded-2xl border-2 ${borderClass} ${bgClass} backdrop-blur-sm cursor-pointer select-none hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] p-4`}
+        style={{ touchAction: 'manipulation' }}
       >
+        {/* Soil fertility ring */}
+        <div className={`pointer-events-none absolute inset-0 rounded-2xl border-2 ${soilMult >= 1.2 ? 'border-emerald-400' : (soilMult >= 0.9 ? 'border-amber-300' : 'border-rose-300')} opacity-50`}></div>
         {/* Plot number badge */}
         <div className="absolute -top-2 -right-2 bg-white border-2 border-slate-300 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold text-slate-600 shadow-lg">
           {i + 1}
@@ -2025,9 +2243,17 @@ export default function FarmSimCanvas() {
             <div className="flex items-center gap-1 flex-wrap justify-center">
               {p.state !== "grown" && spec && (
                 <Badge variant="outline" className="text-xs">
-                  {p.growth}/{spec.stages} stages
+                  {p.growth}/{spec.stages} • {etaInfo ? `ETA ${formatTime(etaInfo.nextIn)}` : 'ETA --:--'} • Soil {soilMult.toFixed(2)}x
                 </Badge>
               )}
+              {etaInfo && (
+                <Badge variant="outline" className="text-xs">
+                  <Timer size={10} className="mr-1"/>ETA {formatTime(etaInfo.nextIn)} → {etaInfo.next}/{spec?.stages}
+                </Badge>
+              )}
+              <Badge variant="secondary" className="text-xs">
+                <Leaf size={10} className="mr-1"/>Soil {soilMult.toFixed(2)}x
+              </Badge>
               {p.watered && p.state !== "grown" && (
                 <Badge variant="info" className="text-xs">
                   <Droplets size={10} className="mr-1"/>watered
@@ -2079,7 +2305,7 @@ export default function FarmSimCanvas() {
           {spec && p.state !== "grown" && p.state !== "withered" && (
             <div className="w-full">
               <Progress value={pct} className="h-3" />
-              <div className="text-xs text-center mt-1 opacity-70">{pct}%</div>
+              <div className="text-xs text-center mt-1 opacity-70">{pct}%{etaInfo ? ` • ${formatTime(etaInfo.nextIn)} to next` : ''}</div>
             </div>
           )}
 
@@ -2123,6 +2349,14 @@ export default function FarmSimCanvas() {
   // --- Enhanced Layout ---
   return (
     <div className={`min-h-screen bg-gradient-to-br ${DAY_NIGHT_CYCLE[currentTimeOfDay].bg} relative overflow-hidden transition-all duration-1000`}>
+      {/* Weather tint overlay */}
+      <div className={`pointer-events-none absolute inset-0 transition-colors duration-700 ${
+        weather.type === 'Rain' ? 'bg-blue-200/20' :
+        weather.type === 'Drought' ? 'bg-orange-200/20' :
+        weather.type === 'Storm' ? 'bg-purple-200/10' :
+        weather.type === 'Frost' ? 'bg-cyan-100/20' :
+        weather.type === 'Pests' ? 'bg-green-100/10' : ''
+      }`}></div>
       {/* Save status indicator */}
       <div className="fixed top-4 left-4 p-2 bg-white/80 border rounded-lg text-xs z-50">
         {(() => {
@@ -2135,8 +2369,8 @@ export default function FarmSimCanvas() {
         })()}
       </div>
       {/* Floating notification system */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
-        {notifications.map(n => (
+      <div className="fixed top-4 right-4 z-50 space-y-2 max-h-[40vh] overflow-hidden flex flex-col-reverse">
+        {notifications.slice(-3).map(n => (
           <div 
             key={n.id} 
             className={`px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md border-2 animate-slide-down font-medium text-sm max-w-sm ${
@@ -2155,6 +2389,7 @@ export default function FarmSimCanvas() {
               {n.type === "warning" && <span className="animate-pulse">⚠️</span>}
               {n.type === "info" && "ℹ️"}
               <span className="flex-1">{n.msg}</span>
+              <button onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))} className="text-xs opacity-60 hover:opacity-100" aria-label="Dismiss">✕</button>
             </div>
           </div>
         ))}
@@ -2209,10 +2444,12 @@ export default function FarmSimCanvas() {
             <div className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-full bg-white/80 border-2 border-white/50 backdrop-blur-sm shadow-lg">
               <span className="font-semibold text-slate-700">{DAY_NIGHT_CYCLE[currentTimeOfDay].name}</span>
             </div>
+
+            {/* Quick Settings Button moved to shop tabs; header button removed per request */}
           </div>
         </div>
 
-        <ParticleSystem/>
+        {animationsEnabled && !performanceMode && <ParticleSystem/>}
         <ComboDisplay/>
 
         <div className="grid lg:grid-cols-[380px_1fr] gap-6">
@@ -2323,15 +2560,16 @@ export default function FarmSimCanvas() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Tabs defaultValue="seeds">
-                  <TabsList className="grid w-full grid-cols-7">
-                    <TabsTrigger value="seeds">🌱 Seeds</TabsTrigger>
-                    <TabsTrigger value="tools">🛠️ Tools</TabsTrigger>
-                    <TabsTrigger value="buildings">🏗️ Buildings</TabsTrigger>
-                    <TabsTrigger value="market">📈 Market</TabsTrigger>
-                    <TabsTrigger value="town">🏛️ Town</TabsTrigger>
-                    <TabsTrigger value="expand">📏 Expand</TabsTrigger>
-                    <TabsTrigger value="test">🧪 Test</TabsTrigger>
+                <Tabs value={shopTab} onValueChange={setShopTab}>
+                  <TabsList className="flex flex-wrap gap-2 w-full overflow-x-auto">
+                    <TabsTrigger className="shrink-0" value="seeds">🌱 Seeds</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="tools">🛠️ Tools</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="buildings">🏗️ Buildings</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="market">📈 Market</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="town">🏛️ Town</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="expand">📏 Expand</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="test">🧪 Test</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="settings">⚙️ Settings</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="seeds" className="space-y-2">
@@ -2341,23 +2579,113 @@ export default function FarmSimCanvas() {
                         onClick={() => buy(seed, 1)} 
                         variant="outline" 
                         className="w-full justify-between h-auto p-3"
-                        disabled={coins < data.shopPrice}
+                        title={(function(){try{var totalTime=(data.secondsPerStage||0)*(data.stages||1);var value=getMarketPrice(seed);var roi=value-(data.shopPrice||0);return 'Time ~ '+totalTime+'s | Value '+value+' | ROI '+roi;}catch(e){return ''}})()}
+                        disabled={buying || coins < data.shopPrice}
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{data.emoji}</span>
-                          <div className="text-left">
-                            <div className="font-semibold capitalize">{seed} Seed</div>
-                            <div className="text-xs opacity-70">{data.stages} stages • +{data.baseValue}🪙</div>
-                          </div>
+                    <div className="text-left">
+                      <div className="font-semibold capitalize">{seed} Seed</div>
+                      <div className="text-xs opacity-70">{data.stages} stages • +{data.baseValue}🪙</div>
+                      <div className="text-[11px] opacity-70">
+                        {(() => { try {
+                          const avgSoil = (plots && plots.length) ? (plots.reduce((a,p)=>a+(p.soilFertility||1),0)/plots.length) : 1;
+                          const skill = 1 + (skills.growthBoost||0);
+                          const weatherSpeed = weather.type === 'Rain' ? 1.2 : (weather.type === 'Drought' ? 0.8 : 1);
+                          const greenhouseSpeed = buildings.greenhouse ? (1 + (rules.buildings.greenhouse.bonus||0)) : 1;
+                          const sps = (data.secondsPerStage||0) / (weatherSpeed*avgSoil*skill*greenhouseSpeed);
+                          const total = Math.max(0, Math.round(sps * (data.stages||1)));
+                          return `ETA ~ ${Math.floor(total/60)}m${(total%60).toString().padStart(2,'0')}s`;
+                        } catch(e) { return '' } })()}
+                      </div>
+                    </div>
                         </div>
                         <div className="text-right">
                           <div className="font-bold">{data.shopPrice}🪙</div>
+                          <div className="text-xs opacity-70">Own: {inventory[seed] || 0}</div>
                           <div className="text-xs opacity-70">{data.rarity}</div>
                         </div>
                       </Button>
                     ))}
                   </TabsContent>
-                  
+
+                  <TabsContent value="settings" className="space-y-3">
+                    <div className="p-3 bg-white/80 border rounded-xl shadow-sm space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">Animations</div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-slate-600">Enabled</label>
+                          <input type="checkbox" checked={animationsEnabled} onChange={e => setAnimationsEnabled(e.target.checked)} />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">Performance Mode</div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-slate-600">Reduce effects</label>
+                          <input type="checkbox" checked={performanceMode} onChange={e => setPerformanceMode(e.target.checked)} />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">Sound</div>
+                        <div className="flex items-center gap-3">
+                          <button className="px-2 py-1 border rounded text-xs" onClick={() => setSoundEnabled(v => !v)}>{soundEnabled ? 'Mute' : 'Unmute'}</button>
+                          <input type="range" min="0" max="1" step="0.1" value={sfxVolume} onChange={e => setSfxVolume(parseFloat(e.target.value))} />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">Time of Day</div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-slate-600">Auto</label>
+                          <input type="checkbox" checked={autoTimeOfDay} onChange={e => setAutoTimeOfDay(e.target.checked)} />
+                          {!autoTimeOfDay && (
+                            <select className="text-xs border rounded px-2 py-1" value={currentTimeOfDay} onChange={e => setCurrentTimeOfDay(e.target.value)}>
+                              {Object.keys(DAY_NIGHT_CYCLE).map(k => (
+                                <option key={k} value={k}>{DAY_NIGHT_CYCLE[k].name}</option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">Simulation</div>
+                        <div className="flex items-center gap-2">
+                          <button className="px-2 py-1 border rounded text-xs" onClick={() => setPaused(v => !v)}>{paused ? 'Resume' : 'Pause'}</button>
+                          <label className="text-xs text-slate-600">Speed</label>
+                          <select className="text-xs border rounded px-2 py-1" value={simSpeed} onChange={e => setSimSpeed(parseInt(e.target.value, 10))}>
+                            <option value={1}>1x</option>
+                            <option value={2}>2x</option>
+                            <option value={3}>3x</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-slate-500">Shortcuts: [ / ] switch seed, M mute, P pause, 1-3 speed, S save</div>
+                    </div>
+                    {/* Skills */}
+                    <div className="p-3 bg-white/80 border rounded-xl shadow-sm space-y-2">
+                      <div className="font-semibold text-slate-700">Skills</div>
+                      <div className="text-xs text-slate-600">Spend coins to unlock small permanent boosts.</div>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          variant="outline"
+                          className="text-xs"
+                          disabled={skills.growthBoost >= 0.2 || coins < 80}
+                          onClick={() => { if (coins >= 80 && (skills.growthBoost||0) < 0.2) { setCoins(c=>c-80); setSkills(s=>({ ...s, growthBoost: (s.growthBoost||0)+0.1 })); addNotification('Growth boost +10%', 'success'); }} }
+                        >
+                          🌿 Growth +10% (80🪙)
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="text-xs"
+                          disabled={skills.valueBoost >= 0.2 || coins < 100}
+                          onClick={() => { if (coins >= 100 && (skills.valueBoost||0) < 0.2) { setCoins(c=>c-100); setSkills(s=>({ ...s, valueBoost: (s.valueBoost||0)+0.1 })); addNotification('Sale value +10%', 'success'); }} }
+                        >
+                          💰 Value +10% (100🪙)
+                        </Button>
+                      </div>
+                      <div className="text-xs text-slate-600">Current: Growth +{Math.round((skills.growthBoost||0)*100)}%, Value +{Math.round((skills.valueBoost||0)*100)}%</div>
+                    </div>
+                  </TabsContent>
+
                   <TabsContent value="tools" className="space-y-2">
                     <Button 
                       onClick={() => buy("fertilizer", 1)} 
@@ -2441,6 +2769,59 @@ export default function FarmSimCanvas() {
                         <div className="font-bold">{rules.wateringCan.shopPrice}🪙</div>
                       </Button>
                     )}
+
+                    {/* Compost Empty Plots */}
+                    <Button 
+                      onClick={() => {
+                        const price = rules.soil.compostPrice || 20;
+                        if (coins < price) return;
+                        setCoins(c => c - price);
+                        setPlots(prev => prev.map(pl => {
+                          if (pl.state === 'empty') {
+                            const nf = Math.min(rules.soil.fertilityMax, (pl.soilFertility||1) + (rules.soil.compostBoost||0.2));
+                            return { ...pl, soilFertility: nf, lastSoilUpdate: nowSec() };
+                          }
+                          return pl;
+                        }));
+                        addNotification('Composted empty plots (+fertility)', 'success');
+                        playSfx('buy');
+                      }} 
+                      variant="outline" 
+                      className="w-full justify-between h-auto p-3"
+                      disabled={coins < (rules.soil.compostPrice || 20)}
+                    >
+                      <div className="text-left">
+                        <div className="font-semibold">Compost Empty Plots</div>
+                        <div className="text-xs opacity-70">Boost soil fertility for empty plots</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold">{rules.soil.compostPrice || 20}dY�T</div>
+                      </div>
+                    </Button>
+
+                    {/* Hire Farmhand */}
+                    <Button 
+                      onClick={() => {
+                        const price = rules.workforce.farmhandPrice || 100;
+                        if (coins < price) return;
+                        setCoins(c => c - price);
+                        setFarmhands(n => n + 1);
+                        addNotification('Hired a farmhand!', 'success');
+                        playSfx('buy');
+                      }} 
+                      variant="outline" 
+                      className="w-full justify-between h-auto p-3"
+                      disabled={coins < (rules.workforce.farmhandPrice || 100)}
+                    >
+                      <div className="text-left">
+                        <div className="font-semibold">Hire Farmhand</div>
+                        <div className="text-xs opacity-70">Automates watering and harvesting</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold">{rules.workforce.farmhandPrice || 100}dY�T</div>
+                        <div className="text-xs opacity-70">Hired: {farmhands}</div>
+                      </div>
+                    </Button>
                   </TabsContent>
                   
                   <TabsContent value="buildings" className="space-y-2">
@@ -3000,7 +3381,23 @@ export default function FarmSimCanvas() {
           </div>
 
         </div>
+
+        {/* Mobile Floating Settings FAB */}
+        <div className="fixed bottom-5 right-5 z-50 lg:hidden">
+          <Button
+            size="lg"
+            className="rounded-full shadow-xl bg-white text-slate-800 hover:bg-slate-50 border-2 border-white/70 backdrop-blur"
+            variant="outline"
+            onClick={() => setShopTab('settings')}
+            aria-label="Open Settings"
+            title="Open Settings"
+          >
+            <SettingsIcon size={18} className="mr-2"/>
+            Settings
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
+
