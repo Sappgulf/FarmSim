@@ -1,8 +1,15 @@
-const VERSION = 'v2';
+const VERSION = 'v3';
 const RUNTIME = `farm-runtime-${VERSION}`;
+const PRECACHE_URLS = ['/', '/index.html'];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(RUNTIME);
+      await cache.addAll(PRECACHE_URLS);
+      await self.skipWaiting();
+    })()
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -30,8 +37,8 @@ self.addEventListener('fetch', (event) => {
       } catch (e) {
         const cached = await cache.match(req);
         if (cached) return cached;
-        // As a last resort, try cached root
-        const root = await cache.match('/');
+        // As a last resort, try cached root or index.html
+        const root = (await cache.match('/')) || (await cache.match('/index.html'));
         if (root) return root;
         throw e;
       }

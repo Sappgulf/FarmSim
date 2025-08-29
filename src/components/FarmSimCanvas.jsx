@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -302,11 +302,15 @@ function formatTimeRemaining(endTime, currentTime) {
 }
 
 // Local save helpers with compression
-const SAVE_KEY = "farm_sim_enhanced_v1";
+const SAVE_KEY = "farm_sim_enhanced_v2";
 function loadSave() {
   try { 
     const s = localStorage.getItem(SAVE_KEY); 
-    if (s) return JSON.parse(s); 
+    if (s) {
+      const parsed = JSON.parse(s);
+      // Only return if it's v2 format, otherwise start fresh
+      if (parsed?.version === 2) return parsed;
+    }
   } catch {}
   return null;
 }
