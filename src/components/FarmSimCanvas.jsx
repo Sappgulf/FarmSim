@@ -8,7 +8,9 @@ import { Progress } from "./ui/progress";
 import { 
   AlertTriangle, CloudDrizzle, Sun, Bug, Sprout, Droplets, Zap, Timer, Store, Hammer, 
   Coins, Trophy, Target, Leaf, Snowflake, Wind, Heart, Star, Gift, ArrowUp, Moon,
-  CloudRain, CloudLightning, Flower, Calendar, Thermometer, Umbrella, Settings as SettingsIcon
+  CloudRain, CloudLightning, Flower, Calendar, Thermometer, Umbrella, Settings as SettingsIcon,
+  Users, MessageSquare, UserPlus, ShoppingCart, MapPin, Award, TrendingUp, Search, 
+  UserCheck, UserX, Mail, Eye, EyeOff, LogIn, LogOut, User
 } from "lucide-react";
 
 /**
@@ -249,6 +251,183 @@ const WEATHER_EFFECTS = {
   Pests: { icon: Bug, color: "text-red-500", bg: "bg-red-50" },
 };
 
+// Social & Multiplayer System Constants
+const SOCIAL_FEATURES = {
+  FRIENDS: {
+    MAX_FRIENDS: 50,
+    DAILY_GIFT_LIMIT: 5,
+    VISIT_REWARDS: { coins: 10, experience: 5 }
+  },
+  MARKET: {
+    LISTING_FEE: 5,
+    MAX_LISTINGS: 10,
+    COMMISSION_RATE: 0.05
+  },
+  EVENTS: {
+    DURATION: 7 * 24 * 60 * 60, // 7 days in seconds
+    MIN_PARTICIPANTS: 10,
+    REWARD_MULTIPLIER: 1.5
+  }
+};
+
+const COMMUNITY_EVENTS = {
+  harvest_festival: {
+    name: "🎃 Harvest Festival",
+    description: "Community competition to harvest the most crops",
+    requirement: "harvest_count",
+    target: 1000, // Global target
+    reward: { coins: 500, reputation: 100 },
+    emoji: "🎃"
+  },
+  market_crash: {
+    name: "📉 Market Recovery",
+    description: "Help stabilize the market by trading",
+    requirement: "trades_made",
+    target: 500,
+    reward: { coins: 300, reputation: 50 },
+    emoji: "📈"
+  },
+  weather_disaster: {
+    name: "🌪️ Storm Relief",
+    description: "Donate crops to help storm victims",
+    requirement: "donations",
+    target: 2000,
+    reward: { coins: 400, reputation: 150 },
+    emoji: "❤️"
+  }
+};
+
+const GIFT_TYPES = {
+  seeds: {
+    items: ["carrot", "potato", "corn", "tomato"],
+    rarity: { common: 0.7, uncommon: 0.25, rare: 0.05 },
+    amounts: { min: 1, max: 5 }
+  },
+  coins: {
+    amounts: { min: 10, max: 50 }
+  },
+  tools: {
+    items: ["fertilizer", "pesticide", "water"],
+    amounts: { min: 1, max: 3 }
+  },
+  special: {
+    items: ["golden_seed", "luck_charm", "growth_booster"],
+    rarity: 0.01 // Very rare
+  }
+};
+
+const PLAYER_RANKS = {
+  novice: { name: "🌱 Novice Farmer", minReputation: 0, benefits: [] },
+  apprentice: { name: "🚜 Apprentice", minReputation: 100, benefits: ["5% market bonus"] },
+  expert: { name: "🏆 Expert Farmer", minReputation: 500, benefits: ["10% market bonus", "Exclusive seeds"] },
+  master: { name: "👑 Master Farmer", minReputation: 1000, benefits: ["15% market bonus", "All benefits", "Special events"] },
+  legendary: { name: "🌟 Legendary", minReputation: 2500, benefits: ["20% market bonus", "Legendary status", "Custom farm themes"] }
+};
+
+// Account System & Player Database (Mock)
+const ACCOUNT_SYSTEM = {
+  MIN_USERNAME_LENGTH: 3,
+  MAX_USERNAME_LENGTH: 20,
+  MIN_PASSWORD_LENGTH: 4,
+  SEARCH_RESULTS_LIMIT: 10
+};
+
+// Mock Player Database (In real app, this would be server-side)
+const MOCK_PLAYERS = [
+  { id: "player_001", username: "FarmMaster", displayName: "Farm Master", level: 15, reputation: 450, joinDate: Date.now() - 86400000 * 30, country: "USA", avatar: "🚜", isOnline: true },
+  { id: "player_002", username: "CropQueen", displayName: "Crop Queen", level: 12, reputation: 320, joinDate: Date.now() - 86400000 * 20, country: "Canada", avatar: "👸", isOnline: false },
+  { id: "player_003", username: "HarvestKing", displayName: "Harvest King", level: 18, reputation: 680, joinDate: Date.now() - 86400000 * 45, country: "UK", avatar: "👑", isOnline: true },
+  { id: "player_004", username: "SeedSower", displayName: "Seed Sower", level: 8, reputation: 180, joinDate: Date.now() - 86400000 * 15, country: "Australia", avatar: "🌱", isOnline: false },
+  { id: "player_005", username: "GreenThumb", displayName: "Green Thumb", level: 22, reputation: 890, joinDate: Date.now() - 86400000 * 60, country: "Germany", avatar: "🌿", isOnline: true },
+  { id: "player_006", username: "TomatoTycoon", displayName: "Tomato Tycoon", level: 14, reputation: 380, joinDate: Date.now() - 86400000 * 25, country: "Italy", avatar: "🍅", isOnline: false },
+  { id: "player_007", username: "CornerField", displayName: "Corner Field", level: 16, reputation: 520, joinDate: Date.now() - 86400000 * 35, country: "France", avatar: "🌽", isOnline: true },
+  { id: "player_008", username: "FlowerPower", displayName: "Flower Power", level: 11, reputation: 290, joinDate: Date.now() - 86400000 * 18, country: "Netherlands", avatar: "🌸", isOnline: false }
+];
+
+let mockPlayerDatabase = [...MOCK_PLAYERS]; // Copy for modifications
+
+// Account System Functions (Mock Implementation)
+const AccountAPI = {
+  currentSession: null,
+  
+  async createAccount(username, password, displayName) {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Check if username exists
+    if (mockPlayerDatabase.find(p => p.username.toLowerCase() === username.toLowerCase())) {
+      throw new Error("Username already taken");
+    }
+    
+    const newPlayer = {
+      id: `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      username,
+      displayName: displayName || username,
+      level: 1,
+      reputation: 0,
+      joinDate: Date.now(),
+      country: "Unknown",
+      avatar: "🚜",
+      isOnline: true
+    };
+    
+    mockPlayerDatabase.push(newPlayer);
+    this.currentSession = newPlayer;
+    localStorage.setItem('farmgame_session', JSON.stringify(newPlayer));
+    return newPlayer;
+  },
+  
+  async login(username, password) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const player = mockPlayerDatabase.find(p => p.username.toLowerCase() === username.toLowerCase());
+    if (!player) {
+      throw new Error("Player not found");
+    }
+    
+    // Mark as online
+    player.isOnline = true;
+    this.currentSession = player;
+    localStorage.setItem('farmgame_session', JSON.stringify(player));
+    return player;
+  },
+  
+  logout() {
+    if (this.currentSession) {
+      const player = mockPlayerDatabase.find(p => p.id === this.currentSession.id);
+      if (player) player.isOnline = false;
+    }
+    this.currentSession = null;
+    localStorage.removeItem('farmgame_session');
+  },
+  
+  async searchPlayers(query) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const results = mockPlayerDatabase.filter(p => 
+      p.username.toLowerCase().includes(query.toLowerCase()) || 
+      p.displayName.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, ACCOUNT_SYSTEM.SEARCH_RESULTS_LIMIT);
+    
+    return results;
+  },
+  
+  getSession() {
+    if (this.currentSession) return this.currentSession;
+    
+    try {
+      const saved = localStorage.getItem('farmgame_session');
+      if (saved) {
+        this.currentSession = JSON.parse(saved);
+        return this.currentSession;
+      }
+    } catch (e) {
+      console.warn('Failed to load session:', e);
+    }
+    return null;
+  }
+};
+
 // NEW: Day/night cycle and visual effects
 const DAY_NIGHT_CYCLE = {
   day: { name: "☀️ Day", bg: "from-emerald-50 via-blue-50 to-purple-50", text: "text-slate-800" },
@@ -428,6 +607,61 @@ export default function FarmSimCanvas() {
   const [paused, setPaused] = useState(saved?.paused ?? false);
   const [simSpeed, setSimSpeed] = useState(saved?.simSpeed ?? 1);
 
+  // Account System State
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginMode, setLoginMode] = useState('login'); // 'login' or 'register'
+  const [loginForm, setLoginForm] = useState({ username: '', password: '', displayName: '' });
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  
+  // Friend System State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showFriendSearch, setShowFriendSearch] = useState(false);
+
+  // Social & Multiplayer State
+  const [playerId] = useState(saved?.playerId || `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [playerProfile, setPlayerProfile] = useState(saved?.playerProfile || {
+    displayName: saved?.name || "Farmer",
+    bio: "A passionate farmer growing the future!",
+    avatar: "🚜",
+    joinDate: Date.now(),
+    publicFarm: true,
+    country: "Unknown"
+  });
+  
+  // Friends & Social Network
+  const [friends, setFriends] = useState(saved?.friends || []);
+  const [friendRequests, setFriendRequests] = useState(saved?.friendRequests || []);
+  const [socialReputation, setSocialReputation] = useState(saved?.socialReputation || 0);
+  const [dailyGiftsReceived, setDailyGiftsReceived] = useState(saved?.dailyGiftsReceived || []);
+  const [dailyGiftsSent, setDailyGiftsSent] = useState(saved?.dailyGiftsSent || []);
+  const [lastGiftReset, setLastGiftReset] = useState(saved?.lastGiftReset || nowSec());
+  
+  // Community & Events
+  const [activeEvents, setActiveEvents] = useState(saved?.activeEvents || []);
+  const [eventContributions, setEventContributions] = useState(saved?.eventContributions || {});
+  const [globalStats, setGlobalStats] = useState(saved?.globalStats || {
+    totalPlayers: 1247,
+    activePlayers: 389,
+    cropsHarvested: 95432,
+    tradesCompleted: 3241
+  });
+  
+  // Farmers Market & Trading
+  const [marketListings, setMarketListings] = useState(saved?.marketListings || []);
+  const [myListings, setMyListings] = useState(saved?.myListings || []);
+  const [tradeHistory, setTradeHistory] = useState(saved?.tradeHistory || []);
+  const [marketReputation, setMarketReputation] = useState(saved?.marketReputation || 100);
+  
+  // Farm Visits & Ratings
+  const [farmVisits, setFarmVisits] = useState(saved?.farmVisits || []);
+  const [farmRating, setFarmRating] = useState(saved?.farmRating || { average: 5.0, totalRatings: 0 });
+  const [visitHistory, setVisitHistory] = useState(saved?.visitHistory || []);
+
   const [levelId, setLevelId] = useState(saved?.levelId || LEVELS[0].id);
   const level = useMemo(() => LEVELS.find(l => l.id === levelId), [levelId]);
   const [levelEndsAt, setLevelEndsAt] = useState(saved?.levelEndsAt || nowSec() + (LEVELS[0]?.minutes || 5) * 60);
@@ -514,6 +748,12 @@ export default function FarmSimCanvas() {
           farmTheme, decorations, farmLevel,
           // Town Development
           townBuildings, townEvents, townReputation,
+          // Social & Multiplayer
+          playerId, playerProfile, friends, friendRequests, socialReputation,
+          dailyGiftsReceived, dailyGiftsSent, lastGiftReset,
+          activeEvents, eventContributions, globalStats,
+          marketListings, myListings, tradeHistory, marketReputation,
+          farmVisits, farmRating, visitHistory,
           // Visual & Animation
           combo, comboTimer, particles, soundEnabled,
           sfxVolume, animationsEnabled, performanceMode, autoTimeOfDay,
@@ -1039,6 +1279,339 @@ export default function FarmSimCanvas() {
     setActionHistory(prev => [...prev.slice(-49), actionEntry]); // Keep last 50 actions
   };
 
+  // === ACCOUNT SYSTEM FUNCTIONS ===
+  
+  // Initialize account session on component mount
+  useEffect(() => {
+    const session = AccountAPI.getSession();
+    if (session) {
+      setCurrentUser(session);
+      setIsLoggedIn(true);
+      setPlayerProfile(prev => ({
+        ...prev,
+        displayName: session.displayName,
+        avatar: session.avatar,
+        country: session.country
+      }));
+    }
+  }, []);
+  
+  const handleLogin = async () => {
+    setLoginLoading(true);
+    setLoginError('');
+    
+    try {
+      let user;
+      if (loginMode === 'register') {
+        if (loginForm.username.length < ACCOUNT_SYSTEM.MIN_USERNAME_LENGTH) {
+          throw new Error(`Username must be at least ${ACCOUNT_SYSTEM.MIN_USERNAME_LENGTH} characters`);
+        }
+        if (loginForm.password.length < ACCOUNT_SYSTEM.MIN_PASSWORD_LENGTH) {
+          throw new Error(`Password must be at least ${ACCOUNT_SYSTEM.MIN_PASSWORD_LENGTH} characters`);
+        }
+        user = await AccountAPI.createAccount(loginForm.username, loginForm.password, loginForm.displayName);
+        addNotification(`Welcome to Farm Game, ${user.displayName}!`, "success");
+      } else {
+        user = await AccountAPI.login(loginForm.username, loginForm.password);
+        addNotification(`Welcome back, ${user.displayName}!`, "success");
+      }
+      
+      setCurrentUser(user);
+      setIsLoggedIn(true);
+      setShowLoginModal(false);
+      setLoginForm({ username: '', password: '', displayName: '' });
+      
+      // Update player profile with account data
+      setPlayerProfile(prev => ({
+        ...prev,
+        displayName: user.displayName,
+        avatar: user.avatar,
+        country: user.country
+      }));
+      
+    } catch (error) {
+      setLoginError(error.message);
+      addNotification(error.message, "error");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+  
+  const handleLogout = () => {
+    AccountAPI.logout();
+    setCurrentUser(null);
+    setIsLoggedIn(false);
+    addNotification("Logged out successfully", "info");
+  };
+  
+  const searchPlayers = async (query) => {
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    
+    setSearchLoading(true);
+    try {
+      const results = await AccountAPI.searchPlayers(query);
+      setSearchResults(results.filter(p => p.id !== currentUser?.id)); // Exclude self
+    } catch (error) {
+      addNotification("Search failed", "error");
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+  
+  // Enhanced friend request system
+  const sendFriendRequestToPlayer = async (targetPlayer) => {
+    if (!isLoggedIn) {
+      addNotification("Please log in to send friend requests", "error");
+      return;
+    }
+    
+    // Check if already friends
+    if (friends.find(f => f.username === targetPlayer.username)) {
+      addNotification("Already friends with this player!", "warning");
+      return;
+    }
+    
+    // Add to friends list (in real app, this would send a request)
+    const newFriend = {
+      id: targetPlayer.id,
+      name: targetPlayer.displayName,
+      username: targetPlayer.username,
+      addedAt: nowSec(),
+      lastOnline: nowSec(),
+      farmLevel: targetPlayer.level,
+      reputation: targetPlayer.reputation
+    };
+    
+    setFriends(prev => [...prev, newFriend]);
+    addNotification(`Friend request sent to ${targetPlayer.displayName}!`, "success");
+    logAction("friend_request_sent", { targetId: targetPlayer.id, targetName: targetPlayer.displayName });
+    setShowFriendSearch(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  // === SOCIAL & MULTIPLAYER FUNCTIONS ===
+  
+  // Friends & Social Network Functions
+  const sendFriendRequest = (targetPlayerId) => {
+    // In a real app, this would send to server
+    addNotification(`Friend request sent!`, "success");
+    logAction("friend_request_sent", { targetPlayerId });
+  };
+  
+  const acceptFriendRequest = (friendId, requestData) => {
+    setFriends(prev => [...prev, { 
+      id: friendId, 
+      name: requestData.name, 
+      addedAt: nowSec(),
+      lastOnline: nowSec(),
+      farmLevel: requestData.farmLevel || 1
+    }]);
+    setFriendRequests(prev => prev.filter(req => req.id !== friendId));
+    addNotification(`You're now friends with ${requestData.name}!`, "success");
+    logAction("friend_added", { friendId, friendName: requestData.name });
+  };
+  
+  const sendGiftToFriend = (friendId, giftType, giftItem, amount = 1) => {
+    const today = Math.floor(nowSec() / 86400); // Day number
+    const giftsToday = dailyGiftsSent.filter(g => Math.floor(g.timestamp / 86400) === today);
+    
+    if (giftsToday.length >= SOCIAL_FEATURES.FRIENDS.DAILY_GIFT_LIMIT) {
+      addNotification("Daily gift limit reached!", "error");
+      return;
+    }
+    
+    const gift = {
+      id: `gift_${Date.now()}`,
+      to: friendId,
+      type: giftType,
+      item: giftItem,
+      amount,
+      timestamp: nowSec()
+    };
+    
+    setDailyGiftsSent(prev => [...prev, gift]);
+    addNotification(`Gift sent! 🎁`, "success");
+    logAction("gift_sent", { friendId, giftType, giftItem, amount });
+  };
+  
+  const receiveGift = (gift) => {
+    // Add items to inventory based on gift type
+    if (gift.type === 'seeds') {
+      setInventory(prev => ({
+        ...prev,
+        [gift.item]: (prev[gift.item] || 0) + gift.amount
+      }));
+    } else if (gift.type === 'coins') {
+      setCoins(prev => prev + gift.amount);
+    }
+    
+    setDailyGiftsReceived(prev => [...prev, { ...gift, receivedAt: nowSec() }]);
+    addNotification(`Received ${gift.amount} ${gift.item} from friend! 🎁`, "success");
+    logAction("gift_received", gift);
+  };
+  
+  // Farmers Market Functions
+  const createMarketListing = (itemType, itemName, quantity, pricePerUnit) => {
+    const totalFee = SOCIAL_FEATURES.MARKET.LISTING_FEE;
+    if (coins < totalFee) {
+      addNotification("Not enough coins for listing fee!", "error");
+      return false;
+    }
+    
+    if (myListings.length >= SOCIAL_FEATURES.MARKET.MAX_LISTINGS) {
+      addNotification("Maximum listings reached!", "error");
+      return false;
+    }
+    
+    const listing = {
+      id: `listing_${Date.now()}`,
+      sellerId: playerId,
+      sellerName: playerProfile.displayName,
+      itemType,
+      itemName,
+      quantity,
+      pricePerUnit,
+      totalPrice: quantity * pricePerUnit,
+      createdAt: nowSec(),
+      expiresAt: nowSec() + (7 * 24 * 60 * 60), // 7 days
+      status: "active"
+    };
+    
+    // Remove items from inventory
+    if (itemType === 'seeds') {
+      setInventory(prev => ({
+        ...prev,
+        [itemName]: Math.max(0, (prev[itemName] || 0) - quantity)
+      }));
+    }
+    
+    setCoins(prev => prev - totalFee);
+    setMyListings(prev => [...prev, listing]);
+    addNotification(`Listed ${quantity} ${itemName} for ${pricePerUnit}💰 each!`, "success");
+    logAction("market_listing_created", listing);
+    return true;
+  };
+  
+  const purchaseFromMarket = (listing) => {
+    const totalCost = listing.totalPrice;
+    if (coins < totalCost) {
+      addNotification("Not enough coins!", "error");
+      return false;
+    }
+    
+    // Add items to buyer inventory
+    if (listing.itemType === 'seeds') {
+      setInventory(prev => ({
+        ...prev,
+        [listing.itemName]: (prev[listing.itemName] || 0) + listing.quantity
+      }));
+    }
+    
+    setCoins(prev => prev - totalCost);
+    
+    // Record trade
+    const trade = {
+      id: `trade_${Date.now()}`,
+      buyerId: playerId,
+      sellerId: listing.sellerId,
+      itemType: listing.itemType,
+      itemName: listing.itemName,
+      quantity: listing.quantity,
+      pricePerUnit: listing.pricePerUnit,
+      totalPrice: totalCost,
+      timestamp: nowSec()
+    };
+    
+    setTradeHistory(prev => [...prev, trade]);
+    setMarketReputation(prev => Math.min(1000, prev + 1));
+    addNotification(`Purchased ${listing.quantity} ${listing.itemName}!`, "success");
+    logAction("market_purchase", trade);
+    return true;
+  };
+  
+  // Farm Visit Functions
+  const visitFriend = (friendId) => {
+    const visit = {
+      id: `visit_${Date.now()}`,
+      visitedId: friendId,
+      timestamp: nowSec(),
+      rewards: SOCIAL_FEATURES.FRIENDS.VISIT_REWARDS
+    };
+    
+    // Give rewards for visiting
+    setCoins(prev => prev + visit.rewards.coins);
+    setSocialReputation(prev => prev + visit.rewards.experience);
+    
+    setVisitHistory(prev => [...prev.slice(-19), visit]); // Keep last 20 visits
+    addNotification(`Farm visit! +${visit.rewards.coins}💰 +${visit.rewards.experience}⭐`, "success");
+    logAction("farm_visit", visit);
+  };
+  
+  const rateFarm = (farmOwnerId, rating, comment = "") => {
+    const ratingData = {
+      raterId: playerId,
+      raterName: playerProfile.displayName,
+      rating,
+      comment,
+      timestamp: nowSec()
+    };
+    
+    addNotification(`Farm rated ${rating}⭐!`, "success");
+    logAction("farm_rated", ratingData);
+  };
+  
+  // Community Events Functions
+  const contributeToEvent = (eventType, amount) => {
+    const event = activeEvents.find(e => e.type === eventType);
+    if (!event) return false;
+    
+    const contribution = {
+      playerId,
+      playerName: playerProfile.displayName,
+      amount,
+      timestamp: nowSec()
+    };
+    
+    setEventContributions(prev => ({
+      ...prev,
+      [eventType]: [...(prev[eventType] || []), contribution]
+    }));
+    
+    setSocialReputation(prev => prev + Math.floor(amount / 10));
+    addNotification(`Contributed ${amount} to ${event.name}!`, "success");
+    logAction("event_contribution", { eventType, amount });
+    return true;
+  };
+  
+  // Player Rank System
+  const getPlayerRank = (reputation) => {
+    const ranks = Object.entries(PLAYER_RANKS).reverse();
+    for (const [key, rank] of ranks) {
+      if (reputation >= rank.minReputation) {
+        return { key, ...rank };
+      }
+    }
+    return { key: 'novice', ...PLAYER_RANKS.novice };
+  };
+  
+  const currentPlayerRank = useMemo(() => getPlayerRank(socialReputation), [socialReputation]);
+  
+  // Reset daily gifts at midnight
+  useEffect(() => {
+    const now = nowSec();
+    const daysSinceReset = Math.floor((now - lastGiftReset) / 86400);
+    if (daysSinceReset >= 1) {
+      setDailyGiftsReceived([]);
+      setDailyGiftsSent([]);
+      setLastGiftReset(now);
+    }
+  }, [currentTime, lastGiftReset]);
+
   // Growth accelerator for testing: backdate plantedAt so stages progress naturally
   const simulateGrowth = (seconds = 20) => {
     setPlots(prev => prev.map(p => {
@@ -1542,8 +2115,21 @@ export default function FarmSimCanvas() {
       playSfx("harvest");
       addParticle(i % gridSize * 120 + 60, Math.floor(i / gridSize) * 120 + 60, "coins", `+${val}`);
       
+      // NEW: Gain social reputation from farming activities
+      const reputationGain = Math.max(1, Math.floor(val / 20)); // 1 rep per 20 coins earned
+      setSocialReputation(prev => prev + reputationGain);
+      setTownReputation(prev => prev + Math.floor(reputationGain / 2)); // Town rep is half of social rep
+      
       // Check achievements
       checkAllAchievements();
+      
+      // Log farming activity for social system
+      logAction("harvest", { 
+        crop: p.seed, 
+        value: val, 
+        quality: p.quality,
+        reputationGained: reputationGain
+      });
       
       const newFert = Math.max(rules.soil.fertilityMin, (p.soilFertility || 1) - (rules.soil.decayOnHarvest || 0.05));
       return { ...newPlot("empty"), lastCropFamily, lastHarvested: nowSec(), soilFertility: newFert };
@@ -1654,6 +2240,13 @@ function buy(item, qty = 1) {
     const emoji = rules.seeds[item]?.emoji || "📦";
     addLog(`🛒 Bought ${qty}x ${emoji} ${item} for ${price}🪙`);
     addNotification(`Bought ${qty}x ${item}`, "info");
+    
+    // NEW: Gain small reputation for market activity
+    if (item in rules.seeds && qty >= 5) {
+      setSocialReputation(prev => prev + 1);
+      logAction("bulk_purchase", { item, quantity: qty, price });
+    }
+    
     release();
   }
 
@@ -2449,6 +3042,52 @@ function buy(item, qty = 1) {
               <span className="font-semibold text-slate-700">{DAY_NIGHT_CYCLE[currentTimeOfDay].name}</span>
             </div>
 
+            {/* Social Quick Access Panel */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg border border-white/50">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 text-sm">
+                  <Users size={16} className="text-blue-600"/>
+                  <span className="font-semibold text-blue-700">{friends.length}</span>
+                </div>
+                <div className="flex items-center gap-1 text-sm">
+                  <Star size={16} className="text-yellow-600"/>
+                  <span className="font-semibold text-yellow-700">{socialReputation}</span>
+                </div>
+                <Badge variant="outline" className="text-xs px-2 py-1">
+                  {currentPlayerRank.name.split(' ')[1] || 'Novice'}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Account Button */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50">
+              {isLoggedIn ? (
+                <div className="flex items-center gap-2">
+                  <div className="px-3 py-2">
+                    <div className="text-sm font-semibold text-slate-800">{currentUser?.displayName}</div>
+                    <div className="text-xs text-slate-600">@{currentUser?.username}</div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleLogout}
+                    className="h-auto p-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <LogOut size={16} />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => setShowLoginModal(true)}
+                  className="m-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  <LogIn size={16} className="mr-1" />
+                  Login
+                </Button>
+              )}
+            </div>
+
             {/* Quick Settings Button moved to shop tabs; header button removed per request */}
           </div>
         </div>
@@ -2555,6 +3194,170 @@ function buy(item, qty = 1) {
               </CardContent>
             </Card>
 
+            {/* Friends & Social Panel */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="text-blue-600" size={20}/>
+                  Social Hub
+                  <Badge variant="outline" className="ml-auto">
+                    {currentPlayerRank.name.split(' ').slice(-1)[0]}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="text-center p-2 bg-blue-50 rounded">
+                    <div className="font-bold text-blue-600">{friends.length}</div>
+                    <div className="text-xs">Friends</div>
+                  </div>
+                  <div className="text-center p-2 bg-yellow-50 rounded">
+                    <div className="font-bold text-yellow-600">{socialReputation}</div>
+                    <div className="text-xs">Social Rep</div>
+                  </div>
+                </div>
+                
+                {/* Quick Friends List */}
+                <div>
+                  <div className="text-sm font-semibold mb-2 flex items-center justify-between">
+                    👫 Friends
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => setShowFriendSearch(true)}
+                      className="text-xs h-6 px-2"
+                    >
+                      <Search size={12} className="mr-1"/>
+                      Find
+                    </Button>
+                  </div>
+                  <div className="space-y-1 max-h-24 overflow-y-auto">
+                    {friends.length === 0 ? (
+                      <div className="text-xs text-gray-500 text-center py-2">
+                        No friends yet. Add some to start socializing!
+                      </div>
+                    ) : (
+                      friends.slice(0, 3).map(friend => (
+                        <div key={friend.id} className="flex justify-between items-center p-2 bg-gray-50 rounded text-xs">
+                          <div>
+                            <div className="font-semibold">{friend.name}</div>
+                            <div className="text-gray-500">Lv {friend.farmLevel}</div>
+                          </div>
+                          <div className="space-x-1">
+                            <Button 
+                              onClick={() => visitFriend(friend.id)}
+                              size="sm" 
+                              className="text-xs h-6 px-2"
+                            >
+                              🏠
+                            </Button>
+                            <Button 
+                              onClick={() => sendGiftToFriend(friend.id, 'seeds', 'carrot', 1)}
+                              size="sm" 
+                              className="text-xs h-6 px-2"
+                              disabled={dailyGiftsSent.filter(g => 
+                                Math.floor(g.timestamp / 86400) === Math.floor(nowSec() / 86400)
+                              ).length >= SOCIAL_FEATURES.FRIENDS.DAILY_GIFT_LIMIT}
+                            >
+                              🎁
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Friend Requests */}
+                {receivedRequests.length > 0 && (
+                  <div>
+                    <div className="text-sm font-semibold mb-2 flex items-center">
+                      <Mail size={16} className="mr-1 text-blue-600"/>
+                      Friend Requests ({receivedRequests.length})
+                    </div>
+                    <div className="space-y-1 max-h-20 overflow-y-auto">
+                      {receivedRequests.map(request => {
+                        const fromPlayer = ACCOUNT_SYSTEM.MOCK_PLAYERS.find(p => p.id === request.fromUserId);
+                        return (
+                          <div key={request.id} className="flex justify-between items-center p-2 bg-blue-50 rounded text-xs">
+                            <div>
+                              <div className="font-semibold">{fromPlayer?.displayName || 'Unknown'}</div>
+                              <div className="text-gray-500">@{fromPlayer?.username}</div>
+                            </div>
+                            <div className="space-x-1">
+                              <Button 
+                                onClick={() => acceptFriendRequest(request.id)}
+                                size="sm" 
+                                className="text-xs h-6 px-2 bg-green-500 hover:bg-green-600"
+                              >
+                                <UserCheck size={10} />
+                              </Button>
+                              <Button 
+                                onClick={() => rejectFriendRequest(request.id)}
+                                size="sm" 
+                                variant="outline"
+                                className="text-xs h-6 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <UserX size={10} />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Account Status */}
+                {!isLoggedIn && (
+                  <div className="bg-orange-50 border border-orange-200 rounded p-2">
+                    <div className="text-sm font-semibold text-orange-800 mb-1">🔒 Account Required</div>
+                    <div className="text-xs text-orange-700 mb-2">
+                      Create an account to save your progress and add friends!
+                    </div>
+                    <Button 
+                      size="sm" 
+                      onClick={() => setShowLoginModal(true)}
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white text-xs"
+                    >
+                      <LogIn size={12} className="mr-1" />
+                      Get Started
+                    </Button>
+                  </div>
+                )}
+
+                {/* Market Quick Stats */}
+                <div>
+                  <div className="text-sm font-semibold mb-2">🛒 Market Activity</div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="text-center p-1 bg-green-50 rounded">
+                      <div className="font-bold">{myListings.length}</div>
+                      <div>My Listings</div>
+                    </div>
+                    <div className="text-center p-1 bg-purple-50 rounded">
+                      <div className="font-bold">{tradeHistory.length}</div>
+                      <div>Trades Made</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recent Activity */}
+                {(tradeHistory.length > 0 || visitHistory.length > 0) && (
+                  <div>
+                    <div className="text-sm font-semibold mb-2">📈 Recent Activity</div>
+                    <div className="space-y-1 max-h-16 overflow-y-auto text-xs">
+                      {[...tradeHistory.slice(-2), ...visitHistory.slice(-2)].map((activity, idx) => (
+                        <div key={idx} className="text-gray-600">
+                          {activity.buyerId ? `🛒 Bought ${activity.itemName}` : `🏠 Visited friend`}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Enhanced Shop */}
             <Card>
               <CardHeader>
@@ -2571,6 +3374,8 @@ function buy(item, qty = 1) {
                     <TabsTrigger className="shrink-0" value="buildings">🏗️ Buildings</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="market">📈 Market</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="town">🏛️ Town</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="social">👥 Social</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="community">🌍 Community</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="expand">📏 Expand</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="test">🧪 Test</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="settings">⚙️ Settings</TabsTrigger>
@@ -2904,65 +3709,390 @@ function buy(item, qty = 1) {
                   </TabsContent>
                   
                   <TabsContent value="town" className="space-y-2">
-                    <div className="space-y-3">
-                      <div className="text-sm font-semibold">🏛️ Town Buildings</div>
-                      <div className="grid grid-cols-1 gap-2">
-                        {Object.entries(TOWN_BUILDINGS).map(([buildingId, building]) => (
+                    <div className="text-sm font-semibold mb-2">🏛️ Town Development</div>
+                    
+                    {/* Town & Social Status */}
+                    <div className="bg-purple-50 p-3 rounded border">
+                      <h4 className="text-sm font-semibold mb-2">🏆 Your Standing</h4>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="flex justify-between">
+                          <span>Town Rep:</span>
+                          <span className="font-semibold">{townReputation}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Social Rep:</span>
+                          <span className="font-semibold">{socialReputation}⭐</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Player Rank:</span>
+                          <Badge variant="outline" className="text-xs">{currentPlayerRank.name.split(' ').slice(-1)[0]}</Badge>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Friends:</span>
+                          <span className="font-semibold">{friends.length}</span>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-600">
+                        💡 Gain reputation by harvesting, trading, and helping friends!
+                      </div>
+                    </div>
+
+                    {/* Town Buildings */}
+                    <div className="bg-blue-50 p-3 rounded border">
+                      <h4 className="text-sm font-semibold mb-2">🏗️ Town Buildings</h4>
+                      <div className="space-y-2">
+                        {Object.entries(TOWN_BUILDINGS).slice(0, 6).map(([buildingId, building]) => (
                           <Button
                             key={buildingId}
                             onClick={() => buildTownBuilding(buildingId)}
-                            className="justify-between h-auto p-3"
-                            variant={townBuildings[buildingId] ? "secondary" : "outline"}
+                            className="w-full justify-between h-auto p-3"
+                            variant={townBuildings[buildingId]?.built ? "secondary" : "outline"}
                             disabled={
-                              townBuildings[buildingId] ||
+                              townBuildings[buildingId]?.built ||
                               coins < building.cost ||
-                              (building.reputationRequired && reputation < building.reputationRequired)
+                              (building.reputationRequired && townReputation < building.reputationRequired)
                             }
                           >
                             <div className="text-left">
                               <div className="flex items-center gap-2">
                                 <span>{building.emoji}</span>
                                 <span className="font-bold">{building.name}</span>
-                                {townBuildings[buildingId] && <span className="text-green-600">✓</span>}
+                                {townBuildings[buildingId]?.built && <span className="text-green-600">✓</span>}
                               </div>
                               <div className="text-xs opacity-75">{building.description}</div>
-                              {building.reputationRequired && (
+                              {building.reputationRequired && townReputation < building.reputationRequired && (
                                 <div className="text-xs text-orange-600">
-                                  Requires {building.reputationRequired} reputation
+                                  Need {building.reputationRequired - townReputation} more town reputation
                                 </div>
                               )}
                             </div>
                             <div className="text-right">
-                              <div className="text-lg">{building.cost}💰</div>
+                              <div className="text-lg font-bold">{building.cost}💰</div>
+                              {building.reputationRequired && (
+                                <div className="text-xs opacity-70">Rep: {building.reputationRequired}</div>
+                              )}
                             </div>
                           </Button>
                         ))}
                       </div>
+                    </div>
+
+                    {/* Social Integration */}
+                    <div className="bg-green-50 p-3 rounded border">
+                      <h4 className="text-sm font-semibold mb-2">🤝 Community Involvement</h4>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between">
+                          <span>Market Reputation:</span>
+                          <span className="font-semibold">{marketReputation}/1000</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Completed Trades:</span>
+                          <span className="font-semibold">{tradeHistory.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Farm Visits:</span>
+                          <span className="font-semibold">{visitHistory.length}</span>
+                        </div>
+                        <div className="mt-2 space-x-1">
+                          <Button 
+                            onClick={() => {
+                              setSocialReputation(prev => prev + 5);
+                              setTownReputation(prev => prev + 2);
+                              addNotification("Volunteered in town! +5⭐ +2🏛️", "success");
+                            }}
+                            size="sm" 
+                            className="text-xs"
+                          >
+                            �️ Volunteer (+5⭐)
+                          </Button>
+                          <Button 
+                            onClick={() => {
+                              if (coins >= 100) {
+                                setCoins(prev => prev - 100);
+                                setTownReputation(prev => prev + 10);
+                                addNotification("Donated to town! +10🏛️", "success");
+                              } else {
+                                addNotification("Need 100💰 to donate!", "error");
+                              }
+                            }}
+                            size="sm" 
+                            className="text-xs"
+                            disabled={coins < 100}
+                          >
+                            💰 Donate (100💰 → +10🏛️)
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                       
-                      <div className="text-sm font-semibold">🎪 Active Town Events</div>
+                    {/* Active Town Events */}
+                    <div className="bg-yellow-50 p-3 rounded border">
+                      <h4 className="text-sm font-semibold mb-2">🎪 Town Events</h4>
                       {townEvents.length > 0 ? (
                         <div className="space-y-2">
                           {townEvents.map((event, idx) => (
-                            <div key={idx} className="p-2 border rounded bg-purple-50">
-                              <div className="text-xs">{event.emoji} {event.name}</div>
+                            <div key={idx} className="p-2 border rounded bg-white">
+                              <div className="text-xs font-semibold">{event.emoji} {event.name}</div>
                               <div className="text-xs text-gray-600">{event.description}</div>
                               <div className="text-xs">Ends in: {Math.max(0, event.endTime - nowSec())}s</div>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="text-xs text-gray-500">No active town events</div>
+                        <div className="text-xs text-gray-500 text-center py-2">
+                          No active town events. Check back later!
+                        </div>
                       )}
-                      
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm">Town Reputation: {townReputation}</div>
-                        <Button onClick={triggerTownEvent} size="sm" variant="outline">
-                          Test Town Event
+                      <div className="mt-2">
+                        <Button 
+                          onClick={triggerTownEvent} 
+                          size="sm" 
+                          variant="outline"
+                          className="w-full text-xs"
+                        >
+                          🎲 Trigger Random Event
                         </Button>
                       </div>
                     </div>
                   </TabsContent>
-                  
+
+                  <TabsContent value="social" className="space-y-2">
+                    <div className="text-sm font-semibold mb-2">👥 Social Hub</div>
+                    
+                    {/* Player Profile & Stats */}
+                    <div className="bg-purple-50 p-3 rounded border">
+                      <h4 className="text-sm font-semibold mb-2">👤 Your Profile</h4>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between">
+                          <span>{playerProfile.avatar} {playerProfile.displayName}</span>
+                          <Badge variant="outline">{currentPlayerRank.name}</Badge>
+                        </div>
+                        <div className="text-xs text-gray-600">{playerProfile.bio}</div>
+                        <div className="flex justify-between">
+                          <span>Social Rep:</span>
+                          <span className="font-semibold">{socialReputation}⭐</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Friends:</span>
+                          <span className="font-semibold">{friends.length}/{SOCIAL_FEATURES.FRIENDS.MAX_FRIENDS}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Friends List */}
+                    <div className="bg-blue-50 p-3 rounded border">
+                      <h4 className="text-sm font-semibold mb-2">👫 Friends ({friends.length})</h4>
+                      <div className="space-y-1 text-xs max-h-32 overflow-y-auto">
+                        {friends.length === 0 ? (
+                          <div className="text-gray-500 text-center py-2">
+                            No friends yet. Add some to share gifts and visit farms!
+                          </div>
+                        ) : (
+                          friends.slice(0, 5).map(friend => (
+                            <div key={friend.id} className="flex justify-between items-center p-2 bg-white rounded border">
+                              <div>
+                                <div className="font-semibold">{friend.name}</div>
+                                <div className="text-xs text-gray-500">Level {friend.farmLevel}</div>
+                              </div>
+                              <div className="space-x-1">
+                                <Button 
+                                  onClick={() => visitFriend(friend.id)}
+                                  size="sm" 
+                                  className="text-xs"
+                                >
+                                  🏠 Visit
+                                </Button>
+                                <Button 
+                                  onClick={() => sendGiftToFriend(friend.id, 'seeds', 'carrot', 2)}
+                                  size="sm" 
+                                  className="text-xs"
+                                  disabled={dailyGiftsSent.filter(g => 
+                                    Math.floor(g.timestamp / 86400) === Math.floor(nowSec() / 86400)
+                                  ).length >= SOCIAL_FEATURES.FRIENDS.DAILY_GIFT_LIMIT}
+                                >
+                                  🎁 Gift
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      <div className="mt-2 flex space-x-1">
+                        <Button 
+                          onClick={() => sendFriendRequest("demo_player_123")}
+                          size="sm" 
+                          className="text-xs"
+                        >
+                          <UserPlus className="w-3 h-3 mr-1" />
+                          Add Friend
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Farmers Market */}
+                    <div className="bg-green-50 p-3 rounded border">
+                      <h4 className="text-sm font-semibold mb-2">🛒 Farmers Market</h4>
+                      <div className="text-xs space-y-2">
+                        <div className="flex justify-between">
+                          <span>Market Rep:</span>
+                          <span className="font-semibold">{marketReputation}/1000</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>My Listings:</span>
+                          <span className="font-semibold">{myListings.length}/{SOCIAL_FEATURES.MARKET.MAX_LISTINGS}</span>
+                        </div>
+                        <div className="space-x-1">
+                          <Button 
+                            onClick={() => createMarketListing('seeds', 'carrot', 5, 15)}
+                            size="sm" 
+                            className="text-xs"
+                            disabled={(inventory.carrot || 0) < 5 || myListings.length >= SOCIAL_FEATURES.MARKET.MAX_LISTINGS}
+                          >
+                            📦 Sell Carrots (5 for 15💰)
+                          </Button>
+                          <Button 
+                            onClick={() => createMarketListing('seeds', 'corn', 3, 25)}
+                            size="sm" 
+                            className="text-xs"
+                            disabled={(inventory.corn || 0) < 3 || myListings.length >= SOCIAL_FEATURES.MARKET.MAX_LISTINGS}
+                          >
+                            📦 Sell Corn (3 for 25💰)
+                          </Button>
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          Listing fee: {SOCIAL_FEATURES.MARKET.LISTING_FEE}💰 • Commission: {SOCIAL_FEATURES.MARKET.COMMISSION_RATE * 100}%
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Recent Activity */}
+                    <div className="bg-yellow-50 p-3 rounded border">
+                      <h4 className="text-sm font-semibold mb-2">📊 Recent Activity</h4>
+                      <div className="text-xs space-y-1 max-h-24 overflow-y-auto">
+                        {tradeHistory.slice(-3).reverse().map(trade => (
+                          <div key={trade.id} className="text-xs">
+                            🛒 Bought {trade.quantity} {trade.itemName} for {trade.totalPrice}💰
+                          </div>
+                        ))}
+                        {visitHistory.slice(-2).reverse().map(visit => (
+                          <div key={visit.id} className="text-xs">
+                            🏠 Visited friend's farm (+{visit.rewards.coins}💰)
+                          </div>
+                        ))}
+                        {dailyGiftsReceived.slice(-2).reverse().map(gift => (
+                          <div key={gift.id} className="text-xs">
+                            🎁 Received {gift.amount} {gift.item} from friend
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="community" className="space-y-2">
+                    <div className="text-sm font-semibold mb-2">🌍 Community Hub</div>
+                    
+                    {/* Global Stats */}
+                    <div className="bg-blue-50 p-3 rounded border">
+                      <h4 className="text-sm font-semibold mb-2">🌐 Global Statistics</h4>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="text-center p-2 bg-white rounded">
+                          <div className="font-bold text-blue-600">{globalStats.totalPlayers.toLocaleString()}</div>
+                          <div className="text-xs">Total Players</div>
+                        </div>
+                        <div className="text-center p-2 bg-white rounded">
+                          <div className="font-bold text-green-600">{globalStats.activePlayers.toLocaleString()}</div>
+                          <div className="text-xs">Online Now</div>
+                        </div>
+                        <div className="text-center p-2 bg-white rounded">
+                          <div className="font-bold text-orange-600">{globalStats.cropsHarvested.toLocaleString()}</div>
+                          <div className="text-xs">Crops Harvested</div>
+                        </div>
+                        <div className="text-center p-2 bg-white rounded">
+                          <div className="font-bold text-purple-600">{globalStats.tradesCompleted.toLocaleString()}</div>
+                          <div className="text-xs">Trades Made</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Active Community Events */}
+                    <div className="bg-green-50 p-3 rounded border">
+                      <h4 className="text-sm font-semibold mb-2">🎉 Community Events</h4>
+                      <div className="space-y-2 text-xs">
+                        {Object.entries(COMMUNITY_EVENTS).slice(0, 2).map(([eventId, event]) => (
+                          <div key={eventId} className="p-2 border rounded bg-white">
+                            <div className="flex justify-between items-start mb-1">
+                              <div className="font-semibold">{event.emoji} {event.name}</div>
+                              <Badge variant="outline" className="text-xs">7d left</Badge>
+                            </div>
+                            <div className="text-xs text-gray-600 mb-2">{event.description}</div>
+                            <div className="flex justify-between items-center">
+                              <div className="text-xs">
+                                Progress: {Math.floor(event.target * 0.65)}/{event.target}
+                              </div>
+                              <Button 
+                                onClick={() => contributeToEvent(eventId, 10)}
+                                size="sm" 
+                                className="text-xs"
+                              >
+                                Contribute
+                              </Button>
+                            </div>
+                            <Progress value={(event.target * 0.65 / event.target) * 100} className="mt-1 h-2" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Leaderboards */}
+                    <div className="bg-yellow-50 p-3 rounded border">
+                      <h4 className="text-sm font-semibold mb-2">🏆 Leaderboards</h4>
+                      <div className="space-y-2 text-xs">
+                        <div className="p-2 bg-white rounded border">
+                          <div className="font-semibold mb-1">Top Farmers (Reputation)</div>
+                          <div className="space-y-1">
+                            <div className="flex justify-between">
+                              <span>🥇 CropMaster2024</span>
+                              <span>2,847⭐</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>🥈 FarmQueen</span>
+                              <span>2,234⭐</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>🥉 HarvestKing</span>
+                              <span>1,892⭐</span>
+                            </div>
+                            <div className="flex justify-between text-blue-600">
+                              <span>#{Math.floor(Math.random() * 200) + 50} {playerProfile.displayName}</span>
+                              <span>{socialReputation}⭐</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Your Contributions */}
+                    <div className="bg-purple-50 p-3 rounded border">
+                      <h4 className="text-sm font-semibold mb-2">🎯 Your Contributions</h4>
+                      <div className="text-xs space-y-1">
+                        {Object.entries(eventContributions).length === 0 ? (
+                          <div className="text-gray-500 text-center py-2">
+                            No contributions yet. Join community events above!
+                          </div>
+                        ) : (
+                          Object.entries(eventContributions).map(([eventType, contributions]) => (
+                            <div key={eventType} className="flex justify-between">
+                              <span>{COMMUNITY_EVENTS[eventType]?.name || eventType}:</span>
+                              <span className="font-semibold">
+                                {contributions.reduce((sum, c) => sum + c.amount, 0)} contributed
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </TabsContent>
+
                   <TabsContent value="expand" className="space-y-2">
                     {gridSize < MAX_SIZE && (
                       <Button 
@@ -3400,6 +4530,196 @@ function buy(item, qty = 1) {
             Settings
           </Button>
         </div>
+
+        {/* Login/Register Modal */}
+        {showLoginModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+            <Card className="w-96 max-w-[90vw] bg-white/95 backdrop-blur border-2 border-white/60 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>🌾 {loginForm.mode === 'login' ? 'Welcome Back' : 'Create Account'}</span>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => setShowLoginModal(false)}
+                    className="h-auto p-1"
+                  >
+                    ✕
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {loginError && (
+                  <div className="text-red-600 text-sm bg-red-50 p-2 rounded border border-red-200">
+                    {loginError}
+                  </div>
+                )}
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Username
+                    </label>
+                    <input
+                      type="text"
+                      value={loginForm.username}
+                      onChange={(e) => setLoginForm(prev => ({ ...prev, username: e.target.value }))}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      placeholder="Enter username"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={loginForm.password}
+                      onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      placeholder="Enter password"
+                    />
+                  </div>
+                  
+                  {loginForm.mode === 'register' && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Display Name
+                      </label>
+                      <input
+                        type="text"
+                        value={loginForm.displayName}
+                        onChange={(e) => setLoginForm(prev => ({ ...prev, displayName: e.target.value }))}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        placeholder="Enter display name"
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleLogin}
+                    className="flex-1"
+                    disabled={!loginForm.username || !loginForm.password || (loginForm.mode === 'register' && !loginForm.displayName)}
+                  >
+                    {loginForm.mode === 'login' ? '🚪 Login' : '✨ Create Account'}
+                  </Button>
+                </div>
+                
+                <div className="text-center">
+                  <button
+                    onClick={() => setLoginForm(prev => ({ 
+                      ...prev, 
+                      mode: prev.mode === 'login' ? 'register' : 'login',
+                      username: '',
+                      password: '',
+                      displayName: ''
+                    }))}
+                    className="text-sm text-emerald-600 hover:text-emerald-700 underline"
+                  >
+                    {loginForm.mode === 'login' ? 
+                      "Don't have an account? Create one" : 
+                      "Already have an account? Login"
+                    }
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Friend Search Modal */}
+        {showFriendSearch && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+            <Card className="w-96 max-w-[90vw] bg-white/95 backdrop-blur border-2 border-white/60 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>🔍 Find Friends</span>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => setShowFriendSearch(false)}
+                    className="h-auto p-1"
+                  >
+                    ✕
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Search Players
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      placeholder="Enter username or display name"
+                    />
+                    <Button onClick={searchPlayers} size="sm">
+                      <Search size={16} />
+                    </Button>
+                  </div>
+                </div>
+                
+                {searchResults.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-slate-700">Search Results:</div>
+                    <div className="max-h-64 overflow-y-auto space-y-2">
+                      {searchResults.map(player => (
+                        <div key={player.id} className="flex items-center justify-between p-2 bg-slate-50 rounded border">
+                          <div>
+                            <div className="font-medium">{player.displayName}</div>
+                            <div className="text-xs text-slate-500">@{player.username}</div>
+                            <div className="text-xs text-slate-500">Level {player.level} • Rep: {player.reputation}</div>
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => sendFriendRequestToPlayer(player.id)}
+                            disabled={
+                              friends.some(f => f.id === player.id) ||
+                              sentRequests.some(r => r.toUserId === player.id) ||
+                              receivedRequests.some(r => r.fromUserId === player.id)
+                            }
+                          >
+                            {friends.some(f => f.id === player.id) ? (
+                              <>
+                                <UserCheck size={12} className="mr-1" />
+                                Friends
+                              </>
+                            ) : sentRequests.some(r => r.toUserId === player.id) ? (
+                              <>
+                                <Mail size={12} className="mr-1" />
+                                Sent
+                              </>
+                            ) : receivedRequests.some(r => r.fromUserId === player.id) ? (
+                              'Accept?'
+                            ) : (
+                              <>
+                                <UserPlus size={12} className="mr-1" />
+                                Add
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {searchQuery && searchResults.length === 0 && (
+                  <div className="text-center text-slate-500 py-4">
+                    No players found matching "{searchQuery}"
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
