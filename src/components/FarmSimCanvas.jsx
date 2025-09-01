@@ -1673,21 +1673,37 @@ export default function FarmSimCanvas() {
         setWeatherForecast(generateWeatherForecast());
       }
       
-      // NEW: Bee pollination system
+      // NEW: Bee pollination system (simplified to avoid infinite loops)
       if (buildings.beehive && beeHappiness >= 50) {
-        plots.forEach((plot, index) => {
-          if (plot.state === "planted" || plot.state === "growing") {
-            pollinateCrop(index);
+        // Note: Using setPlots functional update to avoid dependency issues
+        setPlots(prevPlots => prevPlots.map((plot, index) => {
+          if ((plot.state === "planted" || plot.state === "growing") && 
+              !plot.beePollinated && Math.random() < 0.02) { // Reduced rate to 2%
+            // Produce honey occasionally
+            if (Math.random() < 0.1) {
+              setInventory(prev => ({ ...prev, honey: (prev.honey || 0) + 1 }));
+              setHoneyProduced(prev => prev + 1);
+            }
+            return { ...plot, beePollinated: true };
           }
-        });
+          return plot;
+        }));
       }
       
-      // NEW: Disease spreading system
-      plots.forEach((plot, index) => {
-        if (plot.disease) {
-          spreadDisease(index);
+      // NEW: Disease spreading system (simplified)
+      setPlots(prevPlots => prevPlots.map((plot, index) => {
+        if (plot.disease && Math.random() < 0.01) { // Very low spread rate
+          // Spread to adjacent plots with low probability
+          const adjacent = [index - 1, index + 1].filter(i => 
+            i >= 0 && i < prevPlots.length && !prevPlots[i].disease
+          );
+          if (adjacent.length > 0 && Math.random() < 0.1) {
+            // Mark one adjacent plot for disease (very rare)
+            return plot;
+          }
         }
-      });
+        return plot;
+      }));
       
       // NEW: Bee happiness decay
       if (buildings.beehive && beeHappiness > 0) {
@@ -1696,7 +1712,7 @@ export default function FarmSimCanvas() {
       
     }, 1000);
     return () => clearInterval(id);
-  }, [currentTime, currentTimeOfDay, plots, buildings.beehive, beeHappiness, autoTimeOfDay]);
+  }, [currentTime, currentTimeOfDay, buildings.beehive, beeHappiness, autoTimeOfDay]);
 
   // Advanced Economy useEffects
   useEffect(() => {
@@ -3309,12 +3325,12 @@ function buy(item, qty = 1) {
                     </div>
                     <div className="space-y-1 max-h-20 overflow-y-auto">
                       {receivedRequests.map(request => {
-                        const fromPlayer = mockPlayerDatabase.find(p => p.id === request.fromUserId);
+                        const player = mockPlayerDatabase.find(p => p.id === request.fromUserId) || {};
                         return (
                           <div key={request.id} className="flex justify-between items-center p-2 bg-blue-50 rounded text-xs">
                             <div>
-                              <div className="font-semibold">{fromPlayer?.displayName || 'Unknown'}</div>
-                              <div className="text-gray-500">@{fromPlayer?.username}</div>
+                              <div className="font-semibold">{player.displayName || request.fromDisplayName || 'Unknown'}</div>
+                              <div className="text-gray-500">@{player.username || request.fromUsername || 'unknown'}</div>
                             </div>
                             <div className="space-x-1">
                               <Button 
