@@ -1403,11 +1403,11 @@ export default function FarmSimCanvas() {
 
   // Accept friend request
   const acceptFriendRequestFromPlayer = (request) => {
-    // Add to friends list
+    // Add to friends list - handle both sent and received request formats
     const newFriend = {
-      id: request.fromUserId,
-      name: request.fromDisplayName,
-      username: request.fromUsername,
+      id: request.fromUserId || request.toUserId,
+      name: request.fromDisplayName || request.toDisplayName || 'Unknown',
+      username: request.fromUsername || request.toUsername || 'unknown',
       addedAt: nowSec(),
       lastOnline: nowSec(),
       farmLevel: 1, // Default level, in real app would fetch from server
@@ -1416,13 +1416,14 @@ export default function FarmSimCanvas() {
     
     setFriends(prev => [...prev, newFriend]);
     setReceivedRequests(prev => prev.filter(r => r.id !== request.id));
-    addNotification(`You are now friends with ${request.fromDisplayName}!`, "success");
+    addNotification(`You are now friends with ${newFriend.name}!`, "success");
   };
 
   // Reject friend request
   const rejectFriendRequestFromPlayer = (request) => {
+    const displayName = request.fromDisplayName || request.toDisplayName || 'Unknown';
     setReceivedRequests(prev => prev.filter(r => r.id !== request.id));
-    addNotification(`Friend request from ${request.fromDisplayName} declined`, "info");
+    addNotification(`Friend request from ${displayName} declined`, "info");
   };
 
   // === SOCIAL & MULTIPLAYER FUNCTIONS ===
