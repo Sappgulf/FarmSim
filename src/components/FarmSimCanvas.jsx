@@ -23,6 +23,8 @@ const LEVELS = [
   { id: "lvl1", label: "Novice Farmer", targetCoins: 100, minutes: 6, reward: 25, difficulty: "Easy" },
   { id: "lvl2", label: "Growing Skills", targetCoins: 200, minutes: 8, reward: 40, difficulty: "Medium" },
   { id: "lvl3", label: "Master Gardener", targetCoins: 350, minutes: 10, reward: 70, difficulty: "Hard" },
+  { id: "lvl4", label: "Farm Expert", targetCoins: 500, minutes: 12, reward: 100, difficulty: "Expert" },
+  { id: "lvl5", label: "Agricultural Master", targetCoins: 750, minutes: 15, reward: 150, difficulty: "Master" },
   { id: "endless", label: "Endless Farm", targetCoins: 999999, minutes: 9999, reward: 0, difficulty: "∞" },
 ];
 
@@ -528,6 +530,221 @@ const COMPANION_PLANTS = {
   soybean: { good: ['corn'], bad: [], neutral: ['tomato', 'carrot'] }
 };
 
+// ===== NEW LIVESTOCK SYSTEM =====
+const LIVESTOCK_TYPES = {
+  chicken: {
+    name: "Chickens", emoji: "🐔", 
+    cost: 25, maxCount: 20, space: 1,
+    products: { eggs: { rate: 180, sellPrice: 8, name: "Eggs" } },
+    food: { type: "grain", consumption: 2, cost: 1 },
+    breeding: { time: 300, cost: 15, offspring: 2 },
+    lifespan: 1800, diseaseRate: 0.15
+  },
+  cow: {
+    name: "Cows", emoji: "🐄", 
+    cost: 150, maxCount: 8, space: 4,
+    products: { milk: { rate: 360, sellPrice: 15, name: "Milk" } },
+    food: { type: "hay", consumption: 8, cost: 3 },
+    breeding: { time: 600, cost: 75, offspring: 1 },
+    lifespan: 3600, diseaseRate: 0.08
+  },
+  sheep: {
+    name: "Sheep", emoji: "🐑", 
+    cost: 80, maxCount: 12, space: 2,
+    products: { wool: { rate: 480, sellPrice: 12, name: "Wool" } },
+    food: { type: "grass", consumption: 4, cost: 2 },
+    breeding: { time: 450, cost: 40, offspring: 1 },
+    lifespan: 2700, diseaseRate: 0.12
+  }
+};
+
+// ===== GREENHOUSE SYSTEM =====
+const GREENHOUSE_TYPES = {
+  basic: {
+    name: "Basic Greenhouse", emoji: "🏠", cost: 200, capacity: 9,
+    benefits: { growthRate: 1.5, diseaseResistance: 0.3, weatherProtection: 1.0 },
+    upkeep: 5, description: "Climate-controlled growing environment"
+  },
+  advanced: {
+    name: "Advanced Greenhouse", emoji: "🌿", cost: 500, capacity: 16,
+    benefits: { growthRate: 2.0, diseaseResistance: 0.5, weatherProtection: 1.0 },
+    upkeep: 12, description: "High-tech automated growing system"
+  },
+  hydroponic: {
+    name: "Hydroponic Facility", emoji: "💧", cost: 800, capacity: 25,
+    benefits: { growthRate: 2.5, diseaseResistance: 0.7, weatherProtection: 1.0 },
+    upkeep: 20, description: "Soilless growing with optimal nutrients"
+  }
+};
+
+// ===== IRRIGATION SYSTEM =====
+const IRRIGATION_TYPES = {
+  sprinkler: {
+    name: "Sprinkler System", emoji: "💦", cost: 100, coverage: 9,
+    efficiency: 0.8, autoWater: true, upkeep: 3,
+    description: "Automated watering for small areas"
+  },
+  drip: {
+    name: "Drip Irrigation", emoji: "💧", cost: 200, coverage: 16,
+    efficiency: 0.95, autoWater: true, upkeep: 5,
+    description: "Water-efficient precision irrigation"
+  },
+  pivot: {
+    name: "Center Pivot", emoji: "🌊", cost: 500, coverage: 36,
+    efficiency: 0.85, autoWater: true, upkeep: 15,
+    description: "Large-scale circular irrigation system"
+  }
+};
+
+// ===== PROCESSING FACILITIES =====
+const PROCESSING_TYPES = {
+  mill: {
+    name: "Flour Mill", emoji: "🏭", cost: 300,
+    recipes: {
+      flour: { input: "wheat", ratio: 1, output: "flour", sellPrice: 25, time: 120 }
+    },
+    upkeep: 8, description: "Process wheat into flour"
+  },
+  dairy: {
+    name: "Dairy Plant", emoji: "🥛", cost: 400,
+    recipes: {
+      cheese: { input: "milk", ratio: 2, output: "cheese", sellPrice: 35, time: 180 },
+      butter: { input: "milk", ratio: 3, output: "butter", sellPrice: 40, time: 150 }
+    },
+    upkeep: 12, description: "Process milk into dairy products"
+  },
+  cannery: {
+    name: "Cannery", emoji: "🥫", cost: 350,
+    recipes: {
+      sauce: { input: "tomato", ratio: 3, output: "tomato_sauce", sellPrice: 30, time: 90 },
+      jam: { input: "strawberry", ratio: 4, output: "strawberry_jam", sellPrice: 45, time: 120 }
+    },
+    upkeep: 10, description: "Preserve fruits and vegetables"
+  }
+};
+
+// ===== FARM EQUIPMENT =====
+const EQUIPMENT_TYPES = {
+  tractor: {
+    name: "Tractor", emoji: "🚜", cost: 800,
+    benefits: { plantSpeed: 0.5, harvestSpeed: 0.4, fuelCost: 5 },
+    description: "Speeds up planting and harvesting"
+  },
+  plow: {
+    name: "Auto Plow", emoji: "🔧", cost: 300,
+    benefits: { soilPrep: 1.2, plantBonus: 0.15, fuelCost: 2 },
+    description: "Improves soil preparation and plant growth"
+  },
+  harvester: {
+    name: "Combine Harvester", emoji: "⚙️", cost: 1200,
+    benefits: { harvestSpeed: 0.3, yieldBonus: 0.1, fuelCost: 8 },
+    description: "Ultra-fast harvesting with yield bonus"
+  },
+  seeder: {
+    name: "Precision Seeder", emoji: "🌱", cost: 600,
+    benefits: { plantSpeed: 0.4, seedEfficiency: 0.9, fuelCost: 3 },
+    description: "Efficient planting with reduced seed waste"
+  }
+};
+
+// ===== ENHANCED PEST SYSTEM =====
+const ENHANCED_PEST_TYPES = {
+  aphids: {
+    name: "Aphids", emoji: "🐛", severity: "low",
+    effects: { growthRate: 0.8, yield: 0.9 },
+    treatments: ["insecticide", "ladybugs"], spreadRate: 0.2,
+    description: "Small insects that suck plant juices"
+  },
+  caterpillars: {
+    name: "Caterpillars", emoji: "🐛", severity: "medium",
+    effects: { growthRate: 0.6, yield: 0.7 },
+    treatments: ["pesticide", "bt_spray"], spreadRate: 0.15,
+    description: "Leaf-eating larvae that damage crops"
+  },
+  beetles: {
+    name: "Beetles", emoji: "🪲", severity: "high",
+    effects: { growthRate: 0.4, yield: 0.5 },
+    treatments: ["strong_pesticide", "pheromone_traps"], spreadRate: 0.1,
+    description: "Destructive insects that eat roots and leaves"
+  },
+  locusts: {
+    name: "Locust Swarm", emoji: "🦗", severity: "extreme",
+    effects: { growthRate: 0.1, yield: 0.2 },
+    treatments: ["emergency_spray", "professional_service"], spreadRate: 0.3,
+    description: "Devastating swarms that can destroy entire fields"
+  }
+};
+
+const ENHANCED_PEST_TREATMENTS = {
+  insecticide: { name: "Basic Insecticide", cost: 15, effectiveness: { aphids: 0.9, caterpillars: 0.6 } },
+  pesticide: { name: "Broad Pesticide", cost: 25, effectiveness: { caterpillars: 0.9, beetles: 0.7 } },
+  strong_pesticide: { name: "Strong Pesticide", cost: 40, effectiveness: { beetles: 0.95, locusts: 0.6 } },
+  ladybugs: { name: "Beneficial Ladybugs", cost: 20, effectiveness: { aphids: 0.95 }, organic: true },
+  bt_spray: { name: "BT Bacterial Spray", cost: 30, effectiveness: { caterpillars: 0.95 }, organic: true },
+  pheromone_traps: { name: "Pheromone Traps", cost: 35, effectiveness: { beetles: 0.8 } },
+  emergency_spray: { name: "Emergency Treatment", cost: 80, effectiveness: { locusts: 0.9 } },
+  professional_service: { name: "Professional Service", cost: 150, effectiveness: { locusts: 0.99 } }
+};
+
+// ===== ECONOMIC EXPANSION =====
+const SUPPLY_CONTRACT_TYPES = {
+  supply: {
+    name: "Supply Contract", description: "Guaranteed buyers for your crops",
+    duration: 1800, crops: ["wheat", "corn", "tomato"],
+    priceMultiplier: 1.2, penalty: 0.5, minQuantity: 10
+  },
+  premium: {
+    name: "Premium Contract", description: "High-value specialty crop contracts",
+    duration: 2400, crops: ["berry", "flower"],
+    priceMultiplier: 1.5, penalty: 0.3, minQuantity: 5
+  }
+};
+
+const INSURANCE_TYPES = {
+  basic: {
+    name: "Basic Coverage", cost: 50, coverage: 0.6, 
+    events: ["drought", "storm"], description: "Covers 60% of losses from weather"
+  },
+  comprehensive: {
+    name: "Full Coverage", cost: 120, coverage: 0.8,
+    events: ["drought", "storm", "pest", "disease"], description: "Covers 80% of all losses"
+  },
+  premium: {
+    name: "Premium Insurance", cost: 200, coverage: 0.95,
+    events: ["drought", "storm", "pest", "disease", "fire"], description: "Covers 95% of all disasters"
+  }
+};
+
+const LOAN_TYPES = {
+  personal: {
+    name: "Personal Loan", amount: 500, interest: 0.05, term: 1800,
+    description: "Small loan for equipment and supplies"
+  },
+  business: {
+    name: "Business Loan", amount: 2000, interest: 0.08, term: 3600,
+    description: "Large loan for major farm expansions"
+  },
+  equipment: {
+    name: "Equipment Finance", amount: 1500, interest: 0.06, term: 2400,
+    description: "Specialized financing for farm equipment"
+  }
+};
+
+const COOP_BENEFITS = {
+  buying: {
+    name: "Bulk Purchasing", description: "15% discount on seeds and supplies",
+    discount: 0.15, membershipCost: 100
+  },
+  selling: {
+    name: "Collective Marketing", description: "20% bonus on crop sales",
+    bonus: 1.2, membershipCost: 150
+  },
+  sharing: {
+    name: "Equipment Sharing", description: "Free access to shared equipment",
+    equipmentAccess: true, membershipCost: 200
+  }
+};
+
 // Social & Multiplayer System Constants
 const SOCIAL_FEATURES = {
   FRIENDS: {
@@ -770,13 +987,250 @@ function loadSave() {
   } catch {}
   return null;
 }
+
+// ===== NEW SYSTEMS FUNCTIONS =====
+
+// Livestock Management Functions
+const buyLivestock = (type) => {
+  const animal = LIVESTOCK_TYPES[type];
+  if (!animal) return;
+  
+  if (coins < animal.cost) {
+    addNotification(`Not enough coins for ${animal.name}!`, "error");
+    return;
+  }
+  
+  const currentCount = livestock[type] || 0;
+  if (currentCount >= animal.maxCount) {
+    addNotification(`Maximum ${animal.name} limit reached!`, "error");
+    return;
+  }
+  
+  setCoins(prev => prev - animal.cost);
+  setLivestock(prev => ({
+    ...prev,
+    [type]: (prev[type] || 0) + 1
+  }));
+  
+  addNotification(`Bought ${animal.name}! 🐾`, "success");
+};
+
+const feedLivestock = (type) => {
+  const animal = LIVESTOCK_TYPES[type];
+  const count = livestock[type] || 0;
+  if (count === 0) return;
+  
+  const feedNeeded = animal.food.consumption * count;
+  const feedType = animal.food.type;
+  
+  if (feedInventory[feedType] < feedNeeded) {
+    addNotification(`Not enough ${feedType} to feed ${animal.name}!`, "error");
+    return;
+  }
+  
+  setFeedInventory(prev => ({
+    ...prev,
+    [feedType]: prev[feedType] - feedNeeded
+  }));
+  
+  addNotification(`Fed ${count} ${animal.name}! 🌾`, "success");
+};
+
+const collectProducts = (type) => {
+  const animal = LIVESTOCK_TYPES[type];
+  const count = livestock[type] || 0;
+  if (count === 0) return;
+  
+  Object.entries(animal.products).forEach(([productType, productInfo]) => {
+    const amount = count;
+    setLivestockProducts(prev => ({
+      ...prev,
+      [productType]: (prev[productType] || 0) + amount
+    }));
+  });
+  
+  addNotification(`Collected products from ${animal.name}! 🥚`, "success");
+};
+
+const sellProducts = (productType) => {
+  const amount = livestockProducts[productType] || 0;
+  if (amount === 0) return;
+  
+  // Find product info from livestock types
+  let sellPrice = 5; // default
+  Object.values(LIVESTOCK_TYPES).forEach(animal => {
+    if (animal.products[productType]) {
+      sellPrice = animal.products[productType].sellPrice;
+    }
+  });
+  
+  const earnings = amount * sellPrice;
+  setCoins(prev => prev + earnings);
+  setLivestockProducts(prev => ({
+    ...prev,
+    [productType]: 0
+  }));
+  
+  addNotification(`Sold ${amount} ${productType} for $${earnings}! 💰`, "success");
+};
+
+// Greenhouse Functions
+const buildGreenhouse = (type) => {
+  const greenhouse = GREENHOUSE_TYPES[type];
+  if (!greenhouse) return;
+  
+  if (coins < greenhouse.cost) {
+    addNotification(`Not enough coins for ${greenhouse.name}!`, "error");
+    return;
+  }
+  
+  setCoins(prev => prev - greenhouse.cost);
+  setGreenhouses(prev => [...prev, {
+    id: Date.now(),
+    type,
+    plots: Array(greenhouse.capacity).fill(null)
+  }]);
+  
+  addNotification(`Built ${greenhouse.name}! 🏠`, "success");
+};
+
+// Equipment Functions
+const buyEquipment = (type) => {
+  const eq = EQUIPMENT_TYPES[type];
+  if (!eq) return;
+  
+  if (coins < eq.cost) {
+    addNotification(`Not enough coins for ${eq.name}!`, "error");
+    return;
+  }
+  
+  if (equipment.includes(type)) {
+    addNotification(`You already own ${eq.name}!`, "error");
+    return;
+  }
+  
+  setCoins(prev => prev - eq.cost);
+  setEquipment(prev => [...prev, type]);
+  addNotification(`Bought ${eq.name}! ${eq.emoji}`, "success");
+};
+
+// Processing Functions
+const buildProcessor = (type) => {
+  const processor = PROCESSING_TYPES[type];
+  if (!processor) return;
+  
+  if (coins < processor.cost) {
+    addNotification(`Not enough coins for ${processor.name}!`, "error");
+    return;
+  }
+  
+  setCoins(prev => prev - processor.cost);
+  setProcessing(prev => [...prev, {
+    id: Date.now(),
+    type,
+    isProcessing: false,
+    finishTime: 0
+  }]);
+  
+  addNotification(`Built ${processor.name}! 🏭`, "success");
+};
+
+const startProcessing = (processorId, recipeId) => {
+  const processor = processing.find(p => p.id === processorId);
+  const processorType = PROCESSING_TYPES[processor?.type];
+  const recipe = processorType?.recipes[recipeId];
+  
+  if (!processor || !recipe) return;
+  
+  if (processor.isProcessing) {
+    addNotification("Processor is already working!", "error");
+    return;
+  }
+  
+  // Check if we have enough input materials
+  const inputCount = inventory[recipe.input] || 0;
+  if (inputCount < recipe.ratio) {
+    addNotification(`Need ${recipe.ratio} ${recipe.input} to process!`, "error");
+    return;
+  }
+  
+  // Consume input materials
+  setInventory(prev => ({
+    ...prev,
+    [recipe.input]: prev[recipe.input] - recipe.ratio
+  }));
+  
+  // Start processing
+  setProcessing(prev => prev.map(p => 
+    p.id === processorId ? {
+      ...p,
+      isProcessing: true,
+      finishTime: nowSec() + recipe.time,
+      currentRecipe: recipeId
+    } : p
+  ));
+  
+  addNotification(`Started processing ${recipe.output}! ⚙️`, "success");
+};
+
+// Economic Functions
+const buyInsurance = (type) => {
+  const ins = INSURANCE_TYPES[type];
+  if (!ins) return;
+  
+  if (coins < ins.cost) {
+    addNotification(`Not enough coins for ${ins.name}!`, "error");
+    return;
+  }
+  
+  setCoins(prev => prev - ins.cost);
+  setInsurance({ type, expiresAt: nowSec() + 3600 }); // 1 hour coverage
+  addNotification(`Bought ${ins.name}! 🛡️`, "success");
+};
+
+const takeLoan = (type) => {
+  const loan = LOAN_TYPES[type];
+  if (!loan) return;
+  
+  setCoins(prev => prev + loan.amount);
+  setLoans(prev => [...prev, {
+    id: Date.now(),
+    type,
+    amount: loan.amount,
+    interest: loan.interest,
+    startTime: nowSec(),
+    dueTime: nowSec() + loan.term
+  }]);
+  
+  addNotification(`Loan approved! Received $${loan.amount} 💳`, "success");
+};
+
+const joinCoop = (type) => {
+  const coop = COOP_BENEFITS[type];
+  if (!coop) return;
+  
+  if (coins < coop.membershipCost) {
+    addNotification(`Not enough coins for ${coop.name}!`, "error");
+    return;
+  }
+  
+  if (coopMembership.includes(type)) {
+    addNotification(`Already a member of ${coop.name}!`, "error");
+    return;
+  }
+  
+  setCoins(prev => prev - coop.membershipCost);
+  setCoopMembership(prev => [...prev, type]);
+  addNotification(`Joined ${coop.name}! 🤝`, "success");
+};
+
 function saveState(s) { 
   try { 
     localStorage.setItem(SAVE_KEY, JSON.stringify(s)); 
   } catch {} 
 }
 
-export default function FarmSimCanvas() {
+function FarmSimCanvas() {
   // --- config ---
   const [useApi, setUseApi] = useState(false);
   const [baseUrl, setBaseUrl] = useState("http://127.0.0.1:5000");
@@ -832,7 +1286,8 @@ export default function FarmSimCanvas() {
   
   // New systems state
   const [buildings, setBuildings] = useState(saved?.buildings || {});
-  const [livestock, setLivestock] = useState(saved?.livestock || []);
+  const [livestock, setLivestock] = useState(saved?.livestock || {});
+  const [livestockProducts, setLivestockProducts] = useState(saved?.livestockProducts || {});
   const [processedGoods, setProcessedGoods] = useState(saved?.processedGoods || {});
   const [npcs, setNpcs] = useState(saved?.npcs || []);
   const [events, setEvents] = useState(saved?.events || []);
@@ -863,6 +1318,9 @@ export default function FarmSimCanvas() {
   // PRESTIGE SYSTEM STATE
   const [prestigeLevel, setPrestigeLevel] = useState(saved?.prestigeLevel || 0);
   const [prestigePoints, setPrestigePoints] = useState(saved?.prestigePoints || 0);
+  
+  // ENHANCEMENT STATES - Mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [totalLifetimeCoins, setTotalLifetimeCoins] = useState(saved?.totalLifetimeCoins || 0);
   
   // SKILL TREE STATE
@@ -922,6 +1380,63 @@ export default function FarmSimCanvas() {
     showDetailedTooltips: true
   });
 
+  // 🔄 ENHANCED AUTO-ACTIONS SYSTEM
+  const [autoActionSettings, setAutoActionSettings] = useState(saved?.autoActionSettings || {
+    enabled: false,    // Master toggle
+    harvest: true,     // Auto harvest when ready
+    plant: true,       // Auto plant on empty plots
+    water: true,       // Auto water when needed
+    fertilize: true,   // Auto fertilize when needed
+    smartPriority: true, // Use smart priority system
+    priorities: {
+      harvest: 1,        // Highest priority
+      water: 2,         // Second priority  
+      fertilize: 3,     // Third priority
+      plant: 4,         // Fourth priority
+      pestControl: 5    // Fifth priority
+    },
+    conditions: {
+      minCoinsForPlanting: 50,
+      preferredCrops: ['carrot', 'potato', 'corn'],
+      maxPlotsToAutoPlant: 10,
+      waterWhenBelowPercent: 0.3,
+      fertilizeWhenBelowPercent: 0.5,
+      autoPestControlEnabled: true,
+      smartCropRotation: true
+    },
+    scheduling: {
+      actionInterval: 5000,     // 5 seconds between auto actions
+      maxActionsPerInterval: 3,  // Max 3 actions per interval
+      enableDuringLevels: true,
+      pauseWhenLowCoins: true
+    }
+  });
+  const [lastAutoActionTime, setLastAutoActionTime] = useState(0);
+  const [autoActionQueue, setAutoActionQueue] = useState([]);
+
+  // 📊 ENHANCED ANALYTICS SYSTEM
+  const [analyticsData, setAnalyticsData] = useState(saved?.analyticsData || {
+    profitHistory: [],
+    cropPerformance: {},
+    dailyStats: [],
+    efficiency: {
+      waterUsage: 0,
+      fertilizerUsage: 0,
+      seedSuccess: 0,
+      timeToHarvest: 0
+    },
+    trends: {
+      coinsPerMinute: [],
+      harvestsPerMinute: [],
+      plotUtilization: []
+    }
+  });
+  const [lastAnalyticsUpdate, setLastAnalyticsUpdate] = useState(nowSec());
+  
+  // 📱 MOBILE UI STATE
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showAnalyticsDashboard, setShowAnalyticsDashboard] = useState(false);
+
   // SMART FARM ASSISTANT
   const [assistantRecommendations, setAssistantRecommendations] = useState([]);
   const [assistantEnabled, setAssistantEnabled] = useState(saved?.assistantEnabled ?? true);
@@ -937,6 +1452,19 @@ export default function FarmSimCanvas() {
   const [plotHistory, setPlotHistory] = useState(saved?.plotHistory || {}); // Track what was planted on each plot
   const [rotationBenefits, setRotationBenefits] = useState(saved?.rotationBenefits || {}); // Active benefits per plot
   const [companionBonuses, setCompanionBonuses] = useState(saved?.companionBonuses || {}); // Companion plant bonuses
+
+  // ===== NEW INFRASTRUCTURE & ECONOMIC SYSTEMS =====
+  const [feedInventory, setFeedInventory] = useState(saved?.feedInventory || { grain: 0, hay: 0, grass: 0 });
+  const [greenhouses, setGreenhouses] = useState(saved?.greenhouses || []);
+  const [irrigation, setIrrigation] = useState(saved?.irrigation || []);
+  const [processing, setProcessing] = useState(saved?.processing || []);
+  const [equipment, setEquipment] = useState(saved?.equipment || []);
+  const [contracts, setContracts] = useState(saved?.contracts || []);
+  const [insurance, setInsurance] = useState(saved?.insurance || null);
+  const [loans, setLoans] = useState(saved?.loans || []);
+  const [coopMembership, setCoopMembership] = useState(saved?.coopMembership || []);
+  const [fuelLevel, setFuelLevel] = useState(saved?.fuelLevel || 100);
+  const [enhancedPests, setEnhancedPests] = useState(saved?.enhancedPests || {});
   
   const [competitionsActive, setCompetitionsActive] = useState(saved?.competitionsActive || []);
   const [actionHistory, setActionHistory] = useState(saved?.actionHistory || []);
@@ -1038,6 +1566,7 @@ export default function FarmSimCanvas() {
   const [notifications, setNotifications] = useState([]);
   const [currentTime, setCurrentTime] = useState(nowSec());
   const [buying, setBuying] = useState(false);
+  const [activeTab, setActiveTab] = useState("main"); // Add missing activeTab state
   const [farmhands, setFarmhands] = useState(saved?.farmhands || 0);
   const [lastFarmhandAction, setLastFarmhandAction] = useState(saved?.lastFarmhandAction || nowSec());
   const [skills, setSkills] = useState(saved?.skills || { growthBoost: 0, valueBoost: 0 });
@@ -1143,13 +1672,16 @@ export default function FarmSimCanvas() {
           // SUPPLY CHAIN SYSTEM
           processingFacilities, processingQueue, processedInventory,
           // ADVANCED STATISTICS & ANALYTICS
-          farmStatistics, autoActions,
+          farmStatistics, autoActions, autoActionSettings, analyticsData,
           // SMART FARM ASSISTANT
           assistantEnabled, farmInsights,
           // CROP ROTATION SYSTEM
           plotHistory, rotationBenefits, companionBonuses,
           // TUTORIAL SYSTEM
-          tutorialActive, tutorialStep, tutorialCompleted, tutorialProgress, hintsEnabled
+          tutorialActive, tutorialStep, tutorialCompleted, tutorialProgress, hintsEnabled,
+          // NEW ADVANCED SYSTEMS (v2.1)
+          feedInventory, greenhouses, irrigation, processing, equipment,
+          contracts, insurance, loans, coopMembership, fuelLevel, enhancedPests
         };
         saveState(snapshot);
         // Autosave toast (throttled) to indicate saves without spamming
@@ -1170,6 +1702,16 @@ export default function FarmSimCanvas() {
       }
     };
   }, [coins, score, levelStatus]); // minimal dependencies
+
+  // Mobile detection resize listener
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Simple growth timer system - TEMPORARILY DISABLED FOR DEBUGGING
   /*
@@ -1382,54 +1924,21 @@ export default function FarmSimCanvas() {
     return true;
   };
 
-  // Debug functions for testing all features
+  // Debug functions for testing all features (production version)
   const testAllFeatures = () => {
-    console.log("🧪 Starting comprehensive feature test...");
-    
-    // Test 1: Verify all seeds can be planted
-    const allSeeds = Object.keys(rules.seeds);
-    console.log(`✅ Available seeds: ${allSeeds.join(", ")}`);
-    
-    // Debug current inventory
-    console.log("🎒 Current inventory:", inventory);
-    
-    // Test 2: Give resources for testing
-    setCoins(5000); // More coins for buildings
+    // Give resources for testing
+    setCoins(5000);
     setInventory(prev => ({ ...prev, fertilizer: 50, pesticide: 50 }));
     
-    // Give some seeds to test planting
+    // Give seeds for testing
+    const allSeeds = Object.keys(rules.seeds);
     const newInventory = {};
     allSeeds.forEach(seed => {
       newInventory[seed] = 20;
     });
     setInventory(prev => ({ ...prev, ...newInventory }));
     
-    // Test 3: Verify tools
-    console.log("🔧 Testing tools...");
-    Object.keys(rules.tools || {}).forEach(tool => {
-      console.log(`  ${tool}: ${rules.tools[tool].price}🪙 - ${rules.tools[tool].description}`);
-    });
-    
-    // Test 4: Buildings
-    console.log("� Available buildings:");
-    Object.entries(rules.buildings).forEach(([key, building]) => {
-      console.log(`  ${building.emoji} ${building.name}: ${building.price}🪙 - ${building.description}`);
-    });
-    
-    // Test 5: Livestock
-    console.log("🐄 Available livestock:");
-    Object.entries(rules.livestock).forEach(([key, animal]) => {
-      console.log(`  ${animal.emoji} ${animal.name}: ${animal.price}🪙 - ${animal.description}`);
-    });
-    
-    // Test 6: Processing
-    console.log("🏭 Processing options:");
-    Object.entries(rules.processing).forEach(([crop, process]) => {
-      console.log(`  ${crop} → ${process.emoji} ${process.name} (${process.multiplier}x value)`);
-    });
-    
-    console.log("🧪 Test setup complete! All features ready for testing!");
-    addNotification("Full feature test activated! Check console for details.", "success");
+    addNotification("Debug mode: All resources unlocked!", "success");
   };
 
   // --- Import save helper ---
@@ -1475,7 +1984,7 @@ export default function FarmSimCanvas() {
   if (typeof parsed.seasonalPlants === 'number') setSeasonalPlants(parsed.seasonalPlants);
       if (parsed.weather) setWeather(parsed.weather);
       if (parsed.buildings) setBuildings(parsed.buildings);
-      if (parsed.livestock) setLivestock(parsed.livestock || []);
+      if (parsed.livestock) setLivestock(parsed.livestock || {});
       if (parsed.processedGoods) setProcessedGoods(parsed.processedGoods || {});
       if (parsed.npcs) setNpcs(parsed.npcs || []);
       if (parsed.events) setEvents(parsed.events || []);
@@ -1773,6 +2282,215 @@ export default function FarmSimCanvas() {
     addLog(`✅ Processing complete! Gained ${processing.quantity}x ${processing.outputType} (${value}🪙 value)`);
     addNotification(`Processing complete: ${processing.outputType}`, "success");
     return true;
+  };
+
+  // 🔄 ENHANCED AUTO-ACTIONS SYSTEM
+  const executeAutoActions = () => {
+    if (!autoActionSettings.enabled || (!autoActionSettings.harvest && !autoActionSettings.water && !autoActionSettings.plant && !autoActionSettings.fertilize)) {
+      return; // Auto actions disabled or no actions enabled
+    }
+
+    const now = nowSec();
+    if (now - lastAutoActionTime < autoActionSettings.scheduling.actionInterval / 1000) {
+      return; // Too soon for next action
+    }
+
+    if (autoActionSettings.scheduling.pauseWhenLowCoins && coins < autoActionSettings.conditions.minCoinsForPlanting) {
+      return; // Paused due to low coins
+    }
+
+    const actions = [];
+    
+    // Priority 1: Auto Harvest (highest priority)
+    if (autoActionSettings.harvest) {
+      plots.forEach((plot, index) => {
+        if (plot.state === "grown") {
+          actions.push({ type: "harvest", plotIndex: index, priority: 1 });
+        }
+      });
+    }
+
+    // Priority 2: Auto Water
+    if (autoActionSettings.water) {
+      plots.forEach((plot, index) => {
+        if ((plot.state === "planted" || plot.state === "growing") && 
+            (!plot.watered || (now - (plot.lastWateredAt || 0)) > 120)) {
+          actions.push({ type: "water", plotIndex: index, priority: 2 });
+        }
+      });
+    }
+
+    // Priority 3: Auto Fertilize
+    if (autoActionSettings.fertilize && (inventory.fertilizer || 0) > 0) {
+      plots.forEach((plot, index) => {
+        if ((plot.state === "planted" || plot.state === "growing") && 
+            plot.fertilized === 0) {
+          actions.push({ type: "fertilize", plotIndex: index, priority: 3 });
+        }
+      });
+    }
+
+    // Priority 4: Auto Plant
+    if (autoActionSettings.plant) {
+      const availablePlots = plots.filter(p => p.state === "empty").length;
+      const autoPlantLimit = Math.min(availablePlots, autoActionSettings.conditions.maxPlotsToAutoPlant);
+      let planted = 0;
+
+      plots.forEach((plot, index) => {
+        if (plot.state === "empty" && planted < autoPlantLimit) {
+          // Smart crop selection based on preferences and rotation
+          const preferredCrop = getSmartCropChoice(plot, index);
+          if (preferredCrop && (inventory[preferredCrop] || 0) > 0) {
+            actions.push({ type: "plant", plotIndex: index, priority: 4, crop: preferredCrop });
+            planted++;
+          }
+        }
+      });
+    }
+
+    // Priority 5: Auto Pest Control
+    if (autoActionSettings.conditions.autoPestControlEnabled && (inventory.pesticide || 0) > 0) {
+      plots.forEach((plot, index) => {
+        if (plot.infested) {
+          actions.push({ type: "pesticide", plotIndex: index, priority: 5 });
+        }
+      });
+    }
+
+    // Sort by priority and execute limited actions
+    actions.sort((a, b) => a.priority - b.priority);
+    const actionsToExecute = actions.slice(0, autoActionSettings.scheduling.maxActionsPerInterval);
+
+    actionsToExecute.forEach(action => {
+      switch (action.type) {
+        case "harvest":
+          harvest(action.plotIndex);
+          break;
+        case "water":
+          water(action.plotIndex);
+          break;
+        case "fertilize":
+          fertilize(action.plotIndex);
+          break;
+        case "plant":
+          plant(action.plotIndex, action.crop);
+          break;
+        case "pesticide":
+          pesticide(action.plotIndex);
+          break;
+      }
+    });
+
+    if (actionsToExecute.length > 0) {
+      setLastAutoActionTime(now);
+      updateAnalytics("autoActions", actionsToExecute.length);
+    }
+  };
+
+  const getSmartCropChoice = (plot, plotIndex) => {
+    const { preferredCrops } = autoActionSettings.conditions;
+    
+    // Smart crop rotation logic
+    if (autoActionSettings.conditions.smartCropRotation && plot.lastCropFamily) {
+      const rotationBonus = CROP_ROTATION[plot.lastCropFamily];
+      if (rotationBonus) {
+        // Find a crop from the beneficial families
+        for (const family of rotationBonus.next) {
+          const cropInFamily = preferredCrops.find(crop => 
+            rules.seeds[crop] && rules.seeds[crop].family === family && (inventory[crop] || 0) > 0
+          );
+          if (cropInFamily) return cropInFamily;
+        }
+      }
+    }
+
+    // Default to preferred crops that are available
+    return preferredCrops.find(crop => (inventory[crop] || 0) > 0) || preferredCrops[0];
+  };
+
+  // 📊 ENHANCED ANALYTICS SYSTEM
+  const updateAnalytics = (action, value = 1) => {
+    const now = nowSec();
+    setAnalyticsData(prev => {
+      const newData = { ...prev };
+      
+      // Update efficiency metrics
+      switch (action) {
+        case "water":
+          newData.efficiency.waterUsage += value;
+          break;
+        case "fertilize":
+          newData.efficiency.fertilizerUsage += value;
+          break;
+        case "plant":
+          newData.efficiency.seedSuccess += value;
+          break;
+        case "harvest":
+          const timeToHarvest = value; // passed as time value
+          newData.efficiency.timeToHarvest = 
+            (newData.efficiency.timeToHarvest * 0.9) + (timeToHarvest * 0.1); // Moving average
+          break;
+      }
+
+      // Update performance tracking
+      if (!newData.cropPerformance[action]) {
+        newData.cropPerformance[action] = { count: 0, total: 0 };
+      }
+      newData.cropPerformance[action].count += 1;
+      newData.cropPerformance[action].total += value;
+
+      // Update trends (keep last 100 data points)
+      const minute = Math.floor(now / 60);
+      if (action === "coinsEarned") {
+        newData.trends.coinsPerMinute.push({ time: minute, value });
+        if (newData.trends.coinsPerMinute.length > 100) {
+          newData.trends.coinsPerMinute.shift();
+        }
+      }
+      
+      if (action === "harvest") {
+        newData.trends.harvestsPerMinute.push({ time: minute, value });
+        if (newData.trends.harvestsPerMinute.length > 100) {
+          newData.trends.harvestsPerMinute.shift();
+        }
+      }
+
+      return newData;
+    });
+  };
+
+  const generateAnalyticsReport = () => {
+    const { efficiency, trends, cropPerformance } = analyticsData;
+    const plantedPlots = plots.filter(p => p.state !== "empty").length;
+    const totalPlots = plots.length;
+    const utilization = totalPlots > 0 ? (plantedPlots / totalPlots) * 100 : 0;
+
+    const coinsPerMinute = trends.coinsPerMinute.length > 0 
+      ? trends.coinsPerMinute.slice(-10).reduce((sum, p) => sum + p.value, 0) / Math.min(10, trends.coinsPerMinute.length)
+      : 0;
+
+    const harvestsPerMinute = trends.harvestsPerMinute.length > 0
+      ? trends.harvestsPerMinute.slice(-10).reduce((sum, p) => sum + p.value, 0) / Math.min(10, trends.harvestsPerMinute.length)
+      : 0;
+
+    return {
+      utilization: Math.round(utilization * 100) / 100,
+      coinsPerMinute: Math.round(coinsPerMinute * 100) / 100,
+      harvestsPerMinute: Math.round(harvestsPerMinute * 100) / 100,
+      efficiency: {
+        waterEfficiency: efficiency.waterUsage > 0 ? Math.round((efficiency.seedSuccess / efficiency.waterUsage) * 100) / 100 : 0,
+        fertilizerEfficiency: efficiency.fertilizerUsage > 0 ? Math.round((efficiency.seedSuccess / efficiency.fertilizerUsage) * 100) / 100 : 0,
+        avgTimeToHarvest: Math.round(efficiency.timeToHarvest * 100) / 100
+      },
+      topPerformers: Object.entries(cropPerformance)
+        .sort(([,a], [,b]) => (b.total / b.count) - (a.total / a.count))
+        .slice(0, 3)
+        .map(([crop, data]) => ({
+          crop,
+          avgValue: Math.round((data.total / data.count) * 100) / 100,
+          count: data.count
+        }))
+    };
   };
 
   // Advanced Economy Functions
@@ -2090,50 +2808,85 @@ export default function FarmSimCanvas() {
     {
       id: 'welcome',
       title: '🌱 Welcome to Farm Simulator!',
-      content: 'Let\'s learn the basics of farming. Click anywhere to continue.',
+      content: 'Welcome to your new farm! This enhanced farming game has visual animations, mobile support, auto-actions, and detailed analytics. Let\'s start with the basics.',
       highlight: null,
       action: null
     },
     {
       id: 'plant_first_seed',
       title: '🌰 Plant Your First Seed',
-      content: 'Click on any empty plot (brown squares) to plant a carrot seed.',
+      content: 'You start with some carrot seeds! Click on any empty plot (brown squares) to plant a carrot. Watch for the smooth planting animation!',
       highlight: 'plot',
       action: 'plant'
     },
     {
-      id: 'wait_for_growth',
-      title: '⏱️ Growth Takes Time',
-      content: 'Great! Now wait for your carrot to grow. You can see the progress bar.',
+      id: 'observe_growth',
+      title: '⏱️ Watch Plants Grow',
+      content: 'Perfect! Notice the subtle growing animation and visual effects. Your plants will grow automatically over time with beautiful transitions.',
       highlight: 'growing-plot',
-      action: 'wait'
+      action: 'observe_growth'
     },
     {
       id: 'water_plants',
       title: '💧 Water Your Plants',
-      content: 'Plants grow faster when watered! Right-click your growing plant to water it.',
+      content: 'Right-click your growing plant to water it. You\'ll see a water splash animation!',
       highlight: 'growing-plot',
       action: 'water'
     },
     {
       id: 'harvest_crop',
       title: '🥕 Harvest Time!',
-      content: 'Your carrot is ready! Click on it to harvest and earn coins.',
+      content: 'Wait for your carrot to finish growing, then click it to harvest! Watch for the satisfying harvest pop animation and coin bounce. If it\'s not ready yet, be patient - good farming takes time!',
       highlight: 'grown-plot',
       action: 'harvest'
     },
     {
-      id: 'use_shop',
-      title: '🛒 Visit the Shop',
-      content: 'Great harvest! Use your coins to buy more seeds and tools in the shop.',
+      id: 'explore_shop',
+      title: '🛒 Explore the Enhanced Shop',
+      content: 'Great harvest! Now use your coins to buy something from the shop. Try buying more seeds or tools to expand your farm.',
       highlight: 'shop',
       action: 'buy'
     },
     {
+      id: 'discover_analytics',
+      title: '📊 Farm Analytics',
+      content: 'Click the "Analytics" tab to see your detailed farm performance metrics, efficiency tracking, and smart recommendations!',
+      highlight: 'analytics-tab',
+      action: 'viewAnalytics'
+    },
+    {
+      id: 'auto_actions_intro',
+      title: '🔄 Auto-Actions System',
+      content: 'Now click the "Settings" tab and enable "Auto-Actions"! This powerful system can automatically harvest, plant, water, and fertilize for you.',
+      highlight: 'settings-tab',
+      action: 'enableAutoActions'
+    },
+    {
+      id: 'animation_controls',
+      title: '🎨 Animation Controls',
+      content: 'In Settings, you can control animations. Toggle them off if you prefer a static experience, or enjoy the visual polish!',
+      highlight: 'animation-settings',
+      action: null
+    },
+    {
+      id: 'mobile_features',
+      title: '� Mobile-Friendly',
+      content: 'This farm works great on mobile! Resize your window to see responsive design and touch-friendly controls.',
+      highlight: null,
+      action: null
+    },
+    {
       id: 'advanced_features',
-      title: '🚀 Advanced Features',
-      content: 'You\'ve mastered the basics! Explore Skills, Workers, and Research tabs for advanced farming.',
+      title: '🚀 Master Farmer',
+      content: 'You\'ve learned the enhanced features! Explore Skills, Workers, Research, and use the Analytics dashboard to optimize your farm.',
       highlight: 'tabs',
+      action: null
+    },
+    {
+      id: 'tutorial_complete',
+      title: '🎉 Tutorial Complete!',
+      content: 'Congratulations! You\'re now ready to build the most efficient farm with all the quality-of-life improvements. Happy farming!',
+      highlight: null,
       action: null
     }
   ];
@@ -2182,8 +2935,18 @@ export default function FarmSimCanvas() {
     // Record progress and advance if conditions met
     switch (action) {
       case 'plant':
-        if (plots.some(p => p.state === 'planted')) {
+        if (plots.some(p => p.state === 'planted' || p.state === 'growing')) {
           advanceTutorial();
+        }
+        break;
+      case 'observe_growth':
+        // Auto-advance after player plants and we can show growth
+        if (plots.some(p => p.state === 'planted' || p.state === 'growing')) {
+          setTimeout(() => {
+            if (tutorialActive && getCurrentTutorialStep()?.action === 'observe_growth') {
+              advanceTutorial();
+            }
+          }, 4000); // Give time to observe the growth animation
         }
         break;
       case 'water':
@@ -2197,9 +2960,32 @@ export default function FarmSimCanvas() {
         }
         break;
       case 'buy':
-        if (data.item && data.item !== 'carrot') {
+        if (data.item) {
           advanceTutorial();
         }
+        break;
+      case 'viewAnalytics':
+        if (data.tab === 'analytics') {
+          advanceTutorial();
+        }
+        break;
+      case 'enableAutoActions':
+        if (autoActionSettings.enabled || data.setting === 'enabled') {
+          advanceTutorial();
+        }
+        break;
+      case 'accessSettings':
+        if (data.tab === 'settings') {
+          advanceTutorial();
+        }
+        break;
+      case 'wait':
+        // Auto-advance wait steps after a short delay
+        setTimeout(() => {
+          if (tutorialActive && getCurrentTutorialStep()?.action === 'wait') {
+            advanceTutorial();
+          }
+        }, 3000);
         break;
     }
   };
@@ -2678,6 +3464,16 @@ export default function FarmSimCanvas() {
       if (currentTime % 30 === 0) {
         setWeatherForecast(generateWeatherForecast());
       }
+
+      // 🔄 EXECUTE AUTO-ACTIONS
+      executeAutoActions();
+
+      // 📊 UPDATE ANALYTICS (every 10 seconds)
+      if (currentTime % 10 === 0) {
+        const plotsUsed = plots.filter(p => p.state !== "empty").length;
+        updateAnalytics("plotUtilization", plotsUsed / Math.max(1, plots.length));
+        setLastAnalyticsUpdate(nowSec());
+      }
       
       // NEW: Bee pollination system (simplified to avoid infinite loops)
       if (buildings.beehive && beeHappiness >= 50) {
@@ -2994,7 +3790,6 @@ export default function FarmSimCanvas() {
   const playSound = (type) => {
     if (!soundEnabled) return;
     // Placeholder for sound effects
-    console.log(`🔊 Sound: ${type}`);
   };
 
   // Combo system for consecutive harvests
@@ -3173,11 +3968,9 @@ export default function FarmSimCanvas() {
       if (!rules.seeds[seed]) { addNotification('Invalid seed selected', 'error'); return p; }
       
       const seedCount = inventory[seed] || 0;
-      console.log(`🌱 Attempting to plant ${seed}: current count = ${seedCount}`);
       
       if (seedCount <= 0) {
         addNotification(`No ${seed} seeds available! Current: ${seedCount}`, "warning");
-        console.log(`❌ Cannot plant ${seed}: insufficient seeds (${seedCount})`);
         return p;
       }
       
@@ -3218,12 +4011,16 @@ export default function FarmSimCanvas() {
         const have = inv[seed] || 0;
         if (have <= 0) return inv;
         const next = { ...inv, [seed]: have - 1 };
-        try { console.log(`[inventory] plant ${seed}: ${have} -> ${next[seed]}`); } catch {}
         return next;
       });
       
       // Tutorial progress tracking
       checkTutorialProgress('plant', { seed, plotIndex: i });
+      
+      // Trigger observe growth tutorial step after a delay
+      setTimeout(() => {
+        checkTutorialProgress('observe_growth', { seed, plotIndex: i });
+      }, 2000);
     }
     setTimeout(() => {
       plantingLocks.current.delete(i);
@@ -3317,6 +4114,39 @@ export default function FarmSimCanvas() {
       setScore(s => s + val);
       setTotalEarned(t => t + val);
       setTotalHarvests(h => h + 1);
+
+      // 📊 ANALYTICS: Track harvest performance
+      updateAnalytics("coinsEarned", val);
+      updateAnalytics("harvest", 1);
+      updateAnalytics("timeToHarvest", nowSec() - (p.plantedAt || nowSec()));
+      
+      // Track crop performance
+      if (!analyticsData.cropPerformance[p.seed]) {
+        setAnalyticsData(prev => ({
+          ...prev,
+          cropPerformance: {
+            ...prev.cropPerformance,
+            [p.seed]: { totalValue: val, count: 1, avgValue: val }
+          }
+        }));
+      } else {
+        setAnalyticsData(prev => {
+          const existing = prev.cropPerformance[p.seed];
+          const newCount = existing.count + 1;
+          const newTotal = existing.totalValue + val;
+          return {
+            ...prev,
+            cropPerformance: {
+              ...prev.cropPerformance,
+              [p.seed]: { 
+                totalValue: newTotal, 
+                count: newCount, 
+                avgValue: Math.round((newTotal / newCount) * 100) / 100 
+              }
+            }
+          };
+        });
+      }
       
       // NEW: Grant research points and skill points
       const baseResearchPoints = Math.max(1, Math.floor(val / 50)); // 1 RP per 50 coins
@@ -3379,6 +4209,18 @@ export default function FarmSimCanvas() {
     checkTutorialProgress('harvest', { plotIndex: i });
   }
 
+  // Tutorial-aware tab switching
+  function handleShopTabChange(newTab) {
+    setShopTab(newTab);
+    
+    // Track important tab visits for tutorial
+    if (newTab === 'analytics') {
+      checkTutorialProgress('viewAnalytics', { tab: newTab });
+    } else if (newTab === 'settings') {
+      checkTutorialProgress('accessSettings', { tab: newTab });
+    }
+  }
+
 function buy(item, qty = 1) {
     if (qty < 1) qty = 1;
     if (buyingRef.current) return;
@@ -3416,13 +4258,10 @@ function buy(item, qty = 1) {
       if (coins < price) { release(); return; }
       
       setCoins(c => c - price);
-      const newAnimal = {
-        id: Date.now(),
-        type: item,
-        lastProduced: nowSec(),
-        happiness: 100
-      };
-      setLivestock(prev => [...prev, newAnimal]);
+      setLivestock(prev => ({
+        ...prev,
+        [item]: (prev[item] || 0) + 1
+      }));
       addLog(`🐾 Bought ${rules.livestock[item].emoji} ${rules.livestock[item].name}!`);
       addNotification(`New ${rules.livestock[item].name} added to farm!`, "success");
       playSfx('buy');
@@ -3475,7 +4314,6 @@ function buy(item, qty = 1) {
     setInventory(inv => {
       const before = inv[item] || 0;
       const next = { ...inv, [item]: before + qty };
-      try { console.log(`[inventory] buy ${item}: ${before} -> ${next[item]}`); } catch {}
       return next;
     });
     playSfx('buy');
@@ -3527,24 +4365,10 @@ function buy(item, qty = 1) {
 
   // Collect livestock products
   function collectLivestock() {
-    const now = nowSec();
-    let collected = 0;
-    
-    setLivestock(prev => prev.map(animal => {
-      const data = rules.livestock[animal.type];
-      if (now - animal.lastProduced >= data.interval) {
-        const product = data.product;
-        setInventory(inv => ({ ...inv, [product]: (inv[product] || 0) + 1 }));
-        setCoins(c => c + data.value);
-        collected++;
-        return { ...animal, lastProduced: now };
-      }
-      return animal;
-    }));
-    
-    if (collected > 0) {
-      addNotification(`Collected from ${collected} animals!`, "success");
-    }
+    // Note: This function is currently not used since livestock products 
+    // are handled through the new livestock system functions (buyLivestock, feedLivestock, collectProducts)
+    // If needed, it should be updated to work with the object-based livestock state
+    return;
   }
 
   function resetSave() {
@@ -3759,7 +4583,7 @@ function buy(item, qty = 1) {
         setLastFarmhandAction(nowSec());
       }
 
-              // Enhanced level timer with achievement checks
+              // Enhanced level timer with achievement checks and auto-progression
         if (levelId !== "endless" && levelStatus === "playing" && level) {
           setLevelStatus(st => {
             if (coins >= level.targetCoins) {
@@ -3767,13 +4591,50 @@ function buy(item, qty = 1) {
               if (levelId === "lvl1" && timeUsed < 240 && !achievements.includes("speed_farmer")) { // 4 minutes
                 checkAchievement("speed_farmer");
               }
-              addNotification(`🎉 Level Complete! You earned ${level.reward}🪙 bonus!`, "success");
-              return "won";
+              
+              // Auto-progress to next level or complete the progression
+              const currentLevelIndex = LEVELS.findIndex(l => l.id === levelId);
+              const nextLevel = LEVELS[currentLevelIndex + 1];
+              
+              if (nextLevel && nextLevel.id !== "endless") {
+                // Auto-progress to next level
+                addNotification(`🎉 Level Complete! Advancing to ${nextLevel.label}...`, "success");
+                setTimeout(() => {
+                  setCoins(c => c + level.reward);
+                  setLevelId(nextLevel.id);
+                  setLevelEndsAt(nowSec() + nextLevel.minutes * 60);
+                  setLevelStartedAt(nowSec());
+                  setLevelStatus("playing");
+                  addLog(`🚀 Advanced to ${nextLevel.label}!`);
+                }, 1500); // 1.5 second delay for notification
+                return "won";
+              } else {
+                // Completed all levels - offer endless mode
+                addNotification(`🎊 All levels complete! You're now a Master Farmer! Switch to Endless Mode to continue.`, "success");
+                return "won";
+              }
             }
             if (nowSec() >= levelEndsAt) {
               if (coins >= level.targetCoins) {
-                addNotification(`🎉 Level Complete! You earned ${level.reward}🪙 bonus!`, "success");
-                return "won";
+                // Same auto-progression logic for time-based completion
+                const currentLevelIndex = LEVELS.findIndex(l => l.id === levelId);
+                const nextLevel = LEVELS[currentLevelIndex + 1];
+                
+                if (nextLevel && nextLevel.id !== "endless") {
+                  addNotification(`🎉 Level Complete! Advancing to ${nextLevel.label}...`, "success");
+                  setTimeout(() => {
+                    setCoins(c => c + level.reward);
+                    setLevelId(nextLevel.id);
+                    setLevelEndsAt(nowSec() + nextLevel.minutes * 60);
+                    setLevelStartedAt(nowSec());
+                    setLevelStatus("playing");
+                    addLog(`🚀 Advanced to ${nextLevel.label}!`);
+                  }, 1500);
+                  return "won";
+                } else {
+                  addNotification(`🎊 All levels complete! You're now a Master Farmer!`, "success");
+                  return "won";
+                }
               } else {
                 addNotification(`⏰ Time's up! You needed ${level.targetCoins}🪙 but only earned ${coins}🪙`, "warning");
                 return "lost";
@@ -3991,6 +4852,12 @@ function buy(item, qty = 1) {
       return { next, nextIn };
     })();
     
+    // 🎨 ENHANCED VISUAL POLISH - Respects animation settings
+    let plotEnhancedClass = "plot-enhanced";
+    
+    // Only add animation classes if animations are enabled
+    const useAnimations = animationsEnabled && !performanceMode;
+    
     if (p.state === "locked") {
       bgClass = "bg-slate-100/70";
       borderClass = "border-slate-300";
@@ -3998,18 +4865,34 @@ function buy(item, qty = 1) {
     } else if (p.state === "empty") {
       bgClass = "bg-gradient-to-br from-green-50/70 to-emerald-50/70";
       borderClass = "border-emerald-200";
+    } else if (p.state === "planted") {
+      bgClass = "bg-green-50/80";
+      borderClass = "border-green-200";
+      textClass = "text-green-800";
+      if (useAnimations) plotEnhancedClass += " planted";
+    } else if (p.state === "growing") {
+      bgClass = "bg-blue-50/80";
+      borderClass = "border-blue-200";
+      textClass = "text-blue-800";
+      if (useAnimations) plotEnhancedClass += " growing";
     } else if (p.state === "grown") {
       bgClass = "bg-gradient-to-br from-emerald-100/80 to-green-100/80";
-      borderClass = "border-emerald-400";
+      borderClass = "border-emerald-300";
       textClass = "text-emerald-800";
+      if (useAnimations) plotEnhancedClass += " ready";
     } else if (p.state === "withered") {
-      bgClass = "bg-gradient-to-br from-red-50/70 to-rose-50/70";
+      bgClass = "bg-red-50/80";
       borderClass = "border-red-300";
-      textClass = "text-red-700";
-    } else {
-      bgClass = "bg-gradient-to-br from-amber-50/70 to-yellow-50/70";
-      borderClass = "border-amber-300";
-      textClass = "text-amber-800";
+      textClass = "text-red-800";
+    }
+    
+    // Add state-based classes for enhanced animations (only if animations enabled)
+    if (useAnimations) {
+      if (p.disease) plotEnhancedClass += " diseased";
+      if (p.infested) plotEnhancedClass += " infested";
+      if (p.watered && p.state !== "grown") plotEnhancedClass += " watered";
+      if (p.fertilized > 0) plotEnhancedClass += " fertilized";
+      if (p.beePollinated) plotEnhancedClass += " bee-pollinated";
     }
 
     function leftPointerDown(e) {
@@ -4033,7 +4916,7 @@ function buy(item, qty = 1) {
       <div
         onPointerDown={leftPointerDown}
         onContextMenu={rightClick}
-        className={`group relative rounded-2xl border-2 ${borderClass} ${bgClass} backdrop-blur-sm cursor-pointer select-none hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] p-4`}
+        className={`${plotEnhancedClass} group relative rounded-2xl border-2 ${borderClass} ${bgClass} backdrop-blur-sm cursor-pointer select-none hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] p-4 mobile-friendly-button`}
         style={{ touchAction: 'manipulation' }}
       >
         {/* Soil fertility ring */}
@@ -4188,6 +5071,167 @@ function buy(item, qty = 1) {
       </div>
     );
   }
+
+  // 📊 ANALYTICS DASHBOARD COMPONENT
+  const AnalyticsDashboard = () => {
+    const report = generateAnalyticsReport();
+    
+    return (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                📊 Farm Analytics Dashboard
+              </h2>
+              <Button 
+                onClick={() => setShowAnalyticsDashboard(false)}
+                variant="outline"
+                size="sm"
+              >
+                ✕ Close
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+              {/* Key Metrics */}
+              <div className="analytics-card">
+                <h3 className="text-lg font-semibold mb-3">⚡ Performance</h3>
+                <div className="space-y-2">
+                  <div>
+                    <div className="text-sm opacity-80">Coins/Minute</div>
+                    <div className="stat-number">{report.coinsPerMinute}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm opacity-80">Harvests/Minute</div>
+                    <div className="stat-number">{report.harvestsPerMinute}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="analytics-card">
+                <h3 className="text-lg font-semibold mb-3">🎯 Efficiency</h3>
+                <div className="space-y-2">
+                  <div>
+                    <div className="text-sm opacity-80">Plot Utilization</div>
+                    <div className="stat-number">{report.utilization}%</div>
+                  </div>
+                  <div>
+                    <div className="text-sm opacity-80">Water Efficiency</div>
+                    <div className="stat-number">{report.efficiency.waterEfficiency}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="analytics-card">
+                <h3 className="text-lg font-semibold mb-3">🏆 Top Crops</h3>
+                <div className="space-y-2">
+                  {report.topPerformers.slice(0, 3).map((crop, i) => (
+                    <div key={crop.crop} className="flex justify-between text-sm">
+                      <span>#{i+1} {rules.seeds[crop.crop]?.emoji} {crop.crop}</span>
+                      <span>{crop.avgValue}🪙</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Trends Chart Placeholder */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border">
+              <h3 className="text-lg font-semibold mb-4">📈 Revenue Trends</h3>
+              <div className="h-32 bg-white rounded-lg border-2 border-dashed border-blue-200 flex items-center justify-center">
+                <div className="text-center text-slate-500">
+                  <div className="text-2xl mb-2">📈</div>
+                  <div>Chart visualization coming soon!</div>
+                  <div className="text-sm">Track your farm's performance over time</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 🔄 AUTO-ACTIONS CONTROL PANEL
+  const AutoActionsPanel = () => (
+    <Card className="card-interactive">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          🤖 Smart Automation
+          <div className={`auto-action-indicator ${Object.values(autoActions).some(x => x) ? '' : 'hidden'}`}></div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          {Object.entries(autoActions).filter(([key]) => key.startsWith('auto')).map(([key, enabled]) => (
+            <div key={key} className="flex items-center justify-between">
+              <label className="text-sm font-medium capitalize">
+                {key.replace('auto', '').replace(/([A-Z])/g, ' $1').trim()}
+              </label>
+              <Button
+                size="sm"
+                variant={enabled ? "default" : "outline"}
+                onClick={() => setAutoActions(prev => ({ ...prev, [key]: !prev[key] }))}
+                className="min-w-16"
+              >
+                {enabled ? "ON" : "OFF"}
+              </Button>
+            </div>
+          ))}
+        </div>
+        
+        <div className="border-t pt-4">
+          <div className="text-sm font-medium mb-2">Quick Settings</div>
+          <div className="grid grid-cols-1 gap-2 text-xs">
+            <div className="flex justify-between">
+              <span>Action Interval:</span>
+              <span>{autoActionSettings.scheduling.actionInterval / 1000}s</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Max Actions/Cycle:</span>
+              <span>{autoActionSettings.scheduling.maxActionsPerInterval}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Min Coins for Planting:</span>
+              <span>{autoActionSettings.conditions.minCoinsForPlanting}🪙</span>
+            </div>
+          </div>
+        </div>
+        
+        <Button 
+          onClick={() => setShowAnalyticsDashboard(true)}
+          variant="outline" 
+          className="w-full"
+        >
+          📊 View Analytics Dashboard
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
+  // 📱 MOBILE NAVIGATION BAR
+  const MobileNavBar = ({ currentTab, setCurrentTab, coins, level }) => (
+    <div className="mobile-tabs md:hidden">
+      <div className="flex justify-around">
+        {[
+          { id: "seeds", icon: "�", label: "Seeds" },
+          { id: "analytics", icon: "�", label: "Analytics" },
+          { id: "settings", icon: "⚙️", label: "Settings" },
+          { id: "tools", icon: "🛠️", label: "Tools" }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            className={`mobile-tab ${currentTab === tab.id ? 'active' : ''}`}
+            onClick={() => setCurrentTab(tab.id)}
+          >
+            <span className="text-lg">{tab.icon}</span>
+            <span>{tab.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   // --- Enhanced Layout ---
   return (
@@ -4712,7 +5756,7 @@ function buy(item, qty = 1) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Tabs value={shopTab} onValueChange={setShopTab}>
+                <Tabs value={shopTab} onValueChange={handleShopTabChange}>
                   <TabsList className="flex flex-wrap gap-2 w-full overflow-x-auto">
                     <TabsTrigger className="shrink-0" value="seeds">🌱 Seeds</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="tools">🛠️ Tools</TabsTrigger>
@@ -4726,6 +5770,9 @@ function buy(item, qty = 1) {
                     <TabsTrigger className="shrink-0" value="social">👥 Social</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="community">🌍 Community</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="analytics">📊 Analytics</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="livestock">🐄 Livestock</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="infrastructure">🏗️ Infrastructure</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="economy">💼 Economy</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="expand">📏 Expand</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="test">🧪 Test</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="settings">⚙️ Settings</TabsTrigger>
@@ -4768,150 +5815,249 @@ function buy(item, qty = 1) {
                     ))}
                   </TabsContent>
 
-                  {/* ANALYTICS TAB */}
+                  {/* ENHANCED ANALYTICS TAB */}
                   <TabsContent value="analytics" className="space-y-3">
-                    <div className="p-3 bg-gradient-to-br from-blue-50 to-purple-50 border rounded-xl shadow-sm">
-                      <div className="text-sm font-semibold mb-3 flex items-center gap-2">
-                        📊 Farm Performance Analytics
-                        <Badge variant="outline" className="text-xs">
-                          Efficiency: {Math.round(farmStatistics.efficacyRating)}%
-                        </Badge>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-lg font-bold">📊 Farm Analytics</div>
+                      <Button 
+                        onClick={() => setShowAnalyticsDashboard(true)}
+                        variant="outline"
+                        size="sm"
+                        className="mobile-friendly-button"
+                      >
+                        📈 Full Dashboard
+                      </Button>
+                    </div>
+
+                    {/* Enhanced Performance Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="analytics-card mobile-card">
+                        <h3 className="text-lg font-semibold mb-3">⚡ Real-Time Performance</h3>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="text-sm opacity-80">Plot Utilization</div>
+                            <div className="stat-number">{Math.round((plots.filter(p => p.state !== 'empty').length / plots.length) * 100)}%</div>
+                            <div className="progress-bar-animated w-full h-2 rounded-full mt-1" 
+                                 style={{width: `${(plots.filter(p => p.state !== 'empty').length / plots.length) * 100}%`}}></div>
+                          </div>
+                          <div>
+                            <div className="text-sm opacity-80">Automation Level</div>
+                            <div className="stat-number">{Math.round((workers.length / 5) * 100)}%</div>
+                            <div className="progress-bar-animated w-full h-2 rounded-full mt-1" 
+                                 style={{width: `${(workers.length / 5) * 100}%`}}></div>
+                          </div>
+                        </div>
                       </div>
+
+                      <div className="analytics-card mobile-card">
+                        <h3 className="text-lg font-semibold mb-3">🎯 Efficiency Metrics</h3>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span>Ready to Harvest:</span>
+                            <span className="font-bold">{plots.filter(p => p.state === 'grown').length}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Active Workers:</span>
+                            <span className="font-bold">{workers.length}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Skill Points:</span>
+                            <span className="font-bold">{skillPoints}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Achievements:</span>
+                            <span className="font-bold">{achievements.length}/{ACHIEVEMENTS.length}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick Action Buttons */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      <Button 
+                        onClick={() => {
+                          const readyPlots = plots.filter((p, i) => p.state === "grown");
+                          readyPlots.forEach((p, i) => {
+                            const plotIndex = plots.indexOf(p);
+                            if (plotIndex !== -1) harvest(plotIndex);
+                          });
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="mobile-friendly-button"
+                        disabled={plots.filter(p => p.state === 'grown').length === 0}
+                      >
+                        🌾 Harvest All ({plots.filter(p => p.state === 'grown').length})
+                      </Button>
                       
-                      {/* Key Metrics Grid */}
-                      <div className="grid grid-cols-2 gap-3 mb-4">
-                        <div className="text-center p-3 bg-white/70 rounded-lg">
-                          <div className="text-lg font-bold text-green-600">{farmStatistics.plotsHarvested || 0}</div>
-                          <div className="text-xs text-gray-600">Total Harvests</div>
-                        </div>
-                        <div className="text-center p-3 bg-white/70 rounded-lg">
-                          <div className="text-lg font-bold text-blue-600">{Math.round(totalEarned)}</div>
-                          <div className="text-xs text-gray-600">Total Earned</div>
-                        </div>
-                        <div className="text-center p-3 bg-white/70 rounded-lg">
-                          <div className="text-lg font-bold text-purple-600">{workers.length}</div>
-                          <div className="text-xs text-gray-600">Active Workers</div>
-                        </div>
-                        <div className="text-center p-3 bg-white/70 rounded-lg">
-                          <div className="text-lg font-bold text-orange-600">{completedResearch.length}</div>
-                          <div className="text-xs text-gray-600">Research Done</div>
-                        </div>
-                      </div>
+                      <Button 
+                        onClick={() => {
+                          const needsWater = plots.filter((p, i) => 
+                            (p.state === "planted" || p.state === "growing") && 
+                            (!p.watered || nowSec() - (p.lastWateredAt || 0) > 120)
+                          );
+                          needsWater.forEach((p) => {
+                            const plotIndex = plots.indexOf(p);
+                            if (plotIndex !== -1) water(plotIndex);
+                          });
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="mobile-friendly-button"
+                      >
+                        💧 Water All
+                      </Button>
 
-                      {/* Performance Breakdown */}
-                      <div className="space-y-2">
-                        <div className="text-xs font-semibold">Performance Breakdown:</div>
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs">Plot Utilization</span>
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-green-500 h-2 rounded-full" 
-                                style={{width: `${Math.min(100, (plots.filter(p => p.state !== 'empty').length / plots.length) * 100)}%`}}
-                              ></div>
-                            </div>
-                            <span className="text-xs w-8">{Math.round((plots.filter(p => p.state !== 'empty').length / plots.length) * 100)}%</span>
-                          </div>
-                        </div>
+                      <Button 
+                        onClick={() => setShowAnalyticsDashboard(true)}
+                        variant="outline"
+                        size="sm"
+                        className="mobile-friendly-button"
+                      >
+                        📊 Charts
+                      </Button>
 
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs">Automation Level</span>
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-blue-500 h-2 rounded-full" 
-                                style={{width: `${Math.min(100, (workers.length / 5) * 100)}%`}}
-                              ></div>
-                            </div>
-                            <span className="text-xs w-8">{Math.round((workers.length / 5) * 100)}%</span>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs">Skill Development</span>
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-purple-500 h-2 rounded-full" 
-                                style={{width: `${Math.min(100, (Object.values(skillLevels).reduce((a,b) => a+b, 0) / 20) * 100)}%`}}
-                              ></div>
-                            </div>
-                            <span className="text-xs w-8">{Math.round((Object.values(skillLevels).reduce((a,b) => a+b, 0) / 20) * 100)}%</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Quick Recommendations */}
-                      <div className="mt-4 pt-3 border-t border-white/50">
-                        <div className="text-xs font-semibold mb-2">🎯 Quick Recommendations:</div>
-                        <div className="space-y-1 text-xs">
-                          {plots.filter(p => p.state === 'empty').length > plots.length * 0.3 && (
-                            <div className="text-amber-700">• Plant more crops to improve efficiency</div>
-                          )}
-                          {workers.length < 2 && coins > 300 && (
-                            <div className="text-blue-700">• Consider hiring workers for automation</div>
-                          )}
-                          {skillPoints > 5 && (
-                            <div className="text-purple-700">• Spend skill points to unlock bonuses</div>
-                          )}
-                          {researchPoints > 100 && !activeResearch && (
-                            <div className="text-green-700">• Start a research project for new features</div>
-                          )}
-                        </div>
-                      </div>
+                      <Button 
+                        onClick={() => {
+                          // Quick plant on empty plots
+                          const emptyPlots = plots.filter(p => p.state === 'empty').slice(0, 5);
+                          emptyPlots.forEach(p => {
+                            const plotIndex = plots.indexOf(p);
+                            if (plotIndex !== -1 && (inventory[selectedSeed] || 0) > 0) {
+                              plant(plotIndex, selectedSeed);
+                            }
+                          });
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="mobile-friendly-button"
+                        disabled={(inventory[selectedSeed] || 0) === 0}
+                      >
+                        🌱 Quick Plant
+                      </Button>
                     </div>
 
-                    {/* Detailed Statistics */}
+                    {/* Legacy analytics content (condensed) */}
                     <div className="p-3 bg-white/80 border rounded-xl shadow-sm">
-                      <div className="text-sm font-semibold mb-3">📈 Detailed Statistics</div>
+                      <div className="text-sm font-semibold mb-3">📈 Farm Statistics</div>
                       <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>Crops Planted: <span className="font-bold">{farmStatistics.plotsPlanted || 0}</span></div>
-                        <div>Crops Withered: <span className="font-bold">{farmStatistics.plotsWithered || 0}</span></div>
+                        <div>Total Harvests: <span className="font-bold">{farmStatistics.plotsHarvested || 0}</span></div>
+                        <div>Total Earned: <span className="font-bold">{Math.round(totalEarned)}</span></div>
                         <div>Fertilizer Used: <span className="font-bold">{farmStatistics.totalFertilizerUsed || 0}</span></div>
-                        <div>Pesticide Used: <span className="font-bold">{farmStatistics.totalPesticideUsed || 0}</span></div>
                         <div>Weather Events: <span className="font-bold">{farmStatistics.weatherEventsExperienced || 0}</span></div>
-                        <div>Best Combo: <span className="font-bold">{farmStatistics.bestComboStreak || 0}</span></div>
                         <div>Prestige Level: <span className="font-bold">{prestigeLevel}</span></div>
-                        <div>Lifetime Coins: <span className="font-bold">{Math.round(totalLifetimeCoins)}</span></div>
-                      </div>
-                    </div>
-
-                    {/* Achievement Progress */}
-                    <div className="p-3 bg-white/80 border rounded-xl shadow-sm">
-                      <div className="text-sm font-semibold mb-3">🏆 Achievement Progress</div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs">Achievements Unlocked</span>
-                          <span className="text-xs font-bold">{achievements.length}/{ACHIEVEMENTS.length}</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-yellow-500 h-2 rounded-full" 
-                            style={{width: `${(achievements.length / ACHIEVEMENTS.length) * 100}%`}}
-                          ></div>
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          {achievements.length === ACHIEVEMENTS.length ? "🎉 All achievements unlocked!" : 
-                           `${ACHIEVEMENTS.length - achievements.length} achievements remaining`}
-                        </div>
+                        <div>Efficiency: <span className="font-bold">{Math.round(farmStatistics.efficacyRating)}%</span></div>
                       </div>
                     </div>
                   </TabsContent>
 
                   <TabsContent value="settings" className="space-y-3">
+                    {/* AUTO-ACTIONS PANEL */}
+                    <div className="p-3 bg-gradient-to-br from-green-50 to-blue-50 border rounded-xl shadow-sm">
+                      <div className="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        🔄 Auto-Actions Settings
+                        <Badge variant={autoActionSettings.enabled ? "success" : "outline"} className="text-xs">
+                          {autoActionSettings.enabled ? "ON" : "OFF"}
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {/* Master Toggle */}
+                        <div className="flex items-center justify-between p-2 bg-white/70 rounded-lg">
+                          <div className="text-sm font-medium">Enable Auto-Actions</div>
+                          <input 
+                            type="checkbox" 
+                            checked={autoActionSettings.enabled}
+                            onChange={e => {
+                              setAutoActionSettings(prev => ({...prev, enabled: e.target.checked}));
+                              if (e.target.checked) {
+                                checkTutorialProgress('enableAutoActions', { setting: 'enabled' });
+                              }
+                            }}
+                            className="w-4 h-4"
+                          />
+                        </div>
+
+                        {autoActionSettings.enabled && (
+                          <>
+                            {/* Action Toggles */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <div className="flex items-center justify-between p-2 bg-white/50 rounded">
+                                <span className="text-xs">🌾 Auto Harvest</span>
+                                <input 
+                                  type="checkbox"
+                                  checked={autoActionSettings.harvest}
+                                  onChange={e => setAutoActionSettings(prev => ({...prev, harvest: e.target.checked}))}
+                                  className="w-3 h-3"
+                                />
+                              </div>
+                              <div className="flex items-center justify-between p-2 bg-white/50 rounded">
+                                <span className="text-xs">🌱 Auto Plant</span>
+                                <input 
+                                  type="checkbox"
+                                  checked={autoActionSettings.plant}
+                                  onChange={e => setAutoActionSettings(prev => ({...prev, plant: e.target.checked}))}
+                                  className="w-3 h-3"
+                                />
+                              </div>
+                              <div className="flex items-center justify-between p-2 bg-white/50 rounded">
+                                <span className="text-xs">💧 Auto Water</span>
+                                <input 
+                                  type="checkbox"
+                                  checked={autoActionSettings.water}
+                                  onChange={e => setAutoActionSettings(prev => ({...prev, water: e.target.checked}))}
+                                  className="w-3 h-3"
+                                />
+                              </div>
+                              <div className="flex items-center justify-between p-2 bg-white/50 rounded">
+                                <span className="text-xs">⚡ Auto Fertilize</span>
+                                <input 
+                                  type="checkbox"
+                                  checked={autoActionSettings.fertilize}
+                                  onChange={e => setAutoActionSettings(prev => ({...prev, fertilize: e.target.checked}))}
+                                  className="w-3 h-3"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Priority Settings */}
+                            <div className="p-2 bg-white/50 rounded-lg">
+                              <div className="text-xs font-medium mb-2">🎯 Smart Priority</div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs">Prioritize high-value crops</span>
+                                <input 
+                                  type="checkbox"
+                                  checked={autoActionSettings.smartPriority}
+                                  onChange={e => setAutoActionSettings(prev => ({...prev, smartPriority: e.target.checked}))}
+                                  className="w-3 h-3"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Status Display */}
+                            <div className="text-xs text-slate-600 p-2 bg-white/30 rounded">
+                              <div className="font-medium mb-1">⏱️ Auto-Actions Status:</div>
+                              <div>Actions executed this session: <span className="font-bold">{analyticsData.autoActionsExecuted}</span></div>
+                              <div>Efficiency gain: <span className="font-bold">+{Math.round(analyticsData.efficiencyGain)}%</span></div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* EXISTING SETTINGS */}
                     <div className="p-3 bg-white/80 border rounded-xl shadow-sm space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-medium">Animations</div>
                         <div className="flex items-center gap-2">
-                          <label className="text-xs text-slate-600">Enabled</label>
+                          <label className="text-xs text-slate-600">All effects & plot animations</label>
                           <input type="checkbox" checked={animationsEnabled} onChange={e => setAnimationsEnabled(e.target.checked)} />
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-medium">Performance Mode</div>
                         <div className="flex items-center gap-2">
-                          <label className="text-xs text-slate-600">Reduce effects</label>
+                          <label className="text-xs text-slate-600">Disable animations & effects</label>
                           <input type="checkbox" checked={performanceMode} onChange={e => setPerformanceMode(e.target.checked)} />
                         </div>
                       </div>
@@ -4973,6 +6119,24 @@ function buy(item, qty = 1) {
                         </Button>
                       </div>
                       <div className="text-xs text-slate-600">Current: Growth +{Math.round((skills.growthBoost||0)*100)}%, Value +{Math.round((skills.valueBoost||0)*100)}%</div>
+                    </div>
+
+                    {/* TUTORIAL CONTROL */}
+                    <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 border rounded-xl shadow-sm">
+                      <div className="font-semibold text-slate-700 mb-2">📚 Tutorial System</div>
+                      <div className="text-xs text-slate-600 mb-3">
+                        Need help learning the enhanced farm features? Restart the tutorial to get guided instructions.
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="text-xs w-full"
+                        onClick={restartTutorial}
+                      >
+                        🔄 Restart Tutorial
+                      </Button>
+                      <div className="text-xs text-slate-500 mt-2">
+                        Progress: {tutorialCompleted ? 12 : tutorialStep + 1}/12 steps completed
+                      </div>
                     </div>
                   </TabsContent>
 
@@ -6009,15 +7173,12 @@ function buy(item, qty = 1) {
                             try {
                               const snapshot = { rules, gridSize, plots, coins };
                               saveState(snapshot);
-                              console.log('Saved snapshot', snapshot);
-                              const raw = localStorage.getItem('farm_sim_enhanced_v1');
-                              console.log('LocalStorage value:', raw);
-                              addNotification('Save triggered (check console)', 'success');
+                              addNotification('Game saved successfully', 'success');
                             } catch (e) { console.error(e); addNotification('Save failed', 'error'); }
                           }}
                           className="w-full text-xs bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-600 hover:to-cyan-700"
                         >
-                          💾 Save Now (debug)
+                          💾 Save Game
                         </Button>
                         <Button
                           onClick={() => {
@@ -6092,82 +7253,432 @@ function buy(item, qty = 1) {
               </CardContent>
             </Card>
 
-            {/* Level Goals */}
+            {/* Farm Goals - Seamless Progression */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Target className="text-blue-600" size={20}/>
-                  Farm Goals
+                  Current Goal
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Tabs value={levelId} onValueChange={(v) => {
-                  setLevelId(v);
-                  const L = LEVELS.find(l => l.id === v);
-                  if (L) {
-                    setLevelEndsAt(nowSec() + L.minutes * 60);
-                    setLevelStartedAt(nowSec());
-                    setLevelStatus("playing");
-                    addLog(`🎯 New goal: ${L.label}`);
-                  }
-                }}>
-                  <TabsList className="grid grid-cols-2 w-full">
-                    {LEVELS.slice(0, 2).map(L => (
-                      <TabsTrigger key={L.id} value={L.id} className="text-xs">
-                        {L.id.toUpperCase()}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                  <TabsList className="grid grid-cols-2 w-full mt-2">
-                    {LEVELS.slice(2).map(L => (
-                      <TabsTrigger key={L.id} value={L.id} className="text-xs">
-                        {L.id === "endless" ? "ENDLESS" : L.id.toUpperCase()}
-                      </TabsTrigger>
-                    ))}
+                {levelId === "endless" ? (
+                  // Endless Mode Display
+                  <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg p-4 border-2 border-purple-200">
+                    <div className="text-center space-y-2">
+                      <div className="text-2xl">♾️</div>
+                      <div className="font-bold text-lg text-purple-800">Endless Farm Mode</div>
+                      <div className="text-sm text-purple-600">
+                        No time limits • No coin targets • Pure farming fun!
+                      </div>
+                      <div className="text-xs text-purple-500 mt-2">
+                        Current Progress: {coins}🪙 earned
+                      </div>
+                    </div>
+                  </div>
+                ) : level ? (
+                  // Current Level Progress
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-4 border">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <div className="font-bold text-lg text-blue-800">{level?.label || 'Unknown Level'}</div>
+                          <div className="text-sm text-blue-600">Level {levelId.replace('lvl', '')}</div>
+                        </div>
+                        <div className="text-xs bg-blue-100 px-2 py-1 rounded">
+                          {level?.difficulty || 'Unknown'}
+                        </div>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Progress: {coins}/{level?.targetCoins || 0}🪙</span>
+                          <span>{Math.round((coins / (level?.targetCoins || 1)) * 100)}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div 
+                            className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min((coins / (level?.targetCoins || 1)) * 100, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Time Remaining */}
+                      {levelStatus === "playing" && levelEndsAt > nowSec() && (
+                        <div className="mt-3 text-center">
+                          <div className="text-sm text-gray-600">Time Remaining:</div>
+                          <div className={`font-bold text-lg ${
+                            levelEndsAt - nowSec() < 60 ? 'text-red-600' : 
+                            levelEndsAt - nowSec() < 120 ? 'text-orange-600' : 'text-blue-600'
+                          }`}>
+                            {formatTimeRemaining(levelEndsAt, nowSec())}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Reward Info */}
+                      {(level?.reward || 0) > 0 && (
+                        <div className="mt-3 text-center text-sm text-green-600">
+                          🎁 Completion Reward: {level?.reward || 0}🪙
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Level Completion Status */}
+                    {levelStatus === 'won' && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                        <div className="text-green-800 font-bold mb-2">
+                          🎉 Level Complete!
+                        </div>
+                        <div className="text-sm text-green-600 mb-3">
+                          {(() => {
+                            const currentLevelIndex = LEVELS.findIndex(l => l.id === levelId);
+                            const nextLevel = LEVELS[currentLevelIndex + 1];
+                            
+                            if (nextLevel && nextLevel.id !== "endless") {
+                              return `Advancing to ${nextLevel.label}...`;
+                            } else {
+                              return "All levels completed! You're now a Master Farmer!";
+                            }
+                          })()}
+                        </div>
+                        
+                        {/* Show endless mode option if all levels are complete */}
+                        {(() => {
+                          const currentLevelIndex = LEVELS.findIndex(l => l.id === levelId);
+                          const nextLevel = LEVELS[currentLevelIndex + 1];
+                          
+                          if (!nextLevel || nextLevel.id === "endless") {
+                            return (
+                              <Button 
+                                onClick={() => {
+                                  setLevelId("endless");
+                                  setLevelStatus("playing");
+                                  setLevelEndsAt(0);
+                                  addLog("♾️ Switched to Endless Farm Mode!");
+                                  addNotification("Welcome to Endless Mode! Farm at your own pace.", "success");
+                                }}
+                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                              >
+                                ♾️ Switch to Endless Mode
+                              </Button>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    )}
+
+                    {levelStatus === 'lost' && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                        <div className="text-red-800 font-bold mb-2">
+                          ⏰ Time's Up!
+                        </div>
+                        <div className="text-sm text-red-600 mb-3">
+                          You earned {coins}🪙 out of {level?.targetCoins || 0}🪙 needed.
+                        </div>
+                        <div className="space-x-2">
+                          <Button 
+                            onClick={() => {
+                              setLevelEndsAt(nowSec() + (level?.minutes || 10) * 60);
+                              setLevelStartedAt(nowSec());
+                              setLevelStatus("playing");
+                              addLog(`🔄 Restarting ${level?.label || 'Level'}`);
+                            }}
+                            variant="outline"
+                            size="sm"
+                          >
+                            🔄 Try Again
+                          </Button>
+                          <Button 
+                            onClick={() => {
+                              setLevelId("endless");
+                              setLevelStatus("playing");
+                              setLevelEndsAt(0);
+                              addLog("♾️ Switched to Endless Farm Mode!");
+                            }}
+                            size="sm"
+                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                          >
+                            ♾️ Endless Mode
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    No active goal
+                  </div>
+                )}
+
+                {/* Quick Level Navigation (only show if not in endless mode and user wants to go back) */}
+                {levelId !== "endless" && levelStatus !== "playing" && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="text-xs text-gray-500 mb-2">Quick Options:</div>
+                    <div className="flex flex-wrap gap-2">
+                      {LEVELS.filter(l => l.id !== "endless").map(L => (
+                        <Button
+                          key={L.id}
+                          onClick={() => {
+                            setLevelId(L.id);
+                            setLevelEndsAt(nowSec() + L.minutes * 60);
+                            setLevelStartedAt(nowSec());
+                            setLevelStatus("playing");
+                            addLog(`🎯 Started ${L.label}`);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          {L.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Livestock Tab - Hidden but functional */}
+            <Card style={{display: activeTab === 'livestock' ? 'block' : 'none'}}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-orange-600">🐄</span>
+                  Livestock Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="overview">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="chickens">Chickens</TabsTrigger>
+                    <TabsTrigger value="cows">Cows</TabsTrigger>
+                    <TabsTrigger value="sheep">Sheep</TabsTrigger>
                   </TabsList>
                   
-                  {LEVELS.map(L => (
-                    <TabsContent key={L.id} value={L.id} className="text-sm space-y-2">
-                      <div className="bg-slate-100/80 backdrop-blur-sm rounded-lg p-3 border">
-                        <div className="font-semibold">{L.label}</div>
-                        <div className="text-xs opacity-70 mt-1">
-                          Target: <span className="font-bold text-emerald-600">{L.targetCoins}🪙</span> • 
-                          Time: <span className="font-bold text-blue-600">{L.minutes === 9999 ? "∞" : `${L.minutes}min`}</span>
-                          {L.reward > 0 && (
-                            <> • Reward: <span className="font-bold text-purple-600">{L.reward}🪙</span></>
-                          )}
-                        </div>
-                        <div className="text-xs opacity-60 mt-1">Difficulty: {L.difficulty}</div>
-                        
-                        {/* Progress bar for current level */}
-                        {L.id === levelId && L.id !== "endless" && (
-                          <div className="mt-3">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span>Progress: {coins}/{L.targetCoins}🪙</span>
-                              <span>{Math.round((coins / L.targetCoins) * 100)}%</span>
+                  <TabsContent value="overview" className="mt-0">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {Object.entries(LIVESTOCK_TYPES).map(([type, animal]) => (
+                          <Card key={type} className="p-4">
+                            <div className="text-center space-y-2">
+                              <div className="text-3xl">{animal.emoji}</div>
+                              <h3 className="font-bold">{animal.name}</h3>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <div>Cost: ${animal.cost}</div>
+                                <div>Max: {animal.maxCount}</div>
+                                <div>Owned: {livestock[type] || 0}</div>
+                              </div>
+                              <Button
+                                onClick={() => buyLivestock(type)}
+                                disabled={coins < animal.cost || (livestock[type] || 0) >= animal.maxCount}
+                                className="w-full"
+                              >
+                                Buy {animal.name}
+                              </Button>
+                              {(livestock[type] || 0) > 0 && (
+                                <div className="space-y-2 mt-2">
+                                  <Button onClick={() => feedLivestock(type)} size="sm" className="w-full">
+                                    Feed (${animal.food.cost * animal.food.consumption * (livestock[type] || 0)})
+                                  </Button>
+                                  <Button onClick={() => collectProducts(type)} size="sm" className="w-full">
+                                    Collect Products
+                                  </Button>
+                                </div>
+                              )}
                             </div>
-                            <div className="w-full bg-slate-200 rounded-full h-2">
-                              <div 
-                                className="bg-gradient-to-r from-emerald-500 to-green-600 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${Math.min(100, (coins / L.targetCoins) * 100)}%` }}
-                              />
-                            </div>
-                            
-                            {/* Time remaining */}
-                            <div className="mt-2 text-xs text-center">
-                              <span className="font-semibold">Time Remaining: </span>
-                              <span className={`font-bold ${
-                                levelEndsAt - currentTime < 60 ? 'text-red-600' : 
-                                levelEndsAt - currentTime < 120 ? 'text-orange-600' : 'text-blue-600'
-                              }`}>
-                                {formatTimeRemaining(levelEndsAt, currentTime)}
-                              </span>
-                            </div>
-                          </div>
-                        )}
+                          </Card>
+                        ))}
                       </div>
-                    </TabsContent>
-                  ))}
+                      
+                      {/* Products Section */}
+                      <Card className="p-4">
+                        <h3 className="font-bold mb-2">Animal Products</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {Object.entries(livestockProducts).map(([product, amount]) => (
+                            <div key={product} className="bg-gray-100 p-2 rounded flex justify-between">
+                              <span>{product}: {amount}</span>
+                              <Button onClick={() => sellProducts(product)} size="sm">Sell</Button>
+                            </div>
+                          ))}
+                        </div>
+                      </Card>
+                    </div>
+                  </TabsContent>
+
+                  {/* NEW INFRASTRUCTURE TAB */}
+                  <TabsContent value="infrastructure" className="mt-0">
+                    <div className="space-y-6">
+                      {/* Greenhouses */}
+                      <Card className="p-4">
+                        <h3 className="font-bold mb-4 flex items-center gap-2">
+                          🏠 Greenhouses ({greenhouses.length})
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          {Object.entries(GREENHOUSE_TYPES).map(([type, greenhouse]) => (
+                            <Card key={type} className="p-3">
+                              <div className="text-center space-y-2">
+                                <div className="text-2xl">{greenhouse.emoji}</div>
+                                <h4 className="font-semibold">{greenhouse.name}</h4>
+                                <div className="text-sm text-gray-600">
+                                  <div>Cost: ${greenhouse.cost}</div>
+                                  <div>Capacity: {greenhouse.capacity} plots</div>
+                                  <div>Upkeep: ${greenhouse.upkeep}/day</div>
+                                </div>
+                                <Button
+                                  onClick={() => buildGreenhouse(type)}
+                                  disabled={coins < greenhouse.cost}
+                                  size="sm"
+                                >
+                                  Build
+                                </Button>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </Card>
+
+                      {/* Equipment */}
+                      <Card className="p-4">
+                        <h3 className="font-bold mb-4 flex items-center gap-2">
+                          🚜 Farm Equipment
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {Object.entries(EQUIPMENT_TYPES).map(([type, eq]) => (
+                            <Card key={type} className="p-3">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <div className="font-semibold">{eq.emoji} {eq.name}</div>
+                                  <div className="text-sm text-gray-600">{eq.description}</div>
+                                  <div className="text-sm font-bold">Cost: ${eq.cost}</div>
+                                </div>
+                                <Button
+                                  onClick={() => buyEquipment(type)}
+                                  disabled={coins < eq.cost || equipment.includes(type)}
+                                  size="sm"
+                                >
+                                  {equipment.includes(type) ? "Owned" : "Buy"}
+                                </Button>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </Card>
+
+                      {/* Processing Facilities */}
+                      <Card className="p-4">
+                        <h3 className="font-bold mb-4 flex items-center gap-2">
+                          🏭 Processing Facilities ({processing.length})
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {Object.entries(PROCESSING_TYPES).map(([type, processor]) => (
+                            <Card key={type} className="p-3">
+                              <div className="text-center space-y-2">
+                                <div className="text-2xl">{processor.emoji}</div>
+                                <h4 className="font-semibold">{processor.name}</h4>
+                                <div className="text-sm text-gray-600">
+                                  <div>Cost: ${processor.cost}</div>
+                                  <div>Upkeep: ${processor.upkeep}/day</div>
+                                </div>
+                                <Button
+                                  onClick={() => buildProcessor(type)}
+                                  disabled={coins < processor.cost}
+                                  size="sm"
+                                >
+                                  Build
+                                </Button>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </Card>
+                    </div>
+                  </TabsContent>
+
+                  {/* NEW ECONOMY TAB */}
+                  <TabsContent value="economy" className="mt-0">
+                    <div className="space-y-6">
+                      {/* Insurance */}
+                      <Card className="p-4">
+                        <h3 className="font-bold mb-4 flex items-center gap-2">
+                          🛡️ Farm Insurance
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {Object.entries(INSURANCE_TYPES).map(([type, ins]) => (
+                            <Card key={type} className="p-3">
+                              <div className="space-y-2">
+                                <h4 className="font-semibold">{ins.name}</h4>
+                                <div className="text-sm text-gray-600">{ins.description}</div>
+                                <div className="text-sm font-bold">Cost: ${ins.cost}/hour</div>
+                                <Button
+                                  onClick={() => buyInsurance(type)}
+                                  disabled={coins < ins.cost}
+                                  size="sm"
+                                >
+                                  Buy Coverage
+                                </Button>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </Card>
+
+                      {/* Loans */}
+                      <Card className="p-4">
+                        <h3 className="font-bold mb-4 flex items-center gap-2">
+                          💳 Farm Loans
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {Object.entries(LOAN_TYPES).map(([type, loan]) => (
+                            <Card key={type} className="p-3">
+                              <div className="space-y-2">
+                                <h4 className="font-semibold">{loan.name}</h4>
+                                <div className="text-sm text-gray-600">{loan.description}</div>
+                                <div className="text-sm space-y-1">
+                                  <div>Amount: ${loan.amount}</div>
+                                  <div>Interest: {(loan.interest * 100).toFixed(1)}%</div>
+                                  <div>Term: {Math.round(loan.term / 60)} minutes</div>
+                                </div>
+                                <Button
+                                  onClick={() => takeLoan(type)}
+                                  size="sm"
+                                >
+                                  Apply for Loan
+                                </Button>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </Card>
+
+                      {/* Cooperatives */}
+                      <Card className="p-4">
+                        <h3 className="font-bold mb-4 flex items-center gap-2">
+                          🤝 Farm Cooperatives
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {Object.entries(COOP_BENEFITS).map(([type, coop]) => (
+                            <Card key={type} className="p-3">
+                              <div className="space-y-2">
+                                <h4 className="font-semibold">{coop.name}</h4>
+                                <div className="text-sm text-gray-600">{coop.description}</div>
+                                <div className="text-sm font-bold">Membership: ${coop.membershipCost}</div>
+                                <Button
+                                  onClick={() => joinCoop(type)}
+                                  disabled={coins < coop.membershipCost || coopMembership.includes(type)}
+                                  size="sm"
+                                >
+                                  {coopMembership.includes(type) ? "Member" : "Join"}
+                                </Button>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </Card>
+                    </div>
+                  </TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
@@ -6203,7 +7714,7 @@ function buy(item, qty = 1) {
               </CardHeader>
               <CardContent>
                 <div 
-                  className="grid gap-4 p-2" 
+                  className="farm-grid grid gap-2 md:gap-4 p-2 transition-all duration-300" 
                   style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }}
                 >
                   {plots.map((p, i) => <PlotCard key={i} p={p} i={i} />)}
@@ -6621,7 +8132,35 @@ function buy(item, qty = 1) {
           </div>
         </div>
       )}
+
+      {/* ENHANCED ANALYTICS DASHBOARD MODAL */}
+      {showAnalyticsDashboard && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowAnalyticsDashboard(false)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">📊 Farm Analytics Dashboard</h2>
+                <Button variant="outline" onClick={() => setShowAnalyticsDashboard(false)}>✕</Button>
+              </div>
+
+              <AnalyticsDashboard />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MOBILE NAVIGATION */}
+      {isMobile && (
+        <MobileNavBar 
+          currentTab={shopTab} 
+          setCurrentTab={setShopTab}
+          coins={coins}
+          level={level}
+        />
+      )}
     </div>
   );
 }
+
+export default FarmSimCanvas;
 

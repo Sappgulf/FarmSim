@@ -6,7 +6,8 @@ import "./index.css";
 // Register a basic service worker for PWA/offline support (no precache list here)
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    // Use relative path so file:// or static hosting also works
+    navigator.serviceWorker.register("sw.js").catch(() => {});
   });
 }
 
