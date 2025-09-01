@@ -46,21 +46,21 @@ const ECONOMIC_EVENTS = [
   { id: "luxury_trend", name: "Luxury Food Trend", emoji: "🍾", description: "Premium market prices soar", duration: 150, effects: { luxury_premium: 2.0 } }
 ];
 
-// PRESTIGE SYSTEM
+// PRESTIGE SYSTEM - REFINED BALANCE
 const PRESTIGE_LEVELS = [
   { level: 0, name: "Beginner", emoji: "🌱", multiplier: 1.0, requirement: 0 },
-  { level: 1, name: "Experienced", emoji: "🌿", multiplier: 1.1, requirement: 1000 },
-  { level: 2, name: "Expert", emoji: "🍃", multiplier: 1.25, requirement: 5000 },
-  { level: 3, name: "Master", emoji: "🌳", multiplier: 1.5, requirement: 15000 },
-  { level: 4, name: "Grandmaster", emoji: "🏆", multiplier: 2.0, requirement: 50000 },
-  { level: 5, name: "Legend", emoji: "👑", multiplier: 3.0, requirement: 150000 }
+  { level: 1, name: "Experienced", emoji: "🌿", multiplier: 1.15, requirement: 500 },
+  { level: 2, name: "Expert", emoji: "🍃", multiplier: 1.35, requirement: 2000 },
+  { level: 3, name: "Master", emoji: "🌳", multiplier: 1.6, requirement: 8000 },
+  { level: 4, name: "Grandmaster", emoji: "🏆", multiplier: 2.0, requirement: 25000 },
+  { level: 5, name: "Legend", emoji: "👑", multiplier: 2.5, requirement: 75000 }
 ];
 
 const PRESTIGE_BONUSES = {
-  growth_speed: 0.05,      // 5% faster growth per prestige level
-  coin_multiplier: 0.1,    // 10% more coins per prestige level
-  quality_chance: 0.02,    // 2% better quality chance per level
-  skill_points: 3          // Extra skill points per prestige
+  growth_speed: 0.08,      // 8% faster growth per prestige level
+  coin_multiplier: 0.12,   // 12% more coins per prestige level
+  quality_chance: 0.03,    // 3% better quality chance per level
+  skill_points: 5          // More skill points per prestige
 };
 
 // SKILL TREE SYSTEM
@@ -164,101 +164,101 @@ const RESEARCH_PROJECTS = {
   }
 };
 
-// ADVANCED WORKER SYSTEM
+// ADVANCED WORKER SYSTEM - REFINED BALANCE
 const WORKER_TYPES = {
   irrigator: {
     name: "Irrigator",
     emoji: "💧",
     description: "Automatically waters crops",
-    cost: 200,
-    upkeep: 10, // per day
-    efficiency: 0.8, // 80% as effective as manual
+    cost: 150,      // Reduced from 200
+    upkeep: 8,      // Reduced from 10
+    efficiency: 0.85, // Increased from 0.8
     unlocks: "auto_watering"
   },
   harvester: {
     name: "Harvester",
     emoji: "🚜",
     description: "Automatically harvests ready crops",
-    cost: 350,
-    upkeep: 15,
-    efficiency: 0.9,
+    cost: 300,      // Reduced from 350
+    upkeep: 12,     // Reduced from 15
+    efficiency: 0.95, // Increased from 0.9
     unlocks: "auto_harvesting"
   },
   pest_controller: {
     name: "Pest Controller",
     emoji: "🐛",
     description: "Automatically treats pest infestations",
-    cost: 180,
-    upkeep: 8,
-    efficiency: 0.85,
+    cost: 150,      // Reduced from 180
+    upkeep: 6,      // Reduced from 8
+    efficiency: 0.9, // Increased from 0.85
     unlocks: "auto_pest_control"
   },
   quality_inspector: {
     name: "Quality Inspector",
     emoji: "🔍",
     description: "Improves crop quality through careful monitoring",
-    cost: 300,
-    upkeep: 12,
-    efficiency: 0.75,
+    cost: 250,      // Reduced from 300
+    upkeep: 10,     // Reduced from 12
+    efficiency: 0.8, // Increased from 0.75
     unlocks: "quality_boost"
   },
   market_analyst: {
     name: "Market Analyst",
     emoji: "📈",
     description: "Provides market insights and trading recommendations",
-    cost: 500,
-    upkeep: 20,
+    cost: 400,      // Reduced from 500
+    upkeep: 15,     // Reduced from 20
     efficiency: 1.0,
     unlocks: "market_predictions"
   }
 };
 
-// SUPPLY CHAIN SYSTEM
+// SUPPLY CHAIN SYSTEM - REFINED BALANCE
 const PROCESSING_FACILITIES = {
   flour_mill: {
     name: "Flour Mill",
     emoji: "🏭",
     description: "Process wheat into flour",
-    cost: 500,
+    cost: 400,        // Reduced from 500
     input: "wheat",
     output: "flour",
-    ratio: 2, // 2 wheat = 1 flour
-    value_multiplier: 2.5,
-    time: 60 // 1 minute processing time
+    ratio: 2,         // 2 wheat = 1 flour
+    value_multiplier: 2.8, // Increased from 2.5
+    time: 45          // Reduced from 60
   },
   juice_press: {
     name: "Juice Press",
     emoji: "🧃",
     description: "Process fruits into juice",
-    cost: 400,
+    cost: 300,        // Reduced from 400
     input: "apple",
     output: "apple_juice",
     ratio: 3,
-    value_multiplier: 2.2,
-    time: 45
+    value_multiplier: 2.5, // Increased from 2.2
+    time: 35          // Reduced from 45
   },
   oil_press: {
     name: "Oil Press",
     emoji: "🫒",
     description: "Extract oil from seeds",
-    cost: 600,
+    cost: 500,        // Reduced from 600
     input: "sunflower",
     output: "sunflower_oil",
-    ratio: 4,
-    value_multiplier: 3.0,
-    time: 90
+    ratio: 3,         // Reduced from 4
+    value_multiplier: 3.2, // Increased from 3.0
+    time: 75          // Reduced from 90
   },
   preservation_facility: {
     name: "Preservation Facility",
     emoji: "🥫",
     description: "Preserve crops for longer storage",
-    cost: 800,
-    input: "any", // accepts any crop
+    cost: 600,        // Reduced from 800
+    input: "any",     // accepts any crop
     output: "preserved",
     ratio: 1,
-    value_multiplier: 1.8,
-    time: 120,
-    storage_bonus: 10 // days of extra storage
+    value_multiplier: 2.0, // Increased from 1.8
+    time: 90,         // Reduced from 120
+    storage_bonus: 15 // Increased from 10 days
   }
 };
 
@@ -418,21 +418,53 @@ const WEATHER_FORECAST = {
 };
 
 const ACHIEVEMENTS = [
-  { id: "first_harvest", name: "First Harvest", desc: "Harvest your first crop", reward: 15, icon: "🌱" },
-  { id: "weathered", name: "Weather Expert", desc: "Survive 3 weather events", reward: 25, icon: "⛈️" },
-  { id: "coin_collector", name: "Coin Collector", desc: "Earn 300 coins total", reward: 40, icon: "💰" },
-  { id: "speed_farmer", name: "Speed Farmer", desc: "Complete Level 1 in under 4 minutes", reward: 30, icon: "⚡" },
-  { id: "field_master", name: "Field Master", desc: "Unlock the maximum field size", reward: 100, icon: "🏆" },
-  { id: "season_expert", name: "Season Expert", desc: "Plant 5 crops in their optimal season", reward: 35, icon: "🍂" },
-  { id: "mass_producer", name: "Mass Producer", desc: "Harvest 25 crops total", reward: 60, icon: "🚜" },
-  { id: "quality_farmer", name: "Quality Farmer", desc: "Harvest 5 high-quality crops", reward: 45, icon: "⭐" },
-  { id: "pest_controller", name: "Pest Controller", desc: "Eliminate 10 pest infestations", reward: 30, icon: "🧽" },
-  { id: "millionaire", name: "Farm Millionaire", desc: "Earn 800 coins total", reward: 150, icon: "💎" },
-  // NEW: Disease and pollination achievements
-  { id: "disease_fighter", name: "Disease Fighter", desc: "Cure 15 crop diseases", reward: 50, icon: "🦠" },
-  { id: "bee_keeper", name: "Bee Keeper", desc: "Harvest 10 honey products", reward: 40, icon: "🐝" },
-  { id: "rotation_master", name: "Rotation Master", desc: "Use crop rotation 20 times", reward: 60, icon: "🔄" },
-  { id: "weather_forecaster", name: "Weather Forecaster", desc: "Successfully predict 5 weather changes", reward: 35, icon: "🌤️" },
+  // FARMING BASICS
+  { id: "first_harvest", name: "First Harvest", desc: "Harvest your first crop", reward: 15, icon: "🌱", category: "farming" },
+  { id: "mass_producer", name: "Mass Producer", desc: "Harvest 25 crops total", reward: 60, icon: "🚜", category: "farming" },
+  { id: "quality_farmer", name: "Quality Farmer", desc: "Harvest 5 high-quality crops", reward: 45, icon: "⭐", category: "farming" },
+  { id: "field_master", name: "Field Master", desc: "Unlock the maximum field size", reward: 100, icon: "🏆", category: "farming" },
+  
+  // ECONOMIC MASTERY
+  { id: "coin_collector", name: "Coin Collector", desc: "Earn 300 coins total", reward: 40, icon: "💰", category: "economy" },
+  { id: "millionaire", name: "Farm Millionaire", desc: "Earn 800 coins total", reward: 150, icon: "💎", category: "economy" },
+  { id: "market_master", name: "Market Master", desc: "Make 10 profitable trades", reward: 80, icon: "📈", category: "economy" },
+  { id: "futures_trader", name: "Futures Trader", desc: "Complete 5 futures contracts", reward: 70, icon: "📊", category: "economy" },
+  
+  // SKILL & PROGRESSION
+  { id: "skill_enthusiast", name: "Skill Enthusiast", desc: "Unlock 5 different skills", reward: 75, icon: "📚", category: "progression" },
+  { id: "prestige_pioneer", name: "Prestige Pioneer", desc: "Achieve your first prestige level", reward: 200, icon: "🌟", category: "progression" },
+  { id: "research_scientist", name: "Research Scientist", desc: "Complete 3 research projects", reward: 120, icon: "🔬", category: "progression" },
+  { id: "automation_expert", name: "Automation Expert", desc: "Hire 3 different worker types", reward: 100, icon: "🤖", category: "progression" },
+  
+  // ENVIRONMENTAL & SEASONS
+  { id: "weathered", name: "Weather Expert", desc: "Survive 3 weather events", reward: 25, icon: "⛈️", category: "environment" },
+  { id: "season_expert", name: "Season Expert", desc: "Plant 5 crops in their optimal season", reward: 35, icon: "🍂", category: "environment" },
+  { id: "rotation_master", name: "Rotation Master", desc: "Use crop rotation 20 times", reward: 60, icon: "�", category: "environment" },
+  { id: "companion_gardener", name: "Companion Gardener", desc: "Achieve 10 companion planting bonuses", reward: 50, icon: "🌿", category: "environment" },
+  
+  // CHALLENGES & SPECIAL
+  { id: "speed_farmer", name: "Speed Farmer", desc: "Complete Level 1 in under 4 minutes", reward: 30, icon: "⚡", category: "challenge" },
+  { id: "pest_controller", name: "Pest Controller", desc: "Eliminate 10 pest infestations", reward: 30, icon: "🧽", category: "challenge" },
+  { id: "disease_fighter", name: "Disease Fighter", desc: "Cure 15 crop diseases", reward: 50, icon: "🦠", category: "challenge" },
+  { id: "efficiency_master", name: "Efficiency Master", desc: "Achieve 95% farm efficiency rating", reward: 90, icon: "⚙️", category: "challenge" },
+  
+  // SOCIAL & COMMUNITY
+  { id: "social_butterfly", name: "Social Butterfly", desc: "Add 5 friends", reward: 40, icon: "👥", category: "social" },
+  { id: "gift_giver", name: "Gift Giver", desc: "Send 20 gifts to friends", reward: 60, icon: "🎁", category: "social" },
+  { id: "competition_winner", name: "Competition Winner", desc: "Win a farming competition", reward: 100, icon: "🏅", category: "social" },
+  { id: "town_builder", name: "Town Builder", desc: "Build 3 town structures", reward: 85, icon: "🏛️", category: "social" },
+  
+  // SPECIALIZED & ADVANCED
+  { id: "bee_keeper", name: "Bee Keeper", desc: "Harvest 10 honey products", reward: 40, icon: "🐝", category: "specialized" },
+  { id: "processing_tycoon", name: "Processing Tycoon", desc: "Process 50 raw materials", reward: 70, icon: "🏭", category: "specialized" },
+  { id: "weather_forecaster", name: "Weather Forecaster", desc: "Successfully predict 5 weather changes", reward: 35, icon: "🌤️", category: "specialized" },
+  { id: "innovation_leader", name: "Innovation Leader", desc: "Be first to unlock new technology", reward: 150, icon: "💡", category: "specialized" },
+  
+  // MILESTONE ACHIEVEMENTS
+  { id: "centurion", name: "Centurion", desc: "Harvest 100 crops total", reward: 200, icon: "💯", category: "milestone" },
+  { id: "land_baron", name: "Land Baron", desc: "Expand to maximum farm size in all directions", reward: 250, icon: "🗺️", category: "milestone" },
+  { id: "master_farmer", name: "Master Farmer", desc: "Reach prestige level 3", reward: 500, icon: "👑", category: "milestone" },
+  { id: "farm_legend", name: "Farm Legend", desc: "Complete all other achievements", reward: 1000, icon: "🏆", category: "milestone" }
 ];
 
 const SEASONS = ["spring", "summer", "fall", "winter"];
@@ -465,6 +497,35 @@ const WEATHER_EFFECTS = {
   Storm: { icon: Wind, color: "text-purple-500", bg: "bg-purple-50" },
   Frost: { icon: Snowflake, color: "text-cyan-500", bg: "bg-cyan-50" },
   Pests: { icon: Bug, color: "text-red-500", bg: "bg-red-50" },
+};
+
+// ADVANCED CROP ROTATION SYSTEM
+const CROP_FAMILIES = {
+  legumes: { crops: ['soybean'], benefit: 'nitrogen_fixation', emoji: '🫘' },
+  roots: { crops: ['carrot', 'potato'], benefit: 'soil_aeration', emoji: '🥕' },
+  brassicas: { crops: ['cabbage'], benefit: 'pest_control', emoji: '🥬' },
+  fruits: { crops: ['tomato', 'strawberry', 'apple'], benefit: 'diverse_nutrients', emoji: '🍅' },
+  grains: { crops: ['corn', 'wheat'], benefit: 'soil_structure', emoji: '🌾' },
+  herbs: { crops: ['basil'], benefit: 'companion_planting', emoji: '🌿' }
+};
+
+const ROTATION_BENEFITS = {
+  nitrogen_fixation: { bonus: 1.3, description: 'Enriches soil nitrogen for next crop', duration: 2 },
+  soil_aeration: { bonus: 1.2, description: 'Improves soil structure', duration: 1 },
+  pest_control: { bonus: 1.25, description: 'Natural pest deterrent', duration: 2 },
+  diverse_nutrients: { bonus: 1.15, description: 'Balanced nutrient cycling', duration: 1 },
+  soil_structure: { bonus: 1.2, description: 'Prevents soil compaction', duration: 1 },
+  companion_planting: { bonus: 1.35, description: 'Symbiotic growth boost', duration: 3 }
+};
+
+// COMPANION PLANTING MATRIX
+const COMPANION_PLANTS = {
+  tomato: { good: ['basil'], bad: ['corn'], neutral: ['carrot', 'potato'] },
+  corn: { good: ['soybean'], bad: ['tomato'], neutral: ['carrot'] },
+  carrot: { good: ['tomato', 'corn'], bad: [], neutral: ['potato'] },
+  potato: { good: [], bad: ['tomato'], neutral: ['carrot', 'corn'] },
+  basil: { good: ['tomato'], bad: [], neutral: ['corn', 'carrot'] },
+  soybean: { good: ['corn'], bad: [], neutral: ['tomato', 'carrot'] }
 };
 
 // Social & Multiplayer System Constants
@@ -832,6 +893,51 @@ export default function FarmSimCanvas() {
   const [processingFacilities, setProcessingFacilities] = useState(saved?.processingFacilities || []);
   const [processingQueue, setProcessingQueue] = useState(saved?.processingQueue || []);
   const [processedInventory, setProcessedInventory] = useState(saved?.processedInventory || {});
+  
+  // ADVANCED STATISTICS & ANALYTICS
+  const [farmStatistics, setFarmStatistics] = useState(saved?.farmStatistics || {
+    totalTimePlayedMinutes: 0,
+    plotsPlanted: 0,
+    plotsHarvested: 0,
+    plotsWithered: 0,
+    totalFertilizerUsed: 0,
+    totalPesticideUsed: 0,
+    diseasesEncountered: 0,
+    weatherEventsExperienced: 0,
+    bestComboStreak: 0,
+    highestValueHarvest: 0,
+    favoriteCrop: "carrot",
+    mostProfitableDay: 0,
+    efficacyRating: 100, // 0-100 based on performance
+    lastPlaySession: nowSec()
+  });
+  
+  // QUALITY OF LIFE FEATURES
+  const [autoActions, setAutoActions] = useState(saved?.autoActions || {
+    autoHarvest: false,
+    autoWater: false,
+    autoPlant: false,
+    autoFertilize: false,
+    notifyLowResources: true,
+    showDetailedTooltips: true
+  });
+
+  // SMART FARM ASSISTANT
+  const [assistantRecommendations, setAssistantRecommendations] = useState([]);
+  const [assistantEnabled, setAssistantEnabled] = useState(saved?.assistantEnabled ?? true);
+  const [lastRecommendationUpdate, setLastRecommendationUpdate] = useState(0);
+  const [farmInsights, setFarmInsights] = useState(saved?.farmInsights || {
+    profitTrends: [],
+    cropPerformance: {},
+    seasonalAdvice: {},
+    marketOpportunities: []
+  });
+
+  // ADVANCED CROP ROTATION SYSTEM
+  const [plotHistory, setPlotHistory] = useState(saved?.plotHistory || {}); // Track what was planted on each plot
+  const [rotationBenefits, setRotationBenefits] = useState(saved?.rotationBenefits || {}); // Active benefits per plot
+  const [companionBonuses, setCompanionBonuses] = useState(saved?.companionBonuses || {}); // Companion plant bonuses
+  
   const [competitionsActive, setCompetitionsActive] = useState(saved?.competitionsActive || []);
   const [actionHistory, setActionHistory] = useState(saved?.actionHistory || []);
   
@@ -856,6 +962,14 @@ export default function FarmSimCanvas() {
   const [autoTimeOfDay, setAutoTimeOfDay] = useState(saved?.autoTimeOfDay ?? true);
   const [paused, setPaused] = useState(saved?.paused ?? false);
   const [simSpeed, setSimSpeed] = useState(saved?.simSpeed ?? 1);
+
+  // TUTORIAL & ONBOARDING SYSTEM
+  const [tutorialActive, setTutorialActive] = useState(saved?.tutorialActive ?? true);
+  const [tutorialStep, setTutorialStep] = useState(saved?.tutorialStep ?? 0);
+  const [tutorialCompleted, setTutorialCompleted] = useState(saved?.tutorialCompleted ?? false);
+  const [tutorialProgress, setTutorialProgress] = useState(saved?.tutorialProgress || {});
+  const [hintsEnabled, setHintsEnabled] = useState(saved?.hintsEnabled ?? true);
+  const [lastHintShown, setLastHintShown] = useState(saved?.lastHintShown || 0);
 
   // Account System State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -1027,7 +1141,15 @@ export default function FarmSimCanvas() {
           // ADVANCED WORKER SYSTEM
           workers, workerUpkeep, lastWorkerPayment,
           // SUPPLY CHAIN SYSTEM
-          processingFacilities, processingQueue, processedInventory
+          processingFacilities, processingQueue, processedInventory,
+          // ADVANCED STATISTICS & ANALYTICS
+          farmStatistics, autoActions,
+          // SMART FARM ASSISTANT
+          assistantEnabled, farmInsights,
+          // CROP ROTATION SYSTEM
+          plotHistory, rotationBenefits, companionBonuses,
+          // TUTORIAL SYSTEM
+          tutorialActive, tutorialStep, tutorialCompleted, tutorialProgress, hintsEnabled
         };
         saveState(snapshot);
         // Autosave toast (throttled) to indicate saves without spamming
@@ -1102,17 +1224,29 @@ export default function FarmSimCanvas() {
   // --- enhanced helpers ---
   const addLog = (msg) => setLog(l => [`${new Date().toLocaleTimeString()} ${msg}`, ...l].slice(0, 100));
   
-  const addNotification = (msg, type = "info") => {
-    const id = Date.now() + Math.random(); // Ensure unique IDs
+  const addNotification = (msg, type = "info", duration = 4000) => {
+    const id = Date.now() + Math.random();
+    const notification = { 
+      id, 
+      msg, 
+      type, 
+      timestamp: Date.now(),
+      priority: type === "error" ? 3 : type === "warning" ? 2 : 1
+    };
+    
     setNotifications(n => {
-      const next = [...n, { id, msg, type }];
-      // cap to 3 visible notifications
-      return next.slice(-3);
+      const next = [...n, notification];
+      // Sort by priority and keep max 5 notifications
+      return next
+        .sort((a, b) => b.priority - a.priority || b.timestamp - a.timestamp)
+        .slice(-5);
     });
-    // Use a more reliable timeout mechanism
+    
+    // Auto-remove with longer duration for important messages
+    const autoRemoveDuration = type === "error" ? duration * 2 : duration;
     setTimeout(() => {
       setNotifications(prev => prev.filter(x => x.id !== id));
-    }, 4000); // Increased to 4 seconds for better visibility
+    }, autoRemoveDuration);
   };
 
   // NEW: Enhanced visual and gameplay helpers
@@ -1742,6 +1876,353 @@ export default function FarmSimCanvas() {
     }));
   };
 
+  // SMART FARM ASSISTANT FUNCTIONS
+  const generateSmartRecommendations = () => {
+    const recommendations = [];
+    const now = nowSec();
+    
+    // Market opportunity analysis
+    const bestMarketCrop = Object.entries(marketPrices || {})
+      .sort(([,a], [,b]) => b - a)[0];
+    if (bestMarketCrop && bestMarketCrop[1] > (rules.seeds[bestMarketCrop[0]]?.baseValue || 0) * 1.2) {
+      recommendations.push({
+        id: 'market_opportunity',
+        type: 'profit',
+        title: `Market Opportunity: ${bestMarketCrop[0]}`,
+        description: `${bestMarketCrop[0]} prices are 20%+ above normal. Consider planting more!`,
+        action: () => setSelectedSeed(bestMarketCrop[0]),
+        priority: 'high',
+        icon: '📈'
+      });
+    }
+
+    // Resource management
+    if ((inventory.fertilizer || 0) < 2) {
+      recommendations.push({
+        id: 'low_fertilizer',
+        type: 'resource',
+        title: 'Low Fertilizer Stock',
+        description: 'Buy fertilizer to boost crop growth speed by 50%',
+        action: () => buy('fertilizer', 3),
+        priority: 'medium',
+        icon: '⚡'
+      });
+    }
+
+    // Worker suggestions
+    if (!workers.find(w => w.type === 'harvester') && plots.filter(p => p.state === 'grown').length > 3) {
+      recommendations.push({
+        id: 'hire_harvester',
+        type: 'automation',
+        title: 'Consider Hiring Harvester',
+        description: 'You have many ready crops. A harvester can auto-harvest for you!',
+        action: () => hireWorker('harvester'),
+        priority: 'high',
+        icon: '🚜'
+      });
+    }
+
+    // Skill upgrade suggestions
+    if (skillPoints >= 5 && !skillLevels.green_thumb) {
+      recommendations.push({
+        id: 'upgrade_green_thumb',
+        type: 'progression',
+        title: 'Upgrade Green Thumb Skill',
+        description: 'Increase crop growth speed permanently',
+        action: () => upgradeSkill('farming', 'green_thumb'),
+        priority: 'medium',
+        icon: '📚'
+      });
+    }
+
+    // Weather-based advice
+    if (weather.type === 'Drought' && (inventory.wateringCan || 0) < 3) {
+      recommendations.push({
+        id: 'drought_preparation',
+        type: 'weather',
+        title: 'Drought Warning',
+        description: 'Stock up on watering cans during drought season',
+        action: () => buy('wateringCan', 5),
+        priority: 'high',
+        icon: '🏜️'
+      });
+    }
+
+    return recommendations.slice(0, 4); // Limit to 4 recommendations
+  };
+
+  const updateFarmInsights = () => {
+    const insights = {
+      profitTrends: [],
+      cropPerformance: {},
+      seasonalAdvice: {},
+      marketOpportunities: []
+    };
+
+    // Calculate crop performance
+    Object.keys(rules.seeds).forEach(cropType => {
+      const plantedCount = plots.filter(p => p.seedType === cropType).length;
+      const harvestedCount = farmStatistics.plotsHarvested || 0;
+      const avgValue = marketPrices[cropType] || rules.seeds[cropType].baseValue;
+      
+      insights.cropPerformance[cropType] = {
+        popularity: plantedCount,
+        profitability: avgValue,
+        efficiency: harvestedCount > 0 ? (avgValue / harvestedCount) : 0
+      };
+    });
+
+    // Seasonal advice
+    const seasonBonus = SEASON_EFFECTS[currentSeason] || {};
+    insights.seasonalAdvice[currentSeason] = {
+      recommendedCrops: Object.entries(seasonBonus).filter(([, bonus]) => bonus > 1).map(([crop]) => crop),
+      warning: seasonBonus.growth_penalty ? 'Growth is slower this season' : null
+    };
+
+    setFarmInsights(insights);
+  };
+
+  // ADVANCED CROP ROTATION FUNCTIONS
+  const getCropFamily = (cropType) => {
+    for (const [family, data] of Object.entries(CROP_FAMILIES)) {
+      if (data.crops.includes(cropType)) return family;
+    }
+    return null;
+  };
+
+  const calculateRotationBonus = (plotIndex, newCropType) => {
+    const plotId = `plot_${plotIndex}`;
+    const history = plotHistory[plotId] || [];
+    const newFamily = getCropFamily(newCropType);
+    
+    if (!newFamily || history.length === 0) return 1.0;
+
+    // Check last crop for rotation benefit
+    const lastCrop = history[history.length - 1];
+    const lastFamily = getCropFamily(lastCrop.cropType);
+    
+    if (lastFamily && lastFamily !== newFamily) {
+      const benefit = CROP_FAMILIES[lastFamily].benefit;
+      const bonus = ROTATION_BENEFITS[benefit];
+      if (bonus) {
+        return bonus.bonus;
+      }
+    }
+    
+    return 1.0;
+  };
+
+  const calculateCompanionBonus = (plotIndex, cropType) => {
+    const adjacentPlots = getAdjacentPlots(plotIndex);
+    let totalBonus = 1.0;
+    
+    adjacentPlots.forEach(adjIndex => {
+      const adjPlot = plots[adjIndex];
+      if (adjPlot && (adjPlot.state === 'planted' || adjPlot.state === 'growing') && adjPlot.seedType) {
+        const companions = COMPANION_PLANTS[cropType];
+        if (companions) {
+          if (companions.good.includes(adjPlot.seedType)) {
+            totalBonus += 0.15; // 15% bonus per good companion
+          } else if (companions.bad.includes(adjPlot.seedType)) {
+            totalBonus -= 0.10; // 10% penalty per bad companion
+          }
+        }
+      }
+    });
+    
+    return Math.max(0.5, totalBonus); // Minimum 50% growth
+  };
+
+  const getAdjacentPlots = (plotIndex) => {
+    const size = gridSize;
+    const row = Math.floor(plotIndex / size);
+    const col = plotIndex % size;
+    const adjacent = [];
+    
+    // Check all 4 directions
+    if (row > 0) adjacent.push((row - 1) * size + col); // Up
+    if (row < size - 1) adjacent.push((row + 1) * size + col); // Down
+    if (col > 0) adjacent.push(row * size + (col - 1)); // Left
+    if (col < size - 1) adjacent.push(row * size + (col + 1)); // Right
+    
+    return adjacent.filter(i => i >= 0 && i < plots.length);
+  };
+
+  const updatePlotHistory = (plotIndex, cropType, action) => {
+    const plotId = `plot_${plotIndex}`;
+    const entry = {
+      cropType,
+      action, // 'planted', 'harvested', 'withered'
+      timestamp: nowSec(),
+      season: currentSeason
+    };
+    
+    setPlotHistory(prev => ({
+      ...prev,
+      [plotId]: [...(prev[plotId] || []), entry].slice(-5) // Keep last 5 entries
+    }));
+  };
+
+  const getRotationAdvice = (plotIndex) => {
+    const plotId = `plot_${plotIndex}`;
+    const history = plotHistory[plotId] || [];
+    
+    if (history.length === 0) {
+      return "🌱 Fresh soil! Any crop will thrive here.";
+    }
+    
+    const lastCrop = history[history.length - 1];
+    const lastFamily = getCropFamily(lastCrop.cropType);
+    
+    if (!lastFamily) return "🌱 Plant any crop you like!";
+    
+    // Suggest different family for rotation
+    const recommendedFamilies = Object.keys(CROP_FAMILIES).filter(f => f !== lastFamily);
+    const suggestion = recommendedFamilies[0];
+    const benefit = CROP_FAMILIES[lastFamily].benefit;
+    const bonus = ROTATION_BENEFITS[benefit];
+    
+    return `🔄 Last: ${CROP_FAMILIES[lastFamily].emoji} ${lastFamily}. Try ${CROP_FAMILIES[suggestion].emoji} ${suggestion} for ${bonus ? `+${Math.round((bonus.bonus - 1) * 100)}%` : 'rotation'} bonus!`;
+  };
+
+  // TUTORIAL & ONBOARDING SYSTEM
+  const TUTORIAL_STEPS = [
+    {
+      id: 'welcome',
+      title: '🌱 Welcome to Farm Simulator!',
+      content: 'Let\'s learn the basics of farming. Click anywhere to continue.',
+      highlight: null,
+      action: null
+    },
+    {
+      id: 'plant_first_seed',
+      title: '🌰 Plant Your First Seed',
+      content: 'Click on any empty plot (brown squares) to plant a carrot seed.',
+      highlight: 'plot',
+      action: 'plant'
+    },
+    {
+      id: 'wait_for_growth',
+      title: '⏱️ Growth Takes Time',
+      content: 'Great! Now wait for your carrot to grow. You can see the progress bar.',
+      highlight: 'growing-plot',
+      action: 'wait'
+    },
+    {
+      id: 'water_plants',
+      title: '💧 Water Your Plants',
+      content: 'Plants grow faster when watered! Right-click your growing plant to water it.',
+      highlight: 'growing-plot',
+      action: 'water'
+    },
+    {
+      id: 'harvest_crop',
+      title: '🥕 Harvest Time!',
+      content: 'Your carrot is ready! Click on it to harvest and earn coins.',
+      highlight: 'grown-plot',
+      action: 'harvest'
+    },
+    {
+      id: 'use_shop',
+      title: '🛒 Visit the Shop',
+      content: 'Great harvest! Use your coins to buy more seeds and tools in the shop.',
+      highlight: 'shop',
+      action: 'buy'
+    },
+    {
+      id: 'advanced_features',
+      title: '🚀 Advanced Features',
+      content: 'You\'ve mastered the basics! Explore Skills, Workers, and Research tabs for advanced farming.',
+      highlight: 'tabs',
+      action: null
+    }
+  ];
+
+  const getCurrentTutorialStep = () => {
+    if (!tutorialActive || tutorialCompleted) return null;
+    return TUTORIAL_STEPS[tutorialStep] || null;
+  };
+
+  const advanceTutorial = () => {
+    if (!tutorialActive || tutorialCompleted) return;
+    
+    const nextStep = tutorialStep + 1;
+    if (nextStep >= TUTORIAL_STEPS.length) {
+      setTutorialCompleted(true);
+      setTutorialActive(false);
+      addNotification('🎉 Tutorial completed! You\'re ready to farm independently!', 'success');
+      // Bonus for completing tutorial
+      setCoins(prev => prev + 50);
+      setSkillPoints(prev => prev + 3);
+    } else {
+      setTutorialStep(nextStep);
+    }
+  };
+
+  const skipTutorial = () => {
+    setTutorialCompleted(true);
+    setTutorialActive(false);
+    addNotification('Tutorial skipped. You can replay it in Settings.', 'info');
+  };
+
+  const restartTutorial = () => {
+    setTutorialStep(0);
+    setTutorialCompleted(false);
+    setTutorialActive(true);
+    setTutorialProgress({});
+    addNotification('Tutorial restarted!', 'info');
+  };
+
+  const checkTutorialProgress = (action, data = {}) => {
+    if (!tutorialActive || tutorialCompleted) return;
+    
+    const currentStep = getCurrentTutorialStep();
+    if (!currentStep || currentStep.action !== action) return;
+    
+    // Record progress and advance if conditions met
+    switch (action) {
+      case 'plant':
+        if (plots.some(p => p.state === 'planted')) {
+          advanceTutorial();
+        }
+        break;
+      case 'water':
+        if (plots.some(p => p.watered)) {
+          advanceTutorial();
+        }
+        break;
+      case 'harvest':
+        if (totalHarvests > 0) {
+          advanceTutorial();
+        }
+        break;
+      case 'buy':
+        if (data.item && data.item !== 'carrot') {
+          advanceTutorial();
+        }
+        break;
+    }
+  };
+
+  const showContextualHint = (context) => {
+    if (!hintsEnabled || nowSec() - lastHintShown < 30) return; // Rate limit hints
+    
+    const hints = {
+      low_coins: "💡 Tip: Harvest your crops to earn more coins!",
+      many_grown: "💡 Tip: You have many ready crops. Consider hiring a Harvester worker to auto-harvest!",
+      weather_drought: "💡 Tip: During drought, your crops need extra watering to grow properly.",
+      pest_infestation: "💡 Tip: Use pesticide to eliminate pest infestations quickly.",
+      skill_points: "💡 Tip: You have skill points! Visit the Skills tab to unlock permanent bonuses.",
+      research_available: "💡 Tip: You can start a research project to unlock new features!",
+      prestige_ready: "💡 Tip: You're eligible for prestige! This will reset your farm but give permanent bonuses."
+    };
+    
+    if (hints[context]) {
+      addNotification(hints[context], 'info');
+      setLastHintShown(nowSec());
+    }
+  };
+
   // Town Development Functions
   const buildTownBuilding = (buildingId) => {
     const building = TOWN_BUILDINGS[buildingId];
@@ -2292,6 +2773,28 @@ export default function FarmSimCanvas() {
     }
   }, [currentTime, activeResearch, researchStartedAt]);
 
+  // SMART ASSISTANT useEffects
+  useEffect(() => {
+    if (!assistantEnabled) return;
+    
+    // Update recommendations every 2 minutes
+    const interval = setInterval(() => {
+      const recommendations = generateSmartRecommendations();
+      setAssistantRecommendations(recommendations);
+      updateFarmInsights();
+      setLastRecommendationUpdate(nowSec());
+    }, 120000);
+    
+    // Initial recommendations
+    if (nowSec() - lastRecommendationUpdate > 120) {
+      const recommendations = generateSmartRecommendations();
+      setAssistantRecommendations(recommendations);
+      updateFarmInsights();
+    }
+    
+    return () => clearInterval(interval);
+  }, [assistantEnabled, coins, inventory, plots, workers, skillPoints, weather]);
+
   useEffect(() => {
     // Worker upkeep payment (daily)
     const daysPassed = Math.floor((nowSec() - lastWorkerPayment) / 86400);
@@ -2511,7 +3014,7 @@ export default function FarmSimCanvas() {
     return "Game Running"; // Static for now
   };
 
-  // Keyboard shortcuts: [, ] to cycle seeds; M to mute; P to pause; 1/2/3 speed; S to save
+  // Enhanced keyboard shortcuts with more features
   useEffect(() => {
     const seedKeys = Object.keys(rules.seeds);
     function onKey(e) {
@@ -2521,11 +3024,13 @@ export default function FarmSimCanvas() {
         const idx = seedKeys.indexOf(selectedSeed);
         const next = (idx - 1 + seedKeys.length) % seedKeys.length;
         setSelectedSeed(seedKeys[next]);
+        addNotification(`Selected: ${seedKeys[next]} 🌱`, 'info', 2000);
       } else if (e.key === ']' || e.key === '}') {
         e.preventDefault();
         const idx = seedKeys.indexOf(selectedSeed);
         const next = (idx + 1) % seedKeys.length;
         setSelectedSeed(seedKeys[next]);
+        addNotification(`Selected: ${seedKeys[next]} 🌱`, 'info', 2000);
       } else if (e.key.toLowerCase() === 'm') {
         setSoundEnabled(v => !v);
         addNotification(`Sound ${!soundEnabled ? 'on' : 'muted'}`, 'info');
@@ -2542,11 +3047,42 @@ export default function FarmSimCanvas() {
           saveState({ ...snapshot, savedAt: Date.now() });
           addNotification('Manual save complete', 'success');
         } catch {}
+      } else if (e.key.toLowerCase() === 'h') {
+        // Harvest all ready crops
+        const readyPlots = plots.map((plot, index) => ({ plot, index }))
+          .filter(({plot}) => plot.state === "grown");
+        if (readyPlots.length > 0) {
+          readyPlots.forEach(({index}) => harvest(index));
+          addNotification(`🌾 Harvested ${readyPlots.length} crops`, 'success');
+        } else {
+          addNotification('No crops ready to harvest', 'info', 2000);
+        }
+      } else if (e.key.toLowerCase() === 'w') {
+        // Water all crops that need watering
+        const needsWater = plots.map((plot, index) => ({ plot, index }))
+          .filter(({plot}) => (plot.state === "planted" || plot.state === "growing") && 
+                              (!plot.watered || nowSec() - (plot.lastWateredAt || 0) > 120));
+        if (needsWater.length > 0) {
+          needsWater.forEach(({index}) => {
+            replacePlot(index, (p) => ({
+              ...p,
+              watered: true,
+              lastWateredAt: nowSec(),
+              state: p.state === "planted" ? "growing" : p.state
+            }));
+          });
+          addNotification(`💧 Watered ${needsWater.length} crops`, 'success');
+        } else {
+          addNotification('All crops are watered', 'info', 2000);
+        }
+      } else if (e.key === '?') {
+        // Show help
+        addNotification('🎮 Shortcuts: [/] seeds, H harvest all, W water all, S save, P pause, M mute, 1-3 speed', 'info', 8000);
       }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [rules.seeds, selectedSeed, soundEnabled, paused]);
+  }, [rules.seeds, selectedSeed, soundEnabled, paused, plots, inventory]);
 
   // Market price calculation with seasonal and trend modifiers
   const getMarketPrice = (seedType) => {
@@ -2685,6 +3221,9 @@ export default function FarmSimCanvas() {
         try { console.log(`[inventory] plant ${seed}: ${have} -> ${next[seed]}`); } catch {}
         return next;
       });
+      
+      // Tutorial progress tracking
+      checkTutorialProgress('plant', { seed, plotIndex: i });
     }
     setTimeout(() => {
       plantingLocks.current.delete(i);
@@ -2702,6 +3241,9 @@ export default function FarmSimCanvas() {
         boosted: efficiency > 1 ? true : p.boosted
       };
     });
+    
+    // Tutorial progress tracking
+    checkTutorialProgress('water', { plotIndex: i });
   }
 
   function fertilize(i) {
@@ -2832,6 +3374,9 @@ export default function FarmSimCanvas() {
       const newFert = Math.max(rules.soil.fertilityMin, (p.soilFertility || 1) - (rules.soil.decayOnHarvest || 0.05));
       return { ...newPlot("empty"), lastCropFamily, lastHarvested: nowSec(), soilFertility: newFert };
     });
+    
+    // Tutorial progress tracking
+    checkTutorialProgress('harvest', { plotIndex: i });
   }
 
 function buy(item, qty = 1) {
@@ -2944,6 +3489,9 @@ function buy(item, qty = 1) {
       setSocialReputation(prev => prev + 1);
       logAction("bulk_purchase", { item, quantity: qty, price });
     }
+    
+    // Tutorial progress tracking
+    checkTutorialProgress('buy', { item, quantity: qty, price });
     
     release();
   }
@@ -4075,6 +4623,86 @@ function buy(item, qty = 1) {
               </CardContent>
             </Card>
 
+            {/* Smart Farm Assistant */}
+            {assistantEnabled && assistantRecommendations.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Star className="text-yellow-500" size={20}/>
+                    Smart Farm Assistant
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => setAssistantEnabled(!assistantEnabled)}
+                      className="ml-auto text-xs h-6 px-2"
+                    >
+                      {assistantEnabled ? <EyeOff size={12}/> : <Eye size={12}/>}
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-xs text-gray-600 mb-2">
+                    🤖 AI-powered recommendations to optimize your farm
+                  </div>
+                  {assistantRecommendations.map(rec => (
+                    <div 
+                      key={rec.id} 
+                      className={`p-3 rounded-lg border-l-4 ${
+                        rec.priority === 'high' ? 'bg-red-50 border-red-400' :
+                        rec.priority === 'medium' ? 'bg-yellow-50 border-yellow-400' :
+                        'bg-blue-50 border-blue-400'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 text-sm font-semibold">
+                            <span className="text-lg">{rec.icon}</span>
+                            {rec.title}
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            {rec.description}
+                          </div>
+                        </div>
+                        {rec.action && (
+                          <Button 
+                            size="sm" 
+                            onClick={rec.action}
+                            className="ml-2 text-xs h-7 px-3"
+                            variant={rec.priority === 'high' ? 'default' : 'outline'}
+                          >
+                            Apply
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Quick Farm Insights */}
+                  <div className="mt-4 pt-3 border-t">
+                    <div className="text-xs font-semibold mb-2">📊 Quick Insights</div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="text-center p-2 bg-green-100 rounded">
+                        <div className="font-bold">{plots.filter(p => p.state === 'grown').length}</div>
+                        <div>Ready to Harvest</div>
+                      </div>
+                      <div className="text-center p-2 bg-blue-100 rounded">
+                        <div className="font-bold">{skillPoints}</div>
+                        <div>Skill Points</div>
+                      </div>
+                      <div className="text-center p-2 bg-purple-100 rounded">
+                        <div className="font-bold">{workers.length}</div>
+                        <div>Active Workers</div>
+                      </div>
+                      <div className="text-center p-2 bg-orange-100 rounded">
+                        <div className="font-bold">{processingFacilities.length}</div>
+                        <div>Facilities</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Enhanced Shop */}
             <Card>
               <CardHeader>
@@ -4097,6 +4725,7 @@ function buy(item, qty = 1) {
                     <TabsTrigger className="shrink-0" value="town">🏛️ Town</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="social">👥 Social</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="community">🌍 Community</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="analytics">📊 Analytics</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="expand">📏 Expand</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="test">🧪 Test</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="settings">⚙️ Settings</TabsTrigger>
@@ -4137,6 +4766,137 @@ function buy(item, qty = 1) {
                         </div>
                       </Button>
                     ))}
+                  </TabsContent>
+
+                  {/* ANALYTICS TAB */}
+                  <TabsContent value="analytics" className="space-y-3">
+                    <div className="p-3 bg-gradient-to-br from-blue-50 to-purple-50 border rounded-xl shadow-sm">
+                      <div className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        📊 Farm Performance Analytics
+                        <Badge variant="outline" className="text-xs">
+                          Efficiency: {Math.round(farmStatistics.efficacyRating)}%
+                        </Badge>
+                      </div>
+                      
+                      {/* Key Metrics Grid */}
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="text-center p-3 bg-white/70 rounded-lg">
+                          <div className="text-lg font-bold text-green-600">{farmStatistics.plotsHarvested || 0}</div>
+                          <div className="text-xs text-gray-600">Total Harvests</div>
+                        </div>
+                        <div className="text-center p-3 bg-white/70 rounded-lg">
+                          <div className="text-lg font-bold text-blue-600">{Math.round(totalEarned)}</div>
+                          <div className="text-xs text-gray-600">Total Earned</div>
+                        </div>
+                        <div className="text-center p-3 bg-white/70 rounded-lg">
+                          <div className="text-lg font-bold text-purple-600">{workers.length}</div>
+                          <div className="text-xs text-gray-600">Active Workers</div>
+                        </div>
+                        <div className="text-center p-3 bg-white/70 rounded-lg">
+                          <div className="text-lg font-bold text-orange-600">{completedResearch.length}</div>
+                          <div className="text-xs text-gray-600">Research Done</div>
+                        </div>
+                      </div>
+
+                      {/* Performance Breakdown */}
+                      <div className="space-y-2">
+                        <div className="text-xs font-semibold">Performance Breakdown:</div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs">Plot Utilization</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-green-500 h-2 rounded-full" 
+                                style={{width: `${Math.min(100, (plots.filter(p => p.state !== 'empty').length / plots.length) * 100)}%`}}
+                              ></div>
+                            </div>
+                            <span className="text-xs w-8">{Math.round((plots.filter(p => p.state !== 'empty').length / plots.length) * 100)}%</span>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs">Automation Level</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-500 h-2 rounded-full" 
+                                style={{width: `${Math.min(100, (workers.length / 5) * 100)}%`}}
+                              ></div>
+                            </div>
+                            <span className="text-xs w-8">{Math.round((workers.length / 5) * 100)}%</span>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs">Skill Development</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-purple-500 h-2 rounded-full" 
+                                style={{width: `${Math.min(100, (Object.values(skillLevels).reduce((a,b) => a+b, 0) / 20) * 100)}%`}}
+                              ></div>
+                            </div>
+                            <span className="text-xs w-8">{Math.round((Object.values(skillLevels).reduce((a,b) => a+b, 0) / 20) * 100)}%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Quick Recommendations */}
+                      <div className="mt-4 pt-3 border-t border-white/50">
+                        <div className="text-xs font-semibold mb-2">🎯 Quick Recommendations:</div>
+                        <div className="space-y-1 text-xs">
+                          {plots.filter(p => p.state === 'empty').length > plots.length * 0.3 && (
+                            <div className="text-amber-700">• Plant more crops to improve efficiency</div>
+                          )}
+                          {workers.length < 2 && coins > 300 && (
+                            <div className="text-blue-700">• Consider hiring workers for automation</div>
+                          )}
+                          {skillPoints > 5 && (
+                            <div className="text-purple-700">• Spend skill points to unlock bonuses</div>
+                          )}
+                          {researchPoints > 100 && !activeResearch && (
+                            <div className="text-green-700">• Start a research project for new features</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Detailed Statistics */}
+                    <div className="p-3 bg-white/80 border rounded-xl shadow-sm">
+                      <div className="text-sm font-semibold mb-3">📈 Detailed Statistics</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>Crops Planted: <span className="font-bold">{farmStatistics.plotsPlanted || 0}</span></div>
+                        <div>Crops Withered: <span className="font-bold">{farmStatistics.plotsWithered || 0}</span></div>
+                        <div>Fertilizer Used: <span className="font-bold">{farmStatistics.totalFertilizerUsed || 0}</span></div>
+                        <div>Pesticide Used: <span className="font-bold">{farmStatistics.totalPesticideUsed || 0}</span></div>
+                        <div>Weather Events: <span className="font-bold">{farmStatistics.weatherEventsExperienced || 0}</span></div>
+                        <div>Best Combo: <span className="font-bold">{farmStatistics.bestComboStreak || 0}</span></div>
+                        <div>Prestige Level: <span className="font-bold">{prestigeLevel}</span></div>
+                        <div>Lifetime Coins: <span className="font-bold">{Math.round(totalLifetimeCoins)}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Achievement Progress */}
+                    <div className="p-3 bg-white/80 border rounded-xl shadow-sm">
+                      <div className="text-sm font-semibold mb-3">🏆 Achievement Progress</div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs">Achievements Unlocked</span>
+                          <span className="text-xs font-bold">{achievements.length}/{ACHIEVEMENTS.length}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-yellow-500 h-2 rounded-full" 
+                            style={{width: `${(achievements.length / ACHIEVEMENTS.length) * 100}%`}}
+                          ></div>
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {achievements.length === ACHIEVEMENTS.length ? "🎉 All achievements unlocked!" : 
+                           `${ACHIEVEMENTS.length - achievements.length} achievements remaining`}
+                        </div>
+                      </div>
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="settings" className="space-y-3">
@@ -5513,31 +6273,88 @@ function buy(item, qty = 1) {
           </div>
         </div>
 
-        {/* Enhanced Tips */}
+        {/* Smart Recommendations & Tips */}
         <div className="mt-6 bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/50 shadow-lg">
-          <div className="text-sm text-slate-600 space-y-1">
-            <div className="font-semibold text-slate-800 mb-2">🌟 Advanced Farming Guide:</div>
-            <div>� <strong>Seasons:</strong> Each season lasts 2 minutes. Plant crops in their optimal season for +30% bonus!</div>
-            <div>📊 <strong>Market:</strong> Crop prices fluctuate - watch for high demand (📈) to maximize profits</div>
-            <div>🔥 <strong>Combos:</strong> Harvest crops quickly for combo multipliers and bonus coins</div>
-            <div>⭐ <strong>Quality:</strong> 20% chance for high-quality crops worth extra coins</div>
-            <div>🌧️ <strong>Weather:</strong> Rain boosts growth, drought increases withering, frost stops growth</div>
-            <div>🧪 <strong>Fertilizer:</strong> Stacks up to {rules.fertilizer.maxStacks}x for maximum growth speed</div>
-            <div>💧 <strong>Watering Can:</strong> Provides enhanced watering with growth bonuses</div>
-            <div>🏆 <strong>Achievements:</strong> Complete farming milestones for coin rewards and bragging rights</div>
-            <div className="mt-2 p-2 bg-emerald-50 rounded border-emerald-200 border">
-              <strong>🎯 Current Season:</strong> {SEASON_EFFECTS[currentSeason].name} • 
-              <strong> Optimal Crops:</strong> {Object.entries(rules.seeds).filter(([,data]) => data.season === currentSeason).map(([seed,data]) => data.emoji).join(" ")}
+          <div className="text-sm text-slate-600 space-y-2">
+            <div className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+              🧠 Smart Farm Assistant
             </div>
-            <div className="mt-2 p-2 bg-yellow-50 rounded border-yellow-200 border">
-              <strong>⏰ Growth:</strong> Use "Speed Up Growth" button to grow plants • 
-              <span className="text-xs opacity-75">Manual growth system active</span>
-            </div>
-            <div className="mt-2 p-2 bg-blue-50 rounded border-blue-200 border">
-              <strong>🧪 Pro Tip:</strong> Use the Test tab to get free seeds, change seasons/weather, and speed up growth for experimentation!
+            
+            {/* Dynamic Recommendations */}
+            <div className="space-y-3">
+              {/* Season Optimization */}
+              <div className="p-2 bg-emerald-50 rounded border-emerald-200 border">
+                <div className="font-medium text-emerald-800">🌍 Seasonal Strategy</div>
+                <div className="text-xs text-emerald-700 mt-1">
+                  Current: {SEASON_EFFECTS[currentSeason].name} • 
+                  Optimal crops: {Object.entries(rules.seeds)
+                    .filter(([,data]) => data.season === currentSeason)
+                    .map(([seed,data]) => `${data.emoji}${seed}`)
+                    .join(", ") || "None specific"}
+                </div>
+              </div>
+
+              {/* Market Intelligence */}
+              {Object.keys(marketTrends).length > 0 && (
+                <div className="p-2 bg-blue-50 rounded border-blue-200 border">
+                  <div className="font-medium text-blue-800">📈 Market Intelligence</div>
+                  <div className="text-xs text-blue-700 mt-1 grid grid-cols-2 gap-1">
+                    {Object.entries(marketTrends).slice(0, 4).map(([crop, trend]) => (
+                      <div key={crop} className="flex items-center gap-1">
+                        {rules.seeds[crop]?.emoji} {crop}: {
+                          trend === "high" ? "📈 High" : 
+                          trend === "low" ? "📉 Low" : "📊 Normal"
+                        }
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Performance Insights */}
+              <div className="p-2 bg-purple-50 rounded border-purple-200 border">
+                <div className="font-medium text-purple-800">⚡ Performance Insights</div>
+                <div className="text-xs text-purple-700 mt-1">
+                  {prestigeLevel > 0 && (
+                    <div>🌟 Prestige Level {prestigeLevel} (+{(getPrestigeMultiplier('coins') * 100 - 100).toFixed(0)}% coins)</div>
+                  )}
+                  {skillPoints > 0 && (
+                    <div>📚 {skillPoints} skill points available - invest in skills!</div>
+                  )}
+                  {researchPoints >= 100 && !activeResearch && (
+                    <div>🔬 {researchPoints} research points - start a research project!</div>
+                  )}
+                  {workers.length === 0 && coins > 200 && (
+                    <div>👷 Consider hiring workers for automation (Workers tab)</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="p-2 bg-yellow-50 rounded border-yellow-200 border">
+                <div className="font-medium text-yellow-800">🎮 Quick Actions</div>
+                <div className="text-xs text-yellow-700 mt-1">
+                  <div>Press <kbd className="px-1 bg-yellow-200 rounded text-xs">H</kbd> to harvest all ready crops</div>
+                  <div>Press <kbd className="px-1 bg-yellow-200 rounded text-xs">W</kbd> to water all crops</div>
+                  <div>Press <kbd className="px-1 bg-yellow-200 rounded text-xs">?</kbd> for all shortcuts</div>
+                </div>
+              </div>
+
+              {/* Achievement Progress */}
+              {achievements.length < ACHIEVEMENTS.length && (
+                <div className="p-2 bg-orange-50 rounded border-orange-200 border">
+                  <div className="font-medium text-orange-800">🏆 Achievement Progress</div>
+                  <div className="text-xs text-orange-700 mt-1">
+                    {ACHIEVEMENTS.slice(0, 3).filter(a => !achievements.includes(a.id)).map(achievement => (
+                      <div key={achievement.id} className="flex items-center gap-1">
+                        {achievement.icon} {achievement.name} (+{achievement.reward}🪙)
+                      </div>
+                    )).slice(0, 2)}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-
         </div>
 
         {/* Mobile Floating Settings FAB */}
@@ -5745,6 +6562,65 @@ function buy(item, qty = 1) {
           </div>
         )}
       </div>
+
+      {/* Tutorial Overlay */}
+      {tutorialActive && !tutorialCompleted && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="text-sm font-semibold">Tutorial</div>
+                <Badge variant="outline" className="text-xs">
+                  Step {tutorialStep + 1} of {TUTORIAL_STEPS.length}
+                </Badge>
+              </div>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={skipTutorial}
+                className="text-xs h-6 px-2"
+              >
+                Skip
+              </Button>
+            </div>
+            
+            {getCurrentTutorialStep() && (
+              <div className="space-y-4">
+                <div className="text-lg font-bold">
+                  {getCurrentTutorialStep().title}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {getCurrentTutorialStep().content}
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                    style={{width: `${((tutorialStep + 1) / TUTORIAL_STEPS.length) * 100}%`}}
+                  ></div>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <div className="text-xs text-gray-500">
+                    {getCurrentTutorialStep().action ? 
+                      `Action needed: ${getCurrentTutorialStep().action}` : 
+                      'Click to continue'}
+                  </div>
+                  {!getCurrentTutorialStep().action && (
+                    <Button 
+                      onClick={advanceTutorial}
+                      className="text-sm"
+                    >
+                      Continue
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
