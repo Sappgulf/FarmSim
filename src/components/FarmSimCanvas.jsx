@@ -611,8 +611,7 @@ export default function FarmSimCanvas() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [loginMode, setLoginMode] = useState('login'); // 'login' or 'register'
-  const [loginForm, setLoginForm] = useState({ username: '', password: '', displayName: '' });
+  const [loginForm, setLoginForm] = useState({ username: '', password: '', displayName: '', mode: 'login' });
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
   
@@ -621,6 +620,8 @@ export default function FarmSimCanvas() {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [showFriendSearch, setShowFriendSearch] = useState(false);
+  const [sentRequests, setSentRequests] = useState(saved?.sentRequests || []);
+  const [receivedRequests, setReceivedRequests] = useState(saved?.receivedRequests || []);
 
   // Social & Multiplayer State
   const [playerId] = useState(saved?.playerId || `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
@@ -750,7 +751,7 @@ export default function FarmSimCanvas() {
           townBuildings, townEvents, townReputation,
           // Social & Multiplayer
           playerId, playerProfile, friends, friendRequests, socialReputation,
-          dailyGiftsReceived, dailyGiftsSent, lastGiftReset,
+          dailyGiftsReceived, dailyGiftsSent, lastGiftReset, sentRequests, receivedRequests,
           activeEvents, eventContributions, globalStats,
           marketListings, myListings, tradeHistory, marketReputation,
           farmVisits, farmRating, visitHistory,
@@ -1302,7 +1303,7 @@ export default function FarmSimCanvas() {
     
     try {
       let user;
-      if (loginMode === 'register') {
+      if (loginForm.mode === 'register') {
         if (loginForm.username.length < ACCOUNT_SYSTEM.MIN_USERNAME_LENGTH) {
           throw new Error(`Username must be at least ${ACCOUNT_SYSTEM.MIN_USERNAME_LENGTH} characters`);
         }
@@ -1370,28 +1371,58 @@ export default function FarmSimCanvas() {
     }
     
     // Check if already friends
-    if (friends.find(f => f.username === targetPlayer.username)) {
+    if (friends.find(f => f.id === targetPlayer.id)) {
       addNotification("Already friends with this player!", "warning");
       return;
     }
     
-    // Add to friends list (in real app, this would send a request)
-    const newFriend = {
-      id: targetPlayer.id,
-      name: targetPlayer.displayName,
-      username: targetPlayer.username,
-      addedAt: nowSec(),
-      lastOnline: nowSec(),
-      farmLevel: targetPlayer.level,
-      reputation: targetPlayer.reputation
+    // Check if request already sent
+    if (sentRequests.find(r => r.toUserId === targetPlayer.id)) {
+      addNotification("Friend request already sent!", "warning");
+      return;
+    }
+    
+    // Add to sent requests (in real app, this would send to server)
+    const newRequest = {
+      id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      fromUserId: currentUser?.id,
+      toUserId: targetPlayer.id,
+      toUsername: targetPlayer.username,
+      toDisplayName: targetPlayer.displayName,
+      sentAt: nowSec(),
+      status: 'pending'
     };
     
-    setFriends(prev => [...prev, newFriend]);
+    setSentRequests(prev => [...prev, newRequest]);
     addNotification(`Friend request sent to ${targetPlayer.displayName}!`, "success");
     logAction("friend_request_sent", { targetId: targetPlayer.id, targetName: targetPlayer.displayName });
     setShowFriendSearch(false);
     setSearchQuery('');
     setSearchResults([]);
+  };
+
+  // Accept friend request
+  const acceptFriendRequestFromPlayer = (request) => {
+    // Add to friends list
+    const newFriend = {
+      id: request.fromUserId,
+      name: request.fromDisplayName,
+      username: request.fromUsername,
+      addedAt: nowSec(),
+      lastOnline: nowSec(),
+      farmLevel: 1, // Default level, in real app would fetch from server
+      reputation: 0
+    };
+    
+    setFriends(prev => [...prev, newFriend]);
+    setReceivedRequests(prev => prev.filter(r => r.id !== request.id));
+    addNotification(`You are now friends with ${request.fromDisplayName}!`, "success");
+  };
+
+  // Reject friend request
+  const rejectFriendRequestFromPlayer = (request) => {
+    setReceivedRequests(prev => prev.filter(r => r.id !== request.id));
+    addNotification(`Friend request from ${request.fromDisplayName} declined`, "info");
   };
 
   // === SOCIAL & MULTIPLAYER FUNCTIONS ===
@@ -3278,7 +3309,7 @@ function buy(item, qty = 1) {
                     </div>
                     <div className="space-y-1 max-h-20 overflow-y-auto">
                       {receivedRequests.map(request => {
-                        const fromPlayer = ACCOUNT_SYSTEM.MOCK_PLAYERS.find(p => p.id === request.fromUserId);
+                        const fromPlayer = mockPlayerDatabase.find(p => p.id === request.fromUserId);
                         return (
                           <div key={request.id} className="flex justify-between items-center p-2 bg-blue-50 rounded text-xs">
                             <div>
@@ -3287,14 +3318,14 @@ function buy(item, qty = 1) {
                             </div>
                             <div className="space-x-1">
                               <Button 
-                                onClick={() => acceptFriendRequest(request.id)}
+                                onClick={() => acceptFriendRequestFromPlayer(request)}
                                 size="sm" 
                                 className="text-xs h-6 px-2 bg-green-500 hover:bg-green-600"
                               >
                                 <UserCheck size={10} />
                               </Button>
                               <Button 
-                                onClick={() => rejectFriendRequest(request.id)}
+                                onClick={() => rejectFriendRequestFromPlayer(request)}
                                 size="sm" 
                                 variant="outline"
                                 className="text-xs h-6 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -4679,7 +4710,7 @@ function buy(item, qty = 1) {
                           </div>
                           <Button
                             size="sm"
-                            onClick={() => sendFriendRequestToPlayer(player.id)}
+                            onClick={() => sendFriendRequestToPlayer(player)}
                             disabled={
                               friends.some(f => f.id === player.id) ||
                               sentRequests.some(r => r.toUserId === player.id) ||
