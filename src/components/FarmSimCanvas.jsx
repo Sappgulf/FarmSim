@@ -46,6 +46,222 @@ const ECONOMIC_EVENTS = [
   { id: "luxury_trend", name: "Luxury Food Trend", emoji: "🍾", description: "Premium market prices soar", duration: 150, effects: { luxury_premium: 2.0 } }
 ];
 
+// PRESTIGE SYSTEM
+const PRESTIGE_LEVELS = [
+  { level: 0, name: "Beginner", emoji: "🌱", multiplier: 1.0, requirement: 0 },
+  { level: 1, name: "Experienced", emoji: "🌿", multiplier: 1.1, requirement: 1000 },
+  { level: 2, name: "Expert", emoji: "🍃", multiplier: 1.25, requirement: 5000 },
+  { level: 3, name: "Master", emoji: "🌳", multiplier: 1.5, requirement: 15000 },
+  { level: 4, name: "Grandmaster", emoji: "🏆", multiplier: 2.0, requirement: 50000 },
+  { level: 5, name: "Legend", emoji: "👑", multiplier: 3.0, requirement: 150000 }
+];
+
+const PRESTIGE_BONUSES = {
+  growth_speed: 0.05,      // 5% faster growth per prestige level
+  coin_multiplier: 0.1,    // 10% more coins per prestige level
+  quality_chance: 0.02,    // 2% better quality chance per level
+  skill_points: 3          // Extra skill points per prestige
+};
+
+// SKILL TREE SYSTEM
+const SKILL_TREES = {
+  farming: {
+    name: "🌾 Farming",
+    icon: "🚜",
+    description: "Core farming abilities",
+    skills: {
+      green_thumb: { name: "Green Thumb", maxLevel: 5, cost: [1,2,3,4,5], effect: "growth_speed", value: 0.1, description: "+10% growth speed per level" },
+      quality_seeds: { name: "Quality Seeds", maxLevel: 3, cost: [2,4,6], effect: "quality_chance", value: 0.05, description: "+5% quality chance per level" },
+      efficient_watering: { name: "Efficient Watering", maxLevel: 4, cost: [1,2,3,4], effect: "water_efficiency", value: 0.25, description: "+25% longer watering duration per level" },
+      pest_resistance: { name: "Pest Resistance", maxLevel: 3, cost: [3,5,7], effect: "pest_immunity", value: 0.2, description: "+20% pest immunity per level" },
+      crop_rotation_master: { name: "Rotation Master", maxLevel: 4, cost: [2,3,4,5], effect: "rotation_bonus", value: 0.1, description: "+10% rotation bonus per level" }
+    }
+  },
+  business: {
+    name: "💼 Business",
+    icon: "📈",
+    description: "Economic and trading abilities",
+    skills: {
+      market_insight: { name: "Market Insight", maxLevel: 5, cost: [2,3,4,5,6], effect: "price_prediction", value: 1, description: "See market price trends in advance" },
+      negotiator: { name: "Negotiator", maxLevel: 4, cost: [1,3,5,7], effect: "trade_bonus", value: 0.15, description: "+15% better trade prices per level" },
+      bulk_discount: { name: "Bulk Discount", maxLevel: 3, cost: [2,4,6], effect: "shop_discount", value: 0.1, description: "+10% shop discount per level" },
+      investment_savvy: { name: "Investment Savvy", maxLevel: 5, cost: [3,4,5,6,7], effect: "futures_bonus", value: 0.2, description: "+20% futures contract profits per level" },
+      export_license: { name: "Export License", maxLevel: 1, cost: [10], effect: "unlock_export", value: 1, description: "Unlock international markets" }
+    }
+  },
+  technology: {
+    name: "🔬 Technology",
+    icon: "⚡",
+    description: "Automation and advanced tools",
+    skills: {
+      automation: { name: "Automation", maxLevel: 5, cost: [3,4,5,6,7], effect: "auto_actions", value: 1, description: "Unlock automated farming actions" },
+      research_lab: { name: "Research Lab", maxLevel: 3, cost: [5,8,12], effect: "research_speed", value: 0.5, description: "+50% research speed per level" },
+      weather_station: { name: "Weather Station", maxLevel: 4, cost: [2,3,4,5], effect: "weather_forecast", value: 1, description: "Extended weather forecasting" },
+      greenhouse_tech: { name: "Greenhouse Tech", maxLevel: 3, cost: [4,6,8], effect: "season_immunity", value: 0.33, description: "Reduce seasonal penalties" },
+      drone_monitoring: { name: "Drone Monitoring", maxLevel: 2, cost: [8,15], effect: "instant_diagnosis", value: 1, description: "Instantly detect crop issues" }
+    }
+  },
+  social: {
+    name: "👥 Social",
+    icon: "🤝",
+    description: "Community and relationship building",
+    skills: {
+      charisma: { name: "Charisma", maxLevel: 5, cost: [1,2,3,4,5], effect: "social_bonus", value: 0.2, description: "+20% social reputation gains per level" },
+      network_builder: { name: "Network Builder", maxLevel: 3, cost: [3,5,7], effect: "friend_limit", value: 10, description: "+10 friend slots per level" },
+      market_connections: { name: "Market Connections", maxLevel: 4, cost: [2,4,6,8], effect: "listing_bonus", value: 0.15, description: "+15% market listing profits per level" },
+      community_leader: { name: "Community Leader", maxLevel: 2, cost: [10,20], effect: "event_bonuses", value: 0.5, description: "+50% community event rewards per level" },
+      gift_master: { name: "Gift Master", maxLevel: 3, cost: [2,3,4], effect: "daily_gifts", value: 2, description: "+2 daily gift limit per level" }
+    }
+  }
+};
+
+// RESEARCH SYSTEM
+const RESEARCH_PROJECTS = {
+  hybrid_crops: {
+    name: "Hybrid Crops",
+    emoji: "🧬",
+    description: "Develop superior crop varieties",
+    cost: 100,
+    time: 300, // 5 minutes
+    unlocks: ["premium_seeds"],
+    prerequisites: []
+  },
+  irrigation_system: {
+    name: "Advanced Irrigation",
+    emoji: "💧",
+    description: "Automated watering systems",
+    cost: 150,
+    time: 480,
+    unlocks: ["auto_irrigation"],
+    prerequisites: ["hybrid_crops"]
+  },
+  pest_genetics: {
+    name: "Pest Genetics",
+    emoji: "🧪",
+    description: "Genetic pest resistance",
+    cost: 200,
+    time: 600,
+    unlocks: ["resistant_crops"],
+    prerequisites: ["hybrid_crops"]
+  },
+  market_analytics: {
+    name: "Market Analytics",
+    emoji: "📊",
+    description: "Advanced market prediction AI",
+    cost: 250,
+    time: 720,
+    unlocks: ["price_alerts", "trend_analysis"],
+    prerequisites: []
+  },
+  climate_control: {
+    name: "Climate Control",
+    emoji: "🌡️",
+    description: "Weather-independent farming",
+    cost: 400,
+    time: 900,
+    unlocks: ["weather_immunity"],
+    prerequisites: ["irrigation_system", "pest_genetics"]
+  }
+};
+
+// ADVANCED WORKER SYSTEM
+const WORKER_TYPES = {
+  irrigator: {
+    name: "Irrigator",
+    emoji: "💧",
+    description: "Automatically waters crops",
+    cost: 200,
+    upkeep: 10, // per day
+    efficiency: 0.8, // 80% as effective as manual
+    unlocks: "auto_watering"
+  },
+  harvester: {
+    name: "Harvester",
+    emoji: "🚜",
+    description: "Automatically harvests ready crops",
+    cost: 350,
+    upkeep: 15,
+    efficiency: 0.9,
+    unlocks: "auto_harvesting"
+  },
+  pest_controller: {
+    name: "Pest Controller",
+    emoji: "🐛",
+    description: "Automatically treats pest infestations",
+    cost: 180,
+    upkeep: 8,
+    efficiency: 0.85,
+    unlocks: "auto_pest_control"
+  },
+  quality_inspector: {
+    name: "Quality Inspector",
+    emoji: "🔍",
+    description: "Improves crop quality through careful monitoring",
+    cost: 300,
+    upkeep: 12,
+    efficiency: 0.75,
+    unlocks: "quality_boost"
+  },
+  market_analyst: {
+    name: "Market Analyst",
+    emoji: "📈",
+    description: "Provides market insights and trading recommendations",
+    cost: 500,
+    upkeep: 20,
+    efficiency: 1.0,
+    unlocks: "market_predictions"
+  }
+};
+
+// SUPPLY CHAIN SYSTEM
+const PROCESSING_FACILITIES = {
+  flour_mill: {
+    name: "Flour Mill",
+    emoji: "🏭",
+    description: "Process wheat into flour",
+    cost: 500,
+    input: "wheat",
+    output: "flour",
+    ratio: 2, // 2 wheat = 1 flour
+    value_multiplier: 2.5,
+    time: 60 // 1 minute processing time
+  },
+  juice_press: {
+    name: "Juice Press",
+    emoji: "🧃",
+    description: "Process fruits into juice",
+    cost: 400,
+    input: "apple",
+    output: "apple_juice",
+    ratio: 3,
+    value_multiplier: 2.2,
+    time: 45
+  },
+  oil_press: {
+    name: "Oil Press",
+    emoji: "🫒",
+    description: "Extract oil from seeds",
+    cost: 600,
+    input: "sunflower",
+    output: "sunflower_oil",
+    ratio: 4,
+    value_multiplier: 3.0,
+    time: 90
+  },
+  preservation_facility: {
+    name: "Preservation Facility",
+    emoji: "🥫",
+    description: "Preserve crops for longer storage",
+    cost: 800,
+    input: "any", // accepts any crop
+    output: "preserved",
+    ratio: 1,
+    value_multiplier: 1.8,
+    time: 120,
+    storage_bonus: 10 // days of extra storage
+  }
+};
+
 // Competition & Social Features
 const COMPETITION_TYPES = {
   harvest_race: { name: "Harvest Race", emoji: "🏁", description: "Harvest as many crops as possible", duration: 300, reward: { coins: 500, reputation: 25 } },
@@ -582,6 +798,40 @@ export default function FarmSimCanvas() {
   const [economicEvents, setEconomicEvents] = useState(saved?.economicEvents || []);
   const [marketPrices, setMarketPrices] = useState(saved?.marketPrices || {});
   const [reputation, setReputation] = useState(saved?.reputation || 0);
+  
+  // PRESTIGE SYSTEM STATE
+  const [prestigeLevel, setPrestigeLevel] = useState(saved?.prestigeLevel || 0);
+  const [prestigePoints, setPrestigePoints] = useState(saved?.prestigePoints || 0);
+  const [totalLifetimeCoins, setTotalLifetimeCoins] = useState(saved?.totalLifetimeCoins || 0);
+  
+  // SKILL TREE STATE
+  const [skillPoints, setSkillPoints] = useState(saved?.skillPoints || 5); // Start with some skill points
+  const [skillLevels, setSkillLevels] = useState(saved?.skillLevels || {
+    // Farming skills
+    green_thumb: 0, quality_seeds: 0, efficient_watering: 0, pest_resistance: 0, crop_rotation_master: 0,
+    // Business skills  
+    market_insight: 0, negotiator: 0, bulk_discount: 0, investment_savvy: 0, export_license: 0,
+    // Technology skills
+    automation: 0, research_lab: 0, weather_station: 0, greenhouse_tech: 0, drone_monitoring: 0,
+    // Social skills
+    charisma: 0, network_builder: 0, market_connections: 0, community_leader: 0, gift_master: 0
+  });
+  
+  // RESEARCH SYSTEM STATE
+  const [researchPoints, setResearchPoints] = useState(saved?.researchPoints || 0);
+  const [activeResearch, setActiveResearch] = useState(saved?.activeResearch || null);
+  const [completedResearch, setCompletedResearch] = useState(saved?.completedResearch || []);
+  const [researchStartedAt, setResearchStartedAt] = useState(saved?.researchStartedAt || null);
+  
+  // ADVANCED WORKER SYSTEM STATE
+  const [workers, setWorkers] = useState(saved?.workers || []);
+  const [workerUpkeep, setWorkerUpkeep] = useState(saved?.workerUpkeep || 0);
+  const [lastWorkerPayment, setLastWorkerPayment] = useState(saved?.lastWorkerPayment || nowSec());
+  
+  // SUPPLY CHAIN STATE
+  const [processingFacilities, setProcessingFacilities] = useState(saved?.processingFacilities || []);
+  const [processingQueue, setProcessingQueue] = useState(saved?.processingQueue || []);
+  const [processedInventory, setProcessedInventory] = useState(saved?.processedInventory || {});
   const [competitionsActive, setCompetitionsActive] = useState(saved?.competitionsActive || []);
   const [actionHistory, setActionHistory] = useState(saved?.actionHistory || []);
   
@@ -767,7 +1017,17 @@ export default function FarmSimCanvas() {
           diseasesCured, rotationUses, weatherPredictions, honeyProduced,
           seasonEndsAt, log, gameTime, lastGrowthTick,
           // New systems
-          farmhands, lastFarmhandAction, skills
+          farmhands, lastFarmhandAction, skills,
+          // PRESTIGE SYSTEM
+          prestigeLevel, prestigePoints, totalLifetimeCoins,
+          // SKILL TREE SYSTEM
+          skillPoints, skillLevels,
+          // RESEARCH SYSTEM
+          researchPoints, activeResearch, completedResearch, researchStartedAt,
+          // ADVANCED WORKER SYSTEM
+          workers, workerUpkeep, lastWorkerPayment,
+          // SUPPLY CHAIN SYSTEM
+          processingFacilities, processingQueue, processedInventory
         };
         saveState(snapshot);
         // Autosave toast (throttled) to indicate saves without spamming
@@ -1115,6 +1375,270 @@ export default function FarmSimCanvas() {
       localStorage.removeItem(SAVE_KEY);
       window.location.reload();
     }
+  };
+
+  // PRESTIGE SYSTEM FUNCTIONS
+  const checkPrestigeEligibility = () => {
+    const nextPrestige = PRESTIGE_LEVELS.find(p => p.level === prestigeLevel + 1);
+    return nextPrestige && totalLifetimeCoins >= nextPrestige.requirement;
+  };
+
+  const performPrestige = () => {
+    if (!checkPrestigeEligibility()) return false;
+    
+    const nextPrestige = PRESTIGE_LEVELS.find(p => p.level === prestigeLevel + 1);
+    const prestigeBonus = prestigeLevel * PRESTIGE_BONUSES.skill_points;
+    
+    // Reset core progress but keep some things
+    setCoins(50);
+    setScore(0);
+    setTotalEarned(0);
+    setPlots(makeGrid(MIN_SIZE));
+    setGridSize(MIN_SIZE);
+    setInventory({ 
+      carrot: 5, potato: 3, corn: 2, tomato: 1, strawberry: 1, pumpkin: 0, sunflower: 0,
+      lettuce: 3, bellPepper: 1, garlic: 2,
+      fertilizer: 3, pesticide: 2, wateringCan: 0, sprinkler: 0, scarecrow: 0,
+      fungicide: 2, beeFeed: 1, honey: 0
+    });
+    setAchievements([]);
+    setBuildings({});
+    
+    // Increase prestige level and give skill points
+    setPrestigeLevel(prestigeLevel + 1);
+    setSkillPoints(prev => prev + PRESTIGE_BONUSES.skill_points + prestigeBonus);
+    setPrestigePoints(prev => prev + 1);
+    
+    addLog(`🌟 PRESTIGE! You are now ${nextPrestige.name} with ${nextPrestige.multiplier}x bonuses!`);
+    addNotification(`Prestige unlocked! +${PRESTIGE_BONUSES.skill_points + prestigeBonus} skill points`, "success");
+    return true;
+  };
+
+  const getPrestigeMultiplier = (type) => {
+    const baseMultiplier = PRESTIGE_LEVELS.find(p => p.level === prestigeLevel)?.multiplier || 1.0;
+    switch (type) {
+      case 'coins':
+        return baseMultiplier + (prestigeLevel * PRESTIGE_BONUSES.coin_multiplier);
+      case 'growth':
+        return 1 + (prestigeLevel * PRESTIGE_BONUSES.growth_speed);
+      case 'quality':
+        return prestigeLevel * PRESTIGE_BONUSES.quality_chance;
+      default:
+        return baseMultiplier;
+    }
+  };
+
+  // SKILL TREE FUNCTIONS
+  const canUpgradeSkill = (skillCategory, skillName) => {
+    const skill = SKILL_TREES[skillCategory]?.skills[skillName];
+    if (!skill) return false;
+    
+    const currentLevel = skillLevels[skillName] || 0;
+    if (currentLevel >= skill.maxLevel) return false;
+    
+    const cost = skill.cost[currentLevel];
+    return skillPoints >= cost;
+  };
+
+  const upgradeSkill = (skillCategory, skillName) => {
+    if (!canUpgradeSkill(skillCategory, skillName)) return false;
+    
+    const skill = SKILL_TREES[skillCategory].skills[skillName];
+    const currentLevel = skillLevels[skillName] || 0;
+    const cost = skill.cost[currentLevel];
+    
+    setSkillPoints(prev => prev - cost);
+    setSkillLevels(prev => ({ ...prev, [skillName]: currentLevel + 1 }));
+    
+    addLog(`📚 Upgraded ${skill.name} to level ${currentLevel + 1}!`);
+    addNotification(`Skill upgraded: ${skill.name}`, "success");
+    return true;
+  };
+
+  const getSkillEffect = (skillName) => {
+    const level = skillLevels[skillName] || 0;
+    if (level === 0) return 0;
+    
+    // Find the skill in all trees
+    for (const tree of Object.values(SKILL_TREES)) {
+      const skill = tree.skills[skillName];
+      if (skill) {
+        return skill.value * level;
+      }
+    }
+    return 0;
+  };
+
+  // RESEARCH SYSTEM FUNCTIONS
+  const canStartResearch = (projectId) => {
+    const project = RESEARCH_PROJECTS[projectId];
+    if (!project) return false;
+    if (activeResearch) return false;
+    if (completedResearch.includes(projectId)) return false;
+    if (researchPoints < project.cost) return false;
+    
+    // Check prerequisites
+    return project.prerequisites.every(prereq => completedResearch.includes(prereq));
+  };
+
+  const startResearch = (projectId) => {
+    if (!canStartResearch(projectId)) return false;
+    
+    const project = RESEARCH_PROJECTS[projectId];
+    setResearchPoints(prev => prev - project.cost);
+    setActiveResearch(projectId);
+    setResearchStartedAt(nowSec());
+    
+    addLog(`🔬 Started research: ${project.name}`);
+    addNotification(`Research started: ${project.name}`, "success");
+    return true;
+  };
+
+  const completeResearch = () => {
+    if (!activeResearch) return;
+    
+    const project = RESEARCH_PROJECTS[activeResearch];
+    setCompletedResearch(prev => [...prev, activeResearch]);
+    setActiveResearch(null);
+    setResearchStartedAt(null);
+    
+    // Apply research unlocks
+    project.unlocks.forEach(unlock => {
+      addLog(`🎉 Unlocked: ${unlock}`);
+    });
+    
+    addNotification(`Research complete: ${project.name}!`, "success");
+  };
+
+  // WORKER SYSTEM FUNCTIONS
+  const canHireWorker = (workerType) => {
+    const worker = WORKER_TYPES[workerType];
+    if (!worker) return false;
+    if (coins < worker.cost) return false;
+    if (workers.some(w => w.type === workerType)) return false; // One of each type
+    return true;
+  };
+
+  const hireWorker = (workerType) => {
+    if (!canHireWorker(workerType)) return false;
+    
+    const worker = WORKER_TYPES[workerType];
+    setCoins(prev => prev - worker.cost);
+    setWorkers(prev => [...prev, {
+      id: `${workerType}_${Date.now()}`,
+      type: workerType,
+      hiredAt: nowSec(),
+      efficiency: worker.efficiency,
+      lastAction: nowSec()
+    }]);
+    setWorkerUpkeep(prev => prev + worker.upkeep);
+    
+    addLog(`👷 Hired ${worker.name}!`);
+    addNotification(`Worker hired: ${worker.name}`, "success");
+    return true;
+  };
+
+  const payWorkerUpkeep = () => {
+    if (workerUpkeep === 0) return;
+    if (coins < workerUpkeep) {
+      // Fire all workers if can't pay
+      setWorkers([]);
+      setWorkerUpkeep(0);
+      addNotification("Couldn't pay workers - all workers left!", "error");
+      return;
+    }
+    
+    setCoins(prev => prev - workerUpkeep);
+    setLastWorkerPayment(nowSec());
+    addLog(`💰 Paid worker upkeep: ${workerUpkeep}🪙`);
+  };
+
+  // SUPPLY CHAIN FUNCTIONS
+  const canBuildFacility = (facilityType) => {
+    const facility = PROCESSING_FACILITIES[facilityType];
+    if (!facility) return false;
+    if (coins < facility.cost) return false;
+    if (processingFacilities.some(f => f.type === facilityType)) return false;
+    return true;
+  };
+
+  const buildFacility = (facilityType) => {
+    if (!canBuildFacility(facilityType)) return false;
+    
+    const facility = PROCESSING_FACILITIES[facilityType];
+    setCoins(prev => prev - facility.cost);
+    setProcessingFacilities(prev => [...prev, {
+      id: `${facilityType}_${Date.now()}`,
+      type: facilityType,
+      builtAt: nowSec(),
+      processing: null
+    }]);
+    
+    addLog(`🏭 Built ${facility.name}!`);
+    addNotification(`Facility built: ${facility.name}`, "success");
+    return true;
+  };
+
+  const startProcessing = (facilityId, inputType, quantity) => {
+    const facilityIndex = processingFacilities.findIndex(f => f.id === facilityId);
+    if (facilityIndex === -1) return false;
+    
+    const facility = processingFacilities[facilityIndex];
+    const facilityConfig = PROCESSING_FACILITIES[facility.type];
+    
+    if (facility.processing) return false; // Already processing
+    if (facilityConfig.input !== "any" && facilityConfig.input !== inputType) return false;
+    if ((inventory[inputType] || 0) < quantity * facilityConfig.ratio) return false;
+    
+    // Deduct input materials
+    setInventory(prev => ({
+      ...prev,
+      [inputType]: (prev[inputType] || 0) - (quantity * facilityConfig.ratio)
+    }));
+    
+    // Start processing
+    const updatedFacilities = [...processingFacilities];
+    updatedFacilities[facilityIndex] = {
+      ...facility,
+      processing: {
+        inputType,
+        outputType: facilityConfig.output === "preserved" ? `preserved_${inputType}` : facilityConfig.output,
+        quantity,
+        startedAt: nowSec(),
+        completesAt: nowSec() + facilityConfig.time
+      }
+    };
+    setProcessingFacilities(updatedFacilities);
+    
+    addLog(`🔄 Started processing ${quantity}x ${inputType}`);
+    return true;
+  };
+
+  const completeProcessing = (facilityId) => {
+    const facilityIndex = processingFacilities.findIndex(f => f.id === facilityId);
+    if (facilityIndex === -1) return false;
+    
+    const facility = processingFacilities[facilityIndex];
+    if (!facility.processing) return false;
+    
+    const processing = facility.processing;
+    const facilityConfig = PROCESSING_FACILITIES[facility.type];
+    
+    // Add processed goods to inventory
+    setProcessedInventory(prev => ({
+      ...prev,
+      [processing.outputType]: (prev[processing.outputType] || 0) + processing.quantity
+    }));
+    
+    // Clear processing
+    const updatedFacilities = [...processingFacilities];
+    updatedFacilities[facilityIndex] = { ...facility, processing: null };
+    setProcessingFacilities(updatedFacilities);
+    
+    const value = Math.round(rules.seeds[processing.inputType]?.baseValue * facilityConfig.value_multiplier * processing.quantity);
+    addLog(`✅ Processing complete! Gained ${processing.quantity}x ${processing.outputType} (${value}🪙 value)`);
+    addNotification(`Processing complete: ${processing.outputType}`, "success");
+    return true;
   };
 
   // Advanced Economy Functions
@@ -1741,6 +2265,106 @@ export default function FarmSimCanvas() {
     return () => clearInterval(eventInterval);
   }, []);
 
+  // PRESTIGE & ADVANCED SYSTEMS useEffects
+  useEffect(() => {
+    // Track lifetime coins for prestige system
+    setTotalLifetimeCoins(prev => Math.max(prev, totalEarned));
+  }, [totalEarned]);
+
+  useEffect(() => {
+    // Generate research points over time
+    const interval = setInterval(() => {
+      const baseRate = 1;
+      const labBonus = getSkillEffect('research_lab');
+      const rate = baseRate + labBonus;
+      setResearchPoints(prev => prev + rate);
+    }, 60000); // Every minute
+    return () => clearInterval(interval);
+  }, [skillLevels]);
+
+  useEffect(() => {
+    // Check for completed research
+    if (activeResearch && researchStartedAt) {
+      const project = RESEARCH_PROJECTS[activeResearch];
+      if (project && nowSec() >= researchStartedAt + project.time) {
+        completeResearch();
+      }
+    }
+  }, [currentTime, activeResearch, researchStartedAt]);
+
+  useEffect(() => {
+    // Worker upkeep payment (daily)
+    const daysPassed = Math.floor((nowSec() - lastWorkerPayment) / 86400);
+    if (daysPassed >= 1) {
+      payWorkerUpkeep();
+    }
+  }, [currentTime, lastWorkerPayment, workerUpkeep]);
+
+  useEffect(() => {
+    // Worker automation
+    workers.forEach(worker => {
+      const workerType = WORKER_TYPES[worker.type];
+      if (!workerType) return;
+      
+      const timeSinceLastAction = nowSec() - worker.lastAction;
+      if (timeSinceLastAction < 30) return; // Workers act every 30 seconds
+      
+      // Update last action time
+      setWorkers(prev => prev.map(w => 
+        w.id === worker.id ? { ...w, lastAction: nowSec() } : w
+      ));
+      
+      // Perform worker actions based on type
+      switch (worker.type) {
+        case 'irrigator':
+          // Auto-water crops
+          const needsWater = plots.filter((p, i) => 
+            (p.state === "planted" || p.state === "growing") && 
+            (!p.watered || nowSec() - p.lastWateredAt > 120)
+          );
+          if (needsWater.length > 0) {
+            const randomPlot = needsWater[Math.floor(Math.random() * needsWater.length)];
+            const plotIndex = plots.indexOf(randomPlot);
+            if (plotIndex !== -1) {
+              waterPlot(plotIndex, true); // true = automated
+            }
+          }
+          break;
+        case 'harvester':
+          // Auto-harvest ready crops
+          const readyToHarvest = plots.filter((p, i) => p.state === "grown");
+          if (readyToHarvest.length > 0) {
+            const randomPlot = readyToHarvest[Math.floor(Math.random() * readyToHarvest.length)];
+            const plotIndex = plots.indexOf(randomPlot);
+            if (plotIndex !== -1) {
+              harvest(plotIndex);
+            }
+          }
+          break;
+        case 'pest_controller':
+          // Auto-treat pest infestations
+          const infestedPlots = plots.filter((p, i) => p.infested);
+          if (infestedPlots.length > 0 && (inventory.pesticide || 0) > 0) {
+            const randomPlot = infestedPlots[Math.floor(Math.random() * infestedPlots.length)];
+            const plotIndex = plots.indexOf(randomPlot);
+            if (plotIndex !== -1) {
+              usePesticide(plotIndex);
+            }
+          }
+          break;
+      }
+    });
+  }, [currentTime, workers, plots, inventory]);
+
+  useEffect(() => {
+    // Processing facility automation
+    processingFacilities.forEach(facility => {
+      if (facility.processing && facility.processing.completesAt <= nowSec()) {
+        completeProcessing(facility.id);
+      }
+    });
+  }, [currentTime, processingFacilities]);
+
   // Town Development useEffects
   useEffect(() => {
     // Trigger random town events
@@ -2036,7 +2660,13 @@ export default function FarmSimCanvas() {
       const rotationText = rotationBonus > 0 ? ` 🔄+${Math.round(rotationBonus * 100)}%` : "";
       
       addLog(`🌱 Planted ${rules.seeds[seed].emoji} ${seed} in plot ${i + 1}${isOptimalSeason ? " 🌟" : ""}${greenhouseBonus}${rotationText}`);
-      const quality = Math.random() > 0.8 ? 1.2 : 1; // 20% chance for higher quality
+      
+      // NEW: Calculate quality with skill bonuses
+      let qualityChance = 0.2; // Base 20% chance
+      qualityChance += getSkillEffect('quality_seeds'); // Skill bonus
+      qualityChance += getPrestigeMultiplier('quality'); // Prestige bonus
+      
+      const quality = Math.random() < qualityChance ? 1.2 : 1;
       playSfx("plant");
       didPlant = true;
       return { 
@@ -2132,10 +2762,30 @@ export default function FarmSimCanvas() {
         val = Math.round(val * (1 + rules.buildings.barn.bonus)); // +20% harvest value
       }
       
+      // NEW: Apply prestige multipliers
+      val = Math.round(val * getPrestigeMultiplier('coins'));
+      
+      // NEW: Apply skill bonuses
+      const negotiatorBonus = getSkillEffect('negotiator');
+      if (negotiatorBonus > 0) {
+        val = Math.round(val * (1 + negotiatorBonus));
+      }
+      
       setCoins(c => c + val);
       setScore(s => s + val);
       setTotalEarned(t => t + val);
       setTotalHarvests(h => h + 1);
+      
+      // NEW: Grant research points and skill points
+      const baseResearchPoints = Math.max(1, Math.floor(val / 50)); // 1 RP per 50 coins
+      const baseSkillPoints = p.quality > 1 ? 0.1 : 0.05; // More for quality crops
+      setResearchPoints(prev => prev + baseResearchPoints);
+      
+      // Chance to gain skill point
+      if (Math.random() < baseSkillPoints) {
+        setSkillPoints(prev => prev + 1);
+        addNotification("+1 Skill Point!", "success");
+      }
       
       if (p.quality > 1) {
         setQualityHarvests(q => q + 1);
@@ -3058,6 +3708,11 @@ function buy(item, qty = 1) {
               <div className="flex items-center gap-2 text-lg font-bold text-emerald-700">
                 <Coins size={20}/>
                 {coins}🪙
+                {prestigeLevel > 0 && (
+                  <span className="text-xs text-yellow-600 font-normal">
+                    {PRESTIGE_LEVELS.find(p => p.level === prestigeLevel)?.emoji}P{prestigeLevel}
+                  </span>
+                )}
               </div>
             </div>
             
@@ -3067,6 +3722,20 @@ function buy(item, qty = 1) {
                 {score}
               </div>
             </div>
+            
+            {/* NEW: Skills and Research Points */}
+            {(skillPoints > 0 || researchPoints > 0) && (
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border border-white/50">
+                <div className="flex items-center gap-2 text-sm">
+                  {skillPoints > 0 && (
+                    <span className="text-blue-600 font-bold">📚 {skillPoints}</span>
+                  )}
+                  {researchPoints > 0 && (
+                    <span className="text-green-600 font-bold">🔬 {researchPoints}</span>
+                  )}
+                </div>
+              </div>
+            )}
             
             <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border border-white/50">
               <div className="flex items-center gap-2 text-lg font-bold text-blue-700">
@@ -3420,6 +4089,10 @@ function buy(item, qty = 1) {
                     <TabsTrigger className="shrink-0" value="seeds">🌱 Seeds</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="tools">🛠️ Tools</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="buildings">🏗️ Buildings</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="skills">📚 Skills</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="research">🔬 Research</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="workers">👷 Workers</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="processing">🏭 Processing</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="market">📈 Market</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="town">🏛️ Town</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="social">👥 Social</TabsTrigger>
@@ -3705,6 +4378,309 @@ function buy(item, qty = 1) {
                         </div>
                       </Button>
                     ))}
+                  </TabsContent>
+                  
+                  {/* SKILLS TAB */}
+                  <TabsContent value="skills" className="space-y-2">
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold">📚 Skill Trees</h3>
+                        <Badge>{skillPoints} Skill Points</Badge>
+                      </div>
+                      {prestigeLevel > 0 && (
+                        <div className="p-2 bg-yellow-50 rounded border text-xs">
+                          {PRESTIGE_LEVELS.find(p => p.level === prestigeLevel)?.emoji} Prestige Level {prestigeLevel}: {(getPrestigeMultiplier('coins') * 100).toFixed(0)}% bonus
+                        </div>
+                      )}
+                    </div>
+                    
+                    <Tabs defaultValue="farming">
+                      <TabsList className="grid grid-cols-4 w-full">
+                        <TabsTrigger value="farming">🌾</TabsTrigger>
+                        <TabsTrigger value="business">💼</TabsTrigger>
+                        <TabsTrigger value="technology">🔬</TabsTrigger>
+                        <TabsTrigger value="social">👥</TabsTrigger>
+                      </TabsList>
+                      
+                      {Object.entries(SKILL_TREES).map(([treeId, tree]) => (
+                        <TabsContent key={treeId} value={treeId} className="space-y-2">
+                          <div className="text-sm font-medium text-center mb-2">
+                            {tree.icon} {tree.name}
+                          </div>
+                          {Object.entries(tree.skills).map(([skillId, skill]) => {
+                            const currentLevel = skillLevels[skillId] || 0;
+                            const canUpgrade = canUpgradeSkill(treeId, skillId);
+                            const isMaxed = currentLevel >= skill.maxLevel;
+                            const cost = isMaxed ? 0 : skill.cost[currentLevel];
+                            
+                            return (
+                              <Button
+                                key={skillId}
+                                onClick={() => upgradeSkill(treeId, skillId)}
+                                variant="outline"
+                                className="w-full justify-between h-auto p-3"
+                                disabled={!canUpgrade || isMaxed}
+                              >
+                                <div className="text-left">
+                                  <div className="font-semibold">{skill.name}</div>
+                                  <div className="text-xs opacity-70">{skill.description}</div>
+                                  <div className="text-xs mt-1">
+                                    Level {currentLevel}/{skill.maxLevel}
+                                    {currentLevel > 0 && (
+                                      <span className="text-green-600 ml-2">
+                                        +{(skill.value * currentLevel * 100).toFixed(0)}%
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  {isMaxed ? (
+                                    <Badge variant="default">MAX</Badge>
+                                  ) : (
+                                    <div className="font-bold">{cost} SP</div>
+                                  )}
+                                </div>
+                              </Button>
+                            );
+                          })}
+                        </TabsContent>
+                      ))}
+                    </Tabs>
+                    
+                    {/* Prestige Section */}
+                    {totalLifetimeCoins > 500 && (
+                      <div className="mt-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded border">
+                        <div className="text-sm font-semibold mb-2">🌟 Prestige System</div>
+                        <div className="text-xs space-y-1">
+                          <div>Lifetime Coins: {totalLifetimeCoins.toLocaleString()}🪙</div>
+                          <div>Current Level: {PRESTIGE_LEVELS.find(p => p.level === prestigeLevel)?.name || "Beginner"}</div>
+                          {checkPrestigeEligibility() && (
+                            <Button 
+                              onClick={performPrestige}
+                              size="sm" 
+                              className="w-full mt-2"
+                              variant="secondary"
+                            >
+                              🌟 Prestige Now! (+{PRESTIGE_BONUSES.skill_points} SP)
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
+                  
+                  {/* RESEARCH TAB */}
+                  <TabsContent value="research" className="space-y-2">
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold">🔬 Research Lab</h3>
+                        <Badge>{researchPoints} Research Points</Badge>
+                      </div>
+                      {activeResearch && (
+                        <div className="p-2 bg-blue-50 rounded border text-xs">
+                          🔬 Researching: {RESEARCH_PROJECTS[activeResearch]?.name}
+                          <Progress 
+                            value={Math.min(100, ((nowSec() - researchStartedAt) / RESEARCH_PROJECTS[activeResearch]?.time) * 100)} 
+                            className="mt-1"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {Object.entries(RESEARCH_PROJECTS).map(([projectId, project]) => {
+                      const isCompleted = completedResearch.includes(projectId);
+                      const canStart = canStartResearch(projectId);
+                      const isActive = activeResearch === projectId;
+                      
+                      return (
+                        <Button
+                          key={projectId}
+                          onClick={() => startResearch(projectId)}
+                          variant="outline"
+                          className="w-full justify-between h-auto p-3"
+                          disabled={!canStart || isCompleted || isActive}
+                        >
+                          <div className="text-left">
+                            <div className="font-semibold flex items-center gap-2">
+                              {project.emoji} {project.name}
+                              {isCompleted && <Badge variant="default">✅</Badge>}
+                              {isActive && <Badge variant="secondary">🔬</Badge>}
+                            </div>
+                            <div className="text-xs opacity-70">{project.description}</div>
+                            <div className="text-xs mt-1">
+                              Time: {Math.floor(project.time / 60)}min | Unlocks: {project.unlocks.join(", ")}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold">{project.cost} RP</div>
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </TabsContent>
+                  
+                  {/* WORKERS TAB */}
+                  <TabsContent value="workers" className="space-y-2">
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold">👷 Workers</h3>
+                        <Badge>Daily Upkeep: {workerUpkeep}🪙</Badge>
+                      </div>
+                      {workers.length > 0 && (
+                        <div className="p-2 bg-green-50 rounded border text-xs">
+                          Active Workers: {workers.map(w => WORKER_TYPES[w.type]?.emoji).join("")}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {Object.entries(WORKER_TYPES).map(([workerType, worker]) => {
+                      const isHired = workers.some(w => w.type === workerType);
+                      const canHire = canHireWorker(workerType);
+                      
+                      return (
+                        <Button
+                          key={workerType}
+                          onClick={() => hireWorker(workerType)}
+                          variant="outline"
+                          className="w-full justify-between h-auto p-3"
+                          disabled={!canHire || isHired}
+                        >
+                          <div className="text-left">
+                            <div className="font-semibold flex items-center gap-2">
+                              {worker.emoji} {worker.name}
+                              {isHired && <Badge variant="default">✅ Hired</Badge>}
+                            </div>
+                            <div className="text-xs opacity-70">{worker.description}</div>
+                            <div className="text-xs mt-1">
+                              Efficiency: {(worker.efficiency * 100).toFixed(0)}% | Upkeep: {worker.upkeep}🪙/day
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold">{worker.cost}🪙</div>
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </TabsContent>
+                  
+                  {/* PROCESSING TAB */}
+                  <TabsContent value="processing" className="space-y-2">
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold">🏭 Processing Facilities</h3>
+                        <Badge>{processingFacilities.length} Built</Badge>
+                      </div>
+                      
+                      {/* Processed Goods Inventory */}
+                      {Object.keys(processedInventory).length > 0 && (
+                        <div className="p-2 bg-purple-50 rounded border">
+                          <div className="text-xs font-medium mb-1">Processed Goods:</div>
+                          <div className="grid grid-cols-3 gap-1 text-xs">
+                            {Object.entries(processedInventory).map(([item, qty]) => (
+                              <div key={item}>{item}: {qty}</div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Active Processing */}
+                      {processingFacilities.some(f => f.processing) && (
+                        <div className="p-2 bg-blue-50 rounded border">
+                          <div className="text-xs font-medium mb-1">🔄 Processing:</div>
+                          {processingFacilities.filter(f => f.processing).map(facility => (
+                            <div key={facility.id} className="text-xs">
+                              {PROCESSING_FACILITIES[facility.type]?.emoji} {facility.processing.quantity}x {facility.processing.outputType}
+                              <Progress 
+                                value={Math.min(100, ((nowSec() - facility.processing.startedAt) / (facility.processing.completesAt - facility.processing.startedAt)) * 100)} 
+                                className="mt-1 h-1"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Build Facilities */}
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">Build Facilities:</div>
+                      {Object.entries(PROCESSING_FACILITIES).map(([facilityType, facility]) => {
+                        const isBuilt = processingFacilities.some(f => f.type === facilityType);
+                        const canBuild = canBuildFacility(facilityType);
+                        
+                        return (
+                          <Button
+                            key={facilityType}
+                            onClick={() => buildFacility(facilityType)}
+                            variant="outline"
+                            className="w-full justify-between h-auto p-3"
+                            disabled={!canBuild || isBuilt}
+                          >
+                            <div className="text-left">
+                              <div className="font-semibold flex items-center gap-2">
+                                {facility.emoji} {facility.name}
+                                {isBuilt && <Badge variant="default">✅ Built</Badge>}
+                              </div>
+                              <div className="text-xs opacity-70">{facility.description}</div>
+                              <div className="text-xs mt-1">
+                                {facility.ratio}x {facility.input} → 1x {facility.output} | {facility.value_multiplier}x value
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold">{facility.cost}🪙</div>
+                            </div>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Process Items */}
+                    {processingFacilities.length > 0 && (
+                      <div className="space-y-2 mt-4">
+                        <div className="text-sm font-medium">Start Processing:</div>
+                        {processingFacilities.map(facility => {
+                          const facilityConfig = PROCESSING_FACILITIES[facility.type];
+                          const isProcessing = facility.processing !== null;
+                          
+                          return (
+                            <div key={facility.id} className="p-2 border rounded">
+                              <div className="text-xs font-medium mb-2">
+                                {facilityConfig.emoji} {facilityConfig.name}
+                                {isProcessing && <span className="ml-2 text-blue-600">🔄 Processing</span>}
+                              </div>
+                              {!isProcessing && (
+                                <div className="grid grid-cols-2 gap-2">
+                                  {facilityConfig.input === "any" ? (
+                                    // Show all available crops
+                                    Object.entries(inventory).filter(([item, qty]) => 
+                                      item in rules.seeds && qty >= facilityConfig.ratio
+                                    ).map(([item, qty]) => (
+                                      <Button
+                                        key={item}
+                                        onClick={() => startProcessing(facility.id, item, 1)}
+                                        size="sm"
+                                        className="text-xs"
+                                      >
+                                        Process {item} ({qty})
+                                      </Button>
+                                    ))
+                                  ) : (
+                                    // Show specific input type
+                                    <Button
+                                      onClick={() => startProcessing(facility.id, facilityConfig.input, 1)}
+                                      size="sm"
+                                      className="text-xs"
+                                      disabled={(inventory[facilityConfig.input] || 0) < facilityConfig.ratio}
+                                    >
+                                      Process {facilityConfig.input} ({inventory[facilityConfig.input] || 0})
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </TabsContent>
                   
                   <TabsContent value="market" className="space-y-2">

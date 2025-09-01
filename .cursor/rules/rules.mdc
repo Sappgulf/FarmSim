@@ -1,5 +1,69 @@
 ---
-description:
-globs:
-alwaysApply: false
+alwaysApply: true
+# This rule applies to EVERY chat and generation in this repo.
 ---
+
+# Project Execution Rules (Read first, code second)
+
+## Mission
+Ship improvements that **build, run, and play correctly** on the first try. Think deeply, change surgically, and leave the codebase cleaner than you found it. No cowboy refactors.
+
+## Output Contract (very important)
+- **Only touch files that need changing.** Do not rewrite unrelated files.
+- When proposing edits, **show a short plan first**, then the minimal diffs.
+- Keep PR-sized changes: cohesive, small, reversible.
+- **No new dependencies** unless strictly necessary; if one is essential, explain why and show install command.
+- Preserve **backward compatibility** with existing saves (`farm_data.json`) and public function shapes.
+
+## Understand → Plan → Change → Verify
+**1) Understand (quietly do this first)**
+- Skim `FarmSimCanvas.jsx`, `components/`, `ui/`, `index.html`, `main.jsx`, styles, and `farm_data.json`.
+- Identify constraints: render must stay ≥60fps on typical machines; no blocking UI; state remains serializable.
+
+**2) Plan (must be written before code)**
+Provide a brief plan with:
+- **Goal** (what changes and why).
+- **Risk** (what might break).
+- **Safeguards** (how you’ll prevent breakage).
+- **Test Plan** (exact manual steps to verify locally: `npm run dev`, which screen to open, what to click, expected result).
+
+**3) Change (surgical)**
+- Implement the plan with **small, isolated commits**. Prefer pure functions and composable modules.
+- Keep Canvas loops efficient (no allocations per frame; hoist constants; reuse buffers).
+- Use **async/await**; avoid nested `.then`.
+- Add **JSDoc** types for complex functions and **inline comments** where intent isn’t obvious.
+- Log sparingly: `console.debug('[farm]', 'message', data)`; remove noisy logs.
+
+**4) Verify (before you’re “done”)**
+- Build passes: `npm run build` in your head; ensure Vite import paths are correct.
+- UI still renders; no React key warnings; no Tailwind class typos.
+- Save/load still works; if data shape changes, include a **migration** (see below).
+- Performance sanity: one render loop, no accidental re-renders from state thrash.
+
+## Data & Migration Rules
+- Never break existing `farm_data.json`. If schema changes:
+  - Provide `migrateSave(old) -> new` with **versioning**:
+    ```js
+    // in a save/migrate module
+    const SAVE_VERSION = 2;
+    export function migrateSave(data) {
+      const v = data?.version ?? 1;
+      let d = {...data};
+      if (v < 2) { /* apply v1->v2 transforms with sensible defaults */ }
+      d.version = SAVE_VERSION;
+      return d;
+    }
+    ```
+  - Call migration on load; **do not** mutate in place during gameplay.
+
+## Style & Architecture
+- **React (.jsx)**: state up, props down; no prop drilling >2 levels—extract hooks or context.
+- **Canvas**: keep render/update loops separate; time-step with `delta`; cap work per frame.
+- **Tailwind**: utility-first; extract repeated class piles to small components.
+- **Modules**: one responsibility per file; name by feature (`animals/`, `inventory/`, `research/`).
+
+## Guardrails
+- No dead code, half features, or TODO bombs. If a feature is incomplete, behind a **feature flag**:
+  ```js
+  const FLAGS = { researchTreeV2: false };
+  if (FLAGS.researchTreeV2) { /* new path */ } else { /* old path */ }
