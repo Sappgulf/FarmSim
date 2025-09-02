@@ -974,6 +974,20 @@ function formatTimeRemaining(endTime, currentTime) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+// 🔧 LOOKUP UTILITIES - Consolidates repeated array lookups
+const findPrestigeLevel = (level) => PRESTIGE_LEVELS.find(p => p.level === level);
+const findLevelById = (id) => LEVELS.find(l => l.id === id);
+const findLevelIndex = (id) => LEVELS.findIndex(l => l.id === id);
+
+// 📢 NOTIFICATION HELPERS - Consolidates common notification patterns
+const notifyInsufficientCoins = (entity) => addNotification(`Not enough coins for ${entity.name}!`, "error");
+const notifyPurchaseSuccess = (entity, emoji) => addNotification(`Bought ${entity.name}! ${emoji || entity.emoji || ''}`, "success");
+const notifyMaxLimit = (entity) => addNotification(`Maximum ${entity.name} limit reached!`, "error");
+const notifyAlreadyOwn = (entity) => addNotification(`You already own ${entity.name}!`, "error");
+const notifyInsufficientResource = (resource, action) => addNotification(`Not enough ${resource} to ${action}!`, "error");
+const notifyActionSuccess = (action, emoji) => addNotification(`${action}! ${emoji || ''}`, "success");
+const notifyEntityAction = (action, entity, emoji) => addNotification(`${action} ${entity.name}! ${emoji || ''}`, "success");
+
 // Local save helpers with compression
 const SAVE_KEY = "farm_sim_enhanced_v2";
 function loadSave() {
@@ -990,30 +1004,41 @@ function loadSave() {
 
 // ===== NEW SYSTEMS FUNCTIONS =====
 
-// Livestock Management Functions
-const buyLivestock = (type) => {
-  const animal = LIVESTOCK_TYPES[type];
-  if (!animal) return;
-  
-  if (coins < animal.cost) {
-    addNotification(`Not enough coins for ${animal.name}!`, "error");
-    return;
-  }
-  
-  const currentCount = livestock[type] || 0;
-  if (currentCount >= animal.maxCount) {
-    addNotification(`Maximum ${animal.name} limit reached!`, "error");
-    return;
-  }
-  
-  setCoins(prev => prev - animal.cost);
-  setLivestock(prev => ({
-    ...prev,
-    [type]: (prev[type] || 0) + 1
-  }));
-  
-  addNotification(`Bought ${animal.name}! 🐾`, "success");
+// 🔧 UNIFIED PURCHASE HANDLER - Consolidates duplicate purchase logic
+const createPurchaseHandler = (entityTypes, updateState, additionalValidation = null, successEmoji = '') => {
+  return (type) => {
+    const entity = entityTypes[type];
+    if (!entity) return;
+    
+    if (coins < entity.cost) {
+      addNotification(`Not enough coins for ${entity.name}!`, "error");
+      return;
+    }
+    
+    if (additionalValidation && !additionalValidation(type, entity)) {
+      return;
+    }
+    
+    setCoins(prev => prev - entity.cost);
+    updateState(type, entity);
+    addNotification(`Bought ${entity.name}! ${successEmoji || entity.emoji || ''}`, "success");
+  };
 };
+
+// Livestock Management Functions
+const buyLivestock = createPurchaseHandler(
+  LIVESTOCK_TYPES,
+  (type, animal) => setLivestock(prev => ({ ...prev, [type]: (prev[type] || 0) + 1 })),
+  (type, animal) => {
+    const currentCount = livestock[type] || 0;
+    if (currentCount >= animal.maxCount) {
+      addNotification(`Maximum ${animal.name} limit reached!`, "error");
+      return false;
+    }
+    return true;
+  },
+  '🐾'
+);
 
 const feedLivestock = (type) => {
   const animal = LIVESTOCK_TYPES[type];
@@ -1024,7 +1049,7 @@ const feedLivestock = (type) => {
   const feedType = animal.food.type;
   
   if (feedInventory[feedType] < feedNeeded) {
-    addNotification(`Not enough ${feedType} to feed ${animal.name}!`, "error");
+    notifyInsufficientResource(feedType, `feed ${animal.name}`);
     return;
   }
   
@@ -1033,7 +1058,7 @@ const feedLivestock = (type) => {
     [feedType]: prev[feedType] - feedNeeded
   }));
   
-  addNotification(`Fed ${count} ${animal.name}! 🌾`, "success");
+  notifyActionSuccess(`Fed ${count} ${animal.name}`, '🌾');
 };
 
 const collectProducts = (type) => {
@@ -1049,7 +1074,7 @@ const collectProducts = (type) => {
     }));
   });
   
-  addNotification(`Collected products from ${animal.name}! 🥚`, "success");
+  notifyEntityAction("Collected products from", animal, '🥚');
 };
 
 const sellProducts = (productType) => {
@@ -1071,69 +1096,46 @@ const sellProducts = (productType) => {
     [productType]: 0
   }));
   
-  addNotification(`Sold ${amount} ${productType} for $${earnings}! 💰`, "success");
+  notifyActionSuccess(`Sold ${amount} ${productType} for $${earnings}`, '💰');
 };
 
 // Greenhouse Functions
-const buildGreenhouse = (type) => {
-  const greenhouse = GREENHOUSE_TYPES[type];
-  if (!greenhouse) return;
-  
-  if (coins < greenhouse.cost) {
-    addNotification(`Not enough coins for ${greenhouse.name}!`, "error");
-    return;
-  }
-  
-  setCoins(prev => prev - greenhouse.cost);
-  setGreenhouses(prev => [...prev, {
+const buildGreenhouse = createPurchaseHandler(
+  GREENHOUSE_TYPES,
+  (type, greenhouse) => setGreenhouses(prev => [...prev, {
     id: Date.now(),
     type,
     plots: Array(greenhouse.capacity).fill(null)
-  }]);
-  
-  addNotification(`Built ${greenhouse.name}! 🏠`, "success");
-};
+  }]),
+  null,
+  '🏠'
+);
 
 // Equipment Functions
-const buyEquipment = (type) => {
-  const eq = EQUIPMENT_TYPES[type];
-  if (!eq) return;
-  
-  if (coins < eq.cost) {
-    addNotification(`Not enough coins for ${eq.name}!`, "error");
-    return;
+const buyEquipment = createPurchaseHandler(
+  EQUIPMENT_TYPES,
+  (type) => setEquipment(prev => [...prev, type]),
+  (type, eq) => {
+    if (equipment.includes(type)) {
+      notifyAlreadyOwn(eq);
+      return false;
+    }
+    return true;
   }
-  
-  if (equipment.includes(type)) {
-    addNotification(`You already own ${eq.name}!`, "error");
-    return;
-  }
-  
-  setCoins(prev => prev - eq.cost);
-  setEquipment(prev => [...prev, type]);
-  addNotification(`Bought ${eq.name}! ${eq.emoji}`, "success");
-};
+);
 
 // Processing Functions
-const buildProcessor = (type) => {
-  const processor = PROCESSING_TYPES[type];
-  if (!processor) return;
-  
-  if (coins < processor.cost) {
-    addNotification(`Not enough coins for ${processor.name}!`, "error");
-    return;
-  }
-  
-  setCoins(prev => prev - processor.cost);
-  setProcessing(prev => [...prev, {
+const buildProcessor = createPurchaseHandler(
+  PROCESSING_TYPES,
+  (type) => setProcessing(prev => [...prev, {
     id: Date.now(),
     type,
     isProcessing: false,
     finishTime: 0
-  }]);
-  
-  addNotification(`Built ${processor.name}! 🏭`, "success");
-};
+  }]),
+  null,
+  '🏭'
+);
 
 const startProcessing = (processorId, recipeId) => {
   const processor = processing.find(p => p.id === processorId);
@@ -1150,7 +1152,7 @@ const startProcessing = (processorId, recipeId) => {
   // Check if we have enough input materials
   const inputCount = inventory[recipe.input] || 0;
   if (inputCount < recipe.ratio) {
-    addNotification(`Need ${recipe.ratio} ${recipe.input} to process!`, "error");
+    notifyInsufficientResource(`${recipe.ratio} ${recipe.input}`, "process");
     return;
   }
   
@@ -1170,23 +1172,16 @@ const startProcessing = (processorId, recipeId) => {
     } : p
   ));
   
-  addNotification(`Started processing ${recipe.output}! ⚙️`, "success");
+  notifyActionSuccess(`Started processing ${recipe.output}`, '⚙️');
 };
 
 // Economic Functions
-const buyInsurance = (type) => {
-  const ins = INSURANCE_TYPES[type];
-  if (!ins) return;
-  
-  if (coins < ins.cost) {
-    addNotification(`Not enough coins for ${ins.name}!`, "error");
-    return;
-  }
-  
-  setCoins(prev => prev - ins.cost);
-  setInsurance({ type, expiresAt: nowSec() + 3600 }); // 1 hour coverage
-  addNotification(`Bought ${ins.name}! 🛡️`, "success");
-};
+const buyInsurance = createPurchaseHandler(
+  INSURANCE_TYPES,
+  (type) => setInsurance({ type, expiresAt: nowSec() + 3600 }), // 1 hour coverage
+  null,
+  '🛡️'
+);
 
 const takeLoan = (type) => {
   const loan = LOAN_TYPES[type];
@@ -1556,7 +1551,7 @@ function FarmSimCanvas() {
   const [visitHistory, setVisitHistory] = useState(saved?.visitHistory || []);
 
   const [levelId, setLevelId] = useState(saved?.levelId || LEVELS[0].id);
-  const level = useMemo(() => LEVELS.find(l => l.id === levelId), [levelId]);
+  const level = useMemo(() => findLevelById(levelId), [levelId]);
   const [levelEndsAt, setLevelEndsAt] = useState(saved?.levelEndsAt || nowSec() + (LEVELS[0]?.minutes || 5) * 60);
   const [levelStatus, setLevelStatus] = useState(saved?.levelStatus || "playing");
   const [levelStartedAt, setLevelStartedAt] = useState(saved?.levelStartedAt || nowSec());
@@ -2022,14 +2017,14 @@ function FarmSimCanvas() {
 
   // PRESTIGE SYSTEM FUNCTIONS
   const checkPrestigeEligibility = () => {
-    const nextPrestige = PRESTIGE_LEVELS.find(p => p.level === prestigeLevel + 1);
+    const nextPrestige = findPrestigeLevel(prestigeLevel + 1);
     return nextPrestige && totalLifetimeCoins >= nextPrestige.requirement;
   };
 
   const performPrestige = () => {
     if (!checkPrestigeEligibility()) return false;
     
-    const nextPrestige = PRESTIGE_LEVELS.find(p => p.level === prestigeLevel + 1);
+    const nextPrestige = findPrestigeLevel(prestigeLevel + 1);
     const prestigeBonus = prestigeLevel * PRESTIGE_BONUSES.skill_points;
     
     // Reset core progress but keep some things
@@ -2058,7 +2053,7 @@ function FarmSimCanvas() {
   };
 
   const getPrestigeMultiplier = (type) => {
-    const baseMultiplier = PRESTIGE_LEVELS.find(p => p.level === prestigeLevel)?.multiplier || 1.0;
+    const baseMultiplier = findPrestigeLevel(prestigeLevel)?.multiplier || 1.0;
     switch (type) {
       case 'coins':
         return baseMultiplier + (prestigeLevel * PRESTIGE_BONUSES.coin_multiplier);
@@ -2094,7 +2089,7 @@ function FarmSimCanvas() {
     setSkillLevels(prev => ({ ...prev, [skillName]: currentLevel + 1 }));
     
     addLog(`📚 Upgraded ${skill.name} to level ${currentLevel + 1}!`);
-    addNotification(`Skill upgraded: ${skill.name}`, "success");
+    notifyEntityAction("Skill upgraded:", skill, "");
     return true;
   };
 
@@ -4690,7 +4685,7 @@ function buy(item, qty = 1) {
               }
               
               // Auto-progress to next level or complete the progression
-              const currentLevelIndex = LEVELS.findIndex(l => l.id === levelId);
+              const currentLevelIndex = findLevelIndex(levelId);
               const nextLevel = LEVELS[currentLevelIndex + 1];
               
               if (nextLevel && nextLevel.id !== "endless") {
@@ -4714,7 +4709,7 @@ function buy(item, qty = 1) {
             if (nowSec() >= levelEndsAt) {
               if (coins >= level.targetCoins) {
                 // Same auto-progression logic for time-based completion
-                const currentLevelIndex = LEVELS.findIndex(l => l.id === levelId);
+                const currentLevelIndex = findLevelIndex(levelId);
                 const nextLevel = LEVELS[currentLevelIndex + 1];
                 
                 if (nextLevel && nextLevel.id !== "endless") {
@@ -5451,7 +5446,7 @@ function buy(item, qty = 1) {
                 {coins}🪙
                 {prestigeLevel > 0 && (
                   <span className="text-xs text-yellow-600 font-normal">
-                    {PRESTIGE_LEVELS.find(p => p.level === prestigeLevel)?.emoji}P{prestigeLevel}
+                    {findPrestigeLevel(prestigeLevel)?.emoji}P{prestigeLevel}
                   </span>
                 )}
               </div>
@@ -6462,7 +6457,7 @@ function buy(item, qty = 1) {
                       </div>
                       {prestigeLevel > 0 && (
                         <div className="p-2 bg-yellow-50 rounded border text-xs">
-                          {PRESTIGE_LEVELS.find(p => p.level === prestigeLevel)?.emoji} Prestige Level {prestigeLevel}: {(getPrestigeMultiplier('coins') * 100).toFixed(0)}% bonus
+                          {findPrestigeLevel(prestigeLevel)?.emoji} Prestige Level {prestigeLevel}: {(getPrestigeMultiplier('coins') * 100).toFixed(0)}% bonus
                         </div>
                       )}
                     </div>
@@ -6526,7 +6521,7 @@ function buy(item, qty = 1) {
                         <div className="text-sm font-semibold mb-2">🌟 Prestige System</div>
                         <div className="text-xs space-y-1">
                           <div>Lifetime Coins: {totalLifetimeCoins.toLocaleString()}🪙</div>
-                          <div>Current Level: {PRESTIGE_LEVELS.find(p => p.level === prestigeLevel)?.name || "Beginner"}</div>
+                          <div>Current Level: {findPrestigeLevel(prestigeLevel)?.name || "Beginner"}</div>
                           {checkPrestigeEligibility() && (
                             <Button 
                               onClick={performPrestige}
@@ -7482,7 +7477,7 @@ function buy(item, qty = 1) {
                         </div>
                         <div className="text-sm text-green-600 mb-3">
                           {(() => {
-                            const currentLevelIndex = LEVELS.findIndex(l => l.id === levelId);
+                            const currentLevelIndex = findLevelIndex(levelId);
                             const nextLevel = LEVELS[currentLevelIndex + 1];
                             
                             if (nextLevel && nextLevel.id !== "endless") {
@@ -7495,7 +7490,7 @@ function buy(item, qty = 1) {
                         
                         {/* Show endless mode option if all levels are complete */}
                         {(() => {
-                          const currentLevelIndex = LEVELS.findIndex(l => l.id === levelId);
+                          const currentLevelIndex = findLevelIndex(levelId);
                           const nextLevel = LEVELS[currentLevelIndex + 1];
                           
                           if (!nextLevel || nextLevel.id === "endless") {
@@ -7895,7 +7890,7 @@ function buy(item, qty = 1) {
                   <div className="flex gap-2">
                     <Button 
                       onClick={() => {
-                        const L = LEVELS.find(l => l.id === levelId);
+                        const L = findLevelById(levelId);
                         if (L) {
                           setLevelEndsAt(nowSec() + L.minutes * 60);
                           setLevelStartedAt(nowSec());
@@ -7910,7 +7905,7 @@ function buy(item, qty = 1) {
                     {levelStatus === 'won' && levelId !== 'endless' && (
                       <Button 
                         onClick={() => {
-                          const nextLevel = LEVELS.find(l => l.id === `lvl${parseInt(levelId.slice(3)) + 1}`);
+                          const nextLevel = findLevelById(`lvl${parseInt(levelId.slice(3)) + 1}`);
                           if (nextLevel) {
                             setCoins(c => c + level.reward);
                             setLevelId(nextLevel.id);
