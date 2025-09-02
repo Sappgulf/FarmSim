@@ -1092,7 +1092,12 @@ function FarmSimCanvas() {
   const [prestigePoints, setPrestigePoints] = useState(saved?.prestigePoints || 0);
   
   // ENHANCEMENT STATES - Mobile detection
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 768;
+    }
+    return false; // Default to desktop during SSR
+  });
   const [totalLifetimeCoins, setTotalLifetimeCoins] = useState(saved?.totalLifetimeCoins || 0);
   
   // SKILL TREE STATE
@@ -3541,6 +3546,21 @@ function FarmSimCanvas() {
     return () => clearInterval(eventInterval);
   }, []);
 
+  // Mobile detection useEffect
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    // Set initial value
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // PRESTIGE & ADVANCED SYSTEMS useEffects
   useEffect(() => {
     // Track lifetime coins for prestige system
@@ -4429,6 +4449,7 @@ function buy(item, qty = 1) {
     
     release();
   }
+
 
   // Process crops into higher-value products
   function processCrop(crop, qty = 1) {
