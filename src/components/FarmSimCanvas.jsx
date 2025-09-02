@@ -1261,7 +1261,7 @@ function FarmSimCanvas() {
   const [performanceMode, setPerformanceMode] = useState(saved?.performanceMode ?? false);
   const [autoTimeOfDay, setAutoTimeOfDay] = useState(saved?.autoTimeOfDay ?? true);
   const [paused, setPaused] = useState(saved?.paused ?? false);
-  const [simSpeed, setSimSpeed] = useState(saved?.simSpeed ?? 1);
+  const [simSpeed, setSimSpeed] = useState(saved?.simSpeed || 1);
 
   // TUTORIAL & ONBOARDING SYSTEM
   const [tutorialActive, setTutorialActive] = useState(saved?.tutorialActive ?? true);
