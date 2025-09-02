@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -1002,223 +1002,6 @@ function loadSave() {
   return null;
 }
 
-// ===== NEW SYSTEMS FUNCTIONS =====
-
-// 🔧 UNIFIED PURCHASE HANDLER - Consolidates duplicate purchase logic
-const createPurchaseHandler = (entityTypes, updateState, additionalValidation = null, successEmoji = '') => {
-  return (type) => {
-    const entity = entityTypes[type];
-    if (!entity) return;
-    
-    if (coins < entity.cost) {
-      addNotification(`Not enough coins for ${entity.name}!`, "error");
-      return;
-    }
-    
-    if (additionalValidation && !additionalValidation(type, entity)) {
-      return;
-    }
-    
-    setCoins(prev => prev - entity.cost);
-    updateState(type, entity);
-    addNotification(`Bought ${entity.name}! ${successEmoji || entity.emoji || ''}`, "success");
-  };
-};
-
-// Livestock Management Functions
-const buyLivestock = createPurchaseHandler(
-  LIVESTOCK_TYPES,
-  (type, animal) => setLivestock(prev => ({ ...prev, [type]: (prev[type] || 0) + 1 })),
-  (type, animal) => {
-    const currentCount = livestock[type] || 0;
-    if (currentCount >= animal.maxCount) {
-      addNotification(`Maximum ${animal.name} limit reached!`, "error");
-      return false;
-    }
-    return true;
-  },
-  '🐾'
-);
-
-const feedLivestock = (type) => {
-  const animal = LIVESTOCK_TYPES[type];
-  const count = livestock[type] || 0;
-  if (count === 0) return;
-  
-  const feedNeeded = animal.food.consumption * count;
-  const feedType = animal.food.type;
-  
-  if (feedInventory[feedType] < feedNeeded) {
-    notifyInsufficientResource(feedType, `feed ${animal.name}`);
-    return;
-  }
-  
-  setFeedInventory(prev => ({
-    ...prev,
-    [feedType]: prev[feedType] - feedNeeded
-  }));
-  
-  notifyActionSuccess(`Fed ${count} ${animal.name}`, '🌾');
-};
-
-const collectProducts = (type) => {
-  const animal = LIVESTOCK_TYPES[type];
-  const count = livestock[type] || 0;
-  if (count === 0) return;
-  
-  Object.entries(animal.products).forEach(([productType, productInfo]) => {
-    const amount = count;
-    setLivestockProducts(prev => ({
-      ...prev,
-      [productType]: (prev[productType] || 0) + amount
-    }));
-  });
-  
-  notifyEntityAction("Collected products from", animal, '🥚');
-};
-
-const sellProducts = (productType) => {
-  const amount = livestockProducts[productType] || 0;
-  if (amount === 0) return;
-  
-  // Find product info from livestock types
-  let sellPrice = 5; // default
-  Object.values(LIVESTOCK_TYPES).forEach(animal => {
-    if (animal.products[productType]) {
-      sellPrice = animal.products[productType].sellPrice;
-    }
-  });
-  
-  const earnings = amount * sellPrice;
-  setCoins(prev => prev + earnings);
-  setLivestockProducts(prev => ({
-    ...prev,
-    [productType]: 0
-  }));
-  
-  notifyActionSuccess(`Sold ${amount} ${productType} for $${earnings}`, '💰');
-};
-
-// Greenhouse Functions
-const buildGreenhouse = createPurchaseHandler(
-  GREENHOUSE_TYPES,
-  (type, greenhouse) => setGreenhouses(prev => [...prev, {
-    id: Date.now(),
-    type,
-    plots: Array(greenhouse.capacity).fill(null)
-  }]),
-  null,
-  '🏠'
-);
-
-// Equipment Functions
-const buyEquipment = createPurchaseHandler(
-  EQUIPMENT_TYPES,
-  (type) => setEquipment(prev => [...prev, type]),
-  (type, eq) => {
-    if (equipment.includes(type)) {
-      notifyAlreadyOwn(eq);
-      return false;
-    }
-    return true;
-  }
-);
-
-// Processing Functions
-const buildProcessor = createPurchaseHandler(
-  PROCESSING_TYPES,
-  (type) => setProcessing(prev => [...prev, {
-    id: Date.now(),
-    type,
-    isProcessing: false,
-    finishTime: 0
-  }]),
-  null,
-  '🏭'
-);
-
-const startProcessing = (processorId, recipeId) => {
-  const processor = processing.find(p => p.id === processorId);
-  const processorType = PROCESSING_TYPES[processor?.type];
-  const recipe = processorType?.recipes[recipeId];
-  
-  if (!processor || !recipe) return;
-  
-  if (processor.isProcessing) {
-    addNotification("Processor is already working!", "error");
-    return;
-  }
-  
-  // Check if we have enough input materials
-  const inputCount = inventory[recipe.input] || 0;
-  if (inputCount < recipe.ratio) {
-    notifyInsufficientResource(`${recipe.ratio} ${recipe.input}`, "process");
-    return;
-  }
-  
-  // Consume input materials
-  setInventory(prev => ({
-    ...prev,
-    [recipe.input]: prev[recipe.input] - recipe.ratio
-  }));
-  
-  // Start processing
-  setProcessing(prev => prev.map(p => 
-    p.id === processorId ? {
-      ...p,
-      isProcessing: true,
-      finishTime: nowSec() + recipe.time,
-      currentRecipe: recipeId
-    } : p
-  ));
-  
-  notifyActionSuccess(`Started processing ${recipe.output}`, '⚙️');
-};
-
-// Economic Functions
-const buyInsurance = createPurchaseHandler(
-  INSURANCE_TYPES,
-  (type) => setInsurance({ type, expiresAt: nowSec() + 3600 }), // 1 hour coverage
-  null,
-  '🛡️'
-);
-
-const takeLoan = (type) => {
-  const loan = LOAN_TYPES[type];
-  if (!loan) return;
-  
-  setCoins(prev => prev + loan.amount);
-  setLoans(prev => [...prev, {
-    id: Date.now(),
-    type,
-    amount: loan.amount,
-    interest: loan.interest,
-    startTime: nowSec(),
-    dueTime: nowSec() + loan.term
-  }]);
-  
-  addNotification(`Loan approved! Received $${loan.amount} 💳`, "success");
-};
-
-const joinCoop = (type) => {
-  const coop = COOP_BENEFITS[type];
-  if (!coop) return;
-  
-  if (coins < coop.membershipCost) {
-    addNotification(`Not enough coins for ${coop.name}!`, "error");
-    return;
-  }
-  
-  if (coopMembership.includes(type)) {
-    addNotification(`Already a member of ${coop.name}!`, "error");
-    return;
-  }
-  
-  setCoins(prev => prev - coop.membershipCost);
-  setCoopMembership(prev => [...prev, type]);
-  addNotification(`Joined ${coop.name}! 🤝`, "success");
-};
-
 function saveState(s) { 
   try { 
     localStorage.setItem(SAVE_KEY, JSON.stringify(s)); 
@@ -1617,6 +1400,224 @@ function FarmSimCanvas() {
         return;
     }
   };
+
+  // ===== NEW SYSTEMS FUNCTIONS =====
+
+  // 🔧 UNIFIED PURCHASE HANDLER - Consolidates duplicate purchase logic
+  const createPurchaseHandler = (entityTypes, updateState, additionalValidation = null, successEmoji = '') => {
+    return (type) => {
+      const entity = entityTypes[type];
+      if (!entity) return;
+      
+      if (coins < entity.cost) {
+        addNotification(`Not enough coins for ${entity.name}!`, "error");
+        return;
+      }
+      
+      if (additionalValidation && !additionalValidation(type, entity)) {
+        return;
+      }
+      
+      setCoins(prev => prev - entity.cost);
+      updateState(type, entity);
+      addNotification(`Bought ${entity.name}! ${successEmoji || entity.emoji || ''}`, "success");
+    };
+  };
+
+  // Livestock Management Functions
+  const buyLivestock = createPurchaseHandler(
+    LIVESTOCK_TYPES,
+    (type, animal) => setLivestock(prev => ({ ...prev, [type]: (prev[type] || 0) + 1 })),
+    (type, animal) => {
+      const currentCount = livestock[type] || 0;
+      if (currentCount >= animal.maxCount) {
+        addNotification(`Maximum ${animal.name} limit reached!`, "error");
+        return false;
+      }
+      return true;
+    },
+    '🐾'
+  );
+
+  const feedLivestock = (type) => {
+    const animal = LIVESTOCK_TYPES[type];
+    const count = livestock[type] || 0;
+    if (count === 0) return;
+    
+    const feedNeeded = animal.food.consumption * count;
+    const feedType = animal.food.type;
+    
+    if (feedInventory[feedType] < feedNeeded) {
+      notifyInsufficientResource(feedType, `feed ${animal.name}`);
+      return;
+    }
+    
+    setFeedInventory(prev => ({
+      ...prev,
+      [feedType]: prev[feedType] - feedNeeded
+    }));
+    
+    notifyActionSuccess(`Fed ${count} ${animal.name}`, '🌾');
+  };
+
+  const collectProducts = (type) => {
+    const animal = LIVESTOCK_TYPES[type];
+    const count = livestock[type] || 0;
+    if (count === 0) return;
+    
+    Object.entries(animal.products).forEach(([productType, productInfo]) => {
+      const amount = count;
+      setLivestockProducts(prev => ({
+        ...prev,
+        [productType]: (prev[productType] || 0) + amount
+      }));
+    });
+    
+    notifyEntityAction("Collected products from", animal, '🥚');
+  };
+
+  const sellProducts = (productType) => {
+    const amount = livestockProducts[productType] || 0;
+    if (amount === 0) return;
+    
+    // Find product info from livestock types
+    let sellPrice = 5; // default
+    Object.values(LIVESTOCK_TYPES).forEach(animal => {
+      if (animal.products[productType]) {
+        sellPrice = animal.products[productType].sellPrice;
+      }
+    });
+    
+    const earnings = amount * sellPrice;
+    setCoins(prev => prev + earnings);
+    setLivestockProducts(prev => ({
+      ...prev,
+      [productType]: 0
+    }));
+    
+    notifyActionSuccess(`Sold ${amount} ${productType} for $${earnings}`, '💰');
+  };
+
+  // Greenhouse Functions
+  const buildGreenhouse = createPurchaseHandler(
+    GREENHOUSE_TYPES,
+    (type, greenhouse) => setGreenhouses(prev => [...prev, {
+      id: Date.now(),
+      type,
+      plots: Array(greenhouse.capacity).fill(null)
+    }]),
+    null,
+    '🏠'
+  );
+
+  // Equipment Functions
+  const buyEquipment = createPurchaseHandler(
+    EQUIPMENT_TYPES,
+    (type) => setEquipment(prev => [...prev, type]),
+    (type, eq) => {
+      if (equipment.includes(type)) {
+        notifyAlreadyOwn(eq);
+        return false;
+      }
+      return true;
+    }
+  );
+
+  // Processing Functions
+  const buildProcessor = createPurchaseHandler(
+    PROCESSING_TYPES,
+    (type) => setProcessing(prev => [...prev, {
+      id: Date.now(),
+      type,
+      isProcessing: false,
+      finishTime: 0
+    }]),
+    null,
+    '🏭'
+  );
+
+  const startProcessing = (processorId, recipeId) => {
+    const processor = processing.find(p => p.id === processorId);
+    const processorType = PROCESSING_TYPES[processor?.type];
+    const recipe = processorType?.recipes[recipeId];
+    
+    if (!processor || !recipe) return;
+    
+    if (processor.isProcessing) {
+      addNotification("Processor is already working!", "error");
+      return;
+    }
+    
+    // Check if we have enough input materials
+    const inputCount = inventory[recipe.input] || 0;
+    if (inputCount < recipe.ratio) {
+      notifyInsufficientResource(`${recipe.ratio} ${recipe.input}`, "process");
+      return;
+    }
+    
+    // Consume input materials
+    setInventory(prev => ({
+      ...prev,
+      [recipe.input]: prev[recipe.input] - recipe.ratio
+    }));
+    
+    // Start processing
+    setProcessing(prev => prev.map(p => 
+      p.id === processorId ? {
+        ...p,
+        isProcessing: true,
+        finishTime: nowSec() + recipe.time,
+        currentRecipe: recipeId
+      } : p
+    ));
+    
+    notifyActionSuccess(`Started processing ${recipe.output}`, '⚙️');
+  };
+
+  // Economic Functions
+  const buyInsurance = createPurchaseHandler(
+    INSURANCE_TYPES,
+    (type) => setInsurance({ type, expiresAt: nowSec() + 3600 }), // 1 hour coverage
+    null,
+    '🛡️'
+  );
+
+  const takeLoan = (type) => {
+    const loan = LOAN_TYPES[type];
+    if (!loan) return;
+    
+    setCoins(prev => prev + loan.amount);
+    setLoans(prev => [...prev, {
+      id: Date.now(),
+      type,
+      amount: loan.amount,
+      interest: loan.interest,
+      startTime: nowSec(),
+      dueTime: nowSec() + loan.term
+    }]);
+    
+    addNotification(`Loan approved! Received $${loan.amount} 💳`, "success");
+  };
+
+  const joinCoop = (type) => {
+    const coop = COOP_BENEFITS[type];
+    if (!coop) return;
+    
+    if (coins < coop.membershipCost) {
+      addNotification(`Not enough coins for ${coop.name}!`, "error");
+      return;
+    }
+    
+    if (coopMembership.includes(type)) {
+      addNotification(`Already a member of ${coop.name}!`, "error");
+      return;
+    }
+    
+    setCoins(prev => prev - coop.membershipCost);
+    setCoopMembership(prev => [...prev, type]);
+    addNotification(`Joined ${coop.name}! 🤝`, "success");
+  };
+
   useEffect(() => {
     // debounce saves but avoid infinite loops
     if (typeof window === "undefined") return;
@@ -2217,7 +2218,7 @@ function FarmSimCanvas() {
     return true;
   };
 
-  const startProcessing = (facilityId, inputType, quantity) => {
+  const startFacilityProcessing = (facilityId, inputType, quantity) => {
     const facilityIndex = processingFacilities.findIndex(f => f.id === facilityId);
     if (facilityIndex === -1) return false;
     
@@ -6724,7 +6725,7 @@ function buy(item, qty = 1) {
                                     ).map(([item, qty]) => (
                                       <Button
                                         key={item}
-                                        onClick={() => startProcessing(facility.id, item, 1)}
+                                        onClick={() => startFacilityProcessing(facility.id, item, 1)}
                                         size="sm"
                                         className="text-xs"
                                       >
@@ -6734,7 +6735,7 @@ function buy(item, qty = 1) {
                                   ) : (
                                     // Show specific input type
                                     <Button
-                                      onClick={() => startProcessing(facility.id, facilityConfig.input, 1)}
+                                      onClick={() => startFacilityProcessing(facility.id, facilityConfig.input, 1)}
                                       size="sm"
                                       className="text-xs"
                                       disabled={(inventory[facilityConfig.input] || 0) < facilityConfig.ratio}
