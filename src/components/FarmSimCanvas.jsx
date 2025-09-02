@@ -3726,16 +3726,84 @@ function FarmSimCanvas() {
   };
 
   // Enhanced particle system for visual effects
-  const addParticle = (x, y, type, text = "") => {
+  const addParticle = (x, y, type, text = "", options = {}) => {
+    if (!animationsEnabled || performanceMode) return;
+    
     const id = Date.now() + Math.random();
     const particle = { 
       id, x, y, type, text, 
-      life: 2000, 
-      vx: (Math.random() - 0.5) * 100,
-      vy: -50 - Math.random() * 50 
+      life: options.life || 2000,
+      maxLife: options.life || 2000,
+      vx: options.vx || (Math.random() - 0.5) * 100,
+      vy: options.vy || (-50 - Math.random() * 50),
+      color: options.color || '#22c55e',
+      size: options.size || 1,
+      rotation: options.rotation || 0,
+      rotationSpeed: options.rotationSpeed || 0
     };
     setParticles(p => [...p, particle]);
-    setTimeout(() => setParticles(p => p.filter(pt => pt.id !== id)), 2000);
+    setTimeout(() => setParticles(p => p.filter(pt => pt.id !== id)), particle.life);
+  };
+
+  // Harvest sparkle particles
+  const addHarvestSparkles = (x, y) => {
+    if (!animationsEnabled) return;
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const distance = 30 + Math.random() * 20;
+      addParticle(
+        x + Math.cos(angle) * distance,
+        y + Math.sin(angle) * distance,
+        "sparkle",
+        "✨",
+        {
+          life: 800,
+          vx: Math.cos(angle) * 20,
+          vy: Math.sin(angle) * 20 - 30,
+          color: '#fbbf24',
+          rotationSpeed: 5
+        }
+      );
+    }
+  };
+
+  // Watering droplet particles
+  const addWateringDroplets = (x, y) => {
+    if (!animationsEnabled) return;
+    for (let i = 0; i < 5; i++) {
+      addParticle(
+        x + (Math.random() - 0.5) * 40,
+        y - 10,
+        "droplet",
+        "💧",
+        {
+          life: 600,
+          vx: (Math.random() - 0.5) * 20,
+          vy: 20 + Math.random() * 30,
+          color: '#3b82f6'
+        }
+      );
+    }
+  };
+
+  // Fertilizer dust particles
+  const addFertilizerDust = (x, y) => {
+    if (!animationsEnabled) return;
+    for (let i = 0; i < 6; i++) {
+      addParticle(
+        x + (Math.random() - 0.5) * 30,
+        y + (Math.random() - 0.5) * 30,
+        "dust",
+        "✨",
+        {
+          life: 1000,
+          vx: (Math.random() - 0.5) * 40,
+          vy: -20 - Math.random() * 20,
+          color: '#65a30d',
+          size: 0.8
+        }
+      );
+    }
   };
 
   // NEW: Weather particle effects
@@ -3784,6 +3852,35 @@ function FarmSimCanvas() {
         setTimeout(() => setParticles(p => p.filter(pt => pt.id !== particle.id)), 4000);
       }
     }
+  };
+
+  // Determine plot visual status for color coding
+  const getPlotStatus = (plot) => {
+    if (plot.state === "empty" || plot.state === "locked") return "neutral";
+    
+    // Problem states (red)
+    if (plot.infested || plot.disease || plot.growth >= 1 && !plot.watered) {
+      return "problem";
+    }
+    
+    // Ready to harvest (green pulsing)
+    if (plot.growth >= 1) {
+      return "ready";
+    }
+    
+    // Needs attention (yellow)
+    if (plot.growth > 0.7 || (plot.growth > 0 && !plot.watered)) {
+      return "attention";
+    }
+    
+    // Healthy (green)
+    return "healthy";
+  };
+
+  // Progress bar for crop growth
+  const getGrowthProgress = (plot) => {
+    if (plot.state === "empty" || plot.state === "locked") return 0;
+    return Math.min(100, plot.growth * 100);
   };
 
   // Sound effects (placeholder - would use actual audio in production)
@@ -4836,6 +4933,10 @@ function buy(item, qty = 1) {
     const emoji = spec?.emoji || "🌱";
     const title = p.state === "locked" ? "🔒 Locked" : p.state === "empty" ? "📍 Empty Plot" : p.state === "withered" ? "💀 Withered" : p.seed ? `${emoji} ${p.seed}` : "Plot";
     
+    // Get enhanced visual status
+    const status = getPlotStatus(p);
+    const progress = getGrowthProgress(p);
+    
     // Dynamic styling based on state
     let bgClass = "bg-white/70";
     let borderClass = "border-slate-200";
@@ -4852,8 +4953,17 @@ function buy(item, qty = 1) {
       return { next, nextIn };
     })();
     
-    // 🎨 ENHANCED VISUAL POLISH - Respects animation settings
+    // 🎨 ENHANCED VISUAL POLISH - Enhanced with new visual effects
     let plotEnhancedClass = "plot-enhanced";
+    
+    // Status-based classes for visual hierarchy
+    const statusClasses = {
+      healthy: "status-healthy",
+      attention: "status-attention", 
+      problem: "status-problem",
+      ready: "status-healthy plot-ready",
+      neutral: ""
+    };
     
     // Only add animation classes if animations are enabled
     const useAnimations = animationsEnabled && !performanceMode;
@@ -4895,20 +5005,47 @@ function buy(item, qty = 1) {
       if (p.beePollinated) plotEnhancedClass += " bee-pollinated";
     }
 
+    // Enhanced click handlers with particle effects
     function leftPointerDown(e) {
       try { e?.preventDefault?.(); e?.stopPropagation?.(); } catch {}
+      
+      // Calculate plot position for particles
+      const plotX = (i % gridSize) * 80 + 40;
+      const plotY = Math.floor(i / gridSize) * 80 + 40;
+      
       if (p.state === "locked") return;
-      if (p.state === "grown") return harvest(i);
+      
+      if (p.state === "grown") {
+        // Add harvest sparkles before harvesting
+        if (useAnimations) addHarvestSparkles(plotX, plotY);
+        return harvest(i);
+      }
+      
       if (p.state === "withered") return clearPlot(i);
+      
       if (p.state === "empty") return plant(i, selectedSeed);
+      
+      // Water action with droplet particles
+      if (!p.watered && useAnimations) {
+        addWateringDroplets(plotX, plotY);
+      }
       return water(i);
     }
     
     function rightClick(e) {
       e.preventDefault();
+      
+      // Calculate plot position for particles
+      const plotX = (i % gridSize) * 80 + 40;
+      const plotY = Math.floor(i / gridSize) * 80 + 40;
+      
       if (p.state === "locked") return;
+      
       if (p.infested) return spray(i);
       if (p.disease) return cureDisease(i);
+      
+      // Fertilize with dust particles
+      if (useAnimations) addFertilizerDust(plotX, plotY);
       return fertilize(i);
     }
 
@@ -4916,11 +5053,12 @@ function buy(item, qty = 1) {
       <div
         onPointerDown={leftPointerDown}
         onContextMenu={rightClick}
-        className={`${plotEnhancedClass} group relative rounded-2xl border-2 ${borderClass} ${bgClass} backdrop-blur-sm cursor-pointer select-none hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] p-4 mobile-friendly-button`}
+        className={`${plotEnhancedClass} ${statusClasses[status] || ""} group relative rounded-2xl border-2 ${borderClass} ${bgClass} backdrop-blur-sm cursor-pointer select-none hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] p-4 mobile-friendly-button`}
         style={{ touchAction: 'manipulation' }}
       >
         {/* Soil fertility ring */}
         <div className={`pointer-events-none absolute inset-0 rounded-2xl border-2 ${soilMult >= 1.2 ? 'border-emerald-400' : (soilMult >= 0.9 ? 'border-amber-300' : 'border-rose-300')} opacity-50`}></div>
+        
         {/* Plot number badge */}
         <div className="absolute -top-2 -right-2 bg-white border-2 border-slate-300 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold text-slate-600 shadow-lg">
           {i + 1}
@@ -4933,21 +5071,21 @@ function buy(item, qty = 1) {
           </div>
         )}
         
-        {/* NEW: Disease indicator */}
+        {/* Disease indicator */}
         {p.disease && (
           <div className="absolute -top-2 left-6 bg-red-400 border-2 border-red-300 rounded-full w-6 h-6 flex items-center justify-center shadow-lg animate-pulse">
             <span className="text-xs text-white">{CROP_DISEASES[p.disease].emoji}</span>
           </div>
         )}
         
-        {/* NEW: Bee pollination indicator */}
+        {/* Bee pollination indicator */}
         {p.beePollinated && (
           <div className="absolute -bottom-2 -left-2 bg-yellow-400 border-2 border-yellow-300 rounded-full w-6 h-6 flex items-center justify-center shadow-lg">
             <Bug size={12} className="text-yellow-800"/>
           </div>
         )}
         
-        {/* NEW: Crop rotation indicator */}
+        {/* Crop rotation indicator */}
         {p.rotationBonus > 0 && (
           <div className="absolute -bottom-2 -right-2 bg-green-400 border-2 border-green-300 rounded-full w-6 h-6 flex items-center justify-center shadow-lg">
             <span className="text-xs text-white font-bold">🔄</span>
@@ -4963,6 +5101,20 @@ function buy(item, qty = 1) {
             {(p.state === "planted" || p.state === "growing" || p.state === "grown") && <div className="text-2xl">{emoji}</div>}
             <div className="capitalize">{title}</div>
           </div>
+
+          {/* Enhanced progress bar for growing crops */}
+          {spec && p.state !== "grown" && p.state !== "withered" && (
+            <div className="w-full">
+              <div className="relative">
+                <Progress value={pct} className="h-3" />
+                {/* Animated progress indicator for ready crops */}
+                {pct >= 95 && useAnimations && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-300/50 to-transparent rounded animate-shimmer"></div>
+                )}
+              </div>
+              <div className="text-xs text-center mt-1 opacity-70">{pct}%{etaInfo ? ` • ${formatTime(etaInfo.nextIn)} to next` : ''}</div>
+            </div>
+          )}
 
           {/* Status badges */}
           {p.state !== "empty" && p.state !== "locked" && (
@@ -5000,20 +5152,17 @@ function buy(item, qty = 1) {
                   <Bug size={10} className="mr-1"/>infested
                 </Badge>
               )}
-              {/* NEW: Disease status */}
               {p.disease && (
                 <Badge variant="destructive" className="text-xs animate-pulse">
                   <span className="mr-1">{CROP_DISEASES[p.disease].emoji}</span>
                   {CROP_DISEASES[p.disease].name}
                 </Badge>
               )}
-              {/* NEW: Bee pollination status */}
               {p.beePollinated && (
                 <Badge variant="warning" className="text-xs">
                   <Bug size={10} className="mr-1"/>pollinated
                 </Badge>
               )}
-              {/* NEW: Crop rotation status */}
               {p.rotationBonus > 0 && (
                 <Badge variant="success" className="text-xs">
                   <span className="mr-1">🔄</span>+{Math.round(p.rotationBonus * 100)}%
@@ -5024,14 +5173,6 @@ function buy(item, qty = 1) {
                   <Gift size={10} className="mr-1"/>ready!
                 </Badge>
               )}
-            </div>
-          )}
-
-          {/* Progress bar for growing crops */}
-          {spec && p.state !== "grown" && p.state !== "withered" && (
-            <div className="w-full">
-              <Progress value={pct} className="h-3" />
-              <div className="text-xs text-center mt-1 opacity-70">{pct}%{etaInfo ? ` • ${formatTime(etaInfo.nextIn)} to next` : ''}</div>
             </div>
           )}
 
@@ -5066,8 +5207,16 @@ function buy(item, qty = 1) {
           </div>
         </div>
 
-        {/* Hover glow effect */}
+        {/* Enhanced hover glow effect */}
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-200/0 via-emerald-200/20 to-emerald-200/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        
+        {/* Special sparkle effect for ready crops */}
+        {p.state === "grown" && useAnimations && (
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-1 right-1 text-yellow-400 animate-bounce">✨</div>
+            <div className="absolute bottom-1 left-1 text-yellow-300 animate-pulse" style={{ animationDelay: '0.5s' }}>💫</div>
+          </div>
+        )}
       </div>
     );
   }

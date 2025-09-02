@@ -25,7 +25,7 @@
   }
 }
 
-/* NEW: Enhanced visual animations */
+/* Enhanced Visual Effects */
 @keyframes sprout {
   0% {
     transform: scale(0.3) rotate(0deg);
@@ -38,6 +38,186 @@
   100% {
     transform: scale(1) rotate(0deg);
     opacity: 1;
+  }
+}
+
+@keyframes grow {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Harvest sparkle particles */
+@keyframes sparkle {
+  0% {
+    transform: translateY(0) scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-20px) scale(1) rotate(180deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-40px) scale(0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Watering droplets */
+@keyframes droplet {
+  0% {
+    transform: translateY(-10px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(20px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* Fertilizer dust */
+@keyframes dust {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(var(--dx, 10px), var(--dy, -15px)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Plot pulsing for ready crops */
+@keyframes pulse-ready {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
+}
+
+/* Wilting animation */
+@keyframes wilt {
+  0% {
+    transform: rotate(0deg);
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    transform: rotate(-5deg);
+    filter: hue-rotate(-30deg) brightness(0.7);
+  }
+}
+
+/* Weather effects */
+@keyframes rainDrop {
+  0% {
+    transform: translateY(-100vh) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) translateX(10px);
+    opacity: 0;
+  }
+}
+
+@keyframes sunRays {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.3;
+  }
+  100% {
+    transform: rotate(360deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes snowFall {
+  0% {
+    transform: translateY(-100vh) translateX(0) rotate(0deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(100vh) translateX(50px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Achievement badge unlock */
+@keyframes achievementUnlock {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+  }
+}
+
+/* Button hover micro-animations */
+.hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+/* Tab transition effects */
+.tab-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Progress bar animations */
+@keyframes fillProgress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--progress-width);
+  }
+}
+
+/* Notification toast animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
   }
 }
 
@@ -754,4 +934,65 @@
     min-height: 44px;
     min-width: 44px;
   }
+}
+
+/* Visual Effect Utility Classes */
+.particle-sparkle {
+  animation: sparkle 0.8s ease-out forwards;
+}
+
+.particle-droplet {
+  animation: droplet 0.6s ease-in forwards;
+}
+
+.particle-dust {
+  animation: dust 1s ease-out forwards;
+}
+
+.plot-ready {
+  animation: pulse-ready 2s infinite;
+}
+
+.plot-wilting {
+  animation: wilt 2s ease-in-out infinite alternate;
+}
+
+.weather-rain {
+  animation: rainDrop 1s linear infinite;
+}
+
+.weather-sun-rays {
+  animation: sunRays 20s linear infinite;
+}
+
+.weather-snow {
+  animation: snowFall 3s linear infinite;
+}
+
+.achievement-unlock {
+  animation: achievementUnlock 0.6s ease-out forwards;
+}
+
+.notification-enter {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.notification-exit {
+  animation: slideOutRight 0.3s ease-in forwards;
+}
+
+/* Status Colors */
+.status-healthy {
+  border-color: rgb(34, 197, 94); /* green-500 */
+  background-color: rgba(34, 197, 94, 0.1);
+}
+
+.status-attention {
+  border-color: rgb(234, 179, 8); /* yellow-500 */
+  background-color: rgba(234, 179, 8, 0.1);
+}
+
+.status-problem {
+  border-color: rgb(239, 68, 68); /* red-500 */
+  background-color: rgba(239, 68, 68, 0.1);
 }
