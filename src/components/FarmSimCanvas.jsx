@@ -1323,6 +1323,8 @@ function saveState(s) {
 }
 
 function FarmSimCanvas() {
+  console.log('[FarmSim] Component initializing...');
+  
   // --- Initial loading state ---
   const [isInitializing, setIsInitializing] = useState(true);
   
@@ -5456,7 +5458,8 @@ function FarmSimCanvas() {
   // --- Simplified growth tick (no timers) ---
   useEffect(() => {
     const interval = setInterval(() => {
-      if (paused) return;
+      try {
+        if (paused) return;
       // Update particles (skip on mobile in performance mode)
       if (!performanceMode || !isMobile) {
         setParticles(prev => prev.filter(p => p.life > 0).map(p => ({
@@ -5692,6 +5695,9 @@ function FarmSimCanvas() {
             return st;
           });
         }
+      } catch (error) {
+        console.error('[FarmSim] Growth tick error:', error);
+      }
     }, 1000);
     return () => clearInterval(interval);
   }, [paused]); // Only depend on paused to prevent constant re-renders
