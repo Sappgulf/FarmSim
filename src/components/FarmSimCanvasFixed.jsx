@@ -389,7 +389,14 @@ function FarmSimCanvasFixed() {
   const [coins, setCoins] = useState(saved?.coins || 50);
   const [score, setScore] = useState(saved?.score || 0);
   const [gridSize, setGridSize] = useState(saved?.gridSize || MIN_SIZE);
-  const [plots, setPlots] = useState(() => saved?.plots || makeGrid(MIN_SIZE));
+  const [plots, setPlots] = useState(() => {
+    // Ensure plots match gridSize
+    const size = saved?.gridSize || MIN_SIZE;
+    if (saved?.plots && saved?.plots.length === size * size) {
+      return saved.plots;
+    }
+    return makeGrid(size);
+  });
   const [selectedSeed, setSelectedSeed] = useState("carrot");
   const [inventory, setInventory] = useState(saved?.inventory || {
     carrot: 5, potato: 3, corn: 2, tomato: 1,
@@ -445,6 +452,13 @@ function FarmSimCanvasFixed() {
   // Workers system
   const [workers, setWorkers] = useState(saved?.workers || {});
   const [workerActions, setWorkerActions] = useState(saved?.workerActions || {});
+  
+  // Research system
+  const [researchPoints, setResearchPoints] = useState(saved?.researchPoints || 0);
+  const [activeResearch, setActiveResearch] = useState(saved?.activeResearch || null);
+  const [researchStartedAt, setResearchStartedAt] = useState(saved?.researchStartedAt || 0);
+  const [completedResearch, setCompletedResearch] = useState(saved?.completedResearch || []);
+  const [researchBonuses, setResearchBonuses] = useState(saved?.researchBonuses || {});
   
   // Add notification
   const addNotification = (msg, type = "info") => {
@@ -666,7 +680,7 @@ function FarmSimCanvasFixed() {
   
   // Expand grid
   const expandGrid = () => {
-    const cost = 100 * (gridSize - MIN_SIZE + 1);
+    const cost = 100 * (gridSize - MIN_SIZE + 2); // First expansion costs 200
     if (coins < cost) {
       addNotification("Not enough coins to expand!", "error");
       return;
@@ -1589,17 +1603,51 @@ function FarmSimCanvasFixed() {
         {/* Farm Grid */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>🌾 Your Farm</CardTitle>
-              {gridSize < MAX_SIZE && (
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => expandGrid()}
-                >
-                  📏 Expand ({100 * (gridSize - MIN_SIZE + 1)}🪙)
-                </Button>
-              )}
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <CardTitle>🌾 Your Farm</CardTitle>
+                {gridSize < MAX_SIZE && (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => expandGrid()}
+                  >
+                    📏 Expand ({100 * (gridSize - MIN_SIZE + 2)}🪙)
+                  </Button>
+                )}
+              </div>
+              
+              {/* Seed Selector */}
+              <div className="flex gap-2 items-center flex-wrap">
+                <span className="text-sm font-medium">Select Seed:</span>
+                <div className="flex gap-1 flex-wrap">
+                  {Object.entries(DEFAULT_RULES.seeds).slice(0, 8).map(([seed, data]) => {
+                    const hasSeeds = (inventory[seed] || 0) > 0;
+                    return (
+                      <Button
+                        key={seed}
+                        size="sm"
+                        variant={selectedSeed === seed ? "default" : "outline"}
+                        onClick={() => setSelectedSeed(seed)}
+                        disabled={!hasSeeds}
+                        className="p-1 h-auto"
+                      >
+                        <span className="text-lg">{data.emoji}</span>
+                        {hasSeeds && (
+                          <Badge variant="secondary" className="ml-1 text-xs">
+                            {inventory[seed]}
+                          </Badge>
+                        )}
+                      </Button>
+                    );
+                  })}
+                </div>
+                {selectedSeed && (
+                  <Badge variant="default" className="ml-2">
+                    Selected: {DEFAULT_RULES.seeds[selectedSeed]?.emoji} {selectedSeed}
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
