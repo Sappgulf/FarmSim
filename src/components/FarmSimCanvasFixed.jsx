@@ -36,6 +36,55 @@ const ACHIEVEMENTS = {
   rancher: { name: "Rancher", description: "Own 5 animals", emoji: "🐮", reward: 60 },
 };
 
+// Workers System
+const WORKER_TYPES = {
+  planter: {
+    name: "Planter",
+    emoji: "👨‍🌾",
+    cost: 100,
+    upkeep: 5, // Cost per minute
+    description: "Automatically plants seeds",
+    action: "plant",
+    interval: 10, // seconds
+  },
+  waterer: {
+    name: "Waterer",
+    emoji: "💧",
+    cost: 150,
+    upkeep: 7,
+    description: "Automatically waters crops",
+    action: "water",
+    interval: 8,
+  },
+  harvester: {
+    name: "Harvester",
+    emoji: "🌾",
+    cost: 200,
+    upkeep: 10,
+    description: "Automatically harvests ready crops",
+    action: "harvest",
+    interval: 5,
+  },
+  processor: {
+    name: "Processor",
+    emoji: "🏭",
+    cost: 300,
+    upkeep: 15,
+    description: "Automatically processes items",
+    action: "process",
+    interval: 20,
+  },
+  trader: {
+    name: "Trader",
+    emoji: "💼",
+    cost: 500,
+    upkeep: 20,
+    description: "Automatically sells at best prices",
+    action: "trade",
+    interval: 30,
+  },
+};
+
 // Market System
 const MARKET_TRENDS = {
   high_demand: { multiplier: 1.5, name: "📈 High Demand", color: "text-green-600" },
@@ -343,6 +392,10 @@ function FarmSimCanvasFixed() {
   const [currentMarketEvent, setCurrentMarketEvent] = useState(saved?.currentMarketEvent || null);
   const [marketEventEndsAt, setMarketEventEndsAt] = useState(saved?.marketEventEndsAt || 0);
   const [priceHistory, setPriceHistory] = useState(saved?.priceHistory || {});
+  
+  // Workers system
+  const [workers, setWorkers] = useState(saved?.workers || {});
+  const [workerActions, setWorkerActions] = useState(saved?.workerActions || {});
   
   // Add notification
   const addNotification = (msg, type = "info") => {
@@ -676,6 +729,146 @@ function FarmSimCanvasFixed() {
     });
   };
   
+  // Worker functions
+  const hireWorker = (workerType) => {
+    const worker = WORKER_TYPES[workerType];
+    if (!worker) return;
+    
+    if (coins < worker.cost) {
+      addNotification("Not enough coins to hire worker!", "error");
+      return;
+    }
+    
+    if (workers[workerType]) {
+      addNotification("Already hired this worker!", "error");
+      return;
+    }
+    
+    setCoins(c => c - worker.cost);
+    setWorkers(prev => ({
+      ...prev,
+      [workerType]: {
+        hired: true,
+        lastAction: nowSec(),
+        totalActions: 0,
+      }
+    }));
+    
+    addNotification(`Hired ${worker.name}!`, "success");
+  };
+  
+  const fireWorker = (workerType) => {
+    setWorkers(prev => {
+      const newWorkers = {...prev};
+      delete newWorkers[workerType];
+      return newWorkers;
+    });
+    addNotification(`Fired ${WORKER_TYPES[workerType].name}`, "info");
+  };
+  
+  const performWorkerActions = () => {
+    Object.entries(workers).forEach(([workerType, workerData]) => {
+      if (!workerData.hired) return;
+      
+      const worker = WORKER_TYPES[workerType];
+      const timeSinceAction = nowSec() - (workerData.lastAction || 0);
+      
+      if (timeSinceAction >= worker.interval) {
+        // Perform action based on worker type
+        switch (worker.action) {
+          case "plant":
+            // Find empty plot and plant random seed
+            const emptyPlots = plots.map((p, i) => p.state === "empty" ? i : -1).filter(i => i >= 0);
+            if (emptyPlots.length > 0 && Object.keys(inventory).length > 0) {
+              const plotIdx = emptyPlots[Math.floor(Math.random() * emptyPlots.length)];
+              const availableSeeds = Object.entries(inventory).filter(([k, v]) => DEFAULT_RULES.seeds[k] && v > 0);
+              if (availableSeeds.length > 0) {
+                const [seedType] = availableSeeds[0];
+                plant(plotIdx, seedType);
+                setWorkerActions(prev => ({
+                  ...prev,
+                  [workerType]: (prev[workerType] || 0) + 1
+                }));
+              }
+            }
+            break;
+            
+          case "water":
+            // Find planted plots and water them
+            const plantedPlots = plots.map((p, i) => p.state === "planted" ? i : -1).filter(i => i >= 0);
+            if (plantedPlots.length > 0) {
+              const plotIdx = plantedPlots[Math.floor(Math.random() * plantedPlots.length)];
+              water(plotIdx);
+              setWorkerActions(prev => ({
+                ...prev,
+                [workerType]: (prev[workerType] || 0) + 1
+              }));
+            }
+            break;
+            
+          case "harvest":
+            // Find grown plots and harvest them
+            const grownPlots = plots.map((p, i) => p.state === "grown" ? i : -1).filter(i => i >= 0);
+            if (grownPlots.length > 0) {
+              const plotIdx = grownPlots[Math.floor(Math.random() * grownPlots.length)];
+              harvest(plotIdx);
+              setWorkerActions(prev => ({
+                ...prev,
+                [workerType]: (prev[workerType] || 0) + 1
+              }));
+            }
+            break;
+            
+          case "process":
+            // Auto-process items if workshop exists
+            if (buildings.workshop && processingQueue.length < 3) {
+              const processable = Object.entries(inventory).find(([item, amount]) => {
+                const recipe = DEFAULT_RULES.processing[item];
+                return recipe && amount >= recipe.requiredAmount;
+              });
+              if (processable) {
+                startProcessing(processable[0]);
+                setWorkerActions(prev => ({
+                  ...prev,
+                  [workerType]: (prev[workerType] || 0) + 1
+                }));
+              }
+            }
+            break;
+            
+          case "trade":
+            // Sell processed goods at optimal prices
+            if (Object.keys(processedGoods).length > 0) {
+              const [goodType] = Object.keys(processedGoods);
+              sellProcessedGood(goodType, 1);
+              setWorkerActions(prev => ({
+                ...prev,
+                [workerType]: (prev[workerType] || 0) + 1
+              }));
+            }
+            break;
+        }
+        
+        // Update last action time
+        setWorkers(prev => ({
+          ...prev,
+          [workerType]: {
+            ...prev[workerType],
+            lastAction: nowSec(),
+            totalActions: (prev[workerType].totalActions || 0) + 1
+          }
+        }));
+      }
+    });
+  };
+  
+  // Calculate total worker upkeep
+  const getWorkerUpkeep = () => {
+    return Object.keys(workers).reduce((total, workerType) => {
+      return total + (WORKER_TYPES[workerType]?.upkeep || 0);
+    }, 0);
+  };
+  
   // Market functions
   const updateMarketPrices = () => {
     const newPrices = {};
@@ -976,6 +1169,21 @@ function FarmSimCanvasFixed() {
       if (Math.floor(nowSec()) % 30 === 0) {
         triggerMarketEvent();
         updateMarketPrices();
+      }
+      
+      // Worker actions
+      performWorkerActions();
+      
+      // Worker upkeep (every 60 seconds = 1 minute)
+      if (Math.floor(nowSec()) % 60 === 0 && Object.keys(workers).length > 0) {
+        const upkeep = getWorkerUpkeep();
+        if (coins >= upkeep) {
+          setCoins(c => c - upkeep);
+        } else {
+          // Fire all workers if can't pay
+          setWorkers({});
+          addNotification("Can't pay workers! All fired!", "error");
+        }
       }
       
       // Update weather
@@ -1346,14 +1554,15 @@ function FarmSimCanvasFixed() {
           </CardHeader>
           <CardContent>
             <Tabs value={shopTab} onValueChange={setShopTab}>
-              <TabsList className="grid grid-cols-3 md:grid-cols-7 mb-4 text-xs md:text-sm">
-                <TabsTrigger value="seeds">🌱 Seeds</TabsTrigger>
-                <TabsTrigger value="tools">🛠️ Tools</TabsTrigger>
-                <TabsTrigger value="buildings">🏗️ Build</TabsTrigger>
-                <TabsTrigger value="livestock">🐄 Animals</TabsTrigger>
-                <TabsTrigger value="processing">🏭 Process</TabsTrigger>
-                <TabsTrigger value="skills">📚 Skills</TabsTrigger>
-                <TabsTrigger value="market">📈 Market</TabsTrigger>
+              <TabsList className="grid grid-cols-4 md:grid-cols-8 mb-4 text-xs">
+                <TabsTrigger value="seeds">🌱</TabsTrigger>
+                <TabsTrigger value="tools">🛠️</TabsTrigger>
+                <TabsTrigger value="buildings">🏗️</TabsTrigger>
+                <TabsTrigger value="livestock">🐄</TabsTrigger>
+                <TabsTrigger value="processing">🏭</TabsTrigger>
+                <TabsTrigger value="skills">📚</TabsTrigger>
+                <TabsTrigger value="market">📈</TabsTrigger>
+                <TabsTrigger value="workers">👷</TabsTrigger>
               </TabsList>
               
               <TabsContent value="seeds" className="space-y-2">
@@ -1739,6 +1948,72 @@ function FarmSimCanvasFixed() {
                 >
                   🔄 Refresh Prices (Free)
                 </Button>
+              </TabsContent>
+              
+              <TabsContent value="workers" className="space-y-2">
+                {/* Worker upkeep display */}
+                {Object.keys(workers).length > 0 && (
+                  <div className="p-2 bg-yellow-50 rounded border">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Total Upkeep:</span>
+                      <Badge variant="destructive">{getWorkerUpkeep()}🪙/min</Badge>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Available workers */}
+                <h4 className="font-semibold">👷 Hire Workers:</h4>
+                {Object.entries(WORKER_TYPES).map(([workerType, worker]) => {
+                  const isHired = workers[workerType]?.hired;
+                  const actions = workerActions[workerType] || 0;
+                  
+                  return (
+                    <div key={workerType} className="p-3 border rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-lg">{worker.emoji}</span>
+                            <span className="font-medium">{worker.name}</span>
+                            {isHired && <Badge variant="default">Hired</Badge>}
+                          </div>
+                          <p className="text-xs text-gray-600 mb-1">{worker.description}</p>
+                          <div className="text-xs">
+                            <span className="text-gray-500">Every {worker.interval}s</span>
+                            {isHired && (
+                              <span className="ml-2 text-green-600">
+                                Actions: {actions}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {isHired ? (
+                            <div>
+                              <Badge variant="secondary" className="mb-1">
+                                {worker.upkeep}🪙/min
+                              </Badge>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => fireWorker(workerType)}
+                              >
+                                Fire
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button 
+                              size="sm"
+                              onClick={() => hireWorker(workerType)}
+                              disabled={coins < worker.cost}
+                            >
+                              Hire ({worker.cost}🪙)
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </TabsContent>
             </Tabs>
           </CardContent>
