@@ -804,6 +804,64 @@ function FarmSimCanvasFixed() {
     });
   };
   
+  // Research functions
+  const startResearch = (projectId) => {
+    const project = RESEARCH_PROJECTS[projectId];
+    if (!project) return;
+    
+    if (activeResearch) {
+      addNotification("Research already in progress!", "error");
+      return;
+    }
+    
+    if (coins < project.cost) {
+      addNotification("Not enough coins for research!", "error");
+      return;
+    }
+    
+    // Check requirements
+    for (const req of project.requires) {
+      if (!completedResearch.includes(req)) {
+        addNotification(`Requires ${RESEARCH_PROJECTS[req]?.name} first!`, "error");
+        return;
+      }
+    }
+    
+    setCoins(c => c - project.cost);
+    setActiveResearch(projectId);
+    setResearchStartedAt(nowSec());
+    addNotification(`Started researching ${project.name}!`, "success");
+  };
+  
+  const completeResearch = () => {
+    if (!activeResearch) return;
+    
+    const project = RESEARCH_PROJECTS[activeResearch];
+    const timeElapsed = nowSec() - researchStartedAt;
+    
+    if (timeElapsed < project.time) {
+      const remaining = project.time - timeElapsed;
+      addNotification(`Research needs ${remaining} more seconds!`, "info");
+      return;
+    }
+    
+    setCompletedResearch(prev => [...prev, activeResearch]);
+    setResearchPoints(rp => rp + 10);
+    
+    // Apply research bonuses
+    project.unlocks.forEach(unlock => {
+      setResearchBonuses(prev => ({...prev, [unlock]: true}));
+    });
+    
+    addNotification(`Research complete: ${project.name}! +10 RP`, "success");
+    setActiveResearch(null);
+    setResearchStartedAt(0);
+  };
+  
+  const getResearchBonus = (bonusType) => {
+    return researchBonuses[bonusType] || false;
+  };
+  
   // Worker functions
   const hireWorker = (workerType) => {
     const worker = WORKER_TYPES[workerType];
@@ -1669,7 +1727,7 @@ function FarmSimCanvasFixed() {
           </CardHeader>
           <CardContent>
             <Tabs value={shopTab} onValueChange={setShopTab}>
-              <TabsList className="grid grid-cols-4 md:grid-cols-8 mb-4 text-xs">
+              <TabsList className="grid grid-cols-3 md:grid-cols-9 mb-4 text-xs">
                 <TabsTrigger value="seeds">🌱</TabsTrigger>
                 <TabsTrigger value="tools">🛠️</TabsTrigger>
                 <TabsTrigger value="buildings">🏗️</TabsTrigger>
@@ -1678,6 +1736,7 @@ function FarmSimCanvasFixed() {
                 <TabsTrigger value="skills">📚</TabsTrigger>
                 <TabsTrigger value="market">📈</TabsTrigger>
                 <TabsTrigger value="workers">👷</TabsTrigger>
+                <TabsTrigger value="research">🔬</TabsTrigger>
               </TabsList>
               
               <TabsContent value="seeds" className="space-y-2">
@@ -2122,6 +2181,80 @@ function FarmSimCanvasFixed() {
                               disabled={coins < worker.cost}
                             >
                               Hire ({worker.cost}🪙)
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </TabsContent>
+              
+              <TabsContent value="research" className="space-y-2">
+                {/* Active Research */}
+                {activeResearch && (
+                  <div className="p-3 bg-blue-50 rounded-lg border-2 border-blue-300 mb-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="font-bold">
+                          {RESEARCH_PROJECTS[activeResearch]?.emoji} Researching: {RESEARCH_PROJECTS[activeResearch]?.name}
+                        </span>
+                        <Progress 
+                          value={Math.min(100, ((nowSec() - researchStartedAt) / RESEARCH_PROJECTS[activeResearch]?.time) * 100)} 
+                          className="mt-2"
+                        />
+                      </div>
+                      {nowSec() - researchStartedAt >= RESEARCH_PROJECTS[activeResearch]?.time && (
+                        <Button size="sm" onClick={completeResearch}>
+                          Complete!
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Research Points */}
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-semibold">Research Points:</span>
+                  <Badge variant="default">{researchPoints} RP</Badge>
+                </div>
+                
+                {/* Available Research */}
+                <h4 className="font-semibold">🔬 Research Projects:</h4>
+                {Object.entries(RESEARCH_PROJECTS).map(([projectId, project]) => {
+                  const isCompleted = completedResearch.includes(projectId);
+                  const canStart = !activeResearch && !isCompleted && 
+                    project.requires.every(req => completedResearch.includes(req));
+                  
+                  return (
+                    <div key={projectId} className="p-3 border rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-lg">{project.emoji}</span>
+                            <span className="font-medium">{project.name}</span>
+                            {isCompleted && <Badge variant="default">✅</Badge>}
+                          </div>
+                          <p className="text-xs text-gray-600 mb-1">{project.description}</p>
+                          <div className="text-xs">
+                            <span className="text-gray-500">Time: {project.time}s</span>
+                            {project.requires.length > 0 && (
+                              <span className="ml-2 text-orange-600">
+                                Requires: {project.requires.join(", ")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {isCompleted ? (
+                            <Badge variant="secondary">Completed</Badge>
+                          ) : (
+                            <Button 
+                              size="sm"
+                              onClick={() => startResearch(projectId)}
+                              disabled={!canStart || coins < project.cost}
+                            >
+                              Research ({project.cost}🪙)
                             </Button>
                           )}
                         </div>
