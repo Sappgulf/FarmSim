@@ -39,24 +39,46 @@ const ACHIEVEMENTS = {
 const DEFAULT_RULES = {
   seeds: {
     // Common crops
-    carrot: { stages: 3, secondsPerStage: 8, baseValue: 12, shopPrice: 5, emoji: "🥕", rarity: "common", season: "spring" },
-    potato: { stages: 3, secondsPerStage: 10, baseValue: 15, shopPrice: 7, emoji: "🥔", rarity: "common", season: "fall" },
-    corn: { stages: 4, secondsPerStage: 12, baseValue: 22, shopPrice: 10, emoji: "🌽", rarity: "uncommon", season: "summer" },
-    tomato: { stages: 4, secondsPerStage: 14, baseValue: 28, shopPrice: 14, emoji: "🍅", rarity: "uncommon", season: "summer" },
+    carrot: { stages: 3, secondsPerStage: 8, baseValue: 12, shopPrice: 5, emoji: "🥕", rarity: "common", season: "spring", processable: true },
+    potato: { stages: 3, secondsPerStage: 10, baseValue: 15, shopPrice: 7, emoji: "🥔", rarity: "common", season: "fall", processable: true },
+    corn: { stages: 4, secondsPerStage: 12, baseValue: 22, shopPrice: 10, emoji: "🌽", rarity: "uncommon", season: "summer", processable: true },
+    tomato: { stages: 4, secondsPerStage: 14, baseValue: 28, shopPrice: 14, emoji: "🍅", rarity: "uncommon", season: "summer", processable: true },
     // Uncommon crops
-    strawberry: { stages: 3, secondsPerStage: 16, baseValue: 35, shopPrice: 18, emoji: "🍓", rarity: "uncommon", season: "spring" },
-    pumpkin: { stages: 5, secondsPerStage: 18, baseValue: 45, shopPrice: 22, emoji: "🎃", rarity: "uncommon", season: "fall" },
-    sunflower: { stages: 4, secondsPerStage: 20, baseValue: 40, shopPrice: 20, emoji: "🌻", rarity: "uncommon", season: "summer" },
+    strawberry: { stages: 3, secondsPerStage: 16, baseValue: 35, shopPrice: 18, emoji: "🍓", rarity: "uncommon", season: "spring", processable: true },
+    pumpkin: { stages: 5, secondsPerStage: 18, baseValue: 45, shopPrice: 22, emoji: "🎃", rarity: "uncommon", season: "fall", processable: true },
+    sunflower: { stages: 4, secondsPerStage: 20, baseValue: 40, shopPrice: 20, emoji: "🌻", rarity: "uncommon", season: "summer", processable: true },
     // Rare crops
-    watermelon: { stages: 5, secondsPerStage: 22, baseValue: 60, shopPrice: 30, emoji: "🍉", rarity: "rare", season: "summer" },
-    blueberry: { stages: 3, secondsPerStage: 18, baseValue: 50, shopPrice: 25, emoji: "🫐", rarity: "rare", season: "summer" },
-    pepper: { stages: 4, secondsPerStage: 16, baseValue: 48, shopPrice: 28, emoji: "🌶️", rarity: "rare", season: "summer" },
+    watermelon: { stages: 5, secondsPerStage: 22, baseValue: 60, shopPrice: 30, emoji: "🍉", rarity: "rare", season: "summer", processable: true },
+    blueberry: { stages: 3, secondsPerStage: 18, baseValue: 50, shopPrice: 25, emoji: "🫐", rarity: "rare", season: "summer", processable: true },
+    pepper: { stages: 4, secondsPerStage: 16, baseValue: 48, shopPrice: 28, emoji: "🌶️", rarity: "rare", season: "summer", processable: true },
     // Epic crops
-    grapes: { stages: 6, secondsPerStage: 25, baseValue: 80, shopPrice: 45, emoji: "🍇", rarity: "epic", season: "fall" },
-    avocado: { stages: 7, secondsPerStage: 30, baseValue: 100, shopPrice: 60, emoji: "🥑", rarity: "epic", season: "spring" },
+    grapes: { stages: 6, secondsPerStage: 25, baseValue: 80, shopPrice: 45, emoji: "🍇", rarity: "epic", season: "fall", processable: true },
+    avocado: { stages: 7, secondsPerStage: 30, baseValue: 100, shopPrice: 60, emoji: "🥑", rarity: "epic", season: "spring", processable: true },
     // Legendary crops
-    golden_corn: { stages: 5, secondsPerStage: 35, baseValue: 150, shopPrice: 100, emoji: "🌟", rarity: "legendary", season: "summer" },
-    diamond_berry: { stages: 4, secondsPerStage: 40, baseValue: 200, shopPrice: 150, emoji: "💎", rarity: "legendary", season: "winter" },
+    golden_corn: { stages: 5, secondsPerStage: 35, baseValue: 150, shopPrice: 100, emoji: "🌟", rarity: "legendary", season: "summer", processable: true },
+    diamond_berry: { stages: 4, secondsPerStage: 40, baseValue: 200, shopPrice: 150, emoji: "💎", rarity: "legendary", season: "winter", processable: true },
+  },
+  processing: {
+    // Crop processing
+    carrot: { output: "carrot_juice", emoji: "🥤", name: "Carrot Juice", multiplier: 2.5, time: 30, requiredAmount: 3 },
+    potato: { output: "french_fries", emoji: "🍟", name: "French Fries", multiplier: 3.0, time: 45, requiredAmount: 2 },
+    corn: { output: "popcorn", emoji: "🍿", name: "Popcorn", multiplier: 2.8, time: 20, requiredAmount: 2 },
+    tomato: { output: "sauce", emoji: "🍝", name: "Tomato Sauce", multiplier: 2.5, time: 40, requiredAmount: 4 },
+    strawberry: { output: "jam", emoji: "🍯", name: "Strawberry Jam", multiplier: 3.5, time: 60, requiredAmount: 3 },
+    pumpkin: { output: "pie", emoji: "🥧", name: "Pumpkin Pie", multiplier: 4.0, time: 90, requiredAmount: 1 },
+    sunflower: { output: "oil", emoji: "🛢️", name: "Sunflower Oil", multiplier: 3.0, time: 50, requiredAmount: 5 },
+    watermelon: { output: "juice", emoji: "🧃", name: "Watermelon Juice", multiplier: 2.2, time: 25, requiredAmount: 1 },
+    blueberry: { output: "muffin", emoji: "🧁", name: "Blueberry Muffin", multiplier: 3.8, time: 70, requiredAmount: 4 },
+    pepper: { output: "hot_sauce", emoji: "🌶️", name: "Hot Sauce", multiplier: 4.5, time: 80, requiredAmount: 3 },
+    grapes: { output: "wine", emoji: "🍷", name: "Wine", multiplier: 5.0, time: 120, requiredAmount: 5 },
+    avocado: { output: "guacamole", emoji: "🥑", name: "Guacamole", multiplier: 3.5, time: 30, requiredAmount: 2 },
+    golden_corn: { output: "golden_popcorn", emoji: "✨", name: "Golden Popcorn", multiplier: 4.0, time: 60, requiredAmount: 1 },
+    diamond_berry: { output: "crystal_jam", emoji: "💎", name: "Crystal Jam", multiplier: 5.0, time: 150, requiredAmount: 2 },
+    // Animal product processing
+    eggs: { output: "cake", emoji: "🍰", name: "Cake", multiplier: 3.5, time: 60, requiredAmount: 3 },
+    milk: { output: "cheese", emoji: "🧀", name: "Cheese", multiplier: 2.8, time: 90, requiredAmount: 2 },
+    wool: { output: "sweater", emoji: "🧥", name: "Sweater", multiplier: 3.0, time: 100, requiredAmount: 4 },
+    bacon: { output: "sandwich", emoji: "🥪", name: "BLT Sandwich", multiplier: 3.2, time: 40, requiredAmount: 2 },
   },
   tools: {
     wateringCan: { price: 25, name: "Watering Can", emoji: "🚿", description: "Waters 3x3 area", owned: false, type: "tool" },
@@ -196,6 +218,10 @@ function FarmSimCanvasFixed() {
   const [scarecrowPositions, setScarecrowPositions] = useState(saved?.scarecrowPositions || []);
   const [plotDiseases, setPlotDiseases] = useState(saved?.plotDiseases || {});
   
+  // Processing system
+  const [processingQueue, setProcessingQueue] = useState(saved?.processingQueue || []);
+  const [processedGoods, setProcessedGoods] = useState(saved?.processedGoods || {});
+  
   // Add notification
   const addNotification = (msg, type = "info") => {
     const id = Date.now();
@@ -279,6 +305,12 @@ function FarmSimCanvasFixed() {
     setCoins(c => c + value);
     setScore(s => s + value);
     setTotalHarvests(h => h + 1);
+    
+    // Add to inventory for processing
+    setInventory(prev => ({
+      ...prev,
+      [seed]: (prev[seed] || 0) + 1
+    }));
     
     // Update combo
     setCombo(c => c + 1);
@@ -495,6 +527,103 @@ function FarmSimCanvasFixed() {
       
       return newPlots;
     });
+  };
+  
+  // Process items
+  const startProcessing = (itemType) => {
+    const recipe = DEFAULT_RULES.processing[itemType];
+    if (!recipe) {
+      addNotification("Cannot process this item!", "error");
+      return;
+    }
+    
+    if (!buildings.workshop) {
+      addNotification("Workshop required for processing!", "error");
+      return;
+    }
+    
+    const currentAmount = inventory[itemType] || 0;
+    if (currentAmount < recipe.requiredAmount) {
+      addNotification(`Need ${recipe.requiredAmount} ${itemType} to process!`, "error");
+      return;
+    }
+    
+    // Remove items from inventory
+    setInventory(prev => ({
+      ...prev,
+      [itemType]: prev[itemType] - recipe.requiredAmount
+    }));
+    
+    // Add to processing queue
+    const processItem = {
+      id: Date.now(),
+      input: itemType,
+      output: recipe.output,
+      emoji: recipe.emoji,
+      name: recipe.name,
+      multiplier: recipe.multiplier,
+      startedAt: nowSec(),
+      completesAt: nowSec() + recipe.time,
+      value: DEFAULT_RULES.seeds[itemType]?.baseValue || 10
+    };
+    
+    setProcessingQueue(prev => [...prev, processItem]);
+    addNotification(`Started processing ${recipe.name}!`, "success");
+  };
+  
+  // Collect processed items
+  const collectProcessed = (processId) => {
+    const item = processingQueue.find(p => p.id === processId);
+    if (!item) return;
+    
+    if (nowSec() < item.completesAt) {
+      addNotification("Still processing...", "info");
+      return;
+    }
+    
+    const value = Math.floor(item.value * item.multiplier);
+    
+    // Add to processed goods inventory
+    setProcessedGoods(prev => ({
+      ...prev,
+      [item.output]: (prev[item.output] || 0) + 1
+    }));
+    
+    // Remove from queue
+    setProcessingQueue(prev => prev.filter(p => p.id !== processId));
+    
+    addNotification(`Collected ${item.name}! Worth ${value}🪙`, "success");
+    setScore(s => s + Math.floor(value / 10));
+  };
+  
+  // Sell processed goods
+  const sellProcessedGood = (goodType, amount = 1) => {
+    const currentAmount = processedGoods[goodType] || 0;
+    if (currentAmount < amount) {
+      addNotification("Not enough goods to sell!", "error");
+      return;
+    }
+    
+    // Find the recipe to get value
+    let baseValue = 50;
+    for (const [input, recipe] of Object.entries(DEFAULT_RULES.processing)) {
+      if (recipe.output === goodType) {
+        const inputData = DEFAULT_RULES.seeds[input];
+        if (inputData) {
+          baseValue = Math.floor(inputData.baseValue * recipe.multiplier);
+        }
+        break;
+      }
+    }
+    
+    const totalValue = baseValue * amount;
+    setCoins(c => c + totalValue);
+    setProcessedGoods(prev => ({
+      ...prev,
+      [goodType]: prev[goodType] - amount
+    }));
+    
+    addNotification(`Sold ${amount}x for ${totalValue}🪙!`, "success");
   };
   
   // Buy item
@@ -920,11 +1049,12 @@ function FarmSimCanvasFixed() {
           </CardHeader>
           <CardContent>
             <Tabs value={shopTab} onValueChange={setShopTab}>
-              <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-4">
+              <TabsList className="grid grid-cols-2 md:grid-cols-5 mb-4">
                 <TabsTrigger value="seeds">🌱 Seeds</TabsTrigger>
                 <TabsTrigger value="tools">🛠️ Tools</TabsTrigger>
                 <TabsTrigger value="buildings">🏗️ Buildings</TabsTrigger>
                 <TabsTrigger value="livestock">🐄 Animals</TabsTrigger>
+                <TabsTrigger value="processing">🏭 Process</TabsTrigger>
               </TabsList>
               
               <TabsContent value="seeds" className="space-y-2">
@@ -1028,6 +1158,115 @@ function FarmSimCanvasFixed() {
                       );
                     })}
                   </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="processing" className="space-y-2">
+                {!buildings.workshop ? (
+                  <div className="text-center p-4 bg-yellow-50 rounded">
+                    <p className="text-sm mb-2">🔨 Workshop Required!</p>
+                    <Button 
+                      onClick={() => buy("workshop")}
+                      disabled={coins < DEFAULT_RULES.buildings.workshop.price}
+                    >
+                      Build Workshop ({DEFAULT_RULES.buildings.workshop.price}🪙)
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Processing Queue */}
+                    {processingQueue.length > 0 && (
+                      <div className="mb-4 p-2 bg-blue-50 rounded">
+                        <h4 className="font-semibold mb-2">⏳ Processing:</h4>
+                        {processingQueue.map(item => {
+                          const timeLeft = Math.max(0, item.completesAt - nowSec());
+                          const isReady = timeLeft === 0;
+                          
+                          return (
+                            <div key={item.id} className="flex justify-between items-center p-2 bg-white rounded mb-1">
+                              <div className="flex items-center gap-2">
+                                <span>{item.emoji}</span>
+                                <span className="text-sm">{item.name}</span>
+                              </div>
+                              {isReady ? (
+                                <Button size="sm" onClick={() => collectProcessed(item.id)}>
+                                  Collect!
+                                </Button>
+                              ) : (
+                                <Badge variant="secondary">{timeLeft}s</Badge>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    
+                    {/* Processed Goods Inventory */}
+                    {Object.keys(processedGoods).length > 0 && (
+                      <div className="mb-4 p-2 bg-green-50 rounded">
+                        <h4 className="font-semibold mb-2">📦 Processed Goods:</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          {Object.entries(processedGoods).map(([good, amount]) => {
+                            // Find the emoji for this good
+                            let emoji = "📦";
+                            for (const recipe of Object.values(DEFAULT_RULES.processing)) {
+                              if (recipe.output === good) {
+                                emoji = recipe.emoji;
+                                break;
+                              }
+                            }
+                            
+                            return (
+                              <Button
+                                key={good}
+                                size="sm"
+                                variant="outline"
+                                onClick={() => sellProcessedGood(good, amount)}
+                                className="justify-between"
+                              >
+                                <span>{emoji} {amount}x</span>
+                                <span className="text-xs">Sell</span>
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Available to Process */}
+                    <h4 className="font-semibold">🔄 Process Items:</h4>
+                    {Object.entries(inventory).map(([item, amount]) => {
+                      const recipe = DEFAULT_RULES.processing[item];
+                      if (!recipe || amount < recipe.requiredAmount) return null;
+                      
+                      return (
+                        <Button
+                          key={item}
+                          onClick={() => startProcessing(item)}
+                          variant="outline"
+                          className="w-full justify-between h-auto py-2"
+                          disabled={processingQueue.length >= 3}
+                        >
+                          <div className="flex flex-col items-start">
+                            <div className="flex items-center gap-2">
+                              <span>{DEFAULT_RULES.seeds[item]?.emoji || "📦"}</span>
+                              <span>→</span>
+                              <span>{recipe.emoji}</span>
+                              <span className="font-medium">{recipe.name}</span>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              Requires {recipe.requiredAmount}x ({amount} available) • {recipe.time}s
+                            </span>
+                          </div>
+                          <Badge variant="secondary">x{recipe.multiplier}</Badge>
+                        </Button>
+                      );
+                    })}
+                    
+                    {processingQueue.length >= 3 && (
+                      <p className="text-xs text-center text-gray-500">Max 3 items processing at once</p>
+                    )}
+                  </>
                 )}
               </TabsContent>
             </Tabs>
