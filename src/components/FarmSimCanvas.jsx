@@ -1861,16 +1861,18 @@ function FarmSimCanvas() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitializing(false);
-      
-      // Auto-enable performance mode on mobile for better experience
-      if (isMobile && !performanceMode) {
-        setPerformanceMode(true);
-        setAnimationsEnabled(false);
-        addNotification('Performance mode enabled for mobile', 'info');
-      }
     }, 100);
     return () => clearTimeout(timer);
   }, []);
+  
+  // Auto-enable performance mode on mobile
+  useEffect(() => {
+    if (isMobile && !performanceMode && !isInitializing) {
+      setPerformanceMode(true);
+      setAnimationsEnabled(false);
+      // Don't show notification during initialization to avoid errors
+    }
+  }, [isMobile, performanceMode, isInitializing]);
   
   useEffect(() => {
     const handleResize = () => {
@@ -5688,7 +5690,7 @@ function FarmSimCanvas() {
         }
     }, 1000);
     return () => clearInterval(interval);
-  }, [weather.type, rules, levelId, levelEndsAt, levelStatus, coins, level, levelStartedAt, weatherEvents, achievements, paused, farmhands, lastFarmhandAction, plots]);
+  }, [paused]); // Only depend on paused to prevent constant re-renders
 
   // --- Enhanced UI helpers ---
   function WeatherBadge() {

@@ -14,7 +14,7 @@ if ("serviceWorker" in navigator) {
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false, error: null, errorInfo: null, retryCount: 0 };
   }
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
@@ -25,9 +25,11 @@ class ErrorBoundary extends React.Component {
     
     // Backup save data before clearing
     try {
-      const saveData = localStorage.getItem('farm_sim_enhanced_v2');
-      if (saveData) {
-        localStorage.setItem('farm_sim_backup_' + Date.now(), saveData);
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const saveData = localStorage.getItem('farm_sim_enhanced_v2');
+        if (saveData) {
+          localStorage.setItem('farm_sim_backup_' + Date.now(), saveData);
+        }
       }
     } catch (e) {
       console.error('Failed to backup save:', e);
@@ -46,7 +48,10 @@ class ErrorBoundary extends React.Component {
             
             <div className="space-y-3">
               <button 
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  this.setState({ hasError: false, error: null, errorInfo: null });
+                  window.location.reload();
+                }}
                 className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors"
               >
                 🔄 Reload Game
@@ -54,12 +59,17 @@ class ErrorBoundary extends React.Component {
               
               <button 
                 onClick={() => { 
-                  localStorage.removeItem('farm_sim_enhanced_v2'); 
+                  try {
+                    localStorage.removeItem('farm_sim_enhanced_v2'); 
+                    localStorage.clear(); // Clear all localStorage to ensure clean state
+                  } catch (e) {
+                    console.error('Failed to clear storage:', e);
+                  }
                   window.location.reload(); 
                 }}
                 className="w-full py-3 px-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg transition-colors"
               >
-                🌱 Start Fresh Farm
+                🌱 Start Fresh Farm (Clear All Data)
               </button>
               
               <p className="text-xs text-center text-gray-500 mt-4">
