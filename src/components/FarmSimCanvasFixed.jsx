@@ -258,10 +258,135 @@ const QUESTS = {
   }
 };
 
+// Quest System
 const QUEST_CHAINS = {
-  tutorial: ["first_harvest", "water_master", "tool_collector"],
-  main_story: ["expansion_time", "building_basics", "livestock_lover"],
-  farming_mastery: ["combo_master", "breed_hybrid", "pet_paradise"]
+  tutorial: {
+    id: "tutorial",
+    name: "Getting Started",
+    description: "Learn the basics of farming",
+    quests: [
+      {
+        id: "first_plant",
+        title: "Your First Crop",
+        description: "Plant your first seed",
+        objective: { type: "plant", target: 1 },
+        reward: { coins: 50, xp: 20 },
+        dialogue: "Welcome to your farm! Let's start by planting a seed."
+      },
+      {
+        id: "first_water",
+        title: "Water Works",
+        description: "Water a planted crop",
+        objective: { type: "water", target: 1 },
+        reward: { coins: 30, item: { wateringCan: 1 } },
+        dialogue: "Great! Now water your crop to help it grow."
+      },
+      {
+        id: "first_harvest",
+        title: "Harvest Time",
+        description: "Harvest your first crop",
+        objective: { type: "harvest", target: 1 },
+        reward: { coins: 100, xp: 50 },
+        dialogue: "Perfect! You've completed your first harvest!"
+      }
+    ]
+  },
+  
+  expansion: {
+    id: "expansion",
+    name: "Growing Business",
+    description: "Expand your farming operation",
+    quests: [
+      {
+        id: "expand_grid",
+        title: "More Land",
+        description: "Expand your farm grid",
+        objective: { type: "expand", target: 1 },
+        reward: { coins: 200, seeds: { corn: 5 } },
+        dialogue: "Your farm is growing! Time to expand."
+      },
+      {
+        id: "build_first",
+        title: "Construction Time",
+        description: "Build your first building",
+        objective: { type: "build", target: 1 },
+        reward: { coins: 300, xp: 100 },
+        dialogue: "Buildings will help boost your farm's productivity!"
+      },
+      {
+        id: "hire_worker",
+        title: "Help Wanted",
+        description: "Hire your first worker",
+        objective: { type: "hire", target: 1 },
+        reward: { coins: 500, skillPoints: 1 },
+        dialogue: "Workers can automate tasks for you!"
+      }
+    ]
+  },
+  
+  mastery: {
+    id: "mastery",
+    name: "Master Farmer",
+    description: "Become a farming expert",
+    quests: [
+      {
+        id: "breed_hybrid",
+        title: "Genetic Genius",
+        description: "Breed your first hybrid crop",
+        objective: { type: "breed", target: 1 },
+        reward: { coins: 1000, researchPoints: 50 },
+        dialogue: "Time to experiment with crop genetics!"
+      },
+      {
+        id: "adopt_pet",
+        title: "Animal Friend",
+        description: "Adopt a pet companion",
+        objective: { type: "adopt_pet", target: 1 },
+        reward: { coins: 750, xp: 200 },
+        dialogue: "Pets provide valuable bonuses to your farm!"
+      },
+      {
+        id: "complete_research",
+        title: "Scientific Breakthrough",
+        description: "Complete a research project",
+        objective: { type: "research", target: 1 },
+        reward: { coins: 1500, skillPoints: 2 },
+        dialogue: "Research unlocks powerful new abilities!"
+      }
+    ]
+  },
+  
+  seasonal: {
+    id: "seasonal",
+    name: "Seasonal Stories",
+    description: "Special seasonal quests",
+    quests: [
+      {
+        id: "spring_bloom",
+        title: "Spring Bloom",
+        description: "Plant 20 crops in spring",
+        objective: { type: "plant_season", target: 20, season: "spring" },
+        reward: { coins: 600, seeds: { strawberry: 10 } },
+        dialogue: "Spring is the perfect time for planting!"
+      },
+      {
+        id: "summer_harvest",
+        title: "Summer Bounty",
+        description: "Harvest 30 crops in summer",
+        objective: { type: "harvest_season", target: 30, season: "summer" },
+        reward: { coins: 800, xp: 300 },
+        dialogue: "Summer crops are ready for harvest!"
+      },
+      {
+        id: "autumn_process",
+        title: "Autumn Processing",
+        description: "Process 15 items in autumn",
+        objective: { type: "process_season", target: 15, season: "autumn" },
+        reward: { coins: 1000, item: { fertilizer: 10 } },
+        dialogue: "Autumn is perfect for processing your harvest!"
+      }
+    ]
+  }
 };
 
 // Pets System
@@ -1027,6 +1152,7 @@ function FarmSimCanvasFixed() {
   const [buildings, setBuildings] = useState(saved?.buildings || {});
   const [shopTab, setShopTab] = useState("seeds");
   const [showSettings, setShowSettings] = useState(false);
+  const [showQuests, setShowQuests] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [weather, setWeather] = useState({ type: "Sunny", endsAt: nowSec() + 60 });
   const [currentSeason, setCurrentSeason] = useState("spring");
@@ -1135,10 +1261,12 @@ function FarmSimCanvasFixed() {
   });
   
   // Quest system
-  const [activeQuests, setActiveQuests] = useState(saved?.activeQuests || ["first_harvest"]);
+  // Quest system
+  const [activeQuests, setActiveQuests] = useState(saved?.activeQuests || []);
   const [completedQuests, setCompletedQuests] = useState(saved?.completedQuests || []);
   const [questProgress, setQuestProgress] = useState(saved?.questProgress || {});
-  const [questCooldowns, setQuestCooldowns] = useState(saved?.questCooldowns || {});
+  const [currentQuestChain, setCurrentQuestChain] = useState(saved?.currentQuestChain || "tutorial");
+  const [questDialogue, setQuestDialogue] = useState(null);
   
   // Analytics tracking
   const [analytics, setAnalytics] = useState(saved?.analytics || {
@@ -1277,6 +1405,12 @@ function FarmSimCanvasFixed() {
     updateAnalytics("cropsPlanted", 1);
     trackCropStat(seed, "planted", 1);
     
+    // Update quest progress
+    updateQuestProgress("plant", 1);
+    if (currentSeason) {
+      updateQuestProgress("plant_season", 1);
+    }
+    
     addNotification(`Planted ${seed}!`, "success");
   };
   
@@ -1354,6 +1488,12 @@ function FarmSimCanvasFixed() {
     trackCropStat(seed, "earnings", value);
     if (combo > analytics.highestCombo) {
       updateAnalytics("highestCombo", combo - analytics.highestCombo);
+    }
+    
+    // Update quest progress
+    updateQuestProgress("harvest", 1);
+    if (currentSeason) {
+      updateQuestProgress("harvest_season", 1);
     }
     
     // Add experience
@@ -1807,34 +1947,67 @@ function FarmSimCanvasFixed() {
     }
   };
   
+
+  
   // Quest functions
-  const updateQuestProgress = (type, value = 1) => {
+  const startQuest = (questId) => {
+    const chain = Object.values(QUEST_CHAINS).find(c => 
+      c.quests.some(q => q.id === questId)
+    );
+    
+    if (!chain) return;
+    
+    const quest = chain.quests.find(q => q.id === questId);
+    if (!quest) return;
+    
+    if (activeQuests.includes(questId) || completedQuests.includes(questId)) return;
+    
+    setActiveQuests(prev => [...prev, questId]);
+    setQuestProgress(prev => ({
+      ...prev,
+      [questId]: 0
+    }));
+    
+    // Show dialogue
+    setQuestDialogue({
+      title: quest.title,
+      text: quest.dialogue,
+      questId: questId
+    });
+    
+    addNotification(`New Quest: ${quest.title}!`, "info");
+  };
+  
+  const updateQuestProgress = (type, amount = 1, metadata = {}) => {
     activeQuests.forEach(questId => {
-      const quest = QUESTS[questId];
+      const chain = Object.values(QUEST_CHAINS).find(c => 
+        c.quests.some(q => q.id === questId)
+      );
+      
+      if (!chain) return;
+      
+      const quest = chain.quests.find(q => q.id === questId);
       if (!quest) return;
       
-      // Check if quest requirement matches the type
-      if (quest.requirements[type]) {
+      // Check if quest objective matches
+      if (quest.objective.type === type) {
+        // Check for seasonal requirements
+        if (quest.objective.season && quest.objective.season !== currentSeason) return;
+        
         setQuestProgress(prev => {
-          const current = prev[questId] || {};
-          const newValue = (current[type] || 0) + value;
+          const newProgress = Math.min(
+            (prev[questId] || 0) + amount,
+            quest.objective.target
+          );
           
-          // Check if quest is complete
-          const isComplete = Object.entries(quest.requirements).every(([req, target]) => {
-            if (req === type) return newValue >= target;
-            return (current[req] || 0) >= target;
-          });
-          
-          if (isComplete && !completedQuests.includes(questId)) {
+          // Check for completion
+          if (newProgress >= quest.objective.target) {
             completeQuest(questId);
           }
           
           return {
             ...prev,
-            [questId]: {
-              ...current,
-              [type]: newValue
-            }
+            [questId]: newProgress
           };
         });
       }
@@ -1842,83 +2015,73 @@ function FarmSimCanvasFixed() {
   };
   
   const completeQuest = (questId) => {
-    const quest = QUESTS[questId];
+    const chain = Object.values(QUEST_CHAINS).find(c => 
+      c.quests.some(q => q.id === questId)
+    );
+    
+    if (!chain) return;
+    
+    const quest = chain.quests.find(q => q.id === questId);
     if (!quest) return;
     
     // Award rewards
-    if (quest.rewards.coins) {
-      setCoins(c => c + quest.rewards.coins);
-      updateAnalytics("totalEarnings", quest.rewards.coins);
+    const reward = quest.reward;
+    if (reward.coins) {
+      setCoins(c => c + reward.coins);
+      updateAnalytics("totalEarnings", reward.coins);
     }
-    if (quest.rewards.xp) {
-      addExperience(quest.rewards.xp);
+    if (reward.xp) {
+      addExperience(reward.xp);
     }
-    if (quest.rewards.skillPoints) {
-      setSkillPoints(sp => sp + quest.rewards.skillPoints);
+    if (reward.skillPoints) {
+      setSkillPoints(sp => sp + reward.skillPoints);
     }
-    if (quest.rewards.researchPoints) {
-      setResearchPoints(rp => rp + quest.rewards.researchPoints);
+    if (reward.researchPoints) {
+      setResearchPoints(rp => rp + reward.researchPoints);
     }
-    if (quest.rewards.seeds) {
-      Object.entries(quest.rewards.seeds).forEach(([seed, amount]) => {
+    if (reward.seeds) {
+      Object.entries(reward.seeds).forEach(([seed, amount]) => {
         setInventory(prev => ({
           ...prev,
           [seed]: (prev[seed] || 0) + amount
         }));
       });
     }
-    if (quest.rewards.tool) {
-      setTools(prev => ({
-        ...prev,
-        [quest.rewards.tool]: true
-      }));
+    if (reward.item) {
+      Object.entries(reward.item).forEach(([item, amount]) => {
+        setInventory(prev => ({
+          ...prev,
+          [item]: (prev[item] || 0) + amount
+        }));
+      });
     }
     
     // Mark as completed
     setCompletedQuests(prev => [...prev, questId]);
     setActiveQuests(prev => prev.filter(id => id !== questId));
     
-    // Unlock new quests
-    if (quest.unlocks) {
-      quest.unlocks.forEach(newQuestId => {
-        if (!completedQuests.includes(newQuestId) && !activeQuests.includes(newQuestId)) {
-          setActiveQuests(prev => [...prev, newQuestId]);
+    addNotification(`Quest Complete: ${quest.title}! 🎉`, "success");
+    
+    // Start next quest in chain
+    const questIndex = chain.quests.findIndex(q => q.id === questId);
+    if (questIndex < chain.quests.length - 1) {
+      setTimeout(() => {
+        startQuest(chain.quests[questIndex + 1].id);
+      }, 1000);
+    } else {
+      // Chain complete, move to next chain
+      const chains = Object.keys(QUEST_CHAINS);
+      const currentIndex = chains.indexOf(chain.id);
+      if (currentIndex < chains.length - 1) {
+        const nextChain = QUEST_CHAINS[chains[currentIndex + 1]];
+        if (nextChain && nextChain.quests.length > 0) {
+          setTimeout(() => {
+            setCurrentQuestChain(nextChain.id);
+            startQuest(nextChain.quests[0].id);
+          }, 2000);
         }
-      });
+      }
     }
-    
-    // Handle repeatable quests
-    if (quest.repeatable && quest.cooldown) {
-      setQuestCooldowns(prev => ({
-        ...prev,
-        [questId]: nowSec() + quest.cooldown
-      }));
-    }
-    
-    addNotification(`Quest Complete: ${quest.name}! ${quest.emoji}`, "success");
-    updateAnalytics("questsCompleted", 1);
-  };
-  
-  const acceptQuest = (questId) => {
-    if (activeQuests.includes(questId) || completedQuests.includes(questId)) return;
-    
-    const quest = QUESTS[questId];
-    if (!quest) return;
-    
-    // Check cooldown for repeatable quests
-    if (quest.repeatable && questCooldowns[questId] > nowSec()) {
-      const remaining = Math.floor((questCooldowns[questId] - nowSec()) / 60);
-      addNotification(`Quest on cooldown for ${remaining} minutes`, "error");
-      return;
-    }
-    
-    setActiveQuests(prev => [...prev, questId]);
-    setQuestProgress(prev => ({
-      ...prev,
-      [questId]: {}
-    }));
-    
-    addNotification(`New Quest: ${quest.name}!`, "info");
   };
   
   // Analytics functions
@@ -2836,6 +2999,14 @@ function FarmSimCanvasFixed() {
       generateWeeklyChallenges();
       setLastWeeklyReset(nowSec());
     }
+    
+    // Start first quest if no quests active
+    if (activeQuests.length === 0 && completedQuests.length === 0) {
+      const firstChain = QUEST_CHAINS.tutorial;
+      if (firstChain && firstChain.quests.length > 0) {
+        setTimeout(() => startQuest(firstChain.quests[0].id), 1000);
+      }
+    }
   }, []);
   
   // Enhanced growth and game system
@@ -3159,6 +3330,13 @@ function FarmSimCanvasFixed() {
                   {paused ? "▶️" : "⏸️"}
                 </Button>
                 <Button 
+                  onClick={() => setShowQuests(!showQuests)} 
+                  size="sm"
+                  variant={showQuests ? "default" : "outline"}
+                >
+                  📜
+                </Button>
+                <Button 
                   onClick={() => setShowSettings(!showSettings)} 
                   size="sm"
                   variant={showSettings ? "default" : "outline"}
@@ -3298,6 +3476,87 @@ function FarmSimCanvasFixed() {
                   Click plot to use {DEFAULT_RULES.tools[selectedTool].name}
                 </Badge>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Quest Panel */}
+      {showQuests && (
+        <Card className="mb-4">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>📜 Quests</CardTitle>
+              <Button size="sm" variant="ghost" onClick={() => setShowQuests(false)}>✕</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Active Quests */}
+            <div className="mb-4">
+              <h4 className="font-semibold mb-2">Active Quests</h4>
+              {activeQuests.length === 0 ? (
+                <p className="text-sm text-gray-500">No active quests</p>
+              ) : (
+                <div className="space-y-2">
+                  {activeQuests.map(questId => {
+                    const chain = Object.values(QUEST_CHAINS).find(c => 
+                      c.quests.some(q => q.id === questId)
+                    );
+                    const quest = chain?.quests.find(q => q.id === questId);
+                    if (!quest) return null;
+                    
+                    const progress = questProgress[questId] || 0;
+                    const percentage = (progress / quest.objective.target) * 100;
+                    
+                    return (
+                      <div key={questId} className="p-3 border rounded-lg bg-blue-50">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h5 className="font-medium">{quest.title}</h5>
+                            <p className="text-xs text-gray-600">{quest.description}</p>
+                          </div>
+                          <Badge variant="outline">{chain.name}</Badge>
+                        </div>
+                        <Progress value={percentage} className="mb-1" />
+                        <div className="flex justify-between text-xs">
+                          <span>{progress}/{quest.objective.target}</span>
+                          <span className="text-gray-500">
+                            Reward: {quest.reward.coins}🪙 
+                            {quest.reward.xp && ` +${quest.reward.xp}XP`}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            
+            {/* Quest Chains */}
+            <div>
+              <h4 className="font-semibold mb-2">Quest Chains</h4>
+              <div className="space-y-2">
+                {Object.values(QUEST_CHAINS).map(chain => {
+                  const completedCount = chain.quests.filter(q => 
+                    completedQuests.includes(q.id)
+                  ).length;
+                  const totalCount = chain.quests.length;
+                  const percentage = (completedCount / totalCount) * 100;
+                  
+                  return (
+                    <div key={chain.id} className="p-2 border rounded">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium">{chain.name}</span>
+                        <Badge variant={percentage === 100 ? "default" : "outline"}>
+                          {completedCount}/{totalCount}
+                        </Badge>
+                      </div>
+                      <Progress value={percentage} className="h-2" />
+                      <p className="text-xs text-gray-500 mt-1">{chain.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </CardContent>
         </Card>
