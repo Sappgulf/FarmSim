@@ -1323,6 +1323,9 @@ function saveState(s) {
 }
 
 function FarmSimCanvas() {
+  // --- Initial loading state ---
+  const [isInitializing, setIsInitializing] = useState(true);
+  
   // --- config ---
   const [useApi, setUseApi] = useState(false);
   const [baseUrl, setBaseUrl] = useState("http://127.0.0.1:5000");
@@ -1854,6 +1857,21 @@ function FarmSimCanvas() {
   }, [coins, score, levelStatus]); // minimal dependencies
 
   // Mobile detection resize listener
+  // Initialize app after mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitializing(false);
+      
+      // Auto-enable performance mode on mobile for better experience
+      if (isMobile && !performanceMode) {
+        setPerformanceMode(true);
+        setAnimationsEnabled(false);
+        addNotification('Performance mode enabled for mobile', 'info');
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+  
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -5433,12 +5451,14 @@ function FarmSimCanvas() {
   useEffect(() => {
     const interval = setInterval(() => {
       if (paused) return;
-      // Update particles
-      setParticles(prev => prev.filter(p => p.life > 0).map(p => ({
-        ...p,
-        life: p.life - 100,
-        y: p.y - 2
-      })));
+      // Update particles (skip on mobile in performance mode)
+      if (!performanceMode || !isMobile) {
+        setParticles(prev => prev.filter(p => p.life > 0).map(p => ({
+          ...p,
+          life: p.life - 100,
+          y: p.y - 2
+        })));
+      }
       if (comboTimer > 0 && nowSec() >= comboTimer) {
         setCombo(0);
         setComboTimer(0);
@@ -5933,9 +5953,14 @@ function FarmSimCanvas() {
       if (p.beePollinated) plotEnhancedClass += " bee-pollinated";
     }
 
-    // Enhanced click handlers with particle effects
+    // Enhanced click handlers with particle effects and mobile support
     function leftPointerDown(e) {
-      try { e?.preventDefault?.(); e?.stopPropagation?.(); } catch {}
+      try { 
+        e?.preventDefault?.(); 
+        e?.stopPropagation?.(); 
+        // Prevent double-tap zoom on mobile
+        if (e?.touches?.length > 1) return;
+      } catch {}
       
       // Calculate plot position for particles
       const plotX = (i % gridSize) * 80 + 40;
@@ -6320,6 +6345,25 @@ function FarmSimCanvas() {
   );
 
   // --- Enhanced Layout ---
+  
+  // Show loading screen during initialization
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-bounce">🌱</div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Loading Your Farm...</h1>
+          <p className="text-gray-600">Preparing the fields</p>
+          <div className="mt-4 flex justify-center gap-1">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse delay-100"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse delay-200"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className={`min-h-screen bg-gradient-to-br ${DAY_NIGHT_CYCLE[currentTimeOfDay].bg} relative overflow-hidden transition-all duration-1000`}>
       {/* Weather tint overlay */}
