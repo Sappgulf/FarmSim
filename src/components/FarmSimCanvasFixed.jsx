@@ -18,19 +18,67 @@ const LEVELS = [
   { id: "endless", label: "Endless Farm", targetCoins: 999999, minutes: 9999, reward: 0, difficulty: "∞" },
 ];
 
+const WEATHER_TYPES = ["Sunny", "Rain", "Drought", "Storm", "Frost", "Pests"];
+const SEASONS = ["spring", "summer", "fall", "winter"];
+const SEASON_EFFECTS = {
+  spring: { growthBonus: 1.2, name: "🌸 Spring", color: "text-green-500" },
+  summer: { growthBonus: 1.0, name: "☀️ Summer", color: "text-yellow-500" },
+  fall: { growthBonus: 0.9, name: "🍂 Fall", color: "text-orange-500" },
+  winter: { growthBonus: 0.7, name: "❄️ Winter", color: "text-blue-500" },
+};
+
+const ACHIEVEMENTS = {
+  first_harvest: { name: "First Harvest", description: "Harvest your first crop", emoji: "🌾", reward: 10 },
+  green_thumb: { name: "Green Thumb", description: "Harvest 10 crops", emoji: "🌱", reward: 25 },
+  farmer: { name: "Farmer", description: "Harvest 50 crops", emoji: "👨‍🌾", reward: 50 },
+  rich_farmer: { name: "Rich Farmer", description: "Earn 1000 coins", emoji: "💰", reward: 100 },
+  builder: { name: "Builder", description: "Build 3 buildings", emoji: "🏗️", reward: 75 },
+  rancher: { name: "Rancher", description: "Own 5 animals", emoji: "🐮", reward: 60 },
+};
+
 const DEFAULT_RULES = {
   seeds: {
-    carrot: { stages: 3, secondsPerStage: 8, baseValue: 12, shopPrice: 5, emoji: "🥕", rarity: "common" },
-    potato: { stages: 3, secondsPerStage: 10, baseValue: 15, shopPrice: 7, emoji: "🥔", rarity: "common" },
-    corn: { stages: 4, secondsPerStage: 12, baseValue: 22, shopPrice: 10, emoji: "🌽", rarity: "uncommon" },
-    tomato: { stages: 4, secondsPerStage: 14, baseValue: 28, shopPrice: 14, emoji: "🍅", rarity: "uncommon" },
+    // Common crops
+    carrot: { stages: 3, secondsPerStage: 8, baseValue: 12, shopPrice: 5, emoji: "🥕", rarity: "common", season: "spring" },
+    potato: { stages: 3, secondsPerStage: 10, baseValue: 15, shopPrice: 7, emoji: "🥔", rarity: "common", season: "fall" },
+    corn: { stages: 4, secondsPerStage: 12, baseValue: 22, shopPrice: 10, emoji: "🌽", rarity: "uncommon", season: "summer" },
+    tomato: { stages: 4, secondsPerStage: 14, baseValue: 28, shopPrice: 14, emoji: "🍅", rarity: "uncommon", season: "summer" },
+    // Uncommon crops
+    strawberry: { stages: 3, secondsPerStage: 16, baseValue: 35, shopPrice: 18, emoji: "🍓", rarity: "uncommon", season: "spring" },
+    pumpkin: { stages: 5, secondsPerStage: 18, baseValue: 45, shopPrice: 22, emoji: "🎃", rarity: "uncommon", season: "fall" },
+    sunflower: { stages: 4, secondsPerStage: 20, baseValue: 40, shopPrice: 20, emoji: "🌻", rarity: "uncommon", season: "summer" },
+    // Rare crops
+    watermelon: { stages: 5, secondsPerStage: 22, baseValue: 60, shopPrice: 30, emoji: "🍉", rarity: "rare", season: "summer" },
+    blueberry: { stages: 3, secondsPerStage: 18, baseValue: 50, shopPrice: 25, emoji: "🫐", rarity: "rare", season: "summer" },
+    pepper: { stages: 4, secondsPerStage: 16, baseValue: 48, shopPrice: 28, emoji: "🌶️", rarity: "rare", season: "summer" },
+    // Epic crops
+    grapes: { stages: 6, secondsPerStage: 25, baseValue: 80, shopPrice: 45, emoji: "🍇", rarity: "epic", season: "fall" },
+    avocado: { stages: 7, secondsPerStage: 30, baseValue: 100, shopPrice: 60, emoji: "🥑", rarity: "epic", season: "spring" },
+    // Legendary crops
+    golden_corn: { stages: 5, secondsPerStage: 35, baseValue: 150, shopPrice: 100, emoji: "🌟", rarity: "legendary", season: "summer" },
+    diamond_berry: { stages: 4, secondsPerStage: 40, baseValue: 200, shopPrice: 150, emoji: "💎", rarity: "legendary", season: "winter" },
   },
   fertilizer: { shopPrice: 8, boost: 1.5 },
   pesticide: { shopPrice: 10 },
+  fungicide: { shopPrice: 12 },
   wateringCan: { shopPrice: 25, efficiency: 1.2 },
+  sprinkler: { shopPrice: 100, range: 1 },
+  scarecrow: { shopPrice: 50, range: 2 },
   buildings: {
-    greenhouse: { price: 500, name: "Greenhouse", emoji: "🏡", bonus: 0.2 },
-    barn: { price: 1000, name: "Barn", emoji: "🏚️", bonus: 0 },
+    greenhouse: { price: 500, name: "Greenhouse", emoji: "🏡", bonus: 0.2, description: "Crops grow 20% faster" },
+    barn: { price: 1000, name: "Barn", emoji: "🏚️", bonus: 0, description: "Store animals" },
+    silo: { price: 750, name: "Silo", emoji: "🏭", bonus: 0, description: "Store more crops" },
+    workshop: { price: 1500, name: "Workshop", emoji: "🔨", bonus: 0, description: "Process crops" },
+    market: { price: 2000, name: "Market Stall", emoji: "🏪", bonus: 0.1, description: "Sell for 10% more" },
+    well: { price: 300, name: "Well", emoji: "🪣", bonus: 0, description: "Free water source" },
+    beehive: { price: 600, name: "Beehive", emoji: "🐝", bonus: 0.15, description: "Pollination bonus" },
+    windmill: { price: 2500, name: "Windmill", emoji: "🌬️", bonus: 0, description: "Process grains faster" },
+  },
+  livestock: {
+    chicken: { price: 100, name: "Chicken", emoji: "🐔", product: "eggs", productEmoji: "🥚", productValue: 5, feedCost: 2 },
+    cow: { price: 500, name: "Cow", emoji: "🐄", product: "milk", productEmoji: "🥛", productValue: 15, feedCost: 5 },
+    sheep: { price: 300, name: "Sheep", emoji: "🐑", product: "wool", productEmoji: "🧶", productValue: 10, feedCost: 3 },
+    pig: { price: 400, name: "Pig", emoji: "🐷", product: "bacon", productEmoji: "🥓", productValue: 20, feedCost: 4 },
   }
 };
 
@@ -118,8 +166,15 @@ function FarmSimCanvasFixed() {
   const [shopTab, setShopTab] = useState("seeds");
   const [notifications, setNotifications] = useState([]);
   const [weather, setWeather] = useState({ type: "Sunny", endsAt: nowSec() + 60 });
+  const [currentSeason, setCurrentSeason] = useState("spring");
+  const [seasonEndsAt, setSeasonEndsAt] = useState(nowSec() + 120);
   const [level, setLevel] = useState(LEVELS[0]);
   const [paused, setPaused] = useState(false);
+  const [totalHarvests, setTotalHarvests] = useState(0);
+  const [achievements, setAchievements] = useState([]);
+  const [livestock, setLivestock] = useState({});
+  const [combo, setCombo] = useState(0);
+  const [comboTimer, setComboTimer] = useState(0);
   
   // Add notification
   const addNotification = (msg, type = "info") => {
@@ -186,10 +241,28 @@ function FarmSimCanvasFixed() {
     if (plot.state !== "grown") return;
     
     const seed = plot.seed;
-    const value = DEFAULT_RULES.seeds[seed]?.baseValue || 10;
+    let value = DEFAULT_RULES.seeds[seed]?.baseValue || 10;
+    
+    // Apply combo bonus
+    if (combo > 0) {
+      value = Math.round(value * (1 + combo * 0.1));
+    }
+    
+    // Apply season bonus
+    const seasonBonus = SEASON_EFFECTS[currentSeason]?.growthBonus || 1;
+    value = Math.round(value * seasonBonus);
+    
+    // Apply building bonuses
+    if (buildings.market) value = Math.round(value * 1.1);
+    if (buildings.beehive) value = Math.round(value * 1.15);
     
     setCoins(c => c + value);
     setScore(s => s + value);
+    setTotalHarvests(h => h + 1);
+    
+    // Update combo
+    setCombo(c => c + 1);
+    setComboTimer(nowSec() + 10); // 10 seconds to maintain combo
     
     setPlots(prev => {
       const newPlots = [...prev];
@@ -197,7 +270,72 @@ function FarmSimCanvasFixed() {
       return newPlots;
     });
     
-    addNotification(`Harvested ${seed} for ${value} coins!`, "success");
+    // Check achievements
+    checkAchievements();
+    
+    const comboText = combo > 0 ? ` (Combo x${combo + 1}!)` : "";
+    addNotification(`Harvested ${seed} for ${value} coins!${comboText}`, "success");
+  };
+  
+  // Check achievements
+  const checkAchievements = () => {
+    if (totalHarvests === 1 && !achievements.includes("first_harvest")) {
+      unlockAchievement("first_harvest");
+    }
+    if (totalHarvests === 10 && !achievements.includes("green_thumb")) {
+      unlockAchievement("green_thumb");
+    }
+    if (totalHarvests === 50 && !achievements.includes("farmer")) {
+      unlockAchievement("farmer");
+    }
+    if (coins >= 1000 && !achievements.includes("rich_farmer")) {
+      unlockAchievement("rich_farmer");
+    }
+  };
+  
+  const unlockAchievement = (id) => {
+    const achievement = ACHIEVEMENTS[id];
+    if (!achievement) return;
+    
+    setAchievements(prev => [...prev, id]);
+    setCoins(c => c + achievement.reward);
+    addNotification(`🏆 Achievement Unlocked: ${achievement.name}! +${achievement.reward} coins`, "success");
+  };
+  
+  // Buy livestock
+  const buyLivestock = (animal) => {
+    const data = DEFAULT_RULES.livestock[animal];
+    if (!data || coins < data.price) {
+      addNotification("Not enough coins!", "error");
+      return;
+    }
+    
+    setCoins(c => c - data.price);
+    setLivestock(prev => ({
+      ...prev,
+      [animal]: (prev[animal] || 0) + 1
+    }));
+    
+    addNotification(`Bought a ${data.name}! ${data.emoji}`, "success");
+    
+    // Check rancher achievement
+    const totalAnimals = Object.values(livestock).reduce((sum, count) => sum + count, 0) + 1;
+    if (totalAnimals === 5 && !achievements.includes("rancher")) {
+      unlockAchievement("rancher");
+    }
+  };
+  
+  // Collect from livestock
+  const collectFromLivestock = (animal) => {
+    const data = DEFAULT_RULES.livestock[animal];
+    const count = livestock[animal] || 0;
+    
+    if (count === 0) return;
+    
+    const value = data.productValue * count;
+    setCoins(c => c + value);
+    
+    addNotification(`Collected ${count}x ${data.productEmoji} for ${value} coins!`, "success");
   };
   
   // Clear withered plot
@@ -259,31 +397,92 @@ function FarmSimCanvasFixed() {
     addNotification(`Bought ${qty}x ${item}!`, "success");
   };
   
-  // Simple growth system
+  // Enhanced growth and game system
   useEffect(() => {
     if (paused) return;
     
     const interval = setInterval(() => {
+      // Update combo
+      if (comboTimer > 0 && nowSec() >= comboTimer) {
+        setCombo(0);
+        setComboTimer(0);
+      }
+      
+      // Update weather
+      setWeather(prev => {
+        if (nowSec() >= prev.endsAt) {
+          const newType = WEATHER_TYPES[Math.floor(Math.random() * WEATHER_TYPES.length)];
+          addNotification(`Weather changed to ${newType}!`, "info");
+          
+          // Apply instant weather effects
+          if (newType === "Rain") {
+            setPlots(p => p.map(plot => 
+              plot.state === "planted" || plot.state === "growing" 
+                ? {...plot, watered: true} 
+                : plot
+            ));
+          }
+          
+          return { type: newType, endsAt: nowSec() + 60 + Math.random() * 60 };
+        }
+        return prev;
+      });
+      
+      // Update season
+      if (nowSec() >= seasonEndsAt) {
+        setCurrentSeason(prev => {
+          const idx = SEASONS.indexOf(prev);
+          const next = SEASONS[(idx + 1) % SEASONS.length];
+          addNotification(`Season changed to ${SEASON_EFFECTS[next].name}!`, "info");
+          return next;
+        });
+        setSeasonEndsAt(nowSec() + 120); // 2 minutes per season
+      }
+      
+      // Update plots
       setPlots(prev => prev.map(plot => {
         if (plot.state === "growing" && plot.seed) {
           const seed = DEFAULT_RULES.seeds[plot.seed];
           if (!seed) return plot;
           
-          const elapsed = nowSec() - (plot.plantedAt || nowSec());
-          const totalTime = seed.stages * seed.secondsPerStage;
+          // Calculate growth speed with bonuses
+          let growthMultiplier = 1;
           
-          if (elapsed >= totalTime) {
+          // Weather effects
+          if (weather.type === "Rain") growthMultiplier *= 1.2;
+          if (weather.type === "Drought") growthMultiplier *= 0.8;
+          if (weather.type === "Frost") growthMultiplier *= 0.5;
+          
+          // Season effects
+          const seasonBonus = SEASON_EFFECTS[currentSeason]?.growthBonus || 1;
+          growthMultiplier *= seasonBonus;
+          
+          // Building effects
+          if (buildings.greenhouse) growthMultiplier *= 1.2;
+          
+          const elapsed = nowSec() - (plot.plantedAt || nowSec());
+          const adjustedTime = seed.stages * seed.secondsPerStage / growthMultiplier;
+          
+          if (elapsed >= adjustedTime) {
             return {...plot, state: "grown", growth: seed.stages};
           }
           
-          const newGrowth = Math.floor(elapsed / seed.secondsPerStage);
-          return {...plot, growth: newGrowth};
+          const newGrowth = Math.floor(elapsed / (seed.secondsPerStage / growthMultiplier));
+          return {...plot, growth: Math.min(newGrowth, seed.stages - 1)};
         }
         
-        // Wither if not watered
+        // Pests
+        if (weather.type === "Pests" && plot.state === "growing" && Math.random() < 0.01) {
+          if (!plot.infested) {
+            return {...plot, infested: true};
+          }
+        }
+        
+        // Wither if not watered (faster in drought)
         if (plot.state === "planted") {
           const elapsed = nowSec() - (plot.plantedAt || nowSec());
-          if (elapsed > 30) {
+          const witherTime = weather.type === "Drought" ? 20 : 30;
+          if (elapsed > witherTime) {
             return {...plot, state: "withered"};
           }
         }
@@ -293,7 +492,7 @@ function FarmSimCanvasFixed() {
     }, 1000);
     
     return () => clearInterval(interval);
-  }, [paused]);
+  }, [paused, weather.type, currentSeason, buildings, comboTimer]);
   
   // Auto-save
   useEffect(() => {
@@ -353,11 +552,19 @@ function FarmSimCanvasFixed() {
       {/* Header */}
       <Card className="mb-4">
         <CardContent className="p-4">
-          <div className="flex justify-between items-center">
-            <div className="flex gap-4">
+          <div className="flex justify-between items-center flex-wrap gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Badge variant="outline">🪙 {coins}</Badge>
               <Badge variant="outline">⭐ {score}</Badge>
-              <Badge variant="outline">{weather.type}</Badge>
+              <Badge variant="outline">🌾 {totalHarvests}</Badge>
+              <Badge variant="outline">{SEASON_EFFECTS[currentSeason].name}</Badge>
+              <Badge variant="outline">{weather.type === "Sunny" ? "☀️" : 
+                                       weather.type === "Rain" ? "🌧️" :
+                                       weather.type === "Drought" ? "🏜️" :
+                                       weather.type === "Storm" ? "⛈️" :
+                                       weather.type === "Frost" ? "❄️" :
+                                       weather.type === "Pests" ? "🐛" : ""} {weather.type}</Badge>
+              {combo > 0 && <Badge variant="default">🔥 Combo x{combo}</Badge>}
             </div>
             <div className="flex gap-2">
               <Button onClick={() => setPaused(!paused)} size="sm">
@@ -400,10 +607,11 @@ function FarmSimCanvasFixed() {
           </CardHeader>
           <CardContent>
             <Tabs value={shopTab} onValueChange={setShopTab}>
-              <TabsList className="grid grid-cols-3 mb-4">
+              <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-4">
                 <TabsTrigger value="seeds">🌱 Seeds</TabsTrigger>
                 <TabsTrigger value="tools">🛠️ Tools</TabsTrigger>
                 <TabsTrigger value="buildings">🏗️ Buildings</TabsTrigger>
+                <TabsTrigger value="livestock">🐄 Animals</TabsTrigger>
               </TabsList>
               
               <TabsContent value="seeds" className="space-y-2">
@@ -468,6 +676,45 @@ function FarmSimCanvasFixed() {
                     <span>{buildings[building] ? "Owned" : `${data.price} 🪙`}</span>
                   </Button>
                 ))}
+              </TabsContent>
+              
+              <TabsContent value="livestock" className="space-y-2">
+                {Object.entries(DEFAULT_RULES.livestock).map(([animal, data]) => (
+                  <Button
+                    key={animal}
+                    onClick={() => buyLivestock(animal)}
+                    variant="outline"
+                    className="w-full justify-between"
+                    disabled={coins < data.price}
+                  >
+                    <span>{data.emoji} {data.name} ({livestock[animal] || 0})</span>
+                    <div className="text-right">
+                      <div>{data.price} 🪙</div>
+                      <div className="text-xs">Produces {data.productEmoji}</div>
+                    </div>
+                  </Button>
+                ))}
+                
+                {Object.keys(livestock).length > 0 && (
+                  <div className="mt-4 p-3 bg-yellow-50 rounded">
+                    <div className="font-semibold mb-2">🐮 Your Animals:</div>
+                    {Object.entries(livestock).map(([animal, count]) => {
+                      const data = DEFAULT_RULES.livestock[animal];
+                      return count > 0 && (
+                        <div key={animal} className="flex justify-between text-sm">
+                          <span>{data.emoji} {count}x {data.name}</span>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => collectFromLivestock(animal)}
+                          >
+                            Collect {data.productEmoji}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
