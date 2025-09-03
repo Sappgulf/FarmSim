@@ -36,6 +36,55 @@ const ACHIEVEMENTS = {
   rancher: { name: "Rancher", description: "Own 5 animals", emoji: "🐮", reward: 60 },
 };
 
+// Research System
+const RESEARCH_PROJECTS = {
+  crop_genetics: {
+    name: "Crop Genetics",
+    emoji: "🧬",
+    description: "Unlock hybrid seeds",
+    cost: 100,
+    time: 120, // seconds
+    requires: [],
+    unlocks: ["hybrid_seeds"],
+  },
+  automation_basics: {
+    name: "Automation Basics",
+    emoji: "⚙️",
+    description: "Improve worker efficiency",
+    cost: 150,
+    time: 180,
+    requires: [],
+    unlocks: ["worker_efficiency"],
+  },
+  advanced_fertilizer: {
+    name: "Advanced Fertilizer",
+    emoji: "🧪",
+    description: "Develop super fertilizer",
+    cost: 200,
+    time: 240,
+    requires: ["crop_genetics"],
+    unlocks: ["super_fertilizer"],
+  },
+  weather_control: {
+    name: "Weather Control",
+    emoji: "🌤️",
+    description: "Influence weather patterns",
+    cost: 300,
+    time: 300,
+    requires: ["automation_basics"],
+    unlocks: ["weather_machine"],
+  },
+  quantum_farming: {
+    name: "Quantum Farming",
+    emoji: "⚛️",
+    description: "Instant growth technology",
+    cost: 500,
+    time: 600,
+    requires: ["advanced_fertilizer", "weather_control"],
+    unlocks: ["instant_grow"],
+  },
+};
+
 // Workers System
 const WORKER_TYPES = {
   planter: {
@@ -418,24 +467,38 @@ function FarmSimCanvasFixed() {
       return;
     }
     
-    const plot = plots[plotIndex];
-    if (!plot || plot.state !== "empty") {
-      addNotification("Cannot plant here!", "error");
+    // Validate plot index
+    if (plotIndex < 0 || plotIndex >= plots.length) {
+      addNotification("Invalid plot!", "error");
       return;
     }
     
-    setPlots(prev => {
-      const newPlots = [...prev];
-      newPlots[plotIndex] = {
-        ...newPlots[plotIndex],
-        state: "planted",
-        seed: seed,
-        growth: 0,
-        plantedAt: nowSec()
-      };
-      return newPlots;
-    });
+    const plot = plots[plotIndex];
+    if (!plot) {
+      addNotification("Plot doesn't exist!", "error");
+      return;
+    }
     
+    if (plot.state !== "empty") {
+      addNotification("Plot is not empty!", "error");
+      return;
+    }
+    
+    // Update plot state
+    const newPlots = [...plots];
+    newPlots[plotIndex] = {
+      ...plot,
+      state: "planted",
+      seed: seed,
+      growth: 0,
+      plantedAt: nowSec(),
+      watered: false,
+      infested: false,
+      fertilized: 0,
+      soilQuality: plot.soilQuality || 1
+    };
+    
+    setPlots(newPlots);
     setInventory(inv => ({...inv, [seed]: (inv[seed] || 0) - 1}));
     addNotification(`Planted ${seed}!`, "success");
   };
@@ -615,17 +678,15 @@ function FarmSimCanvasFixed() {
     }
     
     const newSize = gridSize + 1;
-    const oldPlots = [...plots];
-    const newPlots = [];
+    const newPlots = makeGrid(newSize);
     
-    // Copy existing plots and add new ones
-    for (let r = 0; r < newSize; r++) {
-      for (let c = 0; c < newSize; c++) {
+    // Copy data from old plots to new grid positions
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
         const oldIndex = r * gridSize + c;
-        if (r < gridSize && c < gridSize && oldIndex < oldPlots.length) {
-          newPlots.push(oldPlots[oldIndex]);
-        } else {
-          newPlots.push(newPlot("empty"));
+        const newIndex = r * newSize + c;
+        if (oldIndex < plots.length && newIndex < newPlots.length) {
+          newPlots[newIndex] = plots[oldIndex];
         }
       }
     }
@@ -1323,9 +1384,15 @@ function FarmSimCanvasFixed() {
       }
       
       // Normal interactions
-      if (plot.state === "grown") return harvest(index);
-      if (plot.state === "withered") return clearPlot(index);
-      if (plot.state === "empty") return plant(index, selectedSeed);
+      if (plot.state === "grown") {
+        return harvest(index);
+      }
+      if (plot.state === "withered") {
+        return clearPlot(index);
+      }
+      if (plot.state === "empty") {
+        return plant(index, selectedSeed);
+      }
       if (plot.state === "planted") {
         // Use watering can if owned
         if (tools.wateringCan) {
