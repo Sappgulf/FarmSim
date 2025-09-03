@@ -804,12 +804,12 @@ const EXPANSION_COSTS = {
 };
 
 const WEATHER_EFFECTS = {
-  Sunny: { icon: Sun, color: "text-yellow-500", bg: "bg-yellow-50" },
-  Rain: { icon: CloudDrizzle, color: "text-blue-500", bg: "bg-blue-50" },
-  Drought: { icon: Sun, color: "text-orange-500", bg: "bg-orange-50" },
-  Storm: { icon: Wind, color: "text-purple-500", bg: "bg-purple-50" },
-  Frost: { icon: Snowflake, color: "text-cyan-500", bg: "bg-cyan-50" },
-  Pests: { icon: Bug, color: "text-red-500", bg: "bg-red-50" },
+  Sunny: { icon: null, emoji: "☀️", color: "text-yellow-500", bg: "bg-yellow-50" },
+  Rain: { icon: null, emoji: "🌧️", color: "text-blue-500", bg: "bg-blue-50" },
+  Drought: { icon: null, emoji: "🏜️", color: "text-orange-500", bg: "bg-orange-50" },
+  Storm: { icon: null, emoji: "⛈️", color: "text-purple-500", bg: "bg-purple-50" },
+  Frost: { icon: null, emoji: "❄️", color: "text-cyan-500", bg: "bg-cyan-50" },
+  Pests: { icon: null, emoji: "🐛", color: "text-red-500", bg: "bg-red-50" },
 };
 
 // ADVANCED CROP ROTATION SYSTEM
@@ -5704,14 +5704,14 @@ function FarmSimCanvas() {
 
   // --- Enhanced UI helpers ---
   function WeatherBadge() {
-    const WeatherIcon = WEATHER_EFFECTS[weather.type]?.icon || Sun;
+    const weatherEmoji = WEATHER_EFFECTS[weather.type]?.emoji || "☀️";
     const colorClass = WEATHER_EFFECTS[weather.type]?.color || "text-yellow-500";
     const bgClass = WEATHER_EFFECTS[weather.type]?.bg || "bg-yellow-50";
     
     return (
       <div className={`inline-flex items-center gap-2 text-sm px-3 py-2 rounded-full ${bgClass} border-2 border-white/50 backdrop-blur-sm shadow-lg`}>
-        <WeatherIcon size={18} className={colorClass}/>
-        <span className="font-semibold">{weather.type}</span>
+        <span className="text-lg">{weatherEmoji}</span>
+        <span className={`font-semibold ${colorClass}`}>{weather.type}</span>
       </div>
     );
   }
