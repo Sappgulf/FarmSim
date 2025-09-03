@@ -7,8 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Progress } from "./ui/progress";
 
 // Constants
-const MIN_SIZE = 3;
-const MAX_SIZE = 5;
+const MIN_SIZE = 4;
+const MAX_SIZE = 6;
 const SAVE_KEY = "farm_sim_enhanced_v2";
 
 const LEVELS = [
@@ -141,8 +141,8 @@ function makeGrid(size) {
   const arr = [];
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size; c++) {
-      const isEdge = r === 0 || c === 0 || r === size - 1 || c === size - 1;
-      arr.push(newPlot(isEdge ? "empty" : "locked"));
+      // All plots are unlocked and useable
+      arr.push(newPlot("empty"));
     }
   }
   return arr;
@@ -349,6 +349,41 @@ function FarmSimCanvasFixed() {
     });
   };
   
+  // Expand grid
+  const expandGrid = () => {
+    const cost = 100 * (gridSize - MIN_SIZE + 1);
+    if (coins < cost) {
+      addNotification("Not enough coins to expand!", "error");
+      return;
+    }
+    
+    if (gridSize >= MAX_SIZE) {
+      addNotification("Maximum grid size reached!", "error");
+      return;
+    }
+    
+    const newSize = gridSize + 1;
+    const oldPlots = [...plots];
+    const newPlots = [];
+    
+    // Copy existing plots and add new ones
+    for (let r = 0; r < newSize; r++) {
+      for (let c = 0; c < newSize; c++) {
+        const oldIndex = r * gridSize + c;
+        if (r < gridSize && c < gridSize && oldIndex < oldPlots.length) {
+          newPlots.push(oldPlots[oldIndex]);
+        } else {
+          newPlots.push(newPlot("empty"));
+        }
+      }
+    }
+    
+    setCoins(c => c - cost);
+    setGridSize(newSize);
+    setPlots(newPlots);
+    addNotification(`Farm expanded to ${newSize}x${newSize}!`, "success");
+  };
+  
   // Buy item
   const buy = (item, qty = 1) => {
     let price = 0;
@@ -513,84 +548,197 @@ function FarmSimCanvasFixed() {
     const seed = plot.seed ? DEFAULT_RULES.seeds[plot.seed] : null;
     const emoji = seed?.emoji || "🌱";
     
-    let bgClass = "bg-white";
-    if (plot.state === "locked") bgClass = "bg-gray-200";
-    else if (plot.state === "withered") bgClass = "bg-red-100";
-    else if (plot.state === "grown") bgClass = "bg-green-100";
-    else if (plot.state === "growing") bgClass = "bg-yellow-50";
+    let bgClass = "bg-gradient-to-br from-amber-100 to-yellow-50";
+    let borderClass = "border-amber-300";
+    let shadowClass = "";
+    
+    if (plot.state === "withered") {
+      bgClass = "bg-gradient-to-br from-red-100 to-red-50";
+      borderClass = "border-red-300";
+    } else if (plot.state === "grown") {
+      bgClass = "bg-gradient-to-br from-green-100 to-emerald-50";
+      borderClass = "border-green-400";
+      shadowClass = "shadow-lg shadow-green-200/50 animate-pulse";
+    } else if (plot.state === "growing") {
+      bgClass = "bg-gradient-to-br from-yellow-100 to-green-50";
+      borderClass = "border-yellow-400";
+    } else if (plot.state === "planted") {
+      bgClass = "bg-gradient-to-br from-amber-50 to-yellow-50";
+      borderClass = "border-yellow-300";
+    }
+    
+    // Add effects
+    if (plot.infested) borderClass = "border-red-500 border-4";
+    if (plot.watered && plot.state !== "grown") shadowClass = "shadow-blue-200/50";
     
     const handleClick = () => {
-      if (plot.state === "locked") return;
       if (plot.state === "grown") return harvest(index);
       if (plot.state === "withered") return clearPlot(index);
       if (plot.state === "empty") return plant(index, selectedSeed);
       if (plot.state === "planted") return water(index);
     };
     
+    const progress = seed && plot.growth ? (plot.growth / seed.stages) * 100 : 0;
+    
     return (
       <div
         onClick={handleClick}
-        className={`${bgClass} border-2 border-gray-300 rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all text-center`}
+        className={`${bgClass} border-2 ${borderClass} ${shadowClass} rounded-xl p-2 md:p-3 cursor-pointer hover:scale-105 transition-all text-center relative overflow-hidden`}
       >
-        {plot.state === "locked" && "🔒"}
-        {plot.state === "empty" && "📍"}
-        {plot.state === "withered" && "💀"}
-        {(plot.state === "planted" || plot.state === "growing" || plot.state === "grown") && (
-          <div>
-            <div className="text-2xl">{emoji}</div>
-            <div className="text-xs mt-1">
-              {plot.state === "grown" ? "Ready!" : `${plot.growth}/${seed?.stages || 0}`}
-            </div>
-          </div>
+        {/* Progress bar background */}
+        {plot.state === "growing" && (
+          <div 
+            className="absolute bottom-0 left-0 right-0 bg-green-400/30 transition-all"
+            style={{ height: `${progress}%` }}
+          />
         )}
+        
+        {/* Content */}
+        <div className="relative z-10">
+          {plot.state === "empty" && (
+            <div className="text-gray-400">
+              <div className="text-lg md:text-xl">🌱</div>
+              <div className="text-[10px] md:text-xs opacity-60">Plant</div>
+            </div>
+          )}
+          {plot.state === "withered" && (
+            <div>
+              <div className="text-lg md:text-xl">💀</div>
+              <div className="text-[10px] md:text-xs text-red-600">Clear</div>
+            </div>
+          )}
+          {(plot.state === "planted" || plot.state === "growing" || plot.state === "grown") && (
+            <div>
+              <div className="text-xl md:text-2xl">{emoji}</div>
+              <div className="text-[10px] md:text-xs font-medium">
+                {plot.state === "grown" ? (
+                  <span className="text-green-600 font-bold">Ready!</span>
+                ) : plot.state === "planted" ? (
+                  <span className="text-blue-500">Water me!</span>
+                ) : (
+                  <span>{plot.growth}/{seed?.stages || 0}</span>
+                )}
+              </div>
+              {plot.infested && <span className="text-[10px] text-red-500">🐛 Infested!</span>}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
-      {/* Header */}
-      <Card className="mb-4">
-        <CardContent className="p-4">
-          <div className="flex justify-between items-center flex-wrap gap-2">
-            <div className="flex gap-2 flex-wrap">
-              <Badge variant="outline">🪙 {coins}</Badge>
-              <Badge variant="outline">⭐ {score}</Badge>
-              <Badge variant="outline">🌾 {totalHarvests}</Badge>
-              <Badge variant="outline">{SEASON_EFFECTS[currentSeason].name}</Badge>
-              <Badge variant="outline">{weather.type === "Sunny" ? "☀️" : 
-                                       weather.type === "Rain" ? "🌧️" :
-                                       weather.type === "Drought" ? "🏜️" :
-                                       weather.type === "Storm" ? "⛈️" :
-                                       weather.type === "Frost" ? "❄️" :
-                                       weather.type === "Pests" ? "🐛" : ""} {weather.type}</Badge>
-              {combo > 0 && <Badge variant="default">🔥 Combo x{combo}</Badge>}
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-2 md:p-4">
+      {/* Header - Cleaner Design */}
+      <div className="mb-4 space-y-2">
+        {/* Main Stats Bar */}
+        <Card className="bg-white/90 backdrop-blur">
+          <CardContent className="p-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="flex items-center justify-between bg-yellow-50 rounded-lg p-2">
+                <span className="text-sm font-medium">Coins</span>
+                <span className="text-lg font-bold">🪙 {coins}</span>
+              </div>
+              <div className="flex items-center justify-between bg-purple-50 rounded-lg p-2">
+                <span className="text-sm font-medium">Score</span>
+                <span className="text-lg font-bold">⭐ {score}</span>
+              </div>
+              <div className="flex items-center justify-between bg-green-50 rounded-lg p-2">
+                <span className="text-sm font-medium">Harvests</span>
+                <span className="text-lg font-bold">🌾 {totalHarvests}</span>
+              </div>
+              <div className="flex items-center justify-between bg-orange-50 rounded-lg p-2">
+                <span className="text-sm font-medium">Grid</span>
+                <span className="text-lg font-bold">📏 {gridSize}x{gridSize}</span>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={() => setPaused(!paused)} size="sm">
-                {paused ? "▶️ Resume" : "⏸️ Pause"}
-              </Button>
-              <Button onClick={() => {
-                localStorage.removeItem(SAVE_KEY);
-                window.location.reload();
-              }} size="sm" variant="destructive">
-                🔄 Reset
-              </Button>
-            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Environment & Controls Bar */}
+        <div className="flex gap-2 flex-wrap">
+          <Card className="flex-1 min-w-[200px]">
+            <CardContent className="p-2 flex items-center justify-between">
+              <div className="flex gap-2">
+                <Badge className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
+                  {SEASON_EFFECTS[currentSeason].name}
+                </Badge>
+                <Badge variant="secondary">
+                  {weather.type === "Sunny" ? "☀️" : 
+                   weather.type === "Rain" ? "🌧️" :
+                   weather.type === "Drought" ? "🏜️" :
+                   weather.type === "Storm" ? "⛈️" :
+                   weather.type === "Frost" ? "❄️" :
+                   weather.type === "Pests" ? "🐛" : ""} {weather.type}
+                </Badge>
+                {combo > 0 && (
+                  <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white animate-pulse">
+                    🔥 Combo x{combo}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex gap-1">
+                <Button 
+                  onClick={() => setPaused(!paused)} 
+                  size="sm"
+                  variant={paused ? "default" : "outline"}
+                >
+                  {paused ? "▶️" : "⏸️"}
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (confirm("Reset all progress and start over?")) {
+                      localStorage.removeItem(SAVE_KEY);
+                      window.location.reload();
+                    }
+                  }} 
+                  size="sm" 
+                  variant="ghost"
+                >
+                  🔄
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Achievements Progress */}
+        {achievements.length > 0 && (
+          <div className="flex gap-1 overflow-x-auto pb-1">
+            {Object.entries(ACHIEVEMENTS).map(([id, ach]) => (
+              <Badge 
+                key={id} 
+                variant={achievements.includes(id) ? "default" : "outline"}
+                className="shrink-0"
+              >
+                {ach.emoji}
+              </Badge>
+            ))}
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
       
       {/* Main Content */}
       <div className="grid md:grid-cols-2 gap-4">
         {/* Farm Grid */}
         <Card>
           <CardHeader>
-            <CardTitle>🌾 Your Farm</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle>🌾 Your Farm</CardTitle>
+              {gridSize < MAX_SIZE && (
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => expandGrid()}
+                >
+                  📏 Expand ({100 * (gridSize - MIN_SIZE + 1)}🪙)
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div 
-              className="grid gap-2"
+              className="grid gap-1 md:gap-2"
               style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}
             >
               {plots.map((plot, i) => (
