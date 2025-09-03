@@ -1943,6 +1943,13 @@ function FarmSimCanvas() {
     return "dawn";
   };
 
+  // 🚀 PERFORMANCE OPTIMIZATIONS - Memoized expensive calculations
+  const seedEntries = useMemo(() => seedEntries, [rules.seeds]);
+  const buildingEntries = useMemo(() => buildingEntries, [rules.buildings]);
+  const skillTreeEntries = useMemo(() => skillTreeEntries, []);
+  const researchEntries = useMemo(() => Object.entries(RESEARCH_PROJECTS), []);
+  const workerEntries = useMemo(() => Object.entries(WORKER_TYPES), []);
+
   const generateWeatherForecast = () => {
     const forecast = [];
     for (let i = 0; i < 3; i++) {
@@ -2382,8 +2389,9 @@ function FarmSimCanvas() {
 
   // 🎉 SEASONAL EVENTS & FESTIVALS FUNCTIONS
   const checkSeasonalEvents = () => {
-    const now = nowSec();
-    const currentEvents = SEASONAL_EVENTS[currentSeason] || [];
+    try {
+      const now = nowSec();
+      const currentEvents = SEASONAL_EVENTS[currentSeason] || [];
     
     // Check if we should trigger a new event (10% chance every 5 minutes)
     if (now - lastSeasonalCheck >= 300 && Math.random() < 0.1) {
@@ -2431,6 +2439,10 @@ function FarmSimCanvas() {
       }
       return true;
     }));
+    } catch (error) {
+      console.error('[farm] Seasonal events error:', error);
+      addNotification('Seasonal events temporarily unavailable', 'warning');
+    }
   };
 
   // 🎯 DAILY CHALLENGES FUNCTIONS
@@ -2454,8 +2466,9 @@ function FarmSimCanvas() {
   };
 
   const checkDailyChallenges = () => {
-    const now = nowSec();
-    const daysSinceReset = Math.floor((now - lastChallengeReset) / 86400);
+    try {
+      const now = nowSec();
+      const daysSinceReset = Math.floor((now - lastChallengeReset) / 86400);
     
     // Reset challenges daily
     if (daysSinceReset >= 1) {
@@ -2491,6 +2504,10 @@ function FarmSimCanvas() {
         }
       }
     });
+    } catch (error) {
+      console.error('[farm] Daily challenges error:', error);
+      addNotification('Daily challenges temporarily unavailable', 'warning');
+    }
   };
 
   const updateChallengeProgress = (type, data) => {
@@ -2589,8 +2606,8 @@ function FarmSimCanvas() {
 
   // 🌤️ WEATHER PREDICTION MINI-GAME FUNCTIONS
   const startWeatherPredictionGame = () => {
-    const recentWeather = weatherForecast.slice(-3).map(w => w.type.toLowerCase());
-    const pattern = [...recentWeather, weather.type.toLowerCase()];
+    const recentWeather = (weatherForecast || []).slice(-3).map(w => w?.type?.toLowerCase() || 'unknown');
+    const pattern = [...recentWeather, weather?.type?.toLowerCase() || 'unknown'];
     
     setWeatherPredictionGame({
       active: true,
@@ -4284,57 +4301,63 @@ function FarmSimCanvas() {
     expired.forEach(settleFuturesContract);
   }, [currentTime, futuresContracts]);
 
-  useEffect(() => {
-    // Trigger random economic events
-    const eventInterval = setInterval(() => {
-      if (Math.random() < 0.1) { // 10% chance every 5 minutes
-        triggerEconomicEvent();
-      }
-    }, 300000);
-    return () => clearInterval(eventInterval);
-  }, []);
+  // Economic events now handled in master game loop
 
-  // 🎉 NEW GAMEPLAY FEATURES useEffects
-  
-  // Seasonal Events Management
+  // 🎉 OPTIMIZED GAME LOOP - Consolidated all intervals into one efficient loop
   useEffect(() => {
-    checkSeasonalEvents();
+    let lastSeasonalCheck = 0;
+    let lastChallengeCheck = 0;
+    let lastBreedingCheck = 0;
+    let lastPetCheck = 0;
+    let lastEconomicCheck = 0;
     
-    const eventCheckInterval = setInterval(checkSeasonalEvents, 30000); // Check every 30 seconds
-    return () => clearInterval(eventCheckInterval);
-  }, [currentSeason, lastSeasonalCheck]);
-
-  // Daily Challenges Management  
-  useEffect(() => {
-    checkDailyChallenges();
-    
-    const challengeCheckInterval = setInterval(checkDailyChallenges, 60000); // Check every minute
-    return () => clearInterval(challengeCheckInterval);
-  }, [lastChallengeReset]);
-
-  // Initialize daily challenges if empty
-  useEffect(() => {
+    // Initialize daily challenges if empty
     if (dailyChallenges.length === 0) {
       const newChallenges = Array(3).fill().map(() => generateDailyChallenge());
       setDailyChallenges(newChallenges);
     }
-  }, []);
-
-  // Crop Breeding Management
-  useEffect(() => {
-    checkBreedingCompletion();
     
-    const breedingCheckInterval = setInterval(checkBreedingCompletion, 10000); // Check every 10 seconds
-    return () => clearInterval(breedingCheckInterval);
-  }, [breedingQueue]);
-
-  // Farm Pets Management
-  useEffect(() => {
-    updatePetNeeds();
+    // 🚀 OPTIMIZED MASTER GAME LOOP - Adaptive frequency based on performance mode
+    const loopInterval = performanceMode ? 10000 : 5000; // Slower on performance mode
+    const masterGameLoop = setInterval(() => {
+      const now = Date.now();
+      
+      // Seasonal Events (every 30 seconds)
+      if (now - lastSeasonalCheck >= 30000) {
+        checkSeasonalEvents();
+        lastSeasonalCheck = now;
+      }
+      
+      // Daily Challenges (every 60 seconds)
+      if (now - lastChallengeCheck >= 60000) {
+        checkDailyChallenges();
+        lastChallengeCheck = now;
+      }
+      
+      // Breeding Completion (every 10 seconds)
+      if (now - lastBreedingCheck >= 10000) {
+        checkBreedingCompletion();
+        lastBreedingCheck = now;
+      }
+      
+      // Pet Care (every 30 seconds)
+      if (now - lastPetCheck >= 30000) {
+        updatePetNeeds();
+        lastPetCheck = now;
+      }
+      
+      // Economic Events (every 5 minutes)
+      if (now - lastEconomicCheck >= 300000) {
+        if (Math.random() < 0.1) {
+          triggerEconomicEvent();
+        }
+        lastEconomicCheck = now;
+      }
+      
+    }, loopInterval); // Adaptive interval based on performance mode
     
-    const petCareInterval = setInterval(updatePetNeeds, 30000); // Check every 30 seconds
-    return () => clearInterval(petCareInterval);
-  }, [farmPets]);
+    return () => clearInterval(masterGameLoop);
+  }, []); // Only run once
 
   // Pet bonuses application
   useEffect(() => {
@@ -4357,20 +4380,37 @@ function FarmSimCanvas() {
     });
   }, [farmPets, plots]);
 
-  // Mobile detection useEffect
+  // 📱 MOBILE OPTIMIZATION - Enhanced mobile detection and performance
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
+    let resizeTimeout;
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
+      // Debounce resize events for better performance
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const newIsMobile = window.innerWidth <= 768;
+        if (newIsMobile !== isMobile) {
+          setIsMobile(newIsMobile);
+          
+          // Auto-enable performance mode on mobile
+          if (newIsMobile && !performanceMode) {
+            setPerformanceMode(true);
+            addNotification('📱 Performance mode enabled for mobile', 'info');
+          }
+        }
+      }, 100);
     };
     
     // Set initial value
     handleResize();
     
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
+    };
+  }, [isMobile, performanceMode]);
 
   // PRESTIGE & ADVANCED SYSTEMS useEffects
   useEffect(() => {
@@ -4559,20 +4599,30 @@ function FarmSimCanvas() {
   const addParticle = (x, y, type, text = "", options = {}) => {
     if (!animationsEnabled || performanceMode) return;
     
-    const id = Date.now() + Math.random();
-    const particle = { 
-      id, x, y, type, text, 
-      life: options.life || 2000,
-      maxLife: options.life || 2000,
-      vx: options.vx || (Math.random() - 0.5) * 100,
-      vy: options.vy || (-50 - Math.random() * 50),
-      color: options.color || '#22c55e',
-      size: options.size || 1,
-      rotation: options.rotation || 0,
-      rotationSpeed: options.rotationSpeed || 0
-    };
-    setParticles(p => [...p, particle]);
-    setTimeout(() => setParticles(p => p.filter(pt => pt.id !== id)), particle.life);
+    // 🚀 PERFORMANCE: Limit particle count to prevent memory issues
+    setParticles(currentParticles => {
+      if (currentParticles.length >= 50) return currentParticles; // Max 50 particles
+      
+      const id = Date.now() + Math.random();
+      const particle = { 
+        id, x, y, type, text, 
+        life: options.life || 2000,
+        maxLife: options.life || 2000,
+        vx: options.vx || (Math.random() - 0.5) * 100,
+        vy: options.vy || (-50 - Math.random() * 50),
+        color: options.color || '#22c55e',
+        size: options.size || 1,
+        rotation: options.rotation || 0,
+        rotationSpeed: options.rotationSpeed || 0
+      };
+      
+      // Auto-cleanup with timeout
+      setTimeout(() => {
+        setParticles(p => p.filter(pt => pt.id !== id));
+      }, particle.life);
+      
+      return [...currentParticles, particle];
+    });
   };
 
   // Harvest sparkle particles
@@ -4945,10 +4995,13 @@ function FarmSimCanvas() {
       checkTutorialProgress('plant', { seed, plotIndex: i });
       
       // 🎯 UPDATE CHALLENGE PROGRESS
-      updateChallengeProgress("speed_farmer", { 
-        planted: (dailyChallengeProgress.speed_farmer?.planted || 0) + 1,
-        timeSpent: nowSec() - (lastChallengeReset || nowSec())
-      });
+      const speedChallenge = dailyChallenges.find(c => c.type === "speed_farmer" && !c.completed);
+      if (speedChallenge) {
+        updateChallengeProgress("speed_farmer", { 
+          planted: ((dailyChallengeProgress[speedChallenge.id]?.planted || 0) + 1),
+          timeSpent: nowSec() - (lastChallengeReset || nowSec())
+        });
+      }
       
       // Trigger observe growth tutorial step after a delay
       setTimeout(() => {
@@ -4998,9 +5051,12 @@ function FarmSimCanvas() {
       addParticle(i % gridSize * 120 + 60, Math.floor(i / gridSize) * 120 + 60, "spray", "💨");
       
       // 🎯 UPDATE CHALLENGE PROGRESS
-      updateChallengeProgress("pest_hunter", { 
-        pestsKilled: (dailyChallengeProgress.pest_hunter?.pestsKilled || 0) + 1 
-      });
+      const pestChallenge = dailyChallenges.find(c => c.type === "pest_hunter" && !c.completed);
+      if (pestChallenge) {
+        updateChallengeProgress("pest_hunter", { 
+          pestsKilled: ((dailyChallengeProgress[pestChallenge.id]?.pestsKilled || 0) + 1)
+        });
+      }
       
       checkAllAchievements();
       return { ...p, infested: false };
@@ -5055,8 +5111,15 @@ function FarmSimCanvas() {
       setTotalHarvests(h => h + 1);
 
       // 🎯 UPDATE CHALLENGE PROGRESS
-      updateChallengeProgress("harvest_master", { harvests: (dailyChallengeProgress.harvest_master?.harvests || 0) + 1 });
-      updateChallengeProgress("coin_collector", { coinsEarned: (dailyChallengeProgress.coin_collector?.coinsEarned || 0) + val });
+      const harvestChallenge = dailyChallenges.find(c => c.type === "harvest_master" && !c.completed);
+      if (harvestChallenge) {
+        updateChallengeProgress("harvest_master", { harvests: ((dailyChallengeProgress[harvestChallenge.id]?.harvests || 0) + 1) });
+      }
+      
+      const coinChallenge = dailyChallenges.find(c => c.type === "coin_collector" && !c.completed);
+      if (coinChallenge) {
+        updateChallengeProgress("coin_collector", { coinsEarned: ((dailyChallengeProgress[coinChallenge.id]?.coinsEarned || 0) + val) });
+      }
 
       // 📊 ANALYTICS: Track harvest performance
       updateAnalytics("coinsEarned", val);
@@ -5622,7 +5685,7 @@ function buy(item, qty = 1) {
           📊 Market Trends
         </div>
         <div className="grid grid-cols-2 gap-1 text-xs">
-          {Object.entries(rules.seeds).slice(0, 4).map(([seed, data]) => {
+          {seedEntries.slice(0, 4).map(([seed, data]) => {
             const trend = marketTrends[seed] || "normal";
             const trendData = MARKET_TRENDS[trend];
             const price = getMarketPrice(seed);
@@ -5774,15 +5837,17 @@ function buy(item, qty = 1) {
     return "🎮 Farm Mode";
   }
 
-  function PlotCard({ p, i }) {
-    const spec = p.seed ? rules.seeds[p.seed] : null;
-    const pct = spec ? Math.round((p.growth / spec.stages) * 100) : 0;
+  // 🚀 OPTIMIZED PlotCard with React.memo for performance
+  const PlotCard = React.memo(({ p, i }) => {
+    // Memoize expensive calculations
+    const spec = useMemo(() => p.seed ? rules.seeds[p.seed] : null, [p.seed, rules.seeds]);
+    const pct = useMemo(() => spec ? Math.round((p.growth / spec.stages) * 100) : 0, [spec, p.growth]);
     const emoji = spec?.emoji || "🌱";
     const title = p.state === "locked" ? "🔒 Locked" : p.state === "empty" ? "📍 Empty Plot" : p.state === "withered" ? "💀 Withered" : p.seed ? `${emoji} ${p.seed}` : "Plot";
     
-    // Get enhanced visual status
-    const status = getPlotStatus(p);
-    const progress = getGrowthProgress(p);
+    // Memoize visual status calculations
+    const status = useMemo(() => getPlotStatus(p), [p]);
+    const progress = useMemo(() => getGrowthProgress(p), [p]);
     
     // Dynamic styling based on state
     let bgClass = "bg-white/70";
@@ -5901,7 +5966,11 @@ function buy(item, qty = 1) {
         onPointerDown={leftPointerDown}
         onContextMenu={rightClick}
         className={`${plotEnhancedClass} ${statusClasses[status] || ""} group relative rounded-2xl border-2 ${borderClass} ${bgClass} backdrop-blur-sm cursor-pointer select-none hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] p-4 mobile-friendly-button`}
-        style={{ touchAction: 'manipulation' }}
+        style={{ 
+          touchAction: 'manipulation',
+          WebkitTapHighlightColor: 'transparent', // Remove mobile tap highlight
+          userSelect: 'none' // Prevent text selection on mobile
+        }}
       >
         {/* Soil fertility ring */}
         <div className={`pointer-events-none absolute inset-0 rounded-2xl border-2 ${soilMult >= 1.2 ? 'border-emerald-400' : (soilMult >= 0.9 ? 'border-amber-300' : 'border-rose-300')} opacity-50`}></div>
@@ -6066,11 +6135,14 @@ function buy(item, qty = 1) {
         )}
       </div>
     );
-  }
+  }, (prevProps, nextProps) => {
+    // Custom comparison for memo - only re-render if plot actually changed
+    return JSON.stringify(prevProps.p) === JSON.stringify(nextProps.p) && prevProps.i === nextProps.i;
+  });
 
-  // 📊 ANALYTICS DASHBOARD COMPONENT
-  const AnalyticsDashboard = () => {
-    const report = generateAnalyticsReport();
+  // 📊 ANALYTICS DASHBOARD COMPONENT - Memoized for performance
+  const AnalyticsDashboard = React.memo(() => {
+    const report = useMemo(() => generateAnalyticsReport(), [farmStatistics, analyticsData]);
     
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -6780,7 +6852,7 @@ function buy(item, qty = 1) {
                   </TabsList>
                   
                   <TabsContent value="seeds" className="space-y-2">
-                    {Object.entries(rules.seeds).map(([seed, data]) => (
+                    {seedEntries.map(([seed, data]) => (
                       <Button 
                         key={seed} 
                         onClick={() => buy(seed, 1)} 
@@ -7280,7 +7352,7 @@ function buy(item, qty = 1) {
                   </TabsContent>
                   
                   <TabsContent value="buildings" className="space-y-2">
-                    {Object.entries(rules.buildings).map(([buildingType, data]) => (
+                    {buildingEntries.map(([buildingType, data]) => (
                       <Button 
                         key={buildingType} 
                         onClick={() => buy(buildingType, 1)} 
@@ -7327,7 +7399,7 @@ function buy(item, qty = 1) {
                         <TabsTrigger value="social">👥</TabsTrigger>
                       </TabsList>
                       
-                      {Object.entries(SKILL_TREES).map(([treeId, tree]) => (
+                      {skillTreeEntries.map(([treeId, tree]) => (
                         <TabsContent key={treeId} value={treeId} className="space-y-2">
                           <div className="text-sm font-medium text-center mb-2">
                             {tree.icon} {tree.name}
@@ -7873,7 +7945,8 @@ function buy(item, qty = 1) {
                     <div className="space-y-3">
                       {dailyChallenges.map(challenge => {
                         const progress = dailyChallengeProgress[challenge.id] || {};
-                        const progressPercent = Math.min(100, (progress[Object.keys(progress)[0]] || 0) / challenge.target * 100);
+                        const progressValue = Object.values(progress)[0] || 0;
+                        const progressPercent = Math.min(100, Math.max(0, (progressValue / (challenge.target || 1)) * 100));
                         
                         return (
                           <Card key={challenge.id} className={`p-3 ${challenge.completed ? 'bg-green-50 border-green-200' : ''}`}>
@@ -7891,7 +7964,7 @@ function buy(item, qty = 1) {
                             <Progress value={progressPercent} className="mb-2" />
                             
                             <div className="flex justify-between text-xs">
-                              <span>Progress: {Object.values(progress)[0] || 0}/{challenge.target}</span>
+                              <span>Progress: {progressValue}/{challenge.target}</span>
                               <span className="text-green-600">
                                 Reward: {challenge.reward.coins}🪙 + items
                               </span>
@@ -8673,7 +8746,7 @@ function buy(item, qty = 1) {
                     value={selectedSeed} 
                     onChange={(e) => setSelectedSeed(e.target.value)}
                   >
-                    {Object.entries(rules.seeds).map(([seed, data]) => (
+                    {seedEntries.map(([seed, data]) => (
                       <option key={seed} value={seed}>
                         {data.emoji} {seed} ({data.stages} stages, +{data.baseValue}🪙)
                       </option>
@@ -9228,7 +9301,7 @@ function buy(item, qty = 1) {
                 <div className="font-medium text-emerald-800">🌍 Seasonal Strategy</div>
                 <div className="text-xs text-emerald-700 mt-1">
                   Current: {SEASON_EFFECTS[currentSeason].name} • 
-                  Optimal crops: {Object.entries(rules.seeds)
+                  Optimal crops: {seedEntries
                     .filter(([,data]) => data.season === currentSeason)
                     .map(([seed,data]) => `${data.emoji}${seed}`)
                     .join(", ") || "None specific"}
