@@ -37,6 +37,133 @@ const ACHIEVEMENTS = {
 };
 
 // Research System
+// Random Events
+const RANDOM_EVENTS = {
+  // Positive events
+  rain_blessing: {
+    id: "rain_blessing",
+    name: "Blessed Rain",
+    emoji: "🌧️",
+    description: "A gentle rain waters all your crops!",
+    type: "positive",
+    effect: () => ({ action: "water_all" }),
+    chance: 0.05,
+    message: "The blessed rain has watered all your crops!"
+  },
+  
+  bumper_harvest: {
+    id: "bumper_harvest",
+    name: "Bumper Harvest",
+    emoji: "🌾",
+    description: "Your next harvest yields double!",
+    type: "positive",
+    effect: () => ({ action: "double_harvest", duration: 1 }),
+    chance: 0.03,
+    message: "Bumper harvest! Your next harvest will yield double!"
+  },
+  
+  market_boom: {
+    id: "market_boom",
+    name: "Market Boom",
+    emoji: "📈",
+    description: "Crop prices increase by 50% temporarily!",
+    type: "positive",
+    effect: () => ({ action: "price_boost", multiplier: 1.5, duration: 60 }),
+    chance: 0.04,
+    message: "Market boom! Prices are up 50% for the next minute!"
+  },
+  
+  treasure_find: {
+    id: "treasure_find",
+    name: "Found Treasure",
+    emoji: "💎",
+    description: "You found buried treasure!",
+    type: "positive",
+    effect: () => ({ action: "add_coins", amount: Math.floor(50 + Math.random() * 150) }),
+    chance: 0.02,
+    message: "You found buried treasure!"
+  },
+  
+  fairy_visit: {
+    id: "fairy_visit",
+    name: "Fairy Visit",
+    emoji: "🧚",
+    description: "A fairy instantly grows one of your crops!",
+    type: "positive",
+    effect: () => ({ action: "instant_grow" }),
+    chance: 0.03,
+    message: "A fairy blessed one of your crops with instant growth!"
+  },
+  
+  // Negative events
+  pest_invasion: {
+    id: "pest_invasion",
+    name: "Pest Invasion",
+    emoji: "🐛",
+    description: "Pests damage some of your crops!",
+    type: "negative",
+    effect: () => ({ action: "damage_crops", count: 2 }),
+    chance: 0.04,
+    message: "Pest invasion! Some crops were damaged!"
+  },
+  
+  drought: {
+    id: "drought",
+    name: "Drought",
+    emoji: "☀️",
+    description: "All crops dry out faster!",
+    type: "negative",
+    effect: () => ({ action: "drought", duration: 120 }),
+    chance: 0.03,
+    message: "Drought conditions! Crops need more water!"
+  },
+  
+  market_crash: {
+    id: "market_crash",
+    name: "Market Crash",
+    emoji: "📉",
+    description: "Crop prices drop by 30%!",
+    type: "negative",
+    effect: () => ({ action: "price_drop", multiplier: 0.7, duration: 60 }),
+    chance: 0.03,
+    message: "Market crash! Prices down 30% for the next minute!"
+  },
+  
+  storm: {
+    id: "storm",
+    name: "Storm",
+    emoji: "⛈️",
+    description: "A storm destroys some grown crops!",
+    type: "negative",
+    effect: () => ({ action: "destroy_grown", count: 1 }),
+    chance: 0.02,
+    message: "A storm destroyed some of your crops!"
+  },
+  
+  // Neutral events
+  merchant_visit: {
+    id: "merchant_visit",
+    name: "Traveling Merchant",
+    emoji: "🧳",
+    description: "A merchant offers special deals!",
+    type: "neutral",
+    effect: () => ({ action: "merchant_offer" }),
+    chance: 0.05,
+    message: "A traveling merchant has arrived with special offers!"
+  },
+  
+  mystery_seeds: {
+    id: "mystery_seeds",
+    name: "Mystery Seeds",
+    emoji: "❓",
+    description: "You found mysterious seeds!",
+    type: "neutral",
+    effect: () => ({ action: "add_random_seeds", amount: 3 }),
+    chance: 0.04,
+    message: "You found some mystery seeds!"
+  }
+};
+
 const RESEARCH_PROJECTS = {
   crop_genetics: {
     name: "Crop Genetics",
@@ -460,6 +587,14 @@ function FarmSimCanvasFixed() {
   const [completedResearch, setCompletedResearch] = useState(saved?.completedResearch || []);
   const [researchBonuses, setResearchBonuses] = useState(saved?.researchBonuses || {});
   
+  // Events system
+  const [activeEvents, setActiveEvents] = useState(saved?.activeEvents || []);
+  const [eventHistory, setEventHistory] = useState(saved?.eventHistory || []);
+  const [nextHarvestBonus, setNextHarvestBonus] = useState(saved?.nextHarvestBonus || 1);
+  const [eventPriceMultiplier, setEventPriceMultiplier] = useState(saved?.eventPriceMultiplier || 1);
+  const [merchantOffer, setMerchantOffer] = useState(saved?.merchantOffer || null);
+  const [droughtActive, setDroughtActive] = useState(saved?.droughtActive || false);
+  
   // Add notification
   const addNotification = (msg, type = "info") => {
     const id = Date.now();
@@ -567,6 +702,9 @@ function FarmSimCanvasFixed() {
     const sellBonus = getSkillBonus("sell_bonus");
     value = Math.round(value * (1 + sellBonus));
     
+    // Apply event bonuses
+    value = Math.round(value * eventPriceMultiplier);
+    
     setCoins(c => c + value);
     setScore(s => s + value);
     setTotalHarvests(h => h + 1);
@@ -577,11 +715,18 @@ function FarmSimCanvasFixed() {
     // Add to inventory for processing
     let harvestAmount = 1;
     
+    // Apply event harvest bonus
+    if (nextHarvestBonus > 1) {
+      harvestAmount = harvestAmount * nextHarvestBonus;
+      setNextHarvestBonus(1); // Reset after use
+      addNotification("Event bonus: Double harvest!", "success");
+    }
+    
     // Double harvest chance from skills
     const doubleChance = getSkillBonus("double_harvest");
     if (Math.random() < doubleChance) {
-      harvestAmount = 2;
-      addNotification("Double harvest!", "success");
+      harvestAmount = harvestAmount * 2;
+      addNotification("Skill bonus: Double harvest!", "success");
     }
     
     setInventory(prev => ({
@@ -802,6 +947,143 @@ function FarmSimCanvasFixed() {
       
       return newPlots;
     });
+  };
+  
+  // Event functions
+  const triggerRandomEvent = () => {
+    // Don't trigger events too frequently
+    if (Math.random() > 0.02) return; // 2% chance per game tick
+    
+    // Choose a random event based on chances
+    const events = Object.values(RANDOM_EVENTS);
+    const totalChance = events.reduce((sum, e) => sum + e.chance, 0);
+    let random = Math.random() * totalChance;
+    
+    for (const event of events) {
+      random -= event.chance;
+      if (random <= 0) {
+        executeEvent(event);
+        break;
+      }
+    }
+  };
+  
+  const executeEvent = (event) => {
+    const effect = event.effect();
+    
+    // Add to history
+    setEventHistory(prev => [...prev.slice(-9), { 
+      event: event.id, 
+      time: nowSec(),
+      type: event.type 
+    }]);
+    
+    // Execute effect based on action
+    switch (effect.action) {
+      case "water_all":
+        setPlots(prev => prev.map(plot => 
+          plot.state === "growing" ? {...plot, water: 3} : plot
+        ));
+        break;
+        
+      case "double_harvest":
+        setNextHarvestBonus(2);
+        setTimeout(() => setNextHarvestBonus(1), 60000); // Reset after 1 minute
+        break;
+        
+      case "price_boost":
+      case "price_drop":
+        setEventPriceMultiplier(effect.multiplier);
+        setTimeout(() => setEventPriceMultiplier(1), effect.duration * 1000);
+        break;
+        
+      case "add_coins":
+        setCoins(c => c + effect.amount);
+        break;
+        
+      case "instant_grow":
+        setPlots(prev => {
+          const growing = prev.map((p, i) => p.state === "growing" ? i : -1).filter(i => i >= 0);
+          if (growing.length > 0) {
+            const idx = growing[Math.floor(Math.random() * growing.length)];
+            const newPlots = [...prev];
+            newPlots[idx] = {...newPlots[idx], state: "grown"};
+            return newPlots;
+          }
+          return prev;
+        });
+        break;
+        
+      case "damage_crops":
+        setPlots(prev => {
+          const growing = prev.map((p, i) => p.state === "growing" ? i : -1).filter(i => i >= 0);
+          const newPlots = [...prev];
+          for (let i = 0; i < Math.min(effect.count, growing.length); i++) {
+            const idx = growing[Math.floor(Math.random() * growing.length)];
+            newPlots[idx] = {...newPlots[idx], state: "withered"};
+          }
+          return newPlots;
+        });
+        break;
+        
+      case "drought":
+        setDroughtActive(true);
+        setTimeout(() => setDroughtActive(false), effect.duration * 1000);
+        break;
+        
+      case "destroy_grown":
+        setPlots(prev => {
+          const grown = prev.map((p, i) => p.state === "grown" ? i : -1).filter(i => i >= 0);
+          const newPlots = [...prev];
+          for (let i = 0; i < Math.min(effect.count, grown.length); i++) {
+            const idx = grown[Math.floor(Math.random() * grown.length)];
+            newPlots[idx] = {state: "empty"};
+          }
+          return newPlots;
+        });
+        break;
+        
+      case "merchant_offer":
+        // Generate special offer
+        const seeds = Object.keys(DEFAULT_RULES.seeds);
+        const randomSeed = seeds[Math.floor(Math.random() * seeds.length)];
+        setMerchantOffer({
+          seed: randomSeed,
+          price: Math.floor(DEFAULT_RULES.seeds[randomSeed].price * 0.5), // 50% off
+          amount: 10,
+          expiresAt: nowSec() + 120 // 2 minutes
+        });
+        break;
+        
+      case "add_random_seeds":
+        const allSeeds = Object.keys(DEFAULT_RULES.seeds);
+        const randSeed = allSeeds[Math.floor(Math.random() * allSeeds.length)];
+        setInventory(prev => ({
+          ...prev,
+          [randSeed]: (prev[randSeed] || 0) + effect.amount
+        }));
+        break;
+    }
+    
+    // Add notification
+    addNotification(`${event.emoji} ${event.message}`, event.type);
+    
+    // Add to active events for display
+    setActiveEvents(prev => [...prev, {
+      id: event.id,
+      name: event.name,
+      emoji: event.emoji,
+      type: event.type,
+      startedAt: nowSec(),
+      duration: effect.duration || 0
+    }]);
+    
+    // Clean up expired events periodically
+    setTimeout(() => {
+      setActiveEvents(prev => prev.filter(e => 
+        e.duration === 0 || nowSec() - e.startedAt < e.duration
+      ));
+    }, 5000);
   };
   
   // Research functions
@@ -1307,6 +1589,9 @@ function FarmSimCanvasFixed() {
       // Worker actions
       performWorkerActions();
       
+      // Trigger random events
+      triggerRandomEvent();
+      
       // Worker upkeep (every 60 seconds = 1 minute)
       if (Math.floor(nowSec()) % 60 === 0 && Object.keys(workers).length > 0) {
         const upkeep = getWorkerUpkeep();
@@ -1603,20 +1888,88 @@ function FarmSimCanvasFixed() {
           </Card>
         </div>
         
-        {/* Achievements Progress */}
-        {achievements.length > 0 && (
-          <div className="flex gap-1 overflow-x-auto pb-1">
-            {Object.entries(ACHIEVEMENTS).map(([id, ach]) => (
-              <Badge 
-                key={id} 
-                variant={achievements.includes(id) ? "default" : "outline"}
-                className="shrink-0"
-              >
-                {ach.emoji}
-              </Badge>
-            ))}
-          </div>
-        )}
+              {/* Active Events Display */}
+      {activeEvents.length > 0 && (
+        <Card className="mb-2 bg-gradient-to-r from-purple-50 to-pink-50">
+          <CardContent className="p-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-semibold">Active Events:</span>
+              {activeEvents.map(event => (
+                <Badge 
+                  key={event.id} 
+                  variant={event.type === "positive" ? "default" : event.type === "negative" ? "destructive" : "secondary"}
+                  className="animate-pulse"
+                >
+                  {event.emoji} {event.name}
+                  {event.duration > 0 && (
+                    <span className="ml-1 text-xs">
+                      ({Math.max(0, event.duration - (nowSec() - event.startedAt))}s)
+                    </span>
+                  )}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Merchant Offer */}
+      {merchantOffer && nowSec() < merchantOffer.expiresAt && (
+        <Card className="mb-2 bg-gradient-to-r from-yellow-50 to-orange-50 border-orange-300">
+          <CardContent className="p-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🧳</span>
+                <span className="font-semibold">Special Offer:</span>
+                <Badge variant="default">
+                  {DEFAULT_RULES.seeds[merchantOffer.seed]?.emoji} {merchantOffer.seed} x{merchantOffer.amount}
+                </Badge>
+                <span className="text-sm">for only {merchantOffer.price}🪙!</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">
+                  Expires in {merchantOffer.expiresAt - nowSec()}s
+                </span>
+                <Button 
+                  size="sm" 
+                  variant="default"
+                  onClick={() => {
+                    if (coins >= merchantOffer.price) {
+                      setCoins(c => c - merchantOffer.price);
+                      setInventory(prev => ({
+                        ...prev,
+                        [merchantOffer.seed]: (prev[merchantOffer.seed] || 0) + merchantOffer.amount
+                      }));
+                      setMerchantOffer(null);
+                      addNotification(`Bought ${merchantOffer.amount} ${merchantOffer.seed} seeds!`, "success");
+                    } else {
+                      addNotification("Not enough coins!", "error");
+                    }
+                  }}
+                  disabled={coins < merchantOffer.price}
+                >
+                  Buy Now!
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Achievements Progress */}
+      {achievements.length > 0 && (
+        <div className="flex gap-1 overflow-x-auto pb-1">
+          {Object.entries(ACHIEVEMENTS).map(([id, ach]) => (
+            <Badge 
+              key={id} 
+              variant={achievements.includes(id) ? "default" : "outline"}
+              className="shrink-0"
+            >
+              {ach.emoji}
+            </Badge>
+          ))}
+        </div>
+      )}
       </div>
       
       {/* Tools Toolbar */}
