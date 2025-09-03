@@ -745,13 +745,27 @@ function FarmSimCanvasFixed() {
   const [totalCoinsEarned, setTotalCoinsEarned] = useState(saved?.totalCoinsEarned || 0);
   const [cropsWithered, setCropsWithered] = useState(saved?.cropsWithered || 0);
   
-  // Add notification
+  // Add notification with deduplication
   const addNotification = (msg, type = "info") => {
-    const id = Date.now();
-    setNotifications(prev => [...prev, { id, msg, type }]);
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
-    }, 3000);
+    // Prevent duplicate notifications
+    setNotifications(prev => {
+      // Check if same message exists in last 3 notifications
+      const recentMsgs = prev.slice(-3).map(n => n.msg);
+      if (recentMsgs.includes(msg)) {
+        return prev; // Don't add duplicate
+      }
+      
+      const id = Date.now();
+      const newNotification = { id, msg, type };
+      
+      // Auto-dismiss after 3 seconds
+      setTimeout(() => {
+        setNotifications(current => current.filter(n => n.id !== id));
+      }, 3000);
+      
+      // Keep only last 5 notifications
+      return [...prev.slice(-4), newNotification];
+    });
   };
   
   // Plant seed
@@ -1168,11 +1182,26 @@ function FarmSimCanvasFixed() {
       // Update daily challenges
       dailyChallenges.forEach(challenge => {
         if (challenge.type === type && !completedDailies.includes(challenge.id)) {
+          const oldProgress = newProgress[challenge.id] || 0;
+          let newValue;
+          
           if (type === "no_wither") {
             // Special handling for no_wither challenge
-            newProgress[challenge.id] = amount; // amount is cropsWithered count
+            newValue = amount; // amount is cropsWithered count
           } else {
-            newProgress[challenge.id] = (newProgress[challenge.id] || 0) + amount;
+            newValue = oldProgress + amount;
+          }
+          
+          newProgress[challenge.id] = newValue;
+          
+          // Check if this specific challenge just completed
+          const isComplete = type === "no_wither" 
+            ? newValue === 0 
+            : newValue >= challenge.target;
+            
+          if (isComplete && oldProgress < challenge.target) {
+            // Schedule completion check to avoid state update conflicts
+            setTimeout(() => completeChallenge(challenge, "daily"), 100);
           }
         }
       });
@@ -1180,40 +1209,29 @@ function FarmSimCanvasFixed() {
       // Update weekly challenges
       weeklyChallenges.forEach(challenge => {
         if (challenge.type === type && !completedWeeklies.includes(challenge.id)) {
-          newProgress[challenge.id] = (newProgress[challenge.id] || 0) + amount;
+          const oldProgress = newProgress[challenge.id] || 0;
+          const newValue = oldProgress + amount;
+          newProgress[challenge.id] = newValue;
+          
+          // Check if this specific challenge just completed
+          if (newValue >= challenge.target && oldProgress < challenge.target) {
+            // Schedule completion check to avoid state update conflicts
+            setTimeout(() => completeChallenge(challenge, "weekly"), 100);
+          }
         }
       });
       
       return newProgress;
     });
-    
-    // Check for completed challenges
-    checkChallengeCompletion();
   };
   
-  const checkChallengeCompletion = () => {
-    // Check daily challenges
-    dailyChallenges.forEach(challenge => {
-      const progress = challengeProgress[challenge.id] || 0;
-      const isComplete = challenge.type === "no_wither" 
-        ? progress === 0 
-        : progress >= challenge.target;
-        
-      if (isComplete && !completedDailies.includes(challenge.id)) {
-        completeChallenge(challenge, "daily");
-      }
-    });
-    
-    // Check weekly challenges
-    weeklyChallenges.forEach(challenge => {
-      const progress = challengeProgress[challenge.id] || 0;
-      if (progress >= challenge.target && !completedWeeklies.includes(challenge.id)) {
-        completeChallenge(challenge, "weekly");
-      }
-    });
-  };
+
   
   const completeChallenge = (challenge, type) => {
+    // Check if already completed to prevent duplicates
+    if (type === "daily" && completedDailies.includes(challenge.id)) return;
+    if (type === "weekly" && completedWeeklies.includes(challenge.id)) return;
+    
     // Award rewards
     const reward = challenge.reward;
     if (reward.coins) {
@@ -1231,18 +1249,26 @@ function FarmSimCanvasFixed() {
     
     // Mark as completed
     if (type === "daily") {
-      setCompletedDailies(prev => [...prev, challenge.id]);
+      setCompletedDailies(prev => {
+        if (prev.includes(challenge.id)) return prev; // Already completed
+        return [...prev, challenge.id];
+      });
       
       // Check if all dailies are complete
-      if (dailyChallenges.every(c => 
-        completedDailies.includes(c.id) || c.id === challenge.id
-      )) {
-        setDailyStreak(prev => prev + 1);
-        updateChallengeProgress("daily_streak", 1);
-        addNotification("All daily challenges complete! Streak: " + (dailyStreak + 1), "success");
-      }
+      setTimeout(() => {
+        if (dailyChallenges.every(c => 
+          completedDailies.includes(c.id) || c.id === challenge.id
+        )) {
+          setDailyStreak(prev => prev + 1);
+          updateChallengeProgress("daily_streak", 1);
+          addNotification("All daily challenges complete! Streak: " + (dailyStreak + 1), "success");
+        }
+      }, 500);
     } else {
-      setCompletedWeeklies(prev => [...prev, challenge.id]);
+      setCompletedWeeklies(prev => {
+        if (prev.includes(challenge.id)) return prev; // Already completed
+        return [...prev, challenge.id];
+      });
     }
     
     addNotification(`Challenge complete: ${challenge.name}! ${challenge.emoji}`, "success");
@@ -1927,9 +1953,11 @@ function FarmSimCanvasFixed() {
       // Trigger random events
       triggerRandomEvent();
       
-      // Check for challenge resets
-      resetDailyChallenges();
-      resetWeeklyChallenges();
+      // Check for challenge resets (only every 10 seconds)
+      if (Math.floor(nowSec()) % 10 === 0) {
+        resetDailyChallenges();
+        resetWeeklyChallenges();
+      }
       
       // Worker upkeep (every 60 seconds = 1 minute)
       if (Math.floor(nowSec()) % 60 === 0 && Object.keys(workers).length > 0) {
@@ -3064,15 +3092,20 @@ function FarmSimCanvasFixed() {
       </div>
       
       {/* Notifications */}
-      <div className="fixed bottom-4 right-4 space-y-2 max-w-sm">
-        {notifications.map(n => (
+      <div className="fixed bottom-4 right-4 space-y-1 max-w-sm z-50 pointer-events-none">
+        {notifications.map((n, index) => (
           <div
             key={n.id}
-            className={`p-3 rounded-lg shadow-lg animate-pulse ${
-              n.type === "error" ? "bg-red-100 text-red-800" :
-              n.type === "success" ? "bg-green-100 text-green-800" :
-              "bg-blue-100 text-blue-800"
+            className={`p-2 px-3 rounded-lg shadow-lg text-sm transition-all duration-300 ${
+              n.type === "error" ? "bg-red-100 text-red-800 border border-red-200" :
+              n.type === "success" ? "bg-green-100 text-green-800 border border-green-200" :
+              "bg-blue-100 text-blue-800 border border-blue-200"
             }`}
+            style={{
+              animation: 'slideIn 0.3s ease-out',
+              opacity: 1 - (index * 0.15), // Fade older notifications
+              transform: `translateY(${index * -5}px)` // Stack effect
+            }}
           >
             {n.msg}
           </div>
