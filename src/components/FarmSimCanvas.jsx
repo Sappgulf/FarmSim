@@ -6352,23 +6352,23 @@ function FarmSimCanvas() {
 
   // --- Enhanced Layout ---
   
-  // Show loading screen during initialization
-  if (isInitializing) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4 animate-bounce">🌱</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Loading Your Farm...</h1>
-          <p className="text-gray-600">Preparing the fields</p>
-          <div className="mt-4 flex justify-center gap-1">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse delay-100"></div>
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse delay-200"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Skip loading screen for now to debug
+  // if (isInitializing) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="text-6xl mb-4 animate-bounce">🌱</div>
+  //         <h1 className="text-2xl font-bold text-gray-800 mb-2">Loading Your Farm...</h1>
+  //         <p className="text-gray-600">Preparing the fields</p>
+  //         <div className="mt-4 flex justify-center gap-1">
+  //           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+  //           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse delay-100"></div>
+  //           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse delay-200"></div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
   
   return (
     <div className={`min-h-screen bg-gradient-to-br ${DAY_NIGHT_CYCLE[currentTimeOfDay].bg} relative overflow-hidden transition-all duration-1000`}>
