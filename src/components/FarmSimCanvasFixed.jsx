@@ -36,6 +36,100 @@ const ACHIEVEMENTS = {
   rancher: { name: "Rancher", description: "Own 5 animals", emoji: "🐮", reward: 60 },
 };
 
+// Skills System
+const SKILL_TREES = {
+  farming: {
+    name: "Farming",
+    icon: "🌾",
+    skills: {
+      harvest_master: {
+        name: "Harvest Master",
+        description: "+10% harvest value",
+        maxLevel: 5,
+        cost: [1, 2, 3, 4, 5],
+        effect: "harvest_bonus",
+        value: 0.1
+      },
+      growth_boost: {
+        name: "Growth Boost", 
+        description: "+5% growth speed",
+        maxLevel: 5,
+        cost: [1, 2, 3, 4, 5],
+        effect: "growth_speed",
+        value: 0.05
+      },
+      green_thumb: {
+        name: "Green Thumb",
+        description: "Double harvest chance",
+        maxLevel: 3,
+        cost: [3, 5, 8],
+        effect: "double_harvest",
+        value: 0.1
+      }
+    }
+  },
+  business: {
+    name: "Business",
+    icon: "💼",
+    skills: {
+      merchant: {
+        name: "Merchant",
+        description: "+5% sell price",
+        maxLevel: 5,
+        cost: [1, 2, 3, 4, 5],
+        effect: "sell_bonus",
+        value: 0.05
+      },
+      negotiator: {
+        name: "Negotiator",
+        description: "-5% shop prices",
+        maxLevel: 5,
+        cost: [1, 2, 3, 4, 5],
+        effect: "buy_discount",
+        value: 0.05
+      },
+      investor: {
+        name: "Investor",
+        description: "+2 coins/minute",
+        maxLevel: 3,
+        cost: [3, 5, 8],
+        effect: "passive_income",
+        value: 2
+      }
+    }
+  },
+  technology: {
+    name: "Technology",
+    icon: "🔬",
+    skills: {
+      automation: {
+        name: "Automation",
+        description: "Auto-water chance",
+        maxLevel: 3,
+        cost: [2, 4, 6],
+        effect: "auto_water",
+        value: 0.1
+      },
+      efficiency: {
+        name: "Efficiency",
+        description: "+10% tool effect",
+        maxLevel: 5,
+        cost: [1, 2, 3, 4, 5],
+        effect: "tool_bonus",
+        value: 0.1
+      },
+      innovation: {
+        name: "Innovation",
+        description: "+20% process speed",
+        maxLevel: 3,
+        cost: [3, 5, 8],
+        effect: "process_speed",
+        value: 0.2
+      }
+    }
+  }
+};
+
 const DEFAULT_RULES = {
   seeds: {
     // Common crops
@@ -222,6 +316,12 @@ function FarmSimCanvasFixed() {
   const [processingQueue, setProcessingQueue] = useState(saved?.processingQueue || []);
   const [processedGoods, setProcessedGoods] = useState(saved?.processedGoods || {});
   
+  // Skills system
+  const [skillPoints, setSkillPoints] = useState(saved?.skillPoints || 3);
+  const [skillLevels, setSkillLevels] = useState(saved?.skillLevels || {});
+  const [experience, setExperience] = useState(saved?.experience || 0);
+  const [playerLevel, setPlayerLevel] = useState(saved?.playerLevel || 1);
+  
   // Add notification
   const addNotification = (msg, type = "info") => {
     const id = Date.now();
@@ -243,23 +343,26 @@ function FarmSimCanvasFixed() {
       return;
     }
     
+    const plot = plots[plotIndex];
+    if (!plot || plot.state !== "empty") {
+      addNotification("Cannot plant here!", "error");
+      return;
+    }
+    
     setPlots(prev => {
       const newPlots = [...prev];
-      const plot = newPlots[plotIndex];
-      if (plot.state !== "empty") return prev;
-      
       newPlots[plotIndex] = {
-        ...plot,
+        ...newPlots[plotIndex],
         state: "planted",
         seed: seed,
         growth: 0,
         plantedAt: nowSec()
       };
-      
-      setInventory(inv => ({...inv, [seed]: (inv[seed] || 0) - 1}));
-      addNotification(`Planted ${seed}!`, "success");
       return newPlots;
     });
+    
+    setInventory(inv => ({...inv, [seed]: (inv[seed] || 0) - 1}));
+    addNotification(`Planted ${seed}!`, "success");
   };
   
   // Water plot
@@ -289,6 +392,10 @@ function FarmSimCanvasFixed() {
     const seed = plot.seed;
     let value = DEFAULT_RULES.seeds[seed]?.baseValue || 10;
     
+    // Apply skill bonuses
+    const harvestBonus = getSkillBonus("harvest_bonus");
+    value = Math.round(value * (1 + harvestBonus));
+    
     // Apply combo bonus
     if (combo > 0) {
       value = Math.round(value * (1 + combo * 0.1));
@@ -302,14 +409,30 @@ function FarmSimCanvasFixed() {
     if (buildings.market) value = Math.round(value * 1.1);
     if (buildings.beehive) value = Math.round(value * 1.15);
     
+    // Apply sell bonus from skills
+    const sellBonus = getSkillBonus("sell_bonus");
+    value = Math.round(value * (1 + sellBonus));
+    
     setCoins(c => c + value);
     setScore(s => s + value);
     setTotalHarvests(h => h + 1);
     
+    // Add experience
+    addExperience(10);
+    
     // Add to inventory for processing
+    let harvestAmount = 1;
+    
+    // Double harvest chance from skills
+    const doubleChance = getSkillBonus("double_harvest");
+    if (Math.random() < doubleChance) {
+      harvestAmount = 2;
+      addNotification("Double harvest!", "success");
+    }
+    
     setInventory(prev => ({
       ...prev,
-      [seed]: (prev[seed] || 0) + 1
+      [seed]: (prev[seed] || 0) + harvestAmount
     }));
     
     // Update combo
@@ -526,6 +649,63 @@ function FarmSimCanvasFixed() {
       }
       
       return newPlots;
+    });
+  };
+  
+  // Skills functions
+  const getSkillBonus = (effectType) => {
+    let bonus = 0;
+    for (const [treeId, tree] of Object.entries(SKILL_TREES)) {
+      for (const [skillId, skill] of Object.entries(tree.skills)) {
+        if (skill.effect === effectType) {
+          const level = skillLevels[`${treeId}_${skillId}`] || 0;
+          bonus += skill.value * level;
+        }
+      }
+    }
+    return bonus;
+  };
+  
+  const upgradeSkill = (treeId, skillId) => {
+    const skill = SKILL_TREES[treeId]?.skills[skillId];
+    if (!skill) return;
+    
+    const fullSkillId = `${treeId}_${skillId}`;
+    const currentLevel = skillLevels[fullSkillId] || 0;
+    
+    if (currentLevel >= skill.maxLevel) {
+      addNotification("Skill already maxed!", "error");
+      return;
+    }
+    
+    const cost = skill.cost[currentLevel];
+    if (skillPoints < cost) {
+      addNotification("Not enough skill points!", "error");
+      return;
+    }
+    
+    setSkillPoints(sp => sp - cost);
+    setSkillLevels(prev => ({
+      ...prev,
+      [fullSkillId]: currentLevel + 1
+    }));
+    
+    addNotification(`Upgraded ${skill.name} to level ${currentLevel + 1}!`, "success");
+  };
+  
+  const addExperience = (amount) => {
+    setExperience(prev => {
+      const newExp = prev + amount;
+      const expNeeded = playerLevel * 100;
+      
+      if (newExp >= expNeeded) {
+        setPlayerLevel(l => l + 1);
+        setSkillPoints(sp => sp + 2);
+        addNotification(`Level up! You are now level ${playerLevel + 1}! +2 skill points`, "success");
+        return newExp - expNeeded;
+      }
+      
+      return newExp;
     });
   };
   
@@ -891,12 +1071,16 @@ function FarmSimCanvasFixed() {
         {/* Main Stats Bar */}
         <Card className="bg-white/90 backdrop-blur">
           <CardContent className="p-3">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               <div className="flex items-center justify-between bg-yellow-50 rounded-lg p-2">
                 <span className="text-sm font-medium">Coins</span>
                 <span className="text-lg font-bold">🪙 {coins}</span>
               </div>
               <div className="flex items-center justify-between bg-purple-50 rounded-lg p-2">
+                <span className="text-sm font-medium">Level</span>
+                <span className="text-lg font-bold">📊 {playerLevel}</span>
+              </div>
+              <div className="flex items-center justify-between bg-blue-50 rounded-lg p-2">
                 <span className="text-sm font-medium">Score</span>
                 <span className="text-lg font-bold">⭐ {score}</span>
               </div>
@@ -1049,12 +1233,13 @@ function FarmSimCanvasFixed() {
           </CardHeader>
           <CardContent>
             <Tabs value={shopTab} onValueChange={setShopTab}>
-              <TabsList className="grid grid-cols-2 md:grid-cols-5 mb-4">
+              <TabsList className="grid grid-cols-3 md:grid-cols-6 mb-4">
                 <TabsTrigger value="seeds">🌱 Seeds</TabsTrigger>
                 <TabsTrigger value="tools">🛠️ Tools</TabsTrigger>
                 <TabsTrigger value="buildings">🏗️ Buildings</TabsTrigger>
                 <TabsTrigger value="livestock">🐄 Animals</TabsTrigger>
                 <TabsTrigger value="processing">🏭 Process</TabsTrigger>
+                <TabsTrigger value="skills">📚 Skills</TabsTrigger>
               </TabsList>
               
               <TabsContent value="seeds" className="space-y-2">
@@ -1268,6 +1453,87 @@ function FarmSimCanvasFixed() {
                     )}
                   </>
                 )}
+              </TabsContent>
+              
+              <TabsContent value="skills" className="space-y-2">
+                <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded">
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <span className="font-semibold">Level {playerLevel}</span>
+                      <Progress value={(experience / (playerLevel * 100)) * 100} className="w-32 h-2 mt-1" />
+                    </div>
+                    <Badge variant="default">
+                      {skillPoints} Skill Points
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    {experience}/{playerLevel * 100} XP to next level
+                  </p>
+                </div>
+                
+                <Tabs defaultValue="farming">
+                  <TabsList className="grid grid-cols-3 w-full">
+                    <TabsTrigger value="farming">🌾</TabsTrigger>
+                    <TabsTrigger value="business">💼</TabsTrigger>
+                    <TabsTrigger value="technology">🔬</TabsTrigger>
+                  </TabsList>
+                  
+                  {Object.entries(SKILL_TREES).map(([treeId, tree]) => (
+                    <TabsContent key={treeId} value={treeId} className="space-y-2">
+                      <div className="text-center mb-2">
+                        <span className="text-lg">{tree.icon}</span>
+                        <span className="ml-2 font-semibold">{tree.name}</span>
+                      </div>
+                      
+                      {Object.entries(tree.skills).map(([skillId, skill]) => {
+                        const fullSkillId = `${treeId}_${skillId}`;
+                        const currentLevel = skillLevels[fullSkillId] || 0;
+                        const isMaxed = currentLevel >= skill.maxLevel;
+                        const cost = isMaxed ? 0 : skill.cost[currentLevel];
+                        const canUpgrade = skillPoints >= cost && !isMaxed;
+                        
+                        return (
+                          <Button
+                            key={skillId}
+                            onClick={() => upgradeSkill(treeId, skillId)}
+                            variant="outline"
+                            className="w-full justify-between h-auto py-2"
+                            disabled={!canUpgrade}
+                          >
+                            <div className="flex flex-col items-start">
+                              <div className="font-medium">{skill.name}</div>
+                              <div className="text-xs text-gray-500">{skill.description}</div>
+                              <div className="flex gap-1 mt-1">
+                                {Array.from({ length: skill.maxLevel }).map((_, i) => (
+                                  <div
+                                    key={i}
+                                    className={`w-4 h-4 rounded ${
+                                      i < currentLevel ? "bg-green-500" : "bg-gray-300"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              {isMaxed ? (
+                                <Badge variant="default">MAX</Badge>
+                              ) : (
+                                <div>
+                                  <div className="text-sm font-bold">{cost} SP</div>
+                                  {currentLevel > 0 && (
+                                    <div className="text-xs text-green-600">
+                                      +{(skill.value * currentLevel * 100).toFixed(0)}%
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </Button>
+                        );
+                      })}
+                    </TabsContent>
+                  ))}
+                </Tabs>
               </TabsContent>
             </Tabs>
           </CardContent>
