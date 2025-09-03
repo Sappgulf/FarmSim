@@ -5227,7 +5227,7 @@ function FarmSimCanvas() {
     }
   }
 
-function buy(item, qty = 1) {
+  function buy(item, qty = 1) {
     if (qty < 1) qty = 1;
     if (buyingRef.current) return;
     buyingRef.current = true; setBuying(true);
@@ -6219,7 +6219,7 @@ function buy(item, qty = 1) {
         </div>
       </div>
     );
-  };
+  });
 
   // 🔄 AUTO-ACTIONS CONTROL PANEL
   const AutoActionsPanel = () => (
