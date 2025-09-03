@@ -879,6 +879,7 @@ function FarmSimCanvasFixed() {
   });
   const [buildings, setBuildings] = useState(saved?.buildings || {});
   const [shopTab, setShopTab] = useState("seeds");
+  const [showSettings, setShowSettings] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [weather, setWeather] = useState({ type: "Sunny", endsAt: nowSec() + 60 });
   const [currentSeason, setCurrentSeason] = useState("spring");
@@ -968,6 +969,24 @@ function FarmSimCanvasFixed() {
   const [petActivities, setPetActivities] = useState(saved?.petActivities || {});
   const [petBonusActive, setPetBonusActive] = useState(saved?.petBonusActive || {});
   
+  // Settings
+  const [settings, setSettings] = useState(saved?.settings || {
+    autoSave: true,
+    autoSaveInterval: 30,
+    notifications: true,
+    particleEffects: true,
+    weatherEffects: true,
+    animations: true,
+    soundEnabled: false,
+    musicVolume: 50,
+    sfxVolume: 50,
+    performanceMode: false,
+    reducedMotion: false,
+    colorblindMode: false,
+    gridSize: 4,
+    theme: "light"
+  });
+  
   // Analytics tracking
   const [analytics, setAnalytics] = useState(saved?.analytics || {
     totalEarnings: 0,
@@ -994,8 +1013,43 @@ function FarmSimCanvasFixed() {
     profitByDay: []
   });
   
+  // Settings functions
+  const updateSetting = (key, value) => {
+    setSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
+    
+    // Apply setting immediately
+    if (key === "performanceMode") {
+      addNotification(value ? "Performance mode enabled" : "Performance mode disabled", "info");
+    }
+  };
+  
+  const resetSettings = () => {
+    setSettings({
+      autoSave: true,
+      autoSaveInterval: 30,
+      notifications: true,
+      particleEffects: true,
+      weatherEffects: true,
+      animations: true,
+      soundEnabled: false,
+      musicVolume: 50,
+      sfxVolume: 50,
+      performanceMode: false,
+      reducedMotion: false,
+      colorblindMode: false,
+      gridSize: 4,
+      theme: "light"
+    });
+    addNotification("Settings reset to defaults", "info");
+  };
+  
   // Add notification with deduplication
   const addNotification = (msg, type = "info") => {
+    if (!settings.notifications) return; // Check if notifications are enabled
+    
     // Prevent duplicate notifications
     setNotifications(prev => {
       // Check if same message exists in last 3 notifications
@@ -2834,6 +2888,13 @@ function FarmSimCanvasFixed() {
                   {paused ? "▶️" : "⏸️"}
                 </Button>
                 <Button 
+                  onClick={() => setShowSettings(!showSettings)} 
+                  size="sm"
+                  variant={showSettings ? "default" : "outline"}
+                >
+                  ⚙️
+                </Button>
+                <Button 
                   onClick={() => {
                     if (confirm("Reset all progress and start over?")) {
                       localStorage.removeItem(SAVE_KEY);
@@ -2966,6 +3027,107 @@ function FarmSimCanvasFixed() {
                   Click plot to use {DEFAULT_RULES.tools[selectedTool].name}
                 </Badge>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Settings Panel */}
+      {showSettings && (
+        <Card className="mb-4">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>⚙️ Settings</CardTitle>
+              <Button size="sm" variant="ghost" onClick={() => setShowSettings(false)}>✕</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* General Settings */}
+              <div>
+                <h4 className="font-semibold mb-2">General</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Auto-save</span>
+                    <input 
+                      type="checkbox" 
+                      checked={settings.autoSave}
+                      onChange={(e) => updateSetting("autoSave", e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Notifications</span>
+                    <input 
+                      type="checkbox" 
+                      checked={settings.notifications}
+                      onChange={(e) => updateSetting("notifications", e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Weather Effects</span>
+                    <input 
+                      type="checkbox" 
+                      checked={settings.weatherEffects}
+                      onChange={(e) => updateSetting("weatherEffects", e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Animations</span>
+                    <input 
+                      type="checkbox" 
+                      checked={settings.animations}
+                      onChange={(e) => updateSetting("animations", e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Performance Settings */}
+              <div>
+                <h4 className="font-semibold mb-2">Performance</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Performance Mode</span>
+                    <input 
+                      type="checkbox" 
+                      checked={settings.performanceMode}
+                      onChange={(e) => updateSetting("performanceMode", e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Reduced Motion</span>
+                    <input 
+                      type="checkbox" 
+                      checked={settings.reducedMotion}
+                      onChange={(e) => updateSetting("reducedMotion", e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Particle Effects</span>
+                    <input 
+                      type="checkbox" 
+                      checked={settings.particleEffects}
+                      onChange={(e) => updateSetting("particleEffects", e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4 flex gap-2">
+              <Button size="sm" variant="outline" onClick={resetSettings}>
+                Reset to Defaults
+              </Button>
+              <Button size="sm" onClick={() => setShowSettings(false)}>
+                Close
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -3893,6 +4055,108 @@ function FarmSimCanvasFixed() {
                     </div>
                   </div>
                 )}
+              </TabsContent>
+              
+              <TabsContent value="stats" className="space-y-4">
+                {(() => {
+                  const stats = calculateStats();
+                  const topCrops = getTopCrops();
+                  
+                  return (
+                    <>
+                      {/* Overview Stats */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                          <div className="text-xs text-gray-600">Total Earnings</div>
+                          <div className="text-lg font-bold">{analytics.totalEarnings}🪙</div>
+                        </div>
+                        <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                          <div className="text-xs text-gray-600">Net Profit</div>
+                          <div className="text-lg font-bold">{stats.profit}🪙</div>
+                        </div>
+                        <div className="p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg">
+                          <div className="text-xs text-gray-600">Harvest Rate</div>
+                          <div className="text-lg font-bold">{stats.harvestRate.toFixed(1)}%</div>
+                        </div>
+                        <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                          <div className="text-xs text-gray-600">Play Time</div>
+                          <div className="text-lg font-bold">{Math.floor(stats.totalPlayTime / 60)}m</div>
+                        </div>
+                      </div>
+                      
+                      {/* Activity Stats */}
+                      <div>
+                        <h4 className="font-semibold mb-2">📈 Activity Statistics:</h4>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span>Crops Planted:</span>
+                            <Badge variant="outline">{analytics.cropsPlanted}</Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Crops Harvested:</span>
+                            <Badge variant="outline">{analytics.cropsHarvested}</Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Crops Withered:</span>
+                            <Badge variant="outline">{analytics.cropsWithered}</Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Items Processed:</span>
+                            <Badge variant="outline">{analytics.processedItems}</Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Research Completed:</span>
+                            <Badge variant="outline">{analytics.researchCompleted}</Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Highest Combo:</span>
+                            <Badge variant="outline">{analytics.highestCombo}x</Badge>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Top Crops */}
+                      {topCrops.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold mb-2">🌾 Top Performing Crops:</h4>
+                          <div className="space-y-1">
+                            {topCrops.map((crop, idx) => (
+                              <div key={crop.crop} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded">
+                                <span className="font-medium">
+                                  #{idx + 1} {crop.crop}
+                                </span>
+                                <div className="flex gap-2">
+                                  <Badge variant="secondary">{crop.harvested}/{crop.planted}</Badge>
+                                  <Badge variant="default">{crop.earnings}🪙</Badge>
+                                  <Badge variant="outline">{crop.efficiency.toFixed(0)}%</Badge>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Efficiency Metrics */}
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <h4 className="font-semibold text-sm mb-2">⚡ Efficiency Metrics:</h4>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between">
+                            <span>Earnings per Harvest:</span>
+                            <span className="font-medium">{stats.avgEarningsPerHarvest.toFixed(1)}🪙</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Earnings per Minute:</span>
+                            <span className="font-medium">{stats.earningsPerMinute.toFixed(1)}🪙</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Wither Rate:</span>
+                            <span className="font-medium">{stats.witherRate.toFixed(1)}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </TabsContent>
             </Tabs>
           </CardContent>
