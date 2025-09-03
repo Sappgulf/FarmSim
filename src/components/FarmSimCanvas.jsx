@@ -48,6 +48,311 @@ const ECONOMIC_EVENTS = [
   { id: "luxury_trend", name: "Luxury Food Trend", emoji: "🍾", description: "Premium market prices soar", duration: 150, effects: { luxury_premium: 2.0 } }
 ];
 
+// 🎉 SEASONAL EVENTS & FESTIVALS
+const SEASONAL_EVENTS = {
+  spring: [
+    { 
+      id: "spring_festival", 
+      name: "Spring Planting Festival", 
+      emoji: "🌸", 
+      description: "Celebrate new growth! Double XP for planting and 25% faster growth.", 
+      duration: 300, // 5 minutes
+      effects: { growth_speed: 1.25, planting_xp: 2.0 },
+      rewards: { coins: 100, items: { "spring_seeds": 3 } },
+      rarity: "common"
+    },
+    { 
+      id: "flower_bloom", 
+      name: "Flower Bloom Event", 
+      emoji: "🌺", 
+      description: "Flowers are in bloom! Decorative crops give bonus coins.", 
+      duration: 240,
+      effects: { flower_bonus: 1.5 },
+      rewards: { coins: 75, items: { "decorative_seeds": 2 } },
+      rarity: "uncommon"
+    }
+  ],
+  summer: [
+    { 
+      id: "harvest_moon", 
+      name: "Harvest Moon Festival", 
+      emoji: "🌕", 
+      description: "Under the harvest moon, all crops give 50% more coins!", 
+      duration: 180,
+      effects: { harvest_bonus: 1.5 },
+      rewards: { coins: 200, items: { "moon_fertilizer": 1 } },
+      rarity: "rare"
+    },
+    { 
+      id: "summer_solstice", 
+      name: "Summer Solstice", 
+      emoji: "☀️", 
+      description: "Longest day of the year! No watering needed and faster growth.", 
+      duration: 360,
+      effects: { no_watering: true, growth_speed: 1.3 },
+      rewards: { coins: 150, items: { "solar_seeds": 2 } },
+      rarity: "uncommon"
+    }
+  ],
+  autumn: [
+    { 
+      id: "pumpkin_fest", 
+      name: "Pumpkin Festival", 
+      emoji: "🎃", 
+      description: "Pumpkins and gourds sell for triple value!", 
+      duration: 420,
+      effects: { pumpkin_bonus: 3.0 },
+      rewards: { coins: 300, items: { "giant_pumpkin_seeds": 1 } },
+      rarity: "epic"
+    },
+    { 
+      id: "thanksgiving", 
+      name: "Thanksgiving Feast", 
+      emoji: "🦃", 
+      description: "Share the harvest! Bonus coins for every crop type in inventory.", 
+      duration: 240,
+      effects: { diversity_bonus: 50 },
+      rewards: { coins: 250, items: { "feast_crops": 5 } },
+      rarity: "rare"
+    }
+  ],
+  winter: [
+    { 
+      id: "winter_wonder", 
+      name: "Winter Wonderland", 
+      emoji: "❄️", 
+      description: "Greenhouse crops immune to frost and grow 2x faster!", 
+      duration: 300,
+      effects: { greenhouse_boost: 2.0, frost_immunity: true },
+      rewards: { coins: 175, items: { "winter_seeds": 3 } },
+      rarity: "uncommon"
+    }
+  ]
+};
+
+// 🎯 DAILY CHALLENGES SYSTEM
+const DAILY_CHALLENGE_TYPES = [
+  {
+    id: "harvest_master",
+    name: "Harvest Master",
+    description: "Harvest {target} crops",
+    emoji: "🌾",
+    generateTarget: () => Math.floor(Math.random() * 15) + 10, // 10-25 crops
+    checkProgress: (progress, target) => progress.harvests >= target,
+    reward: { coins: 50, xp: 25, items: { "fertilizer": 2 } }
+  },
+  {
+    id: "coin_collector",
+    name: "Coin Collector", 
+    description: "Earn {target} coins",
+    emoji: "💰",
+    generateTarget: () => Math.floor(Math.random() * 200) + 100, // 100-300 coins
+    checkProgress: (progress, target) => progress.coinsEarned >= target,
+    reward: { coins: 75, xp: 30, items: { "pesticide": 1 } }
+  },
+  {
+    id: "speed_farmer",
+    name: "Speed Farmer",
+    description: "Plant {target} seeds in under 5 minutes",
+    emoji: "⚡",
+    generateTarget: () => Math.floor(Math.random() * 8) + 7, // 7-15 seeds
+    checkProgress: (progress, target) => progress.planted >= target && progress.timeSpent <= 300,
+    reward: { coins: 100, xp: 40, items: { "speed_fertilizer": 2 } }
+  },
+  {
+    id: "pest_hunter",
+    name: "Pest Hunter",
+    description: "Eliminate {target} pests",
+    emoji: "🐛",
+    generateTarget: () => Math.floor(Math.random() * 5) + 3, // 3-8 pests
+    checkProgress: (progress, target) => progress.pestsKilled >= target,
+    reward: { coins: 60, xp: 35, items: { "super_pesticide": 1 } }
+  },
+  {
+    id: "weather_warrior",
+    name: "Weather Warrior",
+    description: "Survive {target} weather events without crop loss",
+    emoji: "🌪️",
+    generateTarget: () => Math.floor(Math.random() * 3) + 2, // 2-5 events
+    checkProgress: (progress, target) => progress.weatherSurvived >= target,
+    reward: { coins: 125, xp: 50, items: { "weather_shield": 1 } }
+  }
+];
+
+// 🧬 CROP BREEDING SYSTEM
+const BREEDING_RECIPES = {
+  // Basic hybrids
+  super_carrot: {
+    name: "Super Carrot",
+    emoji: "🥕✨",
+    parents: ["carrot", "carrot"],
+    growthTime: 45,
+    baseValue: 25,
+    shopPrice: 40,
+    quality: 1.5,
+    description: "Enhanced carrot with faster growth and higher value",
+    traits: ["fast_growth", "high_value"],
+    unlockLevel: 2
+  },
+  rainbow_corn: {
+    name: "Rainbow Corn", 
+    emoji: "🌽🌈",
+    parents: ["corn", "sunflower"],
+    growthTime: 70,
+    baseValue: 45,
+    shopPrice: 65,
+    quality: 2.0,
+    description: "Colorful hybrid corn with premium market appeal",
+    traits: ["premium_quality", "weather_resistant"],
+    unlockLevel: 3
+  },
+  golden_tomato: {
+    name: "Golden Tomato",
+    emoji: "🍅✨", 
+    parents: ["tomato", "sunflower"],
+    growthTime: 55,
+    baseValue: 35,
+    shopPrice: 50,
+    quality: 1.8,
+    description: "Luxurious golden tomato with enhanced flavor",
+    traits: ["luxury_appeal", "disease_resistant"],
+    unlockLevel: 3
+  },
+  frost_potato: {
+    name: "Frost Potato",
+    emoji: "🥔❄️",
+    parents: ["potato", "winter_seeds"],
+    growthTime: 40,
+    baseValue: 20,
+    shopPrice: 35,
+    quality: 1.3,
+    description: "Cold-resistant potato that thrives in winter",
+    traits: ["frost_resistant", "winter_bonus"],
+    unlockLevel: 4
+  },
+  // Advanced hybrids
+  dragon_pepper: {
+    name: "Dragon Pepper",
+    emoji: "🌶️🔥",
+    parents: ["bellPepper", "super_carrot"],
+    growthTime: 90,
+    baseValue: 80,
+    shopPrice: 120,
+    quality: 3.0,
+    description: "Legendary spicy pepper with incredible value",
+    traits: ["legendary", "pest_repellent", "high_value"],
+    unlockLevel: 5
+  }
+};
+
+// 🌤️ WEATHER PREDICTION MINI-GAME
+const WEATHER_PATTERNS = [
+  { 
+    pattern: ["sunny", "sunny", "cloudy"], 
+    nextWeather: "rainy", 
+    confidence: 0.8,
+    hint: "Three day pattern suggests incoming rain"
+  },
+  { 
+    pattern: ["rainy", "cloudy"], 
+    nextWeather: "sunny", 
+    confidence: 0.7,
+    hint: "Rain clearing leads to sunshine"
+  },
+  { 
+    pattern: ["windy", "windy"], 
+    nextWeather: "stormy", 
+    confidence: 0.9,
+    hint: "Strong winds often bring storms"
+  },
+  { 
+    pattern: ["sunny", "hot"], 
+    nextWeather: "drought", 
+    confidence: 0.6,
+    hint: "Extended heat may cause drought"
+  }
+];
+
+const WEATHER_PREDICTION_REWARDS = {
+  perfect: { coins: 100, xp: 50, accuracy: 1.0 },
+  good: { coins: 60, xp: 30, accuracy: 0.8 },
+  okay: { coins: 30, xp: 15, accuracy: 0.6 },
+  poor: { coins: 10, xp: 5, accuracy: 0.4 }
+};
+
+// 🐕 FARM PETS SYSTEM
+const PET_TYPES = {
+  dog: {
+    name: "Farm Dog",
+    emoji: "🐕",
+    cost: 200,
+    maxLevel: 5,
+    traits: ["pest_detection", "security", "loyalty"],
+    bonuses: {
+      pest_prevention: 0.3, // 30% chance to prevent pests
+      theft_protection: 0.5, // 50% protection from theft events
+      happiness_boost: 0.1 // 10% faster growth from happiness
+    },
+    needs: {
+      food: { type: "pet_food", consumption: 1, interval: 3600 }, // 1 food per hour
+      play: { type: "attention", consumption: 1, interval: 7200 }, // Play every 2 hours
+      health: { type: "vet_care", consumption: 1, interval: 86400 } // Vet care daily
+    },
+    levelBonuses: {
+      1: { pest_prevention: 0.1 },
+      2: { pest_prevention: 0.15, security: 0.1 },
+      3: { pest_prevention: 0.2, security: 0.15, loyalty: 0.1 },
+      4: { pest_prevention: 0.25, security: 0.2, loyalty: 0.15 },
+      5: { pest_prevention: 0.3, security: 0.25, loyalty: 0.2 }
+    }
+  },
+  cat: {
+    name: "Farm Cat",
+    emoji: "🐱", 
+    cost: 150,
+    maxLevel: 5,
+    traits: ["pest_hunter", "independence", "curiosity"],
+    bonuses: {
+      pest_elimination: 0.4, // 40% chance to auto-eliminate pests
+      crop_quality: 0.15, // 15% quality bonus from pest control
+      luck_boost: 0.05 // 5% better random events
+    },
+    needs: {
+      food: { type: "pet_food", consumption: 1, interval: 4800 }, // 1 food per 1.3 hours
+      play: { type: "attention", consumption: 1, interval: 10800 }, // Play every 3 hours
+      health: { type: "vet_care", consumption: 1, interval: 86400 }
+    },
+    levelBonuses: {
+      1: { pest_elimination: 0.2 },
+      2: { pest_elimination: 0.25, crop_quality: 0.05 },
+      3: { pest_elimination: 0.3, crop_quality: 0.1, luck_boost: 0.02 },
+      4: { pest_elimination: 0.35, crop_quality: 0.12, luck_boost: 0.03 },
+      5: { pest_elimination: 0.4, crop_quality: 0.15, luck_boost: 0.05 }
+    }
+  },
+  chicken: {
+    name: "Farm Chicken",
+    emoji: "🐔",
+    cost: 100,
+    maxLevel: 3,
+    traits: ["egg_production", "pest_control", "fertilizer_production"],
+    bonuses: {
+      daily_eggs: 2, // 2 eggs per day
+      pest_reduction: 0.2, // 20% fewer pests
+      fertilizer_production: 1 // 1 fertilizer per day
+    },
+    needs: {
+      food: { type: "grain", consumption: 2, interval: 3600 },
+      shelter: { type: "coop", consumption: 0, interval: 0 }
+    },
+    levelBonuses: {
+      1: { daily_eggs: 1 },
+      2: { daily_eggs: 2, fertilizer_production: 0.5 },
+      3: { daily_eggs: 3, fertilizer_production: 1, pest_reduction: 0.2 }
+    }
+  }
+};
+
 // PRESTIGE SYSTEM - REFINED BALANCE
 const PRESTIGE_LEVELS = [
   { level: 0, name: "Beginner", emoji: "🌱", multiplier: 1.0, requirement: 0 },
@@ -330,6 +635,12 @@ const DEFAULT_RULES = {
     lettuce: { stages: 3, secondsPerStage: 6, baseValue: 8, shopPrice: 3, emoji: "🥬", rarity: "common", season: "spring", family: "leaf" },
     bellPepper: { stages: 4, secondsPerStage: 15, baseValue: 32, shopPrice: 18, emoji: "🫑", rarity: "uncommon", season: "summer", family: "fruit" },
     garlic: { stages: 3, secondsPerStage: 12, baseValue: 18, shopPrice: 8, emoji: "🧄", rarity: "common", season: "fall", family: "bulb" },
+    // 🧬 HYBRID SEEDS (dynamically added from breeding)
+    super_carrot: { stages: 3, secondsPerStage: 6, baseValue: 25, shopPrice: 40, emoji: "🥕✨", rarity: "hybrid", season: "spring", family: "root" },
+    rainbow_corn: { stages: 4, secondsPerStage: 10, baseValue: 45, shopPrice: 65, emoji: "🌽🌈", rarity: "hybrid", season: "summer", family: "grain" },
+    golden_tomato: { stages: 4, secondsPerStage: 11, baseValue: 35, shopPrice: 50, emoji: "🍅✨", rarity: "hybrid", season: "summer", family: "fruit" },
+    frost_potato: { stages: 3, secondsPerStage: 7, baseValue: 20, shopPrice: 35, emoji: "🥔❄️", rarity: "hybrid", season: "winter", family: "root" },
+    dragon_pepper: { stages: 5, secondsPerStage: 15, baseValue: 80, shopPrice: 120, emoji: "🌶️🔥", rarity: "legendary", season: "summer", family: "fruit" },
   },
   buildings: {
     barn: { price: 200, emoji: "🏚️", name: "Barn", description: "Stores crops and provides +20% harvest value", effect: "storage", bonus: 0.2 },
@@ -1065,6 +1376,45 @@ function FarmSimCanvas() {
   const [events, setEvents] = useState(saved?.events || []);
   const [automation, setAutomation] = useState(saved?.automation || {});
   
+  // 🎉 NEW GAMEPLAY FEATURES STATE
+  // Seasonal Events & Festivals
+  const [activeSeasonalEvents, setActiveSeasonalEvents] = useState(saved?.activeSeasonalEvents || []);
+  const [seasonalEventHistory, setSeasonalEventHistory] = useState(saved?.seasonalEventHistory || []);
+  const [lastSeasonalCheck, setLastSeasonalCheck] = useState(saved?.lastSeasonalCheck || nowSec());
+  
+  // Daily Challenges
+  const [dailyChallenges, setDailyChallenges] = useState(saved?.dailyChallenges || []);
+  const [dailyChallengeProgress, setDailyChallengeProgress] = useState(saved?.dailyChallengeProgress || {});
+  const [lastChallengeReset, setLastChallengeReset] = useState(saved?.lastChallengeReset || nowSec());
+  const [challengeStreak, setChallengeStreak] = useState(saved?.challengeStreak || 0);
+  
+  // Crop Breeding System
+  const [hybridSeeds, setHybridSeeds] = useState(saved?.hybridSeeds || {});
+  const [breedingQueue, setBreedingQueue] = useState(saved?.breedingQueue || []);
+  const [breedingLab, setBreedingLab] = useState(saved?.breedingLab || { level: 1, capacity: 2 });
+  const [discoveredHybrids, setDiscoveredHybrids] = useState(saved?.discoveredHybrids || []);
+  
+  // Weather Prediction Mini-Game
+  const [weatherPredictionGame, setWeatherPredictionGame] = useState(saved?.weatherPredictionGame || {
+    active: false,
+    currentPattern: [],
+    accuracy: 0,
+    streak: 0,
+    totalPredictions: 0,
+    correctPredictions: 0
+  });
+  const [weatherPredictionRewards, setWeatherPredictionRewards] = useState(saved?.weatherPredictionRewards || 0);
+  
+  // Farm Pets System
+  const [farmPets, setFarmPets] = useState(saved?.farmPets || []);
+  const [petSupplies, setPetSupplies] = useState(saved?.petSupplies || { 
+    pet_food: 5, 
+    attention: 100, 
+    vet_care: 2 
+  });
+  const [petHappiness, setPetHappiness] = useState(saved?.petHappiness || {});
+  const [lastPetCare, setLastPetCare] = useState(saved?.lastPetCare || {});
+  
   // NEW: Enhanced visual and gameplay state
   const [currentTimeOfDay, setCurrentTimeOfDay] = useState(saved?.currentTimeOfDay || "day");
   const [weatherForecast, setWeatherForecast] = useState(saved?.weatherForecast || []);
@@ -1433,6 +1783,12 @@ function FarmSimCanvas() {
           // Enhanced Systems
           buildings, livestock, processedGoods, npcs, events, automation,
           marketTrends, sprinklers, scarecrows,
+          // NEW GAMEPLAY FEATURES
+          activeSeasonalEvents, seasonalEventHistory, lastSeasonalCheck,
+          dailyChallenges, dailyChallengeProgress, lastChallengeReset, challengeStreak,
+          hybridSeeds, breedingQueue, breedingLab, discoveredHybrids,
+          weatherPredictionGame, weatherPredictionRewards,
+          farmPets, petSupplies, petHappiness, lastPetCare,
           // Enhanced Visual/Gameplay
           currentTimeOfDay, weatherForecast, beeHappiness,
           diseasesCured, rotationUses, weatherPredictions, honeyProduced,
@@ -2022,6 +2378,398 @@ function FarmSimCanvas() {
     setCoins(prev => prev - coop.membershipCost);
     setCoopMembership(prev => [...prev, type]);
     addNotification(`Joined ${coop.name}! 🤝`, "success");
+  };
+
+  // 🎉 SEASONAL EVENTS & FESTIVALS FUNCTIONS
+  const checkSeasonalEvents = () => {
+    const now = nowSec();
+    const currentEvents = SEASONAL_EVENTS[currentSeason] || [];
+    
+    // Check if we should trigger a new event (10% chance every 5 minutes)
+    if (now - lastSeasonalCheck >= 300 && Math.random() < 0.1) {
+      const availableEvents = currentEvents.filter(event => 
+        !activeSeasonalEvents.some(active => active.id === event.id)
+      );
+      
+      if (availableEvents.length > 0) {
+        const selectedEvent = availableEvents[Math.floor(Math.random() * availableEvents.length)];
+        const eventInstance = {
+          ...selectedEvent,
+          startedAt: now,
+          endsAt: now + selectedEvent.duration,
+          id: `${selectedEvent.id}_${now}`
+        };
+        
+        setActiveSeasonalEvents(prev => [...prev, eventInstance]);
+        addNotification(`🎉 ${selectedEvent.name} has begun! ${selectedEvent.description}`, "success");
+        addLog(`🎉 Seasonal Event: ${selectedEvent.name} started!`);
+      }
+      
+      setLastSeasonalCheck(now);
+    }
+    
+    // Remove expired events and give rewards
+    setActiveSeasonalEvents(prev => prev.filter(event => {
+      if (now >= event.endsAt) {
+        // Give completion rewards
+        setCoins(c => c + event.rewards.coins);
+        if (event.rewards.items) {
+          Object.entries(event.rewards.items).forEach(([item, qty]) => {
+            setInventory(inv => ({ ...inv, [item]: (inv[item] || 0) + qty }));
+          });
+        }
+        
+        // Track in history
+        setSeasonalEventHistory(hist => [...hist, { 
+          ...event, 
+          completedAt: now,
+          rewardsGiven: true 
+        }].slice(-20)); // Keep last 20 events
+        
+        addNotification(`🏆 ${event.name} completed! Rewards claimed!`, "success");
+        return false;
+      }
+      return true;
+    }));
+  };
+
+  // 🎯 DAILY CHALLENGES FUNCTIONS
+  const generateDailyChallenge = () => {
+    const challengeType = DAILY_CHALLENGE_TYPES[Math.floor(Math.random() * DAILY_CHALLENGE_TYPES.length)];
+    const target = challengeType.generateTarget();
+    
+    return {
+      id: `${challengeType.id}_${Date.now()}`,
+      type: challengeType.id,
+      name: challengeType.name,
+      description: challengeType.description.replace('{target}', target),
+      emoji: challengeType.emoji,
+      target,
+      progress: 0,
+      completed: false,
+      reward: challengeType.reward,
+      createdAt: nowSec(),
+      expiresAt: nowSec() + 86400 // 24 hours
+    };
+  };
+
+  const checkDailyChallenges = () => {
+    const now = nowSec();
+    const daysSinceReset = Math.floor((now - lastChallengeReset) / 86400);
+    
+    // Reset challenges daily
+    if (daysSinceReset >= 1) {
+      const newChallenges = Array(3).fill().map(() => generateDailyChallenge());
+      setDailyChallenges(newChallenges);
+      setDailyChallengeProgress({});
+      setLastChallengeReset(now);
+      addNotification("🎯 New daily challenges available!", "info");
+    }
+    
+    // Check challenge completion
+    dailyChallenges.forEach(challenge => {
+      if (!challenge.completed) {
+        const challengeType = DAILY_CHALLENGE_TYPES.find(t => t.id === challenge.type);
+        const progress = dailyChallengeProgress[challenge.id] || {};
+        
+        if (challengeType?.checkProgress(progress, challenge.target)) {
+          // Complete challenge
+          setDailyChallenges(prev => prev.map(c => 
+            c.id === challenge.id ? { ...c, completed: true } : c
+          ));
+          
+          // Give rewards
+          setCoins(c => c + challenge.reward.coins);
+          if (challenge.reward.items) {
+            Object.entries(challenge.reward.items).forEach(([item, qty]) => {
+              setInventory(inv => ({ ...inv, [item]: (inv[item] || 0) + qty }));
+            });
+          }
+          
+          setChallengeStreak(prev => prev + 1);
+          addNotification(`🏆 Challenge completed: ${challenge.name}!`, "success");
+        }
+      }
+    });
+  };
+
+  const updateChallengeProgress = (type, data) => {
+    const activeChallenge = dailyChallenges.find(c => c.type === type && !c.completed);
+    if (!activeChallenge) return;
+    
+    setDailyChallengeProgress(prev => ({
+      ...prev,
+      [activeChallenge.id]: {
+        ...prev[activeChallenge.id],
+        ...data
+      }
+    }));
+  };
+
+  // 🧬 CROP BREEDING FUNCTIONS
+  const startBreeding = (parent1, parent2) => {
+    if (breedingQueue.length >= breedingLab.capacity) {
+      addNotification("Breeding lab is at capacity!", "error");
+      return;
+    }
+    
+    // Check if we have the parent seeds
+    if ((inventory[parent1] || 0) < 1 || (inventory[parent2] || 0) < 1) {
+      addNotification("Need both parent seeds to breed!", "error");
+      return;
+    }
+    
+    // Find possible hybrid
+    const possibleHybrid = Object.entries(BREEDING_RECIPES).find(([hybridId, recipe]) => {
+      return (recipe.parents.includes(parent1) && recipe.parents.includes(parent2)) ||
+             (recipe.parents[0] === parent1 && recipe.parents[1] === parent2) ||
+             (recipe.parents[0] === parent2 && recipe.parents[1] === parent1);
+    });
+    
+    if (!possibleHybrid) {
+      addNotification("These seeds cannot be bred together!", "error");
+      return;
+    }
+    
+    const [hybridId, recipe] = possibleHybrid;
+    
+    // Consume parent seeds
+    setInventory(prev => ({
+      ...prev,
+      [parent1]: prev[parent1] - 1,
+      [parent2]: prev[parent2] - 1
+    }));
+    
+    // Add to breeding queue
+    const breedingProcess = {
+      id: Date.now(),
+      hybridId,
+      parent1,
+      parent2,
+      startedAt: nowSec(),
+      completesAt: nowSec() + 1800, // 30 minutes
+      success: Math.random() < 0.7 // 70% success rate
+    };
+    
+    setBreedingQueue(prev => [...prev, breedingProcess]);
+    addNotification(`🧬 Started breeding ${recipe.name}!`, "info");
+  };
+
+  const checkBreedingCompletion = () => {
+    const now = nowSec();
+    
+    setBreedingQueue(prev => prev.filter(process => {
+      if (now >= process.completesAt) {
+        const recipe = BREEDING_RECIPES[process.hybridId];
+        
+        if (process.success) {
+          // Successful breeding
+          setHybridSeeds(prev => ({
+            ...prev,
+            [process.hybridId]: (prev[process.hybridId] || 0) + 1
+          }));
+          
+          // Add to discovered hybrids if new
+          if (!discoveredHybrids.includes(process.hybridId)) {
+            setDiscoveredHybrids(prev => [...prev, process.hybridId]);
+            addNotification(`🎉 New hybrid discovered: ${recipe.name}!`, "success");
+          } else {
+            addNotification(`🧬 Breeding successful: ${recipe.name}!`, "success");
+          }
+        } else {
+          // Failed breeding
+          addNotification(`💔 Breeding failed. Better luck next time!`, "error");
+        }
+        
+        return false; // Remove from queue
+      }
+      return true; // Keep in queue
+    }));
+  };
+
+  // 🌤️ WEATHER PREDICTION MINI-GAME FUNCTIONS
+  const startWeatherPredictionGame = () => {
+    const recentWeather = weatherForecast.slice(-3).map(w => w.type.toLowerCase());
+    const pattern = [...recentWeather, weather.type.toLowerCase()];
+    
+    setWeatherPredictionGame({
+      active: true,
+      currentPattern: pattern,
+      accuracy: 0,
+      streak: weatherPredictionGame.streak,
+      totalPredictions: weatherPredictionGame.totalPredictions,
+      correctPredictions: weatherPredictionGame.correctPredictions,
+      startedAt: nowSec()
+    });
+  };
+
+  const makePrediction = (predictedWeather) => {
+    if (!weatherPredictionGame.active) return;
+    
+    // Find matching pattern
+    const matchingPattern = WEATHER_PATTERNS.find(p => 
+      p.pattern.every((weather, index) => 
+        index < weatherPredictionGame.currentPattern.length && 
+        weatherPredictionGame.currentPattern[index] === weather
+      )
+    );
+    
+    const isCorrect = matchingPattern && matchingPattern.nextWeather === predictedWeather;
+    const accuracy = isCorrect ? 1.0 : 0.0;
+    
+    // Update game state
+    setWeatherPredictionGame(prev => ({
+      ...prev,
+      active: false,
+      accuracy,
+      streak: isCorrect ? prev.streak + 1 : 0,
+      totalPredictions: prev.totalPredictions + 1,
+      correctPredictions: prev.correctPredictions + (isCorrect ? 1 : 0)
+    }));
+    
+    // Give rewards based on accuracy and streak
+    let rewardLevel = "poor";
+    if (accuracy >= 1.0) rewardLevel = "perfect";
+    else if (accuracy >= 0.8) rewardLevel = "good";
+    else if (accuracy >= 0.6) rewardLevel = "okay";
+    
+    const reward = WEATHER_PREDICTION_REWARDS[rewardLevel];
+    const streakBonus = Math.floor(weatherPredictionGame.streak / 3) * 10; // Bonus every 3 streak
+    
+    setCoins(c => c + reward.coins + streakBonus);
+    setWeatherPredictionRewards(prev => prev + reward.coins + streakBonus);
+    
+    const message = isCorrect 
+      ? `🎯 Correct prediction! +${reward.coins + streakBonus}🪙 (Streak: ${weatherPredictionGame.streak + 1})`
+      : `❌ Wrong prediction. Streak reset.`;
+    
+    addNotification(message, isCorrect ? "success" : "error");
+    
+    // Update challenge progress
+    if (isCorrect) {
+      updateChallengeProgress("weather_warrior", { weatherSurvived: 1 });
+    }
+  };
+
+  // 🐕 FARM PETS FUNCTIONS
+  const adoptPet = (petType) => {
+    const pet = PET_TYPES[petType];
+    if (!pet) return;
+    
+    if (coins < pet.cost) {
+      addNotification(`Need ${pet.cost}🪙 to adopt a ${pet.name}!`, "error");
+      return;
+    }
+    
+    // Check if already have this pet type
+    if (farmPets.some(p => p.type === petType)) {
+      addNotification(`You already have a ${pet.name}!`, "error");
+      return;
+    }
+    
+    setCoins(prev => prev - pet.cost);
+    
+    const newPet = {
+      id: Date.now(),
+      type: petType,
+      name: `${pet.name}`,
+      level: 1,
+      happiness: 100,
+      hunger: 0,
+      playfulness: 100,
+      health: 100,
+      adoptedAt: nowSec(),
+      lastFed: nowSec(),
+      lastPlayed: nowSec(),
+      lastVetVisit: nowSec()
+    };
+    
+    setFarmPets(prev => [...prev, newPet]);
+    setPetHappiness(prev => ({ ...prev, [newPet.id]: 100 }));
+    setLastPetCare(prev => ({ ...prev, [newPet.id]: nowSec() }));
+    
+    addNotification(`🎉 Welcome your new ${pet.name}! ${pet.emoji}`, "success");
+    addLog(`🐾 Adopted a ${pet.name}!`);
+  };
+
+  const carePet = (petId, careType) => {
+    const pet = farmPets.find(p => p.id === petId);
+    const petType = PET_TYPES[pet?.type];
+    if (!pet || !petType) return;
+    
+    const need = petType.needs[careType];
+    if (!need) return;
+    
+    // Check if we have supplies
+    if ((petSupplies[need.type] || 0) < need.consumption) {
+      addNotification(`Need ${need.consumption} ${need.type} to care for ${pet.name}!`, "error");
+      return;
+    }
+    
+    // Consume supplies
+    setPetSupplies(prev => ({
+      ...prev,
+      [need.type]: prev[need.type] - need.consumption
+    }));
+    
+    // Update pet status
+    setFarmPets(prev => prev.map(p => {
+      if (p.id === petId) {
+        const updated = { ...p };
+        if (careType === 'food') {
+          updated.hunger = Math.max(0, updated.hunger - 50);
+          updated.lastFed = nowSec();
+        } else if (careType === 'play') {
+          updated.playfulness = Math.min(100, updated.playfulness + 30);
+          updated.lastPlayed = nowSec();
+        } else if (careType === 'health') {
+          updated.health = Math.min(100, updated.health + 25);
+          updated.lastVetVisit = nowSec();
+        }
+        updated.happiness = Math.min(100, (updated.health + updated.playfulness + (100 - updated.hunger)) / 3);
+        return updated;
+      }
+      return p;
+    }));
+    
+    setPetHappiness(prev => ({ ...prev, [petId]: pet.happiness }));
+    addNotification(`${pet.name} feels better! ${petType.emoji}`, "success");
+  };
+
+  const updatePetNeeds = () => {
+    const now = nowSec();
+    
+    setFarmPets(prev => prev.map(pet => {
+      const petType = PET_TYPES[pet.type];
+      if (!petType) return pet;
+      
+      const updated = { ...pet };
+      
+      // Update hunger
+      const timeSinceFood = now - pet.lastFed;
+      const foodInterval = petType.needs.food.interval;
+      if (timeSinceFood >= foodInterval) {
+        updated.hunger = Math.min(100, updated.hunger + 20);
+      }
+      
+      // Update playfulness
+      const timeSincePlay = now - pet.lastPlayed;
+      const playInterval = petType.needs.play.interval;
+      if (timeSincePlay >= playInterval) {
+        updated.playfulness = Math.max(0, updated.playfulness - 15);
+      }
+      
+      // Update health (slow decay)
+      const timeSinceVet = now - pet.lastVetVisit;
+      if (timeSinceVet >= 86400) { // Daily health decay
+        updated.health = Math.max(0, updated.health - 5);
+      }
+      
+      // Calculate overall happiness
+      updated.happiness = Math.min(100, (updated.health + updated.playfulness + (100 - updated.hunger)) / 3);
+      
+      return updated;
+    }));
   };
 
   // PRESTIGE SYSTEM FUNCTIONS
@@ -3546,6 +4294,69 @@ function FarmSimCanvas() {
     return () => clearInterval(eventInterval);
   }, []);
 
+  // 🎉 NEW GAMEPLAY FEATURES useEffects
+  
+  // Seasonal Events Management
+  useEffect(() => {
+    checkSeasonalEvents();
+    
+    const eventCheckInterval = setInterval(checkSeasonalEvents, 30000); // Check every 30 seconds
+    return () => clearInterval(eventCheckInterval);
+  }, [currentSeason, lastSeasonalCheck]);
+
+  // Daily Challenges Management  
+  useEffect(() => {
+    checkDailyChallenges();
+    
+    const challengeCheckInterval = setInterval(checkDailyChallenges, 60000); // Check every minute
+    return () => clearInterval(challengeCheckInterval);
+  }, [lastChallengeReset]);
+
+  // Initialize daily challenges if empty
+  useEffect(() => {
+    if (dailyChallenges.length === 0) {
+      const newChallenges = Array(3).fill().map(() => generateDailyChallenge());
+      setDailyChallenges(newChallenges);
+    }
+  }, []);
+
+  // Crop Breeding Management
+  useEffect(() => {
+    checkBreedingCompletion();
+    
+    const breedingCheckInterval = setInterval(checkBreedingCompletion, 10000); // Check every 10 seconds
+    return () => clearInterval(breedingCheckInterval);
+  }, [breedingQueue]);
+
+  // Farm Pets Management
+  useEffect(() => {
+    updatePetNeeds();
+    
+    const petCareInterval = setInterval(updatePetNeeds, 30000); // Check every 30 seconds
+    return () => clearInterval(petCareInterval);
+  }, [farmPets]);
+
+  // Pet bonuses application
+  useEffect(() => {
+    farmPets.forEach(pet => {
+      const petType = PET_TYPES[pet.type];
+      if (!petType || pet.happiness < 50) return; // Only happy pets give bonuses
+      
+      // Apply pet bonuses to crops
+      if (petType.bonuses.pest_prevention && Math.random() < petType.bonuses.pest_prevention) {
+        // Prevent pests on random plots
+        const pestPlots = plots.filter(p => p.pest);
+        if (pestPlots.length > 0) {
+          const randomPlot = pestPlots[Math.floor(Math.random() * pestPlots.length)];
+          setPlots(prev => prev.map(p => 
+            p.id === randomPlot.id ? { ...p, pest: false } : p
+          ));
+          addNotification(`${pet.name} scared away pests! ${petType.emoji}`, "success");
+        }
+      }
+    });
+  }, [farmPets, plots]);
+
   // Mobile detection useEffect
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -4133,6 +4944,12 @@ function FarmSimCanvas() {
       // Tutorial progress tracking
       checkTutorialProgress('plant', { seed, plotIndex: i });
       
+      // 🎯 UPDATE CHALLENGE PROGRESS
+      updateChallengeProgress("speed_farmer", { 
+        planted: (dailyChallengeProgress.speed_farmer?.planted || 0) + 1,
+        timeSpent: nowSec() - (lastChallengeReset || nowSec())
+      });
+      
       // Trigger observe growth tutorial step after a delay
       setTimeout(() => {
         checkTutorialProgress('observe_growth', { seed, plotIndex: i });
@@ -4179,6 +4996,12 @@ function FarmSimCanvas() {
       addLog(`🧽 Sprayed plot ${i + 1}. Pests eliminated!`);
       playSfx("spray");
       addParticle(i % gridSize * 120 + 60, Math.floor(i / gridSize) * 120 + 60, "spray", "💨");
+      
+      // 🎯 UPDATE CHALLENGE PROGRESS
+      updateChallengeProgress("pest_hunter", { 
+        pestsKilled: (dailyChallengeProgress.pest_hunter?.pestsKilled || 0) + 1 
+      });
+      
       checkAllAchievements();
       return { ...p, infested: false };
     });
@@ -4230,6 +5053,10 @@ function FarmSimCanvas() {
       setScore(s => s + val);
       setTotalEarned(t => t + val);
       setTotalHarvests(h => h + 1);
+
+      // 🎯 UPDATE CHALLENGE PROGRESS
+      updateChallengeProgress("harvest_master", { harvests: (dailyChallengeProgress.harvest_master?.harvests || 0) + 1 });
+      updateChallengeProgress("coin_collector", { coinsEarned: (dailyChallengeProgress.coin_collector?.coinsEarned || 0) + val });
 
       // 📊 ANALYTICS: Track harvest performance
       updateAnalytics("coinsEarned", val);
@@ -5935,6 +6762,11 @@ function buy(item, qty = 1) {
                     <TabsTrigger className="shrink-0" value="workers">👷 Workers</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="processing">🏭 Processing</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="market">📈 Market</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="events">🎉 Events</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="challenges">🎯 Challenges</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="breeding">🧬 Breeding</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="weather">🌤️ Weather</TabsTrigger>
+                    <TabsTrigger className="shrink-0" value="pets">🐕 Pets</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="town">🏛️ Town</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="social">👥 Social</TabsTrigger>
                     <TabsTrigger className="shrink-0" value="community">🌍 Community</TabsTrigger>
@@ -6971,6 +7803,435 @@ function buy(item, qty = 1) {
                         </Button>
                       </div>
                     </div>
+                  </TabsContent>
+
+                  {/* 🎉 SEASONAL EVENTS TAB */}
+                  <TabsContent value="events" className="space-y-2">
+                    <div className="text-sm font-semibold mb-2">🎉 Seasonal Events & Festivals</div>
+                    
+                    {/* Active Events */}
+                    {activeSeasonalEvents.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-semibold">🎪 Active Events</h4>
+                        {activeSeasonalEvents.map(event => {
+                          const timeLeft = Math.max(0, event.endsAt - nowSec());
+                          const minutes = Math.floor(timeLeft / 60);
+                          const seconds = timeLeft % 60;
+                          
+                          return (
+                            <Card key={event.id} className="p-3">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-semibold">{event.emoji} {event.name}</div>
+                                  <div className="text-xs text-gray-600">{event.description}</div>
+                                  <div className="text-xs font-mono">⏰ {minutes}m {seconds}s remaining</div>
+                                </div>
+                                <Badge variant="outline" className={`
+                                  ${event.rarity === 'epic' ? 'border-purple-500 text-purple-700' : ''}
+                                  ${event.rarity === 'rare' ? 'border-blue-500 text-blue-700' : ''}
+                                  ${event.rarity === 'uncommon' ? 'border-green-500 text-green-700' : ''}
+                                `}>
+                                  {event.rarity}
+                                </Badge>
+                              </div>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    )}
+                    
+                    {/* Event History */}
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2">📜 Recent Events</h4>
+                      {seasonalEventHistory.slice(-5).map(event => (
+                        <div key={event.id} className="p-2 border rounded bg-gray-50 text-xs">
+                          <span>{event.emoji} {event.name}</span>
+                          <span className="float-right text-green-600">+{event.rewards.coins}🪙</span>
+                        </div>
+                      ))}
+                      {seasonalEventHistory.length === 0 && (
+                        <div className="text-xs text-gray-500 text-center py-4">
+                          No events completed yet. Wait for seasonal events to appear!
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  {/* 🎯 DAILY CHALLENGES TAB */}
+                  <TabsContent value="challenges" className="space-y-2">
+                    <div className="text-sm font-semibold mb-2">🎯 Daily Challenges</div>
+                    
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="text-xs">
+                        Streak: <span className="font-bold text-orange-600">{challengeStreak}</span>
+                      </div>
+                      <div className="text-xs">
+                        Resets in: {Math.max(0, Math.floor((lastChallengeReset + 86400 - nowSec()) / 3600))}h
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {dailyChallenges.map(challenge => {
+                        const progress = dailyChallengeProgress[challenge.id] || {};
+                        const progressPercent = Math.min(100, (progress[Object.keys(progress)[0]] || 0) / challenge.target * 100);
+                        
+                        return (
+                          <Card key={challenge.id} className={`p-3 ${challenge.completed ? 'bg-green-50 border-green-200' : ''}`}>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{challenge.emoji}</span>
+                                <div>
+                                  <div className="font-semibold text-sm">{challenge.name}</div>
+                                  <div className="text-xs text-gray-600">{challenge.description}</div>
+                                </div>
+                              </div>
+                              {challenge.completed && <Badge className="bg-green-500">✓ Done</Badge>}
+                            </div>
+                            
+                            <Progress value={progressPercent} className="mb-2" />
+                            
+                            <div className="flex justify-between text-xs">
+                              <span>Progress: {Object.values(progress)[0] || 0}/{challenge.target}</span>
+                              <span className="text-green-600">
+                                Reward: {challenge.reward.coins}🪙 + items
+                              </span>
+                            </div>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                    
+                    {dailyChallenges.length === 0 && (
+                      <div className="text-center py-6">
+                        <div className="text-gray-500 mb-2">No challenges available</div>
+                        <Button onClick={() => {
+                          const newChallenges = Array(3).fill().map(() => generateDailyChallenge());
+                          setDailyChallenges(newChallenges);
+                        }}>
+                          🎯 Generate Challenges
+                        </Button>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* 🧬 CROP BREEDING TAB */}
+                  <TabsContent value="breeding" className="space-y-2">
+                    <div className="text-sm font-semibold mb-2">🧬 Crop Breeding Laboratory</div>
+                    
+                    {/* Breeding Lab Status */}
+                    <Card className="p-3 bg-blue-50">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-semibold">🔬 Lab Level {breedingLab.level}</div>
+                          <div className="text-xs">Capacity: {breedingQueue.length}/{breedingLab.capacity}</div>
+                        </div>
+                        <Button size="sm" disabled>
+                          Upgrade Lab
+                        </Button>
+                      </div>
+                    </Card>
+                    
+                    {/* Active Breeding */}
+                    {breedingQueue.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold mb-2">⏳ Breeding in Progress</h4>
+                        {breedingQueue.map(process => {
+                          const recipe = BREEDING_RECIPES[process.hybridId];
+                          const timeLeft = Math.max(0, process.completesAt - nowSec());
+                          const minutes = Math.floor(timeLeft / 60);
+                          const seconds = timeLeft % 60;
+                          
+                          return (
+                            <Card key={process.id} className="p-3">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <div className="font-semibold">{recipe.emoji} {recipe.name}</div>
+                                  <div className="text-xs">
+                                    {process.parent1} + {process.parent2}
+                                  </div>
+                                </div>
+                                <div className="text-xs font-mono">
+                                  {minutes}m {seconds}s
+                                </div>
+                              </div>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    )}
+                    
+                    {/* Breeding Interface */}
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2">🧪 Start New Breeding</h4>
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        {Object.entries(inventory).filter(([seed, qty]) => 
+                          seed in rules.seeds && qty >= 2
+                        ).map(([seed, qty]) => (
+                          <Button
+                            key={seed}
+                            onClick={() => startBreeding(seed, seed)}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            disabled={breedingQueue.length >= breedingLab.capacity}
+                          >
+                            {rules.seeds[seed].emoji} Breed {seed} ({qty})
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Discovered Hybrids */}
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2">🏆 Discovered Hybrids</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {discoveredHybrids.map(hybridId => {
+                          const recipe = BREEDING_RECIPES[hybridId];
+                          const quantity = hybridSeeds[hybridId] || 0;
+                          
+                          return (
+                            <Card key={hybridId} className="p-2">
+                              <div className="text-center">
+                                <div className="text-lg">{recipe.emoji}</div>
+                                <div className="text-xs font-semibold">{recipe.name}</div>
+                                <div className="text-xs">Owned: {quantity}</div>
+                              </div>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                      {discoveredHybrids.length === 0 && (
+                        <div className="text-xs text-gray-500 text-center py-4">
+                          No hybrids discovered yet. Try breeding different seeds!
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  {/* 🌤️ WEATHER PREDICTION TAB */}
+                  <TabsContent value="weather" className="space-y-2">
+                    <div className="text-sm font-semibold mb-2">🌤️ Weather Prediction Center</div>
+                    
+                    {/* Current Weather Game */}
+                    {weatherPredictionGame.active ? (
+                      <Card className="p-4 bg-blue-50">
+                        <div className="text-center">
+                          <h4 className="font-semibold mb-3">🔮 Predict Next Weather</h4>
+                          <div className="mb-3">
+                            <div className="text-xs mb-2">Recent Pattern:</div>
+                            <div className="flex justify-center gap-1 mb-3">
+                              {weatherPredictionGame.currentPattern.map((w, i) => (
+                                <Badge key={i} variant="outline" className="text-xs">
+                                  {w}
+                                </Badge>
+                              ))}
+                              <span className="mx-2">→</span>
+                              <Badge variant="outline" className="text-xs">?</Badge>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            {["sunny", "rainy", "stormy", "windy"].map(weather => (
+                              <Button
+                                key={weather}
+                                onClick={() => makePrediction(weather)}
+                                variant="outline"
+                                size="sm"
+                                className="text-xs"
+                              >
+                                🌤️ {weather}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      </Card>
+                    ) : (
+                      <div className="text-center">
+                        <Button 
+                          onClick={startWeatherPredictionGame}
+                          className="mb-3"
+                          disabled={weatherForecast.length < 3}
+                        >
+                          🎮 Start Prediction Game
+                        </Button>
+                        {weatherForecast.length < 3 && (
+                          <div className="text-xs text-gray-500">
+                            Need 3+ weather history entries to play
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Weather Stats */}
+                    <Card className="p-3">
+                      <div className="text-sm font-semibold mb-2">📊 Prediction Stats</div>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span>Accuracy:</span>
+                          <span className="font-semibold">
+                            {weatherPredictionGame.totalPredictions > 0 
+                              ? Math.round((weatherPredictionGame.correctPredictions / weatherPredictionGame.totalPredictions) * 100)
+                              : 0}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Current Streak:</span>
+                          <span className="font-semibold">{weatherPredictionGame.streak}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Total Rewards:</span>
+                          <span className="font-semibold text-green-600">{weatherPredictionRewards}🪙</span>
+                        </div>
+                      </div>
+                    </Card>
+                  </TabsContent>
+
+                  {/* 🐕 FARM PETS TAB */}
+                  <TabsContent value="pets" className="space-y-2">
+                    <div className="text-sm font-semibold mb-2">🐕 Farm Pets</div>
+                    
+                    {/* Pet Adoption */}
+                    {farmPets.length === 0 && (
+                      <div className="text-center py-4">
+                        <div className="text-gray-500 mb-3">No pets yet. Adopt your first companion!</div>
+                        <div className="grid grid-cols-1 gap-2">
+                          {Object.entries(PET_TYPES).map(([petType, pet]) => (
+                            <Button
+                              key={petType}
+                              onClick={() => adoptPet(petType)}
+                              variant="outline"
+                              className="justify-between"
+                              disabled={coins < pet.cost}
+                            >
+                              <span>{pet.emoji} Adopt {pet.name}</span>
+                              <span>{pet.cost}🪙</span>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Active Pets */}
+                    {farmPets.length > 0 && (
+                      <div className="space-y-3">
+                        {farmPets.map(pet => {
+                          const petType = PET_TYPES[pet.type];
+                          
+                          return (
+                            <Card key={pet.id} className="p-3">
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <div className="font-semibold">{petType.emoji} {pet.name}</div>
+                                  <div className="text-xs">Level {pet.level} • Happiness: {Math.round(pet.happiness)}%</div>
+                                </div>
+                                <Badge variant="outline">
+                                  {pet.happiness >= 80 ? '😊 Happy' : pet.happiness >= 50 ? '😐 Okay' : '😢 Sad'}
+                                </Badge>
+                              </div>
+                              
+                              {/* Pet Stats */}
+                              <div className="grid grid-cols-3 gap-2 mb-2 text-xs">
+                                <div>
+                                  <div>Health: {pet.health}%</div>
+                                  <Progress value={pet.health} className="h-1" />
+                                </div>
+                                <div>
+                                  <div>Hunger: {pet.hunger}%</div>
+                                  <Progress value={100 - pet.hunger} className="h-1" />
+                                </div>
+                                <div>
+                                  <div>Play: {pet.playfulness}%</div>
+                                  <Progress value={pet.playfulness} className="h-1" />
+                                </div>
+                              </div>
+                              
+                              {/* Pet Care Actions */}
+                              <div className="flex gap-1">
+                                <Button
+                                  onClick={() => carePet(pet.id, 'food')}
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs flex-1"
+                                  disabled={(petSupplies.pet_food || 0) < 1}
+                                >
+                                  🍖 Feed
+                                </Button>
+                                <Button
+                                  onClick={() => carePet(pet.id, 'play')}
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs flex-1"
+                                  disabled={(petSupplies.attention || 0) < 1}
+                                >
+                                  🎾 Play
+                                </Button>
+                                <Button
+                                  onClick={() => carePet(pet.id, 'health')}
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs flex-1"
+                                  disabled={(petSupplies.vet_care || 0) < 1}
+                                >
+                                  🏥 Vet
+                                </Button>
+                              </div>
+                            </Card>
+                          );
+                        })}
+                        
+                        {/* Pet Supplies */}
+                        <Card className="p-3 bg-yellow-50">
+                          <div className="text-sm font-semibold mb-2">🛍️ Pet Supplies</div>
+                          <div className="grid grid-cols-3 gap-2 text-xs">
+                            <div className="text-center">
+                              <div>🍖 Pet Food</div>
+                              <div className="font-semibold">{petSupplies.pet_food || 0}</div>
+                            </div>
+                            <div className="text-center">
+                              <div>❤️ Attention</div>
+                              <div className="font-semibold">{petSupplies.attention || 0}</div>
+                            </div>
+                            <div className="text-center">
+                              <div>🏥 Vet Care</div>
+                              <div className="font-semibold">{petSupplies.vet_care || 0}</div>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-2 flex gap-1">
+                            <Button
+                              onClick={() => {
+                                if (coins >= 20) {
+                                  setCoins(c => c - 20);
+                                  setPetSupplies(prev => ({ ...prev, pet_food: (prev.pet_food || 0) + 5 }));
+                                  addNotification("Bought pet food! 🍖", "success");
+                                }
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs flex-1"
+                              disabled={coins < 20}
+                            >
+                              Buy Food (20🪙)
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                if (coins >= 30) {
+                                  setCoins(c => c - 30);
+                                  setPetSupplies(prev => ({ ...prev, vet_care: (prev.vet_care || 0) + 1 }));
+                                  addNotification("Scheduled vet visit! 🏥", "success");
+                                }
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs flex-1"
+                              disabled={coins < 30}
+                            >
+                              Vet Care (30🪙)
+                            </Button>
+                          </div>
+                        </Card>
+                      </div>
+                    )}
                   </TabsContent>
 
                   <TabsContent value="social" className="space-y-2">
