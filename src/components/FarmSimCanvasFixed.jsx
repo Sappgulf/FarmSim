@@ -37,6 +37,144 @@ const ACHIEVEMENTS = {
 };
 
 // Research System
+// Daily Challenges
+const DAILY_CHALLENGES = {
+  harvest_10: {
+    id: "harvest_10",
+    name: "Harvest Master",
+    description: "Harvest 10 crops",
+    emoji: "🌾",
+    target: 10,
+    reward: { coins: 100, xp: 50 },
+    type: "harvest",
+    difficulty: "easy"
+  },
+  
+  plant_15: {
+    id: "plant_15",
+    name: "Green Thumb",
+    description: "Plant 15 seeds",
+    emoji: "🌱",
+    target: 15,
+    reward: { coins: 75, xp: 40 },
+    type: "plant",
+    difficulty: "easy"
+  },
+  
+  earn_500: {
+    id: "earn_500",
+    name: "Coin Collector",
+    description: "Earn 500 coins",
+    emoji: "🪙",
+    target: 500,
+    reward: { coins: 150, xp: 60 },
+    type: "coins",
+    difficulty: "medium"
+  },
+  
+  process_5: {
+    id: "process_5",
+    name: "Factory Worker",
+    description: "Process 5 items",
+    emoji: "🏭",
+    target: 5,
+    reward: { coins: 200, xp: 80 },
+    type: "process",
+    difficulty: "medium"
+  },
+  
+  research_complete: {
+    id: "research_complete",
+    name: "Scientist",
+    description: "Complete a research project",
+    emoji: "🔬",
+    target: 1,
+    reward: { coins: 300, researchPoints: 20 },
+    type: "research",
+    difficulty: "hard"
+  },
+  
+  combo_5: {
+    id: "combo_5",
+    name: "Combo King",
+    description: "Achieve a 5x combo",
+    emoji: "⚡",
+    target: 5,
+    reward: { coins: 250, xp: 100 },
+    type: "combo",
+    difficulty: "hard"
+  },
+  
+  no_wither: {
+    id: "no_wither",
+    name: "Perfect Farmer",
+    description: "No crops wither today",
+    emoji: "✨",
+    target: 0,
+    reward: { coins: 400, xp: 150 },
+    type: "no_wither",
+    difficulty: "hard"
+  }
+};
+
+// Weekly Challenges
+const WEEKLY_CHALLENGES = {
+  harvest_100: {
+    id: "harvest_100",
+    name: "Harvest Legend",
+    description: "Harvest 100 crops",
+    emoji: "🏆",
+    target: 100,
+    reward: { coins: 1000, xp: 500, skillPoints: 2 },
+    type: "harvest",
+    difficulty: "epic"
+  },
+  
+  earn_5000: {
+    id: "earn_5000",
+    name: "Rich Farmer",
+    description: "Earn 5000 coins",
+    emoji: "💰",
+    target: 5000,
+    reward: { coins: 1500, xp: 750, researchPoints: 50 },
+    type: "coins",
+    difficulty: "epic"
+  },
+  
+  complete_all_daily: {
+    id: "complete_all_daily",
+    name: "Daily Champion",
+    description: "Complete all daily challenges for 7 days",
+    emoji: "🎯",
+    target: 7,
+    reward: { coins: 2000, xp: 1000, skillPoints: 3 },
+    type: "daily_streak",
+    difficulty: "epic"
+  },
+  
+  hire_5_workers: {
+    id: "hire_5_workers",
+    name: "Boss Mode",
+    description: "Have 5 workers at once",
+    emoji: "👷",
+    target: 5,
+    reward: { coins: 2500, xp: 800 },
+    type: "workers",
+    difficulty: "epic"
+  },
+  
+  max_grid: {
+    id: "max_grid",
+    name: "Land Baron",
+    description: "Expand to maximum grid size",
+    emoji: "🗺️",
+    target: 6,
+    reward: { coins: 3000, xp: 1500, researchPoints: 100 },
+    type: "grid",
+    difficulty: "legendary"
+  }
+};
+
 // Random Events
 const RANDOM_EVENTS = {
   // Positive events
@@ -595,6 +733,18 @@ function FarmSimCanvasFixed() {
   const [merchantOffer, setMerchantOffer] = useState(saved?.merchantOffer || null);
   const [droughtActive, setDroughtActive] = useState(saved?.droughtActive || false);
   
+  // Challenges system
+  const [dailyChallenges, setDailyChallenges] = useState(saved?.dailyChallenges || []);
+  const [weeklyChallenges, setWeeklyChallenges] = useState(saved?.weeklyChallenges || []);
+  const [challengeProgress, setChallengeProgress] = useState(saved?.challengeProgress || {});
+  const [completedDailies, setCompletedDailies] = useState(saved?.completedDailies || []);
+  const [completedWeeklies, setCompletedWeeklies] = useState(saved?.completedWeeklies || []);
+  const [dailyStreak, setDailyStreak] = useState(saved?.dailyStreak || 0);
+  const [lastDailyReset, setLastDailyReset] = useState(saved?.lastDailyReset || 0);
+  const [lastWeeklyReset, setLastWeeklyReset] = useState(saved?.lastWeeklyReset || 0);
+  const [totalCoinsEarned, setTotalCoinsEarned] = useState(saved?.totalCoinsEarned || 0);
+  const [cropsWithered, setCropsWithered] = useState(saved?.cropsWithered || 0);
+  
   // Add notification
   const addNotification = (msg, type = "info") => {
     const id = Date.now();
@@ -649,6 +799,10 @@ function FarmSimCanvasFixed() {
     
     setPlots(newPlots);
     setInventory(inv => ({...inv, [seed]: (inv[seed] || 0) - 1}));
+    
+    // Update challenge progress
+    updateChallengeProgress("plant", 1);
+    
     addNotification(`Planted ${seed}!`, "success");
   };
   
@@ -708,6 +862,11 @@ function FarmSimCanvasFixed() {
     setCoins(c => c + value);
     setScore(s => s + value);
     setTotalHarvests(h => h + 1);
+    setTotalCoinsEarned(prev => prev + value);
+    
+    // Update challenge progress
+    updateChallengeProgress("harvest", 1);
+    updateChallengeProgress("coins", value);
     
     // Add experience
     addExperience(10);
@@ -737,6 +896,9 @@ function FarmSimCanvasFixed() {
     // Update combo
     setCombo(c => c + 1);
     setComboTimer(nowSec() + 10); // 10 seconds to maintain combo
+    
+    // Update challenge progress for combo
+    updateChallengeProgress("combo", combo + 1);
     
     setPlots(prev => {
       const newPlots = [...prev];
@@ -947,6 +1109,169 @@ function FarmSimCanvasFixed() {
       
       return newPlots;
     });
+  };
+  
+  // Challenge functions
+  const generateDailyChallenges = () => {
+    const challenges = Object.values(DAILY_CHALLENGES);
+    const selected = [];
+    const difficulties = { easy: 1, medium: 1, hard: 1 };
+    
+    for (const diff of Object.keys(difficulties)) {
+      const available = challenges.filter(c => 
+        c.difficulty === diff && !completedDailies.includes(c.id)
+      );
+      if (available.length > 0) {
+        selected.push(available[Math.floor(Math.random() * available.length)]);
+      }
+    }
+    
+    setDailyChallenges(selected);
+    setChallengeProgress(prev => {
+      const newProgress = {...prev};
+      selected.forEach(c => {
+        if (!newProgress[c.id]) {
+          newProgress[c.id] = 0;
+        }
+      });
+      return newProgress;
+    });
+  };
+  
+  const generateWeeklyChallenges = () => {
+    const challenges = Object.values(WEEKLY_CHALLENGES);
+    const selected = [];
+    
+    // Pick 2 random weekly challenges
+    const available = challenges.filter(c => !completedWeeklies.includes(c.id));
+    for (let i = 0; i < Math.min(2, available.length); i++) {
+      const idx = Math.floor(Math.random() * available.length);
+      selected.push(available.splice(idx, 1)[0]);
+    }
+    
+    setWeeklyChallenges(selected);
+    setChallengeProgress(prev => {
+      const newProgress = {...prev};
+      selected.forEach(c => {
+        if (!newProgress[c.id]) {
+          newProgress[c.id] = 0;
+        }
+      });
+      return newProgress;
+    });
+  };
+  
+  const updateChallengeProgress = (type, amount = 1) => {
+    setChallengeProgress(prev => {
+      const newProgress = {...prev};
+      
+      // Update daily challenges
+      dailyChallenges.forEach(challenge => {
+        if (challenge.type === type && !completedDailies.includes(challenge.id)) {
+          if (type === "no_wither") {
+            // Special handling for no_wither challenge
+            newProgress[challenge.id] = amount; // amount is cropsWithered count
+          } else {
+            newProgress[challenge.id] = (newProgress[challenge.id] || 0) + amount;
+          }
+        }
+      });
+      
+      // Update weekly challenges
+      weeklyChallenges.forEach(challenge => {
+        if (challenge.type === type && !completedWeeklies.includes(challenge.id)) {
+          newProgress[challenge.id] = (newProgress[challenge.id] || 0) + amount;
+        }
+      });
+      
+      return newProgress;
+    });
+    
+    // Check for completed challenges
+    checkChallengeCompletion();
+  };
+  
+  const checkChallengeCompletion = () => {
+    // Check daily challenges
+    dailyChallenges.forEach(challenge => {
+      const progress = challengeProgress[challenge.id] || 0;
+      const isComplete = challenge.type === "no_wither" 
+        ? progress === 0 
+        : progress >= challenge.target;
+        
+      if (isComplete && !completedDailies.includes(challenge.id)) {
+        completeChallenge(challenge, "daily");
+      }
+    });
+    
+    // Check weekly challenges
+    weeklyChallenges.forEach(challenge => {
+      const progress = challengeProgress[challenge.id] || 0;
+      if (progress >= challenge.target && !completedWeeklies.includes(challenge.id)) {
+        completeChallenge(challenge, "weekly");
+      }
+    });
+  };
+  
+  const completeChallenge = (challenge, type) => {
+    // Award rewards
+    const reward = challenge.reward;
+    if (reward.coins) {
+      setCoins(c => c + reward.coins);
+    }
+    if (reward.xp) {
+      addExperience(reward.xp);
+    }
+    if (reward.skillPoints) {
+      setSkillPoints(sp => sp + reward.skillPoints);
+    }
+    if (reward.researchPoints) {
+      setResearchPoints(rp => rp + reward.researchPoints);
+    }
+    
+    // Mark as completed
+    if (type === "daily") {
+      setCompletedDailies(prev => [...prev, challenge.id]);
+      
+      // Check if all dailies are complete
+      if (dailyChallenges.every(c => 
+        completedDailies.includes(c.id) || c.id === challenge.id
+      )) {
+        setDailyStreak(prev => prev + 1);
+        updateChallengeProgress("daily_streak", 1);
+        addNotification("All daily challenges complete! Streak: " + (dailyStreak + 1), "success");
+      }
+    } else {
+      setCompletedWeeklies(prev => [...prev, challenge.id]);
+    }
+    
+    addNotification(`Challenge complete: ${challenge.name}! ${challenge.emoji}`, "success");
+  };
+  
+  const resetDailyChallenges = () => {
+    const now = nowSec();
+    const dayInSeconds = 86400; // 24 hours
+    
+    if (now - lastDailyReset >= dayInSeconds) {
+      setCompletedDailies([]);
+      setCropsWithered(0); // Reset wither counter for new day
+      generateDailyChallenges();
+      setLastDailyReset(now);
+      addNotification("Daily challenges reset! New challenges available!", "info");
+    }
+  };
+  
+  const resetWeeklyChallenges = () => {
+    const now = nowSec();
+    const weekInSeconds = 604800; // 7 days
+    
+    if (now - lastWeeklyReset >= weekInSeconds) {
+      setCompletedWeeklies([]);
+      setDailyStreak(0);
+      generateWeeklyChallenges();
+      setLastWeeklyReset(now);
+      addNotification("Weekly challenges reset! New challenges available!", "info");
+    }
   };
   
   // Event functions
@@ -1560,6 +1885,16 @@ function FarmSimCanvasFixed() {
     if (Object.keys(marketPrices).length === 0) {
       updateMarketPrices();
     }
+    
+    // Initialize challenges if empty
+    if (dailyChallenges.length === 0) {
+      generateDailyChallenges();
+      setLastDailyReset(nowSec());
+    }
+    if (weeklyChallenges.length === 0) {
+      generateWeeklyChallenges();
+      setLastWeeklyReset(nowSec());
+    }
   }, []);
   
   // Enhanced growth and game system
@@ -1591,6 +1926,10 @@ function FarmSimCanvasFixed() {
       
       // Trigger random events
       triggerRandomEvent();
+      
+      // Check for challenge resets
+      resetDailyChallenges();
+      resetWeeklyChallenges();
       
       // Worker upkeep (every 60 seconds = 1 minute)
       if (Math.floor(nowSec()) % 60 === 0 && Object.keys(workers).length > 0) {
@@ -2080,7 +2419,7 @@ function FarmSimCanvasFixed() {
           </CardHeader>
           <CardContent>
             <Tabs value={shopTab} onValueChange={setShopTab}>
-              <TabsList className="grid grid-cols-3 md:grid-cols-9 mb-4 text-xs">
+              <TabsList className="grid grid-cols-5 md:grid-cols-10 mb-4 text-xs">
                 <TabsTrigger value="seeds">🌱</TabsTrigger>
                 <TabsTrigger value="tools">🛠️</TabsTrigger>
                 <TabsTrigger value="buildings">🏗️</TabsTrigger>
@@ -2090,6 +2429,7 @@ function FarmSimCanvasFixed() {
                 <TabsTrigger value="market">📈</TabsTrigger>
                 <TabsTrigger value="workers">👷</TabsTrigger>
                 <TabsTrigger value="research">🔬</TabsTrigger>
+                <TabsTrigger value="challenges">🏆</TabsTrigger>
               </TabsList>
               
               <TabsContent value="seeds" className="space-y-2">
@@ -2615,6 +2955,108 @@ function FarmSimCanvasFixed() {
                     </div>
                   );
                 })}
+              </TabsContent>
+              
+              <TabsContent value="challenges" className="space-y-4">
+                {/* Daily Streak */}
+                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg">
+                  <span className="font-semibold">Daily Streak:</span>
+                  <Badge variant="default" className="text-lg">
+                    🔥 {dailyStreak} days
+                  </Badge>
+                </div>
+                
+                {/* Daily Challenges */}
+                <div>
+                  <h4 className="font-semibold mb-2">📅 Daily Challenges:</h4>
+                  {dailyChallenges.map(challenge => {
+                    const progress = challengeProgress[challenge.id] || 0;
+                    const isComplete = completedDailies.includes(challenge.id);
+                    const progressPercent = challenge.type === "no_wither" 
+                      ? (cropsWithered === 0 ? 100 : 0)
+                      : Math.min(100, (progress / challenge.target) * 100);
+                    
+                    return (
+                      <div key={challenge.id} className="p-3 border rounded-lg mb-2">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{challenge.emoji}</span>
+                              <span className="font-medium">{challenge.name}</span>
+                              <Badge variant={
+                                challenge.difficulty === "easy" ? "secondary" :
+                                challenge.difficulty === "medium" ? "default" :
+                                "destructive"
+                              }>
+                                {challenge.difficulty}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600">{challenge.description}</p>
+                          </div>
+                          {isComplete && <Badge variant="default">✅ Complete</Badge>}
+                        </div>
+                        <Progress value={progressPercent} className="mb-1" />
+                        <div className="flex justify-between text-xs">
+                          <span>
+                            {challenge.type === "no_wither" 
+                              ? `${cropsWithered} withered` 
+                              : `${progress}/${challenge.target}`}
+                          </span>
+                          <span className="text-gray-500">
+                            Reward: {challenge.reward.coins}🪙 
+                            {challenge.reward.xp && ` +${challenge.reward.xp}XP`}
+                            {challenge.reward.researchPoints && ` +${challenge.reward.researchPoints}RP`}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Weekly Challenges */}
+                <div>
+                  <h4 className="font-semibold mb-2">📆 Weekly Challenges:</h4>
+                  {weeklyChallenges.map(challenge => {
+                    const progress = challengeProgress[challenge.id] || 0;
+                    const isComplete = completedWeeklies.includes(challenge.id);
+                    const progressPercent = Math.min(100, (progress / challenge.target) * 100);
+                    
+                    return (
+                      <div key={challenge.id} className="p-3 border-2 border-purple-300 rounded-lg mb-2 bg-purple-50">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{challenge.emoji}</span>
+                              <span className="font-medium">{challenge.name}</span>
+                              <Badge variant="destructive">
+                                {challenge.difficulty}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600">{challenge.description}</p>
+                          </div>
+                          {isComplete && <Badge variant="default">✅ Complete</Badge>}
+                        </div>
+                        <Progress value={progressPercent} className="mb-1" />
+                        <div className="flex justify-between text-xs">
+                          <span>{progress}/{challenge.target}</span>
+                          <span className="text-gray-500">
+                            Reward: {challenge.reward.coins}🪙
+                            {challenge.reward.xp && ` +${challenge.reward.xp}XP`}
+                            {challenge.reward.skillPoints && ` +${challenge.reward.skillPoints}SP`}
+                            {challenge.reward.researchPoints && ` +${challenge.reward.researchPoints}RP`}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Time until reset */}
+                <div className="text-xs text-gray-500 text-center">
+                  Daily reset in: {Math.floor((86400 - (nowSec() - lastDailyReset)) / 3600)}h
+                  {' | '}
+                  Weekly reset in: {Math.floor((604800 - (nowSec() - lastWeeklyReset)) / 86400)}d
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
