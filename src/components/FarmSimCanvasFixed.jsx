@@ -117,6 +117,126 @@ const DAILY_CHALLENGES = {
   }
 };
 
+// Crop Breeding System
+const HYBRID_CROPS = {
+  super_carrot: {
+    id: "super_carrot",
+    name: "Super Carrot",
+    emoji: "🥕✨",
+    parents: ["carrot", "carrot"],
+    price: 30,
+    time: 8,
+    stages: 3,
+    secondsPerStage: 3,
+    processable: true,
+    traits: { yield: 2, growthSpeed: 1.2, value: 1.5 }
+  },
+  
+  golden_potato: {
+    id: "golden_potato",
+    name: "Golden Potato",
+    emoji: "🥔💛",
+    parents: ["potato", "potato"],
+    price: 35,
+    time: 10,
+    stages: 3,
+    secondsPerStage: 4,
+    processable: true,
+    traits: { yield: 1.5, value: 2 }
+  },
+  
+  rainbow_corn: {
+    id: "rainbow_corn",
+    name: "Rainbow Corn",
+    emoji: "🌽🌈",
+    parents: ["corn", "tomato"],
+    price: 45,
+    time: 12,
+    stages: 4,
+    secondsPerStage: 3,
+    processable: true,
+    traits: { yield: 3, value: 1.8 }
+  },
+  
+  giant_tomato: {
+    id: "giant_tomato",
+    name: "Giant Tomato",
+    emoji: "🍅🔴",
+    parents: ["tomato", "tomato"],
+    price: 40,
+    time: 11,
+    stages: 3,
+    secondsPerStage: 4,
+    processable: true,
+    traits: { yield: 2.5, size: 2 }
+  },
+  
+  crystal_wheat: {
+    id: "crystal_wheat",
+    name: "Crystal Wheat",
+    emoji: "🌾💎",
+    parents: ["wheat", "wheat"],
+    price: 50,
+    time: 14,
+    stages: 4,
+    secondsPerStage: 4,
+    processable: true,
+    traits: { value: 3, quality: 2 }
+  },
+  
+  fire_pepper: {
+    id: "fire_pepper",
+    name: "Fire Pepper",
+    emoji: "🌶️🔥",
+    parents: ["pepper", "pepper"],
+    price: 55,
+    time: 13,
+    stages: 3,
+    secondsPerStage: 5,
+    processable: false,
+    traits: { value: 2.5, spicy: 3 }
+  },
+  
+  frost_melon: {
+    id: "frost_melon",
+    name: "Frost Melon",
+    emoji: "🍉❄️",
+    parents: ["watermelon", "watermelon"],
+    price: 60,
+    time: 15,
+    stages: 4,
+    secondsPerStage: 4,
+    processable: false,
+    traits: { value: 2.2, cold_resist: 2 }
+  },
+  
+  mystic_berry: {
+    id: "mystic_berry",
+    name: "Mystic Berry",
+    emoji: "🫐✨",
+    parents: ["blueberry", "strawberry"],
+    price: 65,
+    time: 16,
+    stages: 3,
+    secondsPerStage: 6,
+    processable: true,
+    traits: { value: 3.5, magic: 1 }
+  }
+};
+
+const BREEDING_COMBINATIONS = {
+  "carrot+carrot": "super_carrot",
+  "potato+potato": "golden_potato",
+  "corn+tomato": "rainbow_corn",
+  "tomato+corn": "rainbow_corn",
+  "tomato+tomato": "giant_tomato",
+  "wheat+wheat": "crystal_wheat",
+  "pepper+pepper": "fire_pepper",
+  "watermelon+watermelon": "frost_melon",
+  "blueberry+strawberry": "mystic_berry",
+  "strawberry+blueberry": "mystic_berry"
+};
+
 // Weekly Challenges
 const WEEKLY_CHALLENGES = {
   harvest_100: {
@@ -739,11 +859,18 @@ function FarmSimCanvasFixed() {
   const [challengeProgress, setChallengeProgress] = useState(saved?.challengeProgress || {});
   const [completedDailies, setCompletedDailies] = useState(saved?.completedDailies || []);
   const [completedWeeklies, setCompletedWeeklies] = useState(saved?.completedWeeklies || []);
+  const [notifiedChallenges, setNotifiedChallenges] = useState(saved?.notifiedChallenges || []); // Track which challenges already showed notification
   const [dailyStreak, setDailyStreak] = useState(saved?.dailyStreak || 0);
   const [lastDailyReset, setLastDailyReset] = useState(saved?.lastDailyReset || 0);
   const [lastWeeklyReset, setLastWeeklyReset] = useState(saved?.lastWeeklyReset || 0);
   const [totalCoinsEarned, setTotalCoinsEarned] = useState(saved?.totalCoinsEarned || 0);
   const [cropsWithered, setCropsWithered] = useState(saved?.cropsWithered || 0);
+  
+  // Breeding system
+  const [breedingPairs, setBreedingPairs] = useState(saved?.breedingPairs || []);
+  const [breedingProgress, setBreedingProgress] = useState(saved?.breedingProgress || {});
+  const [unlockedHybrids, setUnlockedHybrids] = useState(saved?.unlockedHybrids || []);
+  const [hybridSeeds, setHybridSeeds] = useState(saved?.hybridSeeds || {});
   
   // Add notification with deduplication
   const addNotification = (msg, type = "info") => {
@@ -845,6 +972,7 @@ function FarmSimCanvasFixed() {
     if (plot.state !== "grown") return;
     
     const seed = plot.seed;
+    const isHybrid = plot.isHybrid;
     
     // Use market price instead of base value
     let value = getMarketPrice(seed);
@@ -888,6 +1016,16 @@ function FarmSimCanvasFixed() {
     // Add to inventory for processing
     let harvestAmount = 1;
     
+    // Apply hybrid traits
+    if (isHybrid && plot.traits) {
+      if (plot.traits.yield) {
+        harvestAmount = Math.floor(harvestAmount * plot.traits.yield);
+      }
+      if (plot.traits.value) {
+        value = Math.round(value * plot.traits.value);
+      }
+    }
+    
     // Apply event harvest bonus
     if (nextHarvestBonus > 1) {
       harvestAmount = harvestAmount * nextHarvestBonus;
@@ -902,10 +1040,18 @@ function FarmSimCanvasFixed() {
       addNotification("Skill bonus: Double harvest!", "success");
     }
     
-    setInventory(prev => ({
-      ...prev,
-      [seed]: (prev[seed] || 0) + harvestAmount
-    }));
+    // Add to appropriate inventory
+    if (isHybrid) {
+      setHybridSeeds(prev => ({
+        ...prev,
+        [seed]: (prev[seed] || 0) + harvestAmount
+      }));
+    } else {
+      setInventory(prev => ({
+        ...prev,
+        [seed]: (prev[seed] || 0) + harvestAmount
+      }));
+    }
     
     // Update combo
     setCombo(c => c + 1);
@@ -1232,6 +1378,9 @@ function FarmSimCanvasFixed() {
     if (type === "daily" && completedDailies.includes(challenge.id)) return;
     if (type === "weekly" && completedWeeklies.includes(challenge.id)) return;
     
+    // Check if we already notified about this challenge
+    const shouldNotify = !notifiedChallenges.includes(challenge.id);
+    
     // Award rewards
     const reward = challenge.reward;
     if (reward.coins) {
@@ -1254,14 +1403,18 @@ function FarmSimCanvasFixed() {
         return [...prev, challenge.id];
       });
       
-      // Check if all dailies are complete
+      // Check if all dailies are complete (only notify once)
       setTimeout(() => {
         if (dailyChallenges.every(c => 
           completedDailies.includes(c.id) || c.id === challenge.id
         )) {
-          setDailyStreak(prev => prev + 1);
-          updateChallengeProgress("daily_streak", 1);
-          addNotification("All daily challenges complete! Streak: " + (dailyStreak + 1), "success");
+          const streakKey = `streak_${dailyStreak + 1}`;
+          if (!notifiedChallenges.includes(streakKey)) {
+            setDailyStreak(prev => prev + 1);
+            updateChallengeProgress("daily_streak", 1);
+            addNotification("All daily challenges complete! Streak: " + (dailyStreak + 1), "success");
+            setNotifiedChallenges(prev => [...prev, streakKey]);
+          }
         }
       }, 500);
     } else {
@@ -1271,7 +1424,11 @@ function FarmSimCanvasFixed() {
       });
     }
     
-    addNotification(`Challenge complete: ${challenge.name}! ${challenge.emoji}`, "success");
+    // Only show notification if we haven't already
+    if (shouldNotify) {
+      addNotification(`Challenge complete: ${challenge.name}! ${challenge.emoji}`, "success");
+      setNotifiedChallenges(prev => [...prev, challenge.id]);
+    }
   };
   
   const resetDailyChallenges = () => {
@@ -1281,6 +1438,8 @@ function FarmSimCanvasFixed() {
     if (now - lastDailyReset >= dayInSeconds) {
       setCompletedDailies([]);
       setCropsWithered(0); // Reset wither counter for new day
+      // Clear daily challenge notifications
+      setNotifiedChallenges(prev => prev.filter(id => !id.startsWith('daily_') && !dailyChallenges.some(c => c.id === id)));
       generateDailyChallenges();
       setLastDailyReset(now);
       addNotification("Daily challenges reset! New challenges available!", "info");
@@ -1294,10 +1453,135 @@ function FarmSimCanvasFixed() {
     if (now - lastWeeklyReset >= weekInSeconds) {
       setCompletedWeeklies([]);
       setDailyStreak(0);
+      // Clear weekly challenge notifications and streak notifications
+      setNotifiedChallenges(prev => prev.filter(id => !id.startsWith('weekly_') && !id.startsWith('streak_') && !weeklyChallenges.some(c => c.id === id)));
       generateWeeklyChallenges();
       setLastWeeklyReset(now);
       addNotification("Weekly challenges reset! New challenges available!", "info");
     }
+  };
+  
+  // Breeding functions
+  const startBreeding = (crop1, crop2) => {
+    // Check if player has the crops
+    if ((inventory[crop1] || 0) < 1 || (inventory[crop2] || 0) < 1) {
+      addNotification("Not enough crops for breeding!", "error");
+      return;
+    }
+    
+    // Check if breeding lab is built
+    if (!buildings.lab) {
+      addNotification("You need a Breeding Lab to breed crops!", "error");
+      return;
+    }
+    
+    // Check for valid combination
+    const combo1 = `${crop1}+${crop2}`;
+    const combo2 = `${crop2}+${crop1}`;
+    const hybridId = BREEDING_COMBINATIONS[combo1] || BREEDING_COMBINATIONS[combo2];
+    
+    if (!hybridId) {
+      addNotification("These crops cannot be bred together!", "error");
+      return;
+    }
+    
+    // Check if already breeding
+    if (breedingPairs.length >= 3) {
+      addNotification("Breeding lab is full! (Max 3 pairs)", "error");
+      return;
+    }
+    
+    // Start breeding
+    const breedingId = Date.now();
+    setBreedingPairs(prev => [...prev, {
+      id: breedingId,
+      crop1,
+      crop2,
+      hybridId,
+      startedAt: nowSec()
+    }]);
+    
+    // Remove crops from inventory
+    setInventory(prev => ({
+      ...prev,
+      [crop1]: prev[crop1] - 1,
+      [crop2]: prev[crop2] - 1
+    }));
+    
+    addNotification(`Started breeding ${crop1} + ${crop2}!`, "success");
+  };
+  
+  const collectHybrid = (breedingId) => {
+    const pair = breedingPairs.find(p => p.id === breedingId);
+    if (!pair) return;
+    
+    const hybrid = HYBRID_CROPS[pair.hybridId];
+    const breedTime = 30; // 30 seconds to breed
+    const elapsed = nowSec() - pair.startedAt;
+    
+    if (elapsed < breedTime) {
+      addNotification(`Breeding needs ${breedTime - elapsed} more seconds!`, "info");
+      return;
+    }
+    
+    // Add hybrid to unlocked list
+    if (!unlockedHybrids.includes(pair.hybridId)) {
+      setUnlockedHybrids(prev => [...prev, pair.hybridId]);
+      addNotification(`New hybrid unlocked: ${hybrid.name}! ${hybrid.emoji}`, "success");
+    }
+    
+    // Add hybrid seeds to inventory
+    setHybridSeeds(prev => ({
+      ...prev,
+      [pair.hybridId]: (prev[pair.hybridId] || 0) + 3 // Get 3 seeds per breeding
+    }));
+    
+    // Remove from breeding pairs
+    setBreedingPairs(prev => prev.filter(p => p.id !== breedingId));
+    
+    addNotification(`Collected 3x ${hybrid.name} seeds!`, "success");
+  };
+  
+  const plantHybrid = (plotIndex, hybridId) => {
+    const hybrid = HYBRID_CROPS[hybridId];
+    if (!hybrid) return;
+    
+    if ((hybridSeeds[hybridId] || 0) <= 0) {
+      addNotification(`No ${hybrid.name} seeds!`, "error");
+      return;
+    }
+    
+    const plot = plots[plotIndex];
+    if (plot.state !== "empty") {
+      addNotification("Plot is not empty!", "error");
+      return;
+    }
+    
+    // Plant hybrid
+    setPlots(prev => {
+      const newPlots = [...prev];
+      newPlots[plotIndex] = {
+        ...plot,
+        state: "planted",
+        seed: hybridId,
+        isHybrid: true,
+        growth: 0,
+        plantedAt: nowSec(),
+        watered: false,
+        traits: hybrid.traits
+      };
+      return newPlots;
+    });
+    
+    setHybridSeeds(prev => ({
+      ...prev,
+      [hybridId]: prev[hybridId] - 1
+    }));
+    
+    // Update challenge progress
+    updateChallengeProgress("plant", 1);
+    
+    addNotification(`Planted ${hybrid.name}!`, "success");
   };
   
   // Event functions
@@ -2447,7 +2731,7 @@ function FarmSimCanvasFixed() {
           </CardHeader>
           <CardContent>
             <Tabs value={shopTab} onValueChange={setShopTab}>
-              <TabsList className="grid grid-cols-5 md:grid-cols-10 mb-4 text-xs">
+              <TabsList className="grid grid-cols-4 md:grid-cols-11 mb-4 text-xs">
                 <TabsTrigger value="seeds">🌱</TabsTrigger>
                 <TabsTrigger value="tools">🛠️</TabsTrigger>
                 <TabsTrigger value="buildings">🏗️</TabsTrigger>
@@ -2458,6 +2742,7 @@ function FarmSimCanvasFixed() {
                 <TabsTrigger value="workers">👷</TabsTrigger>
                 <TabsTrigger value="research">🔬</TabsTrigger>
                 <TabsTrigger value="challenges">🏆</TabsTrigger>
+                <TabsTrigger value="breeding">🧬</TabsTrigger>
               </TabsList>
               
               <TabsContent value="seeds" className="space-y-2">
@@ -3085,6 +3370,117 @@ function FarmSimCanvasFixed() {
                   {' | '}
                   Weekly reset in: {Math.floor((604800 - (nowSec() - lastWeeklyReset)) / 86400)}d
                 </div>
+              </TabsContent>
+              
+              <TabsContent value="breeding" className="space-y-4">
+                {/* Breeding Lab Required */}
+                {!buildings.lab && (
+                  <div className="p-3 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+                    <span className="font-semibold">🧪 Breeding Lab Required!</span>
+                    <p className="text-sm mt-1">Build a Breeding Lab to start breeding hybrid crops.</p>
+                  </div>
+                )}
+                
+                {/* Active Breeding */}
+                {buildings.lab && breedingPairs.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-2">🧬 Active Breeding:</h4>
+                    {breedingPairs.map(pair => {
+                      const hybrid = HYBRID_CROPS[pair.hybridId];
+                      const elapsed = nowSec() - pair.startedAt;
+                      const breedTime = 30;
+                      const progress = Math.min(100, (elapsed / breedTime) * 100);
+                      
+                      return (
+                        <div key={pair.id} className="p-3 border rounded-lg mb-2 bg-purple-50">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-medium">
+                              {pair.crop1} + {pair.crop2} → {hybrid.emoji} {hybrid.name}
+                            </span>
+                            {progress >= 100 && (
+                              <Button size="sm" onClick={() => collectHybrid(pair.id)}>
+                                Collect!
+                              </Button>
+                            )}
+                          </div>
+                          <Progress value={progress} className="h-2" />
+                          <span className="text-xs text-gray-500">
+                            {progress < 100 ? `${Math.floor(breedTime - elapsed)}s remaining` : "Ready!"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {/* Hybrid Seeds Inventory */}
+                {Object.keys(hybridSeeds).length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-2">🌟 Hybrid Seeds:</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.entries(hybridSeeds).map(([hybridId, count]) => {
+                        const hybrid = HYBRID_CROPS[hybridId];
+                        if (!hybrid || count <= 0) return null;
+                        return (
+                          <div key={hybridId} className="p-2 border rounded bg-gradient-to-r from-purple-50 to-pink-50">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm">
+                                {hybrid.emoji} {hybrid.name}
+                              </span>
+                              <Badge variant="default">{count}</Badge>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Breeding Combinations */}
+                {buildings.lab && (
+                  <div>
+                    <h4 className="font-semibold mb-2">🔬 Breeding Recipes:</h4>
+                    <div className="space-y-2">
+                      {Object.entries(HYBRID_CROPS).map(([hybridId, hybrid]) => {
+                        const [parent1, parent2] = hybrid.parents;
+                        const hasParent1 = (inventory[parent1] || 0) > 0;
+                        const hasParent2 = (inventory[parent2] || 0) > 0;
+                        const canBreed = hasParent1 && hasParent2 && breedingPairs.length < 3;
+                        const isUnlocked = unlockedHybrids.includes(hybridId);
+                        
+                        return (
+                          <div key={hybridId} className="p-3 border rounded-lg">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-lg">{hybrid.emoji}</span>
+                                  <span className="font-medium">{hybrid.name}</span>
+                                  {isUnlocked && <Badge variant="default">✅ Unlocked</Badge>}
+                                </div>
+                                <p className="text-xs text-gray-600">
+                                  {parent1} + {parent2}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Traits: 
+                                  {hybrid.traits.yield && ` Yield x${hybrid.traits.yield}`}
+                                  {hybrid.traits.value && ` Value x${hybrid.traits.value}`}
+                                  {hybrid.traits.growthSpeed && ` Speed x${hybrid.traits.growthSpeed}`}
+                                </p>
+                              </div>
+                              <Button 
+                                size="sm"
+                                onClick={() => startBreeding(parent1, parent2)}
+                                disabled={!canBreed}
+                              >
+                                Breed
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
