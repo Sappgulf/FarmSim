@@ -1297,20 +1297,29 @@ const findLevelIndex = (id) => LEVELS.findIndex(l => l.id === id);
 const SAVE_KEY = "farm_sim_enhanced_v2";
 function loadSave() {
   try { 
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return null;
+    }
     const s = localStorage.getItem(SAVE_KEY); 
     if (s) {
       const parsed = JSON.parse(s);
       // Only return if it's v2 format, otherwise start fresh
       if (parsed?.version === 2) return parsed;
-    }
-  } catch {}
+    } 
+  } catch (e) {
+    console.debug('[farm] loadSave error:', e);
+  }
   return null;
 }
 
 function saveState(s) { 
   try { 
-    localStorage.setItem(SAVE_KEY, JSON.stringify(s)); 
-  } catch {} 
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+    }
+  } catch (e) {
+    console.debug('[farm] saveState error:', e);
+  } 
 }
 
 function FarmSimCanvas() {
@@ -1319,7 +1328,14 @@ function FarmSimCanvas() {
   const [baseUrl, setBaseUrl] = useState("http://127.0.0.1:5000");
 
   // --- game state ---
-  const saved = useMemo(() => loadSave(), []);
+  const saved = useMemo(() => {
+    try {
+      return loadSave();
+    } catch (e) {
+      console.debug('[farm] Error loading save:', e);
+      return null;
+    }
+  }, []);
 
   const [rules, setRules] = useState(() => {
     const base = DEFAULT_RULES;
@@ -6280,21 +6296,23 @@ function FarmSimCanvas() {
 
   // 📱 MOBILE NAVIGATION BAR
   const MobileNavBar = ({ currentTab, setCurrentTab, coins, level }) => (
-    <div className="mobile-tabs md:hidden">
-      <div className="flex justify-around">
+    <div className="mobile-tabs md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t shadow-lg z-40">
+      <div className="flex justify-around py-2">
         {[
-          { id: "seeds", icon: "�", label: "Seeds" },
-          { id: "analytics", icon: "�", label: "Analytics" },
+          { id: "seeds", icon: "🌱", label: "Seeds" },
+          { id: "analytics", icon: "📊", label: "Stats" },
           { id: "settings", icon: "⚙️", label: "Settings" },
           { id: "tools", icon: "🛠️", label: "Tools" }
         ].map(tab => (
           <button
             key={tab.id}
-            className={`mobile-tab ${currentTab === tab.id ? 'active' : ''}`}
+            className={`mobile-tab flex flex-col items-center p-2 rounded-lg transition-all ${
+              currentTab === tab.id ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600'
+            }`}
             onClick={() => setCurrentTab(tab.id)}
           >
-            <span className="text-lg">{tab.icon}</span>
-            <span>{tab.label}</span>
+            <span className="text-xl">{tab.icon}</span>
+            <span className="text-xs mt-1">{tab.label}</span>
           </button>
         ))}
       </div>
@@ -6316,9 +6334,13 @@ function FarmSimCanvas() {
       <div className="fixed top-4 left-4 p-2 bg-white/80 border rounded-lg text-xs z-50">
         {(() => {
           try {
-            const save = loadSave();
-            return save ? `💾 Save present (${new Date(save.savedAt || Date.now()).toLocaleString()})` : '💾 No save present';
-          } catch {
+            if (typeof window !== 'undefined' && window.localStorage) {
+              const save = loadSave();
+              return save ? `💾 Save present (${new Date(save.savedAt || Date.now()).toLocaleString()})` : '💾 No save present';
+            }
+            return '💾 Loading...';
+          } catch (e) {
+            console.debug('[farm] Save status error:', e);
             return '💾 Save status unknown';
           }
         })()}
