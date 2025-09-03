@@ -58,12 +58,16 @@ const DEFAULT_RULES = {
     golden_corn: { stages: 5, secondsPerStage: 35, baseValue: 150, shopPrice: 100, emoji: "🌟", rarity: "legendary", season: "summer" },
     diamond_berry: { stages: 4, secondsPerStage: 40, baseValue: 200, shopPrice: 150, emoji: "💎", rarity: "legendary", season: "winter" },
   },
-  fertilizer: { shopPrice: 8, boost: 1.5 },
-  pesticide: { shopPrice: 10 },
-  fungicide: { shopPrice: 12 },
-  wateringCan: { shopPrice: 25, efficiency: 1.2 },
-  sprinkler: { shopPrice: 100, range: 1 },
-  scarecrow: { shopPrice: 50, range: 2 },
+  tools: {
+    wateringCan: { price: 25, name: "Watering Can", emoji: "🚿", description: "Waters 3x3 area", owned: false, type: "tool" },
+    fertilizer: { price: 8, name: "Fertilizer", emoji: "💩", description: "Speed +50% (stackable x3)", owned: 0, type: "consumable", maxStacks: 3 },
+    pesticide: { price: 10, name: "Pesticide", emoji: "🧪", description: "Removes pests", owned: 0, type: "consumable" },
+    fungicide: { price: 12, name: "Fungicide", emoji: "💊", description: "Cures diseases", owned: 0, type: "consumable" },
+    sprinkler: { price: 100, name: "Sprinkler", emoji: "💦", description: "Auto-waters 3x3 area", owned: false, type: "permanent" },
+    scarecrow: { price: 50, name: "Scarecrow", emoji: "👺", description: "Prevents pests", owned: false, type: "permanent" },
+    harvester: { price: 200, name: "Harvester", emoji: "🚜", description: "Auto-harvests ready crops", owned: false, type: "tool" },
+    compost: { price: 15, name: "Compost", emoji: "🍂", description: "Improves soil +20%", owned: 0, type: "consumable" },
+  },
   buildings: {
     greenhouse: { price: 500, name: "Greenhouse", emoji: "🏡", bonus: 0.2, description: "Crops grow 20% faster" },
     barn: { price: 1000, name: "Barn", emoji: "🏚️", bonus: 0, description: "Store animals" },
@@ -175,6 +179,22 @@ function FarmSimCanvasFixed() {
   const [livestock, setLivestock] = useState({});
   const [combo, setCombo] = useState(0);
   const [comboTimer, setComboTimer] = useState(0);
+  
+  // Tools system
+  const [tools, setTools] = useState(saved?.tools || {
+    wateringCan: false,
+    fertilizer: 0,
+    pesticide: 0,
+    fungicide: 0,
+    sprinkler: false,
+    scarecrow: false,
+    harvester: false,
+    compost: 0,
+  });
+  const [selectedTool, setSelectedTool] = useState(null);
+  const [sprinklerPositions, setSprinklerPositions] = useState(saved?.sprinklerPositions || []);
+  const [scarecrowPositions, setScarecrowPositions] = useState(saved?.scarecrowPositions || []);
+  const [plotDiseases, setPlotDiseases] = useState(saved?.plotDiseases || {});
   
   // Add notification
   const addNotification = (msg, type = "info") => {
@@ -384,6 +404,99 @@ function FarmSimCanvasFixed() {
     addNotification(`Farm expanded to ${newSize}x${newSize}!`, "success");
   };
   
+  // Buy tool
+  const buyTool = (toolId) => {
+    const tool = DEFAULT_RULES.tools[toolId];
+    if (!tool) return;
+    
+    if (coins < tool.price) {
+      addNotification("Not enough coins!", "error");
+      return;
+    }
+    
+    setCoins(c => c - tool.price);
+    
+    if (tool.type === "consumable") {
+      setTools(t => ({ ...t, [toolId]: (t[toolId] || 0) + 1 }));
+      addNotification(`Bought ${tool.name}! (${(tools[toolId] || 0) + 1} owned)`, "success");
+    } else {
+      setTools(t => ({ ...t, [toolId]: true }));
+      addNotification(`Bought ${tool.name}!`, "success");
+    }
+  };
+  
+  // Use tool on plot
+  const useTool = (plotIndex, toolId) => {
+    const tool = DEFAULT_RULES.tools[toolId];
+    if (!tool) return;
+    
+    if (tool.type === "consumable" && (tools[toolId] || 0) <= 0) {
+      addNotification(`No ${tool.name} available!`, "error");
+      return;
+    }
+    
+    if (tool.type === "tool" && !tools[toolId]) {
+      addNotification(`You don't own a ${tool.name}!`, "error");
+      return;
+    }
+    
+    setPlots(prev => {
+      const newPlots = [...prev];
+      const plot = newPlots[plotIndex];
+      
+      switch(toolId) {
+        case "fertilizer":
+          if (plot.state === "growing" || plot.state === "planted") {
+            plot.fertilized = (plot.fertilized || 0) + 1;
+            plot.growthBoost = 1 + (plot.fertilized * 0.5);
+            addNotification(`Applied fertilizer! Growth +${plot.fertilized * 50}%`, "success");
+            setTools(t => ({ ...t, fertilizer: t.fertilizer - 1 }));
+          }
+          break;
+          
+        case "pesticide":
+          if (plot.infested) {
+            plot.infested = false;
+            addNotification("Pests eliminated!", "success");
+            setTools(t => ({ ...t, pesticide: t.pesticide - 1 }));
+          }
+          break;
+          
+        case "fungicide":
+          if (plotDiseases[plotIndex]) {
+            setPlotDiseases(d => { const nd = {...d}; delete nd[plotIndex]; return nd; });
+            addNotification("Disease cured!", "success");
+            setTools(t => ({ ...t, fungicide: t.fungicide - 1 }));
+          }
+          break;
+          
+        case "compost":
+          plot.soilQuality = (plot.soilQuality || 1) + 0.2;
+          addNotification(`Soil improved! Quality: ${((plot.soilQuality || 1) * 100).toFixed(0)}%`, "success");
+          setTools(t => ({ ...t, compost: t.compost - 1 }));
+          break;
+          
+        case "wateringCan":
+          // Water 3x3 area
+          const row = Math.floor(plotIndex / gridSize);
+          const col = plotIndex % gridSize;
+          for (let r = Math.max(0, row - 1); r <= Math.min(gridSize - 1, row + 1); r++) {
+            for (let c = Math.max(0, col - 1); c <= Math.min(gridSize - 1, col + 1); c++) {
+              const idx = r * gridSize + c;
+              if (newPlots[idx].state === "planted") {
+                newPlots[idx].state = "growing";
+                newPlots[idx].watered = true;
+              }
+            }
+          }
+          addNotification("Watered 3x3 area!", "success");
+          break;
+      }
+      
+      return newPlots;
+    });
+  };
+  
   // Buy item
   const buy = (item, qty = 1) => {
     let price = 0;
@@ -572,10 +685,25 @@ function FarmSimCanvasFixed() {
     if (plot.watered && plot.state !== "grown") shadowClass = "shadow-blue-200/50";
     
     const handleClick = () => {
+      // If a tool is selected, use it
+      if (selectedTool) {
+        useTool(index, selectedTool);
+        setSelectedTool(null);
+        return;
+      }
+      
+      // Normal interactions
       if (plot.state === "grown") return harvest(index);
       if (plot.state === "withered") return clearPlot(index);
       if (plot.state === "empty") return plant(index, selectedSeed);
-      if (plot.state === "planted") return water(index);
+      if (plot.state === "planted") {
+        // Use watering can if owned
+        if (tools.wateringCan) {
+          useTool(index, "wateringCan");
+        } else {
+          water(index);
+        }
+      }
     };
     
     const progress = seed && plot.growth ? (plot.growth / seed.stages) * 100 : 0;
@@ -718,6 +846,43 @@ function FarmSimCanvasFixed() {
         )}
       </div>
       
+      {/* Tools Toolbar */}
+      {Object.values(tools).some(t => t) && (
+        <Card className="mb-4">
+          <CardContent className="p-2">
+            <div className="flex gap-2 flex-wrap items-center">
+              <span className="text-sm font-medium">Tools:</span>
+              {Object.entries(DEFAULT_RULES.tools).map(([toolId, tool]) => {
+                const owned = tools[toolId];
+                if (!owned || owned === 0) return null;
+                
+                const isSelected = selectedTool === toolId;
+                const count = tool.type === "consumable" ? owned : null;
+                
+                return (
+                  <Button
+                    key={toolId}
+                    size="sm"
+                    variant={isSelected ? "default" : "outline"}
+                    onClick={() => setSelectedTool(isSelected ? null : toolId)}
+                    className="gap-1"
+                  >
+                    <span>{tool.emoji}</span>
+                    <span className="hidden md:inline">{tool.name}</span>
+                    {count && <Badge variant="secondary">{count}</Badge>}
+                  </Button>
+                );
+              })}
+              {selectedTool && (
+                <Badge variant="destructive" className="ml-auto">
+                  Click plot to use {DEFAULT_RULES.tools[selectedTool].name}
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       {/* Main Content */}
       <div className="grid md:grid-cols-2 gap-4">
         {/* Farm Grid */}
@@ -778,37 +943,38 @@ function FarmSimCanvasFixed() {
               </TabsContent>
               
               <TabsContent value="tools" className="space-y-2">
-                <Button
-                  onClick={() => buy("fertilizer", 1)}
-                  variant="outline"
-                  className="w-full justify-between"
-                  disabled={coins < DEFAULT_RULES.fertilizer.shopPrice}
-                >
-                  <span>🌿 Fertilizer ({inventory.fertilizer || 0})</span>
-                  <span>{DEFAULT_RULES.fertilizer.shopPrice} 🪙</span>
-                </Button>
-                
-                <Button
-                  onClick={() => buy("pesticide", 1)}
-                  variant="outline"
-                  className="w-full justify-between"
-                  disabled={coins < DEFAULT_RULES.pesticide.shopPrice}
-                >
-                  <span>🐛 Pesticide ({inventory.pesticide || 0})</span>
-                  <span>{DEFAULT_RULES.pesticide.shopPrice} 🪙</span>
-                </Button>
-                
-                {inventory.wateringCan === 0 && (
-                  <Button
-                    onClick={() => buy("wateringCan", 1)}
-                    variant="outline"
-                    className="w-full justify-between"
-                    disabled={coins < DEFAULT_RULES.wateringCan.shopPrice}
-                  >
-                    <span>🚿 Watering Can</span>
-                    <span>{DEFAULT_RULES.wateringCan.shopPrice} 🪙</span>
-                  </Button>
-                )}
+                {Object.entries(DEFAULT_RULES.tools).map(([toolId, tool]) => {
+                  const owned = tools[toolId] || 0;
+                  const isOwned = tool.type === "consumable" ? owned : owned === true;
+                  const canBuy = tool.type === "consumable" || !isOwned;
+                  
+                  return (
+                    <Button
+                      key={toolId}
+                      onClick={() => buyTool(toolId)}
+                      variant="outline"
+                      className="w-full justify-between h-auto py-2"
+                      disabled={coins < tool.price || !canBuy}
+                    >
+                      <div className="flex flex-col items-start">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{tool.emoji}</span>
+                          <span className="font-medium">{tool.name}</span>
+                          {tool.type === "consumable" && (
+                            <Badge variant="secondary">{owned}</Badge>
+                          )}
+                          {isOwned && tool.type !== "consumable" && (
+                            <Badge variant="default">✓</Badge>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-500">{tool.description}</span>
+                      </div>
+                      <span className="font-bold">
+                        {!canBuy ? "Owned" : `${tool.price} 🪙`}
+                      </span>
+                    </Button>
+                  );
+                })}
               </TabsContent>
               
               <TabsContent value="buildings" className="space-y-2">
