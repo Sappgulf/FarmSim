@@ -1331,8 +1331,12 @@ function FarmSimCanvas() {
   const [baseUrl, setBaseUrl] = useState("http://127.0.0.1:5000");
 
   // --- game state ---
+  // Load save data synchronously to avoid initialization issues
   const saved = useMemo(() => {
     try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return null;
+      }
       return loadSave();
     } catch (e) {
       console.debug('[farm] Error loading save:', e);
@@ -1702,7 +1706,7 @@ function FarmSimCanvas() {
   const [visitHistory, setVisitHistory] = useState(saved?.visitHistory || []);
 
   const [levelId, setLevelId] = useState(saved?.levelId || LEVELS[0].id);
-  const level = useMemo(() => findLevelById(levelId), [levelId]);
+  const level = useMemo(() => findLevelById(levelId) || LEVELS[0], [levelId]);
   const [levelEndsAt, setLevelEndsAt] = useState(saved?.levelEndsAt || nowSec() + (LEVELS[0]?.minutes || 5) * 60);
   const [levelStatus, setLevelStatus] = useState(saved?.levelStatus || "playing");
   const [levelStartedAt, setLevelStartedAt] = useState(saved?.levelStartedAt || nowSec());
