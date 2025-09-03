@@ -117,6 +117,95 @@ const DAILY_CHALLENGES = {
   }
 };
 
+// Pets System
+const PET_TYPES = {
+  dog: {
+    id: "dog",
+    name: "Dog",
+    emoji: "🐕",
+    price: 500,
+    happiness: 100,
+    energy: 100,
+    abilities: ["guard", "fetch"],
+    description: "Protects crops from pests, finds items",
+    feedCost: 5,
+    bonuses: { pestProtection: 0.5, itemFind: 0.1 }
+  },
+  
+  cat: {
+    id: "cat",
+    name: "Cat",
+    emoji: "🐈",
+    price: 400,
+    happiness: 100,
+    energy: 100,
+    abilities: ["hunt", "luck"],
+    description: "Catches pests, brings good luck",
+    feedCost: 4,
+    bonuses: { pestControl: 0.3, luckBonus: 0.15 }
+  },
+  
+  rabbit: {
+    id: "rabbit",
+    name: "Rabbit",
+    emoji: "🐰",
+    price: 300,
+    happiness: 100,
+    energy: 100,
+    abilities: ["fertilize", "speed"],
+    description: "Fertilizes nearby plots, speeds growth",
+    feedCost: 3,
+    bonuses: { fertilizer: 0.2, growthSpeed: 0.1 }
+  },
+  
+  bird: {
+    id: "bird",
+    name: "Bird",
+    emoji: "🦜",
+    price: 350,
+    happiness: 100,
+    energy: 100,
+    abilities: ["scout", "sing"],
+    description: "Finds rare seeds, boosts happiness",
+    feedCost: 2,
+    bonuses: { seedFind: 0.15, happiness: 0.2 }
+  },
+  
+  turtle: {
+    id: "turtle",
+    name: "Turtle",
+    emoji: "🐢",
+    price: 600,
+    happiness: 100,
+    energy: 100,
+    abilities: ["patience", "wisdom"],
+    description: "Increases quality, reduces water needs",
+    feedCost: 3,
+    bonuses: { quality: 0.25, waterEfficiency: 0.3 }
+  },
+  
+  hamster: {
+    id: "hamster",
+    name: "Hamster",
+    emoji: "🐹",
+    price: 250,
+    happiness: 100,
+    energy: 100,
+    abilities: ["store", "multiply"],
+    description: "Stores extra seeds, breeds quickly",
+    feedCost: 2,
+    bonuses: { storage: 0.3, breeding: 0.2 }
+  }
+};
+
+const PET_ACTIVITIES = {
+  play: { energy: -10, happiness: +20, time: 5, emoji: "🎾" },
+  feed: { energy: +30, happiness: +10, time: 3, emoji: "🍖" },
+  pet: { energy: 0, happiness: +15, time: 2, emoji: "💝" },
+  train: { energy: -20, happiness: +5, time: 10, emoji: "🎯" },
+  sleep: { energy: +50, happiness: +5, time: 30, emoji: "😴" }
+};
+
 // Crop Breeding System
 const HYBRID_CROPS = {
   super_carrot: {
@@ -691,6 +780,7 @@ const DEFAULT_RULES = {
     well: { price: 300, name: "Well", emoji: "🪣", bonus: 0, description: "Free water source" },
     beehive: { price: 600, name: "Beehive", emoji: "🐝", bonus: 0.15, description: "Pollination bonus" },
     windmill: { price: 2500, name: "Windmill", emoji: "🌬️", bonus: 0, description: "Process grains faster" },
+    lab: { price: 1000, name: "Breeding Lab", emoji: "🧪", bonus: 0, description: "Breed hybrid crops" },
   },
   livestock: {
     chicken: { price: 100, name: "Chicken", emoji: "🐔", product: "eggs", productEmoji: "🥚", productValue: 5, feedCost: 2 },
@@ -871,6 +961,12 @@ function FarmSimCanvasFixed() {
   const [breedingProgress, setBreedingProgress] = useState(saved?.breedingProgress || {});
   const [unlockedHybrids, setUnlockedHybrids] = useState(saved?.unlockedHybrids || []);
   const [hybridSeeds, setHybridSeeds] = useState(saved?.hybridSeeds || {});
+  
+  // Pets system
+  const [pets, setPets] = useState(saved?.pets || []);
+  const [selectedPet, setSelectedPet] = useState(saved?.selectedPet || null);
+  const [petActivities, setPetActivities] = useState(saved?.petActivities || {});
+  const [petBonusActive, setPetBonusActive] = useState(saved?.petBonusActive || {});
   
   // Add notification with deduplication
   const addNotification = (msg, type = "info") => {
@@ -1459,6 +1555,122 @@ function FarmSimCanvasFixed() {
       setLastWeeklyReset(now);
       addNotification("Weekly challenges reset! New challenges available!", "info");
     }
+  };
+  
+  // Pet functions
+  const adoptPet = (petType) => {
+    const pet = PET_TYPES[petType];
+    if (!pet) return;
+    
+    if (coins < pet.price) {
+      addNotification("Not enough coins to adopt pet!", "error");
+      return;
+    }
+    
+    if (pets.length >= 3) {
+      addNotification("Maximum 3 pets allowed!", "error");
+      return;
+    }
+    
+    const newPet = {
+      id: Date.now(),
+      type: petType,
+      name: pet.name,
+      happiness: 100,
+      energy: 100,
+      experience: 0,
+      level: 1,
+      lastFed: nowSec(),
+      lastPlayed: nowSec()
+    };
+    
+    setPets(prev => [...prev, newPet]);
+    setCoins(c => c - pet.price);
+    addNotification(`Adopted a ${pet.name}! ${pet.emoji}`, "success");
+  };
+  
+  const interactWithPet = (petId, activity) => {
+    const pet = pets.find(p => p.id === petId);
+    if (!pet) return;
+    
+    const activityData = PET_ACTIVITIES[activity];
+    if (!activityData) return;
+    
+    // Check if pet has enough energy
+    if (pet.energy + activityData.energy < 0) {
+      addNotification(`${pet.name} is too tired!`, "error");
+      return;
+    }
+    
+    // Update pet stats
+    setPets(prev => prev.map(p => {
+      if (p.id !== petId) return p;
+      
+      const newEnergy = Math.max(0, Math.min(100, p.energy + activityData.energy));
+      const newHappiness = Math.max(0, Math.min(100, p.happiness + activityData.happiness));
+      const newExp = p.experience + 5;
+      const newLevel = Math.floor(newExp / 100) + 1;
+      
+      return {
+        ...p,
+        energy: newEnergy,
+        happiness: newHappiness,
+        experience: newExp,
+        level: newLevel,
+        [`last${activity.charAt(0).toUpperCase() + activity.slice(1)}`]: nowSec()
+      };
+    }));
+    
+    addNotification(`${activityData.emoji} ${activity} with ${pet.name}!`, "success");
+  };
+  
+  const feedPet = (petId) => {
+    const pet = pets.find(p => p.id === petId);
+    if (!pet) return;
+    
+    const petType = PET_TYPES[pet.type];
+    if (coins < petType.feedCost) {
+      addNotification("Not enough coins to feed pet!", "error");
+      return;
+    }
+    
+    setCoins(c => c - petType.feedCost);
+    interactWithPet(petId, "feed");
+  };
+  
+  const getPetBonus = (bonusType) => {
+    let totalBonus = 0;
+    pets.forEach(pet => {
+      const petType = PET_TYPES[pet.type];
+      if (petType.bonuses[bonusType] && pet.happiness > 50) {
+        // Bonus scales with happiness and level
+        const happinessMultiplier = pet.happiness / 100;
+        const levelMultiplier = 1 + (pet.level - 1) * 0.1;
+        totalBonus += petType.bonuses[bonusType] * happinessMultiplier * levelMultiplier;
+      }
+    });
+    return totalBonus;
+  };
+  
+  const updatePetStats = () => {
+    setPets(prev => prev.map(pet => {
+      const timeSinceLastFed = nowSec() - pet.lastFed;
+      const timeSinceLastPlayed = nowSec() - pet.lastPlayed;
+      
+      // Decrease happiness and energy over time
+      let newHappiness = pet.happiness;
+      let newEnergy = pet.energy;
+      
+      if (timeSinceLastFed > 300) { // 5 minutes
+        newEnergy = Math.max(0, newEnergy - 1);
+      }
+      
+      if (timeSinceLastPlayed > 600) { // 10 minutes
+        newHappiness = Math.max(0, newHappiness - 1);
+      }
+      
+      return { ...pet, happiness: newHappiness, energy: newEnergy };
+    }));
   };
   
   // Breeding functions
@@ -2243,6 +2455,11 @@ function FarmSimCanvasFixed() {
         resetWeeklyChallenges();
       }
       
+      // Update pet stats (every 30 seconds)
+      if (Math.floor(nowSec()) % 30 === 0) {
+        updatePetStats();
+      }
+      
       // Worker upkeep (every 60 seconds = 1 minute)
       if (Math.floor(nowSec()) % 60 === 0 && Object.keys(workers).length > 0) {
         const upkeep = getWorkerUpkeep();
@@ -2731,7 +2948,7 @@ function FarmSimCanvasFixed() {
           </CardHeader>
           <CardContent>
             <Tabs value={shopTab} onValueChange={setShopTab}>
-              <TabsList className="grid grid-cols-4 md:grid-cols-11 mb-4 text-xs">
+              <TabsList className="grid grid-cols-4 md:grid-cols-12 mb-4 text-xs">
                 <TabsTrigger value="seeds">🌱</TabsTrigger>
                 <TabsTrigger value="tools">🛠️</TabsTrigger>
                 <TabsTrigger value="buildings">🏗️</TabsTrigger>
@@ -2743,6 +2960,7 @@ function FarmSimCanvasFixed() {
                 <TabsTrigger value="research">🔬</TabsTrigger>
                 <TabsTrigger value="challenges">🏆</TabsTrigger>
                 <TabsTrigger value="breeding">🧬</TabsTrigger>
+                <TabsTrigger value="pets">🐾</TabsTrigger>
               </TabsList>
               
               <TabsContent value="seeds" className="space-y-2">
@@ -3478,6 +3696,105 @@ function FarmSimCanvasFixed() {
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="pets" className="space-y-4">
+                {/* Current Pets */}
+                {pets.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-2">🐾 Your Pets:</h4>
+                    {pets.map(pet => {
+                      const petType = PET_TYPES[pet.type];
+                      return (
+                        <div key={pet.id} className="p-3 border rounded-lg mb-2 bg-gradient-to-r from-green-50 to-blue-50">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-2xl">{petType.emoji}</span>
+                                <span className="font-medium">{pet.name} (Lv.{pet.level})</span>
+                              </div>
+                              <div className="flex gap-4 mt-2 text-sm">
+                                <div>
+                                  <span className="text-gray-600">Happiness:</span>
+                                  <Progress value={pet.happiness} className="w-20 h-2 mt-1" />
+                                </div>
+                                <div>
+                                  <span className="text-gray-600">Energy:</span>
+                                  <Progress value={pet.energy} className="w-20 h-2 mt-1" />
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="outline" onClick={() => interactWithPet(pet.id, "play")}>
+                                🎾
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => feedPet(pet.id)}>
+                                🍖 ({petType.feedCost}🪙)
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => interactWithPet(pet.id, "pet")}>
+                                💝
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {petType.description}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {/* Pet Shop */}
+                <div>
+                  <h4 className="font-semibold mb-2">🏪 Adopt a Pet:</h4>
+                  <div className="space-y-2">
+                    {Object.entries(PET_TYPES).map(([petId, pet]) => (
+                      <div key={petId} className="p-3 border rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-lg">{pet.emoji}</span>
+                              <span className="font-medium">{pet.name}</span>
+                            </div>
+                            <p className="text-xs text-gray-600">{pet.description}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Abilities: {pet.abilities.join(", ")} | Feed cost: {pet.feedCost}🪙/day
+                            </p>
+                          </div>
+                          <Button 
+                            size="sm"
+                            onClick={() => adoptPet(petId)}
+                            disabled={coins < pet.price || pets.length >= 3}
+                          >
+                            Adopt ({pet.price}🪙)
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Pet Bonuses */}
+                {pets.length > 0 && (
+                  <div className="p-3 bg-yellow-50 rounded-lg">
+                    <h4 className="font-semibold text-sm mb-1">Active Pet Bonuses:</h4>
+                    <div className="text-xs space-y-1">
+                      {getPetBonus("pestProtection") > 0 && (
+                        <div>🛡️ Pest Protection: +{Math.round(getPetBonus("pestProtection") * 100)}%</div>
+                      )}
+                      {getPetBonus("growthSpeed") > 0 && (
+                        <div>🌱 Growth Speed: +{Math.round(getPetBonus("growthSpeed") * 100)}%</div>
+                      )}
+                      {getPetBonus("luckBonus") > 0 && (
+                        <div>🍀 Luck Bonus: +{Math.round(getPetBonus("luckBonus") * 100)}%</div>
+                      )}
+                      {getPetBonus("quality") > 0 && (
+                        <div>⭐ Quality Bonus: +{Math.round(getPetBonus("quality") * 100)}%</div>
+                      )}
                     </div>
                   </div>
                 )}
