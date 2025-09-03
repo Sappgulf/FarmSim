@@ -36,6 +36,21 @@ const ACHIEVEMENTS = {
   rancher: { name: "Rancher", description: "Own 5 animals", emoji: "🐮", reward: 60 },
 };
 
+// Market System
+const MARKET_TRENDS = {
+  high_demand: { multiplier: 1.5, name: "📈 High Demand", color: "text-green-600" },
+  normal: { multiplier: 1.0, name: "📊 Normal", color: "text-gray-600" },
+  low_demand: { multiplier: 0.7, name: "📉 Low Demand", color: "text-red-600" },
+};
+
+const MARKET_EVENTS = [
+  { id: "drought", name: "Drought", emoji: "🏜️", description: "Water crops in high demand", duration: 60, affects: ["watermelon", "tomato"], multiplier: 2.0 },
+  { id: "festival", name: "Harvest Festival", emoji: "🎉", description: "All crops sell for more", duration: 45, affects: "all", multiplier: 1.3 },
+  { id: "shortage", name: "Food Shortage", emoji: "🚨", description: "Basic crops in demand", duration: 50, affects: ["carrot", "potato", "corn"], multiplier: 1.8 },
+  { id: "luxury", name: "Luxury Trend", emoji: "💎", description: "Rare crops worth more", duration: 40, affects: ["golden_corn", "diamond_berry"], multiplier: 2.5 },
+  { id: "recession", name: "Recession", emoji: "💸", description: "All prices down", duration: 60, affects: "all", multiplier: 0.6 },
+];
+
 // Skills System
 const SKILL_TREES = {
   farming: {
@@ -322,6 +337,13 @@ function FarmSimCanvasFixed() {
   const [experience, setExperience] = useState(saved?.experience || 0);
   const [playerLevel, setPlayerLevel] = useState(saved?.playerLevel || 1);
   
+  // Market system
+  const [marketPrices, setMarketPrices] = useState(saved?.marketPrices || {});
+  const [marketTrends, setMarketTrends] = useState(saved?.marketTrends || {});
+  const [currentMarketEvent, setCurrentMarketEvent] = useState(saved?.currentMarketEvent || null);
+  const [marketEventEndsAt, setMarketEventEndsAt] = useState(saved?.marketEventEndsAt || 0);
+  const [priceHistory, setPriceHistory] = useState(saved?.priceHistory || {});
+  
   // Add notification
   const addNotification = (msg, type = "info") => {
     const id = Date.now();
@@ -390,7 +412,9 @@ function FarmSimCanvasFixed() {
     if (plot.state !== "grown") return;
     
     const seed = plot.seed;
-    let value = DEFAULT_RULES.seeds[seed]?.baseValue || 10;
+    
+    // Use market price instead of base value
+    let value = getMarketPrice(seed);
     
     // Apply skill bonuses
     const harvestBonus = getSkillBonus("harvest_bonus");
@@ -652,6 +676,75 @@ function FarmSimCanvasFixed() {
     });
   };
   
+  // Market functions
+  const updateMarketPrices = () => {
+    const newPrices = {};
+    const newTrends = {};
+    
+    // Update prices for all crops
+    Object.keys(DEFAULT_RULES.seeds).forEach(crop => {
+      const basePrice = DEFAULT_RULES.seeds[crop].baseValue;
+      
+      // Random trend for each crop
+      const trendRoll = Math.random();
+      let trend;
+      if (trendRoll < 0.2) trend = "high_demand";
+      else if (trendRoll < 0.8) trend = "normal";
+      else trend = "low_demand";
+      
+      newTrends[crop] = trend;
+      
+      // Calculate price with trend
+      let price = basePrice * MARKET_TRENDS[trend].multiplier;
+      
+      // Apply market event if active
+      if (currentMarketEvent) {
+        const event = MARKET_EVENTS.find(e => e.id === currentMarketEvent);
+        if (event) {
+          if (event.affects === "all" || (Array.isArray(event.affects) && event.affects.includes(crop))) {
+            price *= event.multiplier;
+          }
+        }
+      }
+      
+      // Add some random variation (±10%)
+      price *= (0.9 + Math.random() * 0.2);
+      
+      newPrices[crop] = Math.round(price);
+    });
+    
+    setMarketPrices(newPrices);
+    setMarketTrends(newTrends);
+    
+    // Track price history
+    setPriceHistory(prev => {
+      const history = {...prev};
+      Object.keys(newPrices).forEach(crop => {
+        if (!history[crop]) history[crop] = [];
+        history[crop].push(newPrices[crop]);
+        if (history[crop].length > 10) history[crop].shift(); // Keep last 10 prices
+      });
+      return history;
+    });
+  };
+  
+  const triggerMarketEvent = () => {
+    if (currentMarketEvent && nowSec() < marketEventEndsAt) return; // Event still active
+    
+    // Random chance for market event
+    if (Math.random() < 0.1) { // 10% chance
+      const event = MARKET_EVENTS[Math.floor(Math.random() * MARKET_EVENTS.length)];
+      setCurrentMarketEvent(event.id);
+      setMarketEventEndsAt(nowSec() + event.duration);
+      addNotification(`📰 Market Event: ${event.name} - ${event.description}`, "info");
+      updateMarketPrices(); // Immediately update prices
+    }
+  };
+  
+  const getMarketPrice = (crop) => {
+    return marketPrices[crop] || DEFAULT_RULES.seeds[crop]?.baseValue || 10;
+  };
+  
   // Skills functions
   const getSkillBonus = (effectType) => {
     let bonus = 0;
@@ -854,6 +947,13 @@ function FarmSimCanvasFixed() {
     addNotification(`Bought ${qty}x ${item}!`, "success");
   };
   
+  // Initialize market prices on load
+  useEffect(() => {
+    if (Object.keys(marketPrices).length === 0) {
+      updateMarketPrices();
+    }
+  }, []);
+  
   // Enhanced growth and game system
   useEffect(() => {
     if (paused) return;
@@ -863,6 +963,19 @@ function FarmSimCanvasFixed() {
       if (comboTimer > 0 && nowSec() >= comboTimer) {
         setCombo(0);
         setComboTimer(0);
+      }
+      
+      // Update market event
+      if (currentMarketEvent && nowSec() >= marketEventEndsAt) {
+        setCurrentMarketEvent(null);
+        addNotification("Market event ended", "info");
+        updateMarketPrices();
+      }
+      
+      // Trigger new market events and update prices periodically
+      if (Math.floor(nowSec()) % 30 === 0) {
+        triggerMarketEvent();
+        updateMarketPrices();
       }
       
       // Update weather
@@ -1233,13 +1346,14 @@ function FarmSimCanvasFixed() {
           </CardHeader>
           <CardContent>
             <Tabs value={shopTab} onValueChange={setShopTab}>
-              <TabsList className="grid grid-cols-3 md:grid-cols-6 mb-4">
+              <TabsList className="grid grid-cols-3 md:grid-cols-7 mb-4 text-xs md:text-sm">
                 <TabsTrigger value="seeds">🌱 Seeds</TabsTrigger>
                 <TabsTrigger value="tools">🛠️ Tools</TabsTrigger>
-                <TabsTrigger value="buildings">🏗️ Buildings</TabsTrigger>
+                <TabsTrigger value="buildings">🏗️ Build</TabsTrigger>
                 <TabsTrigger value="livestock">🐄 Animals</TabsTrigger>
                 <TabsTrigger value="processing">🏭 Process</TabsTrigger>
                 <TabsTrigger value="skills">📚 Skills</TabsTrigger>
+                <TabsTrigger value="market">📈 Market</TabsTrigger>
               </TabsList>
               
               <TabsContent value="seeds" className="space-y-2">
@@ -1534,6 +1648,97 @@ function FarmSimCanvasFixed() {
                     </TabsContent>
                   ))}
                 </Tabs>
+              </TabsContent>
+              
+              <TabsContent value="market" className="space-y-2">
+                {/* Market Event Banner */}
+                {currentMarketEvent && (
+                  <div className="p-3 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg border-2 border-orange-300">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="text-lg font-bold">
+                          {MARKET_EVENTS.find(e => e.id === currentMarketEvent)?.emoji} 
+                          {' '}
+                          {MARKET_EVENTS.find(e => e.id === currentMarketEvent)?.name}
+                        </span>
+                        <p className="text-sm text-gray-700">
+                          {MARKET_EVENTS.find(e => e.id === currentMarketEvent)?.description}
+                        </p>
+                      </div>
+                      <Badge variant="secondary">
+                        {Math.max(0, marketEventEndsAt - nowSec())}s
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Market Prices */}
+                <div className="space-y-1 max-h-96 overflow-y-auto">
+                  <h4 className="font-semibold sticky top-0 bg-white p-1">📊 Current Prices:</h4>
+                  {Object.entries(DEFAULT_RULES.seeds).map(([crop, data]) => {
+                    const currentPrice = marketPrices[crop] || data.baseValue;
+                    const basePrice = data.baseValue;
+                    const trend = marketTrends[crop] || "normal";
+                    const trendData = MARKET_TRENDS[trend];
+                    const priceChange = ((currentPrice - basePrice) / basePrice * 100).toFixed(0);
+                    const isUp = currentPrice > basePrice;
+                    
+                    // Get price history for sparkline
+                    const history = priceHistory[crop] || [];
+                    const maxPrice = Math.max(...history, currentPrice);
+                    const minPrice = Math.min(...history, currentPrice);
+                    
+                    return (
+                      <div key={crop} className="p-2 border rounded-lg hover:bg-gray-50">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{data.emoji}</span>
+                            <div>
+                              <div className="font-medium text-sm">{crop}</div>
+                              <Badge variant="outline" className={`text-xs ${trendData.color}`}>
+                                {trendData.name}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-lg">
+                              {currentPrice}🪙
+                            </div>
+                            <div className={`text-xs ${isUp ? 'text-green-600' : 'text-red-600'}`}>
+                              {isUp ? '↑' : '↓'} {priceChange}%
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Mini price chart */}
+                        {history.length > 0 && (
+                          <div className="flex gap-px mt-2 h-8 items-end">
+                            {history.slice(-10).map((price, i) => {
+                              const height = maxPrice > minPrice 
+                                ? ((price - minPrice) / (maxPrice - minPrice)) * 100 
+                                : 50;
+                              return (
+                                <div 
+                                  key={i} 
+                                  className="flex-1 bg-blue-400 rounded-t"
+                                  style={{ height: `${height}%` }}
+                                />
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                <Button 
+                  onClick={updateMarketPrices} 
+                  variant="outline" 
+                  className="w-full"
+                >
+                  🔄 Refresh Prices (Free)
+                </Button>
               </TabsContent>
             </Tabs>
           </CardContent>
