@@ -117,6 +117,153 @@ const DAILY_CHALLENGES = {
   }
 };
 
+// Quest System
+const QUESTS = {
+  // Tutorial Quests
+  first_harvest: {
+    id: "first_harvest",
+    name: "First Harvest",
+    description: "Plant and harvest your first crop",
+    emoji: "🌱",
+    type: "tutorial",
+    requirements: { harvests: 1 },
+    rewards: { coins: 50, xp: 20 },
+    unlocks: ["water_master"],
+    story: "Welcome to your farm! Let's start with the basics."
+  },
+  
+  water_master: {
+    id: "water_master",
+    name: "Water Master",
+    description: "Water 5 crops",
+    emoji: "💧",
+    type: "tutorial",
+    requirements: { watered: 5 },
+    rewards: { coins: 75, tool: "wateringCan" },
+    unlocks: ["tool_collector"],
+    story: "Great! Now let's learn about keeping crops healthy."
+  },
+  
+  tool_collector: {
+    id: "tool_collector",
+    name: "Tool Collector",
+    description: "Buy 3 different tools",
+    emoji: "🛠️",
+    type: "tutorial",
+    requirements: { toolsOwned: 3 },
+    rewards: { coins: 100, xp: 50 },
+    unlocks: ["expansion_time"],
+    story: "Tools make farming easier. Collect them all!"
+  },
+  
+  // Main Story Quests
+  expansion_time: {
+    id: "expansion_time",
+    name: "Expansion Time",
+    description: "Expand your farm to 5x5",
+    emoji: "📏",
+    type: "main",
+    requirements: { gridSize: 5 },
+    rewards: { coins: 200, seeds: { corn: 5 } },
+    unlocks: ["building_basics"],
+    story: "Your farm is growing! Time to expand."
+  },
+  
+  building_basics: {
+    id: "building_basics",
+    name: "Building Basics",
+    description: "Build your first building",
+    emoji: "🏗️",
+    type: "main",
+    requirements: { buildings: 1 },
+    rewards: { coins: 300, xp: 100 },
+    unlocks: ["livestock_lover"],
+    story: "Buildings provide bonuses and new opportunities."
+  },
+  
+  livestock_lover: {
+    id: "livestock_lover",
+    name: "Livestock Lover",
+    description: "Own 3 animals",
+    emoji: "🐄",
+    type: "main",
+    requirements: { animals: 3 },
+    rewards: { coins: 500, building: "barn" },
+    unlocks: ["master_farmer"],
+    story: "Animals are a farmer's best friend!"
+  },
+  
+  // Side Quests
+  combo_master: {
+    id: "combo_master",
+    name: "Combo Master",
+    description: "Achieve a 10x harvest combo",
+    emoji: "⚡",
+    type: "side",
+    requirements: { combo: 10 },
+    rewards: { coins: 400, skillPoints: 1 },
+    repeatable: false,
+    story: "Chain harvests for maximum profit!"
+  },
+  
+  breed_hybrid: {
+    id: "breed_hybrid",
+    name: "Genetic Pioneer",
+    description: "Breed your first hybrid crop",
+    emoji: "🧬",
+    type: "side",
+    requirements: { hybridsCreated: 1 },
+    rewards: { coins: 600, researchPoints: 30 },
+    repeatable: false,
+    story: "Discover the secrets of crop genetics."
+  },
+  
+  pet_paradise: {
+    id: "pet_paradise",
+    name: "Pet Paradise",
+    description: "Adopt 2 pets and keep them happy",
+    emoji: "🐾",
+    type: "side",
+    requirements: { pets: 2, petHappiness: 80 },
+    rewards: { coins: 700, petFood: 20 },
+    repeatable: false,
+    story: "Pets bring joy and bonuses to your farm."
+  },
+  
+  // Repeatable Quests
+  daily_grind: {
+    id: "daily_grind",
+    name: "Daily Grind",
+    description: "Harvest 20 crops",
+    emoji: "🌾",
+    type: "daily",
+    requirements: { harvests: 20 },
+    rewards: { coins: 150, xp: 75 },
+    repeatable: true,
+    cooldown: 86400,
+    story: "Keep the harvest going!"
+  },
+  
+  market_trader: {
+    id: "market_trader",
+    name: "Market Trader",
+    description: "Sell 10 processed goods",
+    emoji: "📦",
+    type: "daily",
+    requirements: { processedSold: 10 },
+    rewards: { coins: 250, processingTime: -10 },
+    repeatable: true,
+    cooldown: 86400,
+    story: "The market loves your processed goods!"
+  }
+};
+
+const QUEST_CHAINS = {
+  tutorial: ["first_harvest", "water_master", "tool_collector"],
+  main_story: ["expansion_time", "building_basics", "livestock_lover"],
+  farming_mastery: ["combo_master", "breed_hybrid", "pet_paradise"]
+};
+
 // Pets System
 const PET_TYPES = {
   dog: {
@@ -987,6 +1134,12 @@ function FarmSimCanvasFixed() {
     theme: "light"
   });
   
+  // Quest system
+  const [activeQuests, setActiveQuests] = useState(saved?.activeQuests || ["first_harvest"]);
+  const [completedQuests, setCompletedQuests] = useState(saved?.completedQuests || []);
+  const [questProgress, setQuestProgress] = useState(saved?.questProgress || {});
+  const [questCooldowns, setQuestCooldowns] = useState(saved?.questCooldowns || {});
+  
   // Analytics tracking
   const [analytics, setAnalytics] = useState(saved?.analytics || {
     totalEarnings: 0,
@@ -1189,6 +1342,10 @@ function FarmSimCanvasFixed() {
     // Update challenge progress
     updateChallengeProgress("harvest", 1);
     updateChallengeProgress("coins", value);
+    
+    // Update quest progress
+    updateQuestProgress("harvests", 1);
+    if (combo >= 10) updateQuestProgress("combo", combo);
     
     // Track analytics
     updateAnalytics("cropsHarvested", 1);
@@ -1648,6 +1805,120 @@ function FarmSimCanvasFixed() {
       setLastWeeklyReset(now);
       addNotification("Weekly challenges reset! New challenges available!", "info");
     }
+  };
+  
+  // Quest functions
+  const updateQuestProgress = (type, value = 1) => {
+    activeQuests.forEach(questId => {
+      const quest = QUESTS[questId];
+      if (!quest) return;
+      
+      // Check if quest requirement matches the type
+      if (quest.requirements[type]) {
+        setQuestProgress(prev => {
+          const current = prev[questId] || {};
+          const newValue = (current[type] || 0) + value;
+          
+          // Check if quest is complete
+          const isComplete = Object.entries(quest.requirements).every(([req, target]) => {
+            if (req === type) return newValue >= target;
+            return (current[req] || 0) >= target;
+          });
+          
+          if (isComplete && !completedQuests.includes(questId)) {
+            completeQuest(questId);
+          }
+          
+          return {
+            ...prev,
+            [questId]: {
+              ...current,
+              [type]: newValue
+            }
+          };
+        });
+      }
+    });
+  };
+  
+  const completeQuest = (questId) => {
+    const quest = QUESTS[questId];
+    if (!quest) return;
+    
+    // Award rewards
+    if (quest.rewards.coins) {
+      setCoins(c => c + quest.rewards.coins);
+      updateAnalytics("totalEarnings", quest.rewards.coins);
+    }
+    if (quest.rewards.xp) {
+      addExperience(quest.rewards.xp);
+    }
+    if (quest.rewards.skillPoints) {
+      setSkillPoints(sp => sp + quest.rewards.skillPoints);
+    }
+    if (quest.rewards.researchPoints) {
+      setResearchPoints(rp => rp + quest.rewards.researchPoints);
+    }
+    if (quest.rewards.seeds) {
+      Object.entries(quest.rewards.seeds).forEach(([seed, amount]) => {
+        setInventory(prev => ({
+          ...prev,
+          [seed]: (prev[seed] || 0) + amount
+        }));
+      });
+    }
+    if (quest.rewards.tool) {
+      setTools(prev => ({
+        ...prev,
+        [quest.rewards.tool]: true
+      }));
+    }
+    
+    // Mark as completed
+    setCompletedQuests(prev => [...prev, questId]);
+    setActiveQuests(prev => prev.filter(id => id !== questId));
+    
+    // Unlock new quests
+    if (quest.unlocks) {
+      quest.unlocks.forEach(newQuestId => {
+        if (!completedQuests.includes(newQuestId) && !activeQuests.includes(newQuestId)) {
+          setActiveQuests(prev => [...prev, newQuestId]);
+        }
+      });
+    }
+    
+    // Handle repeatable quests
+    if (quest.repeatable && quest.cooldown) {
+      setQuestCooldowns(prev => ({
+        ...prev,
+        [questId]: nowSec() + quest.cooldown
+      }));
+    }
+    
+    addNotification(`Quest Complete: ${quest.name}! ${quest.emoji}`, "success");
+    updateAnalytics("questsCompleted", 1);
+  };
+  
+  const acceptQuest = (questId) => {
+    if (activeQuests.includes(questId) || completedQuests.includes(questId)) return;
+    
+    const quest = QUESTS[questId];
+    if (!quest) return;
+    
+    // Check cooldown for repeatable quests
+    if (quest.repeatable && questCooldowns[questId] > nowSec()) {
+      const remaining = Math.floor((questCooldowns[questId] - nowSec()) / 60);
+      addNotification(`Quest on cooldown for ${remaining} minutes`, "error");
+      return;
+    }
+    
+    setActiveQuests(prev => [...prev, questId]);
+    setQuestProgress(prev => ({
+      ...prev,
+      [questId]: {}
+    }));
+    
+    addNotification(`New Quest: ${quest.name}!`, "info");
   };
   
   // Analytics functions
@@ -3204,7 +3475,7 @@ function FarmSimCanvasFixed() {
           </CardHeader>
           <CardContent>
             <Tabs value={shopTab} onValueChange={setShopTab}>
-              <TabsList className="grid grid-cols-4 md:grid-cols-13 mb-4 text-xs">
+              <TabsList className="grid grid-cols-4 md:grid-cols-14 mb-4 text-xs">
                 <TabsTrigger value="seeds">🌱</TabsTrigger>
                 <TabsTrigger value="tools">🛠️</TabsTrigger>
                 <TabsTrigger value="buildings">🏗️</TabsTrigger>
@@ -3218,6 +3489,7 @@ function FarmSimCanvasFixed() {
                 <TabsTrigger value="breeding">🧬</TabsTrigger>
                 <TabsTrigger value="pets">🐾</TabsTrigger>
                 <TabsTrigger value="stats">📊</TabsTrigger>
+                <TabsTrigger value="quests">📜</TabsTrigger>
               </TabsList>
               
               <TabsContent value="seeds" className="space-y-2">
@@ -4157,6 +4429,97 @@ function FarmSimCanvasFixed() {
                     </>
                   );
                 })()}
+              </TabsContent>
+              
+              <TabsContent value="quests" className="space-y-4">
+                {/* Active Quests */}
+                {activeQuests.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-2">📜 Active Quests:</h4>
+                    {activeQuests.map(questId => {
+                      const quest = QUESTS[questId];
+                      if (!quest) return null;
+                      const progress = questProgress[questId] || {};
+                      
+                      return (
+                        <div key={questId} className="p-3 border-2 border-yellow-300 rounded-lg mb-2 bg-yellow-50">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{quest.emoji}</span>
+                                <span className="font-medium">{quest.name}</span>
+                                <Badge variant={
+                                  quest.type === "tutorial" ? "default" :
+                                  quest.type === "main" ? "secondary" :
+                                  "outline"
+                                }>
+                                  {quest.type}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-gray-600 mt-1">{quest.description}</p>
+                              <p className="text-xs text-gray-500 italic mt-1">"{quest.story}"</p>
+                            </div>
+                          </div>
+                          
+                          {/* Progress bars */}
+                          {Object.entries(quest.requirements).map(([req, target]) => {
+                            const current = progress[req] || 0;
+                            const percent = Math.min(100, (current / target) * 100);
+                            return (
+                              <div key={req} className="mb-2">
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span className="capitalize">{req.replace(/_/g, ' ')}</span>
+                                  <span>{current}/{target}</span>
+                                </div>
+                                <Progress value={percent} className="h-2" />
+                              </div>
+                            );
+                          })}
+                          
+                          {/* Rewards */}
+                          <div className="text-xs text-gray-600 mt-2">
+                            Rewards: 
+                            {quest.rewards.coins && ` ${quest.rewards.coins}🪙`}
+                            {quest.rewards.xp && ` +${quest.rewards.xp}XP`}
+                            {quest.rewards.skillPoints && ` +${quest.rewards.skillPoints}SP`}
+                            {quest.rewards.researchPoints && ` +${quest.rewards.researchPoints}RP`}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {/* Available Side Quests */}
+                <div>
+                  <h4 className="font-semibold mb-2">⭐ Available Side Quests:</h4>
+                  {Object.values(QUESTS)
+                    .filter(q => q.type === "side" && !completedQuests.includes(q.id) && !activeQuests.includes(q.id))
+                    .map(quest => (
+                      <div key={quest.id} className="p-3 border rounded-lg mb-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{quest.emoji}</span>
+                              <span className="font-medium">{quest.name}</span>
+                            </div>
+                            <p className="text-xs text-gray-600">{quest.description}</p>
+                          </div>
+                          <Button size="sm" onClick={() => acceptQuest(quest.id)}>
+                            Accept
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+                
+                {/* Completed Quests Count */}
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Quests Completed:</span>
+                    <Badge variant="default">{completedQuests.length}</Badge>
+                  </div>
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
