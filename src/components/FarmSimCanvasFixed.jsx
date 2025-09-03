@@ -968,6 +968,32 @@ function FarmSimCanvasFixed() {
   const [petActivities, setPetActivities] = useState(saved?.petActivities || {});
   const [petBonusActive, setPetBonusActive] = useState(saved?.petBonusActive || {});
   
+  // Analytics tracking
+  const [analytics, setAnalytics] = useState(saved?.analytics || {
+    totalEarnings: 0,
+    totalSpent: 0,
+    cropsPlanted: 0,
+    cropsHarvested: 0,
+    cropsWithered: 0,
+    waterUsed: 0,
+    fertilizerUsed: 0,
+    pesticideUsed: 0,
+    processedItems: 0,
+    researchCompleted: 0,
+    challengesCompleted: 0,
+    hybridsCreated: 0,
+    petsAdopted: 0,
+    workersHired: 0,
+    buildingsBuilt: 0,
+    toolsPurchased: 0,
+    highestCombo: 0,
+    playTime: 0,
+    sessionStart: nowSec(),
+    dailyStats: {},
+    cropStats: {},
+    profitByDay: []
+  });
+  
   // Add notification with deduplication
   const addNotification = (msg, type = "info") => {
     // Prevent duplicate notifications
@@ -1040,6 +1066,10 @@ function FarmSimCanvasFixed() {
     // Update challenge progress
     updateChallengeProgress("plant", 1);
     
+    // Track analytics
+    updateAnalytics("cropsPlanted", 1);
+    trackCropStat(seed, "planted", 1);
+    
     addNotification(`Planted ${seed}!`, "success");
   };
   
@@ -1105,6 +1135,15 @@ function FarmSimCanvasFixed() {
     // Update challenge progress
     updateChallengeProgress("harvest", 1);
     updateChallengeProgress("coins", value);
+    
+    // Track analytics
+    updateAnalytics("cropsHarvested", 1);
+    updateAnalytics("totalEarnings", value);
+    trackCropStat(seed, "harvested", 1);
+    trackCropStat(seed, "earnings", value);
+    if (combo > analytics.highestCombo) {
+      updateAnalytics("highestCombo", combo - analytics.highestCombo);
+    }
     
     // Add experience
     addExperience(10);
@@ -1555,6 +1594,61 @@ function FarmSimCanvasFixed() {
       setLastWeeklyReset(now);
       addNotification("Weekly challenges reset! New challenges available!", "info");
     }
+  };
+  
+  // Analytics functions
+  const updateAnalytics = (key, value = 1) => {
+    setAnalytics(prev => ({
+      ...prev,
+      [key]: (prev[key] || 0) + value
+    }));
+  };
+  
+  const trackCropStat = (crop, stat, value = 1) => {
+    setAnalytics(prev => ({
+      ...prev,
+      cropStats: {
+        ...prev.cropStats,
+        [crop]: {
+          ...prev.cropStats[crop],
+          [stat]: ((prev.cropStats[crop] || {})[stat] || 0) + value
+        }
+      }
+    }));
+  };
+  
+  const calculateStats = () => {
+    const totalPlayTime = analytics.playTime + (nowSec() - analytics.sessionStart);
+    const profit = analytics.totalEarnings - analytics.totalSpent;
+    const harvestRate = analytics.cropsHarvested / Math.max(1, analytics.cropsPlanted) * 100;
+    const witherRate = analytics.cropsWithered / Math.max(1, analytics.cropsPlanted) * 100;
+    const avgEarningsPerHarvest = analytics.totalEarnings / Math.max(1, analytics.cropsHarvested);
+    const earningsPerMinute = analytics.totalEarnings / Math.max(1, totalPlayTime / 60);
+    
+    return {
+      totalPlayTime,
+      profit,
+      harvestRate,
+      witherRate,
+      avgEarningsPerHarvest,
+      earningsPerMinute,
+      totalActivities: analytics.cropsPlanted + analytics.cropsHarvested + 
+                      analytics.processedItems + analytics.researchCompleted
+    };
+  };
+  
+  const getTopCrops = () => {
+    const crops = Object.entries(analytics.cropStats || {})
+      .map(([crop, stats]) => ({
+        crop,
+        planted: stats.planted || 0,
+        harvested: stats.harvested || 0,
+        earnings: stats.earnings || 0,
+        efficiency: ((stats.harvested || 0) / Math.max(1, stats.planted || 0)) * 100
+      }))
+      .sort((a, b) => b.earnings - a.earnings)
+      .slice(0, 5);
+    return crops;
   };
   
   // Pet functions
@@ -2948,7 +3042,7 @@ function FarmSimCanvasFixed() {
           </CardHeader>
           <CardContent>
             <Tabs value={shopTab} onValueChange={setShopTab}>
-              <TabsList className="grid grid-cols-4 md:grid-cols-12 mb-4 text-xs">
+              <TabsList className="grid grid-cols-4 md:grid-cols-13 mb-4 text-xs">
                 <TabsTrigger value="seeds">🌱</TabsTrigger>
                 <TabsTrigger value="tools">🛠️</TabsTrigger>
                 <TabsTrigger value="buildings">🏗️</TabsTrigger>
@@ -2961,6 +3055,7 @@ function FarmSimCanvasFixed() {
                 <TabsTrigger value="challenges">🏆</TabsTrigger>
                 <TabsTrigger value="breeding">🧬</TabsTrigger>
                 <TabsTrigger value="pets">🐾</TabsTrigger>
+                <TabsTrigger value="stats">📊</TabsTrigger>
               </TabsList>
               
               <TabsContent value="seeds" className="space-y-2">
