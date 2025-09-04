@@ -1130,11 +1130,36 @@ function loadSave() {
     }
     const s = localStorage.getItem(SAVE_KEY);
     if (s) {
-      const parsed = JSON.parse(s);
-      if (parsed?.version === 2) return parsed;
+      let parsed = JSON.parse(s);
+      
+      // Migrate old saves or accept new version
+      if (parsed?.version === 2 || parsed?.version === 3) {
+        // Ensure critical fields exist
+        if (!parsed.settings) {
+          parsed.settings = {
+            autoSave: true,
+            autoSaveInterval: 30,
+            notifications: true,
+            particleEffects: true,
+            weatherEffects: true,
+            animations: true,
+            soundEnabled: false,
+            musicVolume: 50,
+            sfxVolume: 50,
+            performanceMode: false,
+            reducedMotion: false,
+            colorblindMode: false,
+            gridSize: 4,
+            theme: "light"
+          };
+        }
+        return parsed;
+      }
     }
   } catch (e) {
     console.debug('[farm] loadSave error:', e);
+    // Clear corrupted save
+    localStorage.removeItem(SAVE_KEY);
   }
   return null;
 }
@@ -3316,17 +3341,64 @@ function FarmSimCanvasFixed() {
   
   // Auto-save
   useEffect(() => {
+    if (!settings?.autoSave) return;
+    
     const timer = setTimeout(() => {
       const snapshot = {
-        version: 2,
+        version: 3,
         savedAt: Date.now(),
-        coins, score, gridSize, plots, inventory, buildings
+        // Core
+        coins, score, gridSize, plots, inventory, buildings,
+        // Systems
+        level: level.level,
+        experience,
+        skillPoints,
+        skills,
+        tools,
+        researchPoints,
+        unlockedResearch,
+        workers,
+        marketPrices,
+        // Features
+        dailyChallenges,
+        weeklyChallenges,
+        challengeProgress,
+        completedDailies,
+        completedWeeklies,
+        notifiedChallenges,
+        dailyStreak,
+        lastDailyReset,
+        lastWeeklyReset,
+        // Breeding & Pets
+        breedingPairs,
+        breedingProgress,
+        unlockedHybrids,
+        hybridSeeds,
+        pets,
+        selectedPet,
+        petActivities,
+        // Quest & Inventory
+        activeQuests,
+        completedQuests,
+        questProgress,
+        currentQuestChain,
+        storageLevel,
+        // Settings & Analytics
+        settings,
+        analytics
       };
       saveState(snapshot);
     }, 5000);
     
     return () => clearTimeout(timer);
-  }, [coins, score, gridSize, plots, inventory, buildings]);
+  }, [coins, score, gridSize, plots, inventory, buildings, level, experience, 
+      skillPoints, skills, tools, researchPoints, unlockedResearch, workers,
+      marketPrices, dailyChallenges, weeklyChallenges, challengeProgress,
+      completedDailies, completedWeeklies, notifiedChallenges, dailyStreak,
+      lastDailyReset, lastWeeklyReset, breedingPairs, breedingProgress,
+      unlockedHybrids, hybridSeeds, pets, selectedPet, petActivities,
+      activeQuests, completedQuests, questProgress, currentQuestChain,
+      storageLevel, settings, analytics]);
   
   // Plot Card Component
   const PlotCard = ({ plot, index }) => {
