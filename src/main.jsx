@@ -1,8 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-// import FarmSimCanvas from "./components/FarmSimCanvas";
-// import FarmSimCanvas from "./components/SafeFarmSimCanvas";
-import FarmSimCanvas from "./components/FarmSimCanvasFixed";
+import FarmSimCanvas from "./components/FarmSimCanvas";
 import "./index.css";
 
 // Register a basic service worker for PWA/offline support (no precache list here)
