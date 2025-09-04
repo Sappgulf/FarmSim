@@ -389,6 +389,62 @@ const QUEST_CHAINS = {
   }
 };
 
+// Inventory System
+const INVENTORY_CATEGORIES = {
+  seeds: {
+    name: "Seeds",
+    emoji: "🌱",
+    items: ["carrot", "potato", "corn", "tomato", "wheat", "strawberry", "pumpkin", "sunflower"],
+    stackSize: 99,
+    description: "Plant these to grow crops"
+  },
+  crops: {
+    name: "Harvested Crops",
+    emoji: "🌾",
+    items: ["harvested_carrot", "harvested_potato", "harvested_corn", "harvested_tomato", 
+             "harvested_wheat", "harvested_strawberry", "harvested_pumpkin", "harvested_sunflower"],
+    stackSize: 99,
+    description: "Raw crops ready for sale or processing"
+  },
+  processed: {
+    name: "Processed Goods",
+    emoji: "🥫",
+    items: ["carrot_juice", "potato_chips", "corn_oil", "tomato_sauce", 
+             "wheat_flour", "strawberry_jam", "pumpkin_pie", "sunflower_oil"],
+    stackSize: 50,
+    description: "Processed items worth more"
+  },
+  tools: {
+    name: "Tools",
+    emoji: "🔧",
+    items: ["wateringCan", "fertilizer", "pesticide", "harvester", "sprinkler"],
+    stackSize: 10,
+    description: "Tools to help your farming"
+  },
+  special: {
+    name: "Special Items",
+    emoji: "⭐",
+    items: ["golden_seed", "magic_fertilizer", "time_crystal", "weather_charm"],
+    stackSize: 5,
+    description: "Rare and powerful items"
+  },
+  hybrid: {
+    name: "Hybrid Seeds",
+    emoji: "🧬",
+    items: Object.keys(HYBRID_CROPS),
+    stackSize: 20,
+    description: "Genetically modified seeds"
+  }
+};
+
+const STORAGE_UPGRADES = [
+  { level: 1, capacity: 100, cost: 0, name: "Basic Shed" },
+  { level: 2, capacity: 200, cost: 500, name: "Storage Barn" },
+  { level: 3, capacity: 350, cost: 1500, name: "Warehouse" },
+  { level: 4, capacity: 500, cost: 3000, name: "Grand Silo" },
+  { level: 5, capacity: 1000, cost: 10000, name: "Mega Storage" }
+];
+
 // Pets System
 const PET_TYPES = {
   dog: {
@@ -1153,6 +1209,10 @@ function FarmSimCanvasFixed() {
   const [shopTab, setShopTab] = useState("seeds");
   const [showSettings, setShowSettings] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
+  const [inventoryCategory, setInventoryCategory] = useState("seeds");
+  const [storageLevel, setStorageLevel] = useState(saved?.storageLevel || 1);
+  const [inventorySort, setInventorySort] = useState("name");
   const [notifications, setNotifications] = useState([]);
   const [weather, setWeather] = useState({ type: "Sunny", endsAt: nowSec() + 60 });
   const [currentSeason, setCurrentSeason] = useState("spring");
@@ -1528,15 +1588,15 @@ function FarmSimCanvasFixed() {
     
     // Add to appropriate inventory
     if (isHybrid) {
-      setHybridSeeds(prev => ({
-        ...prev,
-        [seed]: (prev[seed] || 0) + harvestAmount
-      }));
+      // Hybrids give seeds back
+      if (!addToInventory(seed, harvestAmount)) {
+        addNotification("Storage full! Some items lost.", "warning");
+      }
     } else {
-      setInventory(prev => ({
-        ...prev,
-        [seed]: (prev[seed] || 0) + harvestAmount
-      }));
+      // Regular crops give harvested version
+      if (!addToInventory(`harvested_${seed}`, harvestAmount)) {
+        addNotification("Storage full! Crop sold directly.", "warning");
+      }
     }
     
     // Update combo
@@ -2082,6 +2142,112 @@ function FarmSimCanvasFixed() {
         }
       }
     }
+  };
+  
+  // Inventory management functions
+  const getInventoryCount = () => {
+    return Object.values(inventory).reduce((sum, count) => sum + (count || 0), 0);
+  };
+  
+  const getStorageCapacity = () => {
+    return STORAGE_UPGRADES[storageLevel - 1].capacity;
+  };
+  
+  const canAddToInventory = (amount = 1) => {
+    return getInventoryCount() + amount <= getStorageCapacity();
+  };
+  
+  const addToInventory = (item, amount = 1) => {
+    if (!canAddToInventory(amount)) {
+      addNotification("Storage full! Upgrade your storage to hold more items.", "error");
+      return false;
+    }
+    
+    setInventory(prev => ({
+      ...prev,
+      [item]: (prev[item] || 0) + amount
+    }));
+    return true;
+  };
+  
+  const removeFromInventory = (item, amount = 1) => {
+    setInventory(prev => {
+      const current = prev[item] || 0;
+      if (current < amount) return prev;
+      
+      const newAmount = current - amount;
+      if (newAmount === 0) {
+        const newInv = { ...prev };
+        delete newInv[item];
+        return newInv;
+      }
+      
+      return {
+        ...prev,
+        [item]: newAmount
+      };
+    });
+  };
+  
+  const upgradeStorage = () => {
+    if (storageLevel >= STORAGE_UPGRADES.length) {
+      addNotification("Storage already at maximum level!", "error");
+      return;
+    }
+    
+    const nextUpgrade = STORAGE_UPGRADES[storageLevel];
+    if (coins < nextUpgrade.cost) {
+      addNotification(`Need ${nextUpgrade.cost} coins to upgrade storage!`, "error");
+      return;
+    }
+    
+    setCoins(c => c - nextUpgrade.cost);
+    setStorageLevel(level => level + 1);
+    updateAnalytics("totalSpent", nextUpgrade.cost);
+    addNotification(`Storage upgraded to ${nextUpgrade.name}! Capacity: ${nextUpgrade.capacity}`, "success");
+  };
+  
+  const getItemCategory = (item) => {
+    for (const [category, data] of Object.entries(INVENTORY_CATEGORIES)) {
+      if (data.items.includes(item)) {
+        return category;
+      }
+    }
+    // Check if it's a hybrid seed
+    if (HYBRID_CROPS[item]) {
+      return "hybrid";
+    }
+    // Check if it's a harvested crop
+    if (item.startsWith("harvested_")) {
+      return "crops";
+    }
+    // Default to tools
+    return "tools";
+  };
+  
+  const sortInventory = (items) => {
+    const sorted = [...items];
+    
+    switch (inventorySort) {
+      case "name":
+        sorted.sort((a, b) => a.localeCompare(b));
+        break;
+      case "quantity":
+        sorted.sort((a, b) => (inventory[b] || 0) - (inventory[a] || 0));
+        break;
+      case "value":
+        // Sort by market value if available
+        sorted.sort((a, b) => {
+          const priceA = marketPrices[a] || DEFAULT_RULES.crops[a]?.price || 0;
+          const priceB = marketPrices[b] || DEFAULT_RULES.crops[b]?.price || 0;
+          return priceB - priceA;
+        });
+        break;
+      default:
+        break;
+    }
+    
+    return sorted;
   };
   
   // Analytics functions
@@ -3330,6 +3496,13 @@ function FarmSimCanvasFixed() {
                   {paused ? "▶️" : "⏸️"}
                 </Button>
                 <Button 
+                  onClick={() => setShowInventory(!showInventory)} 
+                  size="sm"
+                  variant={showInventory ? "default" : "outline"}
+                >
+                  📦
+                </Button>
+                <Button 
                   onClick={() => setShowQuests(!showQuests)} 
                   size="sm"
                   variant={showQuests ? "default" : "outline"}
@@ -3476,6 +3649,147 @@ function FarmSimCanvasFixed() {
                   Click plot to use {DEFAULT_RULES.tools[selectedTool].name}
                 </Badge>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Inventory Panel */}
+      {showInventory && (
+        <Card className="mb-4">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <CardTitle>📦 Inventory</CardTitle>
+                <Badge variant="outline">
+                  {getInventoryCount()}/{getStorageCapacity()}
+                </Badge>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => setShowInventory(false)}>✕</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Storage Upgrade */}
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <div>
+                  <h4 className="font-semibold text-sm">
+                    {STORAGE_UPGRADES[storageLevel - 1].name}
+                  </h4>
+                  <p className="text-xs text-gray-600">
+                    Storage Level {storageLevel}/{STORAGE_UPGRADES.length}
+                  </p>
+                </div>
+                {storageLevel < STORAGE_UPGRADES.length && (
+                  <Button 
+                    size="sm" 
+                    onClick={upgradeStorage}
+                    disabled={coins < STORAGE_UPGRADES[storageLevel].cost}
+                  >
+                    Upgrade ({STORAGE_UPGRADES[storageLevel].cost}🪙)
+                  </Button>
+                )}
+              </div>
+              <Progress 
+                value={(getInventoryCount() / getStorageCapacity()) * 100} 
+                className="h-2"
+              />
+            </div>
+            
+            {/* Category Tabs */}
+            <div className="flex gap-1 mb-3 flex-wrap">
+              {Object.entries(INVENTORY_CATEGORIES).map(([key, category]) => (
+                <Button
+                  key={key}
+                  size="sm"
+                  variant={inventoryCategory === key ? "default" : "outline"}
+                  onClick={() => setInventoryCategory(key)}
+                  className="text-xs"
+                >
+                  {category.emoji} {category.name}
+                </Button>
+              ))}
+            </div>
+            
+            {/* Sort Options */}
+            <div className="flex gap-2 mb-3">
+              <span className="text-xs text-gray-600">Sort by:</span>
+              <div className="flex gap-1">
+                {["name", "quantity", "value"].map(sort => (
+                  <Button
+                    key={sort}
+                    size="sm"
+                    variant={inventorySort === sort ? "default" : "ghost"}
+                    onClick={() => setInventorySort(sort)}
+                    className="text-xs h-6 px-2"
+                  >
+                    {sort.charAt(0).toUpperCase() + sort.slice(1)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Items Grid */}
+            <div className="grid grid-cols-4 gap-2 max-h-96 overflow-y-auto">
+              {(() => {
+                const category = INVENTORY_CATEGORIES[inventoryCategory];
+                if (!category) return null;
+                
+                // Get all items in this category that exist in inventory
+                const categoryItems = Object.keys(inventory).filter(item => {
+                  const itemCategory = getItemCategory(item);
+                  return itemCategory === inventoryCategory;
+                });
+                
+                const sortedItems = sortInventory(categoryItems);
+                
+                if (sortedItems.length === 0) {
+                  return (
+                    <div className="col-span-4 text-center py-8 text-gray-500">
+                      <div className="text-2xl mb-2">{category.emoji}</div>
+                      <p className="text-sm">No {category.name.toLowerCase()} in inventory</p>
+                      <p className="text-xs mt-1">{category.description}</p>
+                    </div>
+                  );
+                }
+                
+                return sortedItems.map(item => {
+                  const count = inventory[item] || 0;
+                  const crop = DEFAULT_RULES.crops[item];
+                  const value = marketPrices[item] || crop?.price || 0;
+                  
+                  return (
+                    <div 
+                      key={item} 
+                      className="p-2 border rounded bg-white hover:bg-gray-50 cursor-pointer"
+                      title={`${item}: ${count} units`}
+                    >
+                      <div className="text-center">
+                        <div className="text-2xl">
+                          {crop?.emoji || HYBRID_CROPS[item]?.emoji || "📦"}
+                        </div>
+                        <div className="text-xs font-medium truncate">
+                          {item.replace(/_/g, " ").replace("harvested ", "")}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          x{count}
+                        </div>
+                        {value > 0 && (
+                          <div className="text-xs text-green-600">
+                            {value}🪙
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+            
+            {/* Category Info */}
+            <div className="mt-3 p-2 bg-blue-50 rounded text-xs">
+              <strong>{INVENTORY_CATEGORIES[inventoryCategory]?.name}:</strong>{" "}
+              {INVENTORY_CATEGORIES[inventoryCategory]?.description}
             </div>
           </CardContent>
         </Card>
