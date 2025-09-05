@@ -2,7 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 // import FarmSimCanvas from "./components/FarmSimCanvas";
 // import FarmSimCanvas from "./components/SafeFarmSimCanvas";
-import FarmSimCanvas from "./components/FarmSimCanvasFixed";
+// import FarmSimCanvas from "./components/FarmSimCanvasFixed";
+import UltimateFarmGame from "./components/UltimateFarmGame";
 import "./index.css";
 
 // Register a basic service worker for PWA/offline support (no precache list here)
@@ -101,7 +102,7 @@ class ErrorBoundary extends React.Component {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <FarmSimCanvas />
+      <UltimateFarmGame />
     </ErrorBoundary>
   </React.StrictMode>
 );

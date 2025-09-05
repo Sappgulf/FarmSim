@@ -1291,7 +1291,7 @@ const findLevelById = (id) => LEVELS.find(l => l.id === id);
 const findLevelIndex = (id) => LEVELS.findIndex(l => l.id === id);
 
 // 📢 NOTIFICATION HELPERS - Consolidates common notification patterns
-
+// Notification helpers will be defined inside the component where addNotification is available
 
 // Local save helpers with compression
 const SAVE_KEY = "farm_sim_enhanced_v2";
@@ -1311,6 +1311,9 @@ function loadSave() {
   }
   return null;
 }
+
+// ===== NEW SYSTEMS FUNCTIONS =====
+// These functions will be defined inside the component where state setters are available
 
 function saveState(s) { 
   try { 
@@ -1976,6 +1979,101 @@ function FarmSimCanvas() {
   const notifyActionSuccess = (action, emoji) => addNotification(`${action}! ${emoji || ''}`, "success");
   const notifyEntityAction = (action, entity, emoji) => addNotification(`${action} ${entity.name}! ${emoji || ''}`, "success");
 
+  // Unified purchase handler
+  const createPurchaseHandler = (entityTypes, updateState, additionalValidation = null, successEmoji = '') => {
+    return (type) => {
+      const entity = entityTypes[type];
+      if (!entity) return;
+      
+      if (coins < entity.cost) {
+        addNotification(`Not enough coins for ${entity.name}!`, "error");
+        return;
+      }
+      
+      if (additionalValidation && !additionalValidation(type, entity)) {
+        return;
+      }
+      
+      setCoins(prev => prev - entity.cost);
+      updateState(type, entity);
+      addNotification(`Bought ${entity.name}! ${successEmoji || entity.emoji || ''}`, "success");
+    };
+  };
+
+  // Livestock Management Functions
+  const buyLivestock = createPurchaseHandler(
+    LIVESTOCK_TYPES,
+    (type, animal) => setLivestock(prev => ({ ...prev, [type]: (prev[type] || 0) + 1 })),
+    (type, animal) => {
+      const currentCount = livestock[type] || 0;
+      if (currentCount >= animal.maxCount) {
+        addNotification(`Maximum ${animal.name} limit reached!`, "error");
+        return false;
+      }
+      return true;
+    },
+    '🐾'
+  );
+
+  const feedLivestock = (type) => {
+    const animal = LIVESTOCK_TYPES[type];
+    const count = livestock[type] || 0;
+    if (count === 0) return;
+    
+    const feedNeeded = animal.food.consumption * count;
+    const feedType = animal.food.type;
+    
+    if ((feedInventory[feedType] || 0) < feedNeeded) {
+      notifyInsufficientResource(feedType, `feed ${animal.name}`);
+      return;
+    }
+    
+    setFeedInventory(prev => ({
+      ...prev,
+      [feedType]: (prev[feedType] || 0) - feedNeeded
+    }));
+    
+    notifyActionSuccess(`Fed ${count} ${animal.name}`, '🌾');
+  };
+
+  const collectProducts = (type) => {
+    const animal = LIVESTOCK_TYPES[type];
+    const count = livestock[type] || 0;
+    if (count === 0) return;
+    
+    Object.entries(animal.products).forEach(([productType, productInfo]) => {
+      const amount = count;
+      setLivestockProducts(prev => ({
+        ...prev,
+        [productType]: (prev[productType] || 0) + amount
+      }));
+    });
+    
+    notifyEntityAction("Collected products from", animal, '🥚');
+  };
+
+  const sellProducts = (productType) => {
+    const amount = livestockProducts[productType] || 0;
+    if (amount === 0) return;
+    
+    // Find product info from livestock types
+    let productValue = 10; // Default value
+    for (const [animalType, animalInfo] of Object.entries(LIVESTOCK_TYPES)) {
+      if (animalInfo.products[productType]) {
+        productValue = animalInfo.products[productType].value;
+        break;
+      }
+    }
+    
+    const earnings = amount * productValue;
+    setCoins(prev => prev + earnings);
+    setLivestockProducts(prev => ({
+      ...prev,
+      [productType]: 0
+    }));
+    
+    addNotification(`Sold ${amount} ${productType} for ${earnings} coins! 💰`, "success");
+  };
   // NEW: Enhanced visual and gameplay helpers
   const getTimeOfDay = () => {
     const hour = new Date().getHours();
@@ -2213,101 +2311,6 @@ function FarmSimCanvas() {
   };
 
   // ===== NEW SYSTEMS FUNCTIONS =====
-
-  // 🔧 UNIFIED PURCHASE HANDLER - Consolidates duplicate purchase logic
-  const createPurchaseHandler = (entityTypes, updateState, additionalValidation = null, successEmoji = '') => {
-    return (type) => {
-      const entity = entityTypes[type];
-      if (!entity) return;
-      
-      if (coins < entity.cost) {
-        addNotification(`Not enough coins for ${entity.name}!`, "error");
-        return;
-      }
-      
-      if (additionalValidation && !additionalValidation(type, entity)) {
-        return;
-      }
-      
-      setCoins(prev => prev - entity.cost);
-      updateState(type, entity);
-      addNotification(`Bought ${entity.name}! ${successEmoji || entity.emoji || ''}`, "success");
-    };
-  };
-
-  // Livestock Management Functions
-  const buyLivestock = createPurchaseHandler(
-    LIVESTOCK_TYPES,
-    (type, animal) => setLivestock(prev => ({ ...prev, [type]: (prev[type] || 0) + 1 })),
-    (type, animal) => {
-      const currentCount = livestock[type] || 0;
-      if (currentCount >= animal.maxCount) {
-        addNotification(`Maximum ${animal.name} limit reached!`, "error");
-        return false;
-      }
-      return true;
-    },
-    '🐾'
-  );
-
-  const feedLivestock = (type) => {
-    const animal = LIVESTOCK_TYPES[type];
-    const count = livestock[type] || 0;
-    if (count === 0) return;
-    
-    const feedNeeded = animal.food.consumption * count;
-    const feedType = animal.food.type;
-    
-    if (feedInventory[feedType] < feedNeeded) {
-      notifyInsufficientResource(feedType, `feed ${animal.name}`);
-      return;
-    }
-    
-    setFeedInventory(prev => ({
-      ...prev,
-      [feedType]: prev[feedType] - feedNeeded
-    }));
-    
-    notifyActionSuccess(`Fed ${count} ${animal.name}`, '🌾');
-  };
-
-  const collectProducts = (type) => {
-    const animal = LIVESTOCK_TYPES[type];
-    const count = livestock[type] || 0;
-    if (count === 0) return;
-    
-    Object.entries(animal.products).forEach(([productType, productInfo]) => {
-      const amount = count;
-      setLivestockProducts(prev => ({
-        ...prev,
-        [productType]: (prev[productType] || 0) + amount
-      }));
-    });
-    
-    notifyEntityAction("Collected products from", animal, '🥚');
-  };
-
-  const sellProducts = (productType) => {
-    const amount = livestockProducts[productType] || 0;
-    if (amount === 0) return;
-    
-    // Find product info from livestock types
-    let sellPrice = 5; // default
-    Object.values(LIVESTOCK_TYPES).forEach(animal => {
-      if (animal.products[productType]) {
-        sellPrice = animal.products[productType].sellPrice;
-      }
-    });
-    
-    const earnings = amount * sellPrice;
-    setCoins(prev => prev + earnings);
-    setLivestockProducts(prev => ({
-      ...prev,
-      [productType]: 0
-    }));
-    
-    notifyActionSuccess(`Sold ${amount} ${productType} for $${earnings}`, '💰');
-  };
 
   // Greenhouse Functions
   const buildGreenhouse = createPurchaseHandler(
