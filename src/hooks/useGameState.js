@@ -5,12 +5,52 @@ import { useState, useRef } from 'react';
  * Consolidates all game state and provides state management utilities
  */
 export function useGameState() {
-  // Utility function to get current timestamp
-  const nowSec = () => Math.floor(Date.now() / 1000);
+  // Utility function to get current timestamp with validation
+  const nowSec = () => {
+    const timestamp = Date.now();
+    if (!Number.isFinite(timestamp) || timestamp < 0) {
+      console.error('Invalid timestamp detected:', timestamp);
+      return Math.floor(new Date('2024-01-01').getTime() / 1000); // Fallback
+    }
+    return Math.floor(timestamp / 1000);
+  };
   
   // References for internal tracking
   const _saveTimeout = useRef(null);
   const _lastAutosaveToastAt = useRef(0);
+
+  // State validation function
+  const validateGameState = (state) => {
+    if (!state || typeof state !== 'object') return false;
+    
+    // Validate coins (must be non-negative finite number)
+    if (typeof state.coins !== 'number' || !isFinite(state.coins) || state.coins < 0) {
+      state.coins = 100; // Reset to default
+    }
+    
+    // Validate score
+    if (typeof state.score !== 'number' || !isFinite(state.score) || state.score < 0) {
+      state.score = 0;
+    }
+    
+    // Validate plots array
+    if (!Array.isArray(state.plots) || state.plots.length === 0) {
+      state.plots = Array.from({ length: 25 }, (_, i) => ({
+        id: i,
+        state: "empty",
+        seed: null,
+        progress: 0,
+        wateredAt: 0,
+        fertilizedAt: 0,
+        pesticideAt: 0,
+        plantedAt: 0,
+        quality: 1.0,
+        health: 1.0
+      }));
+    }
+    
+    return true;
+  };
 
   // CORE GAME STATE
   const [coins, setCoins] = useState(100);
@@ -198,10 +238,80 @@ export function useGameState() {
     simSpeed, setSimSpeed,
     
     // Utilities
-    addNotification,
-    addLog,
-    addCoins,
-    spendCoins,
+    addNotification: (notification) => {
+      setNotifications(prev => [...prev, { ...notification, id: Date.now() }]);
+    },
+    addLog: (message) => {
+      setLog(prev => [...prev, { message, timestamp: nowSec() }]);
+    },
+    addCoins: (amount) => {
+      setCoins(prev => prev + amount);
+      setTotalEarned(prev => prev + amount);
+      setTotalLifetimeCoins(prev => prev + amount);
+    },
+    spendCoins: (amount) => {
+      if (coins >= amount) {
+        setCoins(prev => prev - amount);
+        return true;
+      }
+      return false;
+    },
+    saveGame: () => {
+      try {
+        const saveData = {
+          version: 2,
+          coins,
+          score,
+          totalEarned,
+          totalLifetimeCoins,
+          name,
+          gridSize,
+          plots,
+          savedAt: nowSec()
+        };
+        
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem('farm_sim_enhanced_v2', JSON.stringify(saveData));
+          console.debug('[useGameState] Game saved successfully');
+          return true;
+        } else {
+          console.warn('[useGameState] localStorage unavailable');
+          return false;
+        }
+      } catch (error) {
+        console.error('[useGameState] Failed to save game:', error.message);
+        return false;
+      }
+    },
+    loadGame: () => {
+      try {
+        if (typeof window === 'undefined' || !window.localStorage) {
+          return false;
+        }
+        
+        const saveData = localStorage.getItem('farm_sim_enhanced_v2');
+        if (!saveData) return false;
+
+        const parsed = JSON.parse(saveData);
+        
+        if (validateGameState(parsed)) {
+          setCoins(parsed.coins || 100);
+          setScore(parsed.score || 0);
+          setTotalEarned(parsed.totalEarned || 0);
+          setTotalLifetimeCoins(parsed.totalLifetimeCoins || 0);
+          setName(parsed.name || "Farmer Austin");
+          setGridSize(parsed.gridSize || 9);
+          setPlots(parsed.plots || []);
+          
+          console.debug('[useGameState] Game loaded successfully');
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('[useGameState] Failed to load game:', error.message);
+        return false;
+      }
+    },
     nowSec,
     
     // Internal refs

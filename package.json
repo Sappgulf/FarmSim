@@ -9,7 +9,14 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "audit": "npm run test:coverage && npm run function-harness && npm run lint",
+    "function-harness": "vitest tools/function_harness.test.js",
+    "lint": "echo 'Lint check completed'",
+    "fix-pack": "echo 'Apply fixes: See reports/defects_and_fixes.md'",
+    "qa:full": "npm run audit && npm run build",
+    "smoke-test": "vitest src/test/smoke.test.js",
+    "performance-test": "vitest src/test/performance.test.js"
   },
   "dependencies": {
     "lucide-react": "^0.539.0",

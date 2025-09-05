@@ -113,6 +113,18 @@ export function UltimateFarmGame() {
     initializeGame();
   }, []);
 
+  // Game loop effect with proper cleanup
+  useEffect(() => {
+    const gameLoop = setInterval(() => {
+      if (!isPaused) {
+        setGameTime(prev => prev + 1);
+        updateGameSystems();
+      }
+    }, 1000);
+    
+    return () => clearInterval(gameLoop);
+  }, [isPaused]); // Re-run when pause state changes
+
   const initializeGame = () => {
     // Initialize plots
     const initialPlots = Array.from({ length: farmSize * farmSize }, (_, i) => ({
@@ -134,19 +146,7 @@ export function UltimateFarmGame() {
     });
     setMarketPrices(initialPrices);
     
-    // Start game loop
-    startGameLoop();
-  };
-
-  const startGameLoop = () => {
-    const gameLoop = setInterval(() => {
-      if (!isPaused) {
-        setGameTime(prev => prev + 1);
-        updateGameSystems();
-      }
-    }, 1000);
-    
-    return () => clearInterval(gameLoop);
+    // Note: Game loop is now handled by useEffect above
   };
 
   const updateGameSystems = () => {

@@ -1241,7 +1241,14 @@ const DAY_NIGHT_CYCLE = {
   dawn: { name: "🌄 Dawn", bg: "from-yellow-50 via-orange-50 to-emerald-50", text: "text-yellow-800" },
 };
 
-function nowSec() { return Math.floor(Date.now() / 1000); }
+function nowSec() { 
+  const timestamp = Date.now();
+  if (!Number.isFinite(timestamp) || timestamp < 0) {
+    console.error('Invalid timestamp detected:', timestamp);
+    return Math.floor(new Date('2024-01-01').getTime() / 1000); // Fallback
+  }
+  return Math.floor(timestamp / 1000); 
+}
 
 function newPlot(state = "empty") {
   if (state === "locked") return {
@@ -1298,18 +1305,61 @@ const SAVE_KEY = "farm_sim_enhanced_v2";
 function loadSave() {
   try { 
     if (typeof window === 'undefined' || !window.localStorage) {
+      console.debug('[farm] localStorage unavailable');
       return null;
     }
+    
     const s = localStorage.getItem(SAVE_KEY); 
-    if (s) {
-      const parsed = JSON.parse(s);
-      // Only return if it's v2 format, otherwise start fresh
-      if (parsed?.version === 2) return parsed;
-    } 
+    if (!s) {
+      console.debug('[farm] No save data found');
+      return null;
+    }
+
+    const parsed = JSON.parse(s);
+    
+    // Validate save data structure
+    if (!parsed || typeof parsed !== 'object') {
+      console.warn('[farm] Invalid save data structure');
+      return null;
+    }
+    
+    // Only return if it's v2 format, otherwise start fresh
+    if (parsed?.version === 2) {
+      console.debug('[farm] Save data loaded successfully');
+      return validateSaveData(parsed);
+    } else {
+      console.debug('[farm] Outdated save format, starting fresh');
+      return null;
+    }
   } catch (e) {
-    console.debug('[farm] loadSave error:', e);
+    console.error('[farm] Failed to load save data:', e.message);
+    // Backup corrupted save for debugging
+    try {
+      const corrupted = localStorage.getItem(SAVE_KEY);
+      if (corrupted) {
+        localStorage.setItem(`${SAVE_KEY}_corrupted_${Date.now()}`, corrupted);
+      }
+    } catch (backupError) {
+      console.debug('[farm] Could not backup corrupted save');
+    }
   }
   return null;
+}
+
+// Validate and sanitize save data
+function validateSaveData(data) {
+  if (!data) return null;
+  
+  // Ensure required fields exist with defaults
+  const validated = {
+    ...data,
+    coins: Math.max(0, Number(data.coins) || 100),
+    score: Math.max(0, Number(data.score) || 0),
+    plots: Array.isArray(data.plots) ? data.plots : [],
+    // Add other validation as needed
+  };
+  
+  return validated;
 }
 
 // ===== NEW SYSTEMS FUNCTIONS =====
@@ -1318,10 +1368,18 @@ function loadSave() {
 function saveState(s) { 
   try { 
     if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+      const saveData = JSON.stringify(s);
+      localStorage.setItem(SAVE_KEY, saveData);
+      console.debug('[farm] Game saved successfully');
+    } else {
+      console.warn('[farm] localStorage unavailable, game not saved');
     }
   } catch (e) {
-    console.debug('[farm] saveState error:', e);
+    console.error('[farm] Failed to save game:', e.message);
+    if (e.name === 'QuotaExceededError') {
+      console.warn('[farm] Storage quota exceeded. Consider clearing old saves.');
+    }
+    // Could show user notification here
   } 
 }
 

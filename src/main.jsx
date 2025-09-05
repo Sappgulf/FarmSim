@@ -26,6 +26,14 @@ class ErrorBoundary extends React.Component {
     console.error("Farm Game Error:", error, errorInfo);
     this.setState({ errorInfo });
     
+    // Auto-retry for certain error types
+    if (this.state.retryCount < 3 && this.isRetryableError(error)) {
+      setTimeout(() => {
+        this.setState({ hasError: false, error: null, retryCount: this.state.retryCount + 1 });
+      }, 2000);
+      return;
+    }
+    
     // Backup save data before clearing
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -37,6 +45,18 @@ class ErrorBoundary extends React.Component {
     } catch (e) {
       console.error('Failed to backup save:', e);
     }
+  }
+  
+  isRetryableError(error) {
+    // Define which errors are worth auto-retrying
+    const retryableErrors = [
+      'ChunkLoadError',
+      'NetworkError',
+      'TimeoutError'
+    ];
+    return retryableErrors.some(errType => 
+      error.name === errType || error.message.includes(errType)
+    );
   }
   render() {
     if (this.state.hasError) {
