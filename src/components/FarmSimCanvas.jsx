@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -1632,6 +1632,8 @@ function FarmSimCanvas() {
     profitHistory: [],
     cropPerformance: {},
     dailyStats: [],
+    autoActionsExecuted: 0,
+    efficiencyGain: 0,
     efficiency: {
       waterUsage: 0,
       fertilizerUsage: 0,
@@ -2142,9 +2144,9 @@ function FarmSimCanvas() {
   };
 
   // 🚀 PERFORMANCE OPTIMIZATIONS - Memoized expensive calculations
-  const seedEntries = useMemo(() => seedEntries, [rules.seeds]);
-  const buildingEntries = useMemo(() => buildingEntries, [rules.buildings]);
-  const skillTreeEntries = useMemo(() => skillTreeEntries, []);
+  const seedEntries = useMemo(() => Object.entries(rules?.seeds || {}), [rules.seeds]);
+  const buildingEntries = useMemo(() => Object.entries(rules?.buildings || {}), [rules.buildings]);
+  const skillTreeEntries = useMemo(() => Object.entries(SKILL_TREES), []);
   const researchEntries = useMemo(() => Object.entries(RESEARCH_PROJECTS), []);
   const workerEntries = useMemo(() => Object.entries(WORKER_TYPES), []);
 
@@ -3301,6 +3303,13 @@ function FarmSimCanvas() {
           const timeToHarvest = value; // passed as time value
           newData.efficiency.timeToHarvest = 
             (newData.efficiency.timeToHarvest * 0.9) + (timeToHarvest * 0.1); // Moving average
+          break;
+        case "autoActions":
+          // Track count and a simple efficiency metric
+          newData.autoActionsExecuted = (newData.autoActionsExecuted || 0) + value;
+          // Cap efficiencyGain to 100 and smooth increases
+          const gain = Math.min(100, (newData.efficiencyGain || 0) + value * 0.5);
+          newData.efficiencyGain = gain;
           break;
       }
 

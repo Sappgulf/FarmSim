@@ -3,11 +3,28 @@ import ReactDOM from "react-dom/client";
 // import FarmSimCanvas from "./components/FarmSimCanvas";
 // import FarmSimCanvas from "./components/SafeFarmSimCanvas";
 // import FarmSimCanvas from "./components/FarmSimCanvasFixed";
-import UltimateFarmGame from "./components/UltimateFarmGame";
+// import TestComponent from "./components/TestComponent";
+// Default to the fixed full game experience
+import FixedUltimateFarmGame from "./components/FixedUltimateFarmGame";
+import FarmSimCanvas from "./components/FarmSimCanvas";
+// Force reload
 import "./index.css";
 
+// Simple test component
+function TestComponent() {
+  return (
+    <div className="min-h-screen bg-blue-500 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-lg">
+        <h1 className="text-2xl font-bold text-gray-800">Farm Game Test</h1>
+        <p className="text-gray-600 mt-2">If you can see this, React is working!</p>
+      </div>
+    </div>
+  );
+}
+
 // Register a basic service worker for PWA/offline support (no precache list here)
-if ("serviceWorker" in navigator) {
+// Only register SW in production to avoid dev caching issues
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     // Use relative path so file:// or static hosting also works
     navigator.serviceWorker.register("sw.js").catch(() => {});
@@ -119,10 +136,20 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+function AppRouter() {
+  const params = new URLSearchParams(window.location.search);
+  const variant = (params.get('variant') || '').toLowerCase();
+  if (variant === 'farm' || variant === 'farmsim') {
+    return <FarmSimCanvas/>;
+  }
+  // default to fixed full experience
+  return <FixedUltimateFarmGame/>;
+}
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <UltimateFarmGame />
+      <AppRouter />
     </ErrorBoundary>
   </React.StrictMode>
 );
