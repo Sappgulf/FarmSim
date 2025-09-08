@@ -3787,7 +3787,7 @@ export default function SimpleFarmGame() {
                   </button>
                 )}
               </div>
-              <div className="grid gap-1 md:gap-2 max-w-3xl mx-auto" style={{ gridTemplateColumns: `repeat(${farmSize}, 1fr)` }}>
+              <div className="grid gap-2 md:gap-3 max-w-4xl mx-auto" style={{ gridTemplateColumns: `repeat(${farmSize}, 1fr)` }}>
                 {Object.entries(plots).map(([plotId, plot]) => {
                   const isDisease = diseaseOutbreaks[plotId];
                   const marketMultiplier = marketPrices[plot.crop] || 1.0;
@@ -3812,107 +3812,135 @@ export default function SimpleFarmGame() {
                           else if (hasFertilizer && !plot.fertilized) fertilizePlot(Number(plotId));
                         }
                       }}
-                      className={`w-12 h-12 md:w-16 md:h-16 border-2 rounded-lg flex flex-col items-center justify-center text-sm md:text-xl hover:border-green-400 transition-colors relative touch-manipulation ${
-                        selectedPlots.has(Number(plotId)) ? 'ring-4 ring-blue-300 ring-opacity-50' : ''
+                      className={`aspect-square min-h-16 md:min-h-20 border-2 rounded-xl flex flex-col items-center justify-center relative touch-manipulation transition-all duration-200 shadow-sm hover:shadow-md ${
+                        selectedPlots.has(Number(plotId)) ? 'ring-4 ring-blue-400 ring-opacity-60 scale-105' : ''
                       } ${
-                        isDisease ? 'border-red-500 bg-red-50 animate-pulse' :
-                        hasStormDamage ? 'border-orange-500 bg-orange-50' :
-                        isProtected ? 'border-blue-300 bg-blue-50' :
-                        plot.seedQuality === 'platinum' ? 'border-purple-400 bg-purple-50' :
-                        plot.seedQuality === 'gold' ? 'border-yellow-400 bg-yellow-50' :
-                        plot.seedQuality === 'silver' ? 'border-gray-400 bg-gray-50' :
-                        getQualityColor(plot.quality)
+                        isDisease ? 'border-red-400 bg-gradient-to-br from-red-50 to-red-100 animate-pulse' :
+                        hasStormDamage ? 'border-orange-400 bg-gradient-to-br from-orange-50 to-orange-100' :
+                        isProtected ? 'border-blue-400 bg-gradient-to-br from-blue-50 to-blue-100' :
+                        plot.seedQuality === 'platinum' ? 'border-purple-400 bg-gradient-to-br from-purple-50 to-purple-100' :
+                        plot.seedQuality === 'gold' ? 'border-yellow-400 bg-gradient-to-br from-yellow-50 to-yellow-100' :
+                        plot.seedQuality === 'silver' ? 'border-gray-400 bg-gradient-to-br from-gray-50 to-gray-100' :
+                        plot.state === 'empty' ? 'border-gray-300 bg-gradient-to-br from-gray-50 to-gray-100 hover:border-green-400' :
+                        plot.state === 'ready' ? 'border-green-400 bg-gradient-to-br from-green-50 to-green-100' :
+                        'border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100'
                       }`}
                     >
-                      {isDisease ? '🦠' : getPlotDisplay(plot)}
+                      {/* Main Plot Content */}
+                      <div className="text-2xl md:text-3xl mb-1">
+                        {isDisease ? '🦠' : getPlotDisplay(plot)}
+                      </div>
                       
-                      {/* Genetic trait indicators */}
-                      {!isDisease && plot.traits && plot.traits.length > 0 && plot.state !== 'empty' && (
-                        <div className="absolute top-0 left-0 flex text-xs">
-                          {plot.traits.slice(0, 2).map((trait, index) => (
-                            <span key={trait} className="text-xs" style={{ marginLeft: `${index * 8}px` }}>
-                              {GENETIC_TRAITS[trait]?.emoji}
+                      {/* Top Status Bar */}
+                      <div className="absolute top-1 left-1 right-1 flex justify-between items-start">
+                        {/* Left indicators */}
+                        <div className="flex flex-col gap-0.5">
+                          {/* Genetic traits */}
+                          {!isDisease && plot.traits && plot.traits.length > 0 && plot.state !== 'empty' && (
+                            <div className="flex">
+                              {plot.traits.slice(0, 2).map((trait, index) => (
+                                <span key={trait} className="text-xs bg-white bg-opacity-80 rounded px-1">
+                                  {GENETIC_TRAITS[trait]?.emoji}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Building/tool effects */}
+                          <div className="flex gap-0.5">
+                            {isProtected && <span className="text-xs bg-blue-200 rounded px-1">🛡️</span>}
+                            {isIrrigated && <span className="text-xs bg-blue-200 rounded px-1">💧</span>}
+                            {!isDisease && plot.watered && !isIrrigated && <span className="text-xs bg-blue-200 rounded px-1">💧</span>}
+                            {tools.sprinkler && plot.state === 'planted' && <span className="text-xs bg-blue-200 rounded px-1">💦</span>}
+                          </div>
+                        </div>
+                        
+                        {/* Right indicators */}
+                        <div className="flex flex-col gap-0.5 items-end">
+                          {/* Seed quality */}
+                          {!isDisease && plot.seedQuality && plot.seedQuality !== 'bronze' && plot.state !== 'empty' && (
+                            <span className="text-xs bg-white bg-opacity-80 rounded px-1">
+                              {SEED_QUALITIES[plot.seedQuality]?.emoji}
                             </span>
-                          ))}
+                          )}
+                          
+                          {/* Market status */}
+                          {!isDisease && plot.state === 'ready' && marketMultiplier !== 1.0 && (
+                            <span className={`text-xs px-1 rounded ${marketMultiplier > 1.0 ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+                              {marketMultiplier > 1.0 ? '📈' : '📉'}
+                            </span>
+                          )}
+                          
+                          {/* Storm damage */}
+                          {hasStormDamage && (
+                            <span className="text-xs bg-orange-200 text-orange-800 px-1 rounded">
+                              ⛈️
+                            </span>
+                          )}
                         </div>
-                      )}
+                      </div>
                       
-                      {/* Seed quality indicator */}
-                      {!isDisease && plot.seedQuality && plot.seedQuality !== 'bronze' && plot.state !== 'empty' && (
-                        <div className="absolute top-0 right-0 text-xs">
-                          {SEED_QUALITIES[plot.seedQuality]?.emoji}
+                      {/* Bottom Status Bar */}
+                      <div className="absolute bottom-1 left-1 right-1 flex justify-between items-end">
+                        {/* Left bottom indicators */}
+                        <div className="flex gap-0.5">
+                          {!isDisease && plot.fertilized && <span className="text-xs bg-green-200 rounded px-1">🌿</span>}
                         </div>
-                      )}
-                      
-                      {/* Building effects */}
-                      {isProtected && <div className="absolute top-0 left-0 text-xs">🛡️</div>}
-                      {isIrrigated && <div className="absolute top-0 left-0 text-xs">💧</div>}
-                      
-                      {!isDisease && plot.watered && !isIrrigated && <div className="absolute top-0 left-0 text-xs">💧</div>}
-                      {!isDisease && plot.fertilized && <div className="absolute bottom-0 left-0 text-xs">🌿</div>}
-                      {!isDisease && tools.sprinkler && plot.state === 'planted' && (
-                        <div className="absolute top-0 left-1 text-xs">💦</div>
-                      )}
-                      
-                      {/* Quality and value indicators */}
-                      {!isDisease && plot.quality > 1.0 && plot.state === 'ready' && (
-                        <div className="absolute bottom-0 right-0 text-xs bg-yellow-200 px-1 rounded">
-                          {plot.quality.toFixed(1)}x
+                        
+                        {/* Right bottom indicators */}
+                        <div className="flex gap-0.5">
+                          {/* Quality multiplier */}
+                          {!isDisease && plot.quality > 1.0 && plot.state === 'ready' && (
+                            <span className="text-xs bg-yellow-200 text-yellow-800 px-1 rounded font-bold">
+                              {plot.quality.toFixed(1)}x
+                            </span>
+                          )}
                         </div>
-                      )}
+                      </div>
                       
-                      {!isDisease && plot.state === 'ready' && marketMultiplier !== 1.0 && (
-                        <div className={`absolute top-0 left-0 right-0 text-xs px-1 ${marketMultiplier > 1.0 ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
-                          {marketMultiplier > 1.0 ? '📈' : '📉'}
-                        </div>
-                      )}
-                      
-                      {/* Storm damage indicator */}
-                      {hasStormDamage && (
-                        <div className="absolute top-0 right-0 text-xs bg-orange-200 text-orange-800 px-1 rounded">
-                          ⛈️
-                        </div>
-                      )}
-                      
-                      {/* Growth progress */}
+                      {/* Growth progress bar */}
                       {!isDisease && plot.state === 'planted' && (
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 rounded-b">
+                        <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-200 rounded-b-xl overflow-hidden">
                           <div 
-                            className="h-full bg-green-500 rounded-b transition-all duration-1000"
+                            className="h-full bg-gradient-to-r from-green-400 to-green-500 transition-all duration-1000"
                             style={{ width: `${plot.progress}%` }}
                           ></div>
                         </div>
                       )}
                       
+                      {/* Disease indicator */}
                       {isDisease && (
-                        <div className="absolute bottom-0 left-0 right-0 text-xs bg-red-200 text-red-800 px-1 rounded-b">
-                          {DISEASES[isDisease].name.substring(0, 8)}
+                        <div className="absolute bottom-0 left-0 right-0 bg-red-500 text-white text-xs px-1 py-0.5 rounded-b-xl text-center font-semibold">
+                          {DISEASES[isDisease].name.substring(0, 10)}
                         </div>
                       )}
                     </button>
                   );
                 })}
               </div>
-              <div className="mt-4 md:mt-6 text-center text-gray-600 text-sm">
-                <p>💡 Click empty plots to plant • Click ready crops to harvest • Click diseased plots to treat</p>
+              <div className="mt-4 md:mt-6 text-center space-y-2">
+                <p className="text-gray-700 text-sm font-medium">💡 Click empty plots to plant • Click ready crops to harvest • Click diseased plots to treat</p>
                 {(hasWateringCan || hasFertilizer) && !tools.sprinkler && (
-                  <p className="text-xs md:text-sm mt-1">🔧 Click planted crops to use tools</p>
+                  <p className="text-xs md:text-sm text-blue-600 font-medium">🔧 Click planted crops to use tools</p>
                 )}
                 {tools.sprinkler && (
-                  <p className="text-xs md:text-sm mt-1 text-blue-600">💦 Sprinkler system auto-watering crops!</p>
+                  <p className="text-xs md:text-sm text-blue-600 font-medium">💦 Sprinkler system auto-watering crops!</p>
                 )}
                 {(tools.harvester || research.automation.unlocked) && (
-                  <p className="text-xs md:text-sm mt-1 text-green-600">🤖 Auto-harvest enabled!</p>
+                  <p className="text-xs md:text-sm text-green-600 font-medium">🤖 Auto-harvest enabled!</p>
                 )}
-                <p className="text-xs md:text-sm mt-2">
-                  Selected: {(CROPS[selectedCrop] || SPECIAL_CROPS[selectedCrop])?.emoji} {(CROPS[selectedCrop] || SPECIAL_CROPS[selectedCrop])?.name} (Seeds: {seeds[selectedCrop] || 0})
-                </p>
+                <div className="bg-gray-50 rounded-lg p-3 mt-3">
+                  <p className="text-xs md:text-sm text-gray-700">
+                    <span className="font-semibold">Selected:</span> {(CROPS[selectedCrop] || SPECIAL_CROPS[selectedCrop])?.emoji} {(CROPS[selectedCrop] || SPECIAL_CROPS[selectedCrop])?.name} 
+                    <span className="ml-2 px-2 py-1 bg-blue-100 rounded text-blue-800 font-semibold">Seeds: {seeds[selectedCrop] || 0}</span>
+                  </p>
+                </div>
                 {Object.keys(diseaseOutbreaks).length > 0 && (
-                  <p className="text-xs md:text-sm mt-1 text-red-600">🦠 {Object.keys(diseaseOutbreaks).length} active disease(s) - Click diseased plots to treat</p>
+                  <p className="text-xs md:text-sm text-red-600 font-semibold bg-red-50 p-2 rounded-lg">🦠 {Object.keys(diseaseOutbreaks).length} active disease(s) - Click diseased plots to treat</p>
                 )}
                 {currentSeason && (
-                  <p className="text-xs md:text-sm mt-1 text-purple-600">
-                    📅 {currentSeason.name}: {currentSeason.description}
+                  <p className="text-xs md:text-sm text-purple-600 bg-purple-50 p-2 rounded-lg">
+                    <span className="font-semibold">📅 {currentSeason.name}:</span> {currentSeason.description}
                   </p>
                 )}
               </div>
