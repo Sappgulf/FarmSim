@@ -1689,7 +1689,7 @@ export default function SimpleFarmGame() {
           }
           
           // Weather automation
-          if (automationSystems.weatherAutomation?.active && activeWeatherEvents.length > 0) {
+          if (automationSystems.weatherAutomation?.active && Object.keys(activeWeatherEvents).length > 0) {
             // Auto-prepare for disasters (could include resource protection)
             addNotification('🤖 Weather AI preparing for disaster mitigation...', 'info');
           }
@@ -4157,12 +4157,12 @@ export default function SimpleFarmGame() {
                 
                 {ZONE_LIVESTOCK[currentZone] ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {ZONE_LIVESTOCK[currentZone].map(animal => {
-                      const owned = zoneLivestock[currentZone]?.[animal.id] || 0;
+                    {Object.entries(ZONE_LIVESTOCK[currentZone]).map(([animalId, animal]) => {
+                      const owned = zoneLivestock[currentZone]?.[animalId] || 0;
                       const canAfford = money >= animal.cost;
                       
                       return (
-                        <div key={animal.id} className="border rounded-lg p-4 bg-gradient-to-br from-yellow-50 to-orange-50">
+                        <div key={animalId} className="border rounded-lg p-4 bg-gradient-to-br from-yellow-50 to-orange-50">
                           <div className="flex items-center gap-3 mb-3">
                             <span className="text-3xl">{animal.emoji}</span>
                             <div>
@@ -4182,11 +4182,11 @@ export default function SimpleFarmGame() {
                             </div>
                             <div className="flex justify-between">
                               <span>Production:</span>
-                              <span className="font-semibold">{animal.production.resource} (${animal.production.value})</span>
+                              <span className="font-semibold">{animal.productEmoji} {animal.product} (${animal.value})</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Interval:</span>
-                              <span className="font-semibold">{animal.production.interval}s</span>
+                              <span className="font-semibold">{animal.time}s</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Owned:</span>
@@ -4196,7 +4196,7 @@ export default function SimpleFarmGame() {
                           
                           <div className="mt-4 space-y-2">
                             <button
-                              onClick={() => buyLivestock(currentZone, animal.id)}
+                              onClick={() => buyLivestock(currentZone, animalId)}
                               disabled={!canAfford}
                               className="w-full px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
                             >
@@ -4205,7 +4205,7 @@ export default function SimpleFarmGame() {
                             
                             {owned > 0 && (
                               <button
-                                onClick={() => collectLivestockProducts(currentZone, animal.id)}
+                                onClick={() => collectLivestockProducts(currentZone, animalId)}
                                 className="w-full px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                               >
                                 📦 Collect Products ({owned} available)
@@ -4229,7 +4229,7 @@ export default function SimpleFarmGame() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Object.entries(ZONE_TYPES).map(([zoneType, zone]) => {
                     const totalAnimals = Object.values(zoneLivestock[zoneType] || {}).reduce((sum, count) => sum + count, 0);
-                    const zoneAnimals = ZONE_LIVESTOCK[zoneType] || [];
+                    const zoneAnimals = ZONE_LIVESTOCK[zoneType] || {};
                     
                     return (
                       <div key={zoneType} className="border rounded-lg p-4 bg-gray-50">
@@ -4245,16 +4245,16 @@ export default function SimpleFarmGame() {
                         
                         {zoneData[zoneType]?.unlocked ? (
                           <div className="space-y-1">
-                            {zoneAnimals.map(animal => {
-                              const owned = zoneLivestock[zoneType]?.[animal.id] || 0;
+                            {Object.entries(zoneAnimals).map(([animalId, animal]) => {
+                              const owned = zoneLivestock[zoneType]?.[animalId] || 0;
                               return (
-                                <div key={animal.id} className="flex justify-between text-sm">
+                                <div key={animalId} className="flex justify-between text-sm">
                                   <span>{animal.emoji} {animal.name}</span>
                                   <span className="font-semibold">{owned}</span>
                                 </div>
                               );
                             })}
-                            {zoneAnimals.length === 0 && (
+                            {Object.keys(zoneAnimals).length === 0 && (
                               <p className="text-xs text-gray-500">No animals available</p>
                             )}
                           </div>
@@ -4274,10 +4274,10 @@ export default function SimpleFarmGame() {
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-2xl font-bold mb-4">⛈️ Weather Events & Disasters</h2>
               
-              {activeWeatherEvents.length > 0 ? (
+              {Object.values(activeWeatherEvents).length > 0 ? (
                 <div className="space-y-4 mb-6">
                   <h3 className="text-lg font-semibold text-red-600">🚨 Active Disasters</h3>
-                  {activeWeatherEvents.map(event => (
+                  {Object.values(activeWeatherEvents).map(event => (
                     <div key={event.id} className="border-l-4 border-red-500 bg-red-50 p-4 rounded">
                       <div className="flex items-center gap-3 mb-2">
                         <span className="text-2xl">{event.emoji}</span>
@@ -4463,15 +4463,16 @@ export default function SimpleFarmGame() {
                   <div className="bg-white p-3 rounded border">
                     <h4 className="font-semibold text-blue-700 mb-2">🥛 Livestock Products</h4>
                     <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {ZONE_LIVESTOCK[currentZone]?.map(animal => {
-                        const owned = zoneLivestock[currentZone]?.[animal.id] || 0;
+                      {Object.entries(ZONE_LIVESTOCK[currentZone] || {}).map(([animalId, animal]) => {
+                        const owned = zoneLivestock[currentZone]?.[animalId] || 0;
                         return owned > 0 ? (
-                          <div key={animal.id} className="flex justify-between text-sm">
-                            <span>{animal.emoji} {animal.production.resource}</span>
+                          <div key={animalId} className="flex justify-between text-sm">
+                            <span>{animal.emoji} {animal.product}</span>
                             <span className="font-semibold">{owned} producers</span>
                           </div>
                         ) : null;
-                      }).filter(Boolean) || (
+                      }).filter(Boolean)}
+                      {Object.keys(ZONE_LIVESTOCK[currentZone] || {}).length === 0 && (
                         <div className="text-xs text-gray-500">No livestock in this zone</div>
                       )}
                     </div>
@@ -4579,16 +4580,16 @@ export default function SimpleFarmGame() {
                       <div className="bg-white p-3 rounded border">
                         <h5 className="font-semibold text-blue-700 text-sm mb-2">Livestock Products</h5>
                         <div className="space-y-2">
-                          {ZONE_LIVESTOCK[zoneType]?.slice(0, 2).map(animal => {
-                            const theirCount = zoneLivestock[zoneType]?.[animal.id] || 0;
+                          {Object.entries(ZONE_LIVESTOCK[zoneType] || {}).slice(0, 2).map(([animalId, animal]) => {
+                            const theirCount = zoneLivestock[zoneType]?.[animalId] || 0;
                             const canTrade = money >= 500; // Cost to establish trade route
                             
                             return (
-                              <div key={animal.id} className="flex items-center justify-between text-sm">
+                              <div key={animalId} className="flex items-center justify-between text-sm">
                                 <div className="flex items-center gap-2">
                                   <span>$500</span>
                                   <span>→</span>
-                                  <span>{animal.emoji} {animal.production.resource}</span>
+                                  <span>{animal.emoji} {animal.product}</span>
                                 </div>
                                 <button
                                   onClick={() => {
@@ -4597,9 +4598,9 @@ export default function SimpleFarmGame() {
                                       // Simulate getting their product
                                       setInventory(prev => ({
                                         ...prev,
-                                        [animal.production.resource]: (prev[animal.production.resource] || 0) + theirCount
+                                        [animal.product]: (prev[animal.product] || 0) + theirCount
                                       }));
-                                      addNotification(`🚛 Imported ${theirCount} ${animal.production.resource} from ${zone.name}!`, 'success');
+                                      addNotification(`🚛 Imported ${theirCount} ${animal.product} from ${zone.name}!`, 'success');
                                       addZoneMasteryXP(currentZone, 25);
                                     }
                                   }}
