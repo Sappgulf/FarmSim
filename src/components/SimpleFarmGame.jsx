@@ -8,6 +8,32 @@ const CROPS = {
   corn: { name: 'Corn', emoji: '🌽', cost: 25, value: 65, growTime: 75 }
 };
 
+// Zone-specific crops
+const ZONE_CROPS = {
+  // Desert Oasis Zone
+  cactus: { name: 'Cactus Fruit', emoji: '🌵', cost: 40, value: 85, growTime: 90, zones: ['desert'], droughtResistant: true },
+  dates: { name: 'Dates', emoji: '🌴', cost: 50, value: 110, growTime: 120, zones: ['desert'], droughtResistant: true },
+  agave: { name: 'Agave', emoji: '🪴', cost: 35, value: 75, growTime: 80, zones: ['desert'], droughtResistant: true },
+  
+  // Forest Grove Zone  
+  mushroom: { name: 'Mushrooms', emoji: '🍄', cost: 30, value: 70, growTime: 50, zones: ['forest'], shadeTolerant: true },
+  berries: { name: 'Wild Berries', emoji: '🫐', cost: 25, value: 55, growTime: 40, zones: ['forest'], shadeTolerant: true },
+  herbs: { name: 'Forest Herbs', emoji: '🌿', cost: 20, value: 45, growTime: 35, zones: ['forest'], shadeTolerant: true },
+  
+  // Mountain Terrace Zone
+  alpine: { name: 'Alpine Vegetables', emoji: '🥬', cost: 45, value: 95, growTime: 70, zones: ['mountain'], coldResistant: true },
+  potato: { name: 'Mountain Potato', emoji: '🥔', cost: 30, value: 65, growTime: 60, zones: ['mountain'], coldResistant: true },
+  cabbage: { name: 'Alpine Cabbage', emoji: '🥬', cost: 35, value: 75, growTime: 65, zones: ['mountain'], coldResistant: true },
+  
+  // Coastal Farm Zone
+  seaweed: { name: 'Seaweed', emoji: '🌊', cost: 25, value: 60, growTime: 30, zones: ['coastal'], saltTolerant: true },
+  saltherbs: { name: 'Salt Herbs', emoji: '🧂', cost: 40, value: 90, growTime: 55, zones: ['coastal'], saltTolerant: true },
+  kelp: { name: 'Kelp', emoji: '🦑', cost: 35, value: 80, growTime: 45, zones: ['coastal'], saltTolerant: true }
+};
+
+// Combined crops for easy access
+const ALL_CROPS = { ...CROPS, ...ZONE_CROPS };
+
 // Weather types
 const WEATHER = {
   sunny: { 
@@ -49,6 +75,90 @@ const WEATHER = {
     description: 'Dangerous weather - crops may be damaged',
     diseaseChance: 0.05,
     stormChance: 0.15
+  }
+};
+
+// Zone-specific weather patterns
+const ZONE_WEATHER = {
+  desert: {
+    hot: { 
+      name: 'Scorching Heat', 
+      emoji: '🔥', 
+      growthMultiplier: 0.6, 
+      description: 'Extreme heat - only drought-resistant crops survive',
+      diseaseChance: 0.01,
+      stormChance: 0.0,
+      zoneBonus: { droughtResistant: 1.3 }
+    },
+    sandstorm: { 
+      name: 'Sandstorm', 
+      emoji: '🌪️', 
+      growthMultiplier: 0.5, 
+      description: 'Fierce winds damage unprotected crops',
+      diseaseChance: 0.02,
+      stormChance: 0.3,
+      zoneBonus: { droughtResistant: 1.0 }
+    }
+  },
+  forest: {
+    misty: { 
+      name: 'Forest Mist', 
+      emoji: '🌫️', 
+      growthMultiplier: 1.2, 
+      description: 'Perfect humidity for shade crops',
+      diseaseChance: 0.04,
+      stormChance: 0.0,
+      zoneBonus: { shadeTolerant: 1.4 }
+    },
+    humid: { 
+      name: 'Humid', 
+      emoji: '💧', 
+      growthMultiplier: 1.3, 
+      description: 'High moisture perfect for forest plants',
+      diseaseChance: 0.06,
+      stormChance: 0.05,
+      zoneBonus: { shadeTolerant: 1.3 }
+    }
+  },
+  mountain: {
+    cold: { 
+      name: 'Mountain Cold', 
+      emoji: '🥶', 
+      growthMultiplier: 0.7, 
+      description: 'Harsh cold - only hardy crops survive',
+      diseaseChance: 0.01,
+      stormChance: 0.05,
+      zoneBonus: { coldResistant: 1.4 }
+    },
+    blizzard: { 
+      name: 'Blizzard', 
+      emoji: '❄️', 
+      growthMultiplier: 0.3, 
+      description: 'Severe snowstorm threatens all crops',
+      diseaseChance: 0.01,
+      stormChance: 0.4,
+      zoneBonus: { coldResistant: 1.1 }
+    }
+  },
+  coastal: {
+    foggy: { 
+      name: 'Sea Fog', 
+      emoji: '🌊', 
+      growthMultiplier: 1.1, 
+      description: 'Moisture-rich fog benefits marine crops',
+      diseaseChance: 0.03,
+      stormChance: 0.0,
+      zoneBonus: { saltTolerant: 1.3 }
+    },
+    salty: { 
+      name: 'Salt Spray', 
+      emoji: '🧂', 
+      growthMultiplier: 0.8, 
+      description: 'Salty conditions perfect for adapted crops',
+      diseaseChance: 0.02,
+      stormChance: 0.1,
+      zoneBonus: { saltTolerant: 1.5 }
+    }
   }
 };
 
@@ -257,7 +367,16 @@ const ACHIEVEMENTS = {
   rancher: { name: 'Rancher', description: 'Own 10 animals', reward: 600, unlocked: false },
   architect: { name: 'Architect', description: 'Build 3 different buildings', reward: 400, unlocked: false },
   researcher: { name: 'Researcher', description: 'Unlock all research', reward: 800, unlocked: false },
-  tycoon: { name: 'Farm Tycoon', description: 'Have $5000 at once', reward: 2000, unlocked: false }
+  tycoon: { name: 'Farm Tycoon', description: 'Have $5000 at once', reward: 2000, unlocked: false },
+  
+  // Zone-specific achievements
+  desertExplorer: { name: 'Desert Explorer', description: 'Unlock the Desert Oasis', reward: 500, unlocked: false },
+  forestRanger: { name: 'Forest Ranger', description: 'Unlock the Forest Grove', reward: 750, unlocked: false },
+  mountaineer: { name: 'Mountaineer', description: 'Unlock the Mountain Terrace', reward: 1000, unlocked: false },
+  coastalFarmer: { name: 'Coastal Farmer', description: 'Unlock the Coastal Farm', reward: 1500, unlocked: false },
+  globalFarmer: { name: 'Global Farmer', description: 'Unlock all farming zones', reward: 3000, unlocked: false },
+  specialistGrower: { name: 'Specialist Grower', description: 'Harvest 10 zone-specific crops', reward: 1000, unlocked: false },
+  zoneExpert: { name: 'Zone Expert', description: 'Plant in all 5 zones', reward: 800, unlocked: false }
 };
 
 // Farm visitors/NPCs
@@ -350,10 +469,64 @@ const PROCESSING_PLANTS = {
 
 // Farm zones for expansion
 const ZONE_TYPES = {
-  basic: { name: 'Basic Farm', cost: 0, plots: 9, unlocked: true },
-  desert: { name: 'Desert Oasis', cost: 5000, plots: 9, crops: ['cactus', 'dates'], unlocked: false },
-  forest: { name: 'Forest Grove', cost: 4000, plots: 9, crops: ['mushroom', 'berries'], unlocked: false },
-  mountain: { name: 'Mountain Terrace', cost: 6000, plots: 6, crops: ['alpine', 'herbs'], unlocked: false }
+  basic: { 
+    name: 'Basic Farm', 
+    cost: 0, 
+    plots: 9, 
+    unlocked: true,
+    emoji: '🌱',
+    description: 'Traditional farming zone suitable for common crops',
+    climate: 'temperate',
+    specialBonus: 'Balanced growth for all basic crops'
+  },
+  desert: { 
+    name: 'Desert Oasis', 
+    cost: 5000, 
+    plots: 9, 
+    unlocked: false,
+    emoji: '🏜️',
+    description: 'Arid zone perfect for drought-resistant plants',
+    climate: 'arid',
+    specialCrops: ['cactus', 'dates', 'agave'],
+    weatherTypes: ['sunny', 'hot', 'sandstorm'],
+    specialBonus: 'Drought-resistant crops grow 30% faster'
+  },
+  forest: { 
+    name: 'Forest Grove', 
+    cost: 4000, 
+    plots: 9, 
+    unlocked: false,
+    emoji: '🌲',
+    description: 'Shaded woodland area for shade-loving crops',
+    climate: 'humid',
+    specialCrops: ['mushroom', 'berries', 'herbs'],
+    weatherTypes: ['rainy', 'misty', 'cloudy'],
+    specialBonus: 'Shade crops immune to sun damage'
+  },
+  mountain: { 
+    name: 'Mountain Terrace', 
+    cost: 6000, 
+    plots: 6, 
+    unlocked: false,
+    emoji: '⛰️',
+    description: 'High-altitude terraces for cold-weather crops',
+    climate: 'alpine',
+    specialCrops: ['alpine', 'potato', 'cabbage'],
+    weatherTypes: ['snow', 'windy', 'cold'],
+    specialBonus: 'Cold-resistant crops have higher quality'
+  },
+  coastal: {
+    name: 'Coastal Farm',
+    cost: 4500,
+    plots: 9,
+    unlocked: false,
+    emoji: '🌊',
+    description: 'Salt-air farm zone for marine agriculture',
+    climate: 'maritime',
+    specialCrops: ['seaweed', 'saltherbs', 'kelp'],
+    weatherTypes: ['foggy', 'windy', 'salty'],
+    specialBonus: 'Salt-tolerant crops worth 25% more'
+  }
 };
 
 // Hotkey mappings
@@ -449,6 +622,47 @@ export default function SimpleFarmGame() {
   ]);
   const [activeZone, setActiveZone] = useState(0);
   const [processingPlants, setProcessingPlants] = useState({});
+  
+  // Multi-zone expansion states
+  const [currentZone, setCurrentZone] = useState('basic');
+  const [zoneData, setZoneData] = useState({
+    basic: {
+      unlocked: true,
+      crops: {},
+      weather: 'sunny',
+      lastWeatherChange: Date.now(),
+      resources: { fertilizer: 5, seeds: 10 }
+    },
+    desert: {
+      unlocked: false,
+      crops: {},
+      weather: 'hot',
+      lastWeatherChange: Date.now(),
+      resources: { fertilizer: 0, seeds: 0 }
+    },
+    forest: {
+      unlocked: false,
+      crops: {},
+      weather: 'misty',
+      lastWeatherChange: Date.now(),
+      resources: { fertilizer: 0, seeds: 0 }
+    },
+    mountain: {
+      unlocked: false,
+      crops: {},
+      weather: 'cold',
+      lastWeatherChange: Date.now(),
+      resources: { fertilizer: 0, seeds: 0 }
+    },
+    coastal: {
+      unlocked: false,
+      crops: {},
+      weather: 'foggy',
+      lastWeatherChange: Date.now(),
+      resources: { fertilizer: 0, seeds: 0 }
+    }
+  });
+  const [transportCooldown, setTransportCooldown] = useState(0);
   const [view3D, setView3D] = useState(false);
   const [animations, setAnimations] = useState(true);
   
@@ -707,11 +921,17 @@ export default function SimpleFarmGame() {
       setGameTime(time => {
         const newTime = time + 1;
         
-        // Change weather every 60 seconds
+        // Change weather every 60 seconds - zone-specific
         if (newTime % 60 === 0) {
-          const weatherTypes = Object.keys(WEATHER);
-          const randomWeather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
-          setCurrentWeather(randomWeather);
+          // Update weather for current zone
+          updateZoneWeather(currentZone);
+          
+          // Also update other unlocked zones independently
+          Object.keys(zoneData).forEach(zoneType => {
+            if (zoneData[zoneType].unlocked && zoneType !== currentZone) {
+              updateZoneWeather(zoneType);
+            }
+          });
         }
         
         // Season progression (5 minutes per season)
@@ -811,6 +1031,11 @@ export default function SimpleFarmGame() {
           return updated;
         });
         
+        // Transport cooldown
+        if (transportCooldown > 0) {
+          setTransportCooldown(prev => prev - 1);
+        }
+        
         return newTime;
       });
     }, 1000);
@@ -827,11 +1052,11 @@ export default function SimpleFarmGame() {
       Object.keys(updated).forEach(plotId => {
         const plot = updated[plotId];
         if (plot.state === 'planted' && plot.crop) {
-          const cropData = CROPS[plot.crop] || SPECIAL_CROPS[plot.crop] || 
+          const cropData = ALL_CROPS[plot.crop] || 
             Object.values(HYBRID_COMBINATIONS).find(h => h.result === plot.crop);
           
-          // Weather effects with building protection
-          let weather = WEATHER[currentWeather];
+          // Weather effects with building protection and zone bonuses
+          let weather = WEATHER[currentWeather] || ZONE_WEATHER[currentZone]?.[currentWeather] || WEATHER.sunny;
           if (buildings.advancedGreenhouse || (buildings.greenhouse && research.greenhouse.unlocked)) {
             weather = WEATHER.sunny; // Perfect conditions
           }
@@ -840,6 +1065,20 @@ export default function SimpleFarmGame() {
           
           // Base growth multiplier
           let growthMultiplier = weather.growthMultiplier;
+          
+          // Zone-specific weather bonuses
+          if (ZONE_WEATHER[currentZone]?.[currentWeather]) {
+            const zoneWeather = ZONE_WEATHER[currentZone][currentWeather];
+            
+            // Apply zone bonuses based on crop adaptation
+            if (zoneWeather.zoneBonus) {
+              Object.entries(zoneWeather.zoneBonus).forEach(([trait, bonus]) => {
+                if (cropData?.[trait]) {
+                  growthMultiplier *= bonus;
+                }
+              });
+            }
+          }
           
           // Building bonuses
           if (buildings.advancedGreenhouse) growthMultiplier += 0.3;
@@ -855,6 +1094,12 @@ export default function SimpleFarmGame() {
             const bonus = GENETIC_TRAITS.droughtTolerance.levels[plot.seedQuality];
             growthMultiplier *= bonus;
           }
+          
+          // Zone adaptation bonuses (applies to existing trait system)
+          if (currentZone === 'desert' && cropData?.droughtResistant) growthMultiplier *= 1.2;
+          if (currentZone === 'forest' && cropData?.shadeTolerant) growthMultiplier *= 1.2;
+          if (currentZone === 'mountain' && cropData?.coldResistant) growthMultiplier *= 1.2;
+          if (currentZone === 'coastal' && cropData?.saltTolerant) growthMultiplier *= 1.2;
           
           // Standard bonuses
           if (plot.watered) growthMultiplier += 0.2;
@@ -934,12 +1179,26 @@ export default function SimpleFarmGame() {
     });
   }, [gameTime, currentWeather, research, tools]);
 
-  // Plant crop with genetics
+  // Plant crop with genetics and zone bonuses
   const plantCrop = (plotId) => {
     const isHybrid = hybridSeeds[selectedCrop] > 0;
     const hasSeeds = isHybrid ? hybridSeeds[selectedCrop] > 0 : seeds[selectedCrop] > 0;
     
     if (hasSeeds && plots[plotId].state === 'empty') {
+      // Check if crop is suitable for current zone
+      const cropData = ALL_CROPS[selectedCrop];
+      const canPlantInZone = currentZone === 'basic' || 
+        (cropData?.droughtResistant && currentZone === 'desert') ||
+        (cropData?.shadeTolerant && currentZone === 'forest') ||
+        (cropData?.coldResistant && currentZone === 'mountain') ||
+        (cropData?.saltTolerant && currentZone === 'coastal') ||
+        ZONE_TYPES[currentZone]?.specialCrops?.includes(selectedCrop);
+      
+      if (!canPlantInZone && currentZone !== 'basic') {
+        addNotification(`❌ ${selectedCrop} cannot grow in ${ZONE_TYPES[currentZone].name}!`, 'error');
+        return;
+      }
+      
       // Deduct seeds
       if (isHybrid) {
         setHybridSeeds(prev => ({ ...prev, [selectedCrop]: prev[selectedCrop] - 1 }));
@@ -971,6 +1230,17 @@ export default function SimpleFarmGame() {
         }
       }
       
+      // Calculate zone bonus
+      let zoneBonus = 1.0;
+      if (currentZone !== 'basic') {
+        const zoneData = ZONE_TYPES[currentZone];
+        if (zoneData.specialCrops?.includes(selectedCrop)) {
+          zoneBonus = 1.3; // 30% bonus for zone-specific crops
+        } else if (canPlantInZone) {
+          zoneBonus = 1.1; // 10% bonus for adapted crops
+        }
+      }
+      
       setPlots({
         ...plots,
         [plotId]: {
@@ -980,17 +1250,22 @@ export default function SimpleFarmGame() {
           progress: 0,
           watered: false,
           fertilized: false,
-          quality: 1.0,
+          quality: zoneBonus, // Start with zone bonus
           seedQuality: quality,
           traits: traits,
           weatherDamage: 0,
           diseaseResistance: traits.includes('diseaseResistance') ? 
-            GENETIC_TRAITS.diseaseResistance.levels[quality] : 1.0
+            GENETIC_TRAITS.diseaseResistance.levels[quality] : 1.0,
+          zoneBonus: zoneBonus
         }
       });
       
       if (traits.length > 0) {
         addNotification(`🧬 Planted ${selectedCrop} with traits: ${traits.map(t => GENETIC_TRAITS[t].emoji).join('')}`, 'success');
+      }
+      
+      if (zoneBonus > 1.0) {
+        addNotification(`🌍 Zone bonus: +${Math.round((zoneBonus - 1) * 100)}% for ${selectedCrop}!`, 'info');
       }
     }
   };
@@ -1071,15 +1346,33 @@ export default function SimpleFarmGame() {
     }
   };
 
-  // Buy seeds
+  // Buy seeds with zone unlock checks
   const buySeeds = (cropType, quantity = 5) => {
-    const cropData = CROPS[cropType];
+    const cropData = ALL_CROPS[cropType];
+    const isZoneSpecific = ZONE_CROPS[cropType] !== undefined;
+    
+    // Check if zone is unlocked for zone-specific crops
+    if (isZoneSpecific) {
+      const requiredZoneUnlocked = 
+        (cropData.droughtResistant && zoneData.desert?.unlocked) ||
+        (cropData.shadeTolerant && zoneData.forest?.unlocked) ||
+        (cropData.coldResistant && zoneData.mountain?.unlocked) ||
+        (cropData.saltTolerant && zoneData.coastal?.unlocked);
+      
+      if (!requiredZoneUnlocked) {
+        addNotification(`🔒 Unlock the required zone first to buy ${cropType} seeds!`, 'error');
+        return;
+      }
+    }
+    
     const cost = cropData.cost * quantity;
     if (money >= cost) {
       setMoney(money - cost);
       setTotalSpent(prev => prev + cost);
-      setSeeds(prev => ({ ...prev, [cropType]: prev[cropType] + quantity }));
+      setSeeds(prev => ({ ...prev, [cropType]: (prev[cropType] || 0) + quantity }));
       checkAchievements();
+    } else {
+      addNotification(`💰 Need $${cost} to buy ${quantity} ${cropType} seeds!`, 'error');
     }
   };
 
@@ -1678,6 +1971,125 @@ export default function SimpleFarmGame() {
     }
   };
 
+  // Zone weather update system
+  const updateZoneWeather = (zoneType) => {
+    let availableWeather;
+    
+    if (zoneType === 'basic') {
+      // Basic zone uses standard weather
+      availableWeather = Object.keys(WEATHER);
+    } else {
+      // Other zones use zone-specific weather + some standard weather
+      const zoneWeather = Object.keys(ZONE_WEATHER[zoneType] || {});
+      const standardWeather = ['sunny', 'rainy', 'cloudy']; // Always available
+      availableWeather = [...zoneWeather, ...standardWeather];
+    }
+    
+    const randomWeather = availableWeather[Math.floor(Math.random() * availableWeather.length)];
+    
+    if (zoneType === currentZone) {
+      setCurrentWeather(randomWeather);
+    }
+    
+    // Update zone data
+    setZoneData(prev => ({
+      ...prev,
+      [zoneType]: {
+        ...prev[zoneType],
+        weather: randomWeather,
+        lastWeatherChange: Date.now()
+      }
+    }));
+  };
+
+  // Get current weather effects including zone bonuses
+  const getCurrentWeatherEffects = () => {
+    const weather = WEATHER[currentWeather] || ZONE_WEATHER[currentZone]?.[currentWeather] || WEATHER.sunny;
+    return weather;
+  };
+
+  // Zone management functions
+  const unlockZone = (zoneType) => {
+    const unlockCosts = {
+      desert: { money: 5000, level: 5 },
+      forest: { money: 7500, level: 8 },
+      mountain: { money: 10000, level: 12 },
+      coastal: { money: 15000, level: 15 }
+    };
+    
+    const cost = unlockCosts[zoneType];
+    if (cost && money >= cost.money && level >= cost.level) {
+      setMoney(prev => prev - cost.money);
+      setZoneData(prev => ({
+        ...prev,
+        [zoneType]: {
+          ...prev[zoneType],
+          unlocked: true
+        }
+      }));
+      
+      // Show unlock notification
+      addNotification(`🗺️ ${ZONE_TYPES[zoneType].name} unlocked!`, 'success');
+      
+      // Show new crops notification
+      const newCrops = ZONE_TYPES[zoneType].specialCrops;
+      if (newCrops && newCrops.length > 0) {
+        const cropEmojis = newCrops.map(cropType => ALL_CROPS[cropType]?.emoji).join('');
+        addNotification(`🌱 New crops available: ${cropEmojis} Check the shop!`, 'info');
+      }
+      
+      checkAchievements();
+    }
+  };
+
+  const switchZone = (zoneType) => {
+    if (zoneData[zoneType]?.unlocked) {
+      setCurrentZone(zoneType);
+      setCurrentWeather(zoneData[zoneType].weather);
+      addNotification(`🚀 Traveled to ${ZONE_TYPES[zoneType].name}`, 'info');
+    }
+  };
+
+  const transportResources = (fromZone, toZone, resourceType, amount) => {
+    if (transportCooldown > 0) {
+      addNotification('🚛 Transport on cooldown!', 'error');
+      return;
+    }
+    
+    if (amount <= 0 || amount > (zoneData[fromZone]?.resources[resourceType] || 0)) {
+      addNotification('❌ Invalid transport amount!', 'error');
+      return;
+    }
+    
+    const transportCost = Math.ceil(amount * 0.1); // 10% transport fee
+    if (money < transportCost) {
+      addNotification(`💰 Need $${transportCost} for transport!`, 'error');
+      return;
+    }
+    
+    setMoney(prev => prev - transportCost);
+    setZoneData(prev => ({
+      ...prev,
+      [fromZone]: {
+        ...prev[fromZone],
+        resources: {
+          ...prev[fromZone].resources,
+          [resourceType]: (prev[fromZone].resources[resourceType] || 0) - amount
+        }
+      },
+      [toZone]: {
+        ...prev[toZone],
+        resources: {
+          ...prev[toZone].resources,
+          [resourceType]: (prev[toZone].resources[resourceType] || 0) + amount
+        }
+      }
+    }));
+    
+    setTransportCooldown(30); // 30 second cooldown
+    addNotification(`🚛 Transported ${amount} ${resourceType} for $${transportCost}`, 'success');
+  };
+
   // Building effect functions
   const buyAdvancedBuilding = (buildingId) => {
     const building = BUILDINGS[buildingId];
@@ -1843,6 +2255,34 @@ export default function SimpleFarmGame() {
       newAchievements = true;
     }
 
+    // Zone achievements
+    if (!achievements.desertExplorer.unlocked && zoneData.desert?.unlocked) {
+      updates.desertExplorer = { ...achievements.desertExplorer, unlocked: true };
+      newAchievements = true;
+    }
+    
+    if (!achievements.forestRanger.unlocked && zoneData.forest?.unlocked) {
+      updates.forestRanger = { ...achievements.forestRanger, unlocked: true };
+      newAchievements = true;
+    }
+    
+    if (!achievements.mountaineer.unlocked && zoneData.mountain?.unlocked) {
+      updates.mountaineer = { ...achievements.mountaineer, unlocked: true };
+      newAchievements = true;
+    }
+    
+    if (!achievements.coastalFarmer.unlocked && zoneData.coastal?.unlocked) {
+      updates.coastalFarmer = { ...achievements.coastalFarmer, unlocked: true };
+      newAchievements = true;
+    }
+    
+    if (!achievements.globalFarmer.unlocked && 
+        zoneData.desert?.unlocked && zoneData.forest?.unlocked && 
+        zoneData.mountain?.unlocked && zoneData.coastal?.unlocked) {
+      updates.globalFarmer = { ...achievements.globalFarmer, unlocked: true };
+      newAchievements = true;
+    }
+
     if (newAchievements) {
       setAchievements(prev => ({ ...prev, ...updates }));
       
@@ -1857,7 +2297,7 @@ export default function SimpleFarmGame() {
   // Run achievement checks periodically
   useEffect(() => {
     checkAchievements();
-  }, [money, level, totalHarvests, totalEarned, totalSpent, livestock, buildings, research]);
+  }, [money, level, totalHarvests, totalEarned, totalSpent, livestock, buildings, research, zoneData]);
 
   // Display helpers
   const getPlotDisplay = (plot) => {
@@ -2004,11 +2444,53 @@ export default function SimpleFarmGame() {
             {/* Weather Display */}
             <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-3 md:px-4 py-2 rounded-lg border-2 border-blue-200">
               <div className="flex items-center gap-2">
-                <span className="text-xl md:text-2xl">{WEATHER[currentWeather].emoji}</span>
+                <span className="text-xl md:text-2xl">
+                  {WEATHER[currentWeather]?.emoji || ZONE_WEATHER[currentZone]?.[currentWeather]?.emoji || '☀️'}
+                </span>
                 <div>
-                  <div className="font-semibold text-blue-800 text-sm md:text-base">{WEATHER[currentWeather].name}</div>
-                  <div className="text-xs text-blue-600 hidden md:block">{WEATHER[currentWeather].description}</div>
+                  <div className="font-semibold text-blue-800 text-sm md:text-base">
+                    {WEATHER[currentWeather]?.name || ZONE_WEATHER[currentZone]?.[currentWeather]?.name || 'Unknown'}
+                  </div>
+                  <div className="text-xs text-blue-600 hidden md:block">
+                    {WEATHER[currentWeather]?.description || ZONE_WEATHER[currentZone]?.[currentWeather]?.description || ''}
+                  </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Zone Selector */}
+          <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 px-4 py-3 rounded-lg border-2 border-emerald-200 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{ZONE_TYPES[currentZone].emoji}</span>
+                <div>
+                  <div className="font-semibold text-emerald-800 text-lg">{ZONE_TYPES[currentZone].name}</div>
+                  <div className="text-sm text-emerald-600">{ZONE_TYPES[currentZone].description}</div>
+                  <div className="text-xs text-emerald-500">{ZONE_TYPES[currentZone].climate}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={currentZone}
+                  onChange={(e) => switchZone(e.target.value)}
+                  className="px-3 py-2 border-2 border-emerald-300 rounded-lg bg-white"
+                >
+                  {Object.entries(ZONE_TYPES).map(([key, zone]) => (
+                    <option 
+                      key={key} 
+                      value={key} 
+                      disabled={!zoneData[key]?.unlocked}
+                    >
+                      {zone.emoji} {zone.name} {!zoneData[key]?.unlocked ? '🔒' : ''}
+                    </option>
+                  ))}
+                </select>
+                {transportCooldown > 0 && (
+                  <div className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
+                    Transport cooldown: {transportCooldown}s
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -2112,6 +2594,7 @@ export default function SimpleFarmGame() {
           <div className="flex overflow-x-auto border-b">
             {[
               { id: 'farm', name: '🚜 Farm', icon: '🌱' },
+              { id: 'zones', name: '🗺️ Zones', icon: '🌍' },
               { id: 'shop', name: '🏪 Shop', icon: '🛒' },
               { id: 'processing', name: '🏭 Processing', icon: '⚙️' },
               { id: 'livestock', name: '🐄 Livestock', icon: '🐔' },
@@ -2184,10 +2667,29 @@ export default function SimpleFarmGame() {
             <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
               <h2 className="text-lg md:text-xl font-bold mb-4">Select Crop to Plant</h2>
               
-              {/* Regular Crops */}
+              {/* Regular and Zone-Specific Crops */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4">
-                {Object.entries(CROPS).map(([key, crop]) => {
+                {Object.entries(ALL_CROPS).filter(([key, crop]) => {
+                  // Show basic crops always
+                  if (!ZONE_CROPS[key]) return true;
+                  
+                  // For zone-specific crops, check if the zone is unlocked
+                  if (crop.droughtResistant && !zoneData.desert?.unlocked) return false;
+                  if (crop.shadeTolerant && !zoneData.forest?.unlocked) return false;
+                  if (crop.coldResistant && !zoneData.mountain?.unlocked) return false;
+                  if (crop.saltTolerant && !zoneData.coastal?.unlocked) return false;
+                  
+                  return true;
+                }).map(([key, crop]) => {
                   const marketMultiplier = marketPrices[key] || 1.0;
+                  const isZoneSpecific = ZONE_CROPS[key] !== undefined;
+                  const canPlantInCurrentZone = currentZone === 'basic' || 
+                    (crop?.droughtResistant && currentZone === 'desert') ||
+                    (crop?.shadeTolerant && currentZone === 'forest') ||
+                    (crop?.coldResistant && currentZone === 'mountain') ||
+                    (crop?.saltTolerant && currentZone === 'coastal') ||
+                    ZONE_TYPES[currentZone]?.specialCrops?.includes(key);
+                  
                   return (
                     <button
                       key={key}
@@ -2196,11 +2698,28 @@ export default function SimpleFarmGame() {
                         selectedCrop === key
                           ? 'border-green-500 bg-green-50'
                           : 'border-gray-200 hover:border-green-300'
-                      } ${seeds[key] === 0 ? 'opacity-50' : ''}`}
+                      } ${seeds[key] === 0 ? 'opacity-50' : ''} ${
+                        !canPlantInCurrentZone ? 'opacity-25 cursor-not-allowed' : ''
+                      } ${isZoneSpecific ? 'bg-gradient-to-br from-blue-50 to-purple-50' : ''}`}
+                      disabled={!canPlantInCurrentZone}
                     >
-                      <div className="text-2xl md:text-3xl mb-2">{crop.emoji}</div>
+                      <div className="text-2xl md:text-3xl mb-2">
+                        {crop.emoji}
+                        {isZoneSpecific && <span className="text-xs">🌍</span>}
+                      </div>
                       <div className="font-semibold text-sm md:text-base">{crop.name}</div>
-                      <div className="text-xs md:text-sm text-gray-600">Seeds: {seeds[key]}</div>
+                      <div className="text-xs md:text-sm text-gray-600">Seeds: {seeds[key] || 0}</div>
+                      {!canPlantInCurrentZone && (
+                        <div className="text-xs text-red-500">❌ Wrong zone</div>
+                      )}
+                      {isZoneSpecific && (
+                        <div className="text-xs text-purple-600">
+                          {crop.droughtResistant && '🌵'} 
+                          {crop.shadeTolerant && '🌿'} 
+                          {crop.coldResistant && '❄️'} 
+                          {crop.saltTolerant && '🌊'}
+                        </div>
+                      )}
                       <div className={`text-xs md:text-sm ${marketMultiplier > 1.0 ? 'text-green-600' : marketMultiplier < 1.0 ? 'text-red-600' : 'text-gray-600'}`}>
                         Sell: ${Math.floor((research.genetics.unlocked ? crop.value * 1.5 : crop.value) * marketMultiplier)}
                         {marketMultiplier !== 1.0 && (
@@ -2214,7 +2733,7 @@ export default function SimpleFarmGame() {
                           buySeeds(key);
                         }}
                         className="mt-2 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 touch-manipulation"
-                        disabled={money < crop.cost * 5}
+                        disabled={money < crop.cost * 5 || !canPlantInCurrentZone}
                       >
                         Buy 5 (${crop.cost * 5})
                       </button>
@@ -2455,6 +2974,185 @@ export default function SimpleFarmGame() {
               </div>
             </div>
           </>
+        )}
+
+        {/* Zones Tab */}
+        {activeTab === 'zones' && (
+          <div className="space-y-6">
+            {/* Zone Unlock Section */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold mb-4">🗺️ Farm Zones</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.entries(ZONE_TYPES).map(([zoneType, zone]) => (
+                  <div key={zoneType} className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-blue-50">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-3xl">{zone.emoji}</span>
+                      <div>
+                        <h3 className="font-semibold text-lg">{zone.name}</h3>
+                        <p className="text-sm text-gray-600">{zone.climate}</p>
+                      </div>
+                      {zoneData[zoneType]?.unlocked && (
+                        <button
+                          onClick={() => switchZone(zoneType)}
+                          className="ml-auto px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                        >
+                          Visit
+                        </button>
+                      )}
+                    </div>
+                    
+                    <p className="text-sm text-gray-700 mb-3">{zone.description}</p>
+                    
+                    {/* Special Crops */}
+                    <div className="mb-3">
+                      <p className="text-xs font-semibold text-gray-600 mb-1">Special Crops:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {zone.specialCrops?.map(cropType => (
+                          <span key={cropType} className="text-xs bg-green-100 px-2 py-1 rounded">
+                            {ALL_CROPS[cropType]?.emoji} {ALL_CROPS[cropType]?.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Weather Types */}
+                    <div className="mb-3">
+                      <p className="text-xs font-semibold text-gray-600 mb-1">Weather:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {zone.weatherTypes?.map(weather => (
+                          <span key={weather} className="text-xs bg-blue-100 px-2 py-1 rounded">
+                            {ZONE_WEATHER[zoneType]?.[weather]?.emoji || WEATHER[weather]?.emoji} {weather}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Unlock/Status */}
+                    {!zoneData[zoneType]?.unlocked ? (
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600 mb-2">
+                          Requires: Level {zoneType === 'desert' ? 5 : zoneType === 'forest' ? 8 : zoneType === 'mountain' ? 12 : 15}, ${zoneType === 'desert' ? '5,000' : zoneType === 'forest' ? '7,500' : zoneType === 'mountain' ? '10,000' : '15,000'}
+                        </div>
+                        <button
+                          onClick={() => unlockZone(zoneType)}
+                          disabled={level < (zoneType === 'desert' ? 5 : zoneType === 'forest' ? 8 : zoneType === 'mountain' ? 12 : 15) || 
+                                   money < (zoneType === 'desert' ? 5000 : zoneType === 'forest' ? 7500 : zoneType === 'mountain' ? 10000 : 15000)}
+                          className="w-full px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:bg-gray-300"
+                        >
+                          🔓 Unlock Zone
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <div className="text-sm text-green-600 font-semibold mb-2">✅ Unlocked</div>
+                        <div className="text-xs text-gray-600">
+                          Current weather: {WEATHER[zoneData[zoneType]?.weather]?.emoji || ZONE_WEATHER[zoneType]?.[zoneData[zoneType]?.weather]?.emoji} {zoneData[zoneType]?.weather}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Locked Crops Preview */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold mb-4">🔒 Locked Zone Crops</h2>
+              <p className="text-gray-600 mb-4">Unlock these zones to access their special crops:</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(ZONE_TYPES).filter(([zoneType, _]) => 
+                  zoneType !== 'basic' && !zoneData[zoneType]?.unlocked
+                ).map(([zoneType, zone]) => (
+                  <div key={zoneType} className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-2xl">{zone.emoji}</span>
+                      <div>
+                        <h3 className="font-semibold">{zone.name}</h3>
+                        <p className="text-xs text-gray-500">
+                          Unlock: Level {zoneType === 'desert' ? 5 : zoneType === 'forest' ? 8 : zoneType === 'mountain' ? 12 : 15}, 
+                          ${zoneType === 'desert' ? '5,000' : zoneType === 'forest' ? '7,500' : zoneType === 'mountain' ? '10,000' : '15,000'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-gray-600">Special Crops:</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {zone.specialCrops?.map(cropType => {
+                          const crop = ALL_CROPS[cropType];
+                          return (
+                            <div key={cropType} className="text-center p-2 bg-white rounded border opacity-75">
+                              <div className="text-xl mb-1">{crop?.emoji}</div>
+                              <div className="text-xs font-medium">{crop?.name}</div>
+                              <div className="text-xs text-gray-500">${crop?.value}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {Object.entries(ZONE_TYPES).filter(([zoneType, _]) => 
+                zoneType !== 'basic' && !zoneData[zoneType]?.unlocked
+              ).length === 0 && (
+                <div className="text-center text-gray-500 py-8">
+                  🎉 All zones unlocked! All special crops are now available.
+                </div>
+              )}
+            </div>
+            
+            {/* Resource Transport Section */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold mb-4">🚛 Resource Transport</h2>
+              {transportCooldown > 0 && (
+                <div className="bg-orange-100 border border-orange-300 rounded p-3 mb-4">
+                  ⏱️ Transport cooldown: {transportCooldown} seconds
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(zoneData).filter(([_, data]) => data.unlocked).map(([zoneType, data]) => (
+                  <div key={zoneType} className="border rounded-lg p-4">
+                    <h3 className="font-semibold mb-2">
+                      {ZONE_TYPES[zoneType].emoji} {ZONE_TYPES[zoneType].name}
+                    </h3>
+                    <div className="space-y-2">
+                      <div className="text-sm">
+                        📦 Fertilizer: {data.resources?.fertilizer || 0}
+                      </div>
+                      <div className="text-sm">
+                        🌱 Seeds: {data.resources?.seeds || 0}
+                      </div>
+                      {zoneType !== currentZone && (
+                        <div className="mt-3 space-y-2">
+                          <button
+                            onClick={() => transportResources(currentZone, zoneType, 'fertilizer', 5)}
+                            disabled={transportCooldown > 0 || (zoneData[currentZone]?.resources?.fertilizer || 0) < 5}
+                            className="w-full px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 disabled:bg-gray-300"
+                          >
+                            ← Transport 5 Fertilizer (${Math.ceil(5 * 0.1)})
+                          </button>
+                          <button
+                            onClick={() => transportResources(currentZone, zoneType, 'seeds', 10)}
+                            disabled={transportCooldown > 0 || (zoneData[currentZone]?.resources?.seeds || 0) < 10}
+                            className="w-full px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 disabled:bg-gray-300"
+                          >
+                            ← Transport 10 Seeds (${Math.ceil(10 * 0.1)})
+                          </button>
+                        </div>
+                      )}
+                      {zoneType === currentZone && (
+                        <div className="text-xs text-green-600 font-semibold">📍 Current Location</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Shop Tab */}
