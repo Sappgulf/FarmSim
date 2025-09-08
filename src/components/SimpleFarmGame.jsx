@@ -162,6 +162,509 @@ const ZONE_WEATHER = {
   }
 };
 
+// Zone-specific livestock system
+const ZONE_LIVESTOCK = {
+  basic: {
+    chicken: { 
+      name: 'Chicken', 
+      emoji: '🐔', 
+      cost: 50, 
+      product: 'eggs', 
+      productEmoji: '🥚', 
+      value: 8, 
+      time: 30, 
+      description: 'Basic farm chicken - reliable egg production'
+    },
+    cow: { 
+      name: 'Cow', 
+      emoji: '🐄', 
+      cost: 200, 
+      product: 'milk', 
+      productEmoji: '🥛', 
+      value: 15, 
+      time: 45, 
+      description: 'Traditional dairy cow - produces fresh milk'
+    },
+    pig: { 
+      name: 'Pig', 
+      emoji: '🐷', 
+      cost: 120, 
+      product: 'bacon', 
+      productEmoji: '🥓', 
+      value: 20, 
+      time: 60, 
+      description: 'Farm pig - high-value meat production'
+    }
+  },
+  desert: {
+    camel: { 
+      name: 'Camel', 
+      emoji: '🐪', 
+      cost: 300, 
+      product: 'camel_milk', 
+      productEmoji: '🥛', 
+      value: 25, 
+      time: 50, 
+      description: 'Desert camel - heat-resistant, nutrient-rich milk',
+      adaptation: 'heat'
+    },
+    goat: { 
+      name: 'Desert Goat', 
+      emoji: '🐐', 
+      cost: 150, 
+      product: 'goat_cheese', 
+      productEmoji: '🧀', 
+      value: 18, 
+      time: 40, 
+      description: 'Hardy desert goat - produces artisan cheese',
+      adaptation: 'heat'
+    },
+    lizard: { 
+      name: 'Desert Lizard', 
+      emoji: '🦎', 
+      cost: 80, 
+      product: 'scales', 
+      productEmoji: '⚪', 
+      value: 12, 
+      time: 25, 
+      description: 'Exotic desert lizard - scales used for crafting',
+      adaptation: 'heat'
+    }
+  },
+  forest: {
+    boar: { 
+      name: 'Wild Boar', 
+      emoji: '🐗', 
+      cost: 180, 
+      product: 'truffle', 
+      productEmoji: '🍄', 
+      value: 30, 
+      time: 70, 
+      description: 'Forest boar - finds valuable truffles',
+      adaptation: 'shade'
+    },
+    deer: { 
+      name: 'Forest Deer', 
+      emoji: '🦌', 
+      cost: 250, 
+      product: 'antler', 
+      productEmoji: '🦴', 
+      value: 22, 
+      time: 80, 
+      description: 'Majestic deer - antlers for medicine',
+      adaptation: 'shade'
+    },
+    rabbit: { 
+      name: 'Forest Rabbit', 
+      emoji: '🐰', 
+      cost: 60, 
+      product: 'fur', 
+      productEmoji: '🧶', 
+      value: 10, 
+      time: 20, 
+      description: 'Quick forest rabbit - soft fur production',
+      adaptation: 'shade'
+    }
+  },
+  mountain: {
+    yak: { 
+      name: 'Mountain Yak', 
+      emoji: '🐂', 
+      cost: 400, 
+      product: 'yak_wool', 
+      productEmoji: '🧶', 
+      value: 35, 
+      time: 90, 
+      description: 'Hardy yak - premium cold-weather wool',
+      adaptation: 'cold'
+    },
+    goat_mountain: { 
+      name: 'Mountain Goat', 
+      emoji: '🐐', 
+      cost: 220, 
+      product: 'mountain_cheese', 
+      productEmoji: '🧀', 
+      value: 28, 
+      time: 55, 
+      description: 'Agile mountain goat - alpine cheese',
+      adaptation: 'cold'
+    },
+    eagle: { 
+      name: 'Mountain Eagle', 
+      emoji: '🦅', 
+      cost: 500, 
+      product: 'feather', 
+      productEmoji: '🪶', 
+      value: 40, 
+      time: 120, 
+      description: 'Majestic eagle - rare flight feathers',
+      adaptation: 'cold'
+    }
+  },
+  coastal: {
+    seagull: { 
+      name: 'Seagull', 
+      emoji: '🐦', 
+      cost: 100, 
+      product: 'sea_egg', 
+      productEmoji: '🥚', 
+      value: 12, 
+      time: 35, 
+      description: 'Coastal seagull - salt-enriched eggs',
+      adaptation: 'salt'
+    },
+    crab: { 
+      name: 'Shore Crab', 
+      emoji: '🦀', 
+      cost: 80, 
+      product: 'shell', 
+      productEmoji: '🐚', 
+      value: 15, 
+      time: 25, 
+      description: 'Shore crab - decorative shells',
+      adaptation: 'salt'
+    },
+    seal: { 
+      name: 'Harbor Seal', 
+      emoji: '🦭', 
+      cost: 350, 
+      product: 'blubber', 
+      productEmoji: '⚪', 
+      value: 32, 
+      time: 100, 
+      description: 'Harbor seal - valuable blubber oil',
+      adaptation: 'salt'
+    }
+  }
+};
+
+// Zone-specific buildings with unique benefits and adaptations
+const ZONE_BUILDINGS = {
+  basic: {
+    farmhouse: {
+      name: 'Traditional Farmhouse',
+      emoji: '🏠',
+      cost: 2500,
+      description: 'Classic farmhouse that increases crop storage capacity',
+      benefits: ['Crop storage +50%', 'Faster plant growth +10%'],
+      unlockLevel: 5
+    },
+    windmill: {
+      name: 'Grain Windmill',
+      emoji: '🏰',
+      cost: 3500,
+      description: 'Processes crops into higher-value products',
+      benefits: ['Grain processing', 'Crop value +15%'],
+      unlockLevel: 8
+    }
+  },
+  desert: {
+    oasisPump: {
+      name: 'Oasis Water Pump',
+      emoji: '💧',
+      cost: 5000,
+      description: 'Advanced irrigation system for desert farming',
+      benefits: ['Heat resistance +40%', 'Water efficiency +60%'],
+      unlockLevel: 6,
+      requiredZone: 'desert'
+    },
+    solarArray: {
+      name: 'Solar Energy Array',
+      emoji: '☀️',
+      cost: 8000,
+      description: 'Harnesses desert sun for energy production',
+      benefits: ['Generates passive income', 'Powers other buildings'],
+      unlockLevel: 10,
+      requiredZone: 'desert'
+    },
+    dune_shelter: {
+      name: 'Sandstorm Shelter',
+      emoji: '🏚️',
+      cost: 6500,
+      description: 'Protects crops and livestock from sandstorms',
+      benefits: ['Storm protection 80%', 'Livestock safety +90%'],
+      unlockLevel: 12,
+      requiredZone: 'desert'
+    }
+  },
+  forest: {
+    treehouse: {
+      name: 'Canopy Treehouse',
+      emoji: '🌳',
+      cost: 4500,
+      description: 'Elevated storage and wildlife observation post',
+      benefits: ['Forest animal bonus +25%', 'Mushroom growth +40%'],
+      unlockLevel: 9,
+      requiredZone: 'forest'
+    },
+    lumberMill: {
+      name: 'Forest Lumber Mill',
+      emoji: '🪚',
+      cost: 7500,
+      description: 'Processes wood and forest products',
+      benefits: ['Wood production', 'Building cost -20%'],
+      unlockLevel: 11,
+      requiredZone: 'forest'
+    },
+    wildlifeCenter: {
+      name: 'Wildlife Research Center',
+      emoji: '🦉',
+      cost: 9000,
+      description: 'Studies forest ecosystems and improves wildlife yield',
+      benefits: ['Rare animal encounters +50%', 'Research speed +30%'],
+      unlockLevel: 13,
+      requiredZone: 'forest'
+    }
+  },
+  mountain: {
+    miningShaft: {
+      name: 'Mountain Mining Shaft',
+      emoji: '⛏️',
+      cost: 10000,
+      description: 'Extracts valuable minerals from mountain terrain',
+      benefits: ['Mineral extraction', 'Cold resistance +50%'],
+      unlockLevel: 13,
+      requiredZone: 'mountain'
+    },
+    cableway: {
+      name: 'Alpine Cableway',
+      emoji: '🚠',
+      cost: 12000,
+      description: 'Transport system for mountain zones',
+      benefits: ['Transport speed +60%', 'Resource movement +40%'],
+      unlockLevel: 15,
+      requiredZone: 'mountain'
+    },
+    observatory: {
+      name: 'Weather Observatory',
+      emoji: '🔭',
+      cost: 8500,
+      description: 'Predicts weather and prevents avalanches',
+      benefits: ['Weather prediction', 'Disaster warning +3 hours'],
+      unlockLevel: 14,
+      requiredZone: 'mountain'
+    }
+  },
+  coastal: {
+    lighthouse: {
+      name: 'Coastal Lighthouse',
+      emoji: '🗼',
+      cost: 7000,
+      description: 'Guides fishing boats and sea trade vessels',
+      benefits: ['Maritime trade +40%', 'Sea product bonus +25%'],
+      unlockLevel: 16,
+      requiredZone: 'coastal'
+    },
+    seaweedFarm: {
+      name: 'Kelp Cultivation Farm',
+      emoji: '🌊',
+      cost: 9500,
+      description: 'Underwater farming for marine plants',
+      benefits: ['Seaweed production', 'Salt water purification'],
+      unlockLevel: 17,
+      requiredZone: 'coastal'
+    },
+    harborPier: {
+      name: 'Deep Water Harbor',
+      emoji: '⚓',
+      cost: 15000,
+      description: 'Major shipping hub for inter-zone trade',
+      benefits: ['Trade route efficiency +50%', 'International markets'],
+      unlockLevel: 18,
+      requiredZone: 'coastal'
+    }
+  }
+};
+
+// Advanced Automation Systems
+const AUTOMATION_SYSTEMS = {
+  cropAutomation: {
+    name: 'Crop Automation System',
+    emoji: '🤖',
+    description: 'Automatically plants, waters, and harvests crops',
+    cost: 50000,
+    unlockLevel: 20,
+    benefits: [
+      'Auto-plant seeds when plots are empty',
+      'Auto-water crops every cycle',
+      'Auto-harvest ready crops',
+      'Optimizes crop rotation'
+    ],
+    maintenance: 100, // Cost per hour
+    efficiency: 85 // % efficiency vs manual
+  },
+  livestockAutomation: {
+    name: 'Livestock Management AI',
+    emoji: '🐄',
+    description: 'AI-powered livestock care and production optimization',
+    cost: 35000,
+    unlockLevel: 18,
+    benefits: [
+      'Auto-feed livestock when hungry',
+      'Auto-collect products when ready',
+      'Health monitoring and care',
+      'Breeding optimization'
+    ],
+    maintenance: 75,
+    efficiency: 90
+  },
+  weatherAutomation: {
+    name: 'Smart Weather Response',
+    emoji: '⛈️',
+    description: 'Automated weather disaster preparation and response',
+    cost: 40000,
+    unlockLevel: 22,
+    benefits: [
+      'Auto-prepare for incoming disasters',
+      'Livestock shelter management',
+      'Resource protection protocols',
+      'Emergency response systems'
+    ],
+    maintenance: 80,
+    efficiency: 95
+  },
+  tradeAutomation: {
+    name: 'Autonomous Trade Network',
+    emoji: '🚛',
+    description: 'Automated inter-zone trading and resource optimization',
+    cost: 60000,
+    unlockLevel: 25,
+    benefits: [
+      'Auto-trade excess resources',
+      'Market price optimization',
+      'Route efficiency planning',
+      'Supply chain management'
+    ],
+    maintenance: 120,
+    efficiency: 88
+  },
+  masterAutomation: {
+    name: 'Quantum Farm Controller',
+    emoji: '🧠',
+    description: 'Ultimate AI system that manages entire farm ecosystem',
+    cost: 100000,
+    unlockLevel: 30,
+    benefits: [
+      'All automation systems integrated',
+      'Predictive farming analytics',
+      'Multi-zone optimization',
+      'Profit maximization algorithms'
+    ],
+    maintenance: 200,
+    efficiency: 98
+  }
+};
+
+// Dynamic weather events and disasters
+const WEATHER_EVENTS = {
+  desert: {
+    sandstorm: {
+      name: 'Massive Sandstorm',
+      emoji: '🌪️',
+      probability: 0.02, // 2% chance per weather cycle
+      duration: 3, // weather cycles
+      effects: {
+        cropDamage: 0.4, // 40% damage to unprotected crops
+        animalStress: 0.2, // 20% stress to animals
+        buildingDamage: 0.1, // 10% building damage
+        bonus: { glass: 5 } // produces glass from sand
+      },
+      description: 'Fierce sandstorm damages crops but creates valuable glass'
+    },
+    heatwave: {
+      name: 'Extreme Heatwave',
+      emoji: '🔥',
+      probability: 0.03,
+      duration: 2,
+      effects: {
+        cropWilt: 0.3,
+        waterConsumption: 2.0, // double water usage
+        animalStress: 0.3,
+        bonus: { solarEnergy: 10 }
+      },
+      description: 'Scorching heat wilts crops but generates solar energy'
+    }
+  },
+  forest: {
+    wildfire: {
+      name: 'Forest Fire',
+      emoji: '🔥',
+      probability: 0.015,
+      duration: 2,
+      effects: {
+        cropDestruction: 0.6, // destroys crops
+        animalFlee: 0.4, // animals temporarily leave
+        bonus: { ash: 15, charcoal: 5 } // fertile ash and charcoal
+      },
+      description: 'Devastating fire destroys crops but creates fertile ash'
+    },
+    fog: {
+      name: 'Dense Fog',
+      emoji: '🌫️',
+      probability: 0.04,
+      duration: 1,
+      effects: {
+        visibility: 0.5, // reduces efficiency
+        moistureBonus: 1.3, // increases growth
+        mushoomBoost: 2.0 // mushrooms love fog
+      },
+      description: 'Thick fog slows work but boosts moisture-loving crops'
+    }
+  },
+  mountain: {
+    avalanche: {
+      name: 'Avalanche',
+      emoji: '❄️',
+      probability: 0.01,
+      duration: 1,
+      effects: {
+        areaDestruction: 0.8, // destroys everything in path
+        snowDeposit: 20, // leaves snow for water
+        roadBlocking: 3 // blocks transport for 3 cycles
+      },
+      description: 'Destructive avalanche but provides water reserves'
+    },
+    blizzard: {
+      name: 'Severe Blizzard',
+      emoji: '🌨️',
+      probability: 0.025,
+      duration: 3,
+      effects: {
+        animalShelter: 0.5, // animals need shelter
+        cropFreeze: 0.4,
+        iceHarvest: 10 // can harvest ice
+      },
+      description: 'Harsh blizzard freezes crops but enables ice harvesting'
+    }
+  },
+  coastal: {
+    hurricane: {
+      name: 'Hurricane',
+      emoji: '🌀',
+      probability: 0.015,
+      duration: 2,
+      effects: {
+        massiveDestruction: 0.7,
+        flooding: 0.5,
+        bonus: { rareSeed: 3, driftwood: 8 } // brings rare items
+      },
+      description: 'Devastating hurricane brings destruction and rare treasures'
+    },
+    tsunami: {
+      name: 'Tsunami Wave',
+      emoji: '🌊',
+      probability: 0.005,
+      duration: 1,
+      effects: {
+        totalFlood: 0.9, // floods everything
+        saltDeposit: 25, // leaves salt deposits
+        seaweedBonus: 15 // washes up seaweed
+      },
+      description: 'Catastrophic wave floods land but deposits valuable resources'
+    }
+  }
+};
+
 // Genetic traits for crops
 const GENETIC_TRAITS = {
   diseaseResistance: {
@@ -663,6 +1166,48 @@ export default function SimpleFarmGame() {
     }
   });
   const [transportCooldown, setTransportCooldown] = useState(0);
+  
+  // Zone livestock system
+  const [zoneLivestock, setZoneLivestock] = useState({
+    basic: {},
+    desert: {},
+    forest: {},
+    mountain: {},
+    coastal: {}
+  });
+  const [livestockProducts, setLivestockProducts] = useState({});
+  
+  // Weather events and disasters
+  const [activeWeatherEvents, setActiveWeatherEvents] = useState({});
+  const [weatherEventHistory, setWeatherEventHistory] = useState([]);
+  const [disasterResources, setDisasterResources] = useState({
+    glass: 0, ash: 0, charcoal: 0, ice: 0, salt: 0, 
+    driftwood: 0, rareSeed: 0, seaweed: 0
+  });
+  
+  // Zone mastery system
+  const [zoneMastery, setZoneMastery] = useState({
+    basic: { level: 1, xp: 0, perks: [] },
+    desert: { level: 0, xp: 0, perks: [] },
+    forest: { level: 0, xp: 0, perks: [] },
+    mountain: { level: 0, xp: 0, perks: [] },
+    coastal: { level: 0, xp: 0, perks: [] }
+  });
+  
+  // Zone-specific buildings
+  const [zoneBuildings, setZoneBuildings] = useState({
+    basic: {},
+    desert: {},
+    forest: {},
+    mountain: {},
+    coastal: {}
+  });
+  
+  // Advanced automation systems
+  const [automationSystems, setAutomationSystems] = useState({});
+  const [automationEnabled, setAutomationEnabled] = useState(true);
+  const [automationFunds, setAutomationFunds] = useState(1000); // Separate fund for automation maintenance
+  
   const [view3D, setView3D] = useState(false);
   const [animations, setAnimations] = useState(true);
   
@@ -1043,6 +1588,120 @@ export default function SimpleFarmGame() {
         // Transport cooldown
         if (transportCooldown > 0) {
           setTransportCooldown(prev => prev - 1);
+        }
+        
+        // Weather event system - check every 30 seconds
+        if (newTime % 30 === 0) {
+          Object.keys(zoneData).forEach(zoneType => {
+            if (zoneData[zoneType]?.unlocked) {
+              triggerWeatherEvent(zoneType);
+            }
+          });
+        }
+        
+        // Update active weather events
+        setActiveWeatherEvents(prev => {
+          const updated = { ...prev };
+          let hasChanges = false;
+          
+          Object.keys(updated).forEach(zoneType => {
+            const event = updated[zoneType];
+            if (event) {
+              event.remainingDuration -= 1;
+              if (event.remainingDuration <= 0) {
+                delete updated[zoneType];
+                addNotification(`✅ ${event.name} has ended in ${ZONE_TYPES[zoneType].name}`, 'info');
+                hasChanges = true;
+              }
+            }
+          });
+          
+          return hasChanges ? updated : prev;
+        });
+        
+        // Livestock happiness and stress recovery
+        setZoneLivestock(prev => {
+          const updated = { ...prev };
+          let hasChanges = false;
+          
+          Object.keys(updated).forEach(zoneType => {
+            Object.keys(updated[zoneType]).forEach(animalType => {
+              const animal = updated[zoneType][animalType];
+              if (animal && animal.count > 0) {
+                // Gradual stress reduction and happiness recovery
+                if (animal.stress > 0) {
+                  updated[zoneType][animalType].stress = Math.max(0, animal.stress - 1);
+                  hasChanges = true;
+                }
+                if (animal.happiness < 100 && animal.stress === 0) {
+                  updated[zoneType][animalType].happiness = Math.min(100, animal.happiness + 1);
+                  hasChanges = true;
+                }
+              }
+            });
+          });
+          
+          return hasChanges ? updated : prev;
+        });
+        
+        // Advanced automation system processing
+        if (automationEnabled && newTime % 60 === 0) { // Every minute
+          // Pay maintenance costs every hour
+          if (newTime % 3600 === 0) {
+            payMaintenanceCosts();
+          }
+          
+          // Crop automation
+          if (automationSystems.cropAutomation?.active) {
+            // Auto-plant empty plots with best crops
+            Object.entries(plots).forEach(([plotId, plot]) => {
+              if (plot.state === 'empty') {
+                const bestCrop = ['wheat', 'carrot', 'tomato', 'corn']
+                  .find(crop => seeds[crop] > 0);
+                if (bestCrop) {
+                  plantCrop(parseInt(plotId), bestCrop);
+                }
+              }
+              
+              // Auto-water crops
+              if (plot.state === 'growing' && !plot.watered && tools.wateringCan) {
+                waterCrop(parseInt(plotId));
+              }
+              
+              // Auto-harvest ready crops
+              if (plot.state === 'ready') {
+                harvestCrop(parseInt(plotId));
+              }
+            });
+          }
+          
+          // Livestock automation
+          if (automationSystems.livestockAutomation?.active) {
+            Object.keys(zoneLivestock).forEach(zoneType => {
+              Object.keys(zoneLivestock[zoneType]).forEach(animalType => {
+                const animal = ZONE_LIVESTOCK[zoneType]?.find(a => a.id === animalType);
+                if (animal) {
+                  // Auto-collect products
+                  collectLivestockProducts(zoneType, animalType);
+                }
+              });
+            });
+          }
+          
+          // Weather automation
+          if (automationSystems.weatherAutomation?.active && activeWeatherEvents.length > 0) {
+            // Auto-prepare for disasters (could include resource protection)
+            addNotification('🤖 Weather AI preparing for disaster mitigation...', 'info');
+          }
+          
+          // Trade automation
+          if (automationSystems.tradeAutomation?.active && newTime % 300 === 0) { // Every 5 minutes
+            // Auto-trade excess resources for profit
+            const excessCrops = Object.entries(inventory).filter(([crop, amount]) => amount > 50);
+            if (excessCrops.length > 0) {
+              addNotification('🚛 Trade AI executing resource optimization...', 'info');
+            }
+          }
         }
         
         return newTime;
@@ -2099,6 +2758,329 @@ export default function SimpleFarmGame() {
     addNotification(`🚛 Transported ${amount} ${resourceType} for $${transportCost}`, 'success');
   };
 
+  // Zone livestock management functions
+  const buyLivestock = (zoneType, animalType) => {
+    const animal = ZONE_LIVESTOCK[zoneType]?.[animalType];
+    if (!animal) return;
+    
+    // Check if zone is unlocked
+    if (!zoneData[zoneType]?.unlocked && zoneType !== 'basic') {
+      addNotification(`🔒 Unlock ${ZONE_TYPES[zoneType].name} first!`, 'error');
+      return;
+    }
+    
+    if (money >= animal.cost) {
+      setMoney(prev => prev - animal.cost);
+      setZoneLivestock(prev => ({
+        ...prev,
+        [zoneType]: {
+          ...prev[zoneType],
+          [animalType]: {
+            count: (prev[zoneType][animalType]?.count || 0) + 1,
+            lastProduced: Date.now(),
+            stress: 0,
+            happiness: 100
+          }
+        }
+      }));
+      
+      addNotification(`🐾 Bought ${animal.name} for ${ZONE_TYPES[zoneType].name}!`, 'success');
+      checkAchievements();
+    } else {
+      addNotification(`💰 Need $${animal.cost} to buy ${animal.name}!`, 'error');
+    }
+  };
+
+  const collectLivestockProducts = (zoneType, animalType) => {
+    const animal = ZONE_LIVESTOCK[zoneType]?.[animalType];
+    const livestock = zoneLivestock[zoneType]?.[animalType];
+    
+    if (!animal || !livestock || livestock.count === 0) return;
+    
+    const timeSinceLastProduced = Date.now() - livestock.lastProduced;
+    const productionTime = animal.time * 1000; // convert to milliseconds
+    
+    if (timeSinceLastProduced >= productionTime) {
+      const quantity = livestock.count;
+      const baseValue = animal.value * quantity;
+      
+      // Apply happiness bonus
+      const happinessBonus = livestock.happiness / 100;
+      const finalValue = Math.floor(baseValue * happinessBonus);
+      
+      setMoney(prev => prev + finalValue);
+      setLivestockProducts(prev => ({
+        ...prev,
+        [animal.product]: (prev[animal.product] || 0) + quantity
+      }));
+      
+      // Update last produced time
+      setZoneLivestock(prev => ({
+        ...prev,
+        [zoneType]: {
+          ...prev[zoneType],
+          [animalType]: {
+            ...livestock,
+            lastProduced: Date.now()
+          }
+        }
+      }));
+      
+      addNotification(`${animal.productEmoji} Collected ${quantity} ${animal.product} for $${finalValue}!`, 'success');
+      
+      // Add zone mastery XP
+      addZoneMasteryXP(zoneType, quantity * 2);
+    } else {
+      const timeLeft = Math.ceil((productionTime - timeSinceLastProduced) / 1000);
+      addNotification(`⏱️ ${animal.name} needs ${timeLeft}s more to produce!`, 'info');
+    }
+  };
+
+  // Zone mastery system
+  const addZoneMasteryXP = (zoneType, amount) => {
+    setZoneMastery(prev => {
+      const current = prev[zoneType];
+      const newXP = current.xp + amount;
+      const xpForNextLevel = (current.level + 1) * 100; // 100 XP per level
+      
+      if (newXP >= xpForNextLevel && current.level < 10) {
+        // Level up!
+        const newLevel = current.level + 1;
+        addNotification(`⭐ ${ZONE_TYPES[zoneType].name} reached level ${newLevel}!`, 'levelup');
+        
+        return {
+          ...prev,
+          [zoneType]: {
+            ...current,
+            level: newLevel,
+            xp: newXP - xpForNextLevel,
+            perks: [...current.perks, `level_${newLevel}`]
+          }
+        };
+      }
+      
+      return {
+        ...prev,
+        [zoneType]: {
+          ...current,
+          xp: newXP
+        }
+      };
+    });
+  };
+
+  // Zone building system
+  const buyZoneBuilding = (zoneType, buildingId) => {
+    const building = ZONE_BUILDINGS[zoneType]?.[buildingId];
+    if (!building) {
+      addNotification(`❌ Building not found!`, 'error');
+      return;
+    }
+    
+    // Check requirements
+    if (!zoneData[zoneType]?.unlocked) {
+      addNotification(`❌ Must unlock ${ZONE_TYPES[zoneType].name} first!`, 'error');
+      return;
+    }
+    
+    if (level < building.unlockLevel) {
+      addNotification(`❌ Requires level ${building.unlockLevel}!`, 'error');
+      return;
+    }
+    
+    if (money < building.cost) {
+      addNotification(`❌ Need $${building.cost} to build ${building.name}!`, 'error');
+      return;
+    }
+    
+    if (zoneBuildings[zoneType][buildingId]) {
+      addNotification(`❌ ${building.name} already built in this zone!`, 'error');
+      return;
+    }
+    
+    // Purchase building
+    setMoney(prev => prev - building.cost);
+    setTotalSpent(prev => prev + building.cost);
+    
+    setZoneBuildings(prev => ({
+      ...prev,
+      [zoneType]: {
+        ...prev[zoneType],
+        [buildingId]: {
+          name: building.name,
+          level: 1,
+          builtAt: gameTime,
+          active: true
+        }
+      }
+    }));
+    
+    addNotification(`🏗️ ${building.name} built in ${ZONE_TYPES[zoneType].name}!`, 'success');
+    addZoneMasteryXP(zoneType, 50); // Building gives significant mastery XP
+    checkAchievements();
+  };
+
+  // Advanced automation system functions
+  const buyAutomationSystem = (systemId) => {
+    const system = AUTOMATION_SYSTEMS[systemId];
+    if (!system) {
+      addNotification(`❌ Automation system not found!`, 'error');
+      return;
+    }
+    
+    if (level < system.unlockLevel) {
+      addNotification(`❌ Requires level ${system.unlockLevel}!`, 'error');
+      return;
+    }
+    
+    if (money < system.cost) {
+      addNotification(`❌ Need $${system.cost} for ${system.name}!`, 'error');
+      return;
+    }
+    
+    if (automationSystems[systemId]) {
+      addNotification(`❌ ${system.name} already purchased!`, 'error');
+      return;
+    }
+    
+    setMoney(prev => prev - system.cost);
+    setTotalSpent(prev => prev + system.cost);
+    
+    setAutomationSystems(prev => ({
+      ...prev,
+      [systemId]: {
+        name: system.name,
+        active: true,
+        efficiency: system.efficiency,
+        lastMaintenance: Date.now(),
+        totalUptime: 0
+      }
+    }));
+    
+    addNotification(`🤖 ${system.name} installed and activated!`, 'success');
+    addZoneMasteryXP(currentZone, 100); // Automation gives major mastery XP
+  };
+
+  const toggleAutomation = (systemId) => {
+    setAutomationSystems(prev => ({
+      ...prev,
+      [systemId]: {
+        ...prev[systemId],
+        active: !prev[systemId].active
+      }
+    }));
+    
+    const newState = !automationSystems[systemId].active;
+    addNotification(`🤖 ${AUTOMATION_SYSTEMS[systemId].name} ${newState ? 'activated' : 'deactivated'}!`, 'info');
+  };
+
+  const payMaintenanceCosts = () => {
+    let totalCost = 0;
+    Object.entries(automationSystems).forEach(([systemId, data]) => {
+      if (data.active) {
+        totalCost += AUTOMATION_SYSTEMS[systemId].maintenance;
+      }
+    });
+    
+    if (automationFunds >= totalCost) {
+      setAutomationFunds(prev => prev - totalCost);
+      return true;
+    } else {
+      // Disable automation systems if can't afford maintenance
+      setAutomationSystems(prev => {
+        const updated = {};
+        Object.keys(prev).forEach(systemId => {
+          updated[systemId] = { ...prev[systemId], active: false };
+        });
+        return updated;
+      });
+      addNotification(`⚠️ Automation systems disabled - insufficient maintenance funds!`, 'error');
+      return false;
+    }
+  };
+
+  // Weather event system
+  const triggerWeatherEvent = (zoneType) => {
+    const events = WEATHER_EVENTS[zoneType];
+    if (!events || !zoneData[zoneType]?.unlocked) return;
+    
+    // Check if there's already an active event in this zone
+    if (activeWeatherEvents[zoneType]) return;
+    
+    // Random chance for each event type
+    const eventTypes = Object.keys(events);
+    for (const eventType of eventTypes) {
+      const event = events[eventType];
+      if (Math.random() < event.probability) {
+        // Trigger event!
+        const eventData = {
+          ...event,
+          type: eventType,
+          zone: zoneType,
+          startTime: Date.now(),
+          remainingDuration: event.duration
+        };
+        
+        setActiveWeatherEvents(prev => ({
+          ...prev,
+          [zoneType]: eventData
+        }));
+        
+        addNotification(`⚠️ ${event.emoji} ${event.name} in ${ZONE_TYPES[zoneType].name}!`, 'error');
+        
+        // Apply immediate effects
+        applyWeatherEventEffects(zoneType, eventData);
+        break;
+      }
+    }
+  };
+
+  const applyWeatherEventEffects = (zoneType, event) => {
+    const effects = event.effects;
+    
+    // Apply crop damage
+    if (effects.cropDamage || effects.cropWilt || effects.cropDestruction) {
+      const damageRate = effects.cropDamage || effects.cropWilt || effects.cropDestruction || 0;
+      // TODO: Apply damage to crops in this zone
+      addNotification(`🌾 Crops damaged by ${event.name}!`, 'error');
+    }
+    
+    // Apply livestock effects
+    if (effects.animalStress || effects.animalFlee) {
+      const stressRate = effects.animalStress || effects.animalFlee || 0;
+      setZoneLivestock(prev => {
+        const updated = { ...prev };
+        if (updated[zoneType]) {
+          Object.keys(updated[zoneType]).forEach(animalType => {
+            const animal = updated[zoneType][animalType];
+            if (animal) {
+              updated[zoneType][animalType] = {
+                ...animal,
+                stress: Math.min(100, animal.stress + stressRate * 100),
+                happiness: Math.max(0, animal.happiness - stressRate * 50)
+              };
+            }
+          });
+        }
+        return updated;
+      });
+    }
+    
+    // Add bonus resources
+    if (effects.bonus) {
+      setDisasterResources(prev => {
+        const updated = { ...prev };
+        Object.entries(effects.bonus).forEach(([resource, amount]) => {
+          updated[resource] = (updated[resource] || 0) + amount;
+        });
+        return updated;
+      });
+      
+      const bonusItems = Object.entries(effects.bonus).map(([resource, amount]) => `${amount} ${resource}`).join(', ');
+      addNotification(`✨ Gained resources from disaster: ${bonusItems}`, 'success');
+    }
+  };
+
   // Building effect functions
   const buyAdvancedBuilding = (buildingId) => {
     const building = BUILDINGS[buildingId];
@@ -2604,6 +3586,7 @@ export default function SimpleFarmGame() {
             {[
               { id: 'farm', name: '🚜 Farm', icon: '🌱' },
               { id: 'zones', name: '🗺️ Zones', icon: '🌍' },
+              { id: 'trade', name: '🚛 Trade', icon: '📦' },
               { id: 'shop', name: '🏪 Shop', icon: '🛒' },
               { id: 'processing', name: '🏭 Processing', icon: '⚙️' },
               { id: 'livestock', name: '🐄 Livestock', icon: '🐔' },
@@ -3161,6 +4144,559 @@ export default function SimpleFarmGame() {
                 ))}
               </div>
             </div>
+            
+            {/* Zone Livestock Section */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold mb-4">🐄 Zone Livestock</h2>
+              
+              {/* Current Zone Livestock */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">
+                  {ZONE_TYPES[currentZone].emoji} {ZONE_TYPES[currentZone].name} - Available Animals
+                </h3>
+                
+                {ZONE_LIVESTOCK[currentZone] ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    {ZONE_LIVESTOCK[currentZone].map(animal => {
+                      const owned = zoneLivestock[currentZone]?.[animal.id] || 0;
+                      const canAfford = money >= animal.cost;
+                      
+                      return (
+                        <div key={animal.id} className="border rounded-lg p-4 bg-gradient-to-br from-yellow-50 to-orange-50">
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="text-3xl">{animal.emoji}</span>
+                            <div>
+                              <h4 className="font-semibold">{animal.name}</h4>
+                              <p className="text-xs text-gray-600">
+                                Adapted to: {animal.adaptation}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <p className="text-sm text-gray-700 mb-3">{animal.description}</p>
+                          
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span>Cost:</span>
+                              <span className="font-semibold">${animal.cost}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Production:</span>
+                              <span className="font-semibold">{animal.production.resource} (${animal.production.value})</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Interval:</span>
+                              <span className="font-semibold">{animal.production.interval}s</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Owned:</span>
+                              <span className="font-semibold text-green-600">{owned}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4 space-y-2">
+                            <button
+                              onClick={() => buyLivestock(currentZone, animal.id)}
+                              disabled={!canAfford}
+                              className="w-full px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
+                            >
+                              🛒 Buy {animal.name}
+                            </button>
+                            
+                            {owned > 0 && (
+                              <button
+                                onClick={() => collectLivestockProducts(currentZone, animal.id)}
+                                className="w-full px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                              >
+                                📦 Collect Products ({owned} available)
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    🚫 No livestock available in this zone
+                  </div>
+                )}
+              </div>
+              
+              {/* All Zones Livestock Overview */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">🌍 All Zones Livestock Overview</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Object.entries(ZONE_TYPES).map(([zoneType, zone]) => {
+                    const totalAnimals = Object.values(zoneLivestock[zoneType] || {}).reduce((sum, count) => sum + count, 0);
+                    const zoneAnimals = ZONE_LIVESTOCK[zoneType] || [];
+                    
+                    return (
+                      <div key={zoneType} className="border rounded-lg p-4 bg-gray-50">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-2xl">{zone.emoji}</span>
+                          <div>
+                            <h4 className="font-semibold">{zone.name}</h4>
+                            <p className="text-xs text-gray-500">
+                              {zoneData[zoneType]?.unlocked ? `${totalAnimals} animals` : 'Locked'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {zoneData[zoneType]?.unlocked ? (
+                          <div className="space-y-1">
+                            {zoneAnimals.map(animal => {
+                              const owned = zoneLivestock[zoneType]?.[animal.id] || 0;
+                              return (
+                                <div key={animal.id} className="flex justify-between text-sm">
+                                  <span>{animal.emoji} {animal.name}</span>
+                                  <span className="font-semibold">{owned}</span>
+                                </div>
+                              );
+                            })}
+                            {zoneAnimals.length === 0 && (
+                              <p className="text-xs text-gray-500">No animals available</p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-500">
+                            Unlock this zone to see livestock
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            
+            {/* Active Weather Events */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold mb-4">⛈️ Weather Events & Disasters</h2>
+              
+              {activeWeatherEvents.length > 0 ? (
+                <div className="space-y-4 mb-6">
+                  <h3 className="text-lg font-semibold text-red-600">🚨 Active Disasters</h3>
+                  {activeWeatherEvents.map(event => (
+                    <div key={event.id} className="border-l-4 border-red-500 bg-red-50 p-4 rounded">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">{event.emoji}</span>
+                        <div>
+                          <h4 className="font-semibold text-red-800">{event.name}</h4>
+                          <p className="text-sm text-red-600">
+                            Zone: {ZONE_TYPES[event.zone].emoji} {ZONE_TYPES[event.zone].name}
+                          </p>
+                        </div>
+                        <div className="ml-auto text-right">
+                          <div className="text-sm font-semibold text-red-600">
+                            {Math.ceil(event.remainingDuration / 60)}m remaining
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-sm text-red-700 mb-2">{event.description}</p>
+                      <div className="text-xs text-red-600">
+                        Effects: {event.effects.cropDamage && `${event.effects.cropDamage}% crop damage`}
+                        {event.effects.livestockStress && `, ${event.effects.livestockStress}% livestock stress`}
+                        {event.effects.resourceLoss && `, ${event.effects.resourceLoss}% resource loss`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-500">
+                  ☀️ No active weather events. All zones are calm.
+                </div>
+              )}
+              
+              {/* Disaster Resources */}
+              {disasterResources && Object.keys(disasterResources).length > 0 && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-3">🎁 Disaster Recovery Resources</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    These resources were collected from weather events and disasters:
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {Object.entries(disasterResources).map(([resource, amount]) => (
+                      <div key={resource} className="bg-gradient-to-br from-purple-50 to-pink-50 p-3 rounded-lg border text-center">
+                        <div className="text-lg mb-1">
+                          {resource === 'glass' && '🪟'}
+                          {resource === 'ash' && '🌋'}
+                          {resource === 'charcoal' && '⚫'}
+                          {resource === 'ice' && '🧊'}
+                          {resource === 'salt' && '🧂'}
+                          {resource === 'driftwood' && '🪵'}
+                          {resource === 'rareSeeds' && '🌟'}
+                          {resource === 'seaweed' && '🌿'}
+                        </div>
+                        <div className="font-semibold text-sm">{amount}</div>
+                        <div className="text-xs text-gray-600 capitalize">{resource}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Zone Mastery Progression */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold mb-4">🏆 Zone Mastery</h2>
+              <p className="text-gray-600 mb-6">
+                Gain mastery XP by farming, managing livestock, and surviving disasters in each zone.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Object.entries(ZONE_TYPES).map(([zoneType, zone]) => {
+                  const mastery = zoneMastery[zoneType] || { level: 1, xp: 0 };
+                  const nextLevelXP = mastery.level * 100; // 100 XP per level
+                  const progress = (mastery.xp / nextLevelXP) * 100;
+                  
+                  // Calculate mastery bonuses
+                  const cropBonus = mastery.level * 2; // 2% per level
+                  const livestockBonus = mastery.level * 3; // 3% per level
+                  const resourceBonus = mastery.level * 1; // 1% per level
+                  
+                  return (
+                    <div key={zoneType} className="border rounded-lg p-4 bg-gradient-to-br from-purple-50 to-indigo-50">
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className="text-3xl">{zone.emoji}</span>
+                        <div>
+                          <h3 className="font-semibold text-lg">{zone.name}</h3>
+                          <p className="text-sm text-gray-600">
+                            {zoneData[zoneType]?.unlocked ? `Level ${mastery.level} Master` : 'Zone Locked'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {zoneData[zoneType]?.unlocked ? (
+                        <>
+                          {/* XP Progress Bar */}
+                          <div className="mb-4">
+                            <div className="flex justify-between text-sm mb-1">
+                              <span>Progress to Level {mastery.level + 1}</span>
+                              <span>{mastery.xp} / {nextLevelXP} XP</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                              <div 
+                                className="bg-gradient-to-r from-purple-500 to-indigo-500 h-3 rounded-full transition-all duration-300"
+                                style={{ width: `${Math.min(progress, 100)}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                          
+                          {/* Mastery Bonuses */}
+                          <div className="space-y-2 text-sm">
+                            <h4 className="font-semibold text-purple-700">Current Bonuses:</h4>
+                            <div className="grid grid-cols-1 gap-1">
+                              <div className="flex justify-between">
+                                <span>🌱 Crop Value:</span>
+                                <span className="font-semibold text-green-600">+{cropBonus}%</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>🐄 Livestock Production:</span>
+                                <span className="font-semibold text-blue-600">+{livestockBonus}%</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>📦 Resource Efficiency:</span>
+                                <span className="font-semibold text-purple-600">+{resourceBonus}%</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* XP Sources */}
+                          <div className="mt-4 pt-3 border-t border-purple-200">
+                            <h4 className="font-semibold text-purple-700 text-sm mb-2">XP Sources:</h4>
+                            <div className="text-xs text-gray-600 space-y-1">
+                              <div>• Harvest crops: +10 XP</div>
+                              <div>• Collect livestock products: +15 XP</div>
+                              <div>• Survive disasters: +25 XP</div>
+                              <div>• Plant zone-specific crops: +5 XP</div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center py-6 text-gray-500">
+                          🔒 Unlock this zone to start gaining mastery
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Trade Tab - Inter-Zone Trade Routes */}
+        {activeTab === 'trade' && (
+          <div className="space-y-6">
+            {/* Trade Routes Overview */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold mb-4">🚛 Inter-Zone Trade Routes</h2>
+              <p className="text-gray-600 mb-6">
+                Establish trade routes between your unlocked zones to exchange crops, livestock products, and resources.
+              </p>
+              
+              {/* Current Zone Trade Hub */}
+              <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-lg mb-6">
+                <h3 className="text-lg font-semibold mb-3">
+                  📍 Current Location: {ZONE_TYPES[currentZone].emoji} {ZONE_TYPES[currentZone].name}
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Available Crops */}
+                  <div className="bg-white p-3 rounded border">
+                    <h4 className="font-semibold text-green-700 mb-2">🌾 Available Crops</h4>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {Object.entries(inventory).filter(([crop, amount]) => amount > 0).map(([crop, amount]) => (
+                        <div key={crop} className="flex justify-between text-sm">
+                          <span>{ALL_CROPS[crop]?.emoji} {ALL_CROPS[crop]?.name}</span>
+                          <span className="font-semibold">{amount}</span>
+                        </div>
+                      ))}
+                      {Object.entries(inventory).filter(([crop, amount]) => amount > 0).length === 0 && (
+                        <div className="text-xs text-gray-500">No crops in inventory</div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Available Livestock Products */}
+                  <div className="bg-white p-3 rounded border">
+                    <h4 className="font-semibold text-blue-700 mb-2">🥛 Livestock Products</h4>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {ZONE_LIVESTOCK[currentZone]?.map(animal => {
+                        const owned = zoneLivestock[currentZone]?.[animal.id] || 0;
+                        return owned > 0 ? (
+                          <div key={animal.id} className="flex justify-between text-sm">
+                            <span>{animal.emoji} {animal.production.resource}</span>
+                            <span className="font-semibold">{owned} producers</span>
+                          </div>
+                        ) : null;
+                      }).filter(Boolean) || (
+                        <div className="text-xs text-gray-500">No livestock in this zone</div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Zone Resources */}
+                  <div className="bg-white p-3 rounded border">
+                    <h4 className="font-semibold text-purple-700 mb-2">📦 Zone Resources</h4>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>🌱 Seeds</span>
+                        <span className="font-semibold">{zoneData[currentZone]?.resources?.seeds || 0}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>📦 Fertilizer</span>
+                        <span className="font-semibold">{zoneData[currentZone]?.resources?.fertilizer || 0}</span>
+                      </div>
+                      {disasterResources && Object.entries(disasterResources).map(([resource, amount]) => (
+                        <div key={resource} className="flex justify-between text-sm">
+                          <span>
+                            {resource === 'glass' && '🪟'} 
+                            {resource === 'ash' && '🌋'} 
+                            {resource === 'charcoal' && '⚫'} 
+                            {resource === 'ice' && '🧊'} 
+                            {resource === 'salt' && '🧂'} 
+                            {resource === 'driftwood' && '🪵'} 
+                            {resource === 'rareSeeds' && '🌟'} 
+                            {resource === 'seaweed' && '🌿'} 
+                            {resource.charAt(0).toUpperCase() + resource.slice(1)}
+                          </span>
+                          <span className="font-semibold">{amount}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Trade Route Management */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Object.entries(ZONE_TYPES).filter(([zoneType, _]) => 
+                  zoneType !== currentZone && zoneData[zoneType]?.unlocked
+                ).map(([zoneType, zone]) => (
+                  <div key={zoneType} className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-blue-50">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="text-3xl">{zone.emoji}</span>
+                      <div>
+                        <h3 className="font-semibold text-lg">{zone.name}</h3>
+                        <p className="text-sm text-gray-600">
+                          Climate: {zone.climate}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Trade Opportunities */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-700">🔄 Trade Opportunities</h4>
+                      
+                      {/* Crop Exchanges */}
+                      <div className="bg-white p-3 rounded border">
+                        <h5 className="font-semibold text-green-700 text-sm mb-2">Crop Exchange</h5>
+                        <div className="space-y-2">
+                          {zone.specialCrops?.slice(0, 2).map(cropType => {
+                            const crop = ALL_CROPS[cropType];
+                            const hasBasicCrops = Object.entries(inventory).some(([c, amount]) => 
+                              ['wheat', 'carrot', 'potato', 'corn'].includes(c) && amount >= 10
+                            );
+                            
+                            return (
+                              <div key={cropType} className="flex items-center justify-between text-sm">
+                                <div className="flex items-center gap-2">
+                                  <span>10 Basic Crops</span>
+                                  <span>→</span>
+                                  <span>{crop?.emoji} 5 {crop?.name}</span>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    // Find a basic crop with enough quantity
+                                    const basicCrop = Object.entries(inventory).find(([c, amount]) => 
+                                      ['wheat', 'carrot', 'potato', 'corn'].includes(c) && amount >= 10
+                                    );
+                                    
+                                    if (basicCrop) {
+                                      setInventory(prev => ({
+                                        ...prev,
+                                        [basicCrop[0]]: prev[basicCrop[0]] - 10,
+                                        [cropType]: (prev[cropType] || 0) + 5
+                                      }));
+                                      addNotification(`📦 Traded 10 ${ALL_CROPS[basicCrop[0]]?.name} for 5 ${crop?.name}!`, 'success');
+                                      addZoneMasteryXP(currentZone, 20); // Trading gives mastery XP
+                                    }
+                                  }}
+                                  disabled={!hasBasicCrops}
+                                  className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 disabled:bg-gray-300"
+                                >
+                                  Trade
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      
+                      {/* Livestock Product Exchange */}
+                      <div className="bg-white p-3 rounded border">
+                        <h5 className="font-semibold text-blue-700 text-sm mb-2">Livestock Products</h5>
+                        <div className="space-y-2">
+                          {ZONE_LIVESTOCK[zoneType]?.slice(0, 2).map(animal => {
+                            const theirCount = zoneLivestock[zoneType]?.[animal.id] || 0;
+                            const canTrade = money >= 500; // Cost to establish trade route
+                            
+                            return (
+                              <div key={animal.id} className="flex items-center justify-between text-sm">
+                                <div className="flex items-center gap-2">
+                                  <span>$500</span>
+                                  <span>→</span>
+                                  <span>{animal.emoji} {animal.production.resource}</span>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    if (theirCount > 0) {
+                                      setMoney(prev => prev - 500);
+                                      // Simulate getting their product
+                                      setInventory(prev => ({
+                                        ...prev,
+                                        [animal.production.resource]: (prev[animal.production.resource] || 0) + theirCount
+                                      }));
+                                      addNotification(`🚛 Imported ${theirCount} ${animal.production.resource} from ${zone.name}!`, 'success');
+                                      addZoneMasteryXP(currentZone, 25);
+                                    }
+                                  }}
+                                  disabled={!canTrade || theirCount === 0}
+                                  className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 disabled:bg-gray-300"
+                                >
+                                  Import
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      
+                      {/* Resource Trading */}
+                      <div className="bg-white p-3 rounded border">
+                        <h5 className="font-semibold text-purple-700 text-sm mb-2">Resource Trading</h5>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                              <span>$200</span>
+                              <span>→</span>
+                              <span>📦 5 Resources</span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                setMoney(prev => prev - 200);
+                                // Add random resources based on zone type
+                                const newResources = { ...zoneData[currentZone].resources };
+                                newResources.fertilizer = (newResources.fertilizer || 0) + 3;
+                                newResources.seeds = (newResources.seeds || 0) + 2;
+                                
+                                setZoneData(prev => ({
+                                  ...prev,
+                                  [currentZone]: {
+                                    ...prev[currentZone],
+                                    resources: newResources
+                                  }
+                                }));
+                                
+                                addNotification(`📦 Imported resources from ${zone.name}!`, 'success');
+                                addZoneMasteryXP(currentZone, 15);
+                              }}
+                              disabled={money < 200}
+                              className="px-2 py-1 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 disabled:bg-gray-300"
+                            >
+                              Import
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {Object.entries(ZONE_TYPES).filter(([zoneType, _]) => 
+                zoneType !== currentZone && zoneData[zoneType]?.unlocked
+              ).length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  🔒 Unlock more zones to establish trade routes!<br/>
+                  <span className="text-sm">Trade routes allow you to exchange crops, livestock products, and resources between zones.</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Trade Statistics */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold mb-4">📊 Trade Statistics</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center p-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-lg">
+                  <div className="text-3xl mb-2">🌾</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {Object.values(inventory).reduce((sum, amount) => sum + amount, 0)}
+                  </div>
+                  <div className="text-sm text-gray-600">Total Crops</div>
+                </div>
+                
+                <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg">
+                  <div className="text-3xl mb-2">🐄</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {Object.values(zoneLivestock).reduce((total, zoneAnimals) => 
+                      total + Object.values(zoneAnimals).reduce((sum, count) => sum + count, 0), 0
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-600">Total Livestock</div>
+                </div>
+                
+                <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+                  <div className="text-3xl mb-2">🗺️</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {Object.values(zoneData).filter(zone => zone.unlocked).length}
+                  </div>
+                  <div className="text-sm text-gray-600">Unlocked Zones</div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -3359,6 +4895,159 @@ export default function SimpleFarmGame() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* Zone-Specific Buildings */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold mb-4">🏗️ Zone-Specific Buildings</h2>
+              <p className="text-gray-600 mb-6">
+                Build specialized structures that provide unique benefits in each zone.
+              </p>
+              
+              {/* Current Zone Buildings */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">
+                  {ZONE_TYPES[currentZone].emoji} {ZONE_TYPES[currentZone].name} - Available Buildings
+                </h3>
+                
+                {ZONE_BUILDINGS[currentZone] ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Object.entries(ZONE_BUILDINGS[currentZone]).map(([buildingId, building]) => {
+                      const owned = zoneBuildings[currentZone]?.[buildingId];
+                      const canAfford = money >= building.cost;
+                      const levelMet = level >= building.unlockLevel;
+                      const zoneUnlocked = zoneData[currentZone]?.unlocked;
+                      
+                      return (
+                        <div key={buildingId} className={`p-4 border-2 rounded-lg ${
+                          owned ? 'border-blue-400 bg-blue-50' : 
+                          (!canAfford || !levelMet || !zoneUnlocked) ? 'border-gray-200 bg-gray-50' : 
+                          'border-gray-200 hover:border-blue-300'
+                        }`}>
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <div className="text-3xl mb-2">{building.emoji}</div>
+                              <div className="font-semibold">{building.name}</div>
+                              <div className="text-sm text-gray-600 mb-2">{building.description}</div>
+                            </div>
+                            {owned && <div className="text-blue-500 text-xl">✅</div>}
+                          </div>
+                          
+                          {/* Benefits */}
+                          <div className="mb-3">
+                            <h4 className="text-sm font-semibold text-blue-700 mb-1">Benefits:</h4>
+                            <ul className="text-xs text-blue-600 space-y-1">
+                              {building.benefits.map((benefit, index) => (
+                                <li key={index}>• {benefit}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          {/* Requirements */}
+                          <div className="mb-3 text-xs text-gray-600">
+                            <div className={level >= building.unlockLevel ? 'text-green-600' : 'text-red-600'}>
+                              ▶ Level {building.unlockLevel} {level >= building.unlockLevel ? '✓' : '✗'}
+                            </div>
+                            {building.requiredZone && (
+                              <div className={zoneUnlocked ? 'text-green-600' : 'text-red-600'}>
+                                ▶ {ZONE_TYPES[building.requiredZone].name} Zone {zoneUnlocked ? '✓' : '✗'}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="mt-3">
+                            <div className="text-lg font-bold text-blue-600 mb-2">${building.cost}</div>
+                            {!owned ? (
+                              <button
+                                onClick={() => buyZoneBuilding(currentZone, buildingId)}
+                                disabled={!canAfford || !levelMet || !zoneUnlocked}
+                                className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300"
+                              >
+                                Build Now
+                              </button>
+                            ) : (
+                              <div className="w-full px-4 py-2 bg-blue-500 text-white rounded text-center">
+                                Built & Active
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    🚫 No zone-specific buildings available in this zone
+                  </div>
+                )}
+              </div>
+              
+              {/* All Zones Building Overview */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">🌍 All Zones Building Progress</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Object.entries(ZONE_TYPES).map(([zoneType, zone]) => {
+                    const totalBuildings = Object.keys(ZONE_BUILDINGS[zoneType] || {}).length;
+                    const builtBuildings = Object.keys(zoneBuildings[zoneType] || {}).length;
+                    const progressPercent = totalBuildings > 0 ? (builtBuildings / totalBuildings) * 100 : 0;
+                    
+                    return (
+                      <div key={zoneType} className="border rounded-lg p-4 bg-gradient-to-br from-gray-50 to-blue-50">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-2xl">{zone.emoji}</span>
+                          <div>
+                            <h4 className="font-semibold">{zone.name}</h4>
+                            <p className="text-xs text-gray-500">
+                              {zoneData[zoneType]?.unlocked ? `${builtBuildings}/${totalBuildings} built` : 'Locked'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {zoneData[zoneType]?.unlocked ? (
+                          <>
+                            {/* Progress Bar */}
+                            <div className="mb-3">
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${progressPercent}%` }}
+                                ></div>
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                {Math.round(progressPercent)}% Complete
+                              </div>
+                            </div>
+                            
+                            {/* Built Buildings List */}
+                            <div className="space-y-1">
+                              {Object.entries(ZONE_BUILDINGS[zoneType] || {}).map(([buildingId, building]) => {
+                                const owned = zoneBuildings[zoneType]?.[buildingId];
+                                return (
+                                  <div key={buildingId} className="flex justify-between text-sm">
+                                    <span className={owned ? 'text-green-600' : 'text-gray-500'}>
+                                      {building.emoji} {building.name}
+                                    </span>
+                                    <span className="font-semibold">
+                                      {owned ? '✓' : '○'}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                              {totalBuildings === 0 && (
+                                <p className="text-xs text-gray-500">No specialized buildings</p>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-xs text-gray-500">
+                            Unlock this zone to build specialized structures
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -3846,6 +5535,205 @@ export default function SimpleFarmGame() {
                   )}
                 </div>
               ))}
+            </div>
+            
+            {/* Advanced Automation Systems */}
+            <div className="mt-8 border-t pt-6">
+              <h3 className="text-xl font-bold mb-4">🤖 Advanced Automation Systems</h3>
+              <div className="mb-4 p-4 bg-purple-50 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="font-semibold text-purple-800">Automation Status</div>
+                  <button
+                    onClick={() => setAutomationEnabled(!automationEnabled)}
+                    className={`px-3 py-1 rounded text-sm ${
+                      automationEnabled ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                    }`}
+                  >
+                    {automationEnabled ? 'Enabled' : 'Disabled'}
+                  </button>
+                </div>
+                <div className="text-sm text-purple-600">
+                  Maintenance Fund: ${automationFunds} | 
+                  Active Systems: {Object.values(automationSystems).filter(s => s.active).length}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(AUTOMATION_SYSTEMS).map(([systemId, system]) => {
+                  const owned = automationSystems[systemId];
+                  const canAfford = money >= system.cost;
+                  const levelMet = level >= system.unlockLevel;
+                  
+                  return (
+                    <div key={systemId} className={`p-4 border-2 rounded-lg ${
+                      owned ? (owned.active ? 'border-green-400 bg-green-50' : 'border-orange-400 bg-orange-50') : 
+                      (!canAfford || !levelMet) ? 'border-gray-200 bg-gray-50' : 
+                      'border-gray-200 hover:border-purple-300'
+                    }`}>
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="text-3xl mb-2">{system.emoji}</div>
+                          <div className="font-semibold">{system.name}</div>
+                          <div className="text-sm text-gray-600 mb-2">{system.description}</div>
+                        </div>
+                        <div className="text-right">
+                          {owned && (
+                            <div className={`text-xl ${owned.active ? 'text-green-500' : 'text-orange-500'}`}>
+                              {owned.active ? '🟢' : '🟡'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Benefits */}
+                      <div className="mb-3">
+                        <h4 className="text-sm font-semibold text-purple-700 mb-1">Capabilities:</h4>
+                        <ul className="text-xs text-purple-600 space-y-1">
+                          {system.benefits.map((benefit, index) => (
+                            <li key={index}>• {benefit}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      {/* System Stats */}
+                      <div className="mb-3 text-xs">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-white p-2 rounded">
+                            <div className="font-semibold">Efficiency</div>
+                            <div className="text-purple-600">{system.efficiency}%</div>
+                          </div>
+                          <div className="bg-white p-2 rounded">
+                            <div className="font-semibold">Maintenance</div>
+                            <div className="text-purple-600">${system.maintenance}/hr</div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Requirements */}
+                      <div className="mb-3 text-xs text-gray-600">
+                        <div className={level >= system.unlockLevel ? 'text-green-600' : 'text-red-600'}>
+                          ▶ Level {system.unlockLevel} {level >= system.unlockLevel ? '✓' : '✗'}
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3">
+                        <div className="text-lg font-bold text-purple-600 mb-2">${system.cost}</div>
+                        {!owned ? (
+                          <button
+                            onClick={() => buyAutomationSystem(systemId)}
+                            disabled={!canAfford || !levelMet}
+                            className="w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:bg-gray-300"
+                          >
+                            Install System
+                          </button>
+                        ) : (
+                          <div className="space-y-2">
+                            <button
+                              onClick={() => toggleAutomation(systemId)}
+                              className={`w-full px-4 py-2 rounded ${
+                                owned.active 
+                                  ? 'bg-orange-500 text-white hover:bg-orange-600' 
+                                  : 'bg-green-500 text-white hover:bg-green-600'
+                              }`}
+                            >
+                              {owned.active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <div className="text-xs text-center text-gray-600">
+                              Efficiency: {owned.efficiency}%
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Automation Control Panel */}
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-semibold mb-3">🎛️ Automation Control Panel</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white p-3 rounded border">
+                    <h5 className="font-semibold text-green-700 mb-2">Auto-Farming</h5>
+                    <div className="text-sm text-gray-600">
+                      {automationSystems.cropAutomation?.active ? (
+                        <div className="text-green-600">
+                          ✅ Crops auto-managed<br/>
+                          🌱 Next plant cycle: 2m<br/>
+                          💧 Water cycle: Active
+                        </div>
+                      ) : (
+                        <div className="text-gray-500">❌ Manual farming mode</div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white p-3 rounded border">
+                    <h5 className="font-semibold text-blue-700 mb-2">Auto-Livestock</h5>
+                    <div className="text-sm text-gray-600">
+                      {automationSystems.livestockAutomation?.active ? (
+                        <div className="text-blue-600">
+                          ✅ Livestock auto-cared<br/>
+                          🥛 Collection: Active<br/>
+                          🍖 Feeding: Scheduled
+                        </div>
+                      ) : (
+                        <div className="text-gray-500">❌ Manual livestock care</div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white p-3 rounded border">
+                    <h5 className="font-semibold text-purple-700 mb-2">Smart Systems</h5>
+                    <div className="text-sm text-gray-600">
+                      <div>Trade AI: {automationSystems.tradeAutomation?.active ? '🟢' : '🔴'}</div>
+                      <div>Weather AI: {automationSystems.weatherAutomation?.active ? '🟢' : '🔴'}</div>
+                      <div>Master AI: {automationSystems.masterAutomation?.active ? '🟢' : '🔴'}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Maintenance Funding */}
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold">Maintenance Fund</span>
+                    <span className="text-lg font-bold">${automationFunds}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        if (money >= 1000) {
+                          setMoney(prev => prev - 1000);
+                          setAutomationFunds(prev => prev + 1000);
+                          addNotification('💰 Added $1000 to automation fund!', 'success');
+                        }
+                      }}
+                      disabled={money < 1000}
+                      className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 disabled:bg-gray-300"
+                    >
+                      Add $1000
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (money >= 5000) {
+                          setMoney(prev => prev - 5000);
+                          setAutomationFunds(prev => prev + 5000);
+                          addNotification('💰 Added $5000 to automation fund!', 'success');
+                        }
+                      }}
+                      disabled={money < 5000}
+                      className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 disabled:bg-gray-300"
+                    >
+                      Add $5000
+                    </button>
+                  </div>
+                  <div className="text-xs text-gray-600 mt-2">
+                    Hourly cost: ${Object.entries(automationSystems)
+                      .filter(([_, data]) => data.active)
+                      .reduce((sum, [systemId, _]) => sum + AUTOMATION_SYSTEMS[systemId].maintenance, 0)}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
