@@ -1,5 +1,5 @@
 /**
- * Comprehensive test suite for Farm Game features
+ * Comprehensive test suite for FarmLife features
  * Run this in the browser console to test all game systems
  */
 
@@ -189,14 +189,14 @@ const testSuite = {
 };
 
 // Auto-run tests when loaded
-console.log("Farm Game Test Suite Loaded!");
+console.log("FarmLife Test Suite Loaded!");
 console.log("Commands available:");
 console.log("- testSuite.runAll() - Run all tests");
 console.log("- testSuite.exportSave() - Export save file");
 console.log("- testSuite.clearGameData() - Clear all data");
 
 // Export for use
-window.farmGameTests = testSuite;
+window.farmLifeTests = testSuite;
 
 // Run tests automatically
 testSuite.runAll();

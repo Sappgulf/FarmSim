@@ -1260,7 +1260,7 @@ export default function SimpleFarmGame() {
     };
     
     try {
-      localStorage.setItem('farmGameSave', JSON.stringify(gameState));
+      localStorage.setItem('farmLifeSave', JSON.stringify(gameState));
       addNotification('💾 Game saved successfully!', 'success');
     } catch (error) {
       addNotification('❌ Failed to save game', 'error');
@@ -1269,7 +1269,7 @@ export default function SimpleFarmGame() {
 
   const loadGame = () => {
     try {
-      const savedGame = localStorage.getItem('farmGameSave');
+      const savedGame = localStorage.getItem('farmLifeSave');
       if (savedGame) {
         const gameState = JSON.parse(savedGame);
         
@@ -3415,7 +3415,7 @@ export default function SimpleFarmGame() {
         <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
             <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4 md:mb-0">
-              <h1 className="text-2xl md:text-3xl font-bold text-green-800">🚜 Enhanced Farm Game</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-green-800">🚜 FarmLife</h1>
               <div className="flex gap-2">
                 <button
                   onClick={saveGame}

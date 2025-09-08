@@ -1,6 +1,6 @@
 {
-  "name": "Farm Simulation Game",
-  "short_name": "FarmGame",
+  "name": "FarmLife",
+  "short_name": "FarmLife",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f0fdf4",

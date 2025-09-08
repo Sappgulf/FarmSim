@@ -8,7 +8,7 @@ function TestComponent() {
   return (
     <div className="min-h-screen bg-blue-500 flex items-center justify-center">
       <div className="bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-2xl font-bold text-gray-800">Farm Game Test</h1>
+        <h1 className="text-2xl font-bold text-gray-800">FarmLife Test</h1>
         <p className="text-gray-600 mt-2">If you can see this, React is working!</p>
       </div>
     </div>
@@ -33,7 +33,7 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
   componentDidCatch(error, errorInfo) {
-    console.error("Farm Game Error:", error, errorInfo);
+    console.error("FarmLife Error:", error, errorInfo);
     this.setState({ errorInfo });
     
     // Auto-retry for certain error types
@@ -130,7 +130,7 @@ class ErrorBoundary extends React.Component {
 }
 
 function AppRouter() {
-  // Simple working farm game
+  // Simple working FarmLife game
   return <SimpleFarmGame />;
 }
 
