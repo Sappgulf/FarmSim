@@ -667,8 +667,17 @@ export default function SimpleFarmGame() {
   const [animations, setAnimations] = useState(true);
   
   // Seed inventory
-  const [seeds, setSeeds] = useState({
-    wheat: 5, carrot: 2, tomato: 1, corn: 0
+  const [seeds, setSeeds] = useState(() => {
+    const initialSeeds = {};
+    // Initialize all crops with 0 seeds, give starter seeds only for basic crops
+    Object.keys(ALL_CROPS).forEach(cropType => {
+      if (['wheat', 'carrot', 'tomato', 'corn'].includes(cropType)) {
+        initialSeeds[cropType] = cropType === 'wheat' ? 5 : cropType === 'carrot' ? 2 : cropType === 'tomato' ? 1 : 0;
+      } else {
+        initialSeeds[cropType] = 0;
+      }
+    });
+    return initialSeeds;
   });
 
   // Farm plots
