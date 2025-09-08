@@ -1,13 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-// import FarmSimCanvas from "./components/FarmSimCanvas";
-// import FarmSimCanvas from "./components/SafeFarmSimCanvas";
-// import FarmSimCanvas from "./components/FarmSimCanvasFixed";
-// import TestComponent from "./components/TestComponent";
-// Default to the fixed full game experience
-import FixedUltimateFarmGame from "./components/FixedUltimateFarmGame";
-import FarmSimCanvas from "./components/FarmSimCanvas";
-// Force reload
+import SimpleFarmGame from "./components/SimpleFarmGame";
 import "./index.css";
 
 // Simple test component
@@ -137,13 +130,8 @@ class ErrorBoundary extends React.Component {
 }
 
 function AppRouter() {
-  const params = new URLSearchParams(window.location.search);
-  const variant = (params.get('variant') || '').toLowerCase();
-  if (variant === 'farm' || variant === 'farmsim') {
-    return <FarmSimCanvas/>;
-  }
-  // default to fixed full experience
-  return <FixedUltimateFarmGame/>;
+  // Simple working farm game
+  return <SimpleFarmGame />;
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(

@@ -10,7 +10,7 @@ export function useWeather(gameState) {
   
   const [weather, setWeather] = useState({
     type: "sunny",
-    endsAt: nowSec() + 60,
+    endsAt: (gameState?.nowSec?.() || Date.now() / 1000) + 60,
     intensity: 1.0
   });
   

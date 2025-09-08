@@ -23,9 +23,20 @@ class SoundEngine {
   }
 
   async initialize() {
-    if (this.initialized) return;
+    if (this.initialized || typeof window === 'undefined' || !window.AudioContext) return;
 
     try {
+      // Resume AudioContext on user interaction
+      const resumeContext = () => {
+        if (this.audioContext.state === 'suspended') {
+          this.audioContext.resume();
+        }
+        window.removeEventListener('click', resumeContext);
+        window.removeEventListener('touchend', resumeContext);
+      };
+      window.addEventListener('click', resumeContext);
+      window.addEventListener('touchend', resumeContext);
+
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       
       // Create gain nodes for volume control
@@ -45,9 +56,10 @@ class SoundEngine {
       this.generateSounds();
       
       this.initialized = true;
-      console.log('🎵 Sound Engine initialized');
+      console.log('🎵 Sound Engine initialized successfully');
     } catch (error) {
-      console.warn('Failed to initialize audio:', error);
+      console.warn('Failed to initialize audio. Sound will be disabled.', error);
+      this.initialized = false;
     }
   }
 

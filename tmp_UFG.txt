@@ -1,0 +1,456 @@
+import React, { useState, useEffect } from 'react';
+import { FarmGrid } from './farm/FarmGrid';
+import { WeatherDisplay } from './game/WeatherDisplay';
+import { AchievementsPanel } from './game/AchievementsPanel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { EXPANDED_CROPS as expandedCrops } from '../data/expandedCrops';
+import { useWeather } from '../hooks/useWeather';
+import { useAchievements } from '../hooks/useAchievements';
+import { useMarket } from '../hooks/useMarket';
+
+export default function UltimateFarmGame() {
+  console.log('🚀 Ultimate Farm Game - Loading...');
+
+  // Game state
+  const [gameTime, setGameTime] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [money, setMoney] = useState(100);
+  const [experience, setExperience] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [notifications, setNotifications] = useState([]);
+
+  // Farm state
+  const [farmSize, setFarmSize] = useState(3);
+  const [selectedCrop, setSelectedCrop] = useState('wheat');
+  const [plots, setPlots] = useState(() => {
+    const initialPlots = {};
+    for (let i = 0; i < farmSize * farmSize; i++) {
+      initialPlots[i] = {
+        id: i,
+        state: 'empty',
+        seed: null,
+        progress: 0,
+        plantedAt: 0,
+        wateredAt: 0,
+        fertilizedAt: 0,
+        quality: 1.0,
+        health: 1.0
+      };
+    }
+    return initialPlots;
+  });
+
+  // Advanced systems - all hooks enabled
+  const weather = useWeather({ 
+    currentTime: gameTime || 0, 
+    addNotification: addNotification || (() => {}), 
+    addLog: addNotification || (() => {}), 
+    nowSec: () => gameTime || 0 
+  });
+  const achievements = useAchievements({ 
+    totalEarned: money || 0, 
+    totalHarvests: 0, 
+    qualityHarvests: 0,
+    weatherEvents: 0,
+    addNotification: addNotification || (() => {}), 
+    addLog: addNotification || (() => {}), 
+    addCoins: (amount) => setMoney(prev => (prev || 0) + amount)
+  });
+  const market = useMarket({ 
+    currentTime: gameTime || 0, 
+    addNotification: addNotification || (() => {}), 
+    addLog: addNotification || (() => {}), 
+    nowSec: () => gameTime || 0 
+  });  // Notification system
+  const addNotification = (message, type = 'info') => {
+    const notification = {
+      id: Date.now(),
+      message,
+      type,
+      timestamp: Date.now()
+    };
+    setNotifications(prev => [notification, ...prev.slice(0, 4)]);
+
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== notification.id));
+    }, 5000);
+  };
+
+  // Simple game loop
+  useEffect(() => {
+    const gameLoop = setInterval(() => {
+      if (!isPaused) {
+        setGameTime(prev => prev + 1);
+        updateCropGrowth();
+        weather.updateWeather?.();
+        achievements.checkAchievements?.();
+      }
+    }, 1000);
+
+    return () => clearInterval(gameLoop);
+  }, [isPaused]);
+
+  // Update crop growth
+  const updateCropGrowth = () => {
+    setPlots(prevPlots => {
+      const updatedPlots = { ...prevPlots };
+      Object.keys(updatedPlots).forEach(plotId => {
+        const plot = updatedPlots[plotId];
+        if (plot.state === 'planted' || plot.state === 'growing') {
+          const cropData = expandedCrops[plot.seed?.type];
+          if (cropData) {
+            const growthTime = cropData.growthTime;
+            const elapsed = gameTime - plot.plantedAt;
+            const progress = Math.min(elapsed / growthTime, 1);
+
+            if (progress >= 1) {
+              plot.state = 'ready';
+              plot.progress = 1;
+            } else {
+              plot.state = 'growing';
+              plot.progress = progress;
+            }
+          }
+        }
+      });
+      return updatedPlots;
+    });
+  };
+
+  // Handle planting crops
+  const handlePlantCrop = (plotId) => {
+    const plot = plots[plotId];
+    if (plot.state !== 'empty') return;
+
+    const cropData = expandedCrops[selectedCrop];
+    if (!cropData) return;
+
+    const seedCost = cropData.seedCost || Math.round(cropData.baseValue * 0.1);
+    if (money < seedCost) {
+      addNotification(`Not enough money! Need $${seedCost} for ${cropData.name} seeds.`, 'error');
+      return;
+    }
+
+    setMoney(prev => prev - seedCost);
+    setPlots(prevPlots => ({
+      ...prevPlots,
+      [plotId]: {
+        ...prevPlots[plotId],
+        state: 'planted',
+        seed: { type: selectedCrop, ...cropData },
+        plantedAt: gameTime,
+        progress: 0
+      }
+    }));
+
+    addNotification(`🌱 Planted ${cropData.name}!`, 'success');
+  };
+
+  // Handle harvesting crops
+  const handleHarvestCrop = (plotId) => {
+    const plot = plots[plotId];
+    if (plot.state !== 'ready') return;
+
+    const cropData = plot.seed;
+    if (!cropData) return;
+
+    const value = Math.round(cropData.baseValue * (1 + Math.random() * 0.5)); // Random bonus
+    setMoney(prev => prev + value);
+    setExperience(prev => prev + 10);
+
+    // Check for level up
+    const newExp = experience + 10;
+    const newLevel = Math.floor(newExp / 100) + 1;
+    if (newLevel > level) {
+      setLevel(newLevel);
+      addNotification(`🎉 Level Up! You reached level ${newLevel}!`, 'success');
+    }
+
+    setPlots(prevPlots => ({
+      ...prevPlots,
+      [plotId]: {
+        ...prevPlots[plotId],
+        state: 'empty',
+        seed: null,
+        progress: 0,
+        plantedAt: 0
+      }
+    }));
+
+    addNotification(`🌾 Harvested ${cropData.name} for $${value}!`, 'success');
+  };
+
+  // Handle farm size changes
+  useEffect(() => {
+    setPlots(prevPlots => {
+      const newPlots = {};
+      const totalPlots = farmSize * farmSize;
+
+      for (let i = 0; i < totalPlots; i++) {
+        if (prevPlots[i]) {
+          newPlots[i] = prevPlots[i];
+        } else {
+          newPlots[i] = {
+            id: i,
+            state: 'empty',
+            seed: null,
+            progress: 0,
+            plantedAt: 0,
+            wateredAt: 0,
+            fertilizedAt: 0,
+            quality: 1.0,
+            health: 1.0
+          };
+        }
+      }
+      return newPlots;
+    });
+  }, [farmSize]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 p-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Game Header */}
+        <div className="bg-white/95 backdrop-blur-md shadow-2xl border-0 mb-6 p-6 rounded-lg">
+          <h1 className="text-4xl font-bold text-gray-800 text-center">
+            🌱 Ultimate Farm Game 🌱
+          </h1>
+
+          {/* Game Stats */}
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">${money}</div>
+              <div className="text-sm text-gray-600">Money</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{experience}</div>
+              <div className="text-sm text-gray-600">XP</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">Level {level}</div>
+              <div className="text-sm text-gray-600">Farmer</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">{gameTime}s</div>
+              <div className="text-sm text-gray-600">Game Time</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">{farmSize}x{farmSize}</div>
+              <div className="text-sm text-gray-600">Farm Size</div>
+            </div>
+          </div>
+
+          {/* Control Buttons */}
+          <div className="mt-4 flex justify-center gap-2">
+            <button
+              className={`px-4 py-2 rounded font-medium ${isPaused ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'} hover:opacity-80 transition-all`}
+              onClick={() => setIsPaused(!isPaused)}
+            >
+              {isPaused ? '▶️ Resume' : '⏸️ Pause'}
+            </button>
+            <button
+              className="px-4 py-2 bg-blue-500 text-white rounded font-medium hover:bg-blue-600 transition-all"
+              onClick={() => setFarmSize(Math.min(farmSize + 1, 5))}
+            >
+              📏 Expand Farm
+            </button>
+          </div>
+        </div>
+
+        {/* Notifications */}
+        {notifications.length > 0 && (
+          <div className="fixed top-4 right-4 z-50 space-y-2">
+            {notifications.map(notification => (
+              <Card key={notification.id} className={`p-3 shadow-lg border-l-4 ${
+                notification.type === 'success' ? 'border-green-500 bg-green-50' :
+                notification.type === 'error' ? 'border-red-500 bg-red-50' :
+                'border-blue-500 bg-blue-50'
+              }`}>
+                <p className="text-sm">{notification.message}</p>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Main Game Interface */}
+        <Tabs defaultValue="farm" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="farm" className="flex items-center gap-2">
+              🌾 Farm
+            </TabsTrigger>
+            <TabsTrigger value="market" className="flex items-center gap-2">
+              🏪 Market
+            </TabsTrigger>
+            <TabsTrigger value="weather" className="flex items-center gap-2">
+              🌤️ Weather
+            </TabsTrigger>
+            <TabsTrigger value="achievements" className="flex items-center gap-2">
+              🏆 Achievements
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Farm Tab */}
+          <TabsContent value="farm" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Farm Grid */}
+              <div className="lg:col-span-3">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Your Farm</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FarmGrid
+                      plots={Object.values(plots)}
+                      gridSize={farmSize}
+                      selectedSeed={selectedCrop}
+                      onPlotClick={handlePlantCrop}
+                      onPlotRightClick={handleHarvestCrop}
+                      onSizeChange={(newSize) => setFarmSize(newSize)}
+                      animationsEnabled={false}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Crop Selection */}
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Crop Selection</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {['carrot', 'wheat', 'corn', 'tomato'].map((cropKey) => {
+                        const crop = expandedCrops[cropKey];
+                        if (!crop) return null;
+                        return (
+                          <button
+                            key={cropKey}
+                            className={`w-full p-3 rounded-lg text-left transition-all ${
+                              selectedCrop === cropKey
+                                ? 'bg-green-100 border-2 border-green-400 shadow-md'
+                                : 'bg-gray-50 border-2 border-gray-200 hover:bg-gray-100'
+                            }`}
+                            onClick={() => setSelectedCrop(cropKey)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl">{crop.emoji}</span>
+                              <div>
+                                <div className="font-medium">{crop.name}</div>
+                                <div className="text-sm text-gray-600">
+                                  ${crop.seedCost || Math.round(crop.baseValue * 0.1)} • {crop.growthTime}s
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Market Tab */}
+          <TabsContent value="market" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Market Prices</CardTitle>
+                <p className="text-sm text-gray-600">Live market prices update every 30 seconds</p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(expandedCrops).slice(0, 8).map(([key, crop]) => {
+                    const currentPrice = market.getCurrentPrice?.(key) || crop.baseValue;
+                    const trend = market.getPriceTrend?.(key) || 'stable';
+                    const trendEmoji = trend === 'rising' ? '📈' : trend === 'falling' ? '📉' : '➡️';
+                    
+                    return (
+                      <Card key={key} className="p-4 text-center">
+                        <div className="text-2xl mb-2">{crop.emoji}</div>
+                        <h3 className="font-medium">{crop.name}</h3>
+                        <p className="text-xl font-bold text-green-600">${Math.round(currentPrice)}</p>
+                        <p className="text-sm text-gray-500 flex items-center justify-center gap-1">
+                          {trendEmoji} {trend}
+                        </p>
+                      </Card>
+                    );
+                  })}
+                </div>
+                {market.activeEvents?.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="font-medium mb-2">Active Economic Events:</h4>
+                    {market.activeEvents.map(event => (
+                      <Badge key={event.id} variant="secondary" className="mr-2">
+                        {event.name}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Weather Tab */}
+          <TabsContent value="weather" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Weather System</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Current Weather</h4>
+                    <p className="text-lg">{weather.currentWeather?.name || 'Sunny'} {weather.currentWeather?.emoji || '☀️'}</p>
+                    <p className="text-sm text-gray-600">{weather.currentWeather?.description || 'Clear skies'}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Weather Effects</h4>
+                    <p className="text-sm">Crop growth: {weather.currentWeather?.cropMultiplier || 1}x</p>
+                    <p className="text-sm">Water efficiency: {weather.currentWeather?.waterMultiplier || 1}x</p>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h4 className="font-medium mb-2">Weather History</h4>
+                  <div className="text-sm text-gray-600">
+                    Weather changes every 60-180 seconds
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Achievements Tab */}
+          <TabsContent value="achievements" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Achievements</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Progress</h4>
+                    <p className="text-sm">Total Earned: ${achievements.totalEarned || 0}</p>
+                    <p className="text-sm">Total Harvests: {achievements.totalHarvests || 0}</p>
+                    <p className="text-sm">Quality Harvests: {achievements.qualityHarvests || 0}</p>
+                    <p className="text-sm">Weather Events: {achievements.weatherEvents || 0}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Recent Achievements</h4>
+                    <div className="text-sm text-gray-600">
+                      Achievement notifications will appear here
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
