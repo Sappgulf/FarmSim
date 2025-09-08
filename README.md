@@ -1,8 +1,8 @@
 # 🌾 Advanced Farm Simulation Game
 
-**Version: 2.0.0** *(Advanced Genetics & Weather Update)*
+**Version: 2.1.0** *(Quality of Life & Expansion Update)*
 
-A comprehensive React-based farm simulation game featuring advanced genetic breeding systems, dynamic weather mechanics, and sophisticated agricultural management tools.
+A comprehensive React-based farm simulation game featuring advanced genetic breeding systems, dynamic weather mechanics, sophisticated agricultural management tools, and now enhanced with quality of life improvements, processing plants, hotkey controls, and interactive tutorials.
 
 ## 🚀 Quick Start
 
@@ -18,6 +18,22 @@ Open [http://localhost:5173](http://localhost:5173) to play!
 Manage your own virtual farm with realistic agriculture mechanics. Plant crops, breed animals, research new technologies, and build advanced agricultural infrastructure. Features a complete genetic breeding system where you can crossbreed crops to create hybrid varieties with enhanced traits.
 
 ## ✨ Core Features
+
+### 🎮 **Quality of Life Improvements** *(NEW)*
+- **Interactive Tutorial System**: Step-by-step guidance for new players
+- **Hotkey Controls**: Keyboard shortcuts for efficient farming (Space, W, F, H, B, G, etc.)
+- **Bulk Action Mode**: Select multiple plots for batch watering/fertilizing
+- **Quick Action Toolbar**: One-click access to common farming tasks
+- **Auto-Save System**: Configurable automatic game saving every 30 seconds
+- **Contextual Help**: Always-available hotkey reference and tutorial restart
+
+### 🏭 **Processing Plants & Value-Added Agriculture** *(NEW)*
+- **Grain Mill**: Transform wheat into flour (+50% value)
+- **Juice Factory**: Process tomatoes into juice (+60% value) 
+- **Corn Distillery**: Distill corn into ethanol (+80% value)
+- **Preserving Plant**: Preserve carrots (+40% value)
+- **Processing Queue**: Timed production with collection mechanics
+- **Dedicated Processing Tab**: Centralized crop processing management
 
 ### 🌱 **Basic Farming**
 - **9 Plot Farm Grid**: Expandable farming space with visual crop management
@@ -153,6 +169,24 @@ Manage your own virtual farm with realistic agriculture mechanics. Plant crops, 
 
 ## 🎯 **Game Tips**
 
+### 🎮 **Hotkey Mastery**
+- **Space**: Harvest all ready crops instantly
+- **W**: Water all selected plots (bulk mode)
+- **F**: Fertilize all selected plots (bulk mode)
+- **B**: Toggle bulk selection mode
+- **H**: Show/hide hotkey help overlay
+- **G**: Quick switch to Genetics tab
+- **S**: Manual save game
+- **1-4**: Quick crop selection (wheat, carrot, tomato, corn)
+- **ESC**: Clear plot selection
+
+### 🏭 **Processing Strategy**
+- **Build Early**: Processing plants provide significant profit boosts
+- **Plan Production**: Time crop harvests with processing capacity
+- **Value Calculation**: Higher quality crops = more valuable processed goods
+- **Efficiency**: Process crops immediately after harvest for best returns
+
+### 🧬 **Breeding & Genetics**
 1. **Start Simple**: Focus on basic crops before advanced breeding
 2. **Weather Planning**: Check forecasts before planting expensive seeds
 3. **Build Protection**: Invest in greenhouses for consistent production
@@ -161,6 +195,13 @@ Manage your own virtual farm with realistic agriculture mechanics. Plant crops, 
 6. **Market Timing**: Sell crops when seasonal prices are high
 7. **Research Investment**: Unlock genetic improvements early
 8. **Building Synergy**: Combine irrigation + greenhouse for maximum yields
+
+### 🚀 **Efficiency Tips**
+- **Use Bulk Mode**: Select multiple plots for batch operations
+- **Learn Hotkeys**: Master keyboard shortcuts for 10x faster farming
+- **Plan Layouts**: Group similar crops for easier management
+- **Tutorial Review**: Restart tutorial anytime to learn new features
+- **Processing Chain**: Build mills early for wheat value multiplication
 
 ## 📁 **Project Structure**
 
@@ -195,7 +236,19 @@ src/
 
 ## 📈 **Version History**
 
-### v2.0.0 - Advanced Genetics & Weather Update *(Current)*
+### v2.1.0 - Quality of Life & Expansion Update *(Current)*
+- ✅ Interactive tutorial system with step-by-step guidance
+- ✅ Comprehensive hotkey system for efficient farming operations
+- ✅ Bulk selection mode for multi-plot operations
+- ✅ Quick action toolbar with one-click farming tasks
+- ✅ Processing plants for value-added agriculture
+- ✅ Grain mill, juice factory, distillery, and preserving plant
+- ✅ Auto-save system with configurable intervals
+- ✅ Enhanced UI with contextual help and hotkey reference
+- ✅ Bulk watering/fertilizing of selected plots
+- ✅ Processing tab for centralized crop transformation
+
+### v2.0.0 - Advanced Genetics & Weather Update
 - ✅ Complete genetic breeding system with trait inheritance
 - ✅ Advanced weather mechanics with forecasting
 - ✅ Building protection systems (greenhouses, irrigation)

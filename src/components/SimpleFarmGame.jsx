@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 // Simple crop data
 const CROPS = {
@@ -268,6 +268,108 @@ const VISITORS = [
   { name: 'Quest Giver', emoji: '📜', offer: 'givesQuest', bonus: 2.0, description: 'Special delivery missions' }
 ];
 
+// Tutorial steps
+const TUTORIAL_STEPS = [
+  { 
+    title: "Welcome to Your Farm!", 
+    content: "Let's start by planting your first crop. Click on an empty plot and select a crop to plant.",
+    highlight: "plots",
+    action: "plant"
+  },
+  { 
+    title: "Water Your Crops", 
+    content: "Click the watering can and then click your planted crop to help it grow faster.",
+    highlight: "water",
+    action: "water" 
+  },
+  { 
+    title: "Wait and Harvest", 
+    content: "Watch your crop grow! When it's ready, click to harvest and earn money.",
+    highlight: "harvest",
+    action: "harvest"
+  },
+  { 
+    title: "Genetic Breeding", 
+    content: "Visit the Genetics tab to crossbreed different crops and create superior hybrid varieties!",
+    highlight: "genetics",
+    action: "genetics"
+  },
+  { 
+    title: "Weather & Buildings", 
+    content: "Check the weather forecast and build greenhouses to protect your crops from storms.",
+    highlight: "weather",
+    action: "build"
+  },
+  { 
+    title: "You're Ready!", 
+    content: "Master farmer! You now know the basics. Explore all the features and build your agricultural empire!",
+    highlight: "complete",
+    action: "complete"
+  }
+];
+
+// Processing plants for value-added agriculture
+const PROCESSING_PLANTS = {
+  mill: {
+    name: 'Grain Mill',
+    emoji: '🏭',
+    cost: 2000,
+    description: 'Process wheat into flour (+50% value)',
+    inputs: ['wheat'],
+    outputs: { flour: { multiplier: 1.5, time: 10 } },
+    unlocked: false
+  },
+  juicer: {
+    name: 'Juice Factory',
+    emoji: '🧃',
+    cost: 2500,
+    description: 'Turn tomatoes into juice (+60% value)',
+    inputs: ['tomato'],
+    outputs: { juice: { multiplier: 1.6, time: 15 } },
+    unlocked: false
+  },
+  distillery: {
+    name: 'Corn Distillery', 
+    emoji: '🥃',
+    cost: 3000,
+    description: 'Distill corn into ethanol (+80% value)',
+    inputs: ['corn'],
+    outputs: { ethanol: { multiplier: 1.8, time: 20 } },
+    unlocked: false
+  },
+  preservery: {
+    name: 'Preserving Plant',
+    emoji: '🥫', 
+    cost: 2200,
+    description: 'Preserve carrots (+40% value)',
+    inputs: ['carrot'],
+    outputs: { preserves: { multiplier: 1.4, time: 12 } },
+    unlocked: false
+  }
+};
+
+// Farm zones for expansion
+const ZONE_TYPES = {
+  basic: { name: 'Basic Farm', cost: 0, plots: 9, unlocked: true },
+  desert: { name: 'Desert Oasis', cost: 5000, plots: 9, crops: ['cactus', 'dates'], unlocked: false },
+  forest: { name: 'Forest Grove', cost: 4000, plots: 9, crops: ['mushroom', 'berries'], unlocked: false },
+  mountain: { name: 'Mountain Terrace', cost: 6000, plots: 6, crops: ['alpine', 'herbs'], unlocked: false }
+};
+
+// Hotkey mappings
+const HOTKEYS = {
+  'Space': 'Harvest all ready crops',
+  'w': 'Water selected plots', 
+  'f': 'Fertilize selected plots',
+  'h': 'Show/hide hotkey help',
+  's': 'Save game',
+  'b': 'Toggle bulk selection mode',
+  'Escape': 'Clear selection',
+  '1-4': 'Select crop type (1=wheat, 2=carrot, 3=tomato, 4=corn)',
+  'g': 'Go to Genetics tab',
+  'Tab': 'Switch between farm zones'
+};
+
 export default function SimpleFarmGame() {
   // Core game state
   const [money, setMoney] = useState(100);
@@ -335,6 +437,21 @@ export default function SimpleFarmGame() {
     pesticide: 0
   });
   
+  // Quality of Life Features
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const [showTutorial, setShowTutorial] = useState(true);
+  const [selectedPlots, setSelectedPlots] = useState(new Set());
+  const [bulkActionMode, setBulkActionMode] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [showHotkeyHelp, setShowHotkeyHelp] = useState(false);
+  const [farmZones, setFarmZones] = useState([
+    { id: 0, name: 'Main Farm', type: 'basic', unlocked: true, plots: Array.from({length: 9}, (_, i) => i) }
+  ]);
+  const [activeZone, setActiveZone] = useState(0);
+  const [processingPlants, setProcessingPlants] = useState({});
+  const [view3D, setView3D] = useState(false);
+  const [animations, setAnimations] = useState(true);
+  
   // Seed inventory
   const [seeds, setSeeds] = useState({
     wheat: 5, carrot: 2, tomato: 1, corn: 0
@@ -370,7 +487,8 @@ export default function SimpleFarmGame() {
       research, achievements, seeds, plots, currentSeason, seasonTimeLeft,
       marketPrices, activeContracts, completedContracts, diseaseOutbreaks, specialSeeds,
       seedQualities, hybridSeeds, weatherForecast, stormDamage, protectedPlots: Array.from(protectedPlots), 
-      irrigatedPlots: Array.from(irrigatedPlots), inventory
+      irrigatedPlots: Array.from(irrigatedPlots), inventory, tutorialStep, showTutorial, 
+      farmZones, activeZone, processingPlants, view3D, animations, autoSaveEnabled
     };
     
     try {
@@ -429,6 +547,16 @@ export default function SimpleFarmGame() {
         setProtectedPlots(new Set(gameState.protectedPlots || []));
         setIrrigatedPlots(new Set(gameState.irrigatedPlots || []));
         setInventory(gameState.inventory || { fungicide: 0, pesticide: 0 });
+        setTutorialStep(gameState.tutorialStep || 0);
+        setShowTutorial(gameState.showTutorial ?? true);
+        setFarmZones(gameState.farmZones || [
+          { id: 0, name: 'Main Farm', type: 'basic', unlocked: true, plots: Array.from({length: 9}, (_, i) => i) }
+        ]);
+        setActiveZone(gameState.activeZone || 0);
+        setProcessingPlants(gameState.processingPlants || {});
+        setView3D(gameState.view3D || false);
+        setAnimations(gameState.animations ?? true);
+        setAutoSaveEnabled(gameState.autoSaveEnabled ?? true);
         
         addNotification('📁 Game loaded successfully!', 'success');
         return true;
@@ -446,11 +574,125 @@ export default function SimpleFarmGame() {
 
   // Auto-save every 30 seconds
   useEffect(() => {
-    const autoSave = setInterval(() => {
-      saveGame();
-    }, 30000);
-    return () => clearInterval(autoSave);
-  }, [money, level, totalHarvests, livestock, buildings]);
+    if (autoSaveEnabled) {
+      const autoSave = setInterval(() => {
+        saveGame();
+      }, 30000);
+      return () => clearInterval(autoSave);
+    }
+  }, [money, level, totalHarvests, livestock, buildings, autoSaveEnabled]);
+
+  // Hotkey system
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger hotkeys when typing in inputs
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      
+      switch(e.key.toLowerCase()) {
+        case ' ':
+          e.preventDefault();
+          harvestAllReady();
+          break;
+        case 'w':
+          e.preventDefault();
+          waterSelectedPlots();
+          break;
+        case 'f':
+          e.preventDefault();
+          fertilizeSelectedPlots();
+          break;
+        case 'h':
+          e.preventDefault();
+          setShowHotkeyHelp(!showHotkeyHelp);
+          break;
+        case 's':
+          e.preventDefault();
+          saveGame();
+          break;
+        case 'b':
+          e.preventDefault();
+          setBulkActionMode(!bulkActionMode);
+          break;
+        case 'escape':
+          e.preventDefault();
+          setSelectedPlots(new Set());
+          break;
+        case '1':
+          e.preventDefault();
+          setSelectedCrop('wheat');
+          break;
+        case '2':
+          e.preventDefault();
+          setSelectedCrop('carrot');
+          break;
+        case '3':
+          e.preventDefault();
+          setSelectedCrop('tomato');
+          break;
+        case '4':
+          e.preventDefault();
+          setSelectedCrop('corn');
+          break;
+        case 'g':
+          e.preventDefault();
+          setActiveTab('genetics');
+          break;
+        case 'tab':
+          e.preventDefault();
+          switchToNextZone();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [bulkActionMode, showHotkeyHelp, selectedPlots]);
+
+  // Tutorial progress
+  const nextTutorialStep = useCallback(() => {
+    if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+      setTutorialStep(prev => prev + 1);
+    } else {
+      setShowTutorial(false);
+      addNotification('🎓 Tutorial completed! You\'re now a master farmer!', 'success');
+    }
+  }, [tutorialStep]);
+
+  // Check tutorial completion conditions
+  useEffect(() => {
+    if (!showTutorial) return;
+    
+    const currentStep = TUTORIAL_STEPS[tutorialStep];
+    if (!currentStep) return;
+
+    switch(currentStep.action) {
+      case 'plant':
+        if (Object.values(plots).some(plot => plot.state === 'growing' || plot.state === 'ready')) {
+          setTimeout(nextTutorialStep, 1000);
+        }
+        break;
+      case 'water':
+        if (Object.values(plots).some(plot => plot.watered)) {
+          setTimeout(nextTutorialStep, 1000);
+        }
+        break;
+      case 'harvest':
+        if (totalHarvests > 0) {
+          setTimeout(nextTutorialStep, 1000);
+        }
+        break;
+      case 'genetics':
+        if (activeTab === 'genetics') {
+          setTimeout(nextTutorialStep, 1000);
+        }
+        break;
+      case 'build':
+        if (Object.keys(buildings).length > 0) {
+          setTimeout(nextTutorialStep, 1000);
+        }
+        break;
+    }
+  }, [plots, totalHarvests, activeTab, buildings, tutorialStep, showTutorial, nextTutorialStep]);
   const addNotification = (message, type = 'info') => {
     const notif = { id: Date.now(), message, type };
     setNotifications(prev => [notif, ...prev.slice(0, 2)]);
@@ -754,7 +996,7 @@ export default function SimpleFarmGame() {
   };
 
   // Enhanced harvest crop
-  const harvestCrop = (plotId) => {
+  const harvestCrop = (plotId, sellCrop = true) => {
     const plot = plots[plotId];
     if (plot.state === 'ready' && plot.crop) {
       const cropData = CROPS[plot.crop] || SPECIAL_CROPS[plot.crop];
@@ -783,8 +1025,10 @@ export default function SimpleFarmGame() {
         }
       }
       
-      setMoney(money + earnings);
-      setTotalEarned(totalEarned + earnings);
+      if (sellCrop) {
+        setMoney(money + earnings);
+        setTotalEarned(totalEarned + earnings);
+      }
       setTotalHarvests(totalHarvests + 1);
       setExperience(prev => prev + xpGain);
       setResearchPoints(prev => prev + 1);
@@ -903,6 +1147,94 @@ export default function SimpleFarmGame() {
       addNotification('🌿 Crop fertilized!', 'info');
     }
   };
+
+  // Bulk Action Functions
+  const harvestAllReady = useCallback(() => {
+    const readyPlots = Object.entries(plots).filter(([_, plot]) => plot.state === 'ready');
+    if (readyPlots.length === 0) {
+      addNotification('🌾 No crops ready for harvest!', 'info');
+      return;
+    }
+    
+    readyPlots.forEach(([plotId]) => harvestCrop(parseInt(plotId)));
+    addNotification(`🌾 Harvested ${readyPlots.length} crops!`, 'success');
+  }, [plots]);
+
+  const waterSelectedPlots = useCallback(() => {
+    if (!hasWateringCan) {
+      addNotification('💧 Need watering can first!', 'error');
+      return;
+    }
+    
+    if (selectedPlots.size === 0) {
+      addNotification('💧 No plots selected! Use bulk mode (B key) to select plots.', 'info');
+      return;
+    }
+    
+    let wateredCount = 0;
+    selectedPlots.forEach(plotId => {
+      const plot = plots[plotId];
+      if (plot && plot.state === 'growing' && !plot.watered) {
+        waterPlot(plotId);
+        wateredCount++;
+      }
+    });
+    
+    if (wateredCount > 0) {
+      addNotification(`💧 Watered ${wateredCount} plots!`, 'success');
+    } else {
+      addNotification('💧 No plots needed watering!', 'info');
+    }
+  }, [selectedPlots, hasWateringCan, plots]);
+
+  const fertilizeSelectedPlots = useCallback(() => {
+    if (!hasFertilizer) {
+      addNotification('🌿 Need fertilizer first!', 'error');
+      return;
+    }
+    
+    if (selectedPlots.size === 0) {
+      addNotification('🌿 No plots selected! Use bulk mode (B key) to select plots.', 'info');
+      return;
+    }
+    
+    let fertilizedCount = 0;
+    selectedPlots.forEach(plotId => {
+      const plot = plots[plotId];
+      if (plot && plot.state === 'growing' && !plot.fertilized) {
+        fertilizePlot(plotId);
+        fertilizedCount++;
+      }
+    });
+    
+    if (fertilizedCount > 0) {
+      addNotification(`🌿 Fertilized ${fertilizedCount} plots!`, 'success');
+    } else {
+      addNotification('🌿 No plots needed fertilizing!', 'info');
+    }
+  }, [selectedPlots, hasFertilizer, plots]);
+
+  const switchToNextZone = useCallback(() => {
+    const unlockedZones = farmZones.filter(zone => zone.unlocked);
+    const currentIndex = unlockedZones.findIndex(zone => zone.id === activeZone);
+    const nextIndex = (currentIndex + 1) % unlockedZones.length;
+    setActiveZone(unlockedZones[nextIndex].id);
+    addNotification(`🗺️ Switched to ${unlockedZones[nextIndex].name}`, 'info');
+  }, [farmZones, activeZone]);
+
+  const togglePlotSelection = useCallback((plotId) => {
+    if (!bulkActionMode) return;
+    
+    setSelectedPlots(prev => {
+      const newSelected = new Set(prev);
+      if (newSelected.has(plotId)) {
+        newSelected.delete(plotId);
+      } else {
+        newSelected.add(plotId);
+      }
+      return newSelected;
+    });
+  }, [bulkActionMode]);
 
   // Buy tools
   const buyTool = (tool) => {
@@ -1131,6 +1463,111 @@ export default function SimpleFarmGame() {
     
     setActiveContracts(prev => [...prev, contract]);
     addNotification(`📋 New contract: Deliver ${contract.quantity} ${contract.crop} to ${contract.client}!`, 'contract');
+  };
+
+  // Processing Plant Functions
+  const buildProcessingPlant = (plantType) => {
+    const plant = PROCESSING_PLANTS[plantType];
+    if (!plant || money < plant.cost) {
+      addNotification(`❌ Cannot afford ${plant.name}! Need $${plant.cost}`, 'error');
+      return;
+    }
+    
+    if (processingPlants[plantType]) {
+      addNotification(`❌ ${plant.name} already built!`, 'error');
+      return;
+    }
+    
+    setMoney(prev => prev - plant.cost);
+    setTotalSpent(prev => prev + plant.cost);
+    setProcessingPlants(prev => ({
+      ...prev,
+      [plantType]: {
+        ...plant,
+        built: true,
+        queue: [],
+        processing: null,
+        finishTime: 0
+      }
+    }));
+    
+    addNotification(`🏭 ${plant.name} constructed!`, 'success');
+  };
+
+  const processCrop = (plantType, cropType, quantity = 1) => {
+    const plant = processingPlants[plantType];
+    if (!plant || !plant.built) {
+      addNotification(`❌ ${PROCESSING_PLANTS[plantType].name} not built!`, 'error');
+      return;
+    }
+    
+    if (!plant.inputs.includes(cropType)) {
+      addNotification(`❌ Cannot process ${cropType} in this plant!`, 'error');
+      return;
+    }
+    
+    // Check if we have enough crops in inventory
+    const availableCrops = Object.values(plots).filter(plot => 
+      plot.state === 'ready' && plot.crop === cropType
+    ).length;
+    
+    if (availableCrops < quantity) {
+      addNotification(`❌ Need ${quantity} ${cropType} crops ready for harvest!`, 'error');
+      return;
+    }
+    
+    // Harvest the required crops and start processing
+    let harvested = 0;
+    Object.entries(plots).forEach(([plotId, plot]) => {
+      if (harvested < quantity && plot.state === 'ready' && plot.crop === cropType) {
+        harvestCrop(parseInt(plotId), false); // Harvest without selling
+        harvested++;
+      }
+    });
+    
+    const output = plant.outputs[Object.keys(plant.outputs)[0]];
+    const processingTime = output.time * 1000; // Convert to milliseconds
+    
+    setProcessingPlants(prev => ({
+      ...prev,
+      [plantType]: {
+        ...prev[plantType],
+        processing: {
+          crop: cropType,
+          quantity,
+          startTime: Date.now(),
+          finishTime: Date.now() + processingTime,
+          outputValue: CROPS[cropType].value * output.multiplier * quantity
+        }
+      }
+    }));
+    
+    addNotification(`🏭 Processing ${quantity} ${cropType} in ${plant.name}!`, 'success');
+  };
+
+  const collectProcessedGoods = (plantType) => {
+    const plant = processingPlants[plantType];
+    if (!plant || !plant.processing) return;
+    
+    if (Date.now() < plant.processing.finishTime) {
+      const timeLeft = Math.ceil((plant.processing.finishTime - Date.now()) / 1000);
+      addNotification(`⏰ Processing not complete! ${timeLeft}s remaining.`, 'info');
+      return;
+    }
+    
+    const value = plant.processing.outputValue;
+    setMoney(prev => prev + value);
+    setTotalEarned(prev => prev + value);
+    
+    setProcessingPlants(prev => ({
+      ...prev,
+      [plantType]: {
+        ...prev[plantType],
+        processing: null
+      }
+    }));
+    
+    addNotification(`💰 Collected processed goods worth $${value}!`, 'success');
   };
 
   // Advanced breeding system functions
@@ -1464,6 +1901,83 @@ export default function SimpleFarmGame() {
         </div>
       )}
 
+      {/* Tutorial Overlay */}
+      {showTutorial && tutorialStep < TUTORIAL_STEPS.length && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-green-800">
+                🎓 Farm Tutorial ({tutorialStep + 1}/{TUTORIAL_STEPS.length})
+              </h2>
+              <button
+                onClick={() => setShowTutorial(false)}
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mb-6">
+              <h3 className="font-semibold text-lg mb-2">{TUTORIAL_STEPS[tutorialStep].title}</h3>
+              <p className="text-gray-700">{TUTORIAL_STEPS[tutorialStep].content}</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setTutorialStep(Math.max(0, tutorialStep - 1))}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                disabled={tutorialStep === 0}
+              >
+                Previous
+              </button>
+              <button
+                onClick={nextTutorialStep}
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex-1"
+              >
+                {tutorialStep === TUTORIAL_STEPS.length - 1 ? 'Complete!' : 'Next'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hotkey Help Overlay */}
+      {showHotkeyHelp && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full shadow-2xl max-h-96 overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-blue-800">⌨️ Keyboard Shortcuts</h2>
+              <button
+                onClick={() => setShowHotkeyHelp(false)}
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Object.entries(HOTKEYS).map(([key, description]) => (
+                <div key={key} className="flex items-center gap-3">
+                  <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">
+                    {key}
+                  </kbd>
+                  <span className="text-sm text-gray-700">{description}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-xs text-blue-700">
+                💡 Tip: Use bulk mode (B key) to select multiple plots, then use W/F to water/fertilize them all at once!
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Selection Mode Indicator */}
+      {bulkActionMode && (
+        <div className="fixed top-4 left-4 z-40 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
+          🔲 Bulk Mode: {selectedPlots.size} plots selected (ESC to clear)
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto">
         
         {/* Header */}
@@ -1497,6 +2011,66 @@ export default function SimpleFarmGame() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Quick Action Toolbar */}
+          <div className="bg-gray-50 px-4 py-2 rounded-lg border-2 border-gray-200 flex flex-wrap gap-2 mb-4">
+            <button
+              onClick={harvestAllReady}
+              className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 flex items-center gap-1"
+            >
+              🌾 Harvest All (Space)
+            </button>
+            <button
+              onClick={() => setBulkActionMode(!bulkActionMode)}
+              className={`px-3 py-1 rounded text-sm flex items-center gap-1 ${
+                bulkActionMode 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                  : 'bg-blue-500 text-white hover:bg-blue-600'
+              }`}
+            >
+              🔲 Bulk Mode (B) {bulkActionMode && `[${selectedPlots.size}]`}
+            </button>
+            {hasWateringCan && (
+              <button
+                onClick={waterSelectedPlots}
+                className="px-3 py-1 bg-cyan-500 text-white rounded text-sm hover:bg-cyan-600 flex items-center gap-1"
+                disabled={!bulkActionMode || selectedPlots.size === 0}
+              >
+                💧 Water (W)
+              </button>
+            )}
+            {hasFertilizer && (
+              <button
+                onClick={fertilizeSelectedPlots}
+                className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 flex items-center gap-1"
+                disabled={!bulkActionMode || selectedPlots.size === 0}
+              >
+                🌿 Fertilize (F)
+              </button>
+            )}
+            {selectedPlots.size > 0 && (
+              <button
+                onClick={() => setSelectedPlots(new Set())}
+                className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 flex items-center gap-1"
+              >
+                ❌ Clear (ESC)
+              </button>
+            )}
+            <button
+              onClick={() => setShowHotkeyHelp(true)}
+              className="px-3 py-1 bg-purple-500 text-white rounded text-sm hover:bg-purple-600 flex items-center gap-1"
+            >
+              ⌨️ Keys (H)
+            </button>
+            {!showTutorial && (
+              <button
+                onClick={() => {setShowTutorial(true); setTutorialStep(0);}}
+                className="px-3 py-1 bg-orange-500 text-white rounded text-sm hover:bg-orange-600 flex items-center gap-1"
+              >
+                🎓 Tutorial
+              </button>
+            )}
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-4 text-sm md:text-base">
@@ -1539,6 +2113,7 @@ export default function SimpleFarmGame() {
             {[
               { id: 'farm', name: '🚜 Farm', icon: '🌱' },
               { id: 'shop', name: '🏪 Shop', icon: '🛒' },
+              { id: 'processing', name: '🏭 Processing', icon: '⚙️' },
               { id: 'livestock', name: '🐄 Livestock', icon: '🐔' },
               { id: 'buildings', name: '🏗️ Buildings', icon: '🏠' },
               { id: 'contracts', name: '📋 Contracts', icon: '📄' },
@@ -1713,7 +2288,9 @@ export default function SimpleFarmGame() {
                     <button
                       key={plotId}
                       onClick={() => {
-                        if (isDisease) {
+                        if (bulkActionMode) {
+                          togglePlotSelection(Number(plotId));
+                        } else if (isDisease) {
                           treatDisease(plotId);
                         } else if (plot.state === 'empty') {
                           plantCrop(Number(plotId));
@@ -1725,6 +2302,8 @@ export default function SimpleFarmGame() {
                         }
                       }}
                       className={`w-12 h-12 md:w-16 md:h-16 border-2 rounded-lg flex flex-col items-center justify-center text-sm md:text-xl hover:border-green-400 transition-colors relative touch-manipulation ${
+                        selectedPlots.has(Number(plotId)) ? 'ring-4 ring-blue-300 ring-opacity-50' : ''
+                      } ${
                         isDisease ? 'border-red-500 bg-red-50 animate-pulse' :
                         hasStormDamage ? 'border-orange-500 bg-orange-50' :
                         isProtected ? 'border-blue-300 bg-blue-50' :
@@ -2158,6 +2737,142 @@ export default function SimpleFarmGame() {
                       <span className="text-sm font-bold text-green-600">+${contract.reward}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Processing Tab */}
+        {activeTab === 'processing' && (
+          <div className="space-y-6">
+            {/* Build Processing Plants */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold mb-4">🏭 Build Processing Plants</h2>
+              <p className="text-gray-600 mb-4">Transform raw crops into higher-value processed goods!</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(PROCESSING_PLANTS).map(([plantId, plant]) => {
+                  const owned = processingPlants[plantId]?.built;
+                  const isProcessing = processingPlants[plantId]?.processing;
+                  
+                  return (
+                    <div key={plantId} className={`p-4 border-2 rounded-lg ${owned ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <div className="text-2xl mb-1">{plant.emoji}</div>
+                          <div className="font-semibold">{plant.name}</div>
+                          <div className="text-sm text-gray-600">{plant.description}</div>
+                          <div className="text-xs text-blue-600 mt-1">
+                            Processes: {plant.inputs.join(', ')}
+                          </div>
+                        </div>
+                        {owned && <div className="text-green-500 text-xl">🏭</div>}
+                      </div>
+                      
+                      {isProcessing && (
+                        <div className="mt-2 p-2 bg-blue-50 rounded">
+                          <div className="text-sm font-medium text-blue-800">Processing...</div>
+                          <div className="text-xs text-blue-600">
+                            {Math.max(0, Math.ceil((isProcessing.finishTime - Date.now()) / 1000))}s remaining
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="mt-3">
+                        <div className="text-lg font-bold text-green-600 mb-2">${plant.cost}</div>
+                        {!owned ? (
+                          <button
+                            onClick={() => buildProcessingPlant(plantId)}
+                            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                            disabled={money < plant.cost}
+                          >
+                            Build Plant
+                          </button>
+                        ) : (
+                          <div className="w-full px-4 py-2 bg-green-500 text-white rounded text-center">
+                            Built
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Process Crops */}
+            {Object.keys(processingPlants).some(id => processingPlants[id]?.built) && (
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <h2 className="text-xl font-bold mb-4">⚙️ Process Crops</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.entries(processingPlants)
+                    .filter(([_, plant]) => plant?.built)
+                    .map(([plantId, plant]) => {
+                      const plantData = PROCESSING_PLANTS[plantId];
+                      const isProcessing = plant.processing;
+                      const canCollect = isProcessing && Date.now() >= isProcessing.finishTime;
+                      
+                      return (
+                        <div key={plantId} className="p-4 border-2 border-blue-200 rounded-lg">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-2xl">{plantData.emoji}</span>
+                            <div>
+                              <div className="font-semibold">{plantData.name}</div>
+                              <div className="text-sm text-gray-600">{plantData.description}</div>
+                            </div>
+                          </div>
+                          
+                          {isProcessing ? (
+                            <div className="space-y-2">
+                              <div className="p-2 bg-blue-50 rounded">
+                                <div className="text-sm font-medium">Processing {isProcessing.quantity} {isProcessing.crop}</div>
+                                <div className="text-xs text-gray-600">
+                                  Value: ${isProcessing.outputValue}
+                                </div>
+                              </div>
+                              
+                              {canCollect ? (
+                                <button
+                                  onClick={() => collectProcessedGoods(plantId)}
+                                  className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                >
+                                  💰 Collect Goods
+                                </button>
+                              ) : (
+                                <div className="w-full px-4 py-2 bg-gray-300 text-gray-600 rounded text-center">
+                                  ⏰ Processing... {Math.ceil((isProcessing.finishTime - Date.now()) / 1000)}s
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              {plantData.inputs.map(cropType => {
+                                const availableCrops = Object.values(plots).filter(plot => 
+                                  plot.state === 'ready' && plot.crop === cropType
+                                ).length;
+                                
+                                return (
+                                  <div key={cropType} className="flex items-center justify-between">
+                                    <span className="text-sm">
+                                      {CROPS[cropType]?.emoji} {CROPS[cropType]?.name} ({availableCrops} ready)
+                                    </span>
+                                    <button
+                                      onClick={() => processCrop(plantId, cropType, 1)}
+                                      className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 disabled:opacity-50"
+                                      disabled={availableCrops === 0}
+                                    >
+                                      Process 1
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             )}
