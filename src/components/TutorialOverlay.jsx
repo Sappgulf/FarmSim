@@ -33,22 +33,22 @@ const TutorialOverlay = ({
       {/* Semi-transparent backdrop */}
       <div className="absolute inset-0 bg-black bg-opacity-30 pointer-events-auto" onClick={onSkip}></div>
       
-      {/* Tutorial card */}
+      {/* Tutorial card - Mobile Optimized */}
       <div className={`absolute pointer-events-auto ${getPositionClasses()}`}>
-        <div className="bg-white rounded-lg shadow-2xl border-2 border-blue-200 max-w-sm w-full mx-4">
+        <div className="bg-white rounded-lg shadow-2xl border-2 border-blue-200 max-w-sm w-full mx-2 sm:mx-4">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-500 to-green-500 text-white p-4 rounded-t-lg">
+          <div className="bg-gradient-to-r from-blue-500 to-green-500 text-white p-3 sm:p-4 rounded-t-lg">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-lg">{title}</h3>
-              <div className="text-sm opacity-90">
+              <h3 className="font-bold text-base sm:text-lg">{title}</h3>
+              <div className="text-xs sm:text-sm opacity-90">
                 {step + 1} / {totalSteps}
               </div>
             </div>
           </div>
           
           {/* Content */}
-          <div className="p-4">
-            <p className="text-gray-700 mb-4">{content}</p>
+          <div className="p-3 sm:p-4">
+            <p className="text-gray-700 mb-4 text-sm sm:text-base">{content}</p>
             
             {/* Progress bar */}
             <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
@@ -58,11 +58,11 @@ const TutorialOverlay = ({
               ></div>
             </div>
             
-            {/* Buttons */}
+            {/* Buttons - Mobile Optimized */}
             <div className="flex justify-between items-center">
               <button
                 onClick={onSkip}
-                className="text-gray-500 hover:text-gray-700 text-sm"
+                className="text-gray-500 hover:text-gray-700 text-xs sm:text-sm touch-manipulation"
               >
                 Skip Tutorial
               </button>
@@ -71,7 +71,7 @@ const TutorialOverlay = ({
                 {step > 0 && (
                   <button
                     onClick={onPrevious}
-                    className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors text-sm"
+                    className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors text-sm touch-manipulation"
                   >
                     ← Previous
                   </button>
@@ -79,7 +79,7 @@ const TutorialOverlay = ({
                 
                 <button
                   onClick={onNext}
-                  className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm"
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm touch-manipulation"
                 >
                   {step === totalSteps - 1 ? 'Finish' : 'Next →'}
                 </button>

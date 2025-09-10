@@ -3359,15 +3359,15 @@ export default function SimpleFarmGame() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-100 to-blue-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-100 to-blue-100 p-2 sm:p-4">
       
-      {/* Notifications */}
+      {/* Notifications - Mobile Optimized */}
       {notifications.length > 0 && (
-        <div className="fixed top-4 right-4 z-50 space-y-2">
+        <div className="fixed top-2 left-2 right-2 sm:top-4 sm:right-4 sm:left-auto z-50 space-y-2">
           {notifications.map(notif => (
             <div
               key={notif.id}
-              className={`px-4 py-2 rounded-lg shadow-lg max-w-sm animate-bounce ${
+              className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg shadow-lg text-sm sm:text-base max-w-full sm:max-w-sm animate-bounce ${
                 notif.type === 'levelup' ? 'bg-purple-100 border-2 border-purple-400 text-purple-800' :
                 notif.type === 'achievement' ? 'bg-yellow-100 border-2 border-yellow-400 text-yellow-800' :
                 notif.type === 'research' ? 'bg-blue-100 border-2 border-blue-400 text-blue-800' :
@@ -3382,43 +3382,6 @@ export default function SimpleFarmGame() {
         </div>
       )}
 
-      {/* Tutorial Overlay */}
-      {showTutorial && tutorialStep < TUTORIAL_STEPS.length && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-green-800">
-                🎓 Farm Tutorial ({tutorialStep + 1}/{TUTORIAL_STEPS.length})
-              </h2>
-              <button
-                onClick={() => setShowTutorial(false)}
-                className="text-gray-500 hover:text-gray-700 text-xl"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="mb-6">
-              <h3 className="font-semibold text-lg mb-2">{TUTORIAL_STEPS[tutorialStep].title}</h3>
-              <p className="text-gray-700">{TUTORIAL_STEPS[tutorialStep].content}</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setTutorialStep(Math.max(0, tutorialStep - 1))}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                disabled={tutorialStep === 0}
-              >
-                Previous
-              </button>
-              <button
-                onClick={nextTutorialStep}
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex-1"
-              >
-                {tutorialStep === TUTORIAL_STEPS.length - 1 ? 'Complete!' : 'Next'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Hotkey Help Overlay */}
       {showHotkeyHelp && (
@@ -3500,22 +3463,22 @@ export default function SimpleFarmGame() {
             </div>
           </div>
 
-          {/* Zone Selector */}
-          <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 px-4 py-3 rounded-lg border-2 border-emerald-200 mb-4">
-            <div className="flex items-center justify-between">
+          {/* Zone Selector - Mobile Optimized */}
+          <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 px-3 sm:px-4 py-3 rounded-lg border-2 border-emerald-200 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{ZONE_TYPES[currentZone].emoji}</span>
-                <div>
-                  <div className="font-semibold text-emerald-800 text-lg">{ZONE_TYPES[currentZone].name}</div>
-                  <div className="text-sm text-emerald-600">{ZONE_TYPES[currentZone].description}</div>
+                <span className="text-xl sm:text-2xl">{ZONE_TYPES[currentZone].emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-emerald-800 text-base sm:text-lg truncate">{ZONE_TYPES[currentZone].name}</div>
+                  <div className="text-xs sm:text-sm text-emerald-600 hidden sm:block">{ZONE_TYPES[currentZone].description}</div>
                   <div className="text-xs text-emerald-500">{ZONE_TYPES[currentZone].climate}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <select
                   value={currentZone}
                   onChange={(e) => switchZone(e.target.value)}
-                  className="px-3 py-2 border-2 border-emerald-300 rounded-lg bg-white"
+                  className="px-2 sm:px-3 py-2 border-2 border-emerald-300 rounded-lg bg-white text-sm touch-manipulation"
                 >
                   {Object.entries(ZONE_TYPES).map(([key, zone]) => (
                     <option 
@@ -3528,82 +3491,85 @@ export default function SimpleFarmGame() {
                   ))}
                 </select>
                 {transportCooldown > 0 && (
-                  <div className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
-                    Transport cooldown: {transportCooldown}s
+                  <div className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded whitespace-nowrap">
+                    ⏱️ {transportCooldown}s
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Quick Action Toolbar */}
-          <div className="bg-gray-50 px-4 py-2 rounded-lg border-2 border-gray-200 flex flex-wrap gap-2 mb-4">
-            <button
-              onClick={harvestAllReady}
-              className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 flex items-center gap-1"
-            >
-              🌾 Harvest All (Space)
-            </button>
-            <button
-              onClick={() => setBulkActionMode(!bulkActionMode)}
-              className={`px-3 py-1 rounded text-sm flex items-center gap-1 ${
-                bulkActionMode 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                  : 'bg-blue-500 text-white hover:bg-blue-600'
-              }`}
-            >
-              🔲 Bulk Mode (B) {bulkActionMode && `[${selectedPlots.size}]`}
-            </button>
-            {hasWateringCan && (
+          {/* Quick Action Toolbar - Mobile Optimized */}
+          <div className="bg-gray-50 px-3 sm:px-4 py-2 rounded-lg border-2 border-gray-200 mb-4">
+            <div className="flex flex-wrap gap-2">
               <button
-                onClick={waterSelectedPlots}
-                className="px-3 py-1 bg-cyan-500 text-white rounded text-sm hover:bg-cyan-600 flex items-center gap-1"
-                disabled={!bulkActionMode || selectedPlots.size === 0}
+                onClick={harvestAllReady}
+                className="px-2 sm:px-3 py-1 bg-green-500 text-white rounded text-xs sm:text-sm hover:bg-green-600 flex items-center gap-1 touch-manipulation"
               >
-                💧 Water (W)
+                🌾 <span className="hidden sm:inline">Harvest All </span><span className="sm:hidden">All </span>(Space)
               </button>
-            )}
-            {hasFertilizer && (
               <button
-                onClick={fertilizeSelectedPlots}
-                className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 flex items-center gap-1"
-                disabled={!bulkActionMode || selectedPlots.size === 0}
+                onClick={() => setBulkActionMode(!bulkActionMode)}
+                className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm flex items-center gap-1 touch-manipulation ${
+                  bulkActionMode 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
               >
-                🌿 Fertilize (F)
+                🔲 <span className="hidden sm:inline">Bulk Mode </span><span className="sm:hidden">Bulk </span>(B) {bulkActionMode && `[${selectedPlots.size}]`}
               </button>
-            )}
-            {selectedPlots.size > 0 && (
+              {hasWateringCan && (
+                <button
+                  onClick={waterSelectedPlots}
+                  className="px-2 sm:px-3 py-1 bg-cyan-500 text-white rounded text-xs sm:text-sm hover:bg-cyan-600 flex items-center gap-1 touch-manipulation"
+                  disabled={!bulkActionMode || selectedPlots.size === 0}
+                >
+                  💧 <span className="hidden sm:inline">Water </span>(W)
+                </button>
+              )}
+              {hasFertilizer && (
+                <button
+                  onClick={fertilizeSelectedPlots}
+                  className="px-2 sm:px-3 py-1 bg-green-600 text-white rounded text-xs sm:text-sm hover:bg-green-700 flex items-center gap-1 touch-manipulation"
+                  disabled={!bulkActionMode || selectedPlots.size === 0}
+                >
+                  🌿 <span className="hidden sm:inline">Fertilize </span>(F)
+                </button>
+              )}
+              {selectedPlots.size > 0 && (
+                <button
+                  onClick={() => setSelectedPlots(new Set())}
+                  className="px-2 sm:px-3 py-1 bg-red-500 text-white rounded text-xs sm:text-sm hover:bg-red-600 flex items-center gap-1 touch-manipulation"
+                >
+                  ❌ <span className="hidden sm:inline">Clear </span>(ESC)
+                </button>
+              )}
               <button
-                onClick={() => setSelectedPlots(new Set())}
-                className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 flex items-center gap-1"
+                onClick={() => setShowHotkeyHelp(true)}
+                className="px-2 sm:px-3 py-1 bg-purple-500 text-white rounded text-xs sm:text-sm hover:bg-purple-600 flex items-center gap-1 touch-manipulation"
               >
-                ❌ Clear (ESC)
+                ⌨️ <span className="hidden sm:inline">Keys </span>(H)
               </button>
-            )}
-            <button
-              onClick={() => setShowHotkeyHelp(true)}
-              className="px-3 py-1 bg-purple-500 text-white rounded text-sm hover:bg-purple-600 flex items-center gap-1"
-            >
-              ⌨️ Keys (H)
-            </button>
-            {!showTutorial && (
-              <button
-                onClick={() => {setShowTutorial(true); setTutorialStep(0);}}
-                className="px-3 py-1 bg-orange-500 text-white rounded text-sm hover:bg-orange-600 flex items-center gap-1"
-              >
-                🎓 Tutorial
-              </button>
-            )}
+              {!showTutorial && (
+                <button
+                  onClick={() => {setShowTutorial(true); setTutorialStep(0);}}
+                  className="px-2 sm:px-3 py-1 bg-orange-500 text-white rounded text-xs sm:text-sm hover:bg-orange-600 flex items-center gap-1 touch-manipulation"
+                >
+                  🎓 <span className="hidden sm:inline">Tutorial</span>
+                </button>
+              )}
+            </div>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-4 text-sm md:text-base">
-            <div className="bg-yellow-100 px-2 md:px-4 py-2 rounded-lg text-center">
-              <div className="text-base md:text-lg font-bold">${money}</div>
-              <div className="text-xs md:text-sm text-gray-600">Money</div>
+          {/* Stats Grid - Mobile Optimized */}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-xs sm:text-sm">
+            <div className="bg-yellow-100 px-2 sm:px-4 py-2 rounded-lg text-center">
+              <div className="text-sm sm:text-lg font-bold">${money}</div>
+              <div className="text-xs text-gray-600">Money</div>
             </div>
-            <div className="bg-blue-100 px-2 md:px-4 py-2 rounded-lg text-center">
-              <div className="text-base md:text-lg font-bold">Lv.{level}</div>
-              <div className="text-xs md:text-sm text-gray-600">Level</div>
+            <div className="bg-blue-100 px-2 sm:px-4 py-2 rounded-lg text-center">
+              <div className="text-sm sm:text-lg font-bold">Lv.{level}</div>
+              <div className="text-xs text-gray-600">Level</div>
               <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
                 <div 
                   className="bg-blue-500 h-1 rounded-full transition-all duration-500"
@@ -3611,21 +3577,21 @@ export default function SimpleFarmGame() {
                 ></div>
               </div>
             </div>
-            <div className="bg-purple-100 px-2 md:px-4 py-2 rounded-lg text-center">
-              <div className="text-base md:text-lg font-bold">{Math.floor(experience)}</div>
-              <div className="text-xs md:text-sm text-gray-600">XP</div>
+            <div className="bg-purple-100 px-2 sm:px-4 py-2 rounded-lg text-center">
+              <div className="text-sm sm:text-lg font-bold">{Math.floor(experience)}</div>
+              <div className="text-xs text-gray-600">XP</div>
             </div>
-            <div className="bg-cyan-100 px-2 md:px-4 py-2 rounded-lg text-center">
-              <div className="text-base md:text-lg font-bold">{researchPoints}</div>
-              <div className="text-xs md:text-sm text-gray-600">Research</div>
+            <div className="bg-cyan-100 px-2 sm:px-4 py-2 rounded-lg text-center">
+              <div className="text-sm sm:text-lg font-bold">{researchPoints}</div>
+              <div className="text-xs text-gray-600">Research</div>
             </div>
-            <div className="bg-green-100 px-2 md:px-4 py-2 rounded-lg text-center">
-              <div className="text-lg font-bold">{totalHarvests}</div>
-              <div className="text-sm text-gray-600">Harvests</div>
+            <div className="bg-green-100 px-2 sm:px-4 py-2 rounded-lg text-center">
+              <div className="text-sm sm:text-lg font-bold">{totalHarvests}</div>
+              <div className="text-xs text-gray-600">Harvests</div>
             </div>
-            <div className="bg-orange-100 px-4 py-2 rounded-lg text-center">
-              <div className="text-lg font-bold">{Object.keys(livestock).length}</div>
-              <div className="text-sm text-gray-600">Animals</div>
+            <div className="bg-orange-100 px-2 sm:px-4 py-2 rounded-lg text-center">
+              <div className="text-sm sm:text-lg font-bold">{Object.keys(livestock).length}</div>
+              <div className="text-xs text-gray-600">Animals</div>
             </div>
           </div>
         </div>
@@ -3651,14 +3617,19 @@ export default function SimpleFarmGame() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-shrink-0 px-3 md:px-4 py-3 text-center font-medium transition-colors touch-manipulation ${
+                className={`flex-shrink-0 px-2 sm:px-4 py-3 text-center font-medium transition-colors touch-manipulation ${
                   activeTab === tab.id
                     ? 'bg-green-50 text-green-700 border-b-2 border-green-500'
                     : 'text-gray-600 hover:text-green-600'
                 }`}
               >
-                <span className="text-lg md:text-xl block md:mr-2">{tab.icon}</span>
-                <span className="text-xs md:text-sm">{tab.name.split(' ')[1] || tab.name}</span>
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-lg sm:text-xl">{tab.icon}</span>
+                  <span className="text-xs sm:text-sm">
+                    <span className="sm:hidden">{tab.name.split(' ')[1] || tab.name.split(' ')[0]}</span>
+                    <span className="hidden sm:inline">{tab.name}</span>
+                  </span>
+                </div>
               </button>
             ))}
           </div>
@@ -3824,21 +3795,25 @@ export default function SimpleFarmGame() {
               )}
             </div>
 
-            {/* Farm Grid */}
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">Your Farm ({farmSize}x{farmSize})</h2>
+            {/* Farm Grid - Mobile Optimized */}
+            <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                <h2 className="text-lg sm:text-xl font-bold">Your Farm ({farmSize}x{farmSize})</h2>
                 {farmSize < 6 && (
                   <button
                     onClick={expandFarm}
-                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50"
+                    className="px-3 sm:px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 text-sm sm:text-base touch-manipulation"
                     disabled={money < farmSize * 100}
                   >
                     🏗️ Expand (${farmSize * 100})
                   </button>
                 )}
               </div>
-              <div className="grid gap-2 md:gap-3 max-w-4xl mx-auto" style={{ gridTemplateColumns: `repeat(${farmSize}, 1fr)` }}>
+              {/* Mobile-optimized grid with larger touch targets */}
+              <div 
+                className="grid gap-2 sm:gap-3 max-w-full sm:max-w-4xl mx-auto" 
+                style={{ gridTemplateColumns: `repeat(${farmSize}, 1fr)` }}
+              >
                 {Object.entries(plots).map(([plotId, plot]) => {
                   const isDisease = diseaseOutbreaks[plotId];
                   const marketMultiplier = marketPrices[plot.crop] || 1.0;
@@ -3863,7 +3838,7 @@ export default function SimpleFarmGame() {
                           else if (hasFertilizer && !plot.fertilized) fertilizePlot(Number(plotId));
                         }
                       }}
-                      className={`aspect-square min-h-16 md:min-h-20 border-2 rounded-xl flex flex-col items-center justify-center relative touch-manipulation transition-all duration-200 shadow-sm hover:shadow-md ${
+                      className={`aspect-square min-h-20 md:min-h-28 border-2 rounded-xl flex flex-col items-center justify-center relative touch-manipulation transition-all duration-200 shadow-sm hover:shadow-md ${
                         selectedPlots.has(Number(plotId)) ? 'ring-4 ring-blue-400 ring-opacity-60 scale-105' : ''
                       } ${
                         isDisease ? 'border-red-400 bg-gradient-to-br from-red-50 to-red-100 animate-pulse' :
