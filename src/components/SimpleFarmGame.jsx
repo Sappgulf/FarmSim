@@ -4,6 +4,7 @@ import TutorialOverlay from './TutorialOverlay';
 import MarketSystem from '../systems/marketSystem';
 import ProcessingSystem from '../systems/processingSystem';
 import AIFarmingSystem from '../systems/aiFarmingSystem';
+import SeasonalEventsSystem from '../systems/seasonalEventsSystem';
 
 // Simple crop data
 const CROPS = {
@@ -46,7 +47,7 @@ const WEATHER = {
     emoji: '☀️', 
     growthMultiplier: 1.2, 
     description: 'Perfect farming weather',
-    diseaseChance: 0.01,
+    diseaseChance: 0.002, // Reduced from 0.01
     stormChance: 0.0
   },
   rainy: { 
@@ -54,15 +55,15 @@ const WEATHER = {
     emoji: '🌧️', 
     growthMultiplier: 1.1, 
     description: 'Good for growth but increases disease risk',
-    diseaseChance: 0.03,
-    stormChance: 0.05
+    diseaseChance: 0.008, // Reduced from 0.03
+    stormChance: 0.02 // Reduced from 0.05
   },
   cloudy: { 
     name: 'Cloudy', 
     emoji: '☁️', 
     growthMultiplier: 1.0, 
     description: 'Mild conditions',
-    diseaseChance: 0.015,
+    diseaseChance: 0.004, // Reduced from 0.015
     stormChance: 0.0
   },
   drought: { 
@@ -70,7 +71,7 @@ const WEATHER = {
     emoji: '🌵', 
     growthMultiplier: 0.7, 
     description: 'Crops struggle without irrigation',
-    diseaseChance: 0.02,
+    diseaseChance: 0.005, // Reduced from 0.02
     stormChance: 0.0
   },
   stormy: { 
@@ -78,8 +79,8 @@ const WEATHER = {
     emoji: '⛈️', 
     growthMultiplier: 0.8, 
     description: 'Dangerous weather - crops may be damaged',
-    diseaseChance: 0.05,
-    stormChance: 0.15
+    diseaseChance: 0.015, // Reduced from 0.05
+    stormChance: 0.08 // Reduced from 0.15
   }
 };
 
@@ -91,7 +92,7 @@ const ZONE_WEATHER = {
       emoji: '🔥', 
       growthMultiplier: 0.6, 
       description: 'Extreme heat - only drought-resistant crops survive',
-      diseaseChance: 0.01,
+      diseaseChance: 0.002, // Reduced from 0.01
       stormChance: 0.0,
       zoneBonus: { droughtResistant: 1.3 }
     },
@@ -100,8 +101,8 @@ const ZONE_WEATHER = {
       emoji: '🌪️', 
       growthMultiplier: 0.5, 
       description: 'Fierce winds damage unprotected crops',
-      diseaseChance: 0.02,
-      stormChance: 0.3,
+      diseaseChance: 0.005, // Reduced from 0.02
+      stormChance: 0.15, // Reduced from 0.3
       zoneBonus: { droughtResistant: 1.0 }
     }
   },
@@ -111,7 +112,7 @@ const ZONE_WEATHER = {
       emoji: '🌫️', 
       growthMultiplier: 1.2, 
       description: 'Perfect humidity for shade crops',
-      diseaseChance: 0.04,
+      diseaseChance: 0.01, // Reduced from 0.04
       stormChance: 0.0,
       zoneBonus: { shadeTolerant: 1.4 }
     },
@@ -120,8 +121,8 @@ const ZONE_WEATHER = {
       emoji: '💧', 
       growthMultiplier: 1.3, 
       description: 'High moisture perfect for forest plants',
-      diseaseChance: 0.06,
-      stormChance: 0.05,
+      diseaseChance: 0.015, // Reduced from 0.06
+      stormChance: 0.02, // Reduced from 0.05
       zoneBonus: { shadeTolerant: 1.3 }
     }
   },
@@ -131,8 +132,8 @@ const ZONE_WEATHER = {
       emoji: '🥶', 
       growthMultiplier: 0.7, 
       description: 'Harsh cold - only hardy crops survive',
-      diseaseChance: 0.01,
-      stormChance: 0.05,
+      diseaseChance: 0.002, // Reduced from 0.01
+      stormChance: 0.02, // Reduced from 0.05
       zoneBonus: { coldResistant: 1.4 }
     },
     blizzard: { 
@@ -140,8 +141,8 @@ const ZONE_WEATHER = {
       emoji: '❄️', 
       growthMultiplier: 0.3, 
       description: 'Severe snowstorm threatens all crops',
-      diseaseChance: 0.01,
-      stormChance: 0.4,
+      diseaseChance: 0.002, // Reduced from 0.01
+      stormChance: 0.2, // Reduced from 0.4
       zoneBonus: { coldResistant: 1.1 }
     }
   },
@@ -151,7 +152,7 @@ const ZONE_WEATHER = {
       emoji: '🌊', 
       growthMultiplier: 1.1, 
       description: 'Moisture-rich fog benefits marine crops',
-      diseaseChance: 0.03,
+      diseaseChance: 0.008, // Reduced from 0.03
       stormChance: 0.0,
       zoneBonus: { saltTolerant: 1.3 }
     },
@@ -160,8 +161,8 @@ const ZONE_WEATHER = {
       emoji: '🧂', 
       growthMultiplier: 0.8, 
       description: 'Salty conditions perfect for adapted crops',
-      diseaseChance: 0.02,
-      stormChance: 0.1,
+      diseaseChance: 0.005, // Reduced from 0.02
+      stormChance: 0.05, // Reduced from 0.1
       zoneBonus: { saltTolerant: 1.5 }
     }
   }
@@ -566,12 +567,12 @@ const WEATHER_EVENTS = {
     sandstorm: {
       name: 'Massive Sandstorm',
       emoji: '🌪️',
-      probability: 0.02, // 2% chance per weather cycle
-      duration: 3, // weather cycles
+      probability: 0.005, // Reduced from 0.02 (2% to 0.5%)
+      duration: 2, // Reduced from 3
       effects: {
-        cropDamage: 0.4, // 40% damage to unprotected crops
-        animalStress: 0.2, // 20% stress to animals
-        buildingDamage: 0.1, // 10% building damage
+        cropDamage: 0.2, // Reduced from 0.4 (40% to 20%)
+        animalStress: 0.1, // Reduced from 0.2 (20% to 10%)
+        buildingDamage: 0.05, // Reduced from 0.1 (10% to 5%)
         bonus: { glass: 5 } // produces glass from sand
       },
       description: 'Fierce sandstorm damages crops but creates valuable glass'
@@ -579,12 +580,12 @@ const WEATHER_EVENTS = {
     heatwave: {
       name: 'Extreme Heatwave',
       emoji: '🔥',
-      probability: 0.03,
+      probability: 0.008, // Reduced from 0.03
       duration: 2,
       effects: {
-        cropWilt: 0.3,
-        waterConsumption: 2.0, // double water usage
-        animalStress: 0.3,
+        cropWilt: 0.15, // Reduced from 0.3
+        waterConsumption: 1.5, // Reduced from 2.0
+        animalStress: 0.15, // Reduced from 0.3
         bonus: { solarEnergy: 10 }
       },
       description: 'Scorching heat wilts crops but generates solar energy'
@@ -594,11 +595,11 @@ const WEATHER_EVENTS = {
     wildfire: {
       name: 'Forest Fire',
       emoji: '🔥',
-      probability: 0.015,
-      duration: 2,
+      probability: 0.004, // Reduced from 0.015
+      duration: 1, // Reduced from 2
       effects: {
-        cropDestruction: 0.6, // destroys crops
-        animalFlee: 0.4, // animals temporarily leave
+        cropDestruction: 0.3, // Reduced from 0.6
+        animalFlee: 0.2, // Reduced from 0.4
         bonus: { ash: 15, charcoal: 5 } // fertile ash and charcoal
       },
       description: 'Devastating fire destroys crops but creates fertile ash'
@@ -606,10 +607,10 @@ const WEATHER_EVENTS = {
     fog: {
       name: 'Dense Fog',
       emoji: '🌫️',
-      probability: 0.04,
+      probability: 0.02, // Reduced from 0.04
       duration: 1,
       effects: {
-        visibility: 0.5, // reduces efficiency
+        visibility: 0.8, // Reduced from 0.5 (less negative impact)
         moistureBonus: 1.3, // increases growth
         mushoomBoost: 2.0 // mushrooms love fog
       },
@@ -620,23 +621,23 @@ const WEATHER_EVENTS = {
     avalanche: {
       name: 'Avalanche',
       emoji: '❄️',
-      probability: 0.01,
+      probability: 0.003, // Reduced from 0.01
       duration: 1,
       effects: {
-        areaDestruction: 0.8, // destroys everything in path
+        areaDestruction: 0.4, // Reduced from 0.8
         snowDeposit: 20, // leaves snow for water
-        roadBlocking: 3 // blocks transport for 3 cycles
+        roadBlocking: 2 // Reduced from 3
       },
       description: 'Destructive avalanche but provides water reserves'
     },
     blizzard: {
       name: 'Severe Blizzard',
       emoji: '🌨️',
-      probability: 0.025,
-      duration: 3,
+      probability: 0.008, // Reduced from 0.025
+      duration: 2, // Reduced from 3
       effects: {
-        animalShelter: 0.5, // animals need shelter
-        cropFreeze: 0.4,
+        animalShelter: 0.3, // Reduced from 0.5
+        cropFreeze: 0.2, // Reduced from 0.4
         iceHarvest: 10 // can harvest ice
       },
       description: 'Harsh blizzard freezes crops but enables ice harvesting'
@@ -646,11 +647,11 @@ const WEATHER_EVENTS = {
     hurricane: {
       name: 'Hurricane',
       emoji: '🌀',
-      probability: 0.015,
-      duration: 2,
+      probability: 0.004, // Reduced from 0.015
+      duration: 1, // Reduced from 2
       effects: {
-        massiveDestruction: 0.7,
-        flooding: 0.5,
+        massiveDestruction: 0.35, // Reduced from 0.7
+        flooding: 0.25, // Reduced from 0.5
         bonus: { rareSeed: 3, driftwood: 8 } // brings rare items
       },
       description: 'Devastating hurricane brings destruction and rare treasures'
@@ -658,10 +659,10 @@ const WEATHER_EVENTS = {
     tsunami: {
       name: 'Tsunami Wave',
       emoji: '🌊',
-      probability: 0.005,
+      probability: 0.001, // Reduced from 0.005
       duration: 1,
       effects: {
-        totalFlood: 0.9, // floods everything
+        totalFlood: 0.5, // Reduced from 0.9
         saltDeposit: 25, // leaves salt deposits
         seaweedBonus: 15 // washes up seaweed
       },
@@ -802,9 +803,9 @@ const BUILDINGS = {
 
 // Crop diseases
 const DISEASES = {
-  blight: { name: 'Crop Blight', emoji: '🦠', treatment: 'fungicide', damage: 0.5, description: 'Reduces crop value by 50%' },
-  pest: { name: 'Pest Infestation', emoji: '🐛', treatment: 'pesticide', damage: 0.3, description: 'Slows growth by 30%' },
-  drought: { name: 'Crop Stress', emoji: '🌵', treatment: 'fertilizer', damage: 0.2, description: 'Stunts growth' }
+  blight: { name: 'Crop Blight', emoji: '🦠', treatment: 'fungicide', damage: 0.2, description: 'Reduces crop value by 20%' }, // Reduced from 0.5
+  pest: { name: 'Pest Infestation', emoji: '🐛', treatment: 'pesticide', damage: 0.15, description: 'Slows growth by 15%' }, // Reduced from 0.3
+  drought: { name: 'Crop Stress', emoji: '🌵', treatment: 'fertilizer', damage: 0.1, description: 'Stunts growth' } // Reduced from 0.2
 };
 
 // Seasonal events
@@ -1216,10 +1217,17 @@ export default function SimpleFarmGame() {
   // Market and Processing Systems
   const [marketSystem] = useState(() => new MarketSystem());
   const [processingSystem] = useState(() => new ProcessingSystem());
+  const [seasonalEventsSystem] = useState(() => new SeasonalEventsSystem());
   const [marketPricesHistory, setMarketPricesHistory] = useState({});
   const [activeMarketEvents, setActiveMarketEvents] = useState([]);
   const [processingInventory, setProcessingInventory] = useState({});
   const [activeFacilities, setActiveFacilities] = useState({});
+  
+  // Seasonal Events State
+  const [activeSeasonalEvents, setActiveSeasonalEvents] = useState([]);
+  const [eventEffects, setEventEffects] = useState({});
+  const [seasonalCrops, setSeasonalCrops] = useState({});
+  const [eventNotifications, setEventNotifications] = useState([]);
   
   // Bot Automation System
   const [aiFarmingSystem] = useState(() => new AIFarmingSystem());
@@ -1560,6 +1568,28 @@ export default function SimpleFarmGame() {
           
           setActiveMarketEvents(marketSystem.activeEvents);
           
+          // Update seasonal events system
+          const eventUpdate = seasonalEventsSystem.update({
+            level,
+            money,
+            farmZones,
+            processingPlants: activeFacilities,
+            currentSeason,
+            experience,
+            inventory: processingInventory
+          });
+          
+          setActiveSeasonalEvents(eventUpdate.activeEvents);
+          setEventEffects(eventUpdate.eventEffects);
+          setSeasonalCrops(seasonalEventsSystem.getSeasonalCrops());
+          
+          // Check for new event notifications
+          const eventStatus = seasonalEventsSystem.getEventStatus();
+          if (eventStatus.activeEvents.length > activeSeasonalEvents.length) {
+            const newEvent = eventStatus.activeEvents[eventStatus.activeEvents.length - 1];
+            addNotification(`🎉 ${newEvent.name} has started!`, 'event');
+          }
+          
           setMarketPrices(prev => {
             const newPrices = {};
             Object.keys(prev).forEach(crop => {
@@ -1748,13 +1778,13 @@ export default function SimpleFarmGame() {
             Object.keys(updated[zoneType]).forEach(animalType => {
               const animal = updated[zoneType][animalType];
               if (animal && animal.count > 0) {
-                // Gradual stress reduction and happiness recovery
+                // Gradual stress reduction and happiness recovery (faster recovery)
                 if (animal.stress > 0) {
-                  updated[zoneType][animalType].stress = Math.max(0, animal.stress - 1);
+                  updated[zoneType][animalType].stress = Math.max(0, animal.stress - 3); // Increased from 1 to 3
                   hasChanges = true;
                 }
                 if (animal.happiness < 100 && animal.stress === 0) {
-                  updated[zoneType][animalType].happiness = Math.min(100, animal.happiness + 1);
+                  updated[zoneType][animalType].happiness = Math.min(100, animal.happiness + 2); // Increased from 1 to 2
                   hasChanges = true;
                 }
               }
@@ -1894,6 +1924,10 @@ export default function SimpleFarmGame() {
           if (plot.fertilized) growthMultiplier += 0.3;
           if (irrigatedPlots.has(parseInt(plotId))) growthMultiplier += 0.15;
           
+          // Apply seasonal event effects
+          const seasonalModifiers = seasonalEventsSystem.applyCropModifiers(cropData, plot);
+          growthMultiplier *= seasonalModifiers.growthMultiplier;
+          
           // Auto-watering from sprinkler system or irrigation
           if ((tools.sprinkler || buildings.irrigationSystem) && !plot.watered) {
             updated[plotId] = { ...plot, watered: true, quality: Math.min(2.0, plot.quality + 0.3) };
@@ -1949,8 +1983,8 @@ export default function SimpleFarmGame() {
             }
           }
           
-          // Disease check with trait resistance
-          if (!diseaseOutbreaks[plotId] && Math.random() < weather.diseaseChance * plot.diseaseResistance) {
+          // Disease check with trait resistance (fixed logic)
+          if (!diseaseOutbreaks[plotId] && Math.random() < weather.diseaseChance / plot.diseaseResistance) {
             const diseases = Object.keys(DISEASES);
             const disease = diseases[Math.floor(Math.random() * diseases.length)];
             setDiseaseOutbreaks(prev => ({ ...prev, [plotId]: disease }));
@@ -2060,6 +2094,9 @@ export default function SimpleFarmGame() {
       if (soundEnabled) {
         soundManager.playPlant();
       }
+      
+      // Track seasonal event progress
+      seasonalEventsSystem.recordProgress('plant_crops', 1);
     }
   };
 
@@ -2073,7 +2110,11 @@ export default function SimpleFarmGame() {
       const seasonBonus = SEASONS[currentSeason].bonus;
       const diseaseReduction = diseaseOutbreaks[plotId] ? (1 - DISEASES[diseaseOutbreaks[plotId]].damage) : 1.0;
       
-      const earnings = Math.floor(baseValue * marketMultiplier * seasonBonus * diseaseReduction * (research.genetics.unlocked ? 1.5 : 1));
+      // Apply seasonal event value modifiers
+      const seasonalModifiers = seasonalEventsSystem.applyCropModifiers(cropData, plot);
+      const eventValueMultiplier = seasonalModifiers.valueMultiplier;
+      
+      const earnings = Math.floor(baseValue * marketMultiplier * seasonBonus * diseaseReduction * eventValueMultiplier * (research.genetics.unlocked ? 1.5 : 1));
       const xpGain = cropData.value / 5;
       
       // Check for contract completion
@@ -2146,6 +2187,9 @@ export default function SimpleFarmGame() {
       if (soundEnabled) {
         soundManager.playHarvest();
       }
+      
+      // Track seasonal event progress
+      seasonalEventsSystem.recordProgress('harvest_crops', 1);
     }
   };
 
@@ -3687,6 +3731,49 @@ export default function SimpleFarmGame() {
               <div className="text-xs text-gray-600">Animals</div>
             </div>
           </div>
+          
+          {/* Active Seasonal Events Indicator */}
+          {activeSeasonalEvents.length > 0 && (
+            <div className="mt-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg p-3 border border-purple-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🎉</span>
+                  <div>
+                    <div className="font-semibold text-purple-800">
+                      {activeSeasonalEvents.length} Active Event{activeSeasonalEvents.length > 1 ? 's' : ''}
+                    </div>
+                    <div className="text-xs text-purple-600">
+                      {activeSeasonalEvents.map(e => e.name.split(' ')[0]).join(', ')}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveTab('events')}
+                  className="px-3 py-1 bg-purple-500 text-white rounded text-sm hover:bg-purple-600 transition-colors"
+                >
+                  View Events
+                </button>
+              </div>
+              {Object.keys(eventEffects).length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {Object.entries(eventEffects).slice(0, 3).map(([effect, value]) => (
+                    <span key={effect} className="px-2 py-1 bg-purple-200 text-purple-800 rounded text-xs">
+                      {effect.includes('multiplier') && value > 1 ? '+' : ''}
+                      {typeof value === 'number' && effect.includes('multiplier') ? 
+                        `${Math.round((value - 1) * 100)}%` : 
+                        `${Math.round(value * 100)}%`
+                      } {effect.replace(/_/g, ' ').replace('multiplier', '').trim()}
+                    </span>
+                  ))}
+                  {Object.keys(eventEffects).length > 3 && (
+                    <span className="px-2 py-1 bg-gray-200 text-gray-600 rounded text-xs">
+                      +{Object.keys(eventEffects).length - 3} more
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Navigation Tabs */}
@@ -3700,6 +3787,7 @@ export default function SimpleFarmGame() {
               { id: 'shop', name: '🏪 Shop', icon: '🛒' },
               { id: 'processing', name: '🏭 Processing', icon: '⚙️' },
               { id: 'ai', name: '🤖 Bots', icon: '🧠' },
+              { id: 'events', name: '🎉 Events', icon: '🌟' },
               { id: 'livestock', name: '🐄 Livestock', icon: '🐔' },
               { id: 'buildings', name: '🏗️ Buildings', icon: '🏠' },
               { id: 'contracts', name: '📋 Contracts', icon: '📄' },
@@ -5809,6 +5897,224 @@ export default function SimpleFarmGame() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Events Tab - Seasonal Events & Festivals */}
+        {activeTab === 'events' && (
+          <div className="space-y-6">
+            {/* Current Season Display */}
+            <div className="bg-gradient-to-r from-green-400 to-blue-400 p-6 rounded-lg shadow-lg text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-3xl font-bold mb-2">
+                    {SEASONS[currentSeason].emoji} {SEASONS[currentSeason].name}
+                  </h2>
+                  <p className="text-green-100 mb-4">{SEASONS[currentSeason].description}</p>
+                  <div className="bg-white/20 rounded-full h-2 w-64">
+                    <div 
+                      className="bg-white h-2 rounded-full transition-all duration-1000"
+                      style={{ width: `${((300 - seasonTimeLeft) / 300) * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-sm text-green-100 mt-2">
+                    {Math.floor(seasonTimeLeft / 60)}:{(seasonTimeLeft % 60).toString().padStart(2, '0')} until next season
+                  </p>
+                </div>
+                <div className="text-6xl opacity-80">
+                  {SEASONS[currentSeason].emoji}
+                </div>
+              </div>
+            </div>
+
+            {/* Active Events */}
+            {activeSeasonalEvents.length > 0 && (
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <h3 className="text-2xl font-bold mb-4 text-purple-700">🎉 Active Events</h3>
+                <div className="space-y-4">
+                  {activeSeasonalEvents.map((event, index) => {
+                    const timeRemaining = Math.max(0, event.endTime - Date.now());
+                    const hours = Math.floor(timeRemaining / 3600000);
+                    const minutes = Math.floor((timeRemaining % 3600000) / 60000);
+                    const seconds = Math.floor((timeRemaining % 60000) / 1000);
+                    
+                    return (
+                      <div key={event.id} className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="text-xl font-bold text-purple-800">{event.name}</h4>
+                            <p className="text-gray-600">{event.description}</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-medium text-purple-600">
+                              {hours > 0 && `${hours}h `}{minutes}m {seconds}s
+                            </div>
+                            <div className="text-xs text-gray-500">remaining</div>
+                          </div>
+                        </div>
+                        
+                        {/* Event Progress */}
+                        {event.objectives && (
+                          <div className="space-y-2">
+                            {event.objectives.map((objective, objIndex) => {
+                              const progress = event.progress[objective.type] || 0;
+                              const percentage = Math.min(100, (progress / objective.target) * 100);
+                              
+                              return (
+                                <div key={objIndex}>
+                                  <div className="flex justify-between text-sm mb-1">
+                                    <span className="capitalize">{objective.type.replace('_', ' ')}</span>
+                                    <span>{progress}/{objective.target}</span>
+                                  </div>
+                                  <div className="bg-gray-200 rounded-full h-2">
+                                    <div 
+                                      className="bg-purple-500 h-2 rounded-full transition-all duration-500"
+                                      style={{ width: `${percentage}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                        
+                        {/* Event Rewards */}
+                        {event.rewards && (
+                          <div className="mt-3 p-3 bg-yellow-50 rounded border-l-4 border-yellow-400">
+                            <div className="text-sm font-medium text-yellow-800 mb-1">Rewards:</div>
+                            <div className="text-sm text-yellow-700">
+                              {event.rewards.xp && `${event.rewards.xp} XP `}
+                              {event.rewards.money && `$${event.rewards.money} `}
+                              {event.rewards.items && Object.entries(event.rewards.items).map(([item, qty]) => 
+                                `${qty}x ${item.replace('_', ' ')} `
+                              )}
+                              {event.rewards.title && `"${event.rewards.title}" title`}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Event Effects */}
+            {Object.keys(eventEffects).length > 0 && (
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <h3 className="text-2xl font-bold mb-4 text-green-700">✨ Active Effects</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Object.entries(eventEffects).map(([effect, value]) => {
+                    const isMultiplier = typeof value === 'number' && effect.includes('multiplier');
+                    const displayValue = isMultiplier ? `${Math.round((value - 1) * 100)}%` : 
+                                       typeof value === 'number' ? `${Math.round(value * 100)}%` : 
+                                       value.toString();
+                    
+                    return (
+                      <div key={effect} className="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <div className="font-semibold text-green-800 capitalize">
+                          {effect.replace(/_/g, ' ')}
+                        </div>
+                        <div className="text-2xl font-bold text-green-600">
+                          {isMultiplier && value > 1 ? '+' : ''}{displayValue}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Winter Market Special Crops */}
+            {Object.keys(seasonalCrops).length > 0 && (
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <h3 className="text-2xl font-bold mb-4 text-blue-700">❄️ Special Winter Crops</h3>
+                <p className="text-gray-600 mb-4">Exclusive crops only available during winter events!</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {Object.entries(seasonalCrops).map(([cropKey, cropData]) => (
+                    <div key={cropKey} className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">{cropData.emoji}</div>
+                        <div className="font-bold text-blue-800">{cropData.name}</div>
+                        <div className="text-sm text-gray-600 mb-3">
+                          Cost: ${cropData.cost} | Value: ${cropData.value}
+                        </div>
+                        <div className="text-xs text-blue-600 mb-3">
+                          Grow Time: {Math.floor(cropData.growTime / 60)}:{(cropData.growTime % 60).toString().padStart(2, '0')}
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (money >= cropData.cost) {
+                              setMoney(prev => prev - cropData.cost);
+                              setSeeds(prev => ({ 
+                                ...prev, 
+                                [cropKey]: (prev[cropKey] || 0) + 1 
+                              }));
+                              // Add to ALL_CROPS temporarily for this session
+                              ALL_CROPS[cropKey] = cropData;
+                              addNotification(`❄️ Bought 1 ${cropData.name} seed!`, 'success');
+                            } else {
+                              addNotification(`💰 Not enough money for ${cropData.name} seeds!`, 'error');
+                            }
+                          }}
+                          disabled={money < cropData.cost}
+                          className={`px-4 py-2 rounded-lg font-semibold ${
+                            money >= cropData.cost
+                              ? 'bg-blue-500 text-white hover:bg-blue-600'
+                              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          }`}
+                        >
+                          Buy Seed (${cropData.cost})
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No Active Events */}
+            {activeSeasonalEvents.length === 0 && (
+              <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+                <div className="text-6xl mb-4">🌟</div>
+                <h3 className="text-2xl font-bold text-gray-700 mb-2">No Active Events</h3>
+                <p className="text-gray-600 mb-4">
+                  Seasonal events appear randomly throughout the year. Keep farming and check back regularly!
+                </p>
+                <div className="text-sm text-gray-500">
+                  Events are more likely to occur during their respective seasons.
+                </div>
+              </div>
+            )}
+
+            {/* Event Calendar Preview */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h3 className="text-2xl font-bold mb-4 text-gray-700">📅 Seasonal Event Types</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { season: 'spring', icon: '🌱', name: 'Spring', events: ['Planting Competition', 'Growth Festival', 'Early Bloom'] },
+                  { season: 'summer', icon: '☀️', name: 'Summer', events: ['Heat Wave', 'Midsummer Festival', 'Desert Discovery'] },
+                  { season: 'autumn', icon: '🍂', name: 'Autumn', events: ['Harvest Festival', 'Abundance Challenge', 'Maple Boom'] },
+                  { season: 'winter', icon: '❄️', name: 'Winter', events: ['Winter Market', 'Blizzard Challenge', 'Holiday Spirit'] }
+                ].map((seasonInfo) => (
+                  <div key={seasonInfo.season} className={`p-4 rounded-lg border-2 ${
+                    currentSeason === seasonInfo.season 
+                      ? 'border-green-400 bg-green-50' 
+                      : 'border-gray-200 bg-gray-50'
+                  }`}>
+                    <div className="text-center">
+                      <div className="text-3xl mb-2">{seasonInfo.icon}</div>
+                      <div className="font-bold text-gray-800">{seasonInfo.name}</div>
+                      <div className="text-xs text-gray-600 mt-2 space-y-1">
+                        {seasonInfo.events.map((event, idx) => (
+                          <div key={idx}>• {event}</div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
