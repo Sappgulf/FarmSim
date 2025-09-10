@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import soundManager from '../utils/soundManager';
 import TutorialOverlay from './TutorialOverlay';
+import MarketSystem from '../systems/marketSystem';
+import ProcessingSystem from '../systems/processingSystem';
+import AIFarmingSystem from '../systems/aiFarmingSystem';
 
 // Simple crop data
 const CROPS = {
@@ -1210,7 +1213,20 @@ export default function SimpleFarmGame() {
   const [automationEnabled, setAutomationEnabled] = useState(true);
   const [automationFunds, setAutomationFunds] = useState(1000); // Separate fund for automation maintenance
   
-  const [view3D, setView3D] = useState(false);
+  // Market and Processing Systems
+  const [marketSystem] = useState(() => new MarketSystem());
+  const [processingSystem] = useState(() => new ProcessingSystem());
+  const [marketPricesHistory, setMarketPricesHistory] = useState({});
+  const [activeMarketEvents, setActiveMarketEvents] = useState([]);
+  const [processingInventory, setProcessingInventory] = useState({});
+  const [activeFacilities, setActiveFacilities] = useState({});
+  
+  // Bot Automation System
+  const [aiFarmingSystem] = useState(() => new AIFarmingSystem());
+  const [activeBots, setActiveBots] = useState({});
+  const [aiEnergy, setAiEnergy] = useState(100);
+  const [aiDecisions, setAiDecisions] = useState([]);
+  
   const [animations, setAnimations] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   
@@ -1333,7 +1349,6 @@ export default function SimpleFarmGame() {
         ]);
         setActiveZone(gameState.activeZone || 0);
         setProcessingPlants(gameState.processingPlants || {});
-        setView3D(gameState.view3D || false);
         setAnimations(gameState.animations ?? true);
         setAutoSaveEnabled(gameState.autoSaveEnabled ?? true);
         setSoundEnabled(gameState.soundEnabled ?? true);
@@ -1528,18 +1543,96 @@ export default function SimpleFarmGame() {
           return prev - 1;
         });
         
-        // Market price fluctuations every 2 minutes
+        // Market price fluctuations every 2 minutes  
         if (newTime % 120 === 0) {
+          // Update dynamic market system
+          marketSystem.updateMarket({ 
+            level, 
+            money, 
+            currentSeason, 
+            inventory: processingInventory 
+          });
+          
+          setMarketPricesHistory(prev => ({
+            ...prev,
+            [Date.now()]: marketSystem.currentPrices
+          }));
+          
+          setActiveMarketEvents(marketSystem.activeEvents);
+          
           setMarketPrices(prev => {
             const newPrices = {};
             Object.keys(prev).forEach(crop => {
-              // Prices fluctuate between 0.7x and 1.3x
-              const change = (Math.random() - 0.5) * 0.2; // ±10% change
-              newPrices[crop] = Math.max(0.7, Math.min(1.3, prev[crop] + change));
+              // Use market system prices or fallback to old system
+              newPrices[crop] = marketSystem.getPrice(crop) ? 
+                marketSystem.getPrice(crop) / ALL_CROPS[crop]?.baseValue || ALL_CROPS[crop]?.value || 25 :
+                Math.max(0.7, Math.min(1.3, prev[crop] + ((Math.random() - 0.5) * 0.2)));
             });
             return newPrices;
           });
         }
+        
+        // Check processing system for completed batches
+        const completedBatches = processingSystem.updateProcessing();
+        if (completedBatches.length > 0) {
+          completedBatches.forEach(batch => {
+            setProcessingInventory(prev => {
+              const updated = { ...prev };
+              Object.entries(batch.outputs).forEach(([item, data]) => {
+                updated[item] = (updated[item] || 0) + data.quantity;
+              });
+              return updated;
+            });
+            
+            addNotification(`🏭 Processing complete! Produced ${Object.keys(batch.outputs).length} products`, 'success');
+          });
+        }
+        
+        // Update AI Farming System
+        aiFarmingSystem.updateAI({
+          plots, seeds, level, money, marketPrices, 
+          currentSeason, ALL_CROPS: ALL_CROPS
+        });
+        
+        // Execute Bot automation tasks
+        const aiTasks = aiFarmingSystem.executeAutomationQueue({
+          plots, seeds, level, money, marketPrices
+        });
+        
+        if (aiTasks.length > 0) {
+          aiTasks.forEach(task => {
+            switch (task.type) {
+              case 'plant':
+                if (seeds[task.crop] > 0 && plots[task.plotId]?.state === 'empty') {
+                  plantCrop(task.plotId);
+                  addNotification(`🤖 Bot planted ${task.crop} on plot ${task.plotId + 1}`, 'info');
+                }
+                break;
+              case 'harvest':
+                if (plots[task.plotId]?.state === 'ready') {
+                  harvestCrop(task.plotId);
+                  addNotification(`🤖 Bot harvested plot ${task.plotId + 1}`, 'info');
+                }
+                break;
+              case 'water':
+                if (plots[task.plotId]?.state === 'planted' && !plots[task.plotId]?.watered) {
+                  waterPlot(task.plotId);
+                }
+                break;
+              case 'fertilize':
+                if (plots[task.plotId]?.state === 'planted' && !plots[task.plotId]?.fertilized) {
+                  fertilizePlot(task.plotId);
+                }
+                break;
+            }
+          });
+          
+          setAiDecisions(prev => [...aiTasks, ...prev].slice(0, 20)); // Keep last 20 decisions
+        }
+        
+        // Update Bot energy
+        const aiStatus = aiFarmingSystem.getAIStatus();
+        setAiEnergy(aiStatus.energy);
         
         // Visitor system (every 3-5 minutes)
         if (!currentVisitor && Math.random() < 0.003) { // 0.3% chance per second
@@ -3602,9 +3695,11 @@ export default function SimpleFarmGame() {
             {[
               { id: 'farm', name: '🚜 Farm', icon: '🌱' },
               { id: 'zones', name: '🗺️ Zones', icon: '🌍' },
+              { id: 'market', name: '📈 Market', icon: '💰' },
               { id: 'trade', name: '🚛 Trade', icon: '📦' },
               { id: 'shop', name: '🏪 Shop', icon: '🛒' },
               { id: 'processing', name: '🏭 Processing', icon: '⚙️' },
+              { id: 'ai', name: '🤖 Bots', icon: '🧠' },
               { id: 'livestock', name: '🐄 Livestock', icon: '🐔' },
               { id: 'buildings', name: '🏗️ Buildings', icon: '🏠' },
               { id: 'contracts', name: '📋 Contracts', icon: '📄' },
@@ -4480,6 +4575,120 @@ export default function SimpleFarmGame() {
           </div>
         )}
 
+        {/* Market Tab - Dynamic Market System */}
+        {activeTab === 'market' && (
+          <div className="space-y-6">
+            {/* Market Overview */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold mb-4">📈 Dynamic Market</h2>
+              <p className="text-gray-600 mb-6">
+                Track real-time prices, market trends, and seasonal fluctuations. Take advantage of market events and complete contracts for bonus profits.
+              </p>
+              
+              {/* Market Events */}
+              {activeMarketEvents.length > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                  <h3 className="text-lg font-semibold text-yellow-800 mb-3">🚨 Active Market Events</h3>
+                  <div className="space-y-2">
+                    {activeMarketEvents.map(event => (
+                      <div key={event.id} className="flex items-center justify-between">
+                        <span className="font-medium">{event.name}</span>
+                        <span className="text-sm text-yellow-700">{event.description}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Current Market Prices */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {Object.entries(ALL_CROPS).slice(0, 9).map(([cropId, crop]) => {
+                  const currentPrice = marketSystem.getPrice(cropId) || crop.baseValue || crop.value;
+                  const trend = marketSystem.getTrend(cropId);
+                  const priceHistory = marketSystem.getPriceHistory(cropId);
+                  
+                  return (
+                    <div key={cropId} className="bg-gradient-to-br from-green-50 to-blue-50 p-4 rounded-lg border">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{crop.emoji}</span>
+                          <span className="font-semibold">{crop.name}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center gap-1">
+                            <span className="text-lg font-bold">${currentPrice}</span>
+                            <span className="text-sm">{trend.emoji}</span>
+                          </div>
+                          <div className="text-xs text-gray-600">{trend.name}</div>
+                        </div>
+                      </div>
+                      
+                      {/* Simple price trend indicator */}
+                      <div className="flex gap-1 mb-2">
+                        {priceHistory.slice(-7).map((price, i) => (
+                          <div 
+                            key={i} 
+                            className={`flex-1 h-2 rounded ${
+                              price > currentPrice ? 'bg-red-300' : 
+                              price < currentPrice ? 'bg-green-300' : 'bg-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      
+                      {/* Quick sell button */}
+                      {(seeds[cropId] > 0 || processingInventory[cropId] > 0) && (
+                        <button 
+                          onClick={() => {
+                            const available = seeds[cropId] || 0;
+                            if (available > 0) {
+                              const sellAmount = Math.min(available, 10);
+                              const earnings = sellAmount * currentPrice;
+                              setSeeds(prev => ({ ...prev, [cropId]: prev[cropId] - sellAmount }));
+                              setMoney(prev => prev + earnings);
+                              addNotification(`💰 Sold ${sellAmount} ${crop.name} for $${earnings}`, 'success');
+                            }
+                          }}
+                          className="w-full bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+                        >
+                          Quick Sell (${seeds[cropId] || 0} available)
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Active Contracts */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3">📋 Available Contracts</h3>
+                {marketSystem.activeContracts.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {marketSystem.activeContracts.map(contract => (
+                      <div key={contract.id} className="bg-white p-4 rounded border">
+                        <h4 className="font-semibold">{contract.name}</h4>
+                        <p className="text-sm text-gray-600 mb-2">{contract.description}</p>
+                        <div className="text-sm">
+                          <div>Reward: <span className="font-bold text-green-600">${contract.reward}</span></div>
+                          <div>Bonus: <span className="font-bold text-blue-600">{Math.round((contract.bonus - 1) * 100)}%</span></div>
+                          <div className="text-xs text-gray-500">
+                            Expires: {Math.ceil((contract.endTime - Date.now()) / (1000 * 60 * 60 * 24))} days
+                          </div>
+                        </div>
+                        <button className="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
+                          Accept Contract
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No contracts available. Check back later!</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Trade Tab - Inter-Zone Trade Routes */}
         {activeTab === 'trade' && (
           <div className="space-y-6">
@@ -5194,139 +5403,413 @@ export default function SimpleFarmGame() {
           </div>
         )}
 
-        {/* Processing Tab */}
+        {/* Processing Tab - Enhanced Processing Facilities */}
         {activeTab === 'processing' && (
           <div className="space-y-6">
-            {/* Build Processing Plants */}
+            {/* Processing System Overview */}
             <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold mb-4">🏭 Build Processing Plants</h2>
-              <p className="text-gray-600 mb-4">Transform raw crops into higher-value processed goods!</p>
+              <h2 className="text-2xl font-bold mb-4">🏭 Processing Facilities</h2>
+              <p className="text-gray-600 mb-6">
+                Build specialized facilities to transform raw crops into high-value processed products. Create production chains for maximum profit!
+              </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Object.entries(PROCESSING_PLANTS).map(([plantId, plant]) => {
-                  const owned = processingPlants[plantId]?.built;
-                  const isProcessing = processingPlants[plantId]?.processing;
-                  
-                  return (
-                    <div key={plantId} className={`p-4 border-2 rounded-lg ${owned ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <div className="text-2xl mb-1">{plant.emoji}</div>
-                          <div className="font-semibold">{plant.name}</div>
-                          <div className="text-sm text-gray-600">{plant.description}</div>
-                          <div className="text-xs text-blue-600 mt-1">
-                            Processes: {plant.inputs.join(', ')}
+              {/* Processing Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-blue-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-blue-600">{Object.keys(activeFacilities).length}</div>
+                  <div className="text-sm text-gray-600">Active Facilities</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-green-600">{processingSystem.totalProcessed}</div>
+                  <div className="text-sm text-gray-600">Total Processed</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-purple-600">{Object.keys(processingInventory).length}</div>
+                  <div className="text-sm text-gray-600">Product Types</div>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-orange-600">{processingSystem.processingQueue.length}</div>
+                  <div className="text-sm text-gray-600">Active Batches</div>
+                </div>
+              </div>
+
+              {/* Build New Facilities */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">🏗️ Build New Facilities</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    { id: 'juicer', name: 'Juice Press', emoji: '🥤', cost: 3000, unlockLevel: 6, description: 'Extract juices from fruits and vegetables' },
+                    { id: 'mill', name: 'Grain Mill', emoji: '🏭', cost: 5000, unlockLevel: 8, description: 'Process grains into flour and meal' },
+                    { id: 'preservery', name: 'Preserve Kitchen', emoji: '🥫', cost: 4500, unlockLevel: 10, description: 'Create jams, pickles, and preserved goods' },
+                    { id: 'bakery', name: 'Artisan Bakery', emoji: '🍞', cost: 8000, unlockLevel: 12, description: 'Bake bread and pastries from ingredients' },
+                    { id: 'dairy', name: 'Dairy Processing', emoji: '🧀', cost: 6000, unlockLevel: 14, description: 'Process milk into cheese and butter' },
+                    { id: 'winery', name: 'Artisan Winery', emoji: '🍷', cost: 12000, unlockLevel: 18, description: 'Ferment fruits into wines and spirits' }
+                  ].map((facility) => {
+                    const owned = activeFacilities[facility.id];
+                    const canBuild = level >= facility.unlockLevel && money >= facility.cost;
+                    
+                    return (
+                      <div key={facility.id} className={`p-4 border-2 rounded-lg ${owned ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="text-2xl mb-1">{facility.emoji}</div>
+                            <div className="font-semibold">{facility.name}</div>
+                            <div className="text-sm text-gray-600 mb-2">{facility.description}</div>
+                            <div className="text-xs">
+                              <div>Unlock Level: {facility.unlockLevel}</div>
+                            </div>
                           </div>
+                          {owned && <div className="text-green-500 text-xl">✅</div>}
                         </div>
-                        {owned && <div className="text-green-500 text-xl">🏭</div>}
-                      </div>
-                      
-                      {isProcessing && (
-                        <div className="mt-2 p-2 bg-blue-50 rounded">
-                          <div className="text-sm font-medium text-blue-800">Processing...</div>
-                          <div className="text-xs text-blue-600">
-                            {Math.max(0, Math.ceil((isProcessing.finishTime - Date.now()) / 1000))}s remaining
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="mt-3">
-                        <div className="text-lg font-bold text-green-600 mb-2">${plant.cost}</div>
+                        
+                        <div className="text-lg font-bold text-green-600 mb-3">${facility.cost.toLocaleString()}</div>
+                        
                         {!owned ? (
                           <button
-                            onClick={() => buildProcessingPlant(plantId)}
+                            onClick={() => {
+                              if (canBuild) {
+                                setMoney(prev => prev - facility.cost);
+                                setActiveFacilities(prev => ({ 
+                                  ...prev, 
+                                  [facility.id]: { 
+                                    ...facility, 
+                                    level: 1, 
+                                    efficiency: 1.0,
+                                    built: Date.now(),
+                                    currentBatch: null
+                                  }
+                                }));
+                                addNotification(`🏭 ${facility.name} built successfully!`, 'success');
+                              }
+                            }}
                             className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-                            disabled={money < plant.cost}
+                            disabled={!canBuild}
                           >
-                            Build Plant
+                            {level < facility.unlockLevel ? `Level ${facility.unlockLevel} Required` : 'Build Facility'}
                           </button>
                         ) : (
-                          <div className="w-full px-4 py-2 bg-green-500 text-white rounded text-center">
-                            Built
+                          <div className="text-center bg-green-500 text-white py-2 rounded">
+                            Level {owned.level} - Built ✅
                           </div>
                         )}
                       </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Active Facilities & Production */}
+              {Object.keys(activeFacilities).length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">⚙️ Production Management</h3>
+                  <div className="space-y-4">
+                    {Object.entries(activeFacilities).map(([facilityId, facility]) => {
+                      // Simple recipes based on facility type
+                      const recipes = {
+                        juicer: [
+                          { id: 'apple_juice', name: 'Apple Juice', emoji: '🧃', inputs: { apple: 5 }, value: 80, time: 15 },
+                          { id: 'carrot_juice', name: 'Carrot Juice', emoji: '🥕', inputs: { carrot: 6 }, value: 70, time: 20 }
+                        ],
+                        mill: [
+                          { id: 'flour', name: 'Flour', emoji: '🌾', inputs: { wheat: 4 }, value: 60, time: 30 },
+                          { id: 'cornmeal', name: 'Cornmeal', emoji: '🌽', inputs: { corn: 3 }, value: 55, time: 25 }
+                        ],
+                        bakery: [
+                          { id: 'bread', name: 'Artisan Bread', emoji: '🍞', inputs: { wheat: 3 }, value: 120, time: 60 }
+                        ],
+                        preservery: [
+                          { id: 'jam', name: 'Fruit Jam', emoji: '🍓', inputs: { tomato: 5 }, value: 90, time: 45 }
+                        ]
+                      };
+                      
+                      const availableRecipes = recipes[facilityId] || [];
+                      
+                      return (
+                        <div key={facilityId} className="bg-gray-50 p-4 rounded-lg">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl">{facility.emoji}</span>
+                              <div>
+                                <div className="font-semibold">{facility.name}</div>
+                                <div className="text-sm text-gray-600">Level {facility.level}</div>
+                              </div>
+                            </div>
+                            
+                            {facility.currentBatch && (
+                              <div className="bg-blue-100 px-3 py-1 rounded">
+                                <div className="text-sm font-medium text-blue-800">Processing...</div>
+                                <div className="text-xs text-blue-600">Please wait...</div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Available Recipes */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {availableRecipes.map(recipe => (
+                              <div key={recipe.id} className="bg-white p-3 rounded border">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-lg">{recipe.emoji}</span>
+                                  <div>
+                                    <div className="font-medium text-sm">{recipe.name}</div>
+                                  </div>
+                                </div>
+                                
+                                <div className="text-xs space-y-1 mb-3">
+                                  <div>Needs: {Object.entries(recipe.inputs).map(([item, amount]) => `${amount} ${ALL_CROPS[item]?.emoji || ''} ${ALL_CROPS[item]?.name || item}`).join(', ')}</div>
+                                  <div>Time: {recipe.time} min</div>
+                                  <div className="font-bold text-green-600">Value: ${recipe.value}</div>
+                                </div>
+                                
+                                <button
+                                  onClick={() => {
+                                    // Check if we have the required inputs
+                                    const hasInputs = Object.entries(recipe.inputs).every(([item, amount]) => {
+                                      return (seeds[item] || 0) >= amount;
+                                    });
+                                    
+                                    if (hasInputs && !facility.currentBatch) {
+                                      // Consume inputs
+                                      setSeeds(prev => {
+                                        const updated = { ...prev };
+                                        Object.entries(recipe.inputs).forEach(([item, amount]) => {
+                                          updated[item] = Math.max(0, (updated[item] || 0) - amount);
+                                        });
+                                        return updated;
+                                      });
+                                      
+                                      // Start processing
+                                      setActiveFacilities(prev => ({
+                                        ...prev,
+                                        [facilityId]: {
+                                          ...facility,
+                                          currentBatch: {
+                                            recipe: recipe.id,
+                                            finishTime: Date.now() + (recipe.time * 60 * 1000)
+                                          }
+                                        }
+                                      }));
+                                      
+                                      // Set timeout to complete processing
+                                      setTimeout(() => {
+                                        setProcessingInventory(prev => ({
+                                          ...prev,
+                                          [recipe.id]: (prev[recipe.id] || 0) + 1
+                                        }));
+                                        
+                                        setActiveFacilities(prev => ({
+                                          ...prev,
+                                          [facilityId]: {
+                                            ...prev[facilityId],
+                                            currentBatch: null
+                                          }
+                                        }));
+                                        
+                                        addNotification(`✅ ${recipe.name} ready for collection!`, 'success');
+                                      }, recipe.time * 60 * 1000);
+                                      
+                                      addNotification(`🏭 Started processing ${recipe.name}!`, 'success');
+                                    } else if (!hasInputs) {
+                                      const missing = Object.entries(recipe.inputs).filter(([item, amount]) => (seeds[item] || 0) < amount);
+                                      addNotification(`❌ Need more: ${missing.map(([item, amount]) => `${amount} ${ALL_CROPS[item]?.name || item}`).join(', ')}`, 'error');
+                                    }
+                                  }}
+                                  className="w-full px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 disabled:opacity-50"
+                                  disabled={facility.currentBatch}
+                                >
+                                  Start Processing
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Processed Goods Inventory */}
+              {Object.keys(processingInventory).length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-4">📦 Processed Goods Inventory</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {Object.entries(processingInventory).map(([item, quantity]) => (
+                      <div key={item} className="bg-yellow-50 p-3 rounded border text-center">
+                        <div className="font-semibold text-sm capitalize">{item.replace('_', ' ')}</div>
+                        <div className="text-lg font-bold text-yellow-700">{quantity}</div>
+                        <button
+                          onClick={() => {
+                            const baseValue = 50; // Simplified value calculation
+                            const marketPrice = marketSystem.getPrice(item) || baseValue;
+                            const earnings = quantity * marketPrice;
+                            
+                            setProcessingInventory(prev => ({ ...prev, [item]: 0 }));
+                            setMoney(prev => prev + earnings);
+                            addNotification(`💰 Sold ${quantity} ${item} for $${earnings}`, 'success');
+                          }}
+                          className="w-full mt-2 px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
+                        >
+                          Sell All
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Bots Tab - Bot Farming & Automation */}
+        {activeTab === 'ai' && (
+          <div className="space-y-6">
+            {/* Bot System Status */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold mb-4">🤖 Bot Farming System</h2>
+              <p className="text-gray-600 mb-6">
+                Deploy advanced bots to automate your farming operations. Each bot has unique capabilities and can be upgraded for better performance.
+              </p>
+              
+              {/* Bot Energy and Status */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-blue-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-blue-600">{aiEnergy}%</div>
+                  <div className="text-sm text-gray-600">Bot Energy</div>
+                  <div className={`w-full h-2 bg-gray-200 rounded mt-2`}>
+                    <div 
+                      className={`h-full rounded transition-all ${aiEnergy > 50 ? 'bg-blue-500' : aiEnergy > 25 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                      style={{ width: `${aiEnergy}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-green-600">{Object.keys(activeBots).length}</div>
+                  <div className="text-sm text-gray-600">Active Bots</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-purple-600">{aiDecisions.length}</div>
+                  <div className="text-sm text-gray-600">AI Decisions</div>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {Object.values(activeBots).reduce((sum, bot) => sum + (bot.tasksCompleted || 0), 0)}
+                  </div>
+                  <div className="text-sm text-gray-600">Tasks Completed</div>
+                </div>
+              </div>
+
+              {/* Available Bots */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {[
+                  { id: 'seedBot', name: 'Seed Bot', emoji: '🤖', cost: 15000, unlockLevel: 15, description: 'Automatically plants optimal crops based on market conditions' },
+                  { id: 'harvestBot', name: 'Harvest Bot', emoji: '🚜', cost: 18000, unlockLevel: 18, description: 'Harvests crops at optimal ripeness for maximum value' },
+                  { id: 'careBot', name: 'Care Bot', emoji: '💧', cost: 12000, unlockLevel: 12, description: 'Provides precision watering, fertilizing, and pest control' },
+                  { id: 'analyticsBot', name: 'Analytics Bot', emoji: '🧠', cost: 25000, unlockLevel: 20, description: 'Provides market predictions and optimization strategies' },
+                  { id: 'droneSwarm', name: 'Drone Swarm', emoji: '🚁', cost: 35000, unlockLevel: 25, description: 'Aerial monitoring and precision agriculture from above' }
+                ].map((bot) => {
+                  const owned = activeBots[bot.id];
+                  const canDeploy = level >= bot.unlockLevel && money >= bot.cost && aiEnergy >= 20;
+                  
+                  return (
+                    <div key={bot.id} className={`p-4 border-2 rounded-lg ${owned ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="text-2xl mb-1">{bot.emoji}</div>
+                          <div className="font-semibold">{bot.name}</div>
+                          <div className="text-sm text-gray-600 mb-2">{bot.description}</div>
+                          <div className="text-xs">
+                            <div>Unlock Level: {bot.unlockLevel}</div>
+                            <div>Energy Cost: 20/hour</div>
+                          </div>
+                        </div>
+                        {owned && (
+                          <div className="text-center">
+                            <div className="text-green-500 text-xl">🟢</div>
+                            <div className="text-xs text-gray-600">Level {owned.aiLevel || 1}</div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="text-lg font-bold text-green-600 mb-3">${bot.cost.toLocaleString()}</div>
+                      
+                      {!owned ? (
+                        <button
+                          onClick={() => {
+                            if (canDeploy) {
+                              setMoney(prev => prev - bot.cost);
+                              setAiEnergy(prev => Math.max(0, prev - 20));
+                              setActiveBots(prev => ({ 
+                                ...prev, 
+                                [bot.id]: { 
+                                  ...bot, 
+                                  aiLevel: 1,
+                                  deployedAt: Date.now(),
+                                  tasksCompleted: 0,
+                                  status: 'active'
+                                }
+                              }));
+                              addNotification(`🤖 ${bot.name} deployed successfully!`, 'success');
+                            }
+                          }}
+                          className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                          disabled={!canDeploy}
+                        >
+                          {level < bot.unlockLevel ? `Level ${bot.unlockLevel} Required` : 
+                           aiEnergy < 20 ? 'Low Bot Energy' : 'Deploy Bot'}
+                        </button>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="text-center bg-green-500 text-white py-2 rounded">
+                            Active - {owned.tasksCompleted || 0} tasks completed
+                          </div>
+                          <button
+                            onClick={() => {
+                              const upgradeCost = bot.cost * 0.6;
+                              if (money >= upgradeCost) {
+                                setMoney(prev => prev - upgradeCost);
+                                setActiveBots(prev => ({
+                                  ...prev,
+                                  [bot.id]: {
+                                    ...prev[bot.id],
+                                    aiLevel: (prev[bot.id].aiLevel || 1) + 1
+                                  }
+                                }));
+                                addNotification(`⬆️ ${bot.name} upgraded!`, 'success');
+                              }
+                            }}
+                            className="w-full px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600"
+                          >
+                            Upgrade (${Math.round(bot.cost * 0.6).toLocaleString()})
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
-            </div>
 
-            {/* Process Crops */}
-            {Object.keys(processingPlants).some(id => processingPlants[id]?.built) && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-xl font-bold mb-4">⚙️ Process Crops</h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(processingPlants)
-                    .filter(([_, plant]) => plant?.built)
-                    .map(([plantId, plant]) => {
-                      const plantData = PROCESSING_PLANTS[plantId];
-                      const isProcessing = plant.processing;
-                      const canCollect = isProcessing && Date.now() >= isProcessing.finishTime;
-                      
-                      return (
-                        <div key={plantId} className="p-4 border-2 border-blue-200 rounded-lg">
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="text-2xl">{plantData.emoji}</span>
-                            <div>
-                              <div className="font-semibold">{plantData.name}</div>
-                              <div className="text-sm text-gray-600">{plantData.description}</div>
-                            </div>
-                          </div>
-                          
-                          {isProcessing ? (
-                            <div className="space-y-2">
-                              <div className="p-2 bg-blue-50 rounded">
-                                <div className="text-sm font-medium">Processing {isProcessing.quantity} {isProcessing.crop}</div>
-                                <div className="text-xs text-gray-600">
-                                  Value: ${isProcessing.outputValue}
-                                </div>
-                              </div>
-                              
-                              {canCollect ? (
-                                <button
-                                  onClick={() => collectProcessedGoods(plantId)}
-                                  className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                                >
-                                  💰 Collect Goods
-                                </button>
-                              ) : (
-                                <div className="w-full px-4 py-2 bg-gray-300 text-gray-600 rounded text-center">
-                                  ⏰ Processing... {Math.ceil((isProcessing.finishTime - Date.now()) / 1000)}s
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              {plantData.inputs.map(cropType => {
-                                const availableCrops = Object.values(plots).filter(plot => 
-                                  plot.state === 'ready' && plot.crop === cropType
-                                ).length;
-                                
-                                return (
-                                  <div key={cropType} className="flex items-center justify-between">
-                                    <span className="text-sm">
-                                      {CROPS[cropType]?.emoji} {CROPS[cropType]?.name} ({availableCrops} ready)
-                                    </span>
-                                    <button
-                                      onClick={() => processCrop(plantId, cropType, 1)}
-                                      className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 disabled:opacity-50"
-                                      disabled={availableCrops === 0}
-                                    >
-                                      Process 1
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+              {/* Recent AI Decisions */}
+              {aiDecisions.length > 0 && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-3">🧠 Recent AI Decisions</h3>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {aiDecisions.slice(0, 10).map((decision, index) => (
+                      <div key={index} className="flex items-center justify-between text-sm">
+                        <span>
+                          {decision.type === 'plant' && `🌱 Planted ${decision.crop} on plot ${decision.plotId + 1}`}
+                          {decision.type === 'harvest' && `🚜 Harvested plot ${decision.plotId + 1}`}
+                          {decision.type === 'water' && `💧 Watered plot ${decision.plotId + 1}`}
+                          {decision.type === 'fertilize' && `🌿 Fertilized plot ${decision.plotId + 1}`}
+                        </span>
+                        <span className="text-gray-500">
+                          {new Date(decision.timestamp || Date.now()).toLocaleTimeString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 
@@ -6050,19 +6533,6 @@ export default function SimpleFarmGame() {
                       }`}
                     >
                       {animations ? 'ON' : 'OFF'}
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">3D View:</span>
-                    <button
-                      onClick={() => setView3D(!view3D)}
-                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                        view3D 
-                          ? 'bg-green-100 text-green-800 border border-green-300' 
-                          : 'bg-gray-100 text-gray-600 border border-gray-300'
-                      }`}
-                    >
-                      {view3D ? 'ON' : 'OFF'}
                     </button>
                   </div>
                   <div className="flex items-center justify-between">
