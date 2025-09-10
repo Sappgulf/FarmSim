@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import soundManager from '../utils/soundManager';
+import TutorialOverlay from './TutorialOverlay';
 
 // Simple crop data
 const CROPS = {
@@ -1210,6 +1212,7 @@ export default function SimpleFarmGame() {
   
   const [view3D, setView3D] = useState(false);
   const [animations, setAnimations] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   
   // Seed inventory
   const [seeds, setSeeds] = useState(() => {
@@ -1256,14 +1259,22 @@ export default function SimpleFarmGame() {
       marketPrices, activeContracts, completedContracts, diseaseOutbreaks, specialSeeds,
       seedQualities, hybridSeeds, weatherForecast, stormDamage, protectedPlots: Array.from(protectedPlots), 
       irrigatedPlots: Array.from(irrigatedPlots), inventory, tutorialStep, showTutorial, 
-      farmZones, activeZone, processingPlants, view3D, animations, autoSaveEnabled
+      farmZones, activeZone, processingPlants, view3D, animations, autoSaveEnabled, soundEnabled
     };
     
     try {
       localStorage.setItem('farmLifeSave', JSON.stringify(gameState));
       addNotification('💾 Game saved successfully!', 'success');
+      
+      // Play save sound
+      if (soundEnabled) {
+        soundManager.playSuccess();
+      }
     } catch (error) {
       addNotification('❌ Failed to save game', 'error');
+      if (soundEnabled) {
+        soundManager.playError();
+      }
     }
   };
 
@@ -1325,12 +1336,28 @@ export default function SimpleFarmGame() {
         setView3D(gameState.view3D || false);
         setAnimations(gameState.animations ?? true);
         setAutoSaveEnabled(gameState.autoSaveEnabled ?? true);
+        setSoundEnabled(gameState.soundEnabled ?? true);
+        
+        // Sync sound manager with loaded state
+        if (gameState.soundEnabled ?? true) {
+          soundManager.enable();
+        } else {
+          soundManager.disable();
+        }
         
         addNotification('📁 Game loaded successfully!', 'success');
+        
+        // Play load sound
+        if (gameState.soundEnabled ?? true) {
+          soundManager.playSuccess();
+        }
         return true;
       }
     } catch (error) {
       addNotification('❌ Failed to load game', 'error');
+      if (soundEnabled) {
+        soundManager.playError();
+      }
     }
     return false;
   };
@@ -1935,6 +1962,11 @@ export default function SimpleFarmGame() {
       if (zoneBonus > 1.0) {
         addNotification(`🌍 Zone bonus: +${Math.round((zoneBonus - 1) * 100)}% for ${selectedCrop}!`, 'info');
       }
+      
+      // Play plant sound
+      if (soundEnabled) {
+        soundManager.playPlant();
+      }
     }
   };
 
@@ -1982,6 +2014,11 @@ export default function SimpleFarmGame() {
         setLevel(newLevel);
         setMoney(prev => prev + newLevel * 10);
         addNotification(`🎉 Level Up! You are now level ${newLevel}!`, 'levelup');
+        
+        // Play level up sound
+        if (soundEnabled) {
+          soundManager.playLevelUp();
+        }
       }
       
       if (plot.quality > 1.5) {
@@ -2011,6 +2048,11 @@ export default function SimpleFarmGame() {
       });
       
       checkAchievements();
+      
+      // Play harvest sound
+      if (soundEnabled) {
+        soundManager.playHarvest();
+      }
     }
   };
 
@@ -2039,8 +2081,16 @@ export default function SimpleFarmGame() {
       setTotalSpent(prev => prev + cost);
       setSeeds(prev => ({ ...prev, [cropType]: (prev[cropType] || 0) + quantity }));
       checkAchievements();
+      
+      // Play purchase sound
+      if (soundEnabled) {
+        soundManager.playPurchase();
+      }
     } else {
       addNotification(`💰 Need $${cost} to buy ${quantity} ${cropType} seeds!`, 'error');
+      if (soundEnabled) {
+        soundManager.playError();
+      }
     }
   };
 
@@ -3595,7 +3645,8 @@ export default function SimpleFarmGame() {
               { id: 'breeding', name: '🧬 Genetics', icon: '🔬' },
               { id: 'research', name: '🔬 Research', icon: '⚗️' },
               { id: 'achievements', name: '🏆 Achievements', icon: '🎯' },
-              { id: 'stats', name: '📊 Stats', icon: '📈' }
+              { id: 'stats', name: '📊 Stats', icon: '📈' },
+              { id: 'settings', name: '⚙️ Settings', icon: '🔧' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -5966,7 +6017,271 @@ export default function SimpleFarmGame() {
             </div>
           </div>
         )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-xl font-bold mb-4">⚙️ Game Settings</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Save/Load Section */}
+              <div className="p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                <h3 className="font-semibold text-blue-800 mb-3">💾 Save & Load</h3>
+                <div className="space-y-3">
+                  <button
+                    onClick={saveGame}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    💾 Save Game
+                  </button>
+                  <button
+                    onClick={loadGame}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    📁 Load Game
+                  </button>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-sm text-gray-600">Auto-Save:</span>
+                    <button
+                      onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                        autoSaveEnabled 
+                          ? 'bg-green-100 text-green-800 border border-green-300' 
+                          : 'bg-gray-100 text-gray-600 border border-gray-300'
+                      }`}
+                    >
+                      {autoSaveEnabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Auto-save occurs every 30 seconds when enabled
+                  </div>
+                </div>
+              </div>
+
+              {/* Display Settings */}
+              <div className="p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
+                <h3 className="font-semibold text-purple-800 mb-3">🎨 Display</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Animations:</span>
+                    <button
+                      onClick={() => setAnimations(!animations)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                        animations 
+                          ? 'bg-green-100 text-green-800 border border-green-300' 
+                          : 'bg-gray-100 text-gray-600 border border-gray-300'
+                      }`}
+                    >
+                      {animations ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">3D View:</span>
+                    <button
+                      onClick={() => setView3D(!view3D)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                        view3D 
+                          ? 'bg-green-100 text-green-800 border border-green-300' 
+                          : 'bg-gray-100 text-gray-600 border border-gray-300'
+                      }`}
+                    >
+                      {view3D ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Tutorial:</span>
+                    <button
+                      onClick={() => setShowTutorial(!showTutorial)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                        showTutorial 
+                          ? 'bg-green-100 text-green-800 border border-green-300' 
+                          : 'bg-gray-100 text-gray-600 border border-gray-300'
+                      }`}
+                    >
+                      {showTutorial ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Sound Effects:</span>
+                    <button
+                      onClick={() => {
+                        setSoundEnabled(!soundEnabled);
+                        if (!soundEnabled) {
+                          soundManager.enable();
+                          soundManager.playSuccess();
+                        } else {
+                          soundManager.disable();
+                        }
+                      }}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                        soundEnabled 
+                          ? 'bg-green-100 text-green-800 border border-green-300' 
+                          : 'bg-gray-100 text-gray-600 border border-gray-300'
+                      }`}
+                    >
+                      {soundEnabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Game Reset */}
+              <div className="p-4 bg-red-50 rounded-lg border-2 border-red-200">
+                <h3 className="font-semibold text-red-800 mb-3">🔄 Reset Game</h3>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to restart the tutorial? This will reset tutorial progress only.')) {
+                        setTutorialStep(0);
+                        setShowTutorial(true);
+                        addNotification('📚 Tutorial restarted!', 'info');
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                  >
+                    📚 Restart Tutorial
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to reset ALL progress? This cannot be undone!')) {
+                        localStorage.removeItem('farmLifeSave');
+                        window.location.reload();
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    🗑️ Reset All Data
+                  </button>
+                  <div className="text-xs text-red-600">
+                    ⚠️ Warning: Reset All Data will permanently delete your saved game!
+                  </div>
+                </div>
+              </div>
+
+              {/* Game Info */}
+              <div className="p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+                <h3 className="font-semibold text-gray-800 mb-3">ℹ️ Game Info</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Version:</span>
+                    <span className="font-mono">v2.3.0</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Save File Size:</span>
+                    <span className="font-mono">
+                      {(() => {
+                        try {
+                          const saveData = localStorage.getItem('farmLifeSave');
+                          return saveData ? `${Math.round(new Blob([saveData]).size / 1024)}KB` : 'No Save';
+                        } catch {
+                          return 'Unknown';
+                        }
+                      })()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Play Time:</span>
+                    <span>{Math.floor(gameTime / 60)}m {gameTime % 60}s</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Achievements:</span>
+                    <span>{Object.values(achievements).filter(a => a.unlocked).length}/{Object.keys(achievements).length}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Export/Import Save */}
+              <div className="p-4 bg-indigo-50 rounded-lg border-2 border-indigo-200 md:col-span-2">
+                <h3 className="font-semibold text-indigo-800 mb-3">🔄 Export/Import Save</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => {
+                      try {
+                        const saveData = localStorage.getItem('farmLifeSave');
+                        if (saveData) {
+                          const blob = new Blob([saveData], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `farmlife-save-${new Date().toISOString().split('T')[0]}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          addNotification('📤 Save file exported!', 'success');
+                        } else {
+                          addNotification('❌ No save file to export!', 'error');
+                        }
+                      } catch (error) {
+                        addNotification('❌ Failed to export save!', 'error');
+                      }
+                    }}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                    📤 Export Save
+                  </button>
+                  <label className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer text-center">
+                    📥 Import Save
+                    <input
+                      type="file"
+                      accept=".json"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            try {
+                              const saveData = event.target.result;
+                              JSON.parse(saveData); // Validate JSON
+                              localStorage.setItem('farmLifeSave', saveData);
+                              addNotification('📥 Save file imported! Reload to apply.', 'success');
+                            } catch (error) {
+                              addNotification('❌ Invalid save file!', 'error');
+                            }
+                          };
+                          reader.readAsText(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                <div className="text-xs text-gray-500 mt-2">
+                  Export your save file to backup your progress or share with friends. Import to restore a backup.
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
       </div>
+      
+      {/* Tutorial Overlay */}
+      <TutorialOverlay
+        isVisible={showTutorial && tutorialStep < TUTORIAL_STEPS.length}
+        step={tutorialStep}
+        totalSteps={TUTORIAL_STEPS.length}
+        title={TUTORIAL_STEPS[tutorialStep]?.title || ''}
+        content={TUTORIAL_STEPS[tutorialStep]?.content || ''}
+        position="center"
+        onNext={() => {
+          if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+            setTutorialStep(tutorialStep + 1);
+          } else {
+            setShowTutorial(false);
+            addNotification('🎓 Tutorial completed! Happy farming!', 'success');
+          }
+        }}
+        onPrevious={() => {
+          if (tutorialStep > 0) {
+            setTutorialStep(tutorialStep - 1);
+          }
+        }}
+        onSkip={() => {
+          setShowTutorial(false);
+          addNotification('📚 Tutorial skipped. Access it anytime in Settings!', 'info');
+        }}
+      />
     </div>
   );
 }

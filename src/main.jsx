@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import SimpleFarmGame from "./components/SimpleFarmGame";
+import GameErrorBoundary from "./components/GameErrorBoundary";
 import "./index.css";
 
 // Simple test component
@@ -136,8 +137,8 @@ function AppRouter() {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <ErrorBoundary>
+    <GameErrorBoundary>
       <AppRouter />
-    </ErrorBoundary>
+    </GameErrorBoundary>
   </React.StrictMode>
 );
