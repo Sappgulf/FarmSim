@@ -5,6 +5,9 @@ import MarketSystem from '../systems/marketSystem';
 import ProcessingSystem from '../systems/processingSystem';
 import AIFarmingSystem from '../systems/aiFarmingSystem';
 import SeasonalEventsSystem from '../systems/seasonalEventsSystem';
+import CommunitySystem from '../systems/communitySystem';
+import CommunityHub from './CommunityHub';
+import CommunityNotifications from './ui/CommunityNotifications';
 
 // Simple crop data
 const CROPS = {
@@ -1235,6 +1238,11 @@ export default function SimpleFarmGame() {
   const [aiEnergy, setAiEnergy] = useState(100);
   const [aiDecisions, setAiDecisions] = useState([]);
   
+  // Community System
+  const [communitySystem] = useState(() => new CommunitySystem());
+  const [communityData, setCommunityData] = useState({});
+  const [communityNotifications, setCommunityNotifications] = useState([]);
+  
   const [animations, setAnimations] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   
@@ -1519,6 +1527,10 @@ export default function SimpleFarmGame() {
     }, 3000);
   };
 
+  const dismissCommunityNotification = (index) => {
+    setCommunityNotifications(prev => prev.filter((_, i) => i !== index));
+  };
+
   // Enhanced game timer
   useEffect(() => {
     const timer = setInterval(() => {
@@ -1628,6 +1640,32 @@ export default function SimpleFarmGame() {
         const aiTasks = aiFarmingSystem.executeAutomationQueue({
           plots, seeds, level, money, marketPrices
         });
+        
+        // Update Community System
+        const communityUpdate = communitySystem.update({
+          level,
+          money,
+          inventory: { ...inventory, ...processingInventory },
+          livestock,
+          processing_facilities: Object.keys(activeFacilities).length,
+          plots,
+          currentSeason
+        });
+        
+        setCommunityData(communityUpdate);
+        
+        // Check for community notifications
+        if (communityUpdate.activeMarketEvents?.length > (communityData.activeMarketEvents?.length || 0)) {
+          const newEvents = communityUpdate.activeMarketEvents.slice(communityData.activeMarketEvents?.length || 0);
+          newEvents.forEach(event => {
+            setCommunityNotifications(prev => [...prev, {
+              type: 'event',
+              title: 'New Market Event!',
+              message: event.name,
+              timestamp: Date.now()
+            }]);
+          });
+        }
         
         if (aiTasks.length > 0) {
           aiTasks.forEach(task => {
@@ -3519,6 +3557,12 @@ export default function SimpleFarmGame() {
         </div>
       )}
 
+      {/* Community Notifications */}
+      <CommunityNotifications 
+        notifications={communityNotifications}
+        onDismiss={dismissCommunityNotification}
+      />
+
 
       {/* Hotkey Help Overlay */}
       {showHotkeyHelp && (
@@ -3788,6 +3832,7 @@ export default function SimpleFarmGame() {
               { id: 'processing', name: '🏭 Processing', icon: '⚙️' },
               { id: 'ai', name: '🤖 Bots', icon: '🧠' },
               { id: 'events', name: '🎉 Events', icon: '🌟' },
+              { id: 'community', name: '🏘️ Community', icon: '👥' },
               { id: 'livestock', name: '🐄 Livestock', icon: '🐔' },
               { id: 'buildings', name: '🏗️ Buildings', icon: '🏠' },
               { id: 'contracts', name: '📋 Contracts', icon: '📄' },
@@ -6117,6 +6162,110 @@ export default function SimpleFarmGame() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Community Tab */}
+        {activeTab === 'community' && (
+          <CommunityHub
+            community={communityData}
+            gameState={{
+              level,
+              money,
+              inventory: { ...inventory, ...processingInventory },
+              livestock,
+              processing_facilities: Object.keys(activeFacilities)
+            }}
+            onTradeWithNeighbor={(neighborId, offer, request) => {
+              const result = communitySystem.tradeWithNeighbor(neighborId, offer, request);
+              if (result.success) {
+                // Update player inventory
+                Object.entries(offer).forEach(([item, quantity]) => {
+                  if (inventory[item]) {
+                    setInventory(prev => ({
+                      ...prev,
+                      [item]: Math.max(0, (prev[item] || 0) - quantity)
+                    }));
+                  } else if (processingInventory[item]) {
+                    setProcessingInventory(prev => ({
+                      ...prev,
+                      [item]: Math.max(0, (prev[item] || 0) - quantity)
+                    }));
+                  }
+                });
+                
+                Object.entries(request).forEach(([item, quantity]) => {
+                  setProcessingInventory(prev => ({
+                    ...prev,
+                    [item]: (prev[item] || 0) + quantity
+                  }));
+                });
+                
+                addNotification(result.message, 'success');
+                
+                setCommunityNotifications(prev => [...prev, {
+                  type: 'trade',
+                  title: 'Trade Completed!',
+                  message: result.message,
+                  reward: `+${result.relationshipChange} relationship`,
+                  timestamp: Date.now()
+                }]);
+              } else {
+                addNotification(result.message, 'error');
+              }
+              return result;
+            }}
+            onParticipateInEvent={(eventId, contribution) => {
+              const result = communitySystem.participateInMarketEvent(eventId, contribution);
+              if (result.success) {
+                addNotification(result.message, 'success');
+                
+                setCommunityNotifications(prev => [...prev, {
+                  type: 'event',
+                  title: 'Event Participation!',
+                  message: result.message,
+                  reward: `+${result.pointsEarned} Community Points`,
+                  timestamp: Date.now()
+                }]);
+              }
+              return result;
+            }}
+            onVisitFarm={(farmId) => {
+              const result = communitySystem.visitFarm(farmId);
+              if (result.success) {
+                // Apply rewards
+                Object.entries(result.rewards).forEach(([reward, amount]) => {
+                  if (reward === 'inspiration_points') {
+                    // Inspiration points could boost XP or provide temporary buffs
+                    setExperience(prev => prev + amount);
+                  } else if (reward === 'flower_seeds' || reward === 'heirloom_seeds') {
+                    setSpecialSeeds(prev => ({
+                      ...prev,
+                      [reward.replace('_seeds', '')]: (prev[reward.replace('_seeds', '')] || 0) + amount
+                    }));
+                  } else if (reward === 'automation_blueprints') {
+                    setResearchPoints(prev => prev + amount * 10);
+                  }
+                });
+                
+                addNotification(`Visited ${result.farm.name}! Gained inspiration: ${result.inspiration}`, 'success');
+                
+                setCommunityNotifications(prev => [...prev, {
+                  type: 'tour',
+                  title: 'Farm Visit Completed!',
+                  message: `Visited ${result.farm.name}`,
+                  reward: Object.entries(result.rewards).map(([key, val]) => `+${val} ${key.replace('_', ' ')}`).join(', '),
+                  timestamp: Date.now()
+                }]);
+              } else {
+                addNotification(result.message, 'error');
+              }
+              return result;
+            }}
+            onStartChallenge={(challengeId) => {
+              // Challenge system would be implemented here
+              addNotification('Cooperative challenges coming soon!', 'info');
+            }}
+          />
         )}
 
         {/* Livestock Tab */}
