@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useRef } from "react";
 
 export function Button({ children, onClick, variant = "default", size = "default", className = "", ...props }) {
-  const baseClasses = "inline-flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] shadow-sm hover:shadow-md";
+  const buttonRef = useRef(null);
+  
+  const baseClasses = "relative overflow-hidden inline-flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] shadow-sm hover:shadow-md";
   
   const variants = {
     default: "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 focus-visible:ring-emerald-500",
@@ -18,10 +20,46 @@ export function Button({ children, onClick, variant = "default", size = "default
     icon: "h-10 w-10",
   };
 
+  const createRipple = (event) => {
+    const button = buttonRef.current;
+    if (!button) return;
+
+    const ripple = document.createElement("span");
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+
+    ripple.style.cssText = `
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      transform: scale(0);
+      animation: ripple-animation 0.6s ease-out;
+      pointer-events: none;
+      width: ${size}px;
+      height: ${size}px;
+      left: ${x}px;
+      top: ${y}px;
+    `;
+
+    button.appendChild(ripple);
+
+    setTimeout(() => {
+      ripple.remove();
+    }, 600);
+  };
+
+  const handleClick = (event) => {
+    createRipple(event);
+    if (onClick) onClick(event);
+  };
+
   return (
     <button
+      ref={buttonRef}
       className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
-      onClick={onClick}
+      onClick={handleClick}
       {...props}
     >
       {children}

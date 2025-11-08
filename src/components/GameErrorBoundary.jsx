@@ -17,7 +17,7 @@ class GameErrorBoundary extends React.Component {
     });
     
     // Log error for debugging
-    console.error('FarmLife Game Error:', error, errorInfo);
+    console.error('[farm]', 'Game Error', error, errorInfo);
   }
 
   handleRestart = () => {
