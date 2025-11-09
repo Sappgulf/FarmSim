@@ -132,7 +132,11 @@ const GameSidebar = memo(() => {
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div className="text-center">
             <div className="font-semibold text-gray-800">
-              {Object.values(state.inventory).reduce((sum, qty) => sum + (qty || 0), 0)}
+              {Object.values(state.inventory || {}).reduce((sum, qty) => {
+                // Handle both numbers and objects - ensure we only count numeric values
+                const count = typeof qty === 'number' ? qty : (typeof qty === 'object' && qty !== null ? (qty.count || qty.quantity || 0) : 0);
+                return sum + (Number(count) || 0);
+              }, 0)}
             </div>
             <div className="text-gray-600">Total Items</div>
           </div>

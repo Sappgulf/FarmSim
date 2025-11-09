@@ -5,6 +5,39 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 
+// Mapping for unlock IDs to user-friendly names
+const UNLOCK_NAMES = {
+  premium_seeds: 'Premium Seeds',
+  auto_irrigation: 'Auto Irrigation',
+  resistant_crops: 'Pest-Resistant Crops',
+  price_alerts: 'Price Alerts',
+  trend_analysis: 'Trend Analysis',
+  weather_immunity: 'Weather Immunity',
+  fertility_boost: 'Fertility Boost',
+  basic_automation: 'Basic Automation'
+};
+
+// Mapping for research IDs to user-friendly names (for prerequisites)
+const RESEARCH_NAMES = {
+  hybrid_crops: 'Hybrid Crops',
+  irrigation_system: 'Advanced Irrigation',
+  pest_genetics: 'Pest Genetics',
+  market_analytics: 'Market Analytics',
+  climate_control: 'Climate Control',
+  soil_enhancement: 'Soil Enhancement',
+  automation_core: 'Automation Core'
+};
+
+// Helper function to format unlock names
+const formatUnlocks = (unlocks) => {
+  return unlocks.map(id => UNLOCK_NAMES[id] || id).join(', ');
+};
+
+// Helper function to format research names (for prerequisites)
+const formatResearchNames = (ids) => {
+  return ids.map(id => RESEARCH_NAMES[id] || id).join(', ');
+};
+
 // Research projects from original system
 const RESEARCH_PROJECTS = {
   hybrid_crops: {
@@ -321,14 +354,14 @@ const ResearchTab = memo(() => {
                 {/* Prerequisites */}
                 {research.prerequisites.length > 0 && (
                   <div className="text-xs text-gray-600 mb-2">
-                    Requires: {research.prerequisites.join(', ')}
+                    Requires: {formatResearchNames(research.prerequisites)}
                   </div>
                 )}
 
                 {/* Unlocks */}
                 {research.unlocks.length > 0 && (
                   <div className="text-xs text-green-600 mb-2">
-                    Unlocks: {research.unlocks.join(', ')}
+                    Unlocks: {formatUnlocks(research.unlocks)}
                   </div>
                 )}
 

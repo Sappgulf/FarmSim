@@ -142,6 +142,12 @@ export class MusicSystem {
   // Create a musical note
   playNote(frequency, duration, time = 0, type = 'sine') {
     if (!this.enabled || !this.audioContext || frequency === 0) return;
+    
+    // Check if AudioContext is running - don't access currentTime if suspended
+    // This prevents browser warnings about AudioContext not being allowed to start
+    if (this.audioContext.state === 'suspended') {
+      return; // AudioContext hasn't been resumed yet (needs user gesture)
+    }
 
     const now = this.audioContext.currentTime + time;
     
@@ -174,6 +180,11 @@ export class MusicSystem {
   // Schedule next note in the melody
   scheduleNote() {
     if (!this.enabled || !this.audioContext) return;
+    
+    // Check if AudioContext is running - don't access currentTime if suspended
+    if (this.audioContext.state === 'suspended') {
+      return; // AudioContext hasn't been resumed yet (needs user gesture)
+    }
 
     const melody = this.getSeasonalMelody(this.currentSeason);
     const secondsPerBeat = 60.0 / melody.tempo;

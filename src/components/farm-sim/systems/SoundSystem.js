@@ -48,6 +48,14 @@ export class SoundSystem {
   // Create oscillator and gain nodes
   createSound(frequency, type = 'sine', duration = 0.1) {
     if (!this.enabled || !this.audioContext) return;
+    
+    // Check if AudioContext is running - don't access currentTime if suspended
+    // This prevents browser warnings about AudioContext not being allowed to start
+    if (this.audioContext.state === 'suspended') {
+      // AudioContext hasn't been resumed yet (needs user gesture)
+      // Silently return - sounds will work after user interaction
+      return null;
+    }
 
     const oscillator = this.audioContext.createOscillator();
     const gainNode = this.audioContext.createGain();
@@ -58,7 +66,7 @@ export class SoundSystem {
     oscillator.type = type;
     oscillator.frequency.value = frequency;
 
-    // Envelope
+    // Envelope - safe to access currentTime now that we've checked state
     const now = this.audioContext.currentTime;
     gainNode.gain.setValueAtTime(0, now);
     gainNode.gain.linearRampToValueAtTime(this.volume, now + 0.01);
