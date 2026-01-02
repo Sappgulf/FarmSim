@@ -27,7 +27,7 @@ export const CROP_DATA = {
     emoji: '🥕',
     cost: 12,
     baseValue: 24,
-    growthTime: 15, // Fast starter crop
+    growthTime: 60, // Fast starter crop (was 15, 4x scaled)
     stages: 3,
     description: 'A crunchy orange vegetable',
     category: 'vegetable',
@@ -40,7 +40,7 @@ export const CROP_DATA = {
     emoji: '🥔',
     cost: 16,
     baseValue: 32,
-    growthTime: 20, // Reliable mid-tier
+    growthTime: 80, // Reliable mid-tier (was 20, 4x scaled)
     stages: 3,
     description: 'A versatile root vegetable',
     category: 'vegetable',
@@ -53,7 +53,7 @@ export const CROP_DATA = {
     emoji: '🥬',
     cost: 10,
     baseValue: 19,
-    growthTime: 12, // Fastest crop
+    growthTime: 48, // Fastest crop (was 12, 4x scaled)
     stages: 3,
     description: 'Crispy green lettuce - fast growing!',
     category: 'vegetable',
@@ -66,7 +66,7 @@ export const CROP_DATA = {
     emoji: '🥬',
     cost: 24,
     baseValue: 48,
-    growthTime: 25, // Hearty cabbage
+    growthTime: 100, // Hearty cabbage (was 25, 4x scaled)
     stages: 3,
     description: 'Hearty green cabbage',
     category: 'vegetable',
@@ -79,14 +79,14 @@ export const CROP_DATA = {
     emoji: '🍆',
     cost: 32,
     baseValue: 70,
-    growthTime: 30, // Premium crop
+    growthTime: 120, // Premium crop (was 30, 4x scaled)
     stages: 4,
     description: 'Purple eggplant - premium value!',
     category: 'vegetable',
     season: 'summer',
     level: 3,
   },
-  
+
   // Grains - BALANCED GROWTH (15-35 seconds)
   corn: {
     id: 'corn',
@@ -94,7 +94,7 @@ export const CROP_DATA = {
     emoji: '🌽',
     cost: 28,
     baseValue: 60,
-    growthTime: 25, // Tall corn takes time
+    growthTime: 100, // Tall corn takes time (was 25, 4x scaled)
     stages: 4,
     description: 'Golden ears of sweet corn',
     category: 'grain',
@@ -107,7 +107,7 @@ export const CROP_DATA = {
     emoji: '🌾',
     cost: 14,
     baseValue: 28,
-    growthTime: 18, // Fast grain crop
+    growthTime: 72, // Fast grain crop (was 18, 4x scaled)
     stages: 3,
     description: 'Golden wheat for bread',
     category: 'grain',
@@ -120,14 +120,14 @@ export const CROP_DATA = {
     emoji: '🍚',
     cost: 30,
     baseValue: 66,
-    growthTime: 28, // Requires patience
+    growthTime: 112, // Requires patience (was 28, 4x scaled)
     stages: 4,
     description: 'Staple grain crop - high value!',
     category: 'grain',
     season: 'summer',
     level: 3,
   },
-  
+
   // Fruits - BALANCED GROWTH (20-45 seconds)
   tomato: {
     id: 'tomato',
@@ -135,7 +135,7 @@ export const CROP_DATA = {
     emoji: '🍅',
     cost: 32,
     baseValue: 64,
-    growthTime: 22, // Popular fruit
+    growthTime: 88, // Popular fruit (was 22, 4x scaled)
     stages: 4,
     description: 'Juicy red tomatoes',
     category: 'fruit',
@@ -148,7 +148,7 @@ export const CROP_DATA = {
     emoji: '🍓',
     cost: 40,
     baseValue: 88,
-    growthTime: 24, // Delicate berries
+    growthTime: 96, // Delicate berries (was 24, 4x scaled)
     stages: 4,
     description: 'Sweet red strawberries - premium!',
     category: 'fruit',
@@ -161,7 +161,7 @@ export const CROP_DATA = {
     emoji: '🍉',
     cost: 60,
     baseValue: 130,
-    growthTime: 45, // Slow-growing giant
+    growthTime: 180, // Slow-growing giant (was 45, 4x scaled)
     stages: 5,
     description: 'Massive juicy watermelon - luxury crop!',
     category: 'fruit',
@@ -174,14 +174,14 @@ export const CROP_DATA = {
     emoji: '🫐',
     cost: 36,
     baseValue: 78,
-    growthTime: 26, // Bush berries
+    growthTime: 104, // Bush berries (was 26, 4x scaled)
     stages: 4,
     description: 'Antioxidant-rich blueberries',
     category: 'fruit',
     season: 'summer',
     level: 3,
   },
-  
+
   // Specialty Crops - BALANCED GROWTH (15-35 seconds)
   pumpkin: {
     id: 'pumpkin',
@@ -189,7 +189,7 @@ export const CROP_DATA = {
     emoji: '🎃',
     cost: 48,
     baseValue: 110,
-    growthTime: 35, // Large pumpkin takes time
+    growthTime: 140, // Large pumpkin takes time (was 35, 4x scaled)
     stages: 5,
     description: 'Large orange pumpkin - fall favorite!',
     category: 'specialty',
@@ -202,7 +202,7 @@ export const CROP_DATA = {
     emoji: '🌶️',
     cost: 20,
     baseValue: 42,
-    growthTime: 16, // Spicy peppers
+    growthTime: 64, // Spicy peppers (was 16, 4x scaled)
     stages: 3,
     description: 'Spicy red peppers',
     category: 'specialty',
@@ -215,7 +215,7 @@ export const CROP_DATA = {
     emoji: '🧄',
     cost: 18,
     baseValue: 35,
-    growthTime: 20, // Underground growth
+    growthTime: 80, // Underground growth (was 20, 4x scaled)
     stages: 3,
     description: 'Pungent cooking essential',
     category: 'specialty',
@@ -228,7 +228,7 @@ export const CROP_DATA = {
     emoji: '🧅',
     cost: 14,
     baseValue: 28,
-    growthTime: 18, // Layered growth
+    growthTime: 72, // Layered growth (was 18, 4x scaled)
     stages: 3,
     description: 'Versatile cooking base',
     category: 'specialty',
@@ -241,7 +241,7 @@ export const CROP_DATA = {
     emoji: '🥦',
     cost: 26,
     baseValue: 55,
-    growthTime: 22, // Nutrient-rich green
+    growthTime: 88, // Nutrient-rich green (was 22, 4x scaled)
     stages: 4,
     description: 'Nutritious green vegetable',
     category: 'vegetable',

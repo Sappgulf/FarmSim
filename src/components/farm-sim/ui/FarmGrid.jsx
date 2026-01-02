@@ -1,5 +1,6 @@
 import React, { memo, useCallback, useState } from 'react';
 import { useGame } from '../context/GameContext';
+import { useTick } from '../context/TickContext';
 import { Card } from '../../ui/card';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
@@ -9,19 +10,11 @@ import { CROP_DATA } from '../constants/cropData';
 const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [tick, setTick] = useState(0);
-  
-  // Force re-render every second for growing/ready crops to update timers
-  React.useEffect(() => {
-    if (plot && (plot.state === 'growing' || plot.state === 'planted' || plot.state === 'ready')) {
-      const interval = setInterval(() => {
-        setTick(t => t + 1); // Force re-render
-      }, 1000); // Update every second
-      
-      return () => clearInterval(interval);
-    }
-  }, [plot?.state]);
-  
+
+  // PERF: Use centralized tick instead of per-plot setInterval
+  // This reduces N intervals to 1 for the entire grid
+  const tick = useTick();
+
   const getPlotDisplay = () => {
     if (!plot || plot.state === 'empty') {
       return {
@@ -65,7 +58,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
       const minutesLeft = Math.floor(timeRemaining / 60000);
       const secondsLeft = Math.floor((timeRemaining % 60000) / 1000);
       const isNearExpiry = timeRemaining < 10000; // Warning if < 10 seconds
-      
+
       return {
         emoji: plot.crop.emoji || '🌾',
         bgColor: isNearExpiry ? 'bg-orange-100' : 'bg-yellow-100',
@@ -78,9 +71,9 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
     }
 
     if (plot.state === 'withered') {
-      const reason = plot.witherReason === 'no_water' ? 'No Water' : 
-                     plot.witherReason === 'overripe' ? 'Overripe' : 
-                     'Withered';
+      const reason = plot.witherReason === 'no_water' ? 'No Water' :
+        plot.witherReason === 'overripe' ? 'Overripe' :
+          'Withered';
       return {
         emoji: '🥀',
         bgColor: 'bg-red-50',
@@ -131,7 +124,8 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
     <div className="relative">
       <Card
         className={`
-          w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 cursor-pointer transition-all duration-300 relative overflow-hidden
+          w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 cursor-pointer relative overflow-hidden
+          transition-all-fast hover-lift
           ${display.bgColor} ${display.borderColor} border-2
           ${display.hoverEffect} active:scale-95
           ${display.animation || ''}
@@ -170,25 +164,22 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
 
         <div className="flex flex-col items-center justify-center h-full p-0.5 sm:p-1 relative z-10">
           {/* Crop emoji with growth animation - Responsive sizes */}
-          <div 
-            className={`text-xl sm:text-2xl md:text-3xl mb-0.5 sm:mb-1 transition-all duration-300 ${
-              plot?.state === 'growing' ? 'animate-grow' : ''
-            } ${
-              plot?.state === 'ready' ? 'animate-ready-pop' : ''
-            } ${
-              showPreview ? 'opacity-50' : ''
-            }`}
+          <div
+            className={`text-xl sm:text-2xl md:text-3xl mb-0.5 sm:mb-1 transition-transform-medium ${plot?.state === 'growing' ? 'animate-grow' : ''
+              } ${plot?.state === 'ready' ? 'animate-ready-pop' : ''
+              } ${showPreview ? 'opacity-50' : ''
+              }`}
             style={{
-              transform: plot?.state === 'growing' 
+              transform: plot?.state === 'growing'
                 ? `scale(${0.6 + (plot.progress || 0) * 0.6})`  // Grows from 60% to 120% size
-                : plot?.state === 'ready' 
-                ? 'scale(1.2)' 
-                : 'scale(1)'
+                : plot?.state === 'ready'
+                  ? 'scale(1.2)'
+                  : 'scale(1)'
             }}
           >
             {display.emoji}
           </div>
-          
+
           {/* Planting preview */}
           {showPreview && plot?.state === 'empty' && selectedCrop && (
             <div className="absolute inset-0 flex items-center justify-center animate-pulse z-20">
@@ -212,7 +203,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
           {/* Enhanced progress bar with percentage */}
           {display.progress !== undefined && (
             <div className="absolute bottom-1 left-1 right-1 h-2 sm:h-2.5 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-green-400 via-green-500 to-green-600 transition-all duration-500 animate-shimmer"
                 style={{ width: `${display.progress}%` }}
               />
@@ -252,11 +243,10 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
           {/* Water level indicator */}
           {plot?.waterLevel !== undefined && plot?.state !== 'empty' && (
             <div className="absolute bottom-1 left-1 flex items-center gap-0.5">
-              <div className={`w-2 h-2 rounded-full ${
-                plot.waterLevel > 70 ? 'bg-blue-500' :
+              <div className={`w-2 h-2 rounded-full ${plot.waterLevel > 70 ? 'bg-blue-500' :
                 plot.waterLevel > 40 ? 'bg-yellow-500' :
-                'bg-red-500 animate-pulse'
-              }`} />
+                  'bg-red-500 animate-pulse'
+                }`} />
             </div>
           )}
         </div>
@@ -353,7 +343,7 @@ const FarmGrid = memo(() => {
       }
       return;
     }
-    
+
     // Handle plot interaction
     actions.addNotification({
       message: `Plot ${index + 1} info displayed`,
@@ -376,17 +366,17 @@ const FarmGrid = memo(() => {
   const handlePlant = useCallback((index) => {
     // Use consolidated crop data
     const selectedCrop = CROP_DATA[state.selectedCrop] || CROP_DATA.carrot;
-    
+
     // Check if player has enough coins
     if (state.coins >= selectedCrop.cost) {
       actions.setCoins(state.coins - selectedCrop.cost);
       actions.plantCrop(index, selectedCrop.id, selectedCrop);
-      
+
       // Play plant sound
       if (typeof window.soundSystem !== 'undefined') {
         window.soundSystem.playPlantSound();
       }
-      
+
       actions.addNotification({
         message: `Planted ${selectedCrop.emoji} ${selectedCrop.name} on plot ${index + 1}`,
         type: 'success'
@@ -403,13 +393,13 @@ const FarmGrid = memo(() => {
     const plotsArray = Array.isArray(state.plots) ? state.plots : [];
     const plot = plotsArray[index];
     if (!plot || plot.state !== 'ready') return;
-    
+
     const crop = plot.crop;
     const baseValue = crop?.baseValue || 10;
-    
+
     // Calculate earnings (simplified)
     const earnings = Math.floor(baseValue * 1.2);
-    
+
     // Trigger particle effect with earnings text
     if (typeof window.triggerParticleEffect === 'function') {
       // Get plot position
@@ -422,34 +412,34 @@ const FarmGrid = memo(() => {
         });
       }
     }
-    
+
     // Play harvest sound
     if (typeof window.soundSystem !== 'undefined') {
       window.soundSystem.playHarvestSound();
     }
-    
+
     // Play money sound for coin reward
     setTimeout(() => {
       if (typeof window.soundSystem !== 'undefined') {
         window.soundSystem.playMoneySound();
       }
     }, 300);
-    
+
     // Update coins and inventory
     actions.setCoins(state.coins + earnings);
-    // REBALANCED: Reduced XP to 20% of earnings (was 50%) for slower, more meaningful progression
-    actions.setXp(state.xp + Math.floor(earnings * 0.2));
-    
+    // REBALANCED: Reduced XP to 10% of earnings (was 20%) for slower, more meaningful progression
+    actions.setXp(state.xp + Math.floor(earnings * 0.1));
+
     // Update inventory
     const updatedInventory = {
       ...state.inventory,
       [crop.id]: (state.inventory[crop.id] || 0) + 1
     };
     actions.updateInventory(updatedInventory);
-    
+
     // Reset plot
     actions.harvestCrop(index, earnings);
-    
+
     actions.addNotification({
       message: `Harvested ${crop.emoji} ${crop.name}! +${earnings}🪙`,
       type: 'success'
@@ -461,7 +451,7 @@ const FarmGrid = memo(() => {
     let totalEarnings = 0;
     let harvestedCount = 0;
     const plotsArray = Array.isArray(state.plots) ? state.plots : [];
-    
+
     selectedPlots.forEach(index => {
       const plot = plotsArray[index];
       if (plot?.state === 'ready') {
@@ -471,14 +461,14 @@ const FarmGrid = memo(() => {
         handleHarvest(index);
       }
     });
-    
+
     if (harvestedCount > 0) {
       actions.addNotification({
         message: `Bulk harvested ${harvestedCount} crops! +${totalEarnings}🪙`,
         type: 'success'
       });
     }
-    
+
     setSelectedPlots(new Set());
   }, [selectedPlots, Array.isArray(state.plots) ? state.plots : [], handleHarvest, actions]);
 

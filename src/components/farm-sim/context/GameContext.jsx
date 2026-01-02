@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback, useState, useMemo } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { getSoundSystem } from '../systems/SoundSystem';
 
 // Game Context for centralized state management
@@ -51,13 +51,13 @@ const GAME_ACTIONS = {
   // Daily challenges
   SET_DAILY_CHALLENGES: 'SET_DAILY_CHALLENGES',
   UPDATE_CHALLENGE_PROGRESS: 'UPDATE_CHALLENGE_PROGRESS',
-  
+
   // Daily quests
   UPDATE_DAILY_QUESTS: 'UPDATE_DAILY_QUESTS',
-  
+
   // Disaster protections
   UPDATE_DISASTER_PROTECTIONS: 'UPDATE_DISASTER_PROTECTIONS',
-  
+
   // Prestige
   UPDATE_PRESTIGE: 'UPDATE_PRESTIGE',
   PRESTIGE_RESET: 'PRESTIGE_RESET',
@@ -139,14 +139,14 @@ function migrateSaveData(savedData) {
         console.debug('[farm]', 'Migrating save from version 0 to 1');
       }
       migratedData.saveVersion = 1;
-      
+
       // Ensure all required fields exist with fallbacks
       migratedData.settings = migratedData.settings || {
         autoSave: true,
         soundEnabled: true,
         animationsEnabled: true,
       };
-      
+
       migratedData.gameLoop = migratedData.gameLoop || {
         lastUpdate: Date.now(),
         fps: 60,
@@ -237,10 +237,10 @@ function migrateSaveData(savedData) {
   }
 }
 
-  /**
-   * Loads and validates saved game state from localStorage
-   * @returns {Object|null} - Loaded state or null if no valid save exists
-   */
+/**
+ * Loads and validates saved game state from localStorage
+ * @returns {Object|null} - Loaded state or null if no valid save exists
+ */
 function loadSavedState() {
   try {
     const savedDataString = localStorage.getItem(SAVE_KEY);
@@ -283,7 +283,7 @@ function loadSavedState() {
 const initialState = {
   // Save metadata
   saveVersion: SAVE_VERSION,
-  
+
   // Core game state
   coins: 100,
   xp: 0,
@@ -442,26 +442,26 @@ function gameReducer(state, action) {
       const newGridSize = action.payload;
       const newTotalPlots = newGridSize * newGridSize;
       const existingPlots = state.plots;
-      
+
       // Add new empty plots if expanding
       const updatedPlots = existingPlots.length < newTotalPlots
         ? [
-            ...existingPlots,
-            ...Array(newTotalPlots - existingPlots.length).fill(null).map((_, index) => ({
-              id: existingPlots.length + index,
-              state: 'empty',
-              crop: null,
-              growthStage: 0,
-              plantedAt: null,
-              waterLevel: 100,
-              fertilizer: 0,
-              disease: null,
-              soilFertility: 1.0,
-              progress: 0
-            }))
-          ]
+          ...existingPlots,
+          ...Array(newTotalPlots - existingPlots.length).fill(null).map((_, index) => ({
+            id: existingPlots.length + index,
+            state: 'empty',
+            crop: null,
+            growthStage: 0,
+            plantedAt: null,
+            waterLevel: 100,
+            fertilizer: 0,
+            disease: null,
+            soilFertility: 1.0,
+            progress: 0
+          }))
+        ]
         : existingPlots.slice(0, newTotalPlots);
-      
+
       return { ...state, gridSize: newGridSize, plots: updatedPlots };
 
     case GAME_ACTIONS.UPDATE_INVENTORY:
@@ -497,16 +497,16 @@ function gameReducer(state, action) {
 
     case GAME_ACTIONS.UPDATE_CHALLENGE_PROGRESS:
       return { ...state, dailyChallengeProgress: action.payload };
-    
+
     case GAME_ACTIONS.UPDATE_DAILY_QUESTS:
       return { ...state, dailyQuests: action.payload };
-    
+
     case GAME_ACTIONS.UPDATE_DISASTER_PROTECTIONS:
       return { ...state, disasterProtections: action.payload };
-    
+
     case GAME_ACTIONS.UPDATE_PRESTIGE:
       return { ...state, prestige: action.payload };
-    
+
     case GAME_ACTIONS.PRESTIGE_RESET:
       // Reset game but keep prestige bonuses
       return {
@@ -589,7 +589,7 @@ function gameReducer(state, action) {
 export function GameProvider({ children }) {
   // Initialize state with loaded save data if available
   const [state, dispatch] = useReducer(
-    gameReducer, 
+    gameReducer,
     initialState,
     (initial) => {
       const savedState = loadSavedState();
@@ -659,7 +659,7 @@ export function GameProvider({ children }) {
           },
         };
         const serialized = JSON.stringify(saveData);
-        
+
         // Use async storage write to avoid blocking main thread
         // localStorage.setItem is synchronous, but we can defer it with setTimeout
         // requestIdleCallback has limited browser support, so use setTimeout fallback
@@ -694,6 +694,10 @@ export function GameProvider({ children }) {
   }, []);
 
   // Unified game loop with FPS monitoring, auto-save, and subsystem timing
+  // PERF FIX: FPS stored in ref and window global, NOT in React state
+  // This prevents the entire app from re-rendering on every FPS update
+  const fpsRef = useRef(60);
+
   useEffect(() => {
     if (state.gameLoop.paused) return;
 
@@ -707,16 +711,14 @@ export function GameProvider({ children }) {
       const currentState = stateRef.current;
       if (currentState.gameLoop.paused) return;
 
-      // Update FPS counter (every second)
+      // Update FPS counter (every second) - STORED IN REF, NOT STATE
       frameCount++;
       if (currentTime - lastFPSUpdate >= 1000) {
-        dispatch({
-          type: GAME_ACTIONS.UPDATE_GAME_LOOP,
-          payload: { 
-            fps: Math.round((frameCount * 1000) / (currentTime - lastFPSUpdate)),
-            lastUpdate: Date.now() 
-          },
-        });
+        const fps = Math.round((frameCount * 1000) / (currentTime - lastFPSUpdate));
+        fpsRef.current = fps;
+        // Expose to window for performance overlay (no React re-render!)
+        window.__currentFPS = fps;
+        window.__lastFrameTime = currentTime - lastFPSUpdate;
         frameCount = 0;
         lastFPSUpdate = currentTime;
       }
@@ -744,11 +746,11 @@ export function GameProvider({ children }) {
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [state.gameLoop.paused, state.settings.autoSave, debouncedAutoSave]); // Removed 'state' dependency - use ref instead
+  }, [state.gameLoop.paused, state.settings.autoSave, debouncedAutoSave]);
 
   // Systems (will be set by FarmSim component)
   const [systems, setSystemsState] = useState({});
-  
+
   // CRITICAL: Use ref to access systems without triggering re-memoization
   const systemsRef = React.useRef(systems);
   React.useEffect(() => {
@@ -808,11 +810,11 @@ export function GameProvider({ children }) {
     prestigeReset: (newPrestige) => dispatch({ type: GAME_ACTIONS.PRESTIGE_RESET, payload: newPrestige }),
     pauseGame: () => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { paused: true } }),
     resumeGame: () => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { paused: false } }),
-    
+
     /**
      * Save/Load actions
      */
-    
+
     /**
      * Loads game state from localStorage
      * @returns {boolean} True if load succeeded
@@ -825,7 +827,7 @@ export function GameProvider({ children }) {
       }
       return false;
     },
-    
+
     /**
      * Saves current game state to localStorage
      * @returns {boolean} True if save succeeded
@@ -858,7 +860,7 @@ export function GameProvider({ children }) {
     /**
      * Complex actions - these are called by UI and delegated to systems
      */
-    
+
     /**
      * Plants a crop in the specified plot
      * @param {number} plotIndex - Plot index to plant in
@@ -910,7 +912,7 @@ export function GameProvider({ children }) {
       const currentState = stateRef.current;
       const updatedPlots = [...currentState.plots];
       const plot = updatedPlots[plotIndex];
-      
+
       updatedPlots[plotIndex] = {
         ...plot,
         state: 'empty',
@@ -923,14 +925,14 @@ export function GameProvider({ children }) {
         soilFertility: Math.max(0.5, (plot?.soilFertility || 1.0) - 0.1),
         progress: 0
       };
-      
+
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
     },
 
     /**
      * Helper actions for systems - these need to be stable, so we use functions that work with current state
      */
-    
+
     /**
      * Adds money to player's coins
      * @param {number} amount - Amount to add
@@ -961,11 +963,13 @@ export function GameProvider({ children }) {
      * @param {number} amount - Amount to add
      */
     addToInventory: (item, amount) => {
-      dispatch({ type: GAME_ACTIONS.UPDATE_INVENTORY, payload: (currentState) => {
-        const newInventory = { ...currentState.inventory };
-        newInventory[item] = (newInventory[item] || 0) + amount;
-        return newInventory;
-      } });
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_INVENTORY, payload: (currentState) => {
+          const newInventory = { ...currentState.inventory };
+          newInventory[item] = (newInventory[item] || 0) + amount;
+          return newInventory;
+        }
+      });
     },
 
     /**
@@ -974,30 +978,34 @@ export function GameProvider({ children }) {
      * @param {number} amount - Amount to remove
      */
     removeFromInventory: (item, amount) => {
-      dispatch({ type: GAME_ACTIONS.UPDATE_INVENTORY, payload: (currentState) => {
-        const newInventory = { ...currentState.inventory };
-        newInventory[item] = Math.max(0, (newInventory[item] || 0) - amount);
-        if (newInventory[item] === 0) {
-          delete newInventory[item];
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_INVENTORY, payload: (currentState) => {
+          const newInventory = { ...currentState.inventory };
+          newInventory[item] = Math.max(0, (newInventory[item] || 0) - amount);
+          if (newInventory[item] === 0) {
+            delete newInventory[item];
+          }
+          return newInventory;
         }
-        return newInventory;
-      } });
+      });
     },
 
     /**
      * Bulk farming actions
      */
-    
+
     /**
      * Waters all plots (adds 25% water level, clamped to 100%)
      */
     waterAllPlots: () => {
-      dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: (currentState) => {
-        return currentState.plots.map(plot => ({
-          ...plot,
-          waterLevel: Math.min(100, (plot.waterLevel || 0) + 25)
-        }));
-      } });
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_PLOTS, payload: (currentState) => {
+          return currentState.plots.map(plot => ({
+            ...plot,
+            waterLevel: Math.min(100, (plot.waterLevel || 0) + 25)
+          }));
+        }
+      });
     },
 
     /**
@@ -1006,96 +1014,102 @@ export function GameProvider({ children }) {
      */
     harvestAllReadyCrops: () => {
       // First, calculate totals and update plots
-      dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: (currentState) => {
-        const updatedPlots = currentState.plots.map(plot => {
-          if (plot.state === 'ready' && plot.crop) {
-            // Reset plot
-            return {
-              ...plot,
-              state: 'empty',
-              crop: null,
-              plantedAt: null,
-              readyAt: null,
-              growthStage: 0,
-              progress: 0,
-              soilFertility: Math.max(0.5, (plot.soilFertility || 1.0) - 0.1),
-              waterLevel: 50,
-            };
-          }
-          return plot;
-        });
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_PLOTS, payload: (currentState) => {
+          const updatedPlots = currentState.plots.map(plot => {
+            if (plot.state === 'ready' && plot.crop) {
+              // Reset plot
+              return {
+                ...plot,
+                state: 'empty',
+                crop: null,
+                plantedAt: null,
+                readyAt: null,
+                growthStage: 0,
+                progress: 0,
+                soilFertility: Math.max(0.5, (plot.soilFertility || 1.0) - 0.1),
+                waterLevel: 50,
+              };
+            }
+            return plot;
+          });
 
-        // Calculate totals from ready crops before resetting
-        let totalEarnings = 0;
-        let totalXp = 0;
-        const inventoryUpdates = {};
+          // Calculate totals from ready crops before resetting
+          let totalEarnings = 0;
+          let totalXp = 0;
+          const inventoryUpdates = {};
 
-        currentState.plots.forEach(plot => {
-          if (plot.state === 'ready' && plot.crop) {
-            const baseValue = plot.crop.baseValue || 10;
-            const soilMultiplier = plot.soilFertility || 1.0;
-            const earnings = Math.floor(baseValue * soilMultiplier);
+          currentState.plots.forEach(plot => {
+            if (plot.state === 'ready' && plot.crop) {
+              const baseValue = plot.crop.baseValue || 10;
+              const soilMultiplier = plot.soilFertility || 1.0;
+              const earnings = Math.floor(baseValue * soilMultiplier);
 
-            totalEarnings += earnings;
-            // REBALANCED: Reduced XP to 20% of earnings (was 50%)
-            totalXp += Math.floor(earnings * 0.2);
+              totalEarnings += earnings;
+              // REBALANCED: Reduced XP to 20% of earnings (was 50%)
+              totalXp += Math.floor(earnings * 0.2);
 
-            // Track inventory updates
-            const cropId = plot.crop.id;
-            inventoryUpdates[cropId] = (inventoryUpdates[cropId] || 0) + 1;
-          }
-        });
+              // Track inventory updates
+              const cropId = plot.crop.id;
+              inventoryUpdates[cropId] = (inventoryUpdates[cropId] || 0) + 1;
+            }
+          });
 
-        // Apply all updates after a delay to ensure state consistency
-        setTimeout(() => {
-          if (totalEarnings > 0) {
-            dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentState.coins + totalEarnings });
-            dispatch({ type: GAME_ACTIONS.SET_XP, payload: currentState.xp + totalXp });
+          // Apply all updates after a delay to ensure state consistency
+          setTimeout(() => {
+            if (totalEarnings > 0) {
+              dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentState.coins + totalEarnings });
+              dispatch({ type: GAME_ACTIONS.SET_XP, payload: currentState.xp + totalXp });
 
-            // Update inventory
-            dispatch({ type: GAME_ACTIONS.UPDATE_INVENTORY, payload: (currentInv) => {
-              const newInventory = { ...currentInv };
-              Object.entries(inventoryUpdates).forEach(([cropId, amount]) => {
-                newInventory[cropId] = (newInventory[cropId] || 0) + amount;
+              // Update inventory
+              dispatch({
+                type: GAME_ACTIONS.UPDATE_INVENTORY, payload: (currentInv) => {
+                  const newInventory = { ...currentInv };
+                  Object.entries(inventoryUpdates).forEach(([cropId, amount]) => {
+                    newInventory[cropId] = (newInventory[cropId] || 0) + amount;
+                  });
+                  return newInventory;
+                }
               });
-              return newInventory;
-            } });
-          }
-        }, 0);
+            }
+          }, 0);
 
-        return updatedPlots;
-      } });
+          return updatedPlots;
+        }
+      });
     },
 
     fertilizeAllPlots: () => {
-      dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: (currentState) => {
-        const costPerPlot = 15;
-        const maxFertilizations = Math.floor(currentState.coins / costPerPlot);
-        let fertilizationsApplied = 0;
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_PLOTS, payload: (currentState) => {
+          const costPerPlot = 15;
+          const maxFertilizations = Math.floor(currentState.coins / costPerPlot);
+          let fertilizationsApplied = 0;
 
-        const updatedPlots = currentState.plots.map(plot => {
-          if (fertilizationsApplied < maxFertilizations) {
-            fertilizationsApplied++;
-            return {
-              ...plot,
-              soilFertility: Math.min(1.5, (plot.soilFertility || 1.0) + 0.3),
-              waterLevel: Math.min(100, (plot.waterLevel || 0) + 10),
-              fertilizer: (plot.fertilizer || 0) + 1
-            };
-          }
-          return plot;
-        });
+          const updatedPlots = currentState.plots.map(plot => {
+            if (fertilizationsApplied < maxFertilizations) {
+              fertilizationsApplied++;
+              return {
+                ...plot,
+                soilFertility: Math.min(1.5, (plot.soilFertility || 1.0) + 0.3),
+                waterLevel: Math.min(100, (plot.waterLevel || 0) + 10),
+                fertilizer: (plot.fertilizer || 0) + 1
+              };
+            }
+            return plot;
+          });
 
-        // Deduct cost for fertilizations applied
-        const totalCost = fertilizationsApplied * costPerPlot;
-        setTimeout(() => {
-          if (totalCost > 0) {
-            dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentState.coins - totalCost });
-          }
-        }, 0);
+          // Deduct cost for fertilizations applied
+          const totalCost = fertilizationsApplied * costPerPlot;
+          setTimeout(() => {
+            if (totalCost > 0) {
+              dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentState.coins - totalCost });
+            }
+          }, 0);
 
-        return updatedPlots;
-      } });
+          return updatedPlots;
+        }
+      });
     },
 
     /**
@@ -1103,33 +1117,35 @@ export function GameProvider({ children }) {
      * @returns {void}
      */
     treatAllDiseases: () => {
-      dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: (currentState) => {
-        const costPerTreatment = 20;
-        const diseasedPlots = currentState.plots.filter(p => p.disease).length;
-        const maxTreatments = Math.min(diseasedPlots, Math.floor(currentState.coins / costPerTreatment));
-        let treatmentsApplied = 0;
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_PLOTS, payload: (currentState) => {
+          const costPerTreatment = 20;
+          const diseasedPlots = currentState.plots.filter(p => p.disease).length;
+          const maxTreatments = Math.min(diseasedPlots, Math.floor(currentState.coins / costPerTreatment));
+          let treatmentsApplied = 0;
 
-        const updatedPlots = currentState.plots.map(plot => {
-          if (plot.disease && treatmentsApplied < maxTreatments) {
-            treatmentsApplied++;
-            return {
-              ...plot,
-              disease: null
-            };
-          }
-          return plot;
-        });
+          const updatedPlots = currentState.plots.map(plot => {
+            if (plot.disease && treatmentsApplied < maxTreatments) {
+              treatmentsApplied++;
+              return {
+                ...plot,
+                disease: null
+              };
+            }
+            return plot;
+          });
 
-        // Deduct cost for treatments applied
-        const totalCost = treatmentsApplied * costPerTreatment;
-        setTimeout(() => {
-          if (totalCost > 0) {
-            dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentState.coins - totalCost });
-          }
-        }, 0);
+          // Deduct cost for treatments applied
+          const totalCost = treatmentsApplied * costPerTreatment;
+          setTimeout(() => {
+            if (totalCost > 0) {
+              dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentState.coins - totalCost });
+            }
+          }, 0);
 
-        return updatedPlots;
-      } });
+          return updatedPlots;
+        }
+      });
     },
   }), [dispatch]); // CRITICAL: Only dispatch is stable, use refs for everything else
 

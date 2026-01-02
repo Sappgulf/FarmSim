@@ -25,7 +25,7 @@ export class FarmingSystem {
       console.error('[farm] FarmingSystem: update() called with null/undefined state');
       return;
     }
-    
+
     this.gameState = currentState;
 
     // Safety check - don't update if no state or no plots
@@ -57,7 +57,7 @@ export class FarmingSystem {
 
     let hasChanges = false;
     const now = Date.now();
-    
+
     const growingCount = this.gameState.plots.filter(p => p.state === 'planted' || p.state === 'growing').length;
     if (growingCount > 0 && import.meta.env.MODE === 'development') {
       console.debug('[farm]', `Updating ${growingCount} growing crops`);
@@ -156,9 +156,9 @@ export class FarmingSystem {
 
       // Check water level - growing crops wither if no water
       if ((plot.waterLevel || 0) <= 0 && (plot.state === 'growing' || plot.state === 'planted')) {
-        return { 
-          ...plot, 
-          state: 'withered', 
+        return {
+          ...plot,
+          state: 'withered',
           witheredAt: now,
           witherReason: 'no_water'
         };
@@ -204,7 +204,7 @@ export class FarmingSystem {
     });
 
     // Only update if something changed
-    if (updatedPlots.some((plot, index) => 
+    if (updatedPlots.some((plot, index) =>
       plot.soilFertility !== this.gameState.plots[index].soilFertility
     )) {
       this.actions.updatePlots(updatedPlots);
@@ -290,7 +290,7 @@ export class FarmingSystem {
     // Update coins and XP
     // REBALANCED: Reduced XP to 20% of earnings (was 50%)
     this.actions.setCoins(this.gameState.coins + harvestValue);
-    this.actions.setXp(this.gameState.xp + Math.floor(harvestValue * 0.2));
+    this.actions.setXp(this.gameState.xp + Math.floor(harvestValue * 0.1)); // REBALANCED: 10% XP (was 20%)
 
     // Update inventory
     const updatedInventory = {
@@ -315,7 +315,7 @@ export class FarmingSystem {
     };
 
     this.actions.updatePlots(updatedPlots);
-    
+
     return true;
   }
 

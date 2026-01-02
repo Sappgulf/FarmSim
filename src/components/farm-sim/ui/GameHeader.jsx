@@ -1,5 +1,6 @@
 import React, { memo, useState, useEffect, useRef } from 'react';
 import { useGame } from '../context/GameContext';
+import { useTick } from '../context/TickContext';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Progress } from '../../ui/progress';
@@ -22,7 +23,7 @@ const AnimatedNumber = memo(({ value, duration = 500 }) => {
         const now = Date.now();
         const progress = Math.min((now - startTime) / duration, 1);
         const currentValue = Math.floor(startValue + (endValue - startValue) * progress);
-        
+
         setDisplayValue(currentValue);
 
         if (progress < 1) {
@@ -50,7 +51,6 @@ AnimatedNumber.displayName = 'AnimatedNumber';
 const GameHeader = memo(() => {
   const { state, actions } = useGame();
   const [showStatsDropdown, setShowStatsDropdown] = useState(false);
-  const [currentTime, setCurrentTime] = useState(Date.now());
   const prevLevelRef = useRef(state.level);
 
   // Use ref for actions to avoid dependency issues
@@ -68,37 +68,34 @@ const GameHeader = memo(() => {
         const rect = headerElement.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
-        
+
         // Trigger level-up particle effect (confetti - gentle shake)
         if (typeof window.triggerParticleEffect === 'function') {
           window.triggerParticleEffect(centerX, centerY, 'levelup', { shake: true });
         }
-        
+
         // Play level-up sound
         if (typeof window.soundSystem !== 'undefined') {
           window.soundSystem.playLevelUpSound();
         }
-        
+
         // Show notification - use ref to avoid dependency
         actionsRef.current.addNotification({
           message: `🎉 Level Up! You're now Level ${state.level}!`,
           type: 'success'
         });
       }
-      
+
       prevLevelRef.current = state.level;
     }
     // Removed actions from dependencies - using ref instead
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.level]);
 
-  // Update last save time
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(Date.now());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  // PERF: Use centralized tick instead of setInterval
+  const tick = useTick();
+  // Recompute currentTime on each tick for save time display
+  const currentTime = Date.now();
 
   const formatNumber = (num) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -213,21 +210,21 @@ const GameHeader = memo(() => {
               </div>
             )}
           </div>
-        {/* Season display with animation */}
-        {state.season?.config && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-all cursor-pointer group relative shadow-md hover:shadow-lg" style={{
-            boxShadow: '0 2px 8px rgba(168, 85, 247, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
-          }}>
-            <span className="text-lg animate-season drop-shadow-sm">
-              {state.season.config.emoji}
-            </span>
-            <span className="text-sm font-medium text-purple-700 capitalize">
-              {state.season.config.name}
-            </span>
-            {/* Season time remaining tooltip */}
-            <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 backdrop-blur-lg bg-opacity-95" style={{
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(168, 85, 247, 0.2)'
+          {/* Season display with animation */}
+          {state.season?.config && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-all cursor-pointer group relative shadow-md hover:shadow-lg" style={{
+              boxShadow: '0 2px 8px rgba(168, 85, 247, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
             }}>
+              <span className="text-lg animate-season drop-shadow-sm">
+                {state.season.config.emoji}
+              </span>
+              <span className="text-sm font-medium text-purple-700 capitalize">
+                {state.season.config.name}
+              </span>
+              {/* Season time remaining tooltip */}
+              <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 backdrop-blur-lg bg-opacity-95" style={{
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(168, 85, 247, 0.2)'
+              }}>
                 <div className="text-xs font-semibold text-gray-700 mb-1">
                   {state.season.config.name} {state.season.config.icon}
                 </div>
@@ -245,9 +242,9 @@ const GameHeader = memo(() => {
           <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg hover:bg-blue-100 transition cursor-pointer">
             <span className="text-lg animate-weather">
               {state.weather === 'sunny' ? '☀️' :
-               state.weather === 'rainy' ? '🌧️' :
-               state.weather === 'stormy' ? '⛈️' :
-               state.weather === 'snowy' ? '❄️' : '☀️'}
+                state.weather === 'rainy' ? '🌧️' :
+                  state.weather === 'stormy' ? '⛈️' :
+                    state.weather === 'snowy' ? '❄️' : '☀️'}
             </span>
             <span className="text-sm font-medium text-blue-700 capitalize">
               {state.weather || 'sunny'}
@@ -289,8 +286,8 @@ const GameHeader = memo(() => {
             >
               <Save className="w-3 h-3 text-blue-600 group-hover:text-green-600" />
               {state.settings?.autoSave && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" 
-                      title="Auto-save enabled"></span>
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"
+                  title="Auto-save enabled"></span>
               )}
             </Button>
 

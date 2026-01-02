@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { GameProvider, useGame } from '../context/GameContext';
+import { TickProvider } from '../context/TickContext';
 
 // Import modular components
 import GameHeader from '../ui/GameHeader';
@@ -7,6 +8,8 @@ import FarmGrid from '../ui/FarmGrid';
 import GameSidebar from '../ui/GameSidebar';
 import NotificationSystem from '../ui/NotificationSystem';
 import { ParticleEffectsManager } from '../ui/ParticleEffect';
+import FPSCounter from '../ui/FPSCounter';
+import PerformanceOverlay from '../ui/PerformanceOverlay';
 
 // Import systems
 import { FarmingSystem } from '../systems/FarmingSystem';
@@ -70,7 +73,7 @@ function FarmSimCore() {
   const soundSystem = useMemo(() => getSoundSystem(), []);
 
   const musicSystem = useMemo(() => getMusicSystem(), []);
-  
+
   // Use ref to always have latest state (avoids stale closure in interval)
   const stateRef = React.useRef(state);
   React.useEffect(() => {
@@ -81,12 +84,12 @@ function FarmSimCore() {
   // Use ref to track previous systems to avoid unnecessary updates
   const systemsRef = React.useRef({});
   const actionsRef = React.useRef(actions);
-  
+
   // Keep actions ref updated (actions object should be stable, but ref adds safety)
   React.useEffect(() => {
     actionsRef.current = actions;
   }, [actions]);
-  
+
   React.useEffect(() => {
     const newSystems = {
       farmingSystem,
@@ -97,7 +100,7 @@ function FarmSimCore() {
     };
 
     // Only update if systems actually changed (by reference)
-    const systemsChanged = 
+    const systemsChanged =
       systemsRef.current.farmingSystem !== farmingSystem ||
       systemsRef.current.livestockSystem !== livestockSystem ||
       systemsRef.current.fishingSystem !== fishingSystem ||
@@ -126,7 +129,7 @@ function FarmSimCore() {
     const systemUpdateLoop = (currentTime) => {
       // Use stateRef.current to always get latest state (fixes stale closure bug!)
       const currentState = stateRef.current;
-      
+
       if (currentState.gameLoop.paused) {
         return;
       }
@@ -134,6 +137,9 @@ function FarmSimCore() {
       // Throttle to target FPS (10 FPS)
       const deltaTime = currentTime - lastUpdateTime;
       if (deltaTime >= targetFrameTime) {
+        // PERF: Measure update time
+        const updateStart = performance.now();
+
         // Batch all system updates in a single frame
         // Order matters: dependencies first, dependents last
         seasonSystem.update(currentState);
@@ -145,6 +151,9 @@ function FarmSimCore() {
         achievementSystem.update(currentState);
         diseaseSystem.update(currentState);
         disasterSystem.update(currentState);
+
+        // PERF: Record update time for overlay
+        window.__lastUpdateTime = performance.now() - updateStart;
 
         lastUpdateTime = currentTime - (deltaTime % targetFrameTime); // Maintain frame timing
       }
@@ -167,30 +176,30 @@ function FarmSimCore() {
   useEffect(() => {
     const soundSystem = getSoundSystem();
     const musicSystem = getMusicSystem();
-    
+
     window.soundSystem = soundSystem;
     window.musicSystem = musicSystem;
-    
+
     soundSystem.setEnabled(state.settings?.soundEnabled !== false);
     musicSystem.setEnabled(state.settings?.musicEnabled !== false);
-    
+
     // Resume audio context only after user interaction (browser requirement)
     // Don't auto-resume here - let user interaction trigger it
     let hasInteracted = false;
     const handleUserInteraction = async () => {
       if (hasInteracted) return;
       hasInteracted = true;
-      
+
       try {
         await soundSystem.resume();
         await musicSystem.resume();
-        
+
         // Start music after audio context is resumed
         if (state.settings?.musicEnabled !== false && !musicSystem.isPlaying) {
           musicSystem.setSeason(state.season?.current || 'spring');
           musicSystem.play();
         }
-        
+
         // Remove listeners after first interaction
         document.removeEventListener('click', handleUserInteraction);
         document.removeEventListener('keydown', handleUserInteraction);
@@ -202,17 +211,17 @@ function FarmSimCore() {
         }
       }
     };
-    
+
     // Wait for user interaction before resuming audio
     document.addEventListener('click', handleUserInteraction, { once: true });
     document.addEventListener('keydown', handleUserInteraction, { once: true });
     document.addEventListener('touchstart', handleUserInteraction, { once: true });
-    
+
     // Set season for music (will start playing after user interaction)
     if (state.settings?.musicEnabled !== false) {
       musicSystem.setSeason(state.season?.current || 'spring');
     }
-    
+
     return () => {
       // Cleanup on unmount
       document.removeEventListener('click', handleUserInteraction);
@@ -233,7 +242,7 @@ function FarmSimCore() {
   useEffect(() => {
     const musicSystem = getMusicSystem();
     const currentSeason = state.season?.current;
-    
+
     // Only update if season actually changed
     if (currentSeason && currentSeason !== prevSeasonRef.current && state.settings?.musicEnabled !== false) {
       musicSystem.setSeason(currentSeason);
@@ -353,9 +362,9 @@ function FarmSimCore() {
           desc.style.opacity = '0';
           icon.style.transform = 'translate(-50%, -50%) scale(0.5)';
           text.style.transform = 'translate(-50%, -50%) scale(0.5)';
-          
+
           particles.forEach(p => p.style.opacity = '0');
-          
+
           setTimeout(() => {
             overlay.remove();
             icon.remove();
@@ -398,6 +407,12 @@ function FarmSimCore() {
 
       {/* Particle Effects System */}
       <ParticleEffectsManager />
+
+      {/* FPS Overlay */}
+      <FPSCounter />
+
+      {/* Performance Overlay (dev, toggle with `) */}
+      <PerformanceOverlay />
     </div>
   );
 }
@@ -406,7 +421,9 @@ function FarmSimCore() {
 export default function FarmSim() {
   return (
     <GameProvider>
-      <FarmSimCore />
+      <TickProvider>
+        <FarmSimCore />
+      </TickProvider>
     </GameProvider>
   );
 }
