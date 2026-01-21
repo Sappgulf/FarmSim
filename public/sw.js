@@ -1,8 +1,14 @@
-const VERSION = 'v3';
+const VERSION = 'v4';
 const RUNTIME = `farm-runtime-${VERSION}`;
 const PRECACHE_URLS = ['/', '/index.html'];
 
+const IS_LOCAL_DEV = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
+
 self.addEventListener('install', (event) => {
+  if (IS_LOCAL_DEV) {
+    event.waitUntil(self.skipWaiting());
+    return;
+  }
   event.waitUntil(
     (async () => {
       const cache = await caches.open(RUNTIME);
@@ -14,10 +20,13 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    // Claim control immediately
     await self.clients.claim();
-    // Clean up old caches
     const keys = await caches.keys();
+    // In local dev, clear everything to avoid "stuck on old UI/code".
+    if (IS_LOCAL_DEV) {
+      await Promise.all(keys.map(k => caches.delete(k)));
+      return;
+    }
     await Promise.all(keys.filter(k => k.startsWith('farm-runtime-') && k !== RUNTIME).map(k => caches.delete(k)));
   })());
 });
@@ -25,6 +34,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+
+  if (IS_LOCAL_DEV) {
+    event.respondWith(fetch(req));
+    return;
+  }
 
   event.respondWith((async () => {
     const cache = await caches.open(RUNTIME);
@@ -52,5 +66,3 @@ self.addEventListener('fetch', (event) => {
     return cached || fetchPromise;
   })());
 });
-
-

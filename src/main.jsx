@@ -1,12 +1,29 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import FarmSimCanvas from "./components/FarmSimCanvas";
-// import FarmSimCanvas from "./components/FarmSimCanvasFixed";
+// New refactored modular component
+import FarmGame from "./components/FarmGame";
+// Legacy component available in FarmSimCanvas.jsx if needed
 import "./index.css";
 
 // Register a basic service worker for PWA/offline support (no precache list here)
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
+    // In dev, a service worker can easily cause "stuck on old UI/code" due to caching.
+    // Ensure we always run the latest local code during development.
+    if (import.meta.env.DEV) {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((regs) => Promise.all(regs.map((r) => r.unregister())))
+        .catch(() => {});
+      if ("caches" in window) {
+        caches
+          .keys()
+          .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+          .catch(() => {});
+      }
+      return;
+    }
+
     // Use relative path so file:// or static hosting also works
     navigator.serviceWorker.register("sw.js").catch(() => {});
   });
@@ -17,12 +34,21 @@ class ErrorBoundary extends React.Component {
     super(props);
     this.state = { hasError: false, error: null, errorInfo: null, retryCount: 0 };
   }
+  
   static getDerivedStateFromError(error) {
+    // Return state update to show error UI
     return { hasError: true, error };
   }
+  
   componentDidCatch(error, errorInfo) {
+    // Log error for debugging
     console.error("Farm Game Error:", error, errorInfo);
-    this.setState({ errorInfo });
+    
+    // Update state with error info
+    this.setState({ 
+      errorInfo: errorInfo || null,
+      error: error || null
+    });
     
     // Backup save data before clearing
     try {
@@ -78,7 +104,7 @@ class ErrorBoundary extends React.Component {
               </p>
             </div>
             
-            {process.env.NODE_ENV === 'development' && (
+            {import.meta.env.DEV && (
               <details className="mt-6 bg-gray-100 p-3 rounded-lg">
                 <summary className="cursor-pointer text-sm font-semibold text-gray-700">
                   Developer Info
@@ -97,10 +123,26 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// Ensure DOM is ready before rendering
+if (document.getElementById("root")) {
+  try {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <ErrorBoundary>
-      <FarmSimCanvas />
-    </ErrorBoundary>
+        <ErrorBoundary>
+          <FarmGame />
+        </ErrorBoundary>
   </React.StrictMode>
 );
+  } catch (error) {
+    console.error("Failed to render app:", error);
+    document.getElementById("root").innerHTML = `
+      <div style="padding: 20px; text-align: center;">
+        <h1>Failed to load game</h1>
+        <p>Please refresh the page</p>
+        <button onclick="window.location.reload()">Reload</button>
+      </div>
+    `;
+  }
+} else {
+  console.error("Root element not found");
+}

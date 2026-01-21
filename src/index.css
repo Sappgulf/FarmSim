@@ -2,6 +2,189 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   🎨 DESIGN TOKENS - FarmSim Theme System
+   ============================================ */
+
+:root {
+  /* Primary Colors - Nature inspired */
+  --color-primary-50: #ecfdf5;
+  --color-primary-100: #d1fae5;
+  --color-primary-200: #a7f3d0;
+  --color-primary-300: #6ee7b7;
+  --color-primary-400: #34d399;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+  --color-primary-800: #065f46;
+  --color-primary-900: #064e3b;
+
+  /* Accent Colors - Warm earth tones */
+  --color-accent-50: #fffbeb;
+  --color-accent-100: #fef3c7;
+  --color-accent-200: #fde68a;
+  --color-accent-300: #fcd34d;
+  --color-accent-400: #fbbf24;
+  --color-accent-500: #f59e0b;
+  --color-accent-600: #d97706;
+  --color-accent-700: #b45309;
+
+  /* Semantic Colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Spacing Scale */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-glow: 0 0 20px rgb(16 185 129 / 0.3);
+
+  /* Typography */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* Animation Timing */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
+  /* Safe area for mobile */
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ============================================
+   🎯 BASE LAYER - Global Styles
+   ============================================ */
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
+  }
+
+  /* Better focus styles */
+  :focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+
+  /* Selection color */
+  ::selection {
+    background-color: var(--color-primary-200);
+    color: var(--color-primary-900);
+  }
+}
+
+/* ============================================
+   🧩 COMPONENT LAYER - Reusable Components
+   ============================================ */
+
+@layer components {
+  /* Safe area padding for bottom nav */
+  .safe-area-pb {
+    padding-bottom: calc(var(--space-sm) + var(--safe-area-inset-bottom));
+  }
+
+  /* Glass morphism card */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Premium button style */
+  .btn-premium {
+    background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
+    color: white;
+    font-weight: 600;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-lg);
+    transition: all var(--duration-normal) var(--ease-out-quart);
+    box-shadow: var(--shadow-md), 0 2px 8px rgb(16 185 129 / 0.3);
+  }
+
+  .btn-premium:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg), 0 4px 12px rgb(16 185 129 / 0.4);
+  }
+
+  .btn-premium:active {
+    transform: translateY(0);
+  }
+
+  /* Coin display */
+  .coin-display {
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Farm plot base */
+  .farm-plot {
+    aspect-ratio: 1;
+    border-radius: var(--radius-lg);
+    transition: all var(--duration-normal) var(--ease-out-quart);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .farm-plot:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .farm-plot:active {
+    transform: scale(0.96);
+  }
+
+  /* Status indicators */
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    animation: pulse 2s infinite;
+  }
+
+  .status-dot.success { background-color: var(--color-success); }
+  .status-dot.warning { background-color: var(--color-warning); }
+  .status-dot.error { background-color: var(--color-error); }
+}
+
+/* ============================================
+   🎬 ANIMATIONS - Custom Keyframes
+   ============================================ */
+
 /* Custom animations */
 @keyframes slide-down {
   from {
@@ -25,18 +208,82 @@
   }
 }
 
-/* Enhanced Visual Effects */
+/* 🎨 PREMIUM PLANTING ANIMATIONS - Subtle luxury feel */
+/* Seed drop with soft landing bounce (easeOutBack approximation) */
+@keyframes seed-drop {
+  0% {
+    transform: translateY(-20px) scale(0.8);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(2px) scale(1.03); /* Subtle bounce - no rotation */
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-1px) scale(0.99);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* 🌿 SUBTLE GROWTH BREATHE - Replaces shake/jitter */
+@keyframes subtleBreathe {
+  0%, 100% { 
+    transform: scale(1); 
+  }
+  60% { 
+    transform: scale(1.03); /* 3% breathe - barely perceptible */
+  }
+}
+
+/* Stem growth with organic easeOutQuad */
+@keyframes stem-grow {
+  0% {
+    transform: scaleY(0);
+    opacity: 0.3;
+  }
+  60% {
+    transform: scaleY(1.01); /* Subtle overshoot - prevents shake */
+    opacity: 0.9;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+/* Leaf flick at 60% growth (2-frame sprite swap effect) */
+@keyframes leaf-flick {
+  0%, 59% {
+    transform: scale(1);
+  }
+  60% {
+    transform: scale(1.02); /* Very subtle flick - no rotation */
+  }
+  61% {
+    transform: scale(1.01);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Sprout animation - refined version */
+/* 🌱 SPROUT - Capped scale, minimal rotation */
 @keyframes sprout {
   0% {
-    transform: scale(0.3) rotate(0deg);
+    transform: scale(0.3);
     opacity: 0;
   }
   50% {
-    transform: scale(1.1) rotate(5deg);
-    opacity: 0.8;
+    transform: scale(1.08); /* Capped at 8% - subtle */
+    opacity: 0.9;
   }
   100% {
-    transform: scale(1) rotate(0deg);
+    transform: scale(1);
     opacity: 1;
   }
 }
@@ -90,13 +337,53 @@
   }
 }
 
-/* Plot pulsing for ready crops */
-@keyframes pulse-ready {
+/* 🎯 PREMIUM COMBO BADGE - Gentle pop, subtle pulse */
+/* 🎯 CAPPED COMBO POP - Max 1.12 scale (satisfying, not startling) */
+@keyframes combo-badge-pop {
+  0% {
+    transform: scale(0) translateY(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12) translateY(-6px); /* Capped at 12% - surgical calm */
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(-2px); /* Settle with minimal offset */
+    opacity: 1;
+  }
+}
+
+/* 🎯 MICRO PULSE - 6% pulse for premium feel */
+@keyframes combo-badge-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    transform: scale(1) translateY(-2px);
+    opacity: 1;
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    transform: scale(1.06) translateY(-4px); /* 6% micro pulse */
+    opacity: 0.92;
+  }
+}
+
+@keyframes combo-badge-fade {
+  0% {
+    transform: scale(1) translateY(-4px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9) translateY(-8px);
+    opacity: 0;
+  }
+}
+
+/* Plot pulsing for ready crops - More subtle */
+@keyframes pulse-ready {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); /* Reduced opacity */
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); /* Smaller radius */
   }
 }
 
@@ -235,19 +522,13 @@
 
 @keyframes ripen {
   0% {
-    transform: scale(1) rotate(0deg);
-  }
-  25% {
-    transform: scale(1.1) rotate(2deg);
+    transform: scale(1);
   }
   50% {
-    transform: scale(1.05) rotate(-1deg);
-  }
-  75% {
-    transform: scale(1.08) rotate(1deg);
+    transform: scale(1.03); /* Subtle pulse - no rotation */
   }
   100% {
-    transform: scale(1) rotate(0deg);
+    transform: scale(1);
   }
 }
 
@@ -330,64 +611,75 @@
 }
 
 /* 🎨 ENHANCED VISUAL POLISH ANIMATIONS */
+/* 🌾 PREMIUM HARVEST POP - Subtle scale, no rotation chaos */
+/* 🌾 HARVEST POP - Capped at 1.11, gentle exit */
 @keyframes harvest-pop {
   0% {
-    transform: scale(1) rotate(0deg);
+    transform: scale(1);
     opacity: 1;
   }
   30% {
-    transform: scale(1.3) rotate(5deg);
-    opacity: 0.9;
+    transform: scale(1.11); /* Capped at 11% - satisfying but calm */
+    opacity: 0.95;
   }
   60% {
-    transform: scale(0.8) rotate(-3deg);
+    transform: scale(0.94);
     opacity: 0.7;
   }
   100% {
-    transform: scale(0) rotate(15deg);
+    transform: scale(0);
     opacity: 0;
   }
 }
 
-@keyframes coin-bounce {
+/* 💰 PREMIUM COIN ARC - Bezier curve with 3D flip */
+/* Uses CSS custom properties for dynamic start/end positions */
+/* 💰 COIN ARC - Capped scale at 1.08, smooth bezier */
+@keyframes coin-arc {
   0% {
-    transform: translateY(0) rotate(0deg) scale(1);
+    transform: translate(0, 0) rotateY(0deg) scale(1);
     opacity: 1;
   }
   25% {
-    transform: translateY(-15px) rotate(90deg) scale(1.1);
-    opacity: 0.9;
+    transform: translate(calc(var(--dx) * 0.5), calc(var(--dy) * 0.5 - 30px)) rotateY(45deg) scale(1.04);
+    opacity: 1;
   }
   50% {
-    transform: translateY(-25px) rotate(180deg) scale(1.2);
-    opacity: 0.8;
+    /* Peak arc - capped at 8% scale */
+    transform: translate(calc(var(--dx) * 0.5), calc(var(--dy) * 0.5 - 40px)) rotateY(90deg) scale(1.08);
+    opacity: 0.95;
   }
   75% {
-    transform: translateY(-20px) rotate(270deg) scale(1.1);
-    opacity: 0.6;
+    transform: translate(calc(var(--dx) * 0.75), calc(var(--dy) * 0.75 - 20px)) rotateY(135deg) scale(1.02);
+    opacity: 0.85;
   }
   100% {
-    transform: translateY(-40px) rotate(360deg) scale(0.8);
+    transform: translate(var(--dx), var(--dy)) rotateY(180deg) scale(0.9);
     opacity: 0;
+  }
+}
+
+/* Coin counter roll animation */
+@keyframes coin-counter-roll {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes pest-attack {
   0%, 100% {
-    transform: translate(0, 0) scale(1);
+    transform: scale(1);
     opacity: 0.95;
   }
-  25% {
-    transform: translate(1px, -1px) scale(1.02);
-    opacity: 1;
-  }
   50% {
-    transform: translate(-1px, 0.5px) scale(0.98);
-    opacity: 0.98;
-  }
-  75% {
-    transform: translate(0.5px, -0.5px) scale(1.01);
-    opacity: 1;
+    transform: scale(0.99); /* Very subtle pulse - no translate/rotation */
+    opacity: 0.97;
   }
 }
 
@@ -414,29 +706,30 @@
   }
 }
 
+/* 💧 WATER SPLASH - Capped scale at 1.5 */
 @keyframes water-splash {
   0% {
-    transform: scale(0.5) rotate(0deg);
+    transform: scale(0.5);
     opacity: 0;
     filter: blur(0px);
   }
   25% {
-    transform: scale(1.2) rotate(5deg);
+    transform: scale(1.2);
     opacity: 0.8;
     filter: blur(0.5px);
   }
   50% {
-    transform: scale(1.5) rotate(-3deg);
+    transform: scale(1.5); /* Capped - was 1.8 */
     opacity: 0.6;
     filter: blur(1px);
   }
   75% {
-    transform: scale(1.8) rotate(2deg);
+    transform: scale(1.3);
     opacity: 0.3;
     filter: blur(1.5px);
   }
   100% {
-    transform: scale(2) rotate(0deg);
+    transform: scale(1.5); /* Capped - was 2.0 */
     opacity: 0;
     filter: blur(2px);
   }
@@ -457,23 +750,33 @@
   }
 }
 
+/* 📢 NOTIFICATION POLISH - Smooth queue animation */
 @keyframes notification-slide {
   0% {
-    transform: translateX(100%);
+    transform: translateY(-40px);
     opacity: 0;
   }
-  10% {
-    transform: translateX(0);
+  22% {
+    transform: translateY(0);
     opacity: 1;
   }
-  90% {
-    transform: translateX(0);
+  82% {
+    transform: translateY(0);
     opacity: 1;
   }
   100% {
-    transform: translateX(100%);
+    transform: translateY(-20px);
     opacity: 0;
   }
+}
+
+/* Notification styling polish */
+.notify-core {
+  will-change: transform, opacity;
+  pointer-events: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.12);
 }
 
 @keyframes card-hover-lift {
@@ -512,32 +815,52 @@
 /* 🎨 ENHANCED PLOT GRAPHICS & VISUAL POLISH */
 .plot-enhanced {
   position: relative;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.3s ease, background-color 0.3s ease, filter 0.3s ease;
   border-radius: 8px;
   overflow: hidden;
+  will-change: transform;
 }
 
 .plot-enhanced:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px); /* More subtle hover - prevents animation conflicts */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* Subtle plot animations - less annoying */
+/* 🎨 PREMIUM PLANTING - Seed drop with soft bounce */
 .plot-enhanced.planted {
-  animation: sprout 0.6s ease-out;
+  animation: seed-drop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
+/* Growth animation is applied only on growth-stage changes */
 .plot-enhanced.growing {
-  /* Removed infinite blinking animation - just subtle hover effect */
-  transition: transform 0.3s ease;
+  /* Intentionally no animation to avoid constant replays on re-render */
+}
+
+.plot-enhanced.growth-pulse {
+  animation: stem-grow 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* 🌿 GROWTH BREATHE - Subtle animation replaces shake */
+.growing-breathe {
+  animation: subtleBreathe 1.1s ease-out;
+  will-change: transform;
+}
+
+/* Leaf flick at 60% growth */
+.plot-enhanced.growth-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  animation: leaf-flick 0.15s ease-out 0.54s forwards; /* Trigger at 60% of 0.9s */
+  pointer-events: none;
 }
 
 .plot-enhanced.growing:hover {
-  transform: scale(1.02);
+  transform: scale(1.01); /* More subtle hover - prevents animation conflicts */
 }
 
 .plot-enhanced.ready {
-  animation: ripen 1s ease-in-out;
+  animation: ripen 2s ease-in-out infinite; /* Slower, smoother pulse */
   box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
 }
 
@@ -548,8 +871,8 @@
 }
 
 .plot-enhanced.infested {
-  /* Slower pest animation, less jarring */
-  animation: pest-attack 4s ease-in-out infinite;
+  /* Much slower, very subtle pest animation - no shaking */
+  animation: pest-attack 6s ease-in-out infinite;
 }
 
 .plot-enhanced.watered::after {
@@ -597,7 +920,23 @@
 }
 
 .particle.coin {
-  animation: coin-bounce 1.5s ease-out forwards;
+  animation: coin-arc 0.45s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.combo-badge {
+  animation: combo-badge-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.combo-badge.pulse {
+  animation: combo-badge-pulse 0.05s ease-in-out;
+}
+
+.combo-badge.fade {
+  animation: combo-badge-fade 0.3s ease-in forwards;
+}
+
+.coin-counter-rolling {
+  animation: coin-counter-roll 0.18s ease-out;
 }
 
 .particle.xp {

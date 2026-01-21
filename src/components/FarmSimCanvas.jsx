@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -12,6 +12,14 @@ import {
   Users, MessageSquare, UserPlus, ShoppingCart, MapPin, Award, TrendingUp, Search, 
   UserCheck, UserX, Mail, Eye, EyeOff, LogIn, LogOut, User
 } from "lucide-react";
+import { FeedbackPolisher, FEEDBACK_CONFIG, getComboPitch } from "../utils/feedbackPolisher";
+import { applyMultiplierRound, clamp } from "../utils/gameMath.mjs";
+import { ORDER_SYSTEM, MARKET_TRENDS } from "../config/economy.mjs";
+import { getGrowthStage } from "../systems/growth.mjs";
+import { applyInventoryDelta, canFulfillItems, normalizeInventory } from "../systems/inventory.mjs";
+import { getMarketPrice } from "../systems/pricing.mjs";
+import { nowSec, formatTime, formatTimeRemaining, getTimeOfDay } from "../utils/time.mjs";
+import { loadSave, saveState, normalizeSaveData } from "../utils/save.mjs";
 
 /**
  * Enhanced Farm Simulation Game
@@ -27,6 +35,50 @@ const LEVELS = [
   { id: "lvl5", label: "Agricultural Master", targetCoins: 750, minutes: 15, reward: 150, difficulty: "Master" },
   { id: "endless", label: "Endless Farm", targetCoins: 999999, minutes: 9999, reward: 0, difficulty: "∞" },
 ];
+
+// 🌟 QUALITY TIERS SYSTEM
+const QUALITY_TIERS = {
+  NORMAL: { id: 1, name: "Normal", emoji: "", multiplier: 1.0, color: "text-gray-600" },
+  GOOD: { id: 2, name: "Good", emoji: "⭐", multiplier: 1.3, color: "text-green-600" },
+  EXCELLENT: { id: 3, name: "Excellent", emoji: "⭐⭐", multiplier: 1.7, color: "text-blue-600" },
+  PERFECT: { id: 4, name: "Perfect", emoji: "⭐⭐⭐", multiplier: 2.2, color: "text-purple-600" }
+};
+
+// 🧬 CROP MUTATION SYSTEM
+const CROP_MUTATIONS = {
+  carrot: [
+    { mutation: "golden_carrot", chance: 0.015, emoji: "🥕✨", name: "Golden Carrot", bonus: 1.8 },
+    { mutation: "super_carrot", chance: 0.01, emoji: "🥕🌟", name: "Super Carrot", bonus: 2.0 }
+  ],
+  potato: [
+    { mutation: "frost_potato", chance: 0.02, emoji: "🥔❄️", name: "Frost Potato", bonus: 1.5 }
+  ],
+  corn: [
+    { mutation: "rainbow_corn", chance: 0.012, emoji: "🌽🌈", name: "Rainbow Corn", bonus: 2.1 },
+    { mutation: "giant_corn", chance: 0.008, emoji: "🌽💎", name: "Giant Corn", bonus: 2.5 }
+  ],
+  tomato: [
+    { mutation: "golden_tomato", chance: 0.015, emoji: "🍅✨", name: "Golden Tomato", bonus: 1.9 },
+    { mutation: "cherry_tomato", chance: 0.02, emoji: "🍒", name: "Cherry Tomato", bonus: 1.6 }
+  ],
+  strawberry: [
+    { mutation: "golden_strawberry", chance: 0.01, emoji: "🍓✨", name: "Golden Strawberry", bonus: 2.2 }
+  ],
+  pumpkin: [
+    { mutation: "giant_pumpkin", chance: 0.008, emoji: "🎃💎", name: "Giant Pumpkin", bonus: 2.8 }
+  ],
+  sunflower: [
+    { mutation: "golden_sunflower", chance: 0.012, emoji: "🌻✨", name: "Golden Sunflower", bonus: 2.0 }
+  ]
+};
+
+// 🌍 SEASONAL BONUS MULTIPLIERS
+const SEASONAL_BONUSES = {
+  spring: { multiplier: 1.25, description: "Spring Growth Bonus" },
+  summer: { multiplier: 1.3, description: "Summer Bounty Bonus" },
+  fall: { multiplier: 1.2, description: "Fall Harvest Bonus" },
+  winter: { multiplier: 0.9, description: "Winter Penalty" }
+};
 
 // Advanced Economy Constants
 const FUTURES_CONTRACT_TYPES = {
@@ -635,11 +687,18 @@ const DEFAULT_RULES = {
     lettuce: { stages: 3, secondsPerStage: 6, baseValue: 8, shopPrice: 3, emoji: "🥬", rarity: "common", season: "spring", family: "leaf" },
     bellPepper: { stages: 4, secondsPerStage: 15, baseValue: 32, shopPrice: 18, emoji: "🫑", rarity: "uncommon", season: "summer", family: "fruit" },
     garlic: { stages: 3, secondsPerStage: 12, baseValue: 18, shopPrice: 8, emoji: "🧄", rarity: "common", season: "fall", family: "bulb" },
-    // 🧬 HYBRID SEEDS (dynamically added from breeding)
-    super_carrot: { stages: 3, secondsPerStage: 6, baseValue: 25, shopPrice: 40, emoji: "🥕✨", rarity: "hybrid", season: "spring", family: "root" },
-    rainbow_corn: { stages: 4, secondsPerStage: 10, baseValue: 45, shopPrice: 65, emoji: "🌽🌈", rarity: "hybrid", season: "summer", family: "grain" },
-    golden_tomato: { stages: 4, secondsPerStage: 11, baseValue: 35, shopPrice: 50, emoji: "🍅✨", rarity: "hybrid", season: "summer", family: "fruit" },
-    frost_potato: { stages: 3, secondsPerStage: 7, baseValue: 20, shopPrice: 35, emoji: "🥔❄️", rarity: "hybrid", season: "winter", family: "root" },
+    // 🧬 MUTATION SEEDS (discovered through mutations)
+    golden_carrot: { stages: 3, secondsPerStage: 6, baseValue: 30, shopPrice: 50, emoji: "🥕✨", rarity: "rare", season: "spring", family: "root" },
+    super_carrot: { stages: 3, secondsPerStage: 5, baseValue: 35, shopPrice: 60, emoji: "🥕🌟", rarity: "epic", season: "spring", family: "root" },
+    frost_potato: { stages: 3, secondsPerStage: 7, baseValue: 25, shopPrice: 40, emoji: "🥔❄️", rarity: "rare", season: "winter", family: "root" },
+    rainbow_corn: { stages: 4, secondsPerStage: 9, baseValue: 55, shopPrice: 80, emoji: "🌽🌈", rarity: "epic", season: "summer", family: "grain" },
+    giant_corn: { stages: 4, secondsPerStage: 8, baseValue: 70, shopPrice: 100, emoji: "🌽💎", rarity: "legendary", season: "summer", family: "grain" },
+    golden_tomato: { stages: 4, secondsPerStage: 10, baseValue: 42, shopPrice: 65, emoji: "🍅✨", rarity: "rare", season: "summer", family: "fruit" },
+    cherry_tomato: { stages: 4, secondsPerStage: 11, baseValue: 38, shopPrice: 55, emoji: "🍒", rarity: "rare", season: "summer", family: "fruit" },
+    golden_strawberry: { stages: 5, secondsPerStage: 14, baseValue: 65, shopPrice: 95, emoji: "🍓✨", rarity: "epic", season: "spring", family: "berry" },
+    giant_pumpkin: { stages: 6, secondsPerStage: 18, baseValue: 90, shopPrice: 130, emoji: "🎃💎", rarity: "legendary", season: "fall", family: "gourd" },
+    golden_sunflower: { stages: 5, secondsPerStage: 15, baseValue: 60, shopPrice: 90, emoji: "🌻✨", rarity: "epic", season: "summer", family: "flower" },
+    // 🧬 HYBRID SEEDS (from breeding - kept for compatibility)
     dragon_pepper: { stages: 5, secondsPerStage: 15, baseValue: 80, shopPrice: 120, emoji: "🌶️🔥", rarity: "legendary", season: "summer", family: "fruit" },
   },
   buildings: {
@@ -789,12 +848,6 @@ const SEASON_EFFECTS = {
 };
 
 // Market system for dynamic pricing
-const MARKET_TRENDS = {
-  high: { multiplier: 1.5, name: "📈 High Demand", color: "text-emerald-600" },
-  normal: { multiplier: 1.0, name: "📊 Normal", color: "text-slate-600" },
-  low: { multiplier: 0.7, name: "📉 Low Demand", color: "text-red-600" },
-};
-
 const MAX_SIZE = 5;
 const MIN_SIZE = 3;
 
@@ -1227,7 +1280,9 @@ const AccountAPI = {
         return this.currentSession;
       }
     } catch (e) {
-      console.warn('Failed to load session:', e);
+      // Corrupt session data shouldn't spam console or block play.
+      try { localStorage.removeItem('farmgame_session'); } catch {}
+      if (import.meta.env.DEV) console.warn('Failed to load session:', e);
     }
     return null;
   }
@@ -1240,8 +1295,6 @@ const DAY_NIGHT_CYCLE = {
   night: { name: "🌙 Night", bg: "from-slate-900 via-blue-900 to-purple-900", text: "text-slate-200" },
   dawn: { name: "🌄 Dawn", bg: "from-yellow-50 via-orange-50 to-emerald-50", text: "text-yellow-800" },
 };
-
-function nowSec() { return Math.floor(Date.now() / 1000); }
 
 function newPlot(state = "empty") {
   if (state === "locked") return {
@@ -1271,20 +1324,6 @@ function makeGrid(size) {
   return arr;
 }
 
-function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
-function formatTime(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-function formatTimeRemaining(endTime, currentTime) {
-  const remaining = Math.max(0, endTime - currentTime);
-  const m = Math.floor(remaining / 60);
-  const s = remaining % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
 // 🔧 LOOKUP UTILITIES - Consolidates repeated array lookups
 const findPrestigeLevel = (level) => PRESTIGE_LEVELS.find(p => p.level === level);
 const findLevelById = (id) => LEVELS.find(l => l.id === id);
@@ -1295,32 +1334,8 @@ const findLevelIndex = (id) => LEVELS.findIndex(l => l.id === id);
 
 // Local save helpers with compression
 const SAVE_KEY = "farm_sim_enhanced_v2";
-function loadSave() {
-  try { 
-    if (typeof window === 'undefined' || !window.localStorage) {
-      return null;
-    }
-    const s = localStorage.getItem(SAVE_KEY); 
-    if (s) {
-      const parsed = JSON.parse(s);
-      // Only return if it's v2 format, otherwise start fresh
-      if (parsed?.version === 2) return parsed;
-    } 
-  } catch (e) {
-    console.debug('[farm] loadSave error:', e);
-  }
-  return null;
-}
-
-function saveState(s) { 
-  try { 
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(s));
-    }
-  } catch (e) {
-    console.debug('[farm] saveState error:', e);
-  } 
-}
+const SAVE_VERSION = 2;
+const saveConfig = { key: SAVE_KEY, minSize: MIN_SIZE, maxSize: MAX_SIZE, version: SAVE_VERSION };
 
 function FarmSimCanvas() {
   // --- Initial loading state ---
@@ -1332,17 +1347,18 @@ function FarmSimCanvas() {
 
   // --- game state ---
   // Load save data synchronously to avoid initialization issues
-  const saved = useMemo(() => {
+  // Calculate saved data first, before any useState calls that depend on it
+  let saved;
     try {
-      if (typeof window === 'undefined' || !window.localStorage) {
-        return null;
-      }
-      return loadSave();
-    } catch (e) {
-      console.debug('[farm] Error loading save:', e);
-      return null;
+    if (typeof window !== 'undefined' && window.localStorage) {
+      saved = loadSave(saveConfig);
+    } else {
+      saved = null;
     }
-  }, []);
+    } catch (e) {
+      if (import.meta.env.DEV) console.debug('[farm] Error loading save:', e);
+      saved = null;
+    }
 
   const [rules, setRules] = useState(() => {
     const base = DEFAULT_RULES;
@@ -1373,6 +1389,7 @@ function FarmSimCanvas() {
     return makeGrid(saved?.gridSize || MIN_SIZE);
   });
   const [coins, setCoins] = useState(saved?.coins || 50);
+  const coinsRef = useRef(coins);
   const [score, setScore] = useState(saved?.score || 0);
   const [totalEarned, setTotalEarned] = useState(saved?.totalEarned || 0);
   const [name, setName] = useState(saved?.name || "Farmer");
@@ -1411,6 +1428,15 @@ function FarmSimCanvas() {
   const [lastChallengeReset, setLastChallengeReset] = useState(saved?.lastChallengeReset || nowSec());
   const [challengeStreak, setChallengeStreak] = useState(saved?.challengeStreak || 0);
   
+  // Farm Orders
+  const [availableOrders, setAvailableOrders] = useState(saved?.availableOrders || []);
+  const [activeOrder, setActiveOrder] = useState(saved?.activeOrder || null);
+  const [ordersCompleted, setOrdersCompleted] = useState(saved?.ordersCompleted || 0);
+  const [orderStreak, setOrderStreak] = useState(saved?.orderStreak || 0);
+  const [nextOrderRefreshAt, setNextOrderRefreshAt] = useState(
+    saved?.nextOrderRefreshAt || nowSec() + ORDER_SYSTEM.refreshSeconds
+  );
+
   // Crop Breeding System
   const [hybridSeeds, setHybridSeeds] = useState(saved?.hybridSeeds || {});
   const [breedingQueue, setBreedingQueue] = useState(saved?.breedingQueue || []);
@@ -1633,6 +1659,8 @@ function FarmSimCanvas() {
   const [combo, setCombo] = useState(saved?.combo || 0);
   const [comboTimer, setComboTimer] = useState(saved?.comboTimer || 0);
   const [particles, setParticles] = useState(saved?.particles || []);
+  // 🐛 FIX: Unique particle ID generator to prevent React key collisions
+  const particleIdCounterRef = useRef(0);
   const [soundEnabled, setSoundEnabled] = useState(saved?.soundEnabled ?? true);
   const [sfxVolume, setSfxVolume] = useState(saved?.sfxVolume ?? 1);
   const [animationsEnabled, setAnimationsEnabled] = useState(saved?.animationsEnabled ?? true);
@@ -1640,6 +1668,15 @@ function FarmSimCanvas() {
   const [autoTimeOfDay, setAutoTimeOfDay] = useState(saved?.autoTimeOfDay ?? true);
   const [paused, setPaused] = useState(saved?.paused ?? false);
   const [simSpeed, setSimSpeed] = useState(saved?.simSpeed || 1);
+  const pausedRef = useRef(paused);
+
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+
+  useEffect(() => {
+    coinsRef.current = coins;
+  }, [coins]);
 
   // TUTORIAL & ONBOARDING SYSTEM
   const [tutorialActive, setTutorialActive] = useState(saved?.tutorialActive ?? true);
@@ -1720,23 +1757,42 @@ function FarmSimCanvas() {
   const [farmhands, setFarmhands] = useState(saved?.farmhands || 0);
   const [lastFarmhandAction, setLastFarmhandAction] = useState(saved?.lastFarmhandAction || nowSec());
   const [skills, setSkills] = useState(saved?.skills || { growthBoost: 0, valueBoost: 0 });
-  const [shopTab, setShopTab] = useState('seeds');
+  const [shopTab, setShopTab] = useState(saved?.shopTab || 'seeds');
+  const [sidebarTab, setSidebarTab] = useState(saved?.sidebarTab || 'overview');
 
   // Simple growth timer system
   const [gameTime, setGameTime] = useState(saved?.gameTime || 0);
   const [lastGrowthTick, setLastGrowthTick] = useState(saved?.lastGrowthTick || nowSec());
 
-  // persist enhanced state (debounced to avoid excessive writes)
-  const _saveTimeout = useRef(null);
+  // Autosave scheduling (ref-based so saves always use latest state)
+  const _autosaveTimeout = useRef(null);
+  const _lastAutosaveAt = useRef(0);
   const _lastAutosaveToastAt = useRef(0);
+  const _buildSaveSnapshotRef = useRef(() => ({}));
+  const _saveNowRef = useRef(() => {});
+  const _requestSaveRef = useRef(() => {});
+  const _lastNotificationAt = useRef(0);
+  const generateMarketPricesRef = useRef(() => {});
+  const seasonalEventsRef = useRef(() => {});
+  const dailyChallengesRef = useRef(() => {});
+  const breedingCheckRef = useRef(() => {});
+  const petNeedsRef = useRef(() => {});
+  const economicEventRef = useRef(() => {});
   // WebAudio context for SFX
   const audioCtxRef = useRef(null);
+  const audioUnlockedRef = useRef(false);
   const plantingLocks = useRef(new Set());
   const lastPlantClickAt = useRef({});
   const buyingRef = useRef(false);
+  
+  // 🎨 Premium Feedback System
+  const feedbackPolisherRef = useRef(null);
+  const [comboBadgeState, setComboBadgeState] = useState({ visible: false, multiplier: 0, x: 0, y: 0 });
+  const coinCounterRef = useRef(null);
 
   // --- Sound effects via WebAudio (tiny tones, no assets) ---
   const ensureAudio = () => {
+    if (!audioUnlockedRef.current) return null;
     if (!audioCtxRef.current) {
       try { audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)(); } catch {}
     }
@@ -1746,119 +1802,390 @@ function FarmSimCanvas() {
   const playTone = (freq, durationMs, type = 'sine', volMul = 0.15) => {
     const ctx = ensureAudio();
     if (!ctx) return;
+    // Prevent autoplay warnings: if AudioContext is still suspended, resume on gesture and skip this tone.
+    if (ctx.state === 'suspended') {
+      ctx.resume?.().catch(() => {});
+      return;
+    }
+    if (ctx.state === 'closed') return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = type;
     osc.frequency.value = freq;
-    gain.gain.value = Math.max(0, Math.min(1, sfxVolume)) * volMul;
+    const vol = Math.max(0, Math.min(1, sfxVolume)) * volMul;
     osc.connect(gain).connect(ctx.destination);
     const t0 = ctx.currentTime;
+    // Tiny attack/release to avoid clicks and reduce perceived harshness.
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(vol, t0 + 0.005);
+    gain.gain.linearRampToValueAtTime(0, t0 + Math.max(0.01, durationMs / 1000));
+    osc.onended = () => {
+      try { osc.disconnect(); } catch {}
+      try { gain.disconnect(); } catch {}
+    };
     osc.start(t0);
     osc.stop(t0 + durationMs / 1000);
   };
 
+  // 🎨 PREMIUM: Sound effects with volume control and pitch modulation
   const playSfx = (name) => {
     if (!soundEnabled) return;
+    const volume = FEEDBACK_CONFIG.baseVolume;
     switch (name) {
-      case 'plant': // digging/planting
-        playTone(420, 50, 'sine', 0.10);
-        setTimeout(() => playTone(500, 60, 'sine', 0.10), 60);
+      case 'plant': // digging/planting - handled by FeedbackPolisher, fallback here
+        playTone(420, 50, 'sine', volume);
+        setTimeout(() => playTone(500, 60, 'sine', volume), 60);
         break;
       case 'water': // watering
-        playTone(260, 120, 'sawtooth', 0.06);
+        playTone(260, 120, 'sawtooth', volume * 0.5);
+        break;
+      case 'harvest': // harvesting
+        playTone(659, 80, 'triangle', volume * 0.8);
+        break;
+      case 'combo': // combo (pitch modulated)
+        const pitch = getComboPitch(combo);
+        playTone(523 * pitch, 100, 'sine', volume);
         break;
       default:
-        // no other sounds
         return;
     }
   };
 
+  // Define helper functions before useEffect hooks that use them
+  // Using useCallback to prevent recreation on every render
+  const addLog = useCallback((msg) => {
+    setLog(l => [`${new Date().toLocaleTimeString()} ${msg}`, ...l].slice(0, 100));
+  }, []);
+
+  // 🎯 FEEDBACK CORE: Smart notification queue with debouncing
+  const addNotification = useCallback((msg, type = "info", duration = 4000) => {
+    const now = Date.now();
+    // Simple debounce to prevent spam (matches FeedbackCore defaults)
+    if (now - _lastNotificationAt.current < 300) return;
+    _lastNotificationAt.current = now;
+
+    const id = Date.now() + Math.random();
+    const notification = { 
+      id, 
+      msg, 
+      type, 
+      timestamp: now,
+      priority: type === "error" ? 3 : type === "warning" ? 2 : 1
+    };
+    
+    setNotifications(n => {
+      const next = [...n, notification];
+      // Sort by priority and keep max 3 notifications (reduced from 5)
+      return next
+        .sort((a, b) => b.priority - a.priority || b.timestamp - a.timestamp)
+        .slice(0, 3);
+    });
+    
+    // Play sound effects
+    if (soundEnabled && audioUnlockedRef.current && type === "success") playTone(523, 100, 'sine', 0.2);
+    if (soundEnabled && audioUnlockedRef.current && type === "error") playTone(200, 200, 'sawtooth', 0.15);
+    
+    // Auto-remove with longer duration for important messages
+    const autoRemoveDuration = type === "error" ? duration * 2 : duration;
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(x => x.id !== id));
+    }, autoRemoveDuration);
+  }, [soundEnabled]);
+
+  // Unlock audio on first user gesture to satisfy autoplay restrictions
   useEffect(() => {
-    // debounce saves but avoid infinite loops
     if (typeof window === "undefined") return;
-    if (_saveTimeout.current) clearTimeout(_saveTimeout.current);
-    _saveTimeout.current = setTimeout(() => {
+    const unlock = () => {
+      if (audioUnlockedRef.current) return;
+      audioUnlockedRef.current = true;
       try {
-        const snapshot = {
-          version: 2, // Updated version for new features
-          savedAt: Date.now(),
-          rules, gridSize, plots: plots.slice(0, 25), // limit plot size
-          coins, score, totalEarned, name, inventory, selectedSeed,
-          levelId, levelEndsAt, levelStatus, levelStartedAt,
-          achievements, weather, currentSeason,
-          // Advanced Economy
-          futuresContracts, economicEvents, marketPrices, reputation,
-          competitionsActive, actionHistory,
-          // Farm Customization
-          farmTheme, decorations, farmLevel,
-          // Town Development
-          townBuildings, townEvents, townReputation,
-          // Social & Multiplayer
-          playerId, playerProfile, friends, friendRequests, socialReputation,
-          dailyGiftsReceived, dailyGiftsSent, lastGiftReset, sentRequests, receivedRequests,
-          activeEvents, eventContributions, globalStats,
-          marketListings, myListings, tradeHistory, marketReputation,
-          farmVisits, farmRating, visitHistory,
-          // Visual & Animation
-          combo, comboTimer, particles, soundEnabled,
-          sfxVolume, animationsEnabled, performanceMode, autoTimeOfDay,
-          paused, simSpeed,
-          // Enhanced Systems
-          buildings, livestock, processedGoods, npcs, events, automation,
-          marketTrends, sprinklers, scarecrows,
-          // NEW GAMEPLAY FEATURES
-          activeSeasonalEvents, seasonalEventHistory, lastSeasonalCheck,
-          dailyChallenges, dailyChallengeProgress, lastChallengeReset, challengeStreak,
-          hybridSeeds, breedingQueue, breedingLab, discoveredHybrids,
-          weatherPredictionGame, weatherPredictionRewards,
-          farmPets, petSupplies, petHappiness, lastPetCare,
-          // Enhanced Visual/Gameplay
-          currentTimeOfDay, weatherForecast, beeHappiness,
-          diseasesCured, rotationUses, weatherPredictions, honeyProduced,
-          seasonEndsAt, log, gameTime, lastGrowthTick,
-          // New systems
-          farmhands, lastFarmhandAction, skills,
-          // PRESTIGE SYSTEM
-          prestigeLevel, prestigePoints, totalLifetimeCoins,
-          // SKILL TREE SYSTEM
-          skillPoints, skillLevels,
-          // RESEARCH SYSTEM
-          researchPoints, activeResearch, completedResearch, researchStartedAt,
-          // ADVANCED WORKER SYSTEM
-          workers, workerUpkeep, lastWorkerPayment,
-          // SUPPLY CHAIN SYSTEM
-          processingFacilities, processingQueue, processedInventory,
-          // ADVANCED STATISTICS & ANALYTICS
-          farmStatistics, autoActions, autoActionSettings, analyticsData,
-          // SMART FARM ASSISTANT
-          assistantEnabled, farmInsights,
-          // CROP ROTATION SYSTEM
-          plotHistory, rotationBenefits, companionBonuses,
-          // TUTORIAL SYSTEM
-          tutorialActive, tutorialStep, tutorialCompleted, tutorialProgress, hintsEnabled,
-          // NEW ADVANCED SYSTEMS (v2.1)
-          feedInventory, greenhouses, irrigation, processing, equipment,
-          contracts, insurance, loans, coopMembership, fuelLevel, enhancedPests
-        };
-        saveState(snapshot);
-        // Autosave toast (throttled) to indicate saves without spamming
+        const ctx = ensureAudio();
+        if (ctx?.state === 'suspended') ctx.resume().catch(() => {});
+      } catch {}
+      window.removeEventListener('pointerdown', unlock, true);
+      window.removeEventListener('keydown', unlock, true);
+    };
+    window.addEventListener('pointerdown', unlock, { capture: true, once: true });
+    window.addEventListener('keydown', unlock, { capture: true, once: true });
+    return () => {
+      window.removeEventListener('pointerdown', unlock, true);
+      window.removeEventListener('keydown', unlock, true);
+    };
+  }, []);
+
+  // Initialize FeedbackPolisher
+  useEffect(() => {
+    feedbackPolisherRef.current = new FeedbackPolisher({
+      addParticle,
+      playSfx: (name, options = {}) => {
+        if (name === 'combo') {
+          // Use pitch modulation for combo sounds
+          const pitch = options.pitch || 1.0;
+          playTone(523 * pitch, 100, 'sine', options.volume || FEEDBACK_CONFIG.baseVolume);
+        } else if (name === 'coin') {
+          playTone(659, 80, 'triangle', options.volume || FEEDBACK_CONFIG.baseVolume * 0.8);
+        } else if (name === 'plant') {
+          playTone(420, 50, 'sine', options.volume || FEEDBACK_CONFIG.baseVolume);
+          setTimeout(() => playTone(500, 60, 'sine', options.volume || FEEDBACK_CONFIG.baseVolume), 60);
+        } else {
+          playSfx(name);
+        }
+      },
+      setCoins: (value) => {
+        if (coinCounterRef.current) {
+          coinCounterRef.current.classList.add('coin-counter-rolling');
+          setTimeout(() => coinCounterRef.current?.classList.remove('coin-counter-rolling'), 180);
+        }
+        setCoins(value);
+      },
+      getCoins: () => coinsRef.current,
+      onComboBadge: (config) => {
+        setComboBadgeState({
+          visible: true,
+          multiplier: config.multiplier,
+          x: config.x || window.innerWidth / 2,
+          y: config.y || 100,
+        });
+      },
+      onComboPulse: () => {
+        // Pulse handled by CSS class
+      },
+      onComboFade: () => {
+        setComboBadgeState(prev => ({ ...prev, visible: false }));
+      },
+    });
+    
+    return () => {
+      feedbackPolisherRef.current?.destroy();
+    };
+  }, [soundEnabled, sfxVolume, animationsEnabled, performanceMode]);
+
+  _buildSaveSnapshotRef.current = () => ({
+    version: SAVE_VERSION, // Updated version for new features
+    savedAt: Date.now(),
+    rules,
+    gridSize,
+    plots: plots.slice(0, 25), // limit plot size
+    coins: Math.max(0, coins),
+    score: Math.max(0, score),
+    totalEarned: Math.max(0, totalEarned),
+    name,
+    inventory: normalizeInventory(inventory),
+    selectedSeed,
+    levelId,
+    levelEndsAt,
+    levelStatus,
+    levelStartedAt,
+    achievements,
+    weather,
+    currentSeason,
+    // Advanced Economy
+    futuresContracts,
+    economicEvents,
+    marketPrices,
+    reputation,
+    competitionsActive,
+    actionHistory,
+    // Farm Customization
+    farmTheme,
+    decorations,
+    farmLevel,
+    // Town Development
+    townBuildings,
+    townEvents,
+    townReputation,
+    // Social & Multiplayer
+    playerId,
+    playerProfile,
+    friends,
+    friendRequests,
+    socialReputation,
+    dailyGiftsReceived,
+    dailyGiftsSent,
+    lastGiftReset,
+    sentRequests,
+    receivedRequests,
+    activeEvents,
+    eventContributions,
+    globalStats,
+    marketListings,
+    myListings,
+    tradeHistory,
+    marketReputation,
+    farmVisits,
+    farmRating,
+    visitHistory,
+    // Visual & Animation
+    combo,
+    comboTimer,
+    particles,
+    soundEnabled,
+    sfxVolume,
+    animationsEnabled,
+    performanceMode,
+    autoTimeOfDay,
+    paused,
+    simSpeed,
+    // UI state
+    shopTab,
+    sidebarTab,
+    // Enhanced Systems
+    buildings,
+    livestock,
+    processedGoods,
+    npcs,
+    events,
+    automation,
+    marketTrends,
+    sprinklers,
+    scarecrows,
+    // NEW GAMEPLAY FEATURES
+    activeSeasonalEvents,
+    seasonalEventHistory,
+    lastSeasonalCheck,
+    dailyChallenges,
+    dailyChallengeProgress,
+    lastChallengeReset,
+    challengeStreak,
+    availableOrders,
+    activeOrder,
+    ordersCompleted,
+    orderStreak,
+    nextOrderRefreshAt,
+    hybridSeeds,
+    breedingQueue,
+    breedingLab,
+    discoveredHybrids,
+    weatherPredictionGame,
+    weatherPredictionRewards,
+    farmPets,
+    petSupplies,
+    petHappiness,
+    lastPetCare,
+    // Enhanced Visual/Gameplay
+    currentTimeOfDay,
+    weatherForecast,
+    beeHappiness,
+    diseasesCured,
+    rotationUses,
+    weatherPredictions,
+    honeyProduced,
+    seasonEndsAt,
+    log,
+    gameTime,
+    lastGrowthTick,
+    // New systems
+    farmhands,
+    lastFarmhandAction,
+    skills,
+    // PRESTIGE SYSTEM
+    prestigeLevel,
+    prestigePoints,
+    totalLifetimeCoins,
+    // SKILL TREE SYSTEM
+    skillPoints,
+    skillLevels,
+    // RESEARCH SYSTEM
+    researchPoints,
+    activeResearch,
+    completedResearch,
+    researchStartedAt,
+    // ADVANCED WORKER SYSTEM
+    workers,
+    workerUpkeep,
+    lastWorkerPayment,
+    // SUPPLY CHAIN SYSTEM
+    processingFacilities,
+    processingQueue,
+    processedInventory,
+    // ADVANCED STATISTICS & ANALYTICS
+    farmStatistics,
+    autoActions,
+    autoActionSettings,
+    analyticsData,
+    // SMART FARM ASSISTANT
+    assistantEnabled,
+    farmInsights,
+    // CROP ROTATION SYSTEM
+    plotHistory,
+    rotationBenefits,
+    companionBonuses,
+    // TUTORIAL SYSTEM
+    tutorialActive,
+    tutorialStep,
+    tutorialCompleted,
+    tutorialProgress,
+    hintsEnabled,
+    // NEW ADVANCED SYSTEMS (v2.1)
+    feedInventory,
+    greenhouses,
+    irrigation,
+    processing,
+    equipment,
+    contracts,
+    insurance,
+    loans,
+    coopMembership,
+    fuelLevel,
+    enhancedPests,
+  });
+
+  _saveNowRef.current = ({ showToast = false } = {}) => {
+    try {
+      if (typeof window === "undefined" || !window.localStorage) return false;
+      if (isInitializing) return false;
+      saveState({ key: saveConfig.key, data: _buildSaveSnapshotRef.current() });
+      _lastAutosaveAt.current = Date.now();
+
+      if (showToast) {
         const now = Date.now();
         if (now - _lastAutosaveToastAt.current > 15000) {
           try { addNotification('Autosaved', 'info'); } catch {}
           _lastAutosaveToastAt.current = now;
         }
-      } catch (e) {
-        console.error("Save failed:", e);
       }
-    }, 1000); // longer debounce
+      return true;
+    } catch (e) {
+      console.error("Save failed:", e);
+      return false;
+    }
+  };
+
+  _requestSaveRef.current = ({ showToast = false, delayMs = 800 } = {}) => {
+    try {
+      if (typeof window === "undefined" || !window.localStorage) return;
+      if (_autosaveTimeout.current) clearTimeout(_autosaveTimeout.current);
+      _autosaveTimeout.current = setTimeout(() => {
+        _autosaveTimeout.current = null;
+        _saveNowRef.current({ showToast });
+      }, delayMs);
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const flush = () => _saveNowRef.current({ showToast: false });
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+
+    window.addEventListener('pagehide', flush);
+    window.addEventListener('beforeunload', flush);
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
-      if (_saveTimeout.current) {
-        clearTimeout(_saveTimeout.current);
-        _saveTimeout.current = null;
+      window.removeEventListener('pagehide', flush);
+      window.removeEventListener('beforeunload', flush);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (_autosaveTimeout.current) {
+        clearTimeout(_autosaveTimeout.current);
+        _autosaveTimeout.current = null;
       }
     };
-  }, [coins, score, levelStatus]); // minimal dependencies
+  }, []);
 
   // Mobile detection resize listener
   // Initialize app after mount
@@ -1877,15 +2204,6 @@ function FarmSimCanvas() {
       // Don't show notification during initialization to avoid errors
     }
   }, [isMobile, performanceMode, isInitializing]);
-  
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Simple growth timer system - TEMPORARILY DISABLED FOR DEBUGGING
   /*
@@ -1937,33 +2255,7 @@ function FarmSimCanvas() {
   }, [lastGrowthTick, buildings?.greenhouse, weather?.type]);
   */
 
-  // --- enhanced helpers ---
-  const addLog = (msg) => setLog(l => [`${new Date().toLocaleTimeString()} ${msg}`, ...l].slice(0, 100));
-  
-  const addNotification = (msg, type = "info", duration = 4000) => {
-    const id = Date.now() + Math.random();
-    const notification = { 
-      id, 
-      msg, 
-      type, 
-      timestamp: Date.now(),
-      priority: type === "error" ? 3 : type === "warning" ? 2 : 1
-    };
-    
-    setNotifications(n => {
-      const next = [...n, notification];
-      // Sort by priority and keep max 5 notifications
-      return next
-        .sort((a, b) => b.priority - a.priority || b.timestamp - a.timestamp)
-        .slice(-5);
-    });
-    
-    // Auto-remove with longer duration for important messages
-    const autoRemoveDuration = type === "error" ? duration * 2 : duration;
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(x => x.id !== id));
-    }, autoRemoveDuration);
-  };
+  // --- enhanced helpers (duplicate removed - moved above) ---
 
   // 📢 NOTIFICATION HELPERS - Consolidates common notification patterns
   const notifyInsufficientCoins = (entity) => addNotification(`Not enough coins for ${entity.name}!`, "error");
@@ -1974,21 +2266,12 @@ function FarmSimCanvas() {
   const notifyActionSuccess = (action, emoji) => addNotification(`${action}! ${emoji || ''}`, "success");
   const notifyEntityAction = (action, entity, emoji) => addNotification(`${action} ${entity.name}! ${emoji || ''}`, "success");
 
-  // NEW: Enhanced visual and gameplay helpers
-  const getTimeOfDay = () => {
-    const hour = new Date().getHours();
-    if (hour >= 6 && hour < 12) return "day";
-    if (hour >= 12 && hour < 18) return "dusk";
-    if (hour >= 18 || hour < 6) return "night";
-    return "dawn";
-  };
-
   // 🚀 PERFORMANCE OPTIMIZATIONS - Memoized expensive calculations
-  const seedEntries = useMemo(() => seedEntries, [rules.seeds]);
-  const buildingEntries = useMemo(() => buildingEntries, [rules.buildings]);
-  const skillTreeEntries = useMemo(() => skillTreeEntries, []);
-  const researchEntries = useMemo(() => Object.entries(RESEARCH_PROJECTS), []);
-  const workerEntries = useMemo(() => Object.entries(WORKER_TYPES), []);
+  const seedEntries = useMemo(() => Object.entries(rules?.seeds || {}), [rules.seeds]);
+  const buildingEntries = useMemo(() => Object.entries(rules?.buildings || {}), [rules.buildings]);
+  const skillTreeEntries = useMemo(() => Object.entries(SKILL_TREES || {}), []);
+  const researchEntries = useMemo(() => Object.entries(RESEARCH_PROJECTS || {}), []);
+  const workerEntries = useMemo(() => Object.entries(WORKER_TYPES || {}), []);
 
   const generateWeatherForecast = () => {
     const forecast = [];
@@ -2107,7 +2390,7 @@ function FarmSimCanvas() {
   const feedBees = () => {
     if ((inventory.beeFeed || 0) <= 0) return false;
     
-    setInventory(prev => ({ ...prev, beeFeed: prev.beeFeed - 1 }));
+    setInventory(prev => applyInventoryDelta(prev, 'beeFeed', -1));
     setBeeHappiness(prev => Math.min(100, prev + 25));
     addLog(`🍯 Fed the bees! Happiness: ${Math.min(100, beeHappiness + 25)}%`);
     addNotification(`Bees are happier! 🐝`, "success");
@@ -2151,51 +2434,61 @@ function FarmSimCanvas() {
         addNotification('Invalid save file format', 'error');
         return;
       }
+      const normalized = normalizeSaveData(parsed, saveConfig);
+      if (!normalized) {
+        addNotification('Unsupported save version', 'error');
+        return;
+      }
 
       // Apply safe subset of fields to current state
-      if (parsed.rules) setRules(parsed.rules);
-      if (typeof parsed.gridSize === 'number') setGridSize(parsed.gridSize);
-      if (Array.isArray(parsed.plots)) setPlots(parsed.plots);
-      if (typeof parsed.coins === 'number') setCoins(parsed.coins);
-      if (typeof parsed.score === 'number') setScore(parsed.score);
-      if (typeof parsed.totalEarned === 'number') setTotalEarned(parsed.totalEarned);
-      if (parsed.name) setName(parsed.name);
-      if (parsed.inventory) setInventory(parsed.inventory);
-      if (parsed.selectedSeed) setSelectedSeed(parsed.selectedSeed);
-  if (parsed.achievements) setAchievements(parsed.achievements);
-  if (parsed.levelId) setLevelId(parsed.levelId);
-  if (parsed.levelEndsAt) setLevelEndsAt(parsed.levelEndsAt);
-  if (parsed.levelStatus) setLevelStatus(parsed.levelStatus);
-  if (parsed.levelStartedAt) setLevelStartedAt(parsed.levelStartedAt);
-  if (typeof parsed.weatherEvents === 'number') setWeatherEvents(parsed.weatherEvents);
-  if (typeof parsed.totalHarvests === 'number') setTotalHarvests(parsed.totalHarvests);
-  if (typeof parsed.qualityHarvests === 'number') setQualityHarvests(parsed.qualityHarvests);
-  if (typeof parsed.pestEliminations === 'number') setPestEliminations(parsed.pestEliminations);
-  if (typeof parsed.seasonalPlants === 'number') setSeasonalPlants(parsed.seasonalPlants);
-      if (parsed.weather) setWeather(parsed.weather);
-      if (parsed.buildings) setBuildings(parsed.buildings);
-      if (parsed.livestock) setLivestock(parsed.livestock || {});
-      if (parsed.processedGoods) setProcessedGoods(parsed.processedGoods || {});
-      if (parsed.npcs) setNpcs(parsed.npcs || []);
-      if (parsed.events) setEvents(parsed.events || []);
-      if (parsed.automation) setAutomation(parsed.automation || {});
-  if (parsed.currentSeason) setCurrentSeason(parsed.currentSeason);
-  if (parsed.seasonEndsAt) setSeasonEndsAt(parsed.seasonEndsAt);
-  if (parsed.marketTrends) setMarketTrends(parsed.marketTrends || {});
-  if (parsed.sprinklers) setSprinklers(parsed.sprinklers || []);
-  if (parsed.scarecrows) setScarecrows(parsed.scarecrows || []);
-  if (typeof parsed.combo === 'number') setCombo(parsed.combo);
-  if (typeof parsed.comboTimer === 'number') setComboTimer(parsed.comboTimer);
-  if (parsed.particles) setParticles(parsed.particles || []);
-  if (typeof parsed.soundEnabled === 'boolean') setSoundEnabled(parsed.soundEnabled);
-      if (parsed.log) setLog(Array.isArray(parsed.log) ? parsed.log.slice(0,100) : []);
-      if (parsed.gameTime) setGameTime(parsed.gameTime);
-      if (parsed.lastGrowthTick) setLastGrowthTick(parsed.lastGrowthTick);
+      if (normalized.rules) setRules(normalized.rules);
+      if (typeof normalized.gridSize === 'number') setGridSize(normalized.gridSize);
+      if (Array.isArray(normalized.plots)) setPlots(normalized.plots);
+      if (typeof normalized.coins === 'number') setCoins(normalized.coins);
+      if (typeof normalized.score === 'number') setScore(normalized.score);
+      if (typeof normalized.totalEarned === 'number') setTotalEarned(normalized.totalEarned);
+      if (normalized.name) setName(normalized.name);
+      if (normalized.inventory) setInventory(normalized.inventory);
+      if (normalized.selectedSeed) setSelectedSeed(normalized.selectedSeed);
+  if (normalized.achievements) setAchievements(normalized.achievements);
+  if (normalized.levelId) setLevelId(normalized.levelId);
+  if (normalized.levelEndsAt) setLevelEndsAt(normalized.levelEndsAt);
+  if (normalized.levelStatus) setLevelStatus(normalized.levelStatus);
+  if (normalized.levelStartedAt) setLevelStartedAt(normalized.levelStartedAt);
+  if (typeof normalized.weatherEvents === 'number') setWeatherEvents(normalized.weatherEvents);
+  if (typeof normalized.totalHarvests === 'number') setTotalHarvests(normalized.totalHarvests);
+  if (typeof normalized.qualityHarvests === 'number') setQualityHarvests(normalized.qualityHarvests);
+  if (typeof normalized.pestEliminations === 'number') setPestEliminations(normalized.pestEliminations);
+  if (typeof normalized.seasonalPlants === 'number') setSeasonalPlants(normalized.seasonalPlants);
+  if (Array.isArray(normalized.availableOrders)) setAvailableOrders(normalized.availableOrders);
+  if ('activeOrder' in normalized) setActiveOrder(normalized.activeOrder || null);
+  if (typeof normalized.ordersCompleted === 'number') setOrdersCompleted(normalized.ordersCompleted);
+  if (typeof normalized.orderStreak === 'number') setOrderStreak(normalized.orderStreak);
+  if (typeof normalized.nextOrderRefreshAt === 'number') setNextOrderRefreshAt(normalized.nextOrderRefreshAt);
+      if (normalized.weather) setWeather(normalized.weather);
+      if (normalized.buildings) setBuildings(normalized.buildings);
+      if (normalized.livestock) setLivestock(normalized.livestock || {});
+      if (normalized.processedGoods) setProcessedGoods(normalized.processedGoods || {});
+      if (normalized.npcs) setNpcs(normalized.npcs || []);
+      if (normalized.events) setEvents(normalized.events || []);
+      if (normalized.automation) setAutomation(normalized.automation || {});
+  if (normalized.currentSeason) setCurrentSeason(normalized.currentSeason);
+  if (normalized.seasonEndsAt) setSeasonEndsAt(normalized.seasonEndsAt);
+  if (normalized.marketTrends) setMarketTrends(normalized.marketTrends || {});
+  if (normalized.sprinklers) setSprinklers(normalized.sprinklers || []);
+  if (normalized.scarecrows) setScarecrows(normalized.scarecrows || []);
+  if (typeof normalized.combo === 'number') setCombo(normalized.combo);
+  if (typeof normalized.comboTimer === 'number') setComboTimer(normalized.comboTimer);
+  if (normalized.particles) setParticles(normalized.particles || []);
+  if (typeof normalized.soundEnabled === 'boolean') setSoundEnabled(normalized.soundEnabled);
+      if (normalized.log) setLog(Array.isArray(normalized.log) ? normalized.log.slice(0,100) : []);
+      if (normalized.gameTime) setGameTime(normalized.gameTime);
+      if (normalized.lastGrowthTick) setLastGrowthTick(normalized.lastGrowthTick);
 
   // persist to localStorage immediately with a fresh timestamp
-  parsed.version = parsed.version ?? 1;
-  parsed.savedAt = Date.now();
-  saveState(parsed);
+  normalized.version = SAVE_VERSION;
+  normalized.savedAt = Date.now();
+  saveState({ key: saveConfig.key, data: normalized });
       addNotification('Save imported successfully', 'success');
     } catch (e) {
       console.error(e);
@@ -2550,6 +2843,115 @@ function FarmSimCanvas() {
     }
   };
 
+  // 📦 FARM ORDERS SYSTEM
+  const buildOrder = () => {
+    const seedIds = seedEntries.map(([id]) => id);
+    const count = clamp(
+      Math.floor(Math.random() * (ORDER_SYSTEM.maxItems - ORDER_SYSTEM.minItems + 1)) + ORDER_SYSTEM.minItems,
+      ORDER_SYSTEM.minItems,
+      ORDER_SYSTEM.maxItems
+    );
+    const shuffled = [...seedIds].sort(() => Math.random() - 0.5);
+    const picks = shuffled.slice(0, count);
+    const items = {};
+
+    picks.forEach((seedId) => {
+      const spec = rules.seeds[seedId];
+      if (!spec) return;
+      const growthTime = Math.max(10, (spec.secondsPerStage || 0) * (spec.stages || 1));
+      const timeFactor = clamp(100 / growthTime, 0.7, 1.2);
+      const rarityFactor = spec.rarity === 'rare' ? 0.7 : spec.rarity === 'epic' ? 0.6 : 1;
+      const baseQty = Math.floor(Math.random() * (ORDER_SYSTEM.maxQty - ORDER_SYSTEM.minQty + 1)) + ORDER_SYSTEM.minQty;
+      const qty = clamp(Math.round(baseQty * timeFactor * rarityFactor), 1, ORDER_SYSTEM.maxQty);
+      items[seedId] = qty;
+    });
+
+    const baseReward = Object.entries(items).reduce((sum, [seedId, qty]) => {
+      return sum + (getMarketPriceForSeed(seedId) * qty);
+    }, 0);
+    const reward = Math.max(1, Math.round(baseReward * ORDER_SYSTEM.rewardMultiplier));
+
+    return {
+      id: `order_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      items,
+      reward,
+      createdAt: nowSec(),
+    };
+  };
+
+  const refreshOrders = (force = false) => {
+    const now = nowSec();
+    if (!force && now < nextOrderRefreshAt && availableOrders.length > 0) return;
+    const nextOrders = Array.from({ length: ORDER_SYSTEM.slots }, () => buildOrder());
+    setAvailableOrders(nextOrders);
+    setNextOrderRefreshAt(now + ORDER_SYSTEM.refreshSeconds);
+    addNotification("📦 New farm orders posted!", "info");
+  };
+
+  const acceptOrder = (orderId) => {
+    if (activeOrder) {
+      addNotification("Finish your active order first!", "warning");
+      return;
+    }
+    const order = availableOrders.find(o => o.id === orderId);
+    if (!order) return;
+    setActiveOrder(order);
+    setAvailableOrders(prev => prev.filter(o => o.id !== orderId));
+    addNotification("✅ Order accepted!", "success");
+    addLog("📦 Accepted a farm order.");
+  };
+
+  const abandonOrder = () => {
+    if (!activeOrder) return;
+    setActiveOrder(null);
+    setOrderStreak(0);
+    addNotification("Order abandoned. Streak reset.", "warning");
+  };
+
+  const fulfillOrder = () => {
+    if (!activeOrder) return;
+    const canFulfill = canFulfillItems(inventory, activeOrder.items);
+    if (!canFulfill) {
+      addNotification("Not enough items to fulfill this order.", "warning");
+      return;
+    }
+
+    setInventory(prev => {
+      let next = { ...prev };
+      Object.entries(activeOrder.items).forEach(([seedId, qty]) => {
+        next = applyInventoryDelta(next, seedId, -qty);
+      });
+      return next;
+    });
+
+    setCoins(c => c + activeOrder.reward);
+    setTotalEarned(t => t + activeOrder.reward);
+    setOrdersCompleted(count => count + 1);
+    setSocialReputation(rep => rep + Math.max(1, Math.floor(activeOrder.reward / 25)));
+
+    const nextStreak = orderStreak + 1;
+    setOrderStreak(nextStreak);
+
+    if (nextStreak % ORDER_SYSTEM.streakBonusEvery === 0) {
+      setCoins(c => c + ORDER_SYSTEM.streakBonusCoins);
+      addNotification(`🔥 Order streak bonus +${ORDER_SYSTEM.streakBonusCoins}🪙!`, "success");
+    }
+
+    updateAnalytics("coinsEarned", activeOrder.reward);
+    addNotification(`📦 Order fulfilled! +${activeOrder.reward}🪙`, "success");
+    addLog(`📦 Order delivered (+${activeOrder.reward}🪙).`);
+    setActiveOrder(null);
+  };
+
+  const rerollOrders = () => {
+    if (coins < ORDER_SYSTEM.rerollCost) {
+      addNotification("Not enough coins to reroll orders.", "warning");
+      return;
+    }
+    setCoins(c => c - ORDER_SYSTEM.rerollCost);
+    refreshOrders(true);
+  };
+
   const updateChallengeProgress = (type, data) => {
     const activeChallenge = dailyChallenges.find(c => c.type === type && !c.completed);
     if (!activeChallenge) return;
@@ -2571,7 +2973,10 @@ function FarmSimCanvas() {
     }
     
     // Check if we have the parent seeds
-    if ((inventory[parent1] || 0) < 1 || (inventory[parent2] || 0) < 1) {
+    const parent1Count = inventory[parent1] || 0;
+    const parent2Count = inventory[parent2] || 0;
+    const needsDouble = parent1 === parent2;
+    if ((needsDouble && parent1Count < 2) || (!needsDouble && (parent1Count < 1 || parent2Count < 1))) {
       addNotification("Need both parent seeds to breed!", "error");
       return;
     }
@@ -2591,11 +2996,11 @@ function FarmSimCanvas() {
     const [hybridId, recipe] = possibleHybrid;
     
     // Consume parent seeds
-    setInventory(prev => ({
-      ...prev,
-      [parent1]: prev[parent1] - 1,
-      [parent2]: prev[parent2] - 1
-    }));
+    setInventory(prev => {
+      let next = applyInventoryDelta(prev, parent1, -1);
+      next = applyInventoryDelta(next, parent2, -1);
+      return next;
+    });
     
     // Add to breeding queue
     const breedingProcess = {
@@ -2803,23 +3208,30 @@ function FarmSimCanvas() {
       const updated = { ...pet };
       
       // Update hunger
-      const timeSinceFood = now - pet.lastFed;
-      const foodInterval = petType.needs.food.interval;
-      if (timeSinceFood >= foodInterval) {
-        updated.hunger = Math.min(100, updated.hunger + 20);
+      const foodNeed = petType.needs.food;
+      if (foodNeed) {
+        const timeSinceFood = now - pet.lastFed;
+        if (timeSinceFood >= foodNeed.interval) {
+          updated.hunger = Math.min(100, updated.hunger + 20);
+        }
       }
       
       // Update playfulness
-      const timeSincePlay = now - pet.lastPlayed;
-      const playInterval = petType.needs.play.interval;
-      if (timeSincePlay >= playInterval) {
-        updated.playfulness = Math.max(0, updated.playfulness - 15);
+      const playNeed = petType.needs.play;
+      if (playNeed) {
+        const timeSincePlay = now - pet.lastPlayed;
+        if (timeSincePlay >= playNeed.interval) {
+          updated.playfulness = Math.max(0, updated.playfulness - 15);
+        }
       }
       
       // Update health (slow decay)
-      const timeSinceVet = now - pet.lastVetVisit;
-      if (timeSinceVet >= 86400) { // Daily health decay
-        updated.health = Math.max(0, updated.health - 5);
+      const healthNeed = petType.needs.health;
+      if (healthNeed) {
+        const timeSinceVet = now - pet.lastVetVisit;
+        if (timeSinceVet >= healthNeed.interval) { // Daily health decay
+          updated.health = Math.max(0, updated.health - 5);
+        }
       }
       
       // Calculate overall happiness
@@ -3185,7 +3597,7 @@ function FarmSimCanvas() {
           plant(action.plotIndex, action.crop);
           break;
         case "pesticide":
-          pesticide(action.plotIndex);
+          spray(action.plotIndex);
           break;
       }
     });
@@ -3235,9 +3647,10 @@ function FarmSimCanvas() {
           newData.efficiency.seedSuccess += value;
           break;
         case "harvest":
-          const timeToHarvest = value; // passed as time value
+          break;
+        case "timeToHarvest":
           newData.efficiency.timeToHarvest = 
-            (newData.efficiency.timeToHarvest * 0.9) + (timeToHarvest * 0.1); // Moving average
+            (newData.efficiency.timeToHarvest * 0.9) + (value * 0.1); // Moving average
           break;
       }
 
@@ -3308,9 +3721,10 @@ function FarmSimCanvas() {
     Object.keys(rules.seeds).forEach(seedType => {
       const baseValue = rules.seeds[seedType].baseValue;
       const volatility = 0.2; // Base volatility
-      const trend = marketTrends[seedType] || 0;
+      const trendKey = marketTrends[seedType] || "normal";
+      const trendMultiplier = MARKET_TRENDS[trendKey]?.multiplier ?? 1;
       const randomChange = (Math.random() - 0.5) * volatility;
-      const newPrice = Math.max(1, baseValue + (baseValue * (trend + randomChange)));
+      const newPrice = Math.max(1, baseValue * (trendMultiplier + randomChange));
       newPrices[seedType] = Math.round(newPrice * 100) / 100;
     });
     setMarketPrices(newPrices);
@@ -4244,6 +4658,14 @@ function FarmSimCanvas() {
     }
   }, [currentTime, lastGiftReset]);
 
+  // Farm Orders refresh
+  useEffect(() => {
+    if (pausedRef.current) return;
+    if (availableOrders.length === 0 || currentTime >= nextOrderRefreshAt) {
+      refreshOrders(availableOrders.length === 0);
+    }
+  }, [currentTime, availableOrders.length, nextOrderRefreshAt]);
+
   // Growth accelerator for testing: backdate plantedAt so stages progress naturally
   const simulateGrowth = (seconds = 20) => {
     setPlots(prev => prev.map(p => {
@@ -4256,82 +4678,23 @@ function FarmSimCanvas() {
     addNotification(`Growth accelerated by ${seconds}s`, 'success');
   };
 
-  // Update current time every second for real-time countdown
-  useEffect(() => {
-    const id = setInterval(() => {
-      setCurrentTime(nowSec());
-      
-      // NEW: Update time of day for visual effects
-      if (autoTimeOfDay) {
-        const newTimeOfDay = getTimeOfDay();
-        if (newTimeOfDay !== currentTimeOfDay) {
-          setCurrentTimeOfDay(newTimeOfDay);
-        }
-      }
-      
-      // NEW: Generate weather forecast every 30 seconds
-      if (currentTime % 30 === 0) {
-        setWeatherForecast(generateWeatherForecast());
-      }
-
-      // 🔄 EXECUTE AUTO-ACTIONS
-      executeAutoActions();
-
-      // 📊 UPDATE ANALYTICS (every 10 seconds)
-      if (currentTime % 10 === 0) {
-        const plotsUsed = plots.filter(p => p.state !== "empty").length;
-        updateAnalytics("plotUtilization", plotsUsed / Math.max(1, plots.length));
-        setLastAnalyticsUpdate(nowSec());
-      }
-      
-      // NEW: Bee pollination system (simplified to avoid infinite loops)
-      if (buildings.beehive && beeHappiness >= 50) {
-        // Note: Using setPlots functional update to avoid dependency issues
-        setPlots(prevPlots => prevPlots.map((plot, index) => {
-          if ((plot.state === "planted" || plot.state === "growing") && 
-              !plot.beePollinated && Math.random() < 0.02) { // Reduced rate to 2%
-            // Produce honey occasionally
-            if (Math.random() < 0.1) {
-              setInventory(prev => ({ ...prev, honey: (prev.honey || 0) + 1 }));
-              setHoneyProduced(prev => prev + 1);
-            }
-            return { ...plot, beePollinated: true };
-          }
-          return plot;
-        }));
-      }
-      
-      // NEW: Disease spreading system (simplified)
-      setPlots(prevPlots => prevPlots.map((plot, index) => {
-        if (plot.disease && Math.random() < 0.01) { // Very low spread rate
-          // Spread to adjacent plots with low probability
-          const adjacent = [index - 1, index + 1].filter(i => 
-            i >= 0 && i < prevPlots.length && !prevPlots[i].disease
-          );
-          if (adjacent.length > 0 && Math.random() < 0.1) {
-            // Mark one adjacent plot for disease (very rare)
-            return plot;
-          }
-        }
-        return plot;
-      }));
-      
-      // NEW: Bee happiness decay
-      if (buildings.beehive && beeHappiness > 0) {
-        setBeeHappiness(prev => Math.max(0, prev - 0.1));
-      }
-      
-    }, 1000);
-    return () => clearInterval(id);
-  }, [currentTime, currentTimeOfDay, buildings.beehive, beeHappiness, autoTimeOfDay]);
+  generateMarketPricesRef.current = generateMarketPrices;
+  seasonalEventsRef.current = checkSeasonalEvents;
+  dailyChallengesRef.current = checkDailyChallenges;
+  breedingCheckRef.current = checkBreedingCompletion;
+  petNeedsRef.current = updatePetNeeds;
+  economicEventRef.current = triggerEconomicEvent;
 
   // Advanced Economy useEffects
   useEffect(() => {
     // Generate initial market prices
-    generateMarketPrices();
+    if (!pausedRef.current) generateMarketPricesRef.current();
     
     // Update market prices every 5 minutes
-    const interval = setInterval(generateMarketPrices, 300000);
+    const interval = setInterval(() => {
+      if (pausedRef.current) return;
+      generateMarketPricesRef.current();
+    }, 300000);
     return () => clearInterval(interval);
   }, []);
 
@@ -4360,36 +4723,37 @@ function FarmSimCanvas() {
     // 🚀 OPTIMIZED MASTER GAME LOOP - Adaptive frequency based on performance mode
     const loopInterval = performanceMode ? 10000 : 5000; // Slower on performance mode
     const masterGameLoop = setInterval(() => {
+      if (pausedRef.current) return;
       const now = Date.now();
       
       // Seasonal Events (every 30 seconds)
       if (now - lastSeasonalCheck >= 30000) {
-        checkSeasonalEvents();
+        seasonalEventsRef.current();
         lastSeasonalCheck = now;
       }
       
       // Daily Challenges (every 60 seconds)
       if (now - lastChallengeCheck >= 60000) {
-        checkDailyChallenges();
+        dailyChallengesRef.current();
         lastChallengeCheck = now;
       }
       
       // Breeding Completion (every 10 seconds)
       if (now - lastBreedingCheck >= 10000) {
-        checkBreedingCompletion();
+        breedingCheckRef.current();
         lastBreedingCheck = now;
       }
       
       // Pet Care (every 30 seconds)
       if (now - lastPetCheck >= 30000) {
-        updatePetNeeds();
+        petNeedsRef.current();
         lastPetCheck = now;
       }
       
       // Economic Events (every 5 minutes)
       if (now - lastEconomicCheck >= 300000) {
         if (Math.random() < 0.1) {
-          triggerEconomicEvent();
+          economicEventRef.current();
         }
         lastEconomicCheck = now;
       }
@@ -4408,11 +4772,13 @@ function FarmSimCanvas() {
       // Apply pet bonuses to crops
       if (petType.bonuses.pest_prevention && Math.random() < petType.bonuses.pest_prevention) {
         // Prevent pests on random plots
-        const pestPlots = plots.filter(p => p.pest);
+        const pestPlots = plots
+          .map((plot, index) => ({ plot, index }))
+          .filter(({ plot }) => plot.infested);
         if (pestPlots.length > 0) {
           const randomPlot = pestPlots[Math.floor(Math.random() * pestPlots.length)];
-          setPlots(prev => prev.map(p => 
-            p.id === randomPlot.id ? { ...p, pest: false } : p
+          setPlots(prev => prev.map((p, idx) => 
+            idx === randomPlot.index ? { ...p, infested: false } : p
           ));
           addNotification(`${pet.name} scared away pests! ${petType.emoji}`, "success");
         }
@@ -4461,6 +4827,7 @@ function FarmSimCanvas() {
   useEffect(() => {
     // Generate research points over time
     const interval = setInterval(() => {
+      if (pausedRef.current) return;
       const baseRate = 1;
       const labBonus = getSkillEffect('research_lab');
       const rate = baseRate + labBonus;
@@ -4485,6 +4852,7 @@ function FarmSimCanvas() {
     
     // Update recommendations every 2 minutes
     const interval = setInterval(() => {
+      if (pausedRef.current) return;
       const recommendations = generateSmartRecommendations();
       setAssistantRecommendations(recommendations);
       updateFarmInsights();
@@ -4578,6 +4946,7 @@ function FarmSimCanvas() {
   useEffect(() => {
     // Trigger random town events
     const townEventInterval = setInterval(() => {
+      if (pausedRef.current) return;
       if (Math.random() < 0.05 && townReputation > 25) { // 5% chance every 5 minutes, need some reputation
         triggerTownEvent();
       }
@@ -4643,7 +5012,10 @@ function FarmSimCanvas() {
     setParticles(currentParticles => {
       if (currentParticles.length >= 50) return currentParticles; // Max 50 particles
       
-      const id = Date.now() + Math.random();
+      // 🐛 FIX: Generate truly unique IDs using counter + performance.now() + random
+      // This prevents duplicate keys when multiple particles are created in the same millisecond
+      particleIdCounterRef.current += 1;
+      const id = `particle-${performance.now()}-${particleIdCounterRef.current}-${Math.random().toString(36).substr(2, 9)}`;
       const particle = { 
         id, x, y, type, text, 
         life: options.life || 2000,
@@ -4733,43 +5105,52 @@ function FarmSimCanvas() {
       for (let i = 0; i < 12; i++) {
         const x = Math.random() * window.innerWidth;
         const y = -20;
+        // 🐛 FIX: Use unique ID generator to prevent duplicate keys
+        particleIdCounterRef.current += 1;
+        const id = `particle-${performance.now()}-${particleIdCounterRef.current}-${Math.random().toString(36).substr(2, 9)}`;
         const particle = {
-          id: Date.now() + Math.random(),
+          id,
           x, y, type: "rain",
           life: 3000,
           vx: (Math.random() - 0.5) * 50,
           vy: 100 + Math.random() * 50
         };
         setParticles(p => [...p, particle]);
-        setTimeout(() => setParticles(p => p.filter(pt => pt.id !== particle.id)), 3000);
+        setTimeout(() => setParticles(p => p.filter(pt => pt.id !== id)), 3000);
       }
     } else if (weather.type === "Storm") {
       for (let i = 0; i < 8; i++) {
         const x = Math.random() * window.innerWidth;
         const y = -20;
+        // 🐛 FIX: Use unique ID generator to prevent duplicate keys
+        particleIdCounterRef.current += 1;
+        const id = `particle-${performance.now()}-${particleIdCounterRef.current}-${Math.random().toString(36).substr(2, 9)}`;
         const particle = {
-          id: Date.now() + Math.random(),
+          id,
           x, y, type: "wind",
           life: 2000,
           vx: 100 + Math.random() * 100,
           vy: (Math.random() - 0.5) * 30
         };
         setParticles(p => [...p, particle]);
-        setTimeout(() => setParticles(p => p.filter(pt => pt.id !== particle.id)), 2000);
+        setTimeout(() => setParticles(p => p.filter(pt => pt.id !== id)), 2000);
       }
     } else if (weather.type === "Frost") {
       for (let i = 0; i < 14; i++) {
         const x = Math.random() * window.innerWidth;
         const y = -20;
+        // 🐛 FIX: Use unique ID generator to prevent duplicate keys
+        particleIdCounterRef.current += 1;
+        const id = `particle-${performance.now()}-${particleIdCounterRef.current}-${Math.random().toString(36).substr(2, 9)}`;
         const particle = {
-          id: Date.now() + Math.random(),
+          id,
           x, y, type: "snow",
           life: 4000,
           vx: (Math.random() - 0.5) * 30,
           vy: 50 + Math.random() * 30
         };
         setParticles(p => [...p, particle]);
-        setTimeout(() => setParticles(p => p.filter(pt => pt.id !== particle.id)), 4000);
+        setTimeout(() => setParticles(p => p.filter(pt => pt.id !== id)), 4000);
       }
     }
   };
@@ -4809,15 +5190,29 @@ function FarmSimCanvas() {
     // Placeholder for sound effects
   };
 
-  // Combo system for consecutive harvests
+  // 🎯 PREMIUM COMBO SYSTEM - Polished feedback
   const triggerCombo = () => {
-    setCombo(c => c + 1);
+    const newCombo = combo + 1;
+    setCombo(newCombo);
     setComboTimer(nowSec() + 5); // 5 second combo window
-    if (combo >= 3) {
-      const bonus = Math.floor(combo * 2);
+    
+    // Show polished combo badge
+    if (feedbackPolisherRef.current) {
+      const screenCenterX = window.innerWidth / 2;
+      const screenCenterY = 120;
+      feedbackPolisherRef.current.popBadge(newCombo, { x: screenCenterX, y: screenCenterY });
+    }
+    
+    // Combo bonus (only show notification for 3x+)
+    if (newCombo >= 3) {
+      const bonus = Math.floor(newCombo * 2);
       setCoins(c => c + bonus);
-      addNotification(`🔥 ${combo}x Combo! +${bonus}🪙`, "success");
-      playSfx("combo");
+      addNotification(`🔥 ${newCombo}x Combo! +${bonus}🪙`, "success");
+    }
+    
+    // Micro screen shake only at 5x+ (if enabled)
+    if (newCombo >= FEEDBACK_CONFIG.shakeThreshold) {
+      feedbackPolisherRef.current?.screenShake(newCombo);
     }
   };
 
@@ -4854,11 +5249,8 @@ function FarmSimCanvas() {
         setSimSpeed(sp);
         addNotification(`Speed set to ${sp}x`, 'info');
       } else if (e.key.toLowerCase() === 's') {
-        try {
-          const snapshot = loadSave() || {};
-          saveState({ ...snapshot, savedAt: Date.now() });
-          addNotification('Manual save complete', 'success');
-        } catch {}
+        const didSave = _saveNowRef.current({ showToast: false });
+        addNotification(didSave ? 'Manual save complete' : 'Save skipped', didSave ? 'success' : 'warning');
       } else if (e.key.toLowerCase() === 'h') {
         // Harvest all ready crops
         const readyPlots = plots.map((plot, index) => ({ plot, index }))
@@ -4897,14 +5289,10 @@ function FarmSimCanvas() {
   }, [rules.seeds, selectedSeed, soundEnabled, paused, plots, inventory]);
 
   // Market price calculation with seasonal and trend modifiers
-  const getMarketPrice = (seedType) => {
-    const base = rules.seeds[seedType].baseValue;
-    const trend = marketTrends[seedType] || "normal";
-    const trendMultiplier = MARKET_TRENDS[trend].multiplier;
-    const seasonBonus = rules.seeds[seedType].season === currentSeason ? 1.3 : 1.0;
-    const skillBonus = 1 + (skills.valueBoost || 0);
-    return Math.round(base * trendMultiplier * seasonBonus * skillBonus);
-  };
+  const getMarketPriceForSeed = useCallback(
+    (seedType) => getMarketPrice({ rules, seedType, marketTrends, currentSeason, skills }),
+    [rules, marketTrends, currentSeason, skills]
+  );
 
   const checkAchievement = (id) => {
     if (achievements.includes(id)) return;
@@ -4942,14 +5330,75 @@ function FarmSimCanvas() {
     setPlots(prev => prev.map((p, idx) => idx === i ? updater({ ...p }) : p));
   }
 
+  // 🌟 QUALITY CALCULATION SYSTEM
+  // Calculates crop quality based on care factors: water timing, fertilizer, weather, bee pollination
+  function calculateQuality(p) {
+    if (!p.seed || !p.plantedAt) return QUALITY_TIERS.NORMAL.id;
+    
+    let qualityScore = 0;
+    const spec = rules.seeds[p.seed];
+    const totalGrowthTime = spec.secondsPerStage * spec.stages;
+    const elapsed = nowSec() - p.plantedAt;
+    
+    // Factor 1: Water timing (optimal watering = water within 30% of growth time)
+    if (p.watered && p.lastWateredAt) {
+      const waterTiming = p.lastWateredAt - p.plantedAt;
+      const optimalWindow = totalGrowthTime * 0.3;
+      if (waterTiming <= optimalWindow) {
+        qualityScore += 3; // Perfect timing
+      } else if (waterTiming <= optimalWindow * 2) {
+        qualityScore += 2; // Good timing
+      } else {
+        qualityScore += 1; // Late but still helped
+      }
+    }
+    
+    // Factor 2: Fertilizer usage (max stacks = higher quality)
+    const fertStacks = Math.min(p.fertilized || 0, rules.fertilizer.maxStacks);
+    qualityScore += fertStacks * 1.5; // Each stack adds 1.5 points
+    
+    // Factor 3: Weather conditions (optimal weather = +2, bad weather = -1)
+    const isOptimalWeather = (spec.season === currentSeason && weather.type === "Sunny") || 
+                             (spec.season === currentSeason && weather.type === "Rain");
+    if (isOptimalWeather) {
+      qualityScore += 2;
+    } else if (weather.type === "Storm" || weather.type === "Frost") {
+      qualityScore -= 1;
+    }
+    
+    // Factor 4: Bee pollination bonus
+    if (p.beePollinated) {
+      qualityScore += 2;
+    }
+    
+    // Factor 5: Soil fertility
+    const soilFertility = p.soilFertility || 1.0;
+    qualityScore += (soilFertility - 1.0) * 2; // Fertile soil boosts quality
+    
+    // Factor 6: No pests/diseases
+    if (!p.infested && !p.disease) {
+      qualityScore += 1;
+    }
+    
+    // Convert score to quality tier
+    if (qualityScore >= 12) return QUALITY_TIERS.PERFECT.id;
+    if (qualityScore >= 8) return QUALITY_TIERS.EXCELLENT.id;
+    if (qualityScore >= 4) return QUALITY_TIERS.GOOD.id;
+    return QUALITY_TIERS.NORMAL.id;
+  }
+
   function harvestValue(p) {
     if (!p.seed) return 0;
     const base = rules.seeds[p.seed].baseValue;
     const fertBonus = 0.3 * (p.fertilized || 0);
-    const qualityBonus = (p.quality - 1) * 0.2;
+    
+    // 🌟 Use quality tier multiplier instead of simple bonus
+    const qualityTier = QUALITY_TIERS[Object.keys(QUALITY_TIERS).find(key => QUALITY_TIERS[key].id === p.quality)] || QUALITY_TIERS.NORMAL;
+    const qualityMultiplier = qualityTier.multiplier - 1; // Convert to bonus (e.g., 1.3 -> 0.3)
+    
     const pestPenalty = p.infested ? 0.4 : 0;
     const boostBonus = p.boosted ? 0.5 : 0;
-    return Math.max(1, Math.round(base * (1 + fertBonus + qualityBonus + boostBonus - pestPenalty)));
+    return Math.max(1, Math.round(base * (1 + fertBonus + qualityMultiplier + boostBonus - pestPenalty)));
   }
 
   function secondsPerStage(p) {
@@ -5007,20 +5456,30 @@ function FarmSimCanvas() {
       
       addLog(`🌱 Planted ${rules.seeds[seed].emoji} ${seed} in plot ${i + 1}${isOptimalSeason ? " 🌟" : ""}${greenhouseBonus}${rotationText}`);
       
-      // NEW: Calculate quality with skill bonuses
-      let qualityChance = 0.2; // Base 20% chance
-      qualityChance += getSkillEffect('quality_seeds'); // Skill bonus
-      qualityChance += getPrestigeMultiplier('quality'); // Prestige bonus
+      // 🌟 QUALITY SYSTEM: Initial quality set to Normal, will be recalculated during growth
+      // Quality is calculated dynamically based on care factors (water timing, fertilizer, etc.)
+      const initialQuality = QUALITY_TIERS.NORMAL.id;
       
-      const quality = Math.random() < qualityChance ? 1.2 : 1;
+      // 🎨 PREMIUM FEEDBACK: Polished planting animation
+      // CSS animation handles visual, FeedbackPolisher handles sound/particles
+      if (feedbackPolisherRef.current) {
+        const plotX = (i % gridSize) * 80 + 40;
+        const plotY = Math.floor(i / gridSize) * 80 + 40;
+        feedbackPolisherRef.current.plantCrop(i, seed, { x: plotX, y: plotY });
+      }
+      
+      // Play sound effect (handled by FeedbackPolisher if available)
+      if (!feedbackPolisherRef.current) {
       playSfx("plant");
+      }
+      
       didPlant = true;
       return { 
         ...p, state: "planted", seed, growth: 0, watered: false, 
         plantedAt: nowSec(), lastWateredAt: null, fertilized: 0, 
-        infested: false, boosted: false, quality, rotationBonus,
+        infested: false, boosted: false, quality: initialQuality, rotationBonus,
         lastCropFamily: p.lastCropFamily, // Keep for next rotation check
-        disease: null, beePollinated: false
+        disease: null, beePollinated: false, mutated: false // 🧬 Track mutations
       };
     });
     if (didPlant) {
@@ -5074,7 +5533,7 @@ function FarmSimCanvas() {
       if (!(p.state === "planted" || p.state === "growing")) return p;
       if ((inventory["fertilizer"] || 0) <= 0) return p;
       if (p.fertilized >= rules.fertilizer.maxStacks) return p;
-      setInventory(inv => ({ ...inv, fertilizer: (inv.fertilizer || 0) - 1 }));
+      setInventory(inv => applyInventoryDelta(inv, 'fertilizer', -1));
       addLog(`🧪 Fertilized plot ${i + 1} (${p.fertilized + 1}/${rules.fertilizer.maxStacks})`);
       return { ...p, fertilized: (p.fertilized || 0) + 1 };
     });
@@ -5084,7 +5543,7 @@ function FarmSimCanvas() {
     replacePlot(i, (p) => {
       if (!p.infested) return p;
       if ((inventory["pesticide"] || 0) <= 0) return p;
-      setInventory(inv => ({ ...inv, pesticide: (inv.pesticide || 0) - 1 }));
+      setInventory(inv => applyInventoryDelta(inv, 'pesticide', -1));
       setPestEliminations(prev => prev + 1);
       addLog(`🧽 Sprayed plot ${i + 1}. Pests eliminated!`);
       playSfx("spray");
@@ -5115,37 +5574,51 @@ function FarmSimCanvas() {
     replacePlot(i, (p) => {
       if (p.state !== "grown") return p;
       
-      const marketPrice = getMarketPrice(p.seed);
-      let val = Math.round(harvestValue(p) * (marketPrice / rules.seeds[p.seed].baseValue));
+      // 🌟 Final quality calculation before harvest
+      const finalQuality = calculateQuality(p);
+      const qualityTier = QUALITY_TIERS[Object.keys(QUALITY_TIERS).find(key => QUALITY_TIERS[key].id === finalQuality)] || QUALITY_TIERS.NORMAL;
+      const updatedPlot = { ...p, quality: finalQuality };
+      
+      const marketPrice = getMarketPriceForSeed(p.seed);
+      let val = Math.round(harvestValue(updatedPlot) * (marketPrice / rules.seeds[p.seed].baseValue));
+      
+      // 🌍 SEASONAL BONUS: Apply multiplier for planting in optimal season
+      const spec = rules.seeds[p.seed];
+      const isOptimalSeasonHarvest = spec.season === currentSeason;
+      let seasonalBonusMultiplier = 0;
+      if (isOptimalSeasonHarvest) {
+        const seasonBonus = SEASONAL_BONUSES[currentSeason] || { multiplier: 1.0 };
+        seasonalBonusMultiplier = seasonBonus.multiplier - 1.0; // Convert to bonus (e.g., 1.25 -> 0.25)
+        val = applyMultiplierRound(val, seasonBonus.multiplier);
+      }
       
       // NEW: Apply rotation bonus
       if (p.rotationBonus > 0) {
-        val = Math.round(val * (1 + p.rotationBonus));
+        val = applyMultiplierRound(val, 1 + p.rotationBonus);
       }
       
       // NEW: Apply bee pollination bonus
       if (p.beePollinated && buildings.beehive) {
-        val = Math.round(val * (1 + rules.buildings.beehive.bonus));
+        val = applyMultiplierRound(val, 1 + rules.buildings.beehive.bonus);
       }
       // Soil fertility lightly affects value
       const soilMult = Math.max(rules.soil.fertilityMin, Math.min(rules.soil.fertilityMax, p.soilFertility || 1));
-      val = Math.round(val * (0.9 + 0.1 * soilMult));
+      val = applyMultiplierRound(val, 0.9 + 0.1 * soilMult);
       
       // Building bonuses
       if (buildings.barn) {
-        val = Math.round(val * (1 + rules.buildings.barn.bonus)); // +20% harvest value
+        val = applyMultiplierRound(val, 1 + rules.buildings.barn.bonus); // +20% harvest value
       }
       
       // NEW: Apply prestige multipliers
-      val = Math.round(val * getPrestigeMultiplier('coins'));
+      val = applyMultiplierRound(val, getPrestigeMultiplier('coins'));
       
       // NEW: Apply skill bonuses
       const negotiatorBonus = getSkillEffect('negotiator');
       if (negotiatorBonus > 0) {
-        val = Math.round(val * (1 + negotiatorBonus));
+        val = applyMultiplierRound(val, 1 + negotiatorBonus);
       }
       
-      setCoins(c => c + val);
       setScore(s => s + val);
       setTotalEarned(t => t + val);
       setTotalHarvests(h => h + 1);
@@ -5196,7 +5669,7 @@ function FarmSimCanvas() {
       
       // NEW: Grant research points and skill points
       const baseResearchPoints = Math.max(1, Math.floor(val / 50)); // 1 RP per 50 coins
-      const baseSkillPoints = p.quality > 1 ? 0.1 : 0.05; // More for quality crops
+      const baseSkillPoints = finalQuality > QUALITY_TIERS.NORMAL.id ? 0.1 : 0.05; // More for quality crops
       setResearchPoints(prev => prev + baseResearchPoints);
       
       // Chance to gain skill point
@@ -5205,31 +5678,65 @@ function FarmSimCanvas() {
         addNotification("+1 Skill Point!", "success");
       }
       
-      if (p.quality > 1) {
+      // 🌟 Track quality harvests (anything above Normal)
+      if (finalQuality > QUALITY_TIERS.NORMAL.id) {
         setQualityHarvests(q => q + 1);
       }
       
-      // Check for seasonal bonus
-      const isOptimalSeason = rules.seeds[p.seed].season === currentSeason;
+      // 🌍 Seasonal bonus display
+      const seasonBonusText = isOptimalSeasonHarvest ? ` 🌍+${Math.round(seasonalBonusMultiplier * 100)}%` : "";
       
       const emoji = rules.seeds[p.seed].emoji;
-      const qualityText = p.quality > 1 ? " ⭐" : "";
-      const seasonText = isOptimalSeason ? " 🌟" : "";
+      const qualityEmoji = qualityTier.emoji;
+      const qualityName = qualityTier.name;
       const trendText = marketTrends[p.seed] === "high" ? " 📈" : marketTrends[p.seed] === "low" ? " 📉" : "";
       const buildingText = buildings.barn ? " 🏚️" : "";
       const rotationText = p.rotationBonus > 0 ? ` 🔄+${Math.round(p.rotationBonus * 100)}%` : "";
       const beeText = p.beePollinated ? " 🐝+25%" : "";
+      const mutationText = p.mutated ? " 🧬" : "";
       
-      addLog(`🎉 Harvested ${emoji} ${p.seed} (+${val}🪙)${qualityText}${seasonText}${trendText}${buildingText}${rotationText}${beeText}`);
-      addNotification(`+${val}🪙 ${emoji}${qualityText}`, "success");
+      addLog(`🎉 Harvested ${emoji} ${p.seed} (+${val}🪙) ${qualityName}${qualityEmoji}${seasonBonusText}${trendText}${buildingText}${rotationText}${beeText}${mutationText}`);
+      addNotification(`+${val}🪙 ${emoji}${qualityEmoji}${mutationText}`, "success");
       
       // NEW: Update last crop family for rotation system
       const lastCropFamily = rules.seeds[p.seed].family;
       
-      // Trigger combo and effects
+      // 🎨 PREMIUM FEEDBACK: Polished coin arc and combo
       triggerCombo();
+      
+      // Calculate plot screen position for coin arc
+      const plotX = (i % gridSize) * 80 + 40;
+      const plotY = Math.floor(i / gridSize) * 80 + 40;
+      
+      // 🎨 PREMIUM FEEDBACK: Spawn coin with bezier arc to coin counter
+      const nextCoins = coins + val;
+      if (coinCounterRef.current) {
+        const coinCounterRect = coinCounterRef.current.getBoundingClientRect();
+        const endX = coinCounterRect.left + coinCounterRect.width / 2;
+        const endY = coinCounterRect.top + coinCounterRect.height / 2;
+        
+        // Add coin particle with arc animation
+        addParticle(plotX, plotY, "coins", `+${val}`, {
+          endX,
+          endY,
+          startTime: Date.now(),
+          life: 450, // Match coin arc duration
+        });
+        
+        // Smooth coin counter increment with lerp
+        if (feedbackPolisherRef.current) {
+          feedbackPolisherRef.current.animateCoinCounter(nextCoins);
+        } else {
+          // Fallback: instant update
+          setCoins(nextCoins);
+        }
+      } else {
+        // Fallback: instant coin update
+        setCoins(nextCoins);
+        addParticle(plotX, plotY, "coins", `+${val}`);
+      }
+      
       playSfx("harvest");
-      addParticle(i % gridSize * 120 + 60, Math.floor(i / gridSize) * 120 + 60, "coins", `+${val}`);
       
       // NEW: Gain social reputation from farming activities
       const reputationGain = Math.max(1, Math.floor(val / 20)); // 1 rep per 20 coins earned
@@ -5257,6 +5764,8 @@ function FarmSimCanvas() {
 
   // Tutorial-aware tab switching
   function handleShopTabChange(newTab) {
+    // Ensure the right panel shows the shop when a shop tab is selected.
+    setSidebarTab('shop');
     setShopTab(newTab);
     
     // Track important tab visits for tutorial
@@ -5281,7 +5790,10 @@ function FarmSimCanvas() {
     } else if (item === "pesticide") {
       price = rules.pesticide.shopPrice * qty;
     } else if (item === "wateringCan") {
-      if (inventory.wateringCan > 0) return; // Already have one
+      if (inventory.wateringCan > 0) {
+        release();
+        return; // Already have one
+      }
       price = rules.wateringCan.shopPrice;
     } else if (item in rules.buildings) {
       if (buildings[item]) {
@@ -5357,11 +5869,7 @@ function FarmSimCanvas() {
     if (price <= 0 || coins < price) { release(); return; }
     
     setCoins(c => c - price);
-    setInventory(inv => {
-      const before = inv[item] || 0;
-      const next = { ...inv, [item]: before + qty };
-      return next;
-    });
+    setInventory(inv => applyInventoryDelta(inv, item, qty));
     playSfx('buy');
     
     const emoji = rules.seeds[item]?.emoji || "📦";
@@ -5448,15 +5956,68 @@ function FarmSimCanvas() {
     setSprinklers([]);
     setScarecrows([]);
     setNotifications([]);
+    setAvailableOrders([]);
+    setActiveOrder(null);
+    setOrdersCompleted(0);
+    setOrderStreak(0);
+    setNextOrderRefreshAt(nowSec() + ORDER_SYSTEM.refreshSeconds);
     setCombo(0);
     setComboTimer(0);
     setParticles([]);
   }
 
   // --- Simplified growth tick (no timers) ---
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (paused) return;
+  const tickRef = useRef(() => {});
+  tickRef.current = () => {
+    if (paused) return;
+    const now = nowSec();
+
+    // Keep a single source of truth for time-based systems.
+    setCurrentTime(now);
+      
+      // Update time of day for visual effects
+      if (autoTimeOfDay) {
+        const newTimeOfDay = getTimeOfDay();
+        if (newTimeOfDay !== currentTimeOfDay) {
+          setCurrentTimeOfDay(newTimeOfDay);
+        }
+      }
+      
+      // Generate weather forecast periodically
+      if (now % 30 === 0) {
+        setWeatherForecast(generateWeatherForecast());
+      }
+
+      // Execute auto-actions
+      executeAutoActions();
+
+      // Update analytics periodically
+      if (now % 10 === 0) {
+        const plotsUsed = plots.filter(p => p.state !== "empty").length;
+        updateAnalytics("plotUtilization", plotsUsed / Math.max(1, plots.length));
+        setLastAnalyticsUpdate(now);
+      }
+      
+      // Bee pollination / honey
+      if (buildings.beehive && beeHappiness >= 50) {
+        setPlots(prevPlots => prevPlots.map((plot) => {
+          if ((plot.state === "planted" || plot.state === "growing") && 
+              !plot.beePollinated && Math.random() < 0.02) {
+            if (Math.random() < 0.1) {
+              setInventory(prev => ({ ...prev, honey: (prev.honey || 0) + 1 }));
+              setHoneyProduced(prev => prev + 1);
+            }
+            return { ...plot, beePollinated: true };
+          }
+          return plot;
+        }));
+      }
+      
+      // Bee happiness decay
+      if (buildings.beehive && beeHappiness > 0) {
+        setBeeHappiness(prev => Math.max(0, prev - 0.1));
+      }
+
       // Update particles (skip on mobile in performance mode)
       if (!performanceMode || !isMobile) {
         setParticles(prev => prev.filter(p => p.life > 0).map(p => ({
@@ -5465,17 +6026,17 @@ function FarmSimCanvas() {
           y: p.y - 2
         })));
       }
-      if (comboTimer > 0 && nowSec() >= comboTimer) {
+      if (comboTimer > 0 && now >= comboTimer) {
         setCombo(0);
         setComboTimer(0);
       }
       
       // Season changes
-      if (nowSec() >= seasonEndsAt) {
+      if (now >= seasonEndsAt) {
         const currentIndex = SEASONS.indexOf(currentSeason);
         const nextSeason = SEASONS[(currentIndex + 1) % SEASONS.length];
         setCurrentSeason(nextSeason);
-        setSeasonEndsAt(nowSec() + 120); // 2 minutes per season
+        setSeasonEndsAt(now + 120); // 2 minutes per season
         addLog(`🌍 Season changed to ${SEASON_EFFECTS[nextSeason].name}`);
         addNotification(`${SEASON_EFFECTS[nextSeason].name} begins!`, "info");
         
@@ -5492,7 +6053,7 @@ function FarmSimCanvas() {
       
       // Enhanced weather evolution
       setWeather(w => {
-                  if (w.endsAt <= nowSec()) {
+                  if (w.endsAt <= now) {
             setWeatherEvents(prev => prev + 1);
             checkAllAchievements();
             
@@ -5542,13 +6103,13 @@ function FarmSimCanvas() {
             if (next === "Rain") {
               setPlots(prev => prev.map(p => {
                 if (p.state === "planted" || p.state === "growing") {
-                  return { ...p, watered: true, lastWateredAt: nowSec(), state: "growing" };
+                  return { ...p, watered: true, lastWateredAt: now, state: "growing" };
                 }
                 return p;
               }));
             }
             
-            return { type: next, endsAt: nowSec() + dur };
+            return { type: next, endsAt: now + dur };
           }
         return w;
       });
@@ -5557,13 +6118,13 @@ function FarmSimCanvas() {
       setPlots(prev => {
         let arr = [...prev];
         // Soil regeneration for empty plots
-        const now = nowSec();
+        const nowSoil = now;
         arr = arr.map(pl => {
           if (pl.state === 'empty') {
-            const dtMin = Math.max(0, (now - (pl.lastSoilUpdate || now)) / 60);
+            const dtMin = Math.max(0, (nowSoil - (pl.lastSoilUpdate || nowSoil)) / 60);
             const regen = dtMin * (rules.soil.regenPerMinute || 0.02);
             const nf = Math.min(rules.soil.fertilityMax, (pl.soilFertility || 1) + regen);
-            return { ...pl, soilFertility: nf, lastSoilUpdate: now };
+            return { ...pl, soilFertility: nf, lastSoilUpdate: nowSoil };
           }
           return pl;
         });
@@ -5580,7 +6141,7 @@ function FarmSimCanvas() {
         }
         return arr;
       });
-
+      
       // Enhanced growth & wither system
       setPlots(prev => prev.map(p => {
           if (!(p.state === "planted" || p.state === "growing" || p.state === "grown")) return p;
@@ -5588,7 +6149,7 @@ function FarmSimCanvas() {
           
           // Enhanced wither logic
           if (p.state !== "grown" && p.lastWateredAt !== null) {
-            const dry = nowSec() - (p.lastWateredAt || 0);
+            const dry = now - (p.lastWateredAt || 0);
             if (dry > witherLimit(p) && weather.type !== "Storm") {
               addLog(`💀 Plot ${prev.indexOf(p) + 1} withered from drought`);
               return { ...p, state: "withered" };
@@ -5600,24 +6161,56 @@ function FarmSimCanvas() {
           
           const sps = secondsPerStage(p);
           const spec = rules.seeds[p.seed];
-          const elapsed = nowSec() - p.plantedAt;
-          const stg = clamp(Math.floor(elapsed / sps), 0, spec.stages);
+          const elapsed = now - p.plantedAt;
+          const stg = getGrowthStage(elapsed, sps, spec.stages);
           
           let nextState = p.state;
           if (stg >= spec.stages) nextState = "grown";
           else if (stg > 0) nextState = "growing";
           
           if (stg !== p.growth || nextState !== p.state) {
-            if (nextState === "grown") {
-              addNotification(`${spec.emoji} Ready to harvest!`, "success");
+            let updatedPlot = { ...p, growth: stg, state: nextState };
+            
+            // 🌟 Recalculate quality during growth (quality improves with care)
+            if (nextState === "growing" || nextState === "grown") {
+              updatedPlot.quality = calculateQuality(updatedPlot);
             }
-            return { ...p, growth: stg, state: nextState };
+            
+            // 🧬 MUTATION CHECK: When crop reaches grown state, check for rare mutations
+            if (nextState === "grown" && !p.mutated && CROP_MUTATIONS[p.seed]) {
+              const mutations = CROP_MUTATIONS[p.seed];
+              for (const mut of mutations) {
+                // Higher quality crops have better mutation chances
+                const qualityBonus = (updatedPlot.quality - 1) * 0.01; // +1% per quality tier above Normal
+                const mutationChance = mut.chance + qualityBonus;
+                
+                if (Math.random() < mutationChance) {
+                  // Mutation occurred! Update to mutated crop
+                  const mutatedSeed = mut.mutation;
+                  if (rules.seeds[mutatedSeed]) {
+                    updatedPlot.seed = mutatedSeed;
+                    updatedPlot.mutated = true;
+                    updatedPlot.quality = Math.min(QUALITY_TIERS.PERFECT.id, updatedPlot.quality + 1); // Boost quality
+                    addNotification(`🧬 ${mut.name} mutation discovered! ${mut.emoji}`, "success");
+                    addLog(`🧬 Plot ${prev.indexOf(p) + 1} mutated into ${mut.name}!`);
+                    break; // Only one mutation per crop
+                  }
+                }
+              }
+            }
+            
+            if (nextState === "grown") {
+              const qualityTier = QUALITY_TIERS[Object.keys(QUALITY_TIERS).find(key => QUALITY_TIERS[key].id === updatedPlot.quality)] || QUALITY_TIERS.NORMAL;
+              const qualityEmoji = qualityTier.emoji;
+              addNotification(`${spec.emoji} Ready to harvest! ${qualityEmoji}`, "success");
+            }
+            return updatedPlot;
           }
         return p;
       }));
 
       // Farmhand automation: every workforce.actionIntervalSec do limited actions
-      if (farmhands > 0 && nowSec() - lastFarmhandAction >= (rules.workforce.actionIntervalSec || 5)) {
+      if (farmhands > 0 && now - lastFarmhandAction >= (rules.workforce.actionIntervalSec || 5)) {
         let actions = farmhands * (rules.workforce.actionsPerHand || 2);
         // harvest grown first
         for (let idx = 0; idx < plots.length && actions > 0; idx++) {
@@ -5629,14 +6222,14 @@ function FarmSimCanvas() {
           const pl = plots[idx];
           if ((pl.state === 'planted' || pl.state === 'growing') && !pl.watered) { water(idx); actions--; }
         }
-        setLastFarmhandAction(nowSec());
+        setLastFarmhandAction(now);
       }
 
-              // Enhanced level timer with achievement checks and auto-progression
+      // Enhanced level timer with achievement checks and auto-progression
         if (levelId !== "endless" && levelStatus === "playing" && level) {
           setLevelStatus(st => {
             if (coins >= level.targetCoins) {
-              const timeUsed = nowSec() - levelStartedAt;
+              const timeUsed = now - levelStartedAt;
               if (levelId === "lvl1" && timeUsed < 240 && !achievements.includes("speed_farmer")) { // 4 minutes
                 checkAchievement("speed_farmer");
               }
@@ -5663,7 +6256,7 @@ function FarmSimCanvas() {
                 return "won";
               }
             }
-            if (nowSec() >= levelEndsAt) {
+            if (now >= levelEndsAt) {
               if (coins >= level.targetCoins) {
                 // Same auto-progression logic for time-based completion
                 const currentLevelIndex = findLevelIndex(levelId);
@@ -5692,9 +6285,24 @@ function FarmSimCanvas() {
             return st;
           });
         }
+
+    // Periodic autosave to capture all state (including settings/UI changes).
+    if (!isInitializing) {
+      const nowMs = Date.now();
+      const autosaveIntervalMs = 15000;
+      if (nowMs - _lastAutosaveAt.current >= autosaveIntervalMs) {
+        _lastAutosaveAt.current = nowMs;
+        _requestSaveRef.current({ showToast: true });
+      }
+    }
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      tickRef.current();
     }, 1000);
     return () => clearInterval(interval);
-  }, [paused]); // Only depend on paused to prevent constant re-renders
+  }, []);
 
   // --- Enhanced UI helpers ---
   function WeatherBadge() {
@@ -5730,7 +6338,7 @@ function FarmSimCanvas() {
           {seedEntries.slice(0, 4).map(([seed, data]) => {
             const trend = marketTrends[seed] || "normal";
             const trendData = MARKET_TRENDS[trend];
-            const price = getMarketPrice(seed);
+            const price = getMarketPriceForSeed(seed);
             return (
               <div key={seed} className="bg-white/80 backdrop-blur-sm rounded-lg p-2 border">
                 <div className="flex items-center justify-between">
@@ -5768,6 +6376,82 @@ function FarmSimCanvas() {
           ))}
         </div>
       </div>
+    );
+  }
+
+  function OrdersBoard() {
+    const refreshIn = Math.max(0, nextOrderRefreshAt - currentTime);
+    const canFulfill = activeOrder ? canFulfillItems(inventory, activeOrder.items) : false;
+
+    return (
+      <Card className="card-interactive">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>📦 Farm Orders</span>
+            <Badge variant="outline" className="text-xs">
+              Refresh in {formatTime(refreshIn)}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {activeOrder ? (
+            <div className="rounded-lg border bg-emerald-50/60 p-3 space-y-2">
+              <div className="text-sm font-semibold">Active Order</div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {Object.entries(activeOrder.items).map(([seedId, qty]) => (
+                  <Badge key={seedId} variant="outline" className="text-xs">
+                    {rules.seeds[seedId]?.emoji || "🌾"} {seedId} ×{qty}
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-semibold text-emerald-700">Reward: +{activeOrder.reward}🪙</span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={abandonOrder}>
+                    Abandon
+                  </Button>
+                  <Button size="sm" onClick={fulfillOrder} disabled={!canFulfill}>
+                    Fulfill
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-slate-600">No active order. Pick one below!</div>
+          )}
+
+          <div className="space-y-2">
+            {availableOrders.length === 0 ? (
+              <div className="text-xs text-slate-500">No orders posted yet.</div>
+            ) : (
+              availableOrders.map(order => (
+                <div key={order.id} className="rounded-lg border p-3 bg-white/70">
+                  <div className="flex flex-wrap gap-2 text-xs mb-2">
+                    {Object.entries(order.items).map(([seedId, qty]) => (
+                      <Badge key={seedId} variant="outline" className="text-xs">
+                        {rules.seeds[seedId]?.emoji || "🌾"} {seedId} ×{qty}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-emerald-700">+{order.reward}🪙</span>
+                    <Button size="sm" onClick={() => acceptOrder(order.id)} disabled={!!activeOrder}>
+                      Accept
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-slate-600">
+            <span>Streak: {orderStreak} • Completed: {ordersCompleted}</span>
+            <Button size="sm" variant="outline" onClick={rerollOrders} disabled={coins < ORDER_SYSTEM.rerollCost}>
+              Reroll ({ORDER_SYSTEM.rerollCost}🪙)
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -5813,14 +6497,34 @@ function FarmSimCanvas() {
     );
   }
 
+  // 🎯 PREMIUM COMBO BADGE - Subtle luxury feel
+  // Auto-fade badge after delay (moved outside component)
+  useEffect(() => {
+    if (comboBadgeState.visible && combo > 0) {
+      const fadeTimer = setTimeout(() => {
+        setComboBadgeState(prev => ({ ...prev, visible: false }));
+      }, FEEDBACK_CONFIG.comboFadeDelay);
+      return () => clearTimeout(fadeTimer);
+    }
+  }, [combo, comboBadgeState.visible]);
+
   function ComboDisplay() {
-    if (combo === 0) return null;
+    if (!comboBadgeState.visible || combo === 0) return null;
     
     return (
-      <div className="fixed top-20 right-4 z-50 bg-gradient-to-r from-orange-400 to-red-500 text-white px-4 py-2 rounded-full shadow-lg animate-pulse">
-        <div className="flex items-center gap-2 font-bold">
-          <Zap size={20}/>
-          {combo}x COMBO!
+      <div 
+        className={`fixed z-50 combo-badge ${combo >= 3 ? 'pulse' : ''}`}
+        style={{
+          left: `${comboBadgeState.x}px`,
+          top: `${comboBadgeState.y}px`,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        <div className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 text-white px-6 py-3 rounded-full shadow-xl backdrop-blur-sm border-2 border-white/30">
+          <div className="flex items-center gap-2 font-bold text-lg">
+            <Zap size={20} className={combo >= 3 ? 'animate-pulse' : ''}/>
+            <span>{combo}x COMBO!</span>
+          </div>
         </div>
       </div>
     );
@@ -5834,9 +6538,11 @@ function FarmSimCanvas() {
           let className = "absolute text-lg font-bold";
           let content = p.text;
           
-          // NEW: Enhanced particle styling based on type
+          // 🎨 PREMIUM: Enhanced particle styling with polished animations
           if (p.type === "coins") {
-            className += " text-yellow-500 animate-bounce";
+            className += " text-yellow-500 particle coin";
+            // If bezier arc endpoints provided, use CSS animation (coin-arc handles it)
+            // Otherwise fall through to standard particle rendering
           } else if (p.type === "achievement") {
             className += " text-purple-500 animate-bounce";
           } else if (p.type === "rain") {
@@ -5856,16 +6562,28 @@ function FarmSimCanvas() {
             className += " text-blue-500 animate-bounce";
           }
           
+          // 🎨 PREMIUM: Coin arc uses CSS custom properties for dynamic bezier path
+          const particleStyle = p.type === "coins" && p.endX !== undefined 
+            ? {
+                // Coin arc animation with dynamic start/end positions
+                left: `${p.x}px`,
+                top: `${p.y}px`,
+                '--dx': `${p.endX - p.x}px`,
+                '--dy': `${p.endY - p.y}px`,
+                animation: 'coin-arc 0.45s cubic-bezier(0.65, 0, 0.35, 1) forwards',
+              }
+            : {
+                left: `${p.x}px`,
+                top: `${p.y}px`,
+                transform: `translate(${p.vx || 0}px, ${p.vy || 0}px)`,
+                animation: p.type === "achievement" ? "float 2s ease-out forwards" : "none",
+              };
+          
           return (
             <div
               key={p.id}
               className={className}
-              style={{
-                left: p.x,
-                top: p.y,
-                transform: `translate(${p.vx}px, ${p.vy}px)`,
-                animation: p.type === "coins" || p.type === "achievement" ? "float 2s ease-out forwards" : "none",
-              }}
+              style={particleStyle}
             >
               {content}
             </div>
@@ -5921,6 +6639,22 @@ function FarmSimCanvas() {
     
     // Only add animation classes if animations are enabled
     const useAnimations = animationsEnabled && !performanceMode;
+    const [growthPulse, setGrowthPulse] = useState(false);
+    const lastGrowthStageRef = useRef(p.growth);
+
+    useEffect(() => {
+      if (!useAnimations) {
+        lastGrowthStageRef.current = p.growth;
+        setGrowthPulse(false);
+        return;
+      }
+      const didAdvance = p.state === "growing" && p.growth !== lastGrowthStageRef.current;
+      lastGrowthStageRef.current = p.growth;
+      if (!didAdvance) return;
+      setGrowthPulse(true);
+      const timer = setTimeout(() => setGrowthPulse(false), 900);
+      return () => clearTimeout(timer);
+    }, [p.state, p.growth, useAnimations]);
     
     if (p.state === "locked") {
       bgClass = "bg-slate-100/70";
@@ -5957,6 +6691,7 @@ function FarmSimCanvas() {
       if (p.watered && p.state !== "grown") plotEnhancedClass += " watered";
       if (p.fertilized > 0) plotEnhancedClass += " fertilized";
       if (p.beePollinated) plotEnhancedClass += " bee-pollinated";
+      if (growthPulse) plotEnhancedClass += " growth-pulse";
     }
 
     // Enhanced click handlers with particle effects and mobile support
@@ -6326,7 +7061,7 @@ function FarmSimCanvas() {
   );
 
   // 📱 MOBILE NAVIGATION BAR
-  const MobileNavBar = ({ currentTab, setCurrentTab, coins, level }) => (
+  const MobileNavBar = ({ currentTab, setCurrentTab, setSidebarTab, coins, level }) => (
     <div className="mobile-tabs md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t shadow-lg z-40">
       <div className="flex justify-around py-2">
         {[
@@ -6340,7 +7075,7 @@ function FarmSimCanvas() {
             className={`mobile-tab flex flex-col items-center p-2 rounded-lg transition-all ${
               currentTab === tab.id ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600'
             }`}
-            onClick={() => setCurrentTab(tab.id)}
+            onClick={() => { setSidebarTab?.('shop'); setCurrentTab(tab.id); }}
           >
             <span className="text-xl">{tab.icon}</span>
             <span className="text-xs mt-1">{tab.label}</span>
@@ -6380,21 +7115,6 @@ function FarmSimCanvas() {
         weather.type === 'Frost' ? 'bg-cyan-100/20' :
         weather.type === 'Pests' ? 'bg-green-100/10' : ''
       }`}></div>
-      {/* Save status indicator */}
-      <div className="fixed top-4 left-4 p-2 bg-white/80 border rounded-lg text-xs z-50">
-        {(() => {
-          try {
-            if (typeof window !== 'undefined' && window.localStorage) {
-              const save = loadSave();
-              return save ? `💾 Save present (${new Date(save.savedAt || Date.now()).toLocaleString()})` : '💾 No save present';
-            }
-            return '💾 Loading...';
-          } catch (e) {
-            console.debug('[farm] Save status error:', e);
-            return '💾 Save status unknown';
-          }
-        })()}
-      </div>
       {/* Floating notification system */}
       <div className="fixed top-4 right-4 z-50 space-y-2 max-h-[40vh] overflow-hidden flex flex-col-reverse">
         {notifications.slice(-3).map(n => (
@@ -6422,9 +7142,9 @@ function FarmSimCanvas() {
         ))}
       </div>
 
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-24 md:pb-8">
         {/* Enhanced Header */}
-        <div className="flex items-center justify-between mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white/50">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white/50">
           <div className="flex items-center gap-3">
             <div className="bg-gradient-to-r from-emerald-500 to-green-600 rounded-full p-3 shadow-lg">
               <Sprout className="text-white" size={24}/>
@@ -6435,11 +7155,14 @@ function FarmSimCanvas() {
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border border-white/50">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <div 
+              ref={coinCounterRef}
+              className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border border-white/50 transition-transform duration-150"
+            >
               <div className="flex items-center gap-2 text-lg font-bold text-emerald-700">
                 <Coins size={20}/>
-                {coins}🪙
+                <span>{coins}</span>🪙
                 {prestigeLevel > 0 && (
                   <span className="text-xs text-yellow-600 font-normal">
                     {findPrestigeLevel(prestigeLevel)?.emoji}P{prestigeLevel}
@@ -6447,27 +7170,19 @@ function FarmSimCanvas() {
                 )}
               </div>
             </div>
-            
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border border-white/50">
-              <div className="flex items-center gap-2 text-lg font-bold text-purple-700">
-                <Trophy size={20}/>
-                {score}
+
+            <div className="hidden lg:flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border border-white/50">
+              <div className="flex items-center gap-2 text-purple-700 font-bold">
+                <Trophy size={18}/>
+                <span>{score}</span>
               </div>
-            </div>
-            
-            {/* NEW: Skills and Research Points */}
-            {(skillPoints > 0 || researchPoints > 0) && (
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border border-white/50">
+              {(skillPoints > 0 || researchPoints > 0) && (
                 <div className="flex items-center gap-2 text-sm">
-                  {skillPoints > 0 && (
-                    <span className="text-blue-600 font-bold">📚 {skillPoints}</span>
-                  )}
-                  {researchPoints > 0 && (
-                    <span className="text-green-600 font-bold">🔬 {researchPoints}</span>
-                  )}
+                  {skillPoints > 0 && <span className="text-blue-600 font-bold">📚 {skillPoints}</span>}
+                  {researchPoints > 0 && <span className="text-green-600 font-bold">🔬 {researchPoints}</span>}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
             
             <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border border-white/50">
               <div className="flex items-center gap-2 text-lg font-bold text-blue-700">
@@ -6487,25 +7202,8 @@ function FarmSimCanvas() {
             <WeatherBadge/>
             
             {/* NEW: Time of Day Badge */}
-            <div className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-full bg-white/80 border-2 border-white/50 backdrop-blur-sm shadow-lg">
+            <div className="hidden xl:inline-flex items-center gap-2 text-sm px-3 py-2 rounded-full bg-white/80 border-2 border-white/50 backdrop-blur-sm shadow-lg">
               <span className="font-semibold text-slate-700">{DAY_NIGHT_CYCLE[currentTimeOfDay].name}</span>
-            </div>
-
-            {/* Social Quick Access Panel */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg border border-white/50">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 text-sm">
-                  <Users size={16} className="text-blue-600"/>
-                  <span className="font-semibold text-blue-700">{friends.length}</span>
-                </div>
-                <div className="flex items-center gap-1 text-sm">
-                  <Star size={16} className="text-yellow-600"/>
-                  <span className="font-semibold text-yellow-700">{socialReputation}</span>
-                </div>
-                <Badge variant="outline" className="text-xs px-2 py-1">
-                  {currentPlayerRank.name.split(' ')[1] || 'Novice'}
-                </Badge>
-              </div>
             </div>
 
             {/* Account Button */}
@@ -6544,9 +7242,19 @@ function FarmSimCanvas() {
         {animationsEnabled && !performanceMode && <ParticleSystem/>}
         <ComboDisplay/>
 
-        <div className="grid lg:grid-cols-[380px_1fr] gap-6">
+        <div className="grid lg:grid-cols-[1fr_380px] gap-6">
           {/* Enhanced Left Panel */}
-          <div className="space-y-4">
+          <div className="space-y-4 order-2 lg:order-2 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-auto lg:pr-1">
+            <Tabs value={sidebarTab} onValueChange={setSidebarTab} className="space-y-3">
+              <TabsList className="w-full flex flex-wrap gap-2">
+                <TabsTrigger value="overview">🏡 Overview</TabsTrigger>
+                <TabsTrigger value="shop">🛒 Shop</TabsTrigger>
+                <TabsTrigger value="social">👥 Social</TabsTrigger>
+                <TabsTrigger value="assistant">🤖 Assistant</TabsTrigger>
+                <TabsTrigger value="log">📜 Log</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="mt-0 space-y-4">
             {/* Farmer Card */}
             <Card>
               <CardHeader>
@@ -6610,9 +7318,10 @@ function FarmSimCanvas() {
                   </div>
                 )}
 
-                                <MarketDisplay/>
+                <MarketDisplay/>
                 <WeatherForecastDisplay/>
                 <BeeManagementDisplay/>
+                <OrdersBoard/>
 
                 {achievements.length > 0 && (
                   <div>
@@ -6642,7 +7351,9 @@ function FarmSimCanvas() {
                 </div>
               </CardContent>
             </Card>
+              </TabsContent>
 
+              <TabsContent value="social" className="mt-0 space-y-4">
             {/* Friends & Social Panel */}
             <Card>
               <CardHeader>
@@ -6806,86 +7517,111 @@ function FarmSimCanvas() {
                 )}
               </CardContent>
             </Card>
+              </TabsContent>
 
-            {/* Smart Farm Assistant */}
-            {assistantEnabled && assistantRecommendations.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Star className="text-yellow-500" size={20}/>
-                    Smart Farm Assistant
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => setAssistantEnabled(!assistantEnabled)}
-                      className="ml-auto text-xs h-6 px-2"
-                    >
-                      {assistantEnabled ? <EyeOff size={12}/> : <Eye size={12}/>}
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="text-xs text-gray-600 mb-2">
-                    🤖 AI-powered recommendations to optimize your farm
-                  </div>
-                  {assistantRecommendations.map(rec => (
-                    <div 
-                      key={rec.id} 
-                      className={`p-3 rounded-lg border-l-4 ${
-                        rec.priority === 'high' ? 'bg-red-50 border-red-400' :
-                        rec.priority === 'medium' ? 'bg-yellow-50 border-yellow-400' :
-                        'bg-blue-50 border-blue-400'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 text-sm font-semibold">
-                            <span className="text-lg">{rec.icon}</span>
-                            {rec.title}
-                          </div>
-                          <div className="text-xs text-gray-600 mt-1">
-                            {rec.description}
+              <TabsContent value="assistant" className="mt-0 space-y-4">
+                {/* Smart Farm Assistant */}
+                {assistantEnabled && assistantRecommendations.length > 0 ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Star className="text-yellow-500" size={20}/>
+                        Smart Farm Assistant
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => setAssistantEnabled(!assistantEnabled)}
+                          className="ml-auto text-xs h-6 px-2"
+                        >
+                          {assistantEnabled ? <EyeOff size={12}/> : <Eye size={12}/>}
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="text-xs text-gray-600 mb-2">
+                        🤖 AI-powered recommendations to optimize your farm
+                      </div>
+                      {assistantRecommendations.map(rec => (
+                        <div 
+                          key={rec.id} 
+                          className={`p-3 rounded-lg border-l-4 ${
+                            rec.priority === 'high' ? 'bg-red-50 border-red-400' :
+                            rec.priority === 'medium' ? 'bg-yellow-50 border-yellow-400' :
+                            'bg-blue-50 border-blue-400'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 text-sm font-semibold">
+                                <span className="text-lg">{rec.icon}</span>
+                                {rec.title}
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                {rec.description}
+                              </div>
+                            </div>
+                            {rec.action && (
+                              <Button 
+                                size="sm" 
+                                onClick={rec.action}
+                                className="ml-2 text-xs h-7 px-3"
+                                variant={rec.priority === 'high' ? 'default' : 'outline'}
+                              >
+                                Apply
+                              </Button>
+                            )}
                           </div>
                         </div>
-                        {rec.action && (
-                          <Button 
-                            size="sm" 
-                            onClick={rec.action}
-                            className="ml-2 text-xs h-7 px-3"
-                            variant={rec.priority === 'high' ? 'default' : 'outline'}
-                          >
-                            Apply
-                          </Button>
-                        )}
+                      ))}
+                      
+                      {/* Quick Farm Insights */}
+                      <div className="mt-4 pt-3 border-t">
+                        <div className="text-xs font-semibold mb-2">📊 Quick Insights</div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="text-center p-2 bg-green-100 rounded">
+                            <div className="font-bold">{plots.filter(p => p.state === 'grown').length}</div>
+                            <div>Ready to Harvest</div>
+                          </div>
+                          <div className="text-center p-2 bg-blue-100 rounded">
+                            <div className="font-bold">{skillPoints}</div>
+                            <div>Skill Points</div>
+                          </div>
+                          <div className="text-center p-2 bg-purple-100 rounded">
+                            <div className="font-bold">{workers.length}</div>
+                            <div>Active Workers</div>
+                          </div>
+                          <div className="text-center p-2 bg-orange-100 rounded">
+                            <div className="font-bold">{processingFacilities.length}</div>
+                            <div>Facilities</div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  
-                  {/* Quick Farm Insights */}
-                  <div className="mt-4 pt-3 border-t">
-                    <div className="text-xs font-semibold mb-2">📊 Quick Insights</div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="text-center p-2 bg-green-100 rounded">
-                        <div className="font-bold">{plots.filter(p => p.state === 'grown').length}</div>
-                        <div>Ready to Harvest</div>
-                      </div>
-                      <div className="text-center p-2 bg-blue-100 rounded">
-                        <div className="font-bold">{skillPoints}</div>
-                        <div>Skill Points</div>
-                      </div>
-                      <div className="text-center p-2 bg-purple-100 rounded">
-                        <div className="font-bold">{workers.length}</div>
-                        <div>Active Workers</div>
-                      </div>
-                      <div className="text-center p-2 bg-orange-100 rounded">
-                        <div className="font-bold">{processingFacilities.length}</div>
-                        <div>Facilities</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Star className="text-yellow-500" size={20}/>
+                        Smart Farm Assistant
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => setAssistantEnabled(!assistantEnabled)}
+                          className="ml-auto text-xs h-6 px-2"
+                        >
+                          {assistantEnabled ? <EyeOff size={12}/> : <Eye size={12}/>}
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-xs text-slate-600">
+                      {assistantEnabled ? 'No recommendations right now — keep farming and check back soon.' : 'Assistant is disabled.'}
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="shop" className="mt-0 space-y-4">
 
             {/* Enhanced Shop */}
             <Card>
@@ -6930,7 +7666,7 @@ function FarmSimCanvas() {
                         onClick={() => buy(seed, 1)} 
                         variant="outline" 
                         className="w-full justify-between h-auto p-3"
-                        title={(function(){try{var totalTime=(data.secondsPerStage||0)*(data.stages||1);var value=getMarketPrice(seed);var roi=value-(data.shopPrice||0);return 'Time ~ '+totalTime+'s | Value '+value+' | ROI '+roi;}catch(e){return ''}})()}
+                        title={(function(){try{var totalTime=(data.secondsPerStage||0)*(data.stages||1);var value=getMarketPriceForSeed(seed);var roi=value-(data.shopPrice||0);return 'Time ~ '+totalTime+'s | Value '+value+' | ROI '+roi;}catch(e){return ''}})()}
                         disabled={buying || coins < data.shopPrice}
                       >
                         <div className="flex items-center gap-2">
@@ -8746,9 +9482,8 @@ function FarmSimCanvas() {
                         <Button
                           onClick={() => {
                             try {
-                              const snapshot = { rules, gridSize, plots, coins };
-                              saveState(snapshot);
-                              addNotification('Game saved successfully', 'success');
+                              const didSave = _saveNowRef.current({ showToast: false });
+                              addNotification(didSave ? 'Game saved successfully' : 'Save skipped', didSave ? 'success' : 'warning');
                             } catch (e) { console.error(e); addNotification('Save failed', 'error'); }
                           }}
                           className="w-full text-xs bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-600 hover:to-cyan-700"
@@ -8758,16 +9493,11 @@ function FarmSimCanvas() {
                         <Button
                           onClick={() => {
                             try {
-                              const snapshot = loadSave() || {
-                                version: 1,
-                                savedAt: Date.now(),
-                                rules, gridSize, plots, coins, score, totalEarned, name, inventory, selectedSeed,
-                                levelId, levelEndsAt, levelStatus, levelStartedAt, achievements, weather, weatherEvents,
-                                totalHarvests, qualityHarvests, pestEliminations, seasonalPlants,
-                                buildings, livestock, processedGoods, npcs, events, automation,
-                                currentSeason, seasonEndsAt, marketTrends, sprinklers, scarecrows, combo, comboTimer, particles,
-                                soundEnabled, log, gameTime, lastGrowthTick
-                              };
+                              const snapshot = _buildSaveSnapshotRef.current?.() || loadSave(saveConfig);
+                              if (!snapshot) {
+                                addNotification('Nothing to export yet', 'warning');
+                                return;
+                              }
                               const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
                               const url = URL.createObjectURL(blob);
                               const a = document.createElement('a');
@@ -9257,7 +9987,9 @@ function FarmSimCanvas() {
                 </Tabs>
               </CardContent>
             </Card>
+              </TabsContent>
 
+              <TabsContent value="log" className="mt-0 space-y-4">
             {/* Event Log */}
             <Card>
               <CardHeader>
@@ -9276,10 +10008,12 @@ function FarmSimCanvas() {
                 </div>
               </CardContent>
             </Card>
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Enhanced Field */}
-          <div className="space-y-4">
+          <div className="space-y-4 order-1 lg:order-1">
             <Card className="overflow-hidden">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -9360,12 +10094,12 @@ function FarmSimCanvas() {
         </div>
 
         {/* Smart Recommendations & Tips */}
-        <div className="mt-6 bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/50 shadow-lg">
-          <div className="text-sm text-slate-600 space-y-2">
-            <div className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
-              🧠 Smart Farm Assistant
-            </div>
-            
+        <details className="mt-6 bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/50 shadow-lg" open={!isMobile}>
+          <summary className="cursor-pointer select-none font-semibold text-slate-800 flex items-center gap-2">
+            🧠 Smart Assistant Tips
+            <span className="text-xs font-normal text-slate-500">Season · market · actions</span>
+          </summary>
+          <div className="mt-3 text-sm text-slate-600 space-y-2">
             {/* Dynamic Recommendations */}
             <div className="space-y-3">
               {/* Season Optimization */}
@@ -9441,7 +10175,7 @@ function FarmSimCanvas() {
               )}
             </div>
           </div>
-        </div>
+        </details>
 
         {/* Mobile Floating Settings FAB */}
         <div className="fixed bottom-5 right-5 z-50 lg:hidden">
@@ -9449,7 +10183,7 @@ function FarmSimCanvas() {
             size="lg"
             className="rounded-full shadow-xl bg-white text-slate-800 hover:bg-slate-50 border-2 border-white/70 backdrop-blur"
             variant="outline"
-            onClick={() => setShopTab('settings')}
+            onClick={() => { setSidebarTab('shop'); setShopTab('settings'); }}
             aria-label="Open Settings"
             title="Open Settings"
           >
@@ -9729,6 +10463,7 @@ function FarmSimCanvas() {
         <MobileNavBar 
           currentTab={shopTab} 
           setCurrentTab={setShopTab}
+          setSidebarTab={setSidebarTab}
           coins={coins}
           level={level}
         />
@@ -9738,4 +10473,3 @@ function FarmSimCanvas() {
 }
 
 export default FarmSimCanvas;
-

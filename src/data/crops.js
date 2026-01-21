@@ -1,0 +1,95 @@
+/**
+ * Crop Data Module
+ * Centralized crop definitions for the farm game
+ */
+
+export const CROPS = {
+  carrot: { stages: 3, secondsPerStage: 8, baseValue: 12, shopPrice: 5, emoji: "🥕", rarity: "common", season: "spring", family: "root" },
+  potato: { stages: 3, secondsPerStage: 10, baseValue: 15, shopPrice: 7, emoji: "🥔", rarity: "common", season: "fall", family: "root" },
+  corn: { stages: 4, secondsPerStage: 12, baseValue: 22, shopPrice: 10, emoji: "🌽", rarity: "uncommon", season: "summer", family: "grain" },
+  tomato: { stages: 4, secondsPerStage: 14, baseValue: 28, shopPrice: 14, emoji: "🍅", rarity: "uncommon", season: "summer", family: "fruit" },
+  strawberry: { stages: 5, secondsPerStage: 16, baseValue: 35, shopPrice: 20, emoji: "🍓", rarity: "rare", season: "spring", family: "berry" },
+  pumpkin: { stages: 6, secondsPerStage: 20, baseValue: 55, shopPrice: 30, emoji: "🎃", rarity: "epic", season: "fall", family: "gourd" },
+  sunflower: { stages: 5, secondsPerStage: 18, baseValue: 42, shopPrice: 25, emoji: "🌻", rarity: "rare", season: "summer", family: "flower" },
+  lettuce: { stages: 3, secondsPerStage: 6, baseValue: 8, shopPrice: 3, emoji: "🥬", rarity: "common", season: "spring", family: "leaf" },
+  bellPepper: { stages: 4, secondsPerStage: 15, baseValue: 32, shopPrice: 18, emoji: "🫑", rarity: "uncommon", season: "summer", family: "fruit" },
+  garlic: { stages: 3, secondsPerStage: 12, baseValue: 18, shopPrice: 8, emoji: "🧄", rarity: "common", season: "fall", family: "bulb" },
+};
+
+export const MUTATION_CROPS = {
+  golden_carrot: { stages: 3, secondsPerStage: 6, baseValue: 30, shopPrice: 50, emoji: "🥕✨", rarity: "rare", season: "spring", family: "root", mutation: true },
+  super_carrot: { stages: 3, secondsPerStage: 5, baseValue: 35, shopPrice: 60, emoji: "🥕🌟", rarity: "epic", season: "spring", family: "root", mutation: true },
+  frost_potato: { stages: 3, secondsPerStage: 7, baseValue: 25, shopPrice: 40, emoji: "🥔❄️", rarity: "rare", season: "winter", family: "root", mutation: true },
+  rainbow_corn: { stages: 4, secondsPerStage: 9, baseValue: 55, shopPrice: 80, emoji: "🌽🌈", rarity: "epic", season: "summer", family: "grain", mutation: true },
+  giant_corn: { stages: 4, secondsPerStage: 8, baseValue: 70, shopPrice: 100, emoji: "🌽💎", rarity: "legendary", season: "summer", family: "grain", mutation: true },
+  golden_tomato: { stages: 4, secondsPerStage: 10, baseValue: 42, shopPrice: 65, emoji: "🍅✨", rarity: "rare", season: "summer", family: "fruit", mutation: true },
+  golden_strawberry: { stages: 5, secondsPerStage: 14, baseValue: 65, shopPrice: 95, emoji: "🍓✨", rarity: "epic", season: "spring", family: "berry", mutation: true },
+  giant_pumpkin: { stages: 6, secondsPerStage: 18, baseValue: 90, shopPrice: 130, emoji: "🎃💎", rarity: "legendary", season: "fall", family: "gourd", mutation: true },
+  golden_sunflower: { stages: 5, secondsPerStage: 15, baseValue: 60, shopPrice: 90, emoji: "🌻✨", rarity: "epic", season: "summer", family: "flower", mutation: true },
+  dragon_pepper: { stages: 5, secondsPerStage: 15, baseValue: 80, shopPrice: 120, emoji: "🌶️🔥", rarity: "legendary", season: "summer", family: "fruit", mutation: true },
+};
+
+export const ALL_CROPS = { ...CROPS, ...MUTATION_CROPS };
+
+export const CROP_MUTATIONS = {
+  carrot: [
+    { mutation: "golden_carrot", chance: 0.015, emoji: "🥕✨", name: "Golden Carrot", bonus: 1.8 },
+    { mutation: "super_carrot", chance: 0.01, emoji: "🥕🌟", name: "Super Carrot", bonus: 2.0 }
+  ],
+  potato: [
+    { mutation: "frost_potato", chance: 0.02, emoji: "🥔❄️", name: "Frost Potato", bonus: 1.5 }
+  ],
+  corn: [
+    { mutation: "rainbow_corn", chance: 0.012, emoji: "🌽🌈", name: "Rainbow Corn", bonus: 2.1 },
+    { mutation: "giant_corn", chance: 0.008, emoji: "🌽💎", name: "Giant Corn", bonus: 2.5 }
+  ],
+  tomato: [
+    { mutation: "golden_tomato", chance: 0.015, emoji: "🍅✨", name: "Golden Tomato", bonus: 1.9 },
+  ],
+  strawberry: [
+    { mutation: "golden_strawberry", chance: 0.01, emoji: "🍓✨", name: "Golden Strawberry", bonus: 2.2 }
+  ],
+  pumpkin: [
+    { mutation: "giant_pumpkin", chance: 0.008, emoji: "🎃💎", name: "Giant Pumpkin", bonus: 2.8 }
+  ],
+  sunflower: [
+    { mutation: "golden_sunflower", chance: 0.012, emoji: "🌻✨", name: "Golden Sunflower", bonus: 2.0 }
+  ]
+};
+
+export const QUALITY_TIERS = {
+  NORMAL: { id: 1, name: "Normal", emoji: "", multiplier: 1.0, color: "text-gray-600" },
+  GOOD: { id: 2, name: "Good", emoji: "⭐", multiplier: 1.3, color: "text-green-600" },
+  EXCELLENT: { id: 3, name: "Excellent", emoji: "⭐⭐", multiplier: 1.7, color: "text-blue-600" },
+  PERFECT: { id: 4, name: "Perfect", emoji: "⭐⭐⭐", multiplier: 2.2, color: "text-purple-600" }
+};
+
+export const CROP_FAMILIES = {
+  root: { crops: ['carrot', 'potato'], benefit: 'soil_aeration', emoji: '🥕' },
+  leaf: { crops: ['lettuce'], benefit: 'nitrogen_balance', emoji: '🥬' },
+  fruit: { crops: ['tomato', 'bellPepper'], benefit: 'diverse_nutrients', emoji: '🍅' },
+  grain: { crops: ['corn'], benefit: 'soil_structure', emoji: '🌽' },
+  flower: { crops: ['sunflower'], benefit: 'pollinator_attraction', emoji: '🌻' },
+  berry: { crops: ['strawberry'], benefit: 'organic_matter', emoji: '🍓' },
+  bulb: { crops: ['garlic'], benefit: 'pest_deterrent', emoji: '🧄' },
+  gourd: { crops: ['pumpkin'], benefit: 'ground_cover', emoji: '🎃' },
+};
+
+export const CROP_ROTATION = {
+  root: { next: ["leaf", "flower"], bonus: 0.2 },
+  leaf: { next: ["fruit", "grain"], bonus: 0.15 },
+  fruit: { next: ["root", "bulb"], bonus: 0.25 },
+  grain: { next: ["root", "leaf"], bonus: 0.18 },
+  flower: { next: ["fruit", "berry"], bonus: 0.22 },
+  berry: { next: ["root", "grain"], bonus: 0.20 },
+  bulb: { next: ["leaf", "flower"], bonus: 0.16 },
+  gourd: { next: ["root", "grain"], bonus: 0.19 },
+};
+
+export const RARITY_COLORS = {
+  common: "bg-gray-100 text-gray-800 border-gray-300",
+  uncommon: "bg-green-100 text-green-800 border-green-300",
+  rare: "bg-blue-100 text-blue-800 border-blue-300",
+  epic: "bg-purple-100 text-purple-800 border-purple-300",
+  legendary: "bg-amber-100 text-amber-800 border-amber-300",
+};
