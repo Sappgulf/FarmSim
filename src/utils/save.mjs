@@ -1,6 +1,14 @@
 import { clamp } from "./gameMath.mjs";
 import { normalizeInventory } from "../systems/inventory.mjs";
 
+// Default save configuration
+export const SAVE_CONFIG = {
+  key: 'farmSim_save_v3',
+  minSize: 3,
+  maxSize: 5,
+  version: 3,
+};
+
 function normalizeNumber(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
 }
@@ -74,4 +82,36 @@ export function saveState({ key, data }) {
   } catch (e) {
     if (import.meta.env.DEV) console.debug("[farm] saveState error:", e);
   }
+}
+
+// Convenience functions using default config
+export function loadGameSave() {
+  return loadSave(SAVE_CONFIG);
+}
+
+// Throttled save to prevent excessive writes
+let saveTimeout = null;
+let lastSaveData = null;
+
+export function saveGameState(data) {
+  lastSaveData = { ...data, version: SAVE_CONFIG.version };
+
+  // Debounce saves to max once per 2 seconds
+  if (saveTimeout) return;
+
+  saveTimeout = setTimeout(() => {
+    if (lastSaveData) {
+      saveState({ key: SAVE_CONFIG.key, data: lastSaveData });
+    }
+    saveTimeout = null;
+  }, 2000);
+}
+
+// Force immediate save (for critical moments like page unload)
+export function saveGameStateImmediate(data) {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+  }
+  saveState({ key: SAVE_CONFIG.key, data: { ...data, version: SAVE_CONFIG.version } });
 }

@@ -84,11 +84,20 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent double-tap zoom on iOS */
+    touch-action: manipulation;
   }
 
   body {
     min-height: 100vh;
     min-height: 100dvh; /* Dynamic viewport height for mobile */
+    /* Prevent overscroll bounce */
+    overscroll-behavior: none;
+  }
+
+  /* Utility class for touch-friendly buttons */
+  .touch-manipulation {
+    touch-action: manipulation;
   }
 
   /* Better focus styles */
@@ -1202,7 +1211,7 @@
   animation: bee-wing-flutter 0.1s ease-in-out infinite;
 }
 
-/* Respect user motion preferences */
+/* Respect user motion preferences - both system and manual toggle */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
@@ -1210,6 +1219,16 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Manual reduced motion class (applied via data attribute) */
+[data-reduced-motion="true"] *,
+[data-reduced-motion="true"] *::before,
+[data-reduced-motion="true"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.15s !important;
+  scroll-behavior: auto !important;
 }
 
 .animate-rain-drop {
@@ -1318,6 +1337,149 @@
 
 .notification-exit {
   animation: slideOutRight 0.3s ease-in forwards;
+}
+
+@keyframes shrink-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.animate-shrink-progress {
+  animation: shrink-progress linear forwards;
+}
+
+.animate-harvest-pop {
+  animation: harvest-pop 0.4s ease-out;
+}
+
+@keyframes coin-burst-up {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  100% { transform: translate(-50%, -150%) scale(0.8); opacity: 0; }
+}
+
+@keyframes coin-burst-left {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  100% { transform: translate(-150%, -100%) scale(0.8); opacity: 0; }
+}
+
+@keyframes coin-burst-right {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  100% { transform: translate(50%, -100%) scale(0.8); opacity: 0; }
+}
+
+@keyframes coin-burst-up-left {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  100% { transform: translate(-120%, -140%) scale(0.8); opacity: 0; }
+}
+
+@keyframes coin-burst-up-right {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  100% { transform: translate(20%, -140%) scale(0.8); opacity: 0; }
+}
+
+@keyframes coin-burst-center {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  100% { transform: translate(-50%, -180%) scale(1); opacity: 0; }
+}
+
+.animate-coin-burst:nth-child(1) { animation: coin-burst-up 0.5s ease-out forwards; }
+.animate-coin-burst:nth-child(2) { animation: coin-burst-left 0.5s ease-out forwards; }
+.animate-coin-burst:nth-child(3) { animation: coin-burst-right 0.5s ease-out forwards; }
+.animate-coin-burst:nth-child(4) { animation: coin-burst-up-left 0.5s ease-out forwards; }
+.animate-coin-burst:nth-child(5) { animation: coin-burst-up-right 0.5s ease-out forwards; }
+.animate-coin-burst:nth-child(6) { animation: coin-burst-center 0.6s ease-out forwards; }
+
+/* Weather particle animations */
+@keyframes rain-particle {
+  0% { top: -10%; opacity: 0.8; }
+  100% { top: 110%; opacity: 0; }
+}
+
+@keyframes rain-particle-fast {
+  0% { top: -10%; opacity: 0.9; }
+  100% { top: 110%; opacity: 0; }
+}
+
+@keyframes snow-particle {
+  0% { top: -10%; opacity: 0.9; transform: translateX(0); }
+  50% { transform: translateX(10px); }
+  100% { top: 110%; opacity: 0; transform: translateX(-5px); }
+}
+
+@keyframes wind-particle {
+  0% { left: -10%; opacity: 0; }
+  20% { opacity: 0.6; }
+  80% { opacity: 0.6; }
+  100% { left: 110%; opacity: 0; }
+}
+
+@keyframes lightning {
+  0%, 95%, 100% { background-color: transparent; }
+  96%, 98% { background-color: rgba(255, 255, 255, 0.3); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+.animate-rain-particle {
+  animation: rain-particle 1.5s linear infinite;
+}
+
+.animate-rain-particle-fast {
+  animation: rain-particle-fast 0.8s linear infinite;
+}
+
+.animate-snow-particle {
+  animation: snow-particle 3s ease-in-out infinite;
+}
+
+.animate-wind-particle {
+  animation: wind-particle 2s ease-in-out infinite;
+}
+
+.animate-lightning {
+  animation: lightning 4s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+.animate-wobble {
+  animation: wobble 2s ease-in-out infinite;
+}
+
+/* Confetti */
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -20%, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--end-x, 0), 110vh, 0) rotate(var(--rotation, 0));
+    opacity: 0;
+  }
+}
+
+.confetti-piece {
+  will-change: transform, opacity;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+
+[data-reduced-motion="true"] .confetti-piece {
+  animation: none !important;
 }
 
 /* Status Colors */

@@ -25,7 +25,7 @@ const createEmptyGrid = (size) => {
   return Array(size * size).fill(null).map(() => createEmptyPlot());
 };
 
-export function useFarm(addNotification, addCoins, updateStats, prestigeData) {
+export function useFarm(addNotification, addCoins, updateStats, prestigeData, buildingBonuses = {}) {
   const [gridSize, setGridSize] = useState(3);
   const [plots, setPlots] = useState(() => createEmptyGrid(3));
   const [selectedSeed, setSelectedSeed] = useState('carrot');
@@ -265,6 +265,11 @@ export function useFarm(addNotification, addCoins, updateStats, prestigeData) {
     // Calculate value
     let value = cropData.baseValue * quality.multiplier;
 
+    // Apply barn bonus (+20% harvest value)
+    if (buildingBonuses.barnBonus) {
+      value *= (1 + buildingBonuses.barnBonus);
+    }
+
     // Combo bonus
     const timeSinceLastHarvest = now - lastHarvestTime;
     if (timeSinceLastHarvest < 3) {
@@ -324,7 +329,7 @@ export function useFarm(addNotification, addCoins, updateStats, prestigeData) {
       mutation,
       comboCount,
     };
-  }, [plots, getCropData, determineQuality, checkForMutation, lastHarvestTime, comboMultiplier, prestigeData, addCoins, addNotification, updateStats, comboCount]);
+  }, [plots, getCropData, determineQuality, checkForMutation, lastHarvestTime, comboMultiplier, prestigeData, addCoins, addNotification, updateStats, comboCount, buildingBonuses]);
 
   // Expand farm
   const expandFarm = useCallback((cost) => {

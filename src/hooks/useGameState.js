@@ -4,7 +4,6 @@
  */
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { LEVELS, GAME_SETTINGS, PRESTIGE_LEVELS } from '../data/constants';
-import { loadSave, saveState } from '../utils/save.mjs';
 import { nowSec } from '../utils/time.mjs';
 
 const INITIAL_STATE = {

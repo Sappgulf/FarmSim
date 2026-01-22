@@ -8,6 +8,7 @@ export const BUILDINGS = {
     emoji: "🏚️",
     name: "Barn",
     description: "Stores crops and provides +20% harvest value",
+    shortEffect: "+20% value",
     effect: "storage",
     bonus: 0.2,
     category: "storage"
@@ -17,6 +18,7 @@ export const BUILDINGS = {
     emoji: "🏡",
     name: "Greenhouse",
     description: "All crops grow 50% faster regardless of weather",
+    shortEffect: "+50% growth",
     effect: "growth",
     bonus: 0.5,
     category: "production"
@@ -26,6 +28,7 @@ export const BUILDINGS = {
     emoji: "🗼",
     name: "Silo",
     description: "Automatically sells crops when storage is full",
+    shortEffect: "Auto-sell",
     effect: "auto_sell",
     bonus: 1,
     category: "storage"
@@ -35,6 +38,7 @@ export const BUILDINGS = {
     emoji: "🏭",
     name: "Workshop",
     description: "Enables crop processing into valuable products",
+    shortEffect: "Processing",
     effect: "processing",
     bonus: 1,
     category: "production"
@@ -44,6 +48,7 @@ export const BUILDINGS = {
     emoji: "🌪️",
     name: "Windmill",
     description: "Generates +5 coins per minute passively",
+    shortEffect: "+5🪙/min",
     effect: "income",
     bonus: 5,
     category: "income"
@@ -53,6 +58,7 @@ export const BUILDINGS = {
     emoji: "🐝",
     name: "Beehive",
     description: "Bees pollinate crops for +25% yield and produce honey",
+    shortEffect: "+25% yield",
     effect: "pollination",
     bonus: 0.25,
     category: "production"
@@ -62,6 +68,7 @@ export const BUILDINGS = {
     emoji: "🪣",
     name: "Well",
     description: "Automatic watering for adjacent plots",
+    shortEffect: "Auto-water",
     effect: "water",
     bonus: 1,
     category: "utility"
@@ -71,6 +78,7 @@ export const BUILDINGS = {
     emoji: "♻️",
     name: "Compost Bin",
     description: "Converts waste to fertilizer automatically",
+    shortEffect: "Fertilizer",
     effect: "fertilizer",
     bonus: 1,
     category: "utility"

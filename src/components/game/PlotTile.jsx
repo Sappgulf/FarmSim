@@ -2,7 +2,7 @@
  * PlotTile Component
  * Individual farm plot with crop display and interactions
  */
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, useState, useCallback } from 'react';
 import { Droplets, Bug, AlertTriangle } from 'lucide-react';
 
 const GROWTH_EMOJIS = {
@@ -11,6 +11,31 @@ const GROWTH_EMOJIS = {
   2: '🪴',
   3: '🌾',
 };
+
+// Coin burst animation component
+function CoinBurst({ isActive }) {
+  if (!isActive) return null;
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-visible z-10">
+      {[...Array(6)].map((_, i) => (
+        <span
+          key={i}
+          className="absolute text-base animate-coin-burst"
+          style={{
+            left: '50%',
+            top: '50%',
+            '--angle': `${i * 60 - 30}deg`,
+            '--delay': `${i * 30}ms`,
+            animationDelay: `var(--delay)`,
+          }}
+        >
+          🪙
+        </span>
+      ))}
+    </div>
+  );
+}
 
 function PlotTileComponent({
   plot,
@@ -27,6 +52,8 @@ function PlotTileComponent({
   onFertilize,
   disabled = false,
 }) {
+  const [showCoinBurst, setShowCoinBurst] = useState(false);
+
   // Determine visual state
   const visualState = useMemo(() => {
     if (!plot.crop) return 'empty';
@@ -50,8 +77,8 @@ function PlotTileComponent({
     return GROWTH_EMOJIS[Math.min(stage, 3)] || '🌱';
   }, [plot.crop, cropData, status, stage]);
 
-  // Handle click
-  const handleClick = () => {
+  // Handle click with harvest animation
+  const handleClick = useCallback(() => {
     if (disabled) return;
 
     if (!plot.crop) {
@@ -70,13 +97,16 @@ function PlotTileComponent({
     }
 
     if (status === 'ready') {
+      // Trigger coin burst animation
+      setShowCoinBurst(true);
+      setTimeout(() => setShowCoinBurst(false), 600);
       onHarvest?.(index);
       return;
     }
 
     // Growing - offer water
     onWater?.(index);
-  };
+  }, [disabled, plot.crop, plot.hasPest, plot.hasDisease, status, index, onPlant, onTreatPest, onTreatDisease, onHarvest, onWater]);
 
   // Base classes
   const baseClasses = `
@@ -87,6 +117,7 @@ function PlotTileComponent({
     select-none
     active:scale-95
     plot-enhanced
+    touch-manipulation min-h-[44px]
   `;
 
   // State-specific classes
@@ -126,9 +157,13 @@ function PlotTileComponent({
         transition-transform duration-200
         ${status === 'ready' ? 'animate-pulse' : ''}
         ${visualState === 'growing' ? 'growing-breathe' : ''}
+        ${showCoinBurst ? 'animate-harvest-pop' : ''}
       `}>
         {displayEmoji}
       </span>
+
+      {/* Coin burst animation */}
+      <CoinBurst isActive={showCoinBurst} />
 
       {/* Progress bar for growing crops */}
       {plot.crop && status !== 'ready' && progress < 1 && (
@@ -179,4 +214,22 @@ function PlotTileComponent({
   );
 }
 
-export const PlotTile = memo(PlotTileComponent);
+// Custom comparison function for memo - ignore handler changes
+function arePropsEqual(prevProps, nextProps) {
+  return (
+    prevProps.index === nextProps.index &&
+    prevProps.disabled === nextProps.disabled &&
+    prevProps.status === nextProps.status &&
+    prevProps.progress === nextProps.progress &&
+    prevProps.stage === nextProps.stage &&
+    prevProps.cropData === nextProps.cropData &&
+    prevProps.plot.crop === nextProps.plot.crop &&
+    prevProps.plot.hasPest === nextProps.plot.hasPest &&
+    prevProps.plot.hasDisease === nextProps.plot.hasDisease &&
+    prevProps.plot.wateredAt === nextProps.plot.wateredAt &&
+    prevProps.plot.fertilizedCount === nextProps.plot.fertilizedCount &&
+    prevProps.plot.pollinated === nextProps.plot.pollinated
+  );
+}
+
+export const PlotTile = memo(PlotTileComponent, arePropsEqual);

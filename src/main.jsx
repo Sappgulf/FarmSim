@@ -1,8 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-// New refactored modular component
 import FarmGame from "./components/FarmGame";
-// Legacy component available in FarmSimCanvas.jsx if needed
 import "./index.css";
 
 // Register a basic service worker for PWA/offline support (no precache list here)

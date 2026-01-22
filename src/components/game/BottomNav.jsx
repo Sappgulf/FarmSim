@@ -1,36 +1,27 @@
 /**
  * BottomNav Component
- * Mobile bottom tab navigation
+ * Mobile bottom tab navigation - simplified to 3 core items
  */
 import React, { memo } from 'react';
-import {
-  Leaf,
-  ShoppingCart,
-  Trophy,
-  Dna,
-  Building2,
-  Settings,
-  CloudSun,
-  Target,
-} from 'lucide-react';
+import { Leaf, ShoppingCart, Menu } from 'lucide-react';
 
 const NAV_ITEMS = [
   { id: 'farm', label: 'Farm', icon: Leaf, color: 'text-green-600' },
   { id: 'shop', label: 'Shop', icon: ShoppingCart, color: 'text-blue-600' },
-  { id: 'goals', label: 'Goals', icon: Target, color: 'text-amber-600' },
-  { id: 'breeding', label: 'Breed', icon: Dna, color: 'text-purple-600' },
-  { id: 'buildings', label: 'Build', icon: Building2, color: 'text-orange-600' },
+  { id: 'menu', label: 'Menu', icon: Menu, color: 'text-gray-600' },
 ];
 
 function BottomNavComponent({ activeTab, onTabChange, badges = {} }) {
   return (
-    <nav className="
-      fixed bottom-0 left-0 right-0 z-40
-      bg-white border-t border-gray-200 shadow-lg
-      safe-area-pb
-      sm:hidden
-    ">
-      <div className="flex items-center justify-around h-16 px-2">
+    <nav
+      className="
+        fixed bottom-0 left-0 right-0 z-40
+        bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-lg
+        sm:hidden
+      "
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
+      <div className="flex items-center justify-around h-[56px] px-2">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -42,11 +33,12 @@ function BottomNavComponent({ activeTab, onTabChange, badges = {} }) {
               onClick={() => onTabChange(item.id)}
               className={`
                 flex flex-col items-center justify-center
-                flex-1 h-full min-w-0
+                flex-1 min-h-[56px] min-w-[56px]
                 transition-colors relative
+                touch-manipulation
                 ${isActive
                   ? 'text-blue-600'
-                  : 'text-gray-500 active:text-gray-700'
+                  : 'text-gray-500 active:text-gray-700 active:bg-gray-50'
                 }
               `}
               aria-label={item.label}
