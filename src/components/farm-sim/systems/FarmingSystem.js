@@ -1,4 +1,4 @@
-import { calculateHarvestValue } from '../constants/cropData';
+import { calculateHarvestValue, HARVEST_WINDOW_MS } from '../constants/cropData';
 
 /**
  * Farming System - Handles crop growth, planting, harvesting
@@ -156,7 +156,7 @@ export class FarmingSystem {
     }
 
     const now = Date.now();
-    const HARVEST_WINDOW = 45000; // 45 seconds to harvest after ready
+    const HARVEST_WINDOW = HARVEST_WINDOW_MS;
 
     const updatedPlots = this.gameState.plots.map(plot => {
       if (plot.state === 'empty' || plot.state === 'withered') return plot;

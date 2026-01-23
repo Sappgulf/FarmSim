@@ -4,7 +4,8 @@ import { useTick } from '../context/TickContext';
 import { Card } from '../../ui/card';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
-import { CROP_DATA, calculateHarvestValue } from '../constants/cropData';
+import { CROP_DATA, calculateHarvestValue, HARVEST_WINDOW_MS } from '../constants/cropData';
+import { getDiseaseById } from '../constants/diseaseData';
 
 // Enhanced plot component with tooltips and animations
 const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0 }) => {
@@ -51,10 +52,9 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
     }
 
     if (plot.state === 'ready') {
-      // Calculate harvest window countdown (45 seconds)
-      const HARVEST_WINDOW = 45000;
+      // Calculate harvest window countdown
       const timeSinceReady = Date.now() - (plot.readyAt || Date.now());
-      const timeRemaining = Math.max(0, HARVEST_WINDOW - timeSinceReady);
+      const timeRemaining = Math.max(0, HARVEST_WINDOW_MS - timeSinceReady);
       const minutesLeft = Math.floor(timeRemaining / 60000);
       const secondsLeft = Math.floor((timeRemaining % 60000) / 1000);
       const isNearExpiry = timeRemaining < 10000; // Warning if < 10 seconds
@@ -94,6 +94,10 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
   };
 
   const display = getPlotDisplay();
+  const diseaseInfo = plot?.disease ? getDiseaseById(plot.disease) : null;
+  const diseasePenalty = typeof diseaseInfo?.yieldPenalty === 'number'
+    ? Math.round(diseaseInfo.yieldPenalty * 100)
+    : null;
 
   // Get soil fertility color gradient
   const getSoilGradient = () => {
@@ -271,7 +275,11 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
                   <div>💧 Water: {Math.round(plot.waterLevel || 0)}%</div>
                   <div>🌱 Fertility: {Math.round((plot.soilFertility || 1.0) * 100)}%</div>
                   {plot.fertilizer > 0 && <div>✨ Fertilizer: +{plot.fertilizer * 10}%</div>}
-                  {plot.disease && <div className="text-red-400">🐛 Diseased!</div>}
+                  {plot.disease && (
+                    <div className="text-red-400">
+                      🐛 Diseased{diseasePenalty !== null ? ` • Yield -${diseasePenalty}%` : '!'}
+                    </div>
+                  )}
                   {plot.progress !== undefined && <div>📈 Growth: {Math.round(plot.progress * 100)}%</div>}
                   {plot.weatherModifier && plot.weatherModifier !== 1.0 && (
                     <div className={plot.weatherModifier > 1.0 ? 'text-green-400' : 'text-orange-400'}>

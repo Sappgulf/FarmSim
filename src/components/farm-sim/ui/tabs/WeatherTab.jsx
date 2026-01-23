@@ -118,6 +118,7 @@ const WeatherTab = memo(() => {
       case 'rainy': return '🌧️';
       case 'cloudy': return '☁️';
       case 'stormy': return '⛈️';
+      case 'snow': return '❄️';
       case 'windy': return '💨';
       case 'drought': return '🏜️';
       case 'hot': return '🔥';
@@ -131,6 +132,7 @@ const WeatherTab = memo(() => {
       rainy: { growth: '+10%', water: '+50%', disease: 'Medium' },
       cloudy: { growth: 'Normal', water: 'Normal', disease: 'Low' },
       stormy: { growth: '-20%', water: '+20%', disease: 'High' },
+      snow: { growth: '-70%', water: '+10%', disease: 'None' },
       windy: { growth: '-10%', water: '-5%', disease: 'Medium' },
       drought: { growth: '-30%', water: '-20%', disease: 'High' },
       hot: { growth: '+15%', water: '-15%', disease: 'Medium' }

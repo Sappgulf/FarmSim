@@ -7,6 +7,7 @@ import React, { memo, useMemo } from 'react';
 const WeatherEffects = memo(({ weather, intensity = 1 }) => {
   const [isTransitioning, setIsTransitioning] = React.useState(false);
   const prevWeatherRef = React.useRef(weather);
+  const weatherType = weather === 'snowy' ? 'snow' : weather;
   
   // Detect weather change and trigger transition
   React.useEffect(() => {
@@ -22,27 +23,27 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
   
   // Generate particle elements based on weather type
   const particles = useMemo(() => {
-    if (!weather || weather === 'sunny') return [];
+    if (!weatherType || weatherType === 'sunny') return [];
 
-    const particleCount = weather === 'stormy' ? 100 : weather === 'rainy' ? 60 : weather === 'snowy' ? 50 : 30;
+    const particleCount = weatherType === 'stormy' ? 100 : weatherType === 'rainy' ? 60 : weatherType === 'snow' ? 50 : 30;
     
     return Array.from({ length: Math.floor(particleCount * intensity) }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       delay: Math.random() * 3,
       duration: 1 + Math.random() * 2,
-      size: weather === 'snowy' ? 3 + Math.random() * 3 : 1 + Math.random() * 2,
+      size: weatherType === 'snow' ? 3 + Math.random() * 3 : 1 + Math.random() * 2,
     }));
-  }, [weather, intensity]);
+  }, [weatherType, intensity]);
 
   // Don't render anything for clear weather
-  if (!weather || weather === 'sunny' || weather === 'cloudy') {
+  if (!weatherType || weatherType === 'sunny' || weatherType === 'cloudy') {
     return null;
   }
 
   return (
     <div className={`absolute inset-0 pointer-events-none overflow-hidden z-10 transition-opacity duration-500 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-      {weather === 'rainy' && (
+      {weatherType === 'rainy' && (
         <>
           {particles.map((particle) => (
             <div
@@ -59,7 +60,7 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
         </>
       )}
 
-      {weather === 'stormy' && (
+      {weatherType === 'stormy' && (
         <>
           {/* Rain */}
           {particles.map((particle) => (
@@ -79,7 +80,7 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
         </>
       )}
 
-      {weather === 'snowy' && (
+      {weatherType === 'snow' && (
         <>
           {particles.map((particle) => (
             <div

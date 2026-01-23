@@ -130,6 +130,12 @@ const GameHeader = memo(() => {
     return num.toString();
   };
 
+  const formatBonusPercent = (multiplier) => {
+    const percent = Math.round((multiplier - 1) * 100);
+    if (percent === 0) return '0%';
+    return `${percent > 0 ? '+' : ''}${percent}%`;
+  };
+
   const getTimeSinceLastSave = () => {
     const lastSavedAt = state.gameLoop?.lastSaveTime;
     if (!lastSavedAt) {
@@ -282,6 +288,9 @@ const GameHeader = memo(() => {
                   {state.season.config.description}
                 </div>
                 <div className="text-xs text-gray-500">
+                  Market prices: {formatBonusPercent(state.season.config.bonuses?.marketPrices || 1.0)}
+                </div>
+                <div className="text-xs text-gray-500">
                   Next season in: {Math.floor((120000 - (Date.now() - state.season.lastChangeTime)) / 60000)}:{((120000 - (Date.now() - state.season.lastChangeTime)) % 60000 / 1000).toFixed(0).padStart(2, '0')}
                 </div>
               </div>
@@ -294,7 +303,7 @@ const GameHeader = memo(() => {
               {state.weather === 'sunny' ? '☀️' :
                 state.weather === 'rainy' ? '🌧️' :
                   state.weather === 'stormy' ? '⛈️' :
-                    state.weather === 'snowy' ? '❄️' : '☀️'}
+                    state.weather === 'snowy' || state.weather === 'snow' ? '❄️' : '☀️'}
             </span>
             <span className="text-sm font-medium text-blue-700 capitalize">
               {state.weather || 'sunny'}

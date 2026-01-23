@@ -1,7 +1,12 @@
+import { getDiseaseById } from './diseaseData';
+
 /**
  * Centralized Crop Data Constants
  * Single source of truth for all crop information across the game
  */
+
+// Harvest window before crops overripe
+export const HARVEST_WINDOW_MS = 60000;
 
 // Crop categories for filtering
 export const CROP_CATEGORIES = {
@@ -307,7 +312,11 @@ export function calculateHarvestValue(plot, seasonConfig) {
   const fertilityMultiplier = typeof plot.soilFertility === 'number' ? plot.soilFertility : 1.0;
   const marketMultiplier = seasonConfig?.bonuses?.marketPrices || 1.0;
   const totalMultiplier = Math.max(0, fertilityMultiplier) * Math.max(0, marketMultiplier);
-  return Math.max(1, Math.floor(baseValue * totalMultiplier));
+  const disease = plot.disease ? getDiseaseById(plot.disease) : null;
+  const penaltyMultiplier = disease && typeof disease.yieldPenalty === 'number'
+    ? Math.max(0, 1 - disease.yieldPenalty)
+    : 1.0;
+  return Math.max(1, Math.floor(baseValue * totalMultiplier * penaltyMultiplier));
 }
 
 export default CROP_DATA;
