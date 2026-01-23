@@ -1,5 +1,6 @@
 import React, { memo, useState, useEffect } from 'react';
 import { useGame } from '../../context/GameContext';
+import { useTick } from '../../context/TickContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
@@ -142,28 +143,24 @@ const RESEARCH_PROJECTS = {
 
 const ResearchTab = memo(() => {
   const { state, actions } = useGame();
+  const tick = useTick();
 
   // Use research state from global state
   const activeResearch = state.research?.active || null;
   const researchStartTime = state.research?.startTime || null;
 
-  // Research progress simulation
+  // Research progress simulation (centralized tick)
   useEffect(() => {
     if (!activeResearch || !researchStartTime) return;
 
     const research = RESEARCH_PROJECTS[activeResearch];
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - researchStartTime;
-      const progress = Math.min(100, (elapsed / (research.time * 10)) * 100); // Scale time for demo
+    const elapsed = Date.now() - researchStartTime;
+    const progress = Math.min(100, (elapsed / (research.time * 10)) * 100); // Scale time for demo
 
-      if (progress >= 100) {
-        completeResearch(activeResearch);
-        clearInterval(interval);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [activeResearch, researchStartTime]);
+    if (progress >= 100) {
+      completeResearch(activeResearch);
+    }
+  }, [activeResearch, researchStartTime, tick]);
 
   const startResearch = (researchId) => {
     const research = RESEARCH_PROJECTS[researchId];

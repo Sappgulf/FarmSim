@@ -1,5 +1,6 @@
 import React, { memo, useState, useEffect } from 'react';
 import { useGame } from '../../context/GameContext';
+import { useTick } from '../../context/TickContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
@@ -60,58 +61,54 @@ const PROCESSING_FACILITIES = {
 
 const ProcessingTab = memo(() => {
   const { state, actions } = useGame();
+  const tick = useTick();
 
   // Use processing queue from global state with safe defaults
   const processingQueue = state.processingQueue || [];
   const processingFacilities = state.processingFacilities || [];
   const processedInventory = state.processedInventory || {};
 
-  // Process completed items
+  // Process completed items (centralized tick)
   useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const completedItems = processingQueue.filter(item =>
-        item.finishTime && now >= item.finishTime
-      );
+    if (processingQueue.length === 0) return;
 
-      if (completedItems.length > 0) {
-        // Process completed items
-        completedItems.forEach(item => {
-          const facility = PROCESSING_FACILITIES[item.facilityId];
+    const now = Date.now();
+    const completedItems = processingQueue.filter(item =>
+      item.finishTime && now >= item.finishTime
+    );
 
-          // Add processed product to inventory
-          const currentProcessed = state.processedInventory[item.output] || 0;
-          actions.updateProcessedInventory({
-            ...state.processedInventory,
-            [item.output]: currentProcessed + item.quantity
-          });
+    if (completedItems.length === 0) return;
 
-          actions.addNotification({
-            message: `Processing complete! Produced ${item.quantity} ${item.output.replace('_', ' ')}`,
-            type: 'success'
-          });
-        });
+    const nextProcessedInventory = { ...processedInventory };
 
-        // Remove completed items from global queue
-        const updatedQueue = processingQueue.filter(item =>
-          !completedItems.some(completed => completed.id === item.id)
-        );
-        actions.updateProcessingQueue(updatedQueue);
+    // Process completed items
+    completedItems.forEach(item => {
+      nextProcessedInventory[item.output] = (nextProcessedInventory[item.output] || 0) + item.quantity;
 
-        // Free up processing facilities
-        const updatedFacilities = state.processingFacilities.map(facility => {
-          const completedItem = completedItems.find(item => item.facilityId === facility.id);
-          if (completedItem) {
-            return { ...facility, isProcessing: false, currentRecipe: null, finishTime: null };
-          }
-          return facility;
-        });
-        actions.updateProcessingFacilities(updatedFacilities);
+      actions.addNotification({
+        message: `Processing complete! Produced ${item.quantity} ${item.output.replace('_', ' ')}`,
+        type: 'success'
+      });
+    });
+
+    actions.updateProcessedInventory(nextProcessedInventory);
+
+    // Remove completed items from global queue
+    const updatedQueue = processingQueue.filter(item =>
+      !completedItems.some(completed => completed.id === item.id)
+    );
+    actions.updateProcessingQueue(updatedQueue);
+
+    // Free up processing facilities
+    const updatedFacilities = processingFacilities.map(facility => {
+      const completedItem = completedItems.find(item => item.facilityId === facility.id);
+      if (completedItem) {
+        return { ...facility, isProcessing: false, currentRecipe: null, finishTime: null };
       }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [processingQueue, state.processedInventory]);
+      return facility;
+    });
+    actions.updateProcessingFacilities(updatedFacilities);
+  }, [processingQueue, processedInventory, processingFacilities, tick, actions]);
 
   const buyProcessingFacility = (facilityId) => {
     const facility = PROCESSING_FACILITIES[facilityId];

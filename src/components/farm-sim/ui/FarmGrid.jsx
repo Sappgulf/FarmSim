@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { useTick } from '../context/TickContext';
 import { Card } from '../../ui/card';
@@ -11,6 +11,16 @@ import { getDiseaseById } from '../constants/diseaseData';
 const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const hideTooltipTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (hideTooltipTimeoutRef.current) {
+        clearTimeout(hideTooltipTimeoutRef.current);
+        hideTooltipTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // PERF: Use centralized tick instead of per-plot setInterval
   // This reduces N intervals to 1 for the entire grid
@@ -78,8 +88,8 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
         emoji: '🥀',
         bgColor: 'bg-red-50',
         borderColor: 'border-red-300',
-        text: 'Withered',
-        subText: 'Click to clear',
+        text: reason,
+        subText: 'Tap to clear',
         hoverEffect: 'hover:bg-red-200 hover:scale-105 cursor-pointer'
       };
     }
@@ -151,13 +161,20 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
           setShowPreview(false);
         }}
         onTouchStart={() => {
+          if (hideTooltipTimeoutRef.current) {
+            clearTimeout(hideTooltipTimeoutRef.current);
+            hideTooltipTimeoutRef.current = null;
+          }
           setShowTooltip(true);
           if (plot?.state === 'empty' && selectedCrop) {
             setShowPreview(true);
           }
         }}
         onTouchEnd={() => {
-          setTimeout(() => {
+          if (hideTooltipTimeoutRef.current) {
+            clearTimeout(hideTooltipTimeoutRef.current);
+          }
+          hideTooltipTimeoutRef.current = setTimeout(() => {
             setShowTooltip(false);
             setShowPreview(false);
           }, 2000);
