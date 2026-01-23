@@ -16,6 +16,7 @@ import { useGameState } from '../hooks/useGameState';
 import { useFarm } from '../hooks/useFarm';
 import { useWeather } from '../hooks/useWeather';
 import { useTutorial } from '../hooks/useTutorial';
+import { useSound } from '../hooks/useSound';
 
 // Game Components
 import { FarmGrid } from './game/FarmGrid';
@@ -27,6 +28,7 @@ import { BottomNav } from './game/BottomNav';
 import { SeedTray } from './game/SeedTray';
 import { BuildingIndicators } from './game/BuildingIndicators';
 import { Confetti, useConfetti } from './game/Confetti';
+import { ScreenFlash, useScreenFlash } from './game/ScreenFlash';
 import { DebugOverlay } from './DebugOverlay';
 import { MenuDrawer } from './MenuDrawer';
 
@@ -117,10 +119,22 @@ export default function FarmGame() {
     fire: fireConfetti,
   } = useConfetti();
 
+  // Screen flash effects
+  const {
+    trigger: flashTrigger,
+    color: flashColor,
+    flashGold,
+    flashGreen,
+    flashPurple,
+  } = useScreenFlash();
+
   // Local UI state
   const [activeTab, setActiveTab] = useState('farm');
   const [menuOpen, setMenuOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Sound effects - linked to soundEnabled state
+  const sound = useSound(soundEnabled);
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false
   );
@@ -196,11 +210,15 @@ export default function FarmGame() {
   // Celebrate major milestones
   useEffect(() => {
     const prevStatus = prevLevelStatusRef.current;
-    if (!reducedMotion && levelStatus === 'won' && prevStatus !== 'won') {
-      fireConfetti('high');
+    if (levelStatus === 'won' && prevStatus !== 'won') {
+      sound.playLevelUp();
+      flashGreen();
+      if (!reducedMotion) {
+        fireConfetti('high');
+      }
     }
     prevLevelStatusRef.current = levelStatus;
-  }, [levelStatus, reducedMotion, fireConfetti]);
+  }, [levelStatus, reducedMotion, fireConfetti, sound, flashGreen]);
 
   // ============ SAVE/LOAD ============
 
@@ -259,8 +277,11 @@ export default function FarmGame() {
     if (spendCoins(totalCost)) {
       addToInventory({ [seedId]: qty });
       addNotification(`Bought ${qty} ${crop.emoji} ${seedId} seeds!`, 'success');
+      sound.playSuccess();
+    } else {
+      sound.playError();
     }
-  }, [spendCoins, addToInventory, addNotification]);
+  }, [spendCoins, addToInventory, addNotification, sound]);
 
   const handleBuyTool = useCallback((toolId) => {
     const tool = { fertilizer: 8, pesticide: 6, fungicide: 12 }[toolId];
@@ -269,18 +290,27 @@ export default function FarmGame() {
     if (spendCoins(tool)) {
       addToInventory({ [toolId]: 1 });
       addNotification(`Bought ${toolId}!`, 'success');
+      sound.playSuccess();
+    } else {
+      sound.playError();
     }
-  }, [spendCoins, addToInventory, addNotification]);
+  }, [spendCoins, addToInventory, addNotification, sound]);
 
   const handleExpandFarm = useCallback(() => {
     const cost = GRID_CONFIG.EXPANSION_COSTS[gridSize + 1];
     if (cost && spendCoins(cost)) {
       const expanded = expandFarm(cost);
-      if (expanded && !reducedMotion) {
-        fireConfetti('medium');
+      if (expanded) {
+        sound.playLevelUp();
+        flashGreen();
+        if (!reducedMotion) {
+          fireConfetti('medium');
+        }
       }
+    } else {
+      sound.playError();
     }
-  }, [gridSize, spendCoins, expandFarm, reducedMotion, fireConfetti]);
+  }, [gridSize, spendCoins, expandFarm, reducedMotion, fireConfetti, sound, flashGreen]);
 
   const handleBuyBuilding = useCallback((buildingId) => {
     const building = BUILDINGS[buildingId];
@@ -289,11 +319,15 @@ export default function FarmGame() {
     if (spendCoins(building.price)) {
       setBuildings(prev => [...prev, buildingId]);
       addNotification(`Built ${building.emoji} ${building.name}!`, 'success');
+      sound.playLevelUp();
+      flashPurple();
       if (!reducedMotion) {
         fireConfetti('medium');
       }
+    } else {
+      sound.playError();
     }
-  }, [buildings, spendCoins, addNotification, reducedMotion, fireConfetti]);
+  }, [buildings, spendCoins, addNotification, reducedMotion, fireConfetti, sound, flashPurple]);
 
   // Reset game
   const handleResetGame = useCallback(() => {
@@ -310,21 +344,64 @@ export default function FarmGame() {
     } else {
       setActiveTab(tabId);
     }
-  }, []);
+    sound.playClick();
+  }, [sound]);
+
+  // Sound-enabled plant handler
+  const handlePlant = useCallback((plotIndex) => {
+    const result = plant(plotIndex);
+    if (result) {
+      sound.playPlant();
+    }
+    return result;
+  }, [plant, sound]);
+
+  // Sound-enabled water handler
+  const handleWater = useCallback((plotIndex) => {
+    const result = water(plotIndex);
+    if (result) {
+      sound.playWater();
+    }
+    return result;
+  }, [water, sound]);
+
+  // Sound-enabled fertilize handler
+  const handleFertilize = useCallback((plotIndex) => {
+    const result = fertilize(plotIndex);
+    if (result) {
+      sound.playSuccess();
+    }
+    return result;
+  }, [fertilize, sound]);
 
   const handleHarvest = useCallback((plotIndex) => {
     const result = harvest(plotIndex);
-    if (!result || reducedMotion) return result;
+    if (!result) return result;
+
+    // Play harvest sound
+    sound.playHarvest();
+
+    // Play coin sound with pitch based on value
+    const pitch = Math.min(1 + (result.value / 100) * 0.5, 1.5);
+    setTimeout(() => sound.playCoin(pitch), 100);
 
     const isGreatQuality = result.quality?.id >= QUALITY_TIERS.EXCELLENT.id;
     const isBigWin = result.value >= 120;
 
     if (result.mutation || isGreatQuality || isBigWin) {
-      fireConfetti(isBigWin ? 'high' : 'medium');
+      flashGold();
+      if (!reducedMotion) {
+        fireConfetti(isBigWin ? 'high' : 'medium');
+      }
+    }
+
+    // Play combo sound if combo is building
+    if (comboCount > 1) {
+      setTimeout(() => sound.playCombo(Math.min(comboCount, 4)), 150);
     }
 
     return result;
-  }, [harvest, reducedMotion, fireConfetti]);
+  }, [harvest, reducedMotion, fireConfetti, sound, flashGold, comboCount]);
 
   // Harvest all ready crops
   const handleHarvestAll = useCallback(() => {
@@ -344,13 +421,22 @@ export default function FarmGame() {
 
     if (harvestedCount > 0) {
       addNotification(`🎉 Harvested ${harvestedCount} crops for ${totalValue}🪙!`, 'success');
+      sound.playHarvest();
 
-      if (!reducedMotion && (harvestedCount >= 5 || totalValue >= 150)) {
-        const bigWin = harvestedCount >= 10 || totalValue >= 250;
-        fireConfetti(bigWin ? 'high' : 'medium');
+      // Multiple coin sounds for big harvests
+      for (let i = 0; i < Math.min(harvestedCount, 5); i++) {
+        setTimeout(() => sound.playCoin(1 + i * 0.1), 100 + i * 80);
+      }
+
+      const bigWin = harvestedCount >= 5 || totalValue >= 150;
+      if (bigWin) {
+        flashGold();
+        if (!reducedMotion) {
+          fireConfetti(harvestedCount >= 10 || totalValue >= 250 ? 'high' : 'medium');
+        }
       }
     }
-  }, [plots, getPlotStatus, harvest, addNotification, reducedMotion, fireConfetti]);
+  }, [plots, getPlotStatus, harvest, addNotification, reducedMotion, fireConfetti, sound, flashGold]);
 
   // ============ RENDER ============
 
@@ -369,6 +455,9 @@ export default function FarmGame() {
       {!reducedMotion && (
         <Confetti trigger={confettiTrigger} intensity={confettiIntensity} />
       )}
+
+      {/* Screen flash effects */}
+      <ScreenFlash trigger={flashTrigger} color={flashColor} />
 
       {/* Tutorial Overlay */}
       <Tutorial
@@ -431,12 +520,12 @@ export default function FarmGame() {
               plots={plots}
               getPlotStatus={getPlotStatus}
               getCropData={getCropData}
-              onPlant={plant}
+              onPlant={handlePlant}
               onHarvest={handleHarvest}
-              onWater={water}
+              onWater={handleWater}
               onTreatPest={treatPest}
               onTreatDisease={treatDisease}
-              onFertilize={fertilize}
+              onFertilize={handleFertilize}
               onHarvestAll={handleHarvestAll}
             />
 
@@ -575,12 +664,12 @@ export default function FarmGame() {
                 plots={plots}
                 getPlotStatus={getPlotStatus}
                 getCropData={getCropData}
-                onPlant={plant}
-              onHarvest={handleHarvest}
-                onWater={water}
+                onPlant={handlePlant}
+                onHarvest={handleHarvest}
+                onWater={handleWater}
                 onTreatPest={treatPest}
                 onTreatDisease={treatDisease}
-                onFertilize={fertilize}
+                onFertilize={handleFertilize}
                 onHarvestAll={handleHarvestAll}
               />
               <InventoryPanel
