@@ -35,9 +35,18 @@ export class AchievementSystem {
     
     const achievements = this.getAchievements();
     let hasNewAchievement = false;
+    const unlockedIds = new Set(
+      (this.state.achievements || [])
+        .filter(achievement => achievement.unlocked)
+        .map(achievement => achievement.id)
+    );
 
     achievements.forEach(achievement => {
-      if (!achievement.unlocked && this.checkAchievementCondition(achievement)) {
+      if (unlockedIds.has(achievement.id)) {
+        return;
+      }
+
+      if (this.checkAchievementCondition(achievement)) {
         this.unlockAchievement(achievement);
         hasNewAchievement = true;
       }
@@ -102,7 +111,11 @@ export class AchievementSystem {
         this.actions.setCoins((this.state.coins || 0) + achievement.reward.coins);
       }
       if (achievement.reward.xp) {
-        this.actions.setXp((this.state.xp || 0) + achievement.reward.xp);
+        if (typeof this.actions.addXP === 'function') {
+          this.actions.addXP(achievement.reward.xp, `achievement:${achievement.id}`);
+        } else {
+          this.actions.setXp((this.state.xp || 0) + achievement.reward.xp);
+        }
       }
     }
   }

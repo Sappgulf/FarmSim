@@ -2,7 +2,9 @@
  * GamePersistence - Save/Load, Migration, and Initialization logic for FarmSim
  */
 
-export const SAVE_VERSION = 1;
+import { XP_PER_LEVEL_BASE } from '../constants/progression';
+
+export const SAVE_VERSION = 2;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 
 /**
@@ -64,6 +66,27 @@ export function migrateSaveData(savedData) {
             if (typeof migratedData.gameLoop.lastSaveTime !== 'number') {
                 migratedData.gameLoop.lastSaveTime = Date.now();
             }
+        }
+
+        // Version 1 → 2: Rebalance XP curve while preserving level progress
+        if (saveVersion < 2) {
+            if (import.meta.env.MODE === 'development') {
+                console.debug('[farm]', 'Migrating save from version 1 to 2 (XP rebalance)');
+            }
+            const oldXpBase = 50;
+            const level = Number.isFinite(migratedData.level) ? Math.max(1, migratedData.level) : 1;
+            const xp = Number.isFinite(migratedData.xp) ? Math.max(0, migratedData.xp) : 0;
+            const oldXpForCurrent = Math.pow(level - 1, 2) * oldXpBase;
+            const oldXpForNext = Math.pow(level, 2) * oldXpBase;
+            const progress = oldXpForNext > oldXpForCurrent
+                ? (xp - oldXpForCurrent) / (oldXpForNext - oldXpForCurrent)
+                : 0;
+            const clampedProgress = Math.min(1, Math.max(0, progress));
+            const newXpForCurrent = Math.pow(level - 1, 2) * XP_PER_LEVEL_BASE;
+            const newXpForNext = Math.pow(level, 2) * XP_PER_LEVEL_BASE;
+            migratedData.xp = Math.round(
+                newXpForCurrent + clampedProgress * (newXpForNext - newXpForCurrent)
+            );
         }
 
         // Validate critical fields

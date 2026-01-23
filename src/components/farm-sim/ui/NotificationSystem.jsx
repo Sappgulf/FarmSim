@@ -1,10 +1,16 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useCallback, useEffect, useRef } from 'react';
 import { useGame } from '../context/GameContext';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 const DEFAULT_NOTIFICATION_DURATION_MS = 4000;
+const getNotificationDurationMs = (notification) => {
+  if (!notification) return DEFAULT_NOTIFICATION_DURATION_MS;
+  if (Number.isFinite(notification.durationMs)) return notification.durationMs;
+  if (Number.isFinite(notification.duration)) return notification.duration;
+  return DEFAULT_NOTIFICATION_DURATION_MS;
+};
 
 // Individual Notification Component
 const NotificationItem = memo(({ notification, onClose }) => {
@@ -43,23 +49,6 @@ const NotificationItem = memo(({ notification, onClose }) => {
 
   const style = getNotificationStyle(notification.type);
 
-  // Auto-remove notification after default duration unless sticky
-  useEffect(() => {
-    if (notification.sticky) return undefined;
-    const durationMs = Number.isFinite(notification.durationMs)
-      ? notification.durationMs
-      : Number.isFinite(notification.duration)
-        ? notification.duration
-        : DEFAULT_NOTIFICATION_DURATION_MS;
-
-    if (durationMs <= 0) return undefined;
-    const timer = setTimeout(() => {
-      onClose(notification.id);
-    }, durationMs);
-
-    return () => clearTimeout(timer);
-  }, [notification.id, notification.duration, notification.durationMs, notification.sticky, onClose]);
-
   return (
     <Card className={`p-3 ${style.bgColor} ${style.borderColor} border-l-4 shadow-sm transition-all duration-300 animate-in slide-in-from-right-2 pointer-events-auto`}>
       <div className="flex items-start gap-3">
@@ -84,10 +73,11 @@ const NotificationItem = memo(({ notification, onClose }) => {
           variant="ghost"
           onClick={(e) => {
             e.stopPropagation();
-            onClose(notification.id);
+            onClose(notification.id, 'manual');
           }}
           className="flex-shrink-0 h-11 w-11 p-0 text-slate-700 hover:text-slate-900 bg-white/70 hover:bg-white/90 shadow-sm ring-1 ring-black/5 transition-colors"
-          aria-label="Close notification"
+          type="button"
+          aria-label="Close"
         >
           <X className="w-4 h-4" />
         </Button>
@@ -101,10 +91,73 @@ NotificationItem.displayName = 'NotificationItem';
 // Main Notification System Component
 const NotificationSystem = memo(() => {
   const { state, actions } = useGame();
+  const timersRef = useRef(new Map());
+  const debugNotifications = import.meta.env.MODE === 'development'
+    && typeof window !== 'undefined'
+    && window.__farmDebug?.notifications;
 
-  const handleCloseNotification = (id) => {
+  const handleCloseNotification = useCallback((id, reason = 'manual') => {
+    const timers = timersRef.current;
+    if (timers.has(id)) {
+      clearTimeout(timers.get(id));
+      timers.delete(id);
+    }
+
+    if (debugNotifications) {
+      console.debug('[farm]', 'Notification dismissed', {
+        id,
+        reason,
+        dismissedAt: Date.now()
+      });
+    }
     actions.clearNotification(id);
-  };
+  }, [actions, debugNotifications]);
+
+  // Centralized auto-dismiss handling (covers notifications not currently rendered)
+  useEffect(() => {
+    const timers = timersRef.current;
+    const activeIds = new Set(state.notifications.map(notification => notification.id));
+
+    // Cleanup timers for removed notifications
+    timers.forEach((timer, id) => {
+      if (!activeIds.has(id)) {
+        clearTimeout(timer);
+        timers.delete(id);
+      }
+    });
+
+    // Schedule timers for new notifications
+    state.notifications.forEach(notification => {
+      if (notification.sticky) return;
+      if (timers.has(notification.id)) return;
+
+      const durationMs = getNotificationDurationMs(notification);
+      if (durationMs <= 0) return;
+
+      if (debugNotifications) {
+        console.debug('[farm]', 'Notification scheduled', {
+          id: notification.id,
+          createdAt: notification.createdAt ?? notification.timestamp ?? Date.now(),
+          durationMs,
+          sticky: !!notification.sticky
+        });
+      }
+
+      const timerId = setTimeout(() => {
+        handleCloseNotification(notification.id, 'timeout');
+      }, durationMs);
+
+      timers.set(notification.id, timerId);
+    });
+  }, [state.notifications, handleCloseNotification, debugNotifications]);
+
+  useEffect(() => {
+    return () => {
+      const timers = timersRef.current;
+      timers.forEach((timer) => clearTimeout(timer));
+      timers.clear();
+    };
+  }, []);
 
   // Don't render if no notifications
   if (state.notifications.length === 0) {

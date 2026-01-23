@@ -1,5 +1,6 @@
 import { GAME_ACTIONS } from './GameActions';
 import { SAVE_VERSION, initializePlots } from './GamePersistence';
+import { getLevelFromXp, getXpForLevel, MAX_LEVEL_GAIN_PER_GRANT } from '../constants/progression';
 
 // Initial game state
 export const initialState = {
@@ -113,8 +114,11 @@ export function gameReducer(state, action) {
             return { ...state, coins: newCoins };
 
         case GAME_ACTIONS.SET_XP:
-            const newXp = typeof action.payload === 'function' ? action.payload(state.xp) : action.payload;
-            const newLevel = Math.floor(Math.sqrt(newXp / 50)) + 1;
+            const rawXp = typeof action.payload === 'function' ? action.payload(state.xp) : action.payload;
+            const safeXp = Number.isFinite(rawXp) ? Math.max(0, rawXp) : state.xp;
+            const maxAllowedXp = getXpForLevel((state.level || 1) + MAX_LEVEL_GAIN_PER_GRANT);
+            const newXp = Math.min(safeXp, maxAllowedXp);
+            const newLevel = getLevelFromXp(newXp);
             const didLevelUp = newLevel > state.level;
 
             if (didLevelUp && typeof window !== 'undefined') {
@@ -130,6 +134,24 @@ export function gameReducer(state, action) {
                 }, 100);
             }
 
+            if (action.meta?.stack) {
+                const stackLines = action.meta.stack.split('\n').map(line => line.trim());
+                const callsite = stackLines.find(line =>
+                    line.includes('/src/')
+                    && !line.includes('GameContext.jsx')
+                    && !line.includes('GameReducer.js')
+                );
+                console.debug('[farm]', 'XP grant', {
+                    source: action.meta.source || callsite || 'unknown',
+                    amount: newXp - state.xp,
+                    timestamp: action.meta.timestamp || Date.now(),
+                    callsite,
+                    xp: { before: state.xp, after: newXp },
+                    level: { before: state.level, after: newLevel }
+                });
+            }
+
+            const levelUpTimestamp = didLevelUp ? Date.now() : null;
             return {
                 ...state,
                 xp: newXp,
@@ -138,9 +160,11 @@ export function gameReducer(state, action) {
                     notifications: [
                         ...state.notifications,
                         {
-                            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                            id: `${levelUpTimestamp}-${Math.random().toString(36).substr(2, 9)}`,
                             message: `🎉 Level ${newLevel} Reached!`,
                             type: 'success',
+                            createdAt: levelUpTimestamp,
+                            timestamp: levelUpTimestamp,
                         }
                     ]
                 })
@@ -242,13 +266,15 @@ export function gameReducer(state, action) {
             return { ...state, social: action.payload };
 
         case GAME_ACTIONS.ADD_NOTIFICATION:
-            const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const createdAt = Date.now();
+            const uniqueId = `${createdAt}-${Math.random().toString(36).substr(2, 9)}`;
             return {
                 ...state,
                 notifications: [...state.notifications, {
                     id: uniqueId,
                     ...action.payload,
-                    timestamp: Date.now(),
+                    timestamp: createdAt,
+                    createdAt,
                 }],
             };
 

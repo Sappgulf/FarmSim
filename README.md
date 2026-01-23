@@ -36,9 +36,10 @@ Open [http://localhost:5173](http://localhost:5173) to start farming!
 1. **Launch**: `npm run dev` → load the game without console errors.
 2. **Core Loop**: plant a crop → wait → harvest → coins/XP update.
 3. **Notifications**: trigger a toast → auto-dismiss in ~4s → close button works.
-4. **Menus**: open Farming, Shop, Processing, Research, Settings tabs.
-5. **Save/Load**: save in Settings → refresh → load persists.
-6. **Mobile**: check bottom nav, tap targets, and safe-area spacing.
+4. **Idle XP**: sit idle 2–5 minutes → XP/level stable unless a timed task completes.
+5. **Menus**: open Farming, Shop, Processing, Research, Settings tabs.
+6. **Save/Load**: save in Settings → refresh → load persists.
+7. **Mobile**: check bottom nav, tap targets, and safe-area spacing.
 
 ---
 

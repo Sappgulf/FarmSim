@@ -4,6 +4,7 @@ import { useTick } from '../context/TickContext';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Progress } from '../../ui/progress';
+import { getXpForLevel } from '../constants/progression';
 import { Coins, Star, Trophy, Settings, Save, Play, Pause, ChevronDown, TrendingUp, Calendar } from 'lucide-react';
 
 // Animated number counter component
@@ -147,9 +148,9 @@ const GameHeader = memo(() => {
     return `${Math.floor(seconds / 60)}m ago`;
   };
 
-  // Calculate XP progress to next level (matches reducer: level = floor(sqrt(xp/50)) + 1)
-  const xpForCurrentLevel = Math.pow(state.level - 1, 2) * 50;
-  const xpForNextLevel = Math.pow(state.level, 2) * 50;
+  // Calculate XP progress to next level (matches progression constants)
+  const xpForCurrentLevel = getXpForLevel(state.level);
+  const xpForNextLevel = getXpForLevel(state.level + 1);
   const currentLevelXp = Math.max(0, state.xp - xpForCurrentLevel);
   const xpNeededForNext = Math.max(1, xpForNextLevel - xpForCurrentLevel);
   const xpProgress = Math.min(100, (currentLevelXp / xpNeededForNext) * 100);
