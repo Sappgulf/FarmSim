@@ -1,8 +1,38 @@
 # Codebase Cleanup & Optimization Changelog
 
 **Date:** January 2026  
-**Project:** FarmLife v4.2.1  
-**Phases Completed:** All QA Phases ✅
+**Project:** FarmLife v4.3.0  
+**Status:** Major Update ✅
+
+---
+
+## v4.3.0 - UI/UX Overhaul (January 2026)
+
+### New Features
+- 🎯 **Bottom Navigation Bar** - Consolidated 21 tabs into 5 sections (Farm, Items, Build, Animals, More)
+- 📱 **Mobile-First Design** - 56px touch targets, safe-area CSS for iOS notch/home indicator
+- 🎓 **Onboarding Tutorial** - 4-step interactive tutorial for new players (skippable)
+
+### UI/UX Improvements
+- NavBar with grouped sections and slide-up sub-tabs
+- Controlled tab state from parent for consistent navigation
+- Scrollbar-hide utility for clean horizontal scrolling
+
+### Files Added
+- `src/components/farm-sim/ui/NavBar.jsx` - New 5-section navigation
+- `src/components/farm-sim/ui/Tutorial.jsx` - Onboarding overlay
+
+### Files Modified
+- `src/components/farm-sim/core/FarmSim.jsx` - NavBar + Tutorial integration
+- `src/components/farm-sim/ui/GameSidebar.jsx` - Controlled props support
+- `src/index.css` - Safe-area and scrollbar utilities
+
+### Metrics
+| Metric | Before | After |
+|--------|--------|-------|
+| Bundle | 277KB | 284KB |
+| Tests | 9/9 | 9/9 |
+| Tabs | 21 buttons | 5 sections |
 
 ---
 
