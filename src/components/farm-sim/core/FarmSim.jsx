@@ -11,6 +11,7 @@ import NotificationSystem from '../ui/NotificationSystem';
 import { ParticleEffectsManager } from '../ui/ParticleEffect';
 import FPSCounter from '../ui/FPSCounter';
 import PerformanceOverlay from '../ui/PerformanceOverlay';
+import Tutorial from '../ui/Tutorial';
 
 // Import systems
 import { FarmingSystem } from '../systems/FarmingSystem';
@@ -447,6 +448,9 @@ function FarmSimCore() {
 
       {/* Performance Overlay (dev, toggle with `) */}
       <PerformanceOverlay />
+
+      {/* Onboarding Tutorial (auto-shows for new players) */}
+      <Tutorial />
     </div>
   );
 }
