@@ -170,10 +170,21 @@ export function getAdjacentPlots(plotIndex, gridSize) {
   return adjacent;
 }
 
+/**
+ * Get disease definition by ID
+ * @param {string} diseaseId
+ * @returns {Object|null}
+ */
+export function getDiseaseById(diseaseId) {
+  if (!diseaseId) return null;
+  return Object.values(DISEASE_TYPES).find((disease) => disease.id === diseaseId) || null;
+}
+
 export default {
   DISEASE_TYPES,
   CURE_ITEMS,
   calculateDiseaseRisk,
   getAdjacentPlots,
+  getDiseaseById,
 };
 

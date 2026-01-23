@@ -211,7 +211,7 @@ const FarmingTab = memo(() => {
                       )}
                     </div>
                     <div className="text-xs text-gray-600">
-                      Cost: {crop.cost}🪙 • Time: {crop.time}s • Sell: {crop.value}🪙
+                      Cost: {crop.cost}🪙 • Time: {crop.time}s • Base: {crop.value}🪙
                     </div>
                     <div className="text-[10px] text-gray-500 italic mt-0.5">
                       {crop.description}

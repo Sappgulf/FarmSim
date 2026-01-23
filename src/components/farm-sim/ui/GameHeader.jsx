@@ -52,12 +52,39 @@ const GameHeader = memo(() => {
   const { state, actions } = useGame();
   const [showStatsDropdown, setShowStatsDropdown] = useState(false);
   const prevLevelRef = useRef(state.level);
+  const statsDropdownRef = useRef(null);
 
   // Use ref for actions to avoid dependency issues
   const actionsRef = useRef(actions);
   useEffect(() => {
     actionsRef.current = actions;
   }, [actions]);
+
+  useEffect(() => {
+    if (!showStatsDropdown) return;
+
+    const handlePointerDown = (event) => {
+      if (statsDropdownRef.current && !statsDropdownRef.current.contains(event.target)) {
+        setShowStatsDropdown(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setShowStatsDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showStatsDropdown]);
 
   // Detect level up and trigger celebration
   useEffect(() => {
@@ -103,6 +130,12 @@ const GameHeader = memo(() => {
     return num.toString();
   };
 
+  const formatBonusPercent = (multiplier) => {
+    const percent = Math.round((multiplier - 1) * 100);
+    if (percent === 0) return '0%';
+    return `${percent > 0 ? '+' : ''}${percent}%`;
+  };
+
   const getTimeSinceLastSave = () => {
     const lastSavedAt = state.gameLoop?.lastSaveTime;
     if (!lastSavedAt) {
@@ -114,14 +147,12 @@ const GameHeader = memo(() => {
     return `${Math.floor(seconds / 60)}m ago`;
   };
 
-  // Calculate XP progress to next level (60 XP per level)
-  const xpForCurrentLevel = (state.level - 1) * 60;
-  // REBALANCED: Progressive XP formula - matches GameContext calculation
-  // Formula: XP needed = (level^2) * 50
-  const xpForNextLevel = (state.level * state.level) * 50;
-  const currentLevelXp = state.xp - xpForCurrentLevel;
-  const xpNeededForNext = xpForNextLevel - xpForCurrentLevel;
-  const xpProgress = (currentLevelXp / xpNeededForNext) * 100;
+  // Calculate XP progress to next level (matches reducer: level = floor(sqrt(xp/50)) + 1)
+  const xpForCurrentLevel = Math.pow(state.level - 1, 2) * 50;
+  const xpForNextLevel = Math.pow(state.level, 2) * 50;
+  const currentLevelXp = Math.max(0, state.xp - xpForCurrentLevel);
+  const xpNeededForNext = Math.max(1, xpForNextLevel - xpForCurrentLevel);
+  const xpProgress = Math.min(100, (currentLevelXp / xpNeededForNext) * 100);
 
   // Dynamic goal hint based on game state
   const getNextGoal = () => {
@@ -191,12 +222,13 @@ const GameHeader = memo(() => {
         {/* Right side - Controls and weather */}
         <div className="flex items-center gap-3">
           {/* Stats Dropdown Button */}
-          <div className="relative">
+          <div className="relative" ref={statsDropdownRef}>
             <Button
               size="sm"
               variant="outline"
               onClick={() => setShowStatsDropdown(!showStatsDropdown)}
               className="flex items-center gap-1"
+              aria-expanded={showStatsDropdown}
             >
               <TrendingUp className="w-3 h-3" />
               <span className="text-xs">Stats</span>
@@ -256,6 +288,9 @@ const GameHeader = memo(() => {
                   {state.season.config.description}
                 </div>
                 <div className="text-xs text-gray-500">
+                  Market prices: {formatBonusPercent(state.season.config.bonuses?.marketPrices || 1.0)}
+                </div>
+                <div className="text-xs text-gray-500">
                   Next season in: {Math.floor((120000 - (Date.now() - state.season.lastChangeTime)) / 60000)}:{((120000 - (Date.now() - state.season.lastChangeTime)) % 60000 / 1000).toFixed(0).padStart(2, '0')}
                 </div>
               </div>
@@ -268,7 +303,7 @@ const GameHeader = memo(() => {
               {state.weather === 'sunny' ? '☀️' :
                 state.weather === 'rainy' ? '🌧️' :
                   state.weather === 'stormy' ? '⛈️' :
-                    state.weather === 'snowy' ? '❄️' : '☀️'}
+                    state.weather === 'snowy' || state.weather === 'snow' ? '❄️' : '☀️'}
             </span>
             <span className="text-sm font-medium text-blue-700 capitalize">
               {state.weather || 'sunny'}

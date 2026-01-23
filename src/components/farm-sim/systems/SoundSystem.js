@@ -326,6 +326,7 @@ export class SoundSystem {
         }, 100);
         break;
       case 'snowy':
+      case 'snow':
         this.createSound(600, 'triangle', 0.4);
         break;
       default:
