@@ -6,7 +6,7 @@ import { getDiseaseById } from './diseaseData';
  */
 
 // Harvest window before crops overripe
-export const HARVEST_WINDOW_MS = 60000;
+export const HARVEST_WINDOW_MS = 90000;
 
 // Crop categories for filtering
 export const CROP_CATEGORIES = {

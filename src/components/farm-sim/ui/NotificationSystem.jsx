@@ -118,6 +118,9 @@ const NotificationSystem = memo(() => {
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingRight: 'env(safe-area-inset-right, 0px)',
       }}
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
     >
       <div className="space-y-2">
         {state.notifications.slice(0, 5).map(notification => (
