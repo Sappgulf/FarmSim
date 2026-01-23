@@ -38,7 +38,8 @@
 - ✅ Debug-only XP grant logging with source/callsite
 
 ### Verification
-- ⏳ Pending: manual run in local dev
+- ✅ `npm run test -- --run` (warnings: ReactDOMTestUtils.act, invalid plots in tests)
+- ✅ `npm run lint`
 
 ---
 
