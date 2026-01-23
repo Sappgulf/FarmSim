@@ -1,8 +1,38 @@
 # Codebase Cleanup & Optimization Changelog
 
 **Date:** January 2026  
-**Project:** FarmLife v4.3.0  
-**Status:** Major Update ✅
+**Project:** FarmLife v4.4.0  
+**Status:** Architecture & Accessibility Update ✅
+
+---
+
+## v4.4.0 - Architecture & Accessibility (January 2026)
+
+### Major Changes
+- 🏗️ **GameContext Modularization** - Refactored monolithic 1172-line context into:
+    - `GameActions.js` - Action types
+    - `GameReducer.js` - Reducer and initial state
+    - `GamePersistence.js` - Save/Load and Migration logic
+    - `GameContext.jsx` - Provider, side effects, and hooks (~210 lines)
+- ♿ **Reduced Motion Support** - Standardized accessibility:
+    - CSS `prefers-reduced-motion` support
+    - Manual "Reduced Motion" toggle in Gameplay Settings
+    - Automatic disabling of particle effects and screen shake when active
+- 📱 **PWA Support** - Enhanced mobile experience:
+    - `manifest.json` for home screen installation
+    - `sw.js` (Service Worker) for offline shell support
+
+### UI/UX Improvements
+- Added Reduced Motion toggle in Settings
+- Updated GameHeader with dynamic goal indicator (v4.3.1 polish)
+- Title updated to "FarmSim - Advanced Farming Simulator"
+
+### Metrics
+| Metric | v4.3.1 | v4.4.0 | Change |
+|--------|--------|--------|--------|
+| Bundle | 285KB | 282KB | -1% (improved tree-shaking) |
+| Code | 1 monolithic Context | 4 modular files | -82% file size (Context) |
+| Tests | 9/9 | 9/9 | - |
 
 ---
 

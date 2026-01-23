@@ -80,6 +80,30 @@ export const GameplaySettings = memo(({
                             />
                         </button>
                     </div>
+
+                    {/* Reduced Motion */}
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                        <div>
+                            <div className="font-medium">Reduced Motion</div>
+                            <div className="text-sm text-gray-600">Disable heavy animations</div>
+                        </div>
+                        <button
+                            onClick={() => actions.updateSettings({
+                                reducedMotion: !state.settings.reducedMotion
+                            })}
+                            className={`
+                relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                                ${state.settings.reducedMotion ? 'bg-green-600' : 'bg-gray-300'}
+              `}
+                        >
+                            <span
+                                className={`
+                  inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                  ${state.settings.reducedMotion ? 'translate-x-6' : 'translate-x-1'}
+                `}
+                            />
+                        </button>
+                    </div>
                 </div>
             </Card>
 
