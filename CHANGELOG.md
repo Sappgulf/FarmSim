@@ -24,6 +24,25 @@
 
 ---
 
+## v4.4.2 - Notifications + XP Rebalance (January 2026)
+
+### Notifications
+- ✅ Stabilized auto-dismiss timers (centralized timers; no reset on re-render)
+- ✅ Debug-only notification lifecycle logs (createdAt, duration, removal reason)
+- ✅ Close button now explicit type + aria-label
+
+### Progression
+- ✅ Fixed achievement auto-award loop that granted idle XP
+- ✅ XP curve rebalance (base 100) with migration preserving level progress
+- ✅ Guardrail: cap single XP grant to max 3 levels per update
+- ✅ Debug-only XP grant logging with source/callsite
+
+### Verification
+- ✅ `npm run test -- --run` (warnings: ReactDOMTestUtils.act, invalid plots in tests)
+- ✅ `npm run lint`
+
+---
+
 ## v4.4.1 - Notifications & Polish Pass (January 2026)
 
 ### Notifications
@@ -49,6 +68,8 @@
 - Added Reduced Motion toggle in Settings
 - Updated GameHeader with dynamic goal indicator (v4.3.1 polish)
 - Title updated to "FarmSim - Advanced Farming Simulator"
+
+---
 
 ### Metrics
 | Metric | v4.3.1 | v4.4.0 | Change |

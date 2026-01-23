@@ -144,11 +144,30 @@ export function GameProvider({ children }) {
     systemsRef.current = systems;
   }, [systems]);
 
+  const buildXpMeta = useCallback((source) => {
+    if (import.meta.env.MODE !== 'development') return undefined;
+    if (typeof window === 'undefined' || !window.__farmDebug?.xp) return undefined;
+    const stack = new Error().stack;
+    const stackLines = stack ? stack.split('\n').map(line => line.trim()) : [];
+    const inferredSource = source
+      || stackLines.find(line => line.includes('/src/') && !line.includes('GameContext.jsx'))
+      || 'unknown';
+    return {
+      source: inferredSource,
+      stack,
+      timestamp: Date.now(),
+    };
+  }, []);
+
   // Memoized action creators
   const actions = useMemo(() => ({
     // Core property setters
     setCoins: (coins) => dispatch({ type: GAME_ACTIONS.SET_COINS, payload: coins }),
-    setXp: (xp) => dispatch({ type: GAME_ACTIONS.SET_XP, payload: xp }),
+    setXp: (xp, source) => dispatch({
+      type: GAME_ACTIONS.SET_XP,
+      payload: xp,
+      meta: buildXpMeta(source),
+    }),
 
     // Plot & Inventory
     updatePlot: (index, plot) => dispatch({ type: GAME_ACTIONS.UPDATE_PLOT, payload: { index, plot } }),
@@ -232,7 +251,11 @@ export function GameProvider({ children }) {
 
     earnMoney: (amount) => dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (c) => c + amount }),
     spendMoney: (amount) => dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (c) => Math.max(0, c - amount) }),
-    addXP: (amount) => dispatch({ type: GAME_ACTIONS.SET_XP, payload: (x) => x + amount }),
+    addXP: (amount, source) => dispatch({
+      type: GAME_ACTIONS.SET_XP,
+      payload: (x) => x + amount,
+      meta: buildXpMeta(source),
+    }),
 
     // Bulk actions
     harvestAllReadyCrops: () => {
@@ -272,7 +295,7 @@ export function GameProvider({ children }) {
         });
       }, 0);
     },
-  }), []); // dispatch is stable
+  }), [buildXpMeta]); // dispatch is stable
 
   return (
     <GameContext.Provider value={{ state, actions, systems }}>
