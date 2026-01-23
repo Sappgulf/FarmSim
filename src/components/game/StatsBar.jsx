@@ -3,7 +3,7 @@
  * Top header showing coins, level, weather, season
  */
 import React, { memo, useMemo, useState, useEffect, useRef } from 'react';
-import { Coins, Target, TrendingUp, Zap, Crown } from 'lucide-react';
+import { Coins, Target, TrendingUp, Zap, Crown, HelpCircle, Clock, Sun, Moon, Sunrise, Sunset } from 'lucide-react';
 import { formatTimeRemaining } from '../../utils/time.mjs';
 import { nowSec } from '../../utils/time.mjs';
 
@@ -78,6 +78,9 @@ function StatsBarComponent({
   comboMultiplier,
   prestige,
   prestigeData,
+  timeDisplay,
+  currentPeriod,
+  onShowHelp,
 }) {
   const now = nowSec();
   const timeRemaining = levelEndsAt > 0 ? formatTimeRemaining(levelEndsAt, now) : null;
@@ -136,6 +139,35 @@ function StatsBarComponent({
             <span className="text-lg drop-shadow-sm">{prestigeData?.emoji}</span>
             <span className="text-sm font-bold text-purple-700">{prestigeData?.multiplier}x</span>
           </div>
+        )}
+
+        {/* Time of Day */}
+        {timeDisplay && currentPeriod && (
+          <div className={`
+            flex items-center gap-1.5 px-3 py-1.5 rounded-xl shadow-sm border
+            ${currentPeriod.id === 'night'
+              ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+              : 'bg-amber-50 border-amber-200 text-amber-700'
+            }
+          `}>
+            {currentPeriod.id === 'dawn' && <Sunrise size={14} />}
+            {currentPeriod.id === 'morning' && <Sun size={14} />}
+            {currentPeriod.id === 'afternoon' && <Sun size={14} />}
+            {currentPeriod.id === 'evening' && <Sunset size={14} />}
+            {currentPeriod.id === 'night' && <Moon size={14} />}
+            <span className="text-xs font-mono font-medium">{timeDisplay}</span>
+          </div>
+        )}
+
+        {/* Help button */}
+        {onShowHelp && (
+          <button
+            onClick={onShowHelp}
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500 hover:text-gray-700"
+            title="Help (press ?)"
+          >
+            <HelpCircle size={18} />
+          </button>
         )}
       </div>
 

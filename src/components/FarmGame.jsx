@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import {
   Leaf, ShoppingCart, Trophy, Dna, Building2, Settings, CloudSun,
-  Target, Package, RotateCcw, Volume2, VolumeX
+  Target, Package, RotateCcw, Volume2, VolumeX, HelpCircle, Crown, Factory
 } from 'lucide-react';
 
 // Hooks
@@ -17,6 +17,8 @@ import { useFarm } from '../hooks/useFarm';
 import { useWeather } from '../hooks/useWeather';
 import { useTutorial } from '../hooks/useTutorial';
 import { useSound } from '../hooks/useSound';
+import { useAchievements } from '../hooks/useAchievements';
+import { useDayNight } from '../hooks/useDayNight';
 
 // Game Components
 import { FarmGrid } from './game/FarmGrid';
@@ -31,16 +33,23 @@ import { Confetti, useConfetti } from './game/Confetti';
 import { ScreenFlash, useScreenFlash } from './game/ScreenFlash';
 import { DebugOverlay } from './DebugOverlay';
 import { MenuDrawer } from './MenuDrawer';
+import { WelcomeScreen } from './game/WelcomeScreen';
+import { MilestonePopup, MILESTONES } from './game/MilestonePopup';
+import { HelpGuide } from './game/HelpGuide';
+import { TimeDisplay } from './game/TimeDisplay';
 
 // Panels
 import { ShopPanel } from './panels/ShopPanel';
 import { InventoryPanel } from './panels/InventoryPanel';
 import { AchievementsPanel } from './panels/AchievementsPanel';
 import { BreedingPanel } from './panels/BreedingPanel';
+import { ProcessingPanel } from './panels/ProcessingPanel';
+import { LivestockPanel } from './panels/LivestockPanel';
+import { PrestigePanel } from './panels/PrestigePanel';
 
 // Data
 import { GRID_CONFIG, GAME_SETTINGS, LEVELS } from '../data/constants';
-import { BUILDINGS } from '../data/buildings';
+import { BUILDINGS, LIVESTOCK, PROCESSING_RECIPES } from '../data/buildings';
 import { CROPS, QUALITY_TIERS } from '../data/crops';
 
 // Utils
@@ -54,9 +63,9 @@ export default function FarmGame() {
   const gameState = useGameState();
   const {
     coins, totalEarned, levelId, levelStatus, levelEndsAt, level, prestige, prestigeData,
-    tutorialComplete, tutorialStep, notifications, stats,
+    tutorialComplete, tutorialStep, notifications, stats, levelStartedAt,
     addCoins, spendCoins, addNotification, removeNotification, updateStats,
-    checkLevelProgress, startLevel, advanceTutorial, completeTutorial,
+    checkLevelProgress, startLevel, advanceTutorial, completeTutorial, doPrestige,
     getSaveData: getGameSaveData, loadSaveData: loadGameSaveData,
   } = gameState;
 
@@ -138,11 +147,36 @@ export default function FarmGame() {
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false
   );
-  const [achievements, setAchievements] = useState([]);
   const [discoveredHybrids, setDiscoveredHybrids] = useState([]);
   const lastTickRef = useRef(nowSec());
   const lastWindmillPayoutRef = useRef(0);
   const prevLevelStatusRef = useRef(levelStatus);
+
+  // New systems
+  const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('farmSim_welcomed'));
+  const [showHelp, setShowHelp] = useState(false);
+  const [currentMilestone, setCurrentMilestone] = useState(null);
+  const [claimedMilestones, setClaimedMilestones] = useState([]);
+
+  // Livestock state
+  const [ownedAnimals, setOwnedAnimals] = useState([]);
+  const [pendingProducts, setPendingProducts] = useState([]);
+
+  // Processing state
+  const [processingQueue, setProcessingQueue] = useState([]);
+  const [completedProducts, setCompletedProducts] = useState([]);
+
+  // Day/night cycle
+  const dayNight = useDayNight(false);
+  const { currentPeriod, timeDisplay, getEffects, getVisuals } = dayNight;
+
+  // Achievement tracking
+  const achievementSystem = useAchievements(
+    addNotification,
+    () => sound.playLevelUp(),
+    (intensity) => !reducedMotion && fireConfetti(intensity)
+  );
+  const { unlockedAchievements, checkAchievements } = achievementSystem;
 
   // ============ GAME LOOP ============
 
@@ -216,9 +250,127 @@ export default function FarmGame() {
       if (!reducedMotion) {
         fireConfetti('high');
       }
+      // Show level complete milestone
+      if (!claimedMilestones.includes('level_complete_' + levelId)) {
+        setCurrentMilestone({ id: 'level_complete', reward: level?.reward || 0 });
+      }
     }
     prevLevelStatusRef.current = levelStatus;
-  }, [levelStatus, reducedMotion, fireConfetti, sound, flashGreen]);
+  }, [levelStatus, reducedMotion, fireConfetti, sound, flashGreen, level, levelId, claimedMilestones]);
+
+  // Check achievements periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkAchievements({
+        stats,
+        totalEarned,
+        prestige,
+        gridSize,
+        buildings,
+        discoveredHybrids,
+        inventory,
+        levelId,
+        levelStatus,
+        levelStartedAt: gameState.levelStartedAt,
+      });
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [checkAchievements, stats, totalEarned, prestige, gridSize, buildings, discoveredHybrids, inventory, levelId, levelStatus]);
+
+  // Track first plant milestone
+  useEffect(() => {
+    if (stats.cropsPlanted === 1 && !claimedMilestones.includes('first_plant')) {
+      setCurrentMilestone({ id: 'first_plant' });
+    }
+  }, [stats.cropsPlanted, claimedMilestones]);
+
+  // Track first harvest milestone
+  useEffect(() => {
+    if (stats.totalHarvests === 1 && !claimedMilestones.includes('first_harvest')) {
+      setCurrentMilestone({ id: 'first_harvest' });
+    }
+  }, [stats.totalHarvests, claimedMilestones]);
+
+  // Track first building milestone
+  useEffect(() => {
+    if (buildings.length === 1 && !claimedMilestones.includes('first_building')) {
+      setCurrentMilestone({ id: 'first_building' });
+    }
+  }, [buildings.length, claimedMilestones]);
+
+  // Livestock production tick
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now() / 1000;
+
+      ownedAnimals.forEach((animal, index) => {
+        const livestock = LIVESTOCK[animal.type];
+        if (!livestock) return;
+
+        const timeSinceProduct = now - (animal.lastProductAt || now);
+        if (timeSinceProduct >= livestock.interval) {
+          // Animal produced something!
+          setPendingProducts(prev => [...prev, {
+            animalId: animal.id,
+            type: livestock.product,
+            name: livestock.product.charAt(0).toUpperCase() + livestock.product.slice(1),
+            emoji: livestock.productEmoji,
+            value: livestock.value,
+          }]);
+
+          // Update animal's last production time
+          setOwnedAnimals(prev => prev.map((a, i) =>
+            i === index ? { ...a, lastProductAt: now } : a
+          ));
+        }
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [ownedAnimals]);
+
+  // Processing tick
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+
+      setProcessingQueue(prev => {
+        const stillProcessing = [];
+        const completed = [];
+
+        prev.forEach(item => {
+          if (now >= item.startTime + item.duration * 1000) {
+            completed.push(item);
+          } else {
+            stillProcessing.push(item);
+          }
+        });
+
+        if (completed.length > 0) {
+          setCompletedProducts(existing => [...existing, ...completed]);
+          addNotification(`${completed.map(c => c.emoji).join('')} Processing complete!`, 'success');
+          sound.playSuccess();
+        }
+
+        return stillProcessing;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [addNotification, sound]);
+
+  // Help guide keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+        setShowHelp(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // ============ SAVE/LOAD ============
 
@@ -230,8 +382,11 @@ export default function FarmGame() {
       loadFarmSaveData(savedData.farm);
       loadWeatherSaveData(savedData.weather);
       if (savedData.buildings) setBuildings(savedData.buildings);
-      if (savedData.achievements) setAchievements(savedData.achievements);
+      if (savedData.achievements) achievementSystem.loadSaveData(savedData.achievements);
       if (savedData.discoveredHybrids) setDiscoveredHybrids(savedData.discoveredHybrids);
+      if (savedData.dayNight) dayNight.loadSaveData(savedData.dayNight);
+      if (savedData.ownedAnimals) setOwnedAnimals(savedData.ownedAnimals);
+      if (savedData.claimedMilestones) setClaimedMilestones(savedData.claimedMilestones);
     } else {
       // New game - initialize
       generateForecast();
@@ -245,8 +400,11 @@ export default function FarmGame() {
       farm: getFarmSaveData(),
       weather: getWeatherSaveData(),
       buildings,
-      achievements,
+      achievements: achievementSystem.getSaveData(),
       discoveredHybrids,
+      dayNight: dayNight.getSaveData(),
+      ownedAnimals,
+      claimedMilestones,
       savedAt: nowSec(),
     });
 
@@ -264,7 +422,7 @@ export default function FarmGame() {
       clearInterval(saveInterval);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [getGameSaveData, getFarmSaveData, getWeatherSaveData, buildings, achievements, discoveredHybrids]);
+  }, [getGameSaveData, getFarmSaveData, getWeatherSaveData, buildings, discoveredHybrids, ownedAnimals, claimedMilestones, achievementSystem, dayNight]);
 
   // ============ HANDLERS ============
 
@@ -333,9 +491,145 @@ export default function FarmGame() {
   const handleResetGame = useCallback(() => {
     if (confirm('Are you sure you want to reset your farm? All progress will be lost!')) {
       localStorage.removeItem('farmSim_save_v3');
+      localStorage.removeItem('farmSim_welcomed');
       window.location.reload();
     }
   }, []);
+
+  // Welcome screen handlers
+  const handleWelcomeStart = useCallback(() => {
+    setShowWelcome(false);
+    localStorage.setItem('farmSim_welcomed', 'true');
+  }, []);
+
+  const handleWelcomeSkip = useCallback(() => {
+    setShowWelcome(false);
+    localStorage.setItem('farmSim_welcomed', 'true');
+    completeTutorial();
+  }, [completeTutorial]);
+
+  // Milestone handlers
+  const handleMilestoneClaim = useCallback((reward) => {
+    if (currentMilestone && reward > 0) {
+      addCoins(reward, 'milestone');
+    }
+    if (currentMilestone) {
+      setClaimedMilestones(prev => [...prev, currentMilestone.id]);
+    }
+    setCurrentMilestone(null);
+  }, [currentMilestone, addCoins]);
+
+  // Livestock handlers
+  const handleBuyAnimal = useCallback((type) => {
+    const livestock = LIVESTOCK[type];
+    if (!livestock || coins < livestock.price) return;
+
+    if (spendCoins(livestock.price)) {
+      const newAnimal = {
+        id: Date.now(),
+        type,
+        happiness: 100,
+        fedAt: Date.now() / 1000,
+        wateredAt: Date.now() / 1000,
+        lastProductAt: Date.now() / 1000,
+      };
+      setOwnedAnimals(prev => [...prev, newAnimal]);
+      addNotification(`Bought a ${livestock.emoji} ${livestock.name}!`, 'success');
+      sound.playSuccess();
+
+      // First animal milestone
+      if (ownedAnimals.length === 0 && !claimedMilestones.includes('first_animal')) {
+        setTimeout(() => setCurrentMilestone({ id: 'first_animal' }), 500);
+      }
+    }
+  }, [coins, spendCoins, addNotification, sound, ownedAnimals.length, claimedMilestones]);
+
+  const handleFeedAnimal = useCallback((animalId) => {
+    if (spendCoins(5)) {
+      setOwnedAnimals(prev => prev.map(a =>
+        a.id === animalId ? { ...a, fedAt: Date.now() / 1000, happiness: Math.min(100, (a.happiness || 50) + 20) } : a
+      ));
+      sound.playSuccess();
+    }
+  }, [spendCoins, sound]);
+
+  const handleWaterAnimal = useCallback((animalId) => {
+    if (spendCoins(2)) {
+      setOwnedAnimals(prev => prev.map(a =>
+        a.id === animalId ? { ...a, wateredAt: Date.now() / 1000, happiness: Math.min(100, (a.happiness || 50) + 10) } : a
+      ));
+      sound.playWater();
+    }
+  }, [spendCoins, sound]);
+
+  const handleCollectProduct = useCallback((index) => {
+    const product = pendingProducts[index];
+    if (!product) return;
+
+    addCoins(product.value, 'livestock');
+    setPendingProducts(prev => prev.filter((_, i) => i !== index));
+    sound.playCoin();
+    addNotification(`Collected ${product.emoji} for ${product.value} coins!`, 'success');
+  }, [pendingProducts, addCoins, sound, addNotification]);
+
+  // Processing handlers
+  const handleStartProcessing = useCallback((inputId, quantity) => {
+    const recipe = PROCESSING_RECIPES[inputId];
+    const crop = CROPS[inputId];
+    if (!recipe || !crop) return;
+
+    // Remove items from inventory
+    setInventory(prev => ({
+      ...prev,
+      [inputId]: Math.max(0, (prev[inputId] || 0) - quantity),
+    }));
+
+    // Add to processing queue
+    const processItem = {
+      inputId,
+      outputId: recipe.output,
+      name: recipe.name,
+      emoji: recipe.emoji,
+      quantity,
+      value: Math.floor(crop.baseValue * recipe.multiplier * quantity),
+      startTime: Date.now(),
+      duration: recipe.time * quantity,
+    };
+
+    setProcessingQueue(prev => [...prev, processItem]);
+    addNotification(`Started processing ${crop.emoji} → ${recipe.emoji}!`, 'info');
+    sound.playClick();
+
+    // First process milestone
+    if (processingQueue.length === 0 && !claimedMilestones.includes('first_process')) {
+      setTimeout(() => setCurrentMilestone({ id: 'first_process' }), 500);
+    }
+  }, [setInventory, addNotification, sound, processingQueue.length, claimedMilestones]);
+
+  const handleCollectProcessed = useCallback((productId, index) => {
+    const product = completedProducts[index];
+    if (!product) return;
+
+    addCoins(product.value, 'processing');
+    setCompletedProducts(prev => prev.filter((_, i) => i !== index));
+    sound.playCoin();
+    flashGold();
+    addNotification(`Collected ${product.emoji} for ${product.value} coins!`, 'success');
+  }, [completedProducts, addCoins, sound, flashGold, addNotification]);
+
+  // Prestige handler
+  const handlePrestige = useCallback(() => {
+    if (doPrestige()) {
+      sound.playLevelUp();
+      flashPurple();
+      if (!reducedMotion) {
+        fireConfetti('high');
+      }
+      if (!claimedMilestones.includes('first_prestige') && prestige === 0) {
+        setTimeout(() => setCurrentMilestone({ id: 'first_prestige' }), 1000);
+      }
+    }
+  }, [doPrestige, sound, flashPurple, reducedMotion, fireConfetti, claimedMilestones, prestige]);
 
   // Handle bottom nav tab change
   const handleTabChange = useCallback((tabId) => {
@@ -440,15 +734,44 @@ export default function FarmGame() {
 
   // ============ RENDER ============
 
+  // Get day/night visual adjustments
+  const dayNightVisuals = getVisuals();
+
+  // If showing welcome screen
+  if (showWelcome) {
+    return (
+      <WelcomeScreen
+        onStart={handleWelcomeStart}
+        onSkip={handleWelcomeSkip}
+      />
+    );
+  }
+
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50"
+      className={`min-h-screen bg-gradient-to-br ${dayNightVisuals.bgGradient || 'from-green-50 via-emerald-50 to-teal-50'} transition-colors duration-1000`}
       data-reduced-motion={reducedMotion ? 'true' : 'false'}
     >
+      {/* Day/night overlay */}
+      <div
+        className="fixed inset-0 pointer-events-none transition-colors duration-1000 z-0"
+        style={{ backgroundColor: dayNightVisuals.overlayColor }}
+      />
+
       {/* Notifications */}
       <NotificationStack
         notifications={notifications}
         onDismiss={removeNotification}
+      />
+
+      {/* Help Guide Modal */}
+      <HelpGuide isOpen={showHelp} onClose={() => setShowHelp(false)} />
+
+      {/* Milestone Popup */}
+      <MilestonePopup
+        milestone={currentMilestone}
+        onClose={() => setCurrentMilestone(null)}
+        onClaim={handleMilestoneClaim}
       />
 
       {/* Celebrations */}
@@ -488,6 +811,9 @@ export default function FarmGame() {
           comboMultiplier={comboMultiplier}
           prestige={prestige}
           prestigeData={prestigeData}
+          timeDisplay={timeDisplay}
+          currentPeriod={currentPeriod}
+          onShowHelp={() => setShowHelp(true)}
         />
 
         {/* Desktop Layout */}
@@ -540,17 +866,20 @@ export default function FarmGame() {
           {/* Right Column - Tabs */}
           <div className="space-y-4">
             <Tabs defaultValue="shop" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="shop">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="shop" title="Shop">
                   <ShoppingCart size={16} />
                 </TabsTrigger>
-                <TabsTrigger value="achievements">
+                <TabsTrigger value="process" title="Processing">
+                  <Factory size={16} />
+                </TabsTrigger>
+                <TabsTrigger value="achievements" title="Achievements">
                   <Trophy size={16} />
                 </TabsTrigger>
-                <TabsTrigger value="breeding">
-                  <Dna size={16} />
+                <TabsTrigger value="prestige" title="Prestige">
+                  <Crown size={16} />
                 </TabsTrigger>
-                <TabsTrigger value="settings">
+                <TabsTrigger value="settings" title="Settings">
                   <Settings size={16} />
                 </TabsTrigger>
               </TabsList>
@@ -568,18 +897,33 @@ export default function FarmGame() {
                 />
               </TabsContent>
 
+              <TabsContent value="process" className="mt-4">
+                <ProcessingPanel
+                  inventory={inventory}
+                  coins={coins}
+                  hasWorkshop={buildings.includes('workshop')}
+                  onProcess={handleStartProcessing}
+                  onCollect={handleCollectProcessed}
+                  processingQueue={processingQueue}
+                  completedProducts={completedProducts}
+                  addNotification={addNotification}
+                />
+              </TabsContent>
+
               <TabsContent value="achievements" className="mt-4">
                 <AchievementsPanel
-                  unlockedAchievements={achievements}
+                  unlockedAchievements={unlockedAchievements}
                   stats={stats}
                 />
               </TabsContent>
 
-              <TabsContent value="breeding" className="mt-4">
-                <BreedingPanel
-                  inventory={inventory}
-                  discoveredHybrids={discoveredHybrids}
+              <TabsContent value="prestige" className="mt-4">
+                <PrestigePanel
                   prestige={prestige}
+                  totalEarned={totalEarned}
+                  coins={coins}
+                  onPrestige={handlePrestige}
+                  stats={stats}
                 />
               </TabsContent>
 

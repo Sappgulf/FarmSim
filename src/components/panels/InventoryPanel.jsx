@@ -3,8 +3,9 @@
  * Display and manage inventory items
  */
 import React, { memo, useMemo } from 'react';
-import { Package, Leaf, Wrench, FlaskConical } from 'lucide-react';
+import { Package, Leaf, Wrench, FlaskConical, ShoppingCart, ArrowRight, Sparkles } from 'lucide-react';
 import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ALL_CROPS } from '../../data/crops';
 import { TOOLS } from '../../data/constants';
@@ -14,6 +15,7 @@ function InventoryPanelComponent({
   selectedSeed,
   onSelectSeed,
   onSellItem,
+  onOpenShop,
 }) {
   // Categorize inventory items
   const categorized = useMemo(() => {
@@ -135,12 +137,41 @@ function InventoryPanelComponent({
           </div>
         )}
 
-        {/* Empty state */}
+        {/* Empty state - enhanced */}
         {totalItems === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <Package size={48} className="mx-auto mb-2 opacity-50" />
-            <p>Your inventory is empty</p>
-            <p className="text-sm">Visit the shop to buy seeds!</p>
+          <div className="text-center py-8">
+            {/* Animated icon */}
+            <div className="relative mx-auto w-20 h-20 mb-4">
+              <div className="absolute inset-0 bg-amber-100 rounded-2xl rotate-6 animate-pulse" />
+              <div className="absolute inset-0 bg-amber-50 rounded-2xl -rotate-3" />
+              <div className="relative bg-white rounded-2xl p-4 shadow-lg flex items-center justify-center">
+                <Package size={40} className="text-amber-400 animate-bob" />
+              </div>
+              <Sparkles className="absolute -top-1 -right-1 text-amber-400 animate-pulse" size={18} />
+            </div>
+
+            <h3 className="font-semibold text-gray-800 mb-1">Inventory Empty</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Your farming adventure starts at the shop!
+            </p>
+
+            {onOpenShop && (
+              <Button
+                onClick={onOpenShop}
+                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg group"
+              >
+                <ShoppingCart size={16} className="mr-2" />
+                Visit Shop
+                <ArrowRight size={14} className="ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            )}
+
+            {/* Hint */}
+            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400">
+              <span className="text-lg">🥕</span>
+              <span>Buy seeds to start planting!</span>
+              <span className="text-lg">🌱</span>
+            </div>
           </div>
         )}
 

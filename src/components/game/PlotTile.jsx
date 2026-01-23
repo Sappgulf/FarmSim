@@ -3,13 +3,25 @@
  * Individual farm plot with crop display and interactions
  */
 import React, { useMemo, memo, useState, useCallback, useEffect } from 'react';
-import { Droplets, Bug, AlertTriangle } from 'lucide-react';
+import { Droplets, Bug, AlertTriangle, Check } from 'lucide-react';
 
 const GROWTH_EMOJIS = {
   0: '🌱',
   1: '🌿',
   2: '🪴',
   3: '🌾',
+};
+
+// Haptic feedback utility
+const triggerHaptic = (pattern = 'light') => {
+  if (!navigator.vibrate) return;
+  switch (pattern) {
+    case 'light': navigator.vibrate(10); break;
+    case 'medium': navigator.vibrate(25); break;
+    case 'heavy': navigator.vibrate([30, 20, 30]); break;
+    case 'success': navigator.vibrate([10, 50, 20]); break;
+    default: navigator.vibrate(10);
+  }
 };
 
 // Premium coin burst animation component
@@ -109,6 +121,71 @@ function FloatingText({ text, isActive, color = 'text-amber-500' }) {
   );
 }
 
+// Animated quality stars with count-up effect
+function QualityStars({ quality, isReady }) {
+  const [visibleStars, setVisibleStars] = useState(0);
+
+  useEffect(() => {
+    if (isReady && quality > 0) {
+      // Animate stars appearing one by one
+      setVisibleStars(0);
+      const timers = [];
+      for (let i = 1; i <= Math.min(quality, 3); i++) {
+        timers.push(setTimeout(() => setVisibleStars(i), i * 150));
+      }
+      return () => timers.forEach(clearTimeout);
+    } else {
+      setVisibleStars(0);
+    }
+  }, [isReady, quality]);
+
+  if (!isReady || quality <= 0) return null;
+
+  return (
+    <div className="absolute top-1 left-1 flex">
+      {[...Array(Math.min(quality, 3))].map((_, i) => (
+        <span
+          key={i}
+          className={`
+            text-[10px] -ml-0.5 first:ml-0 drop-shadow-md
+            transition-all duration-300
+            ${i < visibleStars ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
+            ${quality >= 3 ? 'animate-star-glow' : ''}
+          `}
+          style={{ transitionDelay: `${i * 100}ms` }}
+        >
+          ⭐
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// Cured effect overlay
+function CuredEffect({ isActive }) {
+  if (!isActive) return null;
+
+  return (
+    <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center animate-cured-flash">
+      <div className="bg-green-500/20 rounded-xl absolute inset-0" />
+      <div className="bg-white rounded-full p-1 shadow-lg">
+        <Check size={16} className="text-green-500" />
+      </div>
+    </div>
+  );
+}
+
+// Fertilizer glow effect
+function FertilizerGlow({ isActive }) {
+  if (!isActive) return null;
+
+  return (
+    <div className="absolute inset-0 pointer-events-none rounded-xl animate-fertilizer-glow">
+      <div className="absolute inset-0 bg-yellow-400/20 rounded-xl" />
+    </div>
+  );
+}
+
 function PlotTileComponent({
   plot,
   index,
@@ -131,6 +208,8 @@ function PlotTileComponent({
   const [isPressed, setIsPressed] = useState(false);
   const [justPlanted, setJustPlanted] = useState(false);
   const [harvestValue, setHarvestValue] = useState(0);
+  const [showCured, setShowCured] = useState(false);
+  const [showFertilizerGlow, setShowFertilizerGlow] = useState(false);
 
   // Determine visual state
   const visualState = useMemo(() => {
@@ -155,17 +234,19 @@ function PlotTileComponent({
     return GROWTH_EMOJIS[Math.min(stage, 3)] || '🌱';
   }, [plot.crop, cropData, status, stage]);
 
-  // Handle click with enhanced animations
+  // Handle click with enhanced animations and haptic feedback
   const handleClick = useCallback(() => {
     if (disabled) return;
 
-    // Press feedback
+    // Press feedback with haptic
     setIsPressed(true);
+    triggerHaptic('light');
     setTimeout(() => setIsPressed(false), 150);
 
     if (!plot.crop) {
       onPlant?.(index);
       setJustPlanted(true);
+      triggerHaptic('medium');
       setTimeout(() => setJustPlanted(false), 400);
       return;
     }
@@ -173,14 +254,24 @@ function PlotTileComponent({
     if (plot.hasPest) {
       onTreatPest?.(index);
       setShowSparkle(true);
-      setTimeout(() => setShowSparkle(false), 600);
+      setShowCured(true);
+      triggerHaptic('success');
+      setTimeout(() => {
+        setShowSparkle(false);
+        setShowCured(false);
+      }, 800);
       return;
     }
 
     if (plot.hasDisease) {
       onTreatDisease?.(index);
       setShowSparkle(true);
-      setTimeout(() => setShowSparkle(false), 600);
+      setShowCured(true);
+      triggerHaptic('success');
+      setTimeout(() => {
+        setShowSparkle(false);
+        setShowCured(false);
+      }, 800);
       return;
     }
 
@@ -192,6 +283,7 @@ function PlotTileComponent({
       setHarvestValue(baseValue);
       setShowCoinBurst(true);
       setFloatingText(`+${baseValue}🪙`);
+      triggerHaptic(isBigHarvest ? 'heavy' : 'success');
 
       setTimeout(() => {
         setShowCoinBurst(false);
@@ -204,9 +296,27 @@ function PlotTileComponent({
 
     // Growing - offer water
     setShowWaterSplash(true);
+    triggerHaptic('light');
     setTimeout(() => setShowWaterSplash(false), 600);
     onWater?.(index);
   }, [disabled, plot.crop, plot.hasPest, plot.hasDisease, status, index, onPlant, onTreatPest, onTreatDisease, onHarvest, onWater, cropData]);
+
+  // Handle long press for fertilize
+  const handleContextMenu = useCallback((e) => {
+    e.preventDefault();
+    if (plot.crop && status !== 'ready' && !plot.hasPest && !plot.hasDisease) {
+      onFertilize?.(index);
+      setShowSparkle(true);
+      setShowFertilizerGlow(true);
+      triggerHaptic('medium');
+      setTimeout(() => {
+        setShowSparkle(false);
+      }, 600);
+      setTimeout(() => {
+        setShowFertilizerGlow(false);
+      }, 2000);
+    }
+  }, [plot.crop, plot.hasPest, plot.hasDisease, status, index, onFertilize]);
 
   // Base classes
   const baseClasses = `
@@ -245,6 +355,7 @@ function PlotTileComponent({
     <div
       className={`${baseClasses} ${stateClasses[visualState]} ${scaleClass} ${justPlanted ? 'bounce-in' : ''}`}
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
       role="button"
       tabIndex={0}
       aria-label={plot.crop ? `${plot.crop} - ${status}` : 'Empty plot'}
@@ -252,6 +363,10 @@ function PlotTileComponent({
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           handleClick();
+        }
+        if (e.key === 'f' && plot.crop && status !== 'ready') {
+          e.preventDefault();
+          handleContextMenu(e);
         }
       }}
     >
@@ -275,6 +390,8 @@ function PlotTileComponent({
       <WaterSplash isActive={showWaterSplash} />
       <SparkleEffect isActive={showSparkle} />
       <FloatingText text={floatingText} isActive={!!floatingText} />
+      <CuredEffect isActive={showCured} />
+      <FertilizerGlow isActive={showFertilizerGlow} />
 
       {/* Progress bar for growing crops - Enhanced */}
       {plot.crop && status !== 'ready' && progress < 1 && (
@@ -308,14 +425,8 @@ function PlotTileComponent({
         )}
       </div>
 
-      {/* Quality star preview for ready crops */}
-      {status === 'ready' && plot.quality && plot.quality > 0 && (
-        <div className="absolute top-1 left-1 flex">
-          {[...Array(Math.min(plot.quality, 3))].map((_, i) => (
-            <span key={i} className="text-[8px] -ml-0.5 first:ml-0 drop-shadow-sm">⭐</span>
-          ))}
-        </div>
-      )}
+      {/* Quality star preview for ready crops - animated */}
+      <QualityStars quality={plot.quality || 0} isReady={status === 'ready'} />
 
       {/* Pest/Disease overlay - Enhanced */}
       {plot.hasPest && (
