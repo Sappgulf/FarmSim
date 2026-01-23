@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback, u
 import { GAME_ACTIONS } from './GameActions';
 import { SAVE_VERSION, SAVE_KEY, loadSavedState } from './GamePersistence';
 import { initialState, gameReducer } from './GameReducer';
+import { calculateHarvestValue } from '../constants/cropData';
 
 /**
  * GameContext - Centralized state management for FarmSim
@@ -248,7 +249,7 @@ export function GameProvider({ children }) {
 
       const updatedPlots = currentState.plots.map(plot => {
         if (plot.state === 'ready' && plot.crop) {
-          const earnings = Math.floor((plot.crop.baseValue || 10) * (plot.soilFertility || 1.0));
+          const earnings = calculateHarvestValue(plot, currentState.season?.config);
           totalEarnings += earnings;
           totalXp += Math.floor(earnings * 0.15);
           inventoryUpdates[plot.crop.id] = (inventoryUpdates[plot.crop.id] || 0) + 1;

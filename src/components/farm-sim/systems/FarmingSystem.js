@@ -1,3 +1,5 @@
+import { calculateHarvestValue } from '../constants/cropData';
+
 /**
  * Farming System - Handles crop growth, planting, harvesting
  * SIMPLIFIED AND FIXED - Growth calculated from timestamp, no complex timing
@@ -287,10 +289,7 @@ export class FarmingSystem {
       return false;
     }
 
-    // Calculate harvest value with soil fertility bonus
-    const baseValue = crop.baseValue || 10;
-    const soilMultiplier = plot.soilFertility || 1.0;
-    const harvestValue = Math.floor(baseValue * soilMultiplier);
+    const harvestValue = calculateHarvestValue(plot, this.gameState?.season?.config);
 
     // Update coins and XP
     // Add coins and XP for harvest

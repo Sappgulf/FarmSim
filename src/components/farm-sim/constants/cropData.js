@@ -295,4 +295,19 @@ export function calculateProfitPerSecond(crop) {
   return profit / crop.growthTime;
 }
 
+/**
+ * Calculate harvest value for a plot with modifiers applied.
+ * @param {Object} plot - Plot data with crop and fertility
+ * @param {Object} [seasonConfig] - Season config for market bonuses
+ * @returns {number}
+ */
+export function calculateHarvestValue(plot, seasonConfig) {
+  if (!plot?.crop) return 0;
+  const baseValue = plot.crop.baseValue || 10;
+  const fertilityMultiplier = typeof plot.soilFertility === 'number' ? plot.soilFertility : 1.0;
+  const marketMultiplier = seasonConfig?.bonuses?.marketPrices || 1.0;
+  const totalMultiplier = Math.max(0, fertilityMultiplier) * Math.max(0, marketMultiplier);
+  return Math.max(1, Math.floor(baseValue * totalMultiplier));
+}
+
 export default CROP_DATA;

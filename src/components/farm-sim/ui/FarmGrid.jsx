@@ -4,7 +4,7 @@ import { useTick } from '../context/TickContext';
 import { Card } from '../../ui/card';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
-import { CROP_DATA } from '../constants/cropData';
+import { CROP_DATA, calculateHarvestValue } from '../constants/cropData';
 
 // Enhanced plot component with tooltips and animations
 const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0 }) => {
@@ -121,7 +121,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
   }, [plot, index, onPlotClick, onPlant, onHarvest, onToggleSelect]);
 
   return (
-    <div className="relative">
+    <div className="relative" data-plot-index={index}>
       <Card
         className={`
           w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 cursor-pointer relative overflow-hidden
@@ -395,10 +395,8 @@ const FarmGrid = memo(() => {
     if (!plot || plot.state !== 'ready') return;
 
     const crop = plot.crop;
-    const baseValue = crop?.baseValue || 10;
-
-    // Calculate earnings (simplified)
-    const earnings = Math.floor(baseValue * 1.2);
+    const seasonConfig = state.season?.config;
+    const earnings = calculateHarvestValue(plot, seasonConfig);
 
     // Trigger particle effect with earnings text
     if (typeof window.triggerParticleEffect === 'function') {
@@ -455,7 +453,7 @@ const FarmGrid = memo(() => {
     selectedPlots.forEach(index => {
       const plot = plotsArray[index];
       if (plot?.state === 'ready') {
-        const earnings = Math.floor((plot.crop?.baseValue || 10) * 1.2);
+        const earnings = calculateHarvestValue(plot, state.season?.config);
         totalEarnings += earnings;
         harvestedCount++;
         handleHarvest(index);
