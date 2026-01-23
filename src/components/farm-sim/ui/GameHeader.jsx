@@ -123,6 +123,24 @@ const GameHeader = memo(() => {
   const xpNeededForNext = xpForNextLevel - xpForCurrentLevel;
   const xpProgress = (currentLevelXp / xpNeededForNext) * 100;
 
+  // Dynamic goal hint based on game state
+  const getNextGoal = () => {
+    const activePlots = state.plots?.filter(p => p.state !== 'empty').length || 0;
+    const readyPlots = state.plots?.filter(p => p.state === 'ready').length || 0;
+    const emptyPlots = (state.plots?.length || 0) - activePlots;
+
+    if (readyPlots > 0) return { text: `Harvest ${readyPlots} crop${readyPlots > 1 ? 's' : ''}`, emoji: '🌾', priority: 1 };
+    if (emptyPlots > 0 && state.coins >= 10) return { text: `Plant ${Math.min(emptyPlots, 3)} seeds`, emoji: '🌱', priority: 2 };
+    if (activePlots > 0) return { text: 'Wait for crops to grow', emoji: '⏳', priority: 3 };
+    if (state.level >= 2 && !Object.values(state.buildings || {}).some(b => b?.built)) {
+      return { text: 'Build your first structure', emoji: '🏠', priority: 2 };
+    }
+    if (state.coins < 10) return { text: 'Earn coins to buy seeds', emoji: '💰', priority: 2 };
+    return { text: 'Explore your farm!', emoji: '🚜', priority: 3 };
+  };
+
+  const nextGoal = getNextGoal();
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 relative">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -161,6 +179,12 @@ const GameHeader = memo(() => {
             <Badge variant="outline" className="bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200 font-bold">
               Level {state.level}
             </Badge>
+
+            {/* Next Goal Indicator */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+              <span className="text-base">{nextGoal.emoji}</span>
+              <span className="text-xs font-medium text-amber-800">{nextGoal.text}</span>
+            </div>
           </div>
         </div>
 
@@ -269,7 +293,7 @@ const GameHeader = memo(() => {
               onClick={() => {
                 try {
                   localStorage.setItem('farm_sim_enhanced_v2', JSON.stringify(state));
-                  setLastSaveTime(Date.now());
+                  actions.updateGameLoop({ lastSaveTime: Date.now() });
                   actions.addNotification({
                     message: '💾 Game saved successfully!',
                     type: 'success'

@@ -9,6 +9,7 @@ import { AudioSettings } from './settings/AudioSettings';
 import { SaveLoadSettings } from './settings/SaveLoadSettings';
 import { GameplaySettings } from './settings/GameplaySettings';
 import { GameStats } from './settings/GameStats';
+import { resetTutorial } from '../../ui/Tutorial';
 
 const SettingsTab = memo(() => {
   const { state, actions } = useGame();
@@ -329,21 +330,45 @@ const SettingsTab = memo(() => {
         </div>
       </Card>
 
+      {/* Tutorial Settings */}
+      <Card className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50">
+        <h4 className="font-semibold mb-3">🎓 Tutorial</h4>
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="font-medium">Reset Tutorial</div>
+            <div className="text-sm text-gray-600">Show the onboarding tutorial again</div>
+          </div>
+          <Button
+            onClick={() => {
+              resetTutorial();
+              actions.addNotification({
+                message: '🎓 Tutorial reset! Refresh to see it again.',
+                type: 'success'
+              });
+            }}
+            variant="outline"
+            size="sm"
+          >
+            Reset Tutorial
+          </Button>
+        </div>
+      </Card>
+
       {/* About (Static) */}
       <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50">
         <h4 className="font-semibold mb-2 text-green-800">🌾 About FarmSim</h4>
         <div className="text-sm text-green-700 space-y-1">
-          <p><strong>Version:</strong> 4.2.0</p>
+          <p><strong>Version:</strong> 4.3.0</p>
           <p><strong>Made with:</strong> React + Vite + Tailwind CSS</p>
           <p className="pt-2">A comprehensive farm simulation game with modular architecture, sound effects, background music, livestock management, fishing, and endless possibilities!</p>
 
           <div className="pt-3 border-t border-green-200 mt-3">
-            <p className="font-semibold">✨ New in v4.2.0:</p>
+            <p className="font-semibold">✨ New in v4.3.0:</p>
             <ul className="list-disc list-inside text-xs space-y-0.5 mt-1">
+              <li>🎯 Bottom navigation with 5 grouped sections</li>
+              <li>🎓 Interactive onboarding tutorial</li>
+              <li>📱 Mobile-first design with iOS safe-area</li>
               <li>🎵 Sound effects & seasonal music</li>
-              <li>🐄 Livestock management system</li>
-              <li>🎣 Fishing mini-game</li>
-              <li>🔊 Volume controls</li>
             </ul>
           </div>
         </div>
