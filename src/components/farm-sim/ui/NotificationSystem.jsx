@@ -1,8 +1,10 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import { useGame } from '../context/GameContext';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+
+const DEFAULT_DURATION_MS = 4000;
 
 // Individual Notification Component
 const NotificationItem = memo(({ notification, onClose }) => {
@@ -41,17 +43,6 @@ const NotificationItem = memo(({ notification, onClose }) => {
 
   const style = getNotificationStyle(notification.type);
 
-  // Auto-remove notification after 5 seconds (configurable per notification or default)
-  // Can be manually closed at any time
-  useEffect(() => {
-    const duration = notification.duration || 5000; // Default 5 seconds
-    const timer = setTimeout(() => {
-      onClose(notification.id);
-    }, duration);
-
-    return () => clearTimeout(timer);
-  }, [notification.id, notification.duration, onClose]);
-
   return (
     <Card className={`p-3 mb-2 ${style.bgColor} ${style.borderColor} border-l-4 shadow-sm transition-all duration-300 animate-in slide-in-from-right-2`}>
       <div className="flex items-start gap-3">
@@ -78,10 +69,10 @@ const NotificationItem = memo(({ notification, onClose }) => {
             e.stopPropagation();
             onClose(notification.id);
           }}
-          className="flex-shrink-0 h-6 w-6 p-0 hover:bg-gray-200 opacity-70 hover:opacity-100 transition-opacity"
+          className="flex-shrink-0 h-6 w-6 p-0 text-gray-700 hover:text-gray-900 hover:bg-white/70 border border-transparent hover:border-gray-200"
           aria-label="Close notification"
         >
-          <X className="w-3 h-3" />
+          <X className="w-3 h-3 text-current" />
         </Button>
       </div>
     </Card>
@@ -93,10 +84,38 @@ NotificationItem.displayName = 'NotificationItem';
 // Main Notification System Component
 const NotificationSystem = memo(() => {
   const { state, actions } = useGame();
+  const autoDismissTimersRef = useRef(new Map());
 
   const handleCloseNotification = (id) => {
     actions.clearNotification(id);
   };
+
+  useEffect(() => {
+    const timers = autoDismissTimersRef.current;
+    const notifications = state.notifications || [];
+
+    notifications.forEach((notification) => {
+      if (!notification?.id || timers.has(notification.id)) return;
+      const duration = Number.isFinite(notification.duration) && notification.duration > 0
+        ? notification.duration
+        : DEFAULT_DURATION_MS;
+
+      const timer = setTimeout(() => {
+        actions.clearNotification(notification.id);
+        timers.delete(notification.id);
+      }, duration);
+
+      timers.set(notification.id, timer);
+    });
+
+    // Clean up timers for notifications that are gone
+    timers.forEach((timer, id) => {
+      if (!notifications.some((notification) => notification.id === id)) {
+        clearTimeout(timer);
+        timers.delete(id);
+      }
+    });
+  }, [actions, state.notifications]);
 
   // Don't render if no notifications
   if (state.notifications.length === 0) {

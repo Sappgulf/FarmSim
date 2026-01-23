@@ -175,6 +175,7 @@ export class FishingSystem {
     this.activeCatch = {
       fish: hookedFish,
       startTime: Date.now(),
+      lastTargetUpdate: Date.now(),
       progress: 0,
       difficulty: hookedFish.difficulty,
       targetZone: Math.random(), // Where the fish wants to be (0-1)
@@ -194,6 +195,30 @@ export class FishingSystem {
     });
 
     return { success: true, catch: this.activeCatch };
+  }
+
+  /**
+   * Update active catch state (time limit + subtle target drift)
+   * @returns {Object|null} Active catch or null if ended
+   */
+  tickActiveCatch() {
+    if (!this.activeCatch) return null;
+
+    const now = Date.now();
+    const elapsed = now - this.activeCatch.startTime;
+
+    if (elapsed > this.activeCatch.timeLimit) {
+      this.fishEscaped();
+      return null;
+    }
+
+    if (now - this.activeCatch.lastTargetUpdate > 400) {
+      const jitter = (Math.random() - 0.5) * 0.2;
+      this.activeCatch.targetZone = Math.max(0.05, Math.min(0.95, this.activeCatch.targetZone + jitter));
+      this.activeCatch.lastTargetUpdate = now;
+    }
+
+    return this.activeCatch;
   }
 
   /**
@@ -302,7 +327,13 @@ export class FishingSystem {
     this.actions.addXP(fish.difficulty * 5);
     
     // Add to inventory/collection
-    this.actions.addToInventory(fish.id, 1);
+    this.actions.updateInventory((state) => {
+      const currentInventory = state.inventory || {};
+      return {
+        ...currentInventory,
+        [fish.id]: (currentInventory[fish.id] || 0) + 1
+      };
+    });
 
     // Update statistics
     const newStats = {
@@ -394,7 +425,7 @@ export class FishingSystem {
 
   // Get current mini-game state
   getActiveCatch() {
-    return this.activeCatch;
+    return this.tickActiveCatch();
   }
 
   // Cancel fishing

@@ -151,14 +151,14 @@ const FishingTab = memo(() => {
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 3;
         window.triggerParticleEffect(centerX, centerY, 'harvest', {
-          text: `🎣 Caught ${result.fish.name}! +$${result.value}`,
+          text: `🎣 Caught ${result.fish.name}! +${result.value}🪙`,
           value: result.value
         });
       }
 
       // Success notification
       actions.addNotification({
-        message: `🎉 Caught ${result.fish.name} (${result.size}cm) for $${result.value}!`,
+        message: `🎉 Caught ${result.fish.name} (${result.size}cm) for ${result.value}🪙!`,
         type: 'success'
       });
     } else if (result.escaped) {
@@ -240,7 +240,7 @@ const FishingTab = memo(() => {
             <div className="text-xs text-gray-600">Fish Caught</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">${stats.totalValue}</div>
+            <div className="text-2xl font-bold text-green-600">{stats.totalValue}🪙</div>
             <div className="text-xs text-gray-600">Total Value</div>
           </div>
           <div className="text-center">
@@ -328,7 +328,7 @@ const FishingTab = memo(() => {
                 {gameState?.fish.name} Hooked!
               </div>
               <div className="text-sm text-gray-700">
-                Size: {gameState?.size}cm • Value: ${gameState?.fish.baseValue}
+                Size: {gameState?.size}cm • Value: {gameState?.fish.baseValue}🪙
               </div>
             </div>
 
@@ -495,7 +495,7 @@ const FishingTab = memo(() => {
                         <div className="flex justify-between text-xs">
                           <span>Value:</span>
                           <span className="font-bold text-green-600">
-                            ${fish.baseValue}
+                            {fish.baseValue}🪙
                           </span>
                         </div>
                         <div className="flex justify-between text-xs">
