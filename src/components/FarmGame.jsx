@@ -57,7 +57,7 @@ import { nowSec } from '../utils/time.mjs';
 import { loadGameSave, saveGameState, saveGameStateImmediate } from '../utils/save.mjs';
 
 export default function FarmGame() {
-  // ============ STATE MANAGEMENT ============
+  // ------------ STATE MANAGEMENT ------------
 
   // Core game state
   const gameState = useGameState();
@@ -178,7 +178,7 @@ export default function FarmGame() {
   );
   const { unlockedAchievements, checkAchievements } = achievementSystem;
 
-  // ============ GAME LOOP ============
+  // ------------ GAME LOOP ------------
 
   useEffect(() => {
     const tickInterval = setInterval(() => {
@@ -372,7 +372,7 @@ export default function FarmGame() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // ============ SAVE/LOAD ============
+  // ------------ SAVE/LOAD ------------
 
   // Load save on mount
   useEffect(() => {
@@ -424,7 +424,7 @@ export default function FarmGame() {
     };
   }, [getGameSaveData, getFarmSaveData, getWeatherSaveData, buildings, discoveredHybrids, ownedAnimals, claimedMilestones, achievementSystem, dayNight]);
 
-  // ============ HANDLERS ============
+  // ------------ HANDLERS ------------
 
   // Shop handlers
   const handleBuySeeds = useCallback((seedId, qty) => {
@@ -732,7 +732,7 @@ export default function FarmGame() {
     }
   }, [plots, getPlotStatus, harvest, addNotification, reducedMotion, fireConfetti, sound, flashGold]);
 
-  // ============ RENDER ============
+  // ------------ RENDER ------------
 
   // Get day/night visual adjustments
   const dayNightVisuals = getVisuals();
@@ -1039,7 +1039,7 @@ export default function FarmGame() {
 
           {activeTab === 'goals' && (
             <AchievementsPanel
-              unlockedAchievements={achievements}
+              unlockedAchievements={unlockedAchievements}
               stats={stats}
             />
           )}
