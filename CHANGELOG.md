@@ -1,18 +1,35 @@
 # Codebase Cleanup & Optimization Changelog
 
-**Date:** 2024  
-**Project:** FarmLife v1.1.1  
-**Phases Completed:** Phase 1 (Diagnostic) ✅, Phase 2 (Critical Fixes) ✅
+**Date:** January 2026  
+**Project:** FarmLife v4.2.1  
+**Phases Completed:** All QA Phases ✅
 
 ---
 
-## Summary
+## v4.2.1 - QA & Polish Sweep (January 2026)
 
-- **Errors Fixed:** 9 critical issues resolved
-- **Files Modified:** 11 files
-- **Performance Improvements:** 1 major optimization
-- **Build Status:** ✅ Passing (verified)
-- **Breaking Changes:** None
+### Bug Fixes
+- ✅ **B01:** Fixed version mismatch in `GameErrorBoundary.jsx` (v2.3.0 → v4.2.0)
+- ✅ **B04:** Fixed version mismatch in `package.json` (1.1.1 → 4.2.0)
+- ✅ **B06:** Fixed stale closure in `FishingTab.jsx` keyboard handler using ref pattern
+- ✅ **CSS:** Removed duplicate `@keyframes grow` definition in `index.css`
+
+### Files Modified
+- `src/components/GameErrorBoundary.jsx` - Version string update
+- `package.json` - Version bump to 4.2.0
+- `src/components/farm-sim/ui/tabs/FishingTab.jsx` - useEffect dependency fix
+- `src/index.css` - Removed duplicate keyframe
+
+### Verification
+- ✅ Build passes (277KB main bundle, 72KB CSS)
+- ✅ All 9 tests passing
+- ✅ No regressions introduced
+
+---
+
+## Previous Changelog
+
+### Summary (v1.1.1 → v4.2.0)
 
 ---
 

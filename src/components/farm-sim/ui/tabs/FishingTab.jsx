@@ -37,7 +37,7 @@ const FishingTab = memo(() => {
       byType: (state.fishing?.stats?.byType) || {}
     }
   };
-  
+
   // Safety check for imports
   if (!FISH_TYPES || !POND_UPGRADES || typeof FISH_TYPES !== 'object' || typeof POND_UPGRADES !== 'object') {
     return (
@@ -50,7 +50,7 @@ const FishingTab = memo(() => {
       </div>
     );
   }
-  
+
   // If system isn't available yet, show loading
   if (!fishingSystem) {
     return (
@@ -63,7 +63,7 @@ const FishingTab = memo(() => {
       </div>
     );
   }
-  
+
   const stats = fishingSystem.getStats() || fishing.stats;
   const pondLevel = fishing.pond.level || 1;
   const currentUpgrade = POND_UPGRADES[Object.keys(POND_UPGRADES)[pondLevel - 1]];
@@ -176,7 +176,7 @@ const FishingTab = memo(() => {
 
   const handleUpgradePond = () => {
     if (!fishingSystem) return;
-    
+
     const result = fishingSystem.upgradePond();
     if (result.success) {
       soundSystem?.playBuildSound();
@@ -186,14 +186,20 @@ const FishingTab = memo(() => {
   };
 
   // Keyboard controls
+  // Use ref to avoid stale closure issues without requiring handleReel in deps
+  const handleReelRef = React.useRef(handleReel);
+  React.useEffect(() => {
+    handleReelRef.current = handleReel;
+  });
+
   useEffect(() => {
     if (!isPlaying) return;
 
     const handleKeyPress = (e) => {
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-        handleReel('left');
+        handleReelRef.current('left');
       } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-        handleReel('right');
+        handleReelRef.current('right');
       }
     };
 
@@ -227,7 +233,7 @@ const FishingTab = memo(() => {
             Level {pondLevel}
           </Badge>
         </h3>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-700">{stats.totalCaught}</div>
@@ -256,8 +262,8 @@ const FishingTab = memo(() => {
             <div className="flex-1">
               <h4 className="font-bold text-gray-800">{currentUpgrade.name}</h4>
               <div className="flex items-center gap-2 mt-1">
-                <Progress 
-                  value={(fishing.pond.population / fishing.pond.maxPopulation) * 100} 
+                <Progress
+                  value={(fishing.pond.population / fishing.pond.maxPopulation) * 100}
                   className="h-2 flex-1 max-w-xs"
                   variant="growth"
                 />
@@ -331,8 +337,8 @@ const FishingTab = memo(() => {
               <div className="text-center text-sm font-bold mb-2">
                 Progress: {Math.floor((gameState?.progress || 0) * 100)}%
               </div>
-              <Progress 
-                value={(gameState?.progress || 0) * 100} 
+              <Progress
+                value={(gameState?.progress || 0) * 100}
                 className="h-6"
                 variant="growth"
               />
@@ -453,20 +459,19 @@ const FishingTab = memo(() => {
             Caught: {Object.keys(stats.byType).length}/{Object.keys(FISH_TYPES).length} species
           </span>
         </h4>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {Object.values(FISH_TYPES).map(fish => {
             const caughtCount = stats.byType[fish.id] || 0;
             const isCaught = caughtCount > 0;
-            
+
             return (
               <Card
                 key={fish.id}
-                className={`p-3 transition-all duration-200 ${
-                  isCaught 
-                    ? 'bg-white hover:shadow-lg hover:scale-105 border-2 border-transparent hover:border-blue-200' 
+                className={`p-3 transition-all duration-200 ${isCaught
+                    ? 'bg-white hover:shadow-lg hover:scale-105 border-2 border-transparent hover:border-blue-200'
                     : 'bg-gray-100 opacity-50'
-                }`}
+                  }`}
               >
                 <div className="text-center">
                   <div className="text-4xl mb-2">
@@ -475,17 +480,17 @@ const FishingTab = memo(() => {
                   <div className={`font-bold ${getRarityColor(fish.rarity)}`}>
                     {isCaught ? fish.name : '???'}
                   </div>
-                  
+
                   {isCaught && (
                     <>
                       <div className="text-xs text-gray-600 mb-2">
                         {fish.description}
                       </div>
-                      
+
                       <div className="flex items-center justify-center gap-2 mb-2">
                         {getRarityBadge(fish.rarity)}
                       </div>
-                      
+
                       <div className="text-sm space-y-1">
                         <div className="flex justify-between text-xs">
                           <span>Value:</span>
@@ -504,7 +509,7 @@ const FishingTab = memo(() => {
                       </div>
                     </>
                   )}
-                  
+
                   {!isCaught && (
                     <div className="text-xs text-gray-500">
                       Not yet discovered

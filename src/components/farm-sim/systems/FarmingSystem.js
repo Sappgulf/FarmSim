@@ -55,13 +55,18 @@ export class FarmingSystem {
       return;
     }
 
-    let hasChanges = false;
-    const now = Date.now();
-
+    // PERF: Early exit if no crops are growing (big win for idle farms)
     const growingCount = this.gameState.plots.filter(p => p.state === 'planted' || p.state === 'growing').length;
-    if (growingCount > 0 && import.meta.env.MODE === 'development') {
+    if (growingCount === 0) {
+      return; // Nothing to update - skip expensive iteration
+    }
+
+    if (import.meta.env.MODE === 'development') {
       console.debug('[farm]', `Updating ${growingCount} growing crops`);
     }
+
+    let hasChanges = false;
+    const now = Date.now();
 
     const updatedPlots = this.gameState.plots.map(plot => {
       // Safety check for invalid plot
@@ -288,9 +293,10 @@ export class FarmingSystem {
     const harvestValue = Math.floor(baseValue * soilMultiplier);
 
     // Update coins and XP
-    // REBALANCED: Reduced XP to 20% of earnings (was 50%)
+    // Add coins and XP for harvest
     this.actions.setCoins(this.gameState.coins + harvestValue);
-    this.actions.setXp(this.gameState.xp + Math.floor(harvestValue * 0.1)); // REBALANCED: 10% XP (was 20%)
+    // REBALANCED: Consistent 15% XP rate across all harvest methods
+    this.actions.setXp(this.gameState.xp + Math.floor(harvestValue * 0.15));
 
     // Update inventory
     const updatedInventory = {

@@ -221,16 +221,33 @@ const triggerScreenShake = (intensity = 1) => {
 
 /**
  * Particle Effects Manager Component
- * Manages multiple particle effects
+ * Manages multiple particle effects with performance cap
  */
 export const ParticleEffectsManager = memo(() => {
   const [effects, setEffects] = useState([]);
 
+  // PERF: Max concurrent effects to prevent FPS drops during rapid harvesting
+  const MAX_CONCURRENT_EFFECTS = 5;
+
+  // Track particle count for performance overlay
+  useEffect(() => {
+    window.__particleCount = effects.length;
+  }, [effects.length]);
+
   // Expose method to trigger effects globally
   useEffect(() => {
     window.triggerParticleEffect = (x, y, type, options = {}) => {
-      const id = Date.now() + Math.random();
-      setEffects(prev => [...prev, { id, x, y, type, text: options.text, value: options.value }]);
+      setEffects(prev => {
+        // PERF: Cap concurrent effects to prevent FPS drops
+        if (prev.length >= MAX_CONCURRENT_EFFECTS) {
+          // Remove oldest effect to make room
+          const trimmed = prev.slice(1);
+          const id = Date.now() + Math.random();
+          return [...trimmed, { id, x, y, type, text: options.text, value: options.value }];
+        }
+        const id = Date.now() + Math.random();
+        return [...prev, { id, x, y, type, text: options.text, value: options.value }];
+      });
 
       // Trigger screen shake for harvest and levelup (very subtle!)
       if ((type === 'harvest' || type === 'levelup') && options.shake !== false) {
@@ -245,6 +262,7 @@ export const ParticleEffectsManager = memo(() => {
     return () => {
       delete window.triggerParticleEffect;
       delete window.triggerScreenShake;
+      delete window.__particleCount;
     };
   }, []);
 

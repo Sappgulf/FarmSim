@@ -427,8 +427,8 @@ const FarmGrid = memo(() => {
 
     // Update coins and inventory
     actions.setCoins(state.coins + earnings);
-    // REBALANCED: Reduced XP to 10% of earnings (was 20%) for slower, more meaningful progression
-    actions.setXp(state.xp + Math.floor(earnings * 0.1));
+    // REBALANCED: Consistent 15% XP rate across all harvest methods
+    actions.setXp(state.xp + Math.floor(earnings * 0.15));
 
     // Update inventory
     const updatedInventory = {

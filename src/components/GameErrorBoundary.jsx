@@ -15,7 +15,7 @@ class GameErrorBoundary extends React.Component {
       error: error,
       errorInfo: errorInfo
     });
-    
+
     // Log error for debugging
     console.error('[farm]', 'Game Error', error, errorInfo);
   }
@@ -23,7 +23,7 @@ class GameErrorBoundary extends React.Component {
   handleRestart = () => {
     // Clear error state
     this.setState({ hasError: false, error: null, errorInfo: null });
-    
+
     // Optionally clear save data if corrupted
     if (window.confirm('Would you like to reset your save data? This might fix the error but will delete your progress.')) {
       localStorage.removeItem('farmLifeSave');
@@ -43,7 +43,7 @@ class GameErrorBoundary extends React.Component {
                 Something went wrong with FarmLife. Don't worry, your progress might still be saved!
               </p>
             </div>
-            
+
             <div className="space-y-4">
               <button
                 onClick={() => window.location.reload()}
@@ -51,14 +51,14 @@ class GameErrorBoundary extends React.Component {
               >
                 🔄 Restart Game
               </button>
-              
+
               <button
                 onClick={this.handleRestart}
                 className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
                 🗑️ Reset Save Data
               </button>
-              
+
               <button
                 onClick={() => this.setState({ showDetails: !this.state.showDetails })}
                 className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
@@ -66,7 +66,7 @@ class GameErrorBoundary extends React.Component {
                 {this.state.showDetails ? '📄 Hide' : '📄 Show'} Error Details
               </button>
             </div>
-            
+
             {this.state.showDetails && (
               <div className="mt-4 p-4 bg-gray-100 rounded-lg text-xs font-mono">
                 <div className="text-red-600 font-semibold mb-2">Error:</div>
@@ -77,9 +77,9 @@ class GameErrorBoundary extends React.Component {
                 </div>
               </div>
             )}
-            
+
             <div className="mt-6 text-center text-sm text-gray-500">
-              FarmLife v2.3.0 - If this persists, try refreshing your browser
+              FarmLife v4.2.1 - If this persists, try refreshing your browser
             </div>
           </div>
         </div>

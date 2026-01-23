@@ -1046,8 +1046,8 @@ export function GameProvider({ children }) {
               const earnings = Math.floor(baseValue * soilMultiplier);
 
               totalEarnings += earnings;
-              // REBALANCED: Reduced XP to 20% of earnings (was 50%)
-              totalXp += Math.floor(earnings * 0.2);
+              // REBALANCED: Consistent 15% XP rate across all harvest methods
+              totalXp += Math.floor(earnings * 0.15);
 
               // Track inventory updates
               const cropId = plot.crop.id;
