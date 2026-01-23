@@ -4,6 +4,8 @@ import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
+const DEFAULT_NOTIFICATION_DURATION_MS = 4000;
+
 // Individual Notification Component
 const NotificationItem = memo(({ notification, onClose }) => {
   const getNotificationStyle = (type) => {
@@ -41,19 +43,25 @@ const NotificationItem = memo(({ notification, onClose }) => {
 
   const style = getNotificationStyle(notification.type);
 
-  // Auto-remove notification after 5 seconds (configurable per notification or default)
-  // Can be manually closed at any time
+  // Auto-remove notification after default duration unless sticky
   useEffect(() => {
-    const duration = notification.duration || 5000; // Default 5 seconds
+    if (notification.sticky) return undefined;
+    const durationMs = Number.isFinite(notification.durationMs)
+      ? notification.durationMs
+      : Number.isFinite(notification.duration)
+        ? notification.duration
+        : DEFAULT_NOTIFICATION_DURATION_MS;
+
+    if (durationMs <= 0) return undefined;
     const timer = setTimeout(() => {
       onClose(notification.id);
-    }, duration);
+    }, durationMs);
 
     return () => clearTimeout(timer);
-  }, [notification.id, notification.duration, onClose]);
+  }, [notification.id, notification.duration, notification.durationMs, notification.sticky, onClose]);
 
   return (
-    <Card className={`p-3 mb-2 ${style.bgColor} ${style.borderColor} border-l-4 shadow-sm transition-all duration-300 animate-in slide-in-from-right-2`}>
+    <Card className={`p-3 ${style.bgColor} ${style.borderColor} border-l-4 shadow-sm transition-all duration-300 animate-in slide-in-from-right-2 pointer-events-auto`}>
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">
           {style.icon}
@@ -72,16 +80,16 @@ const NotificationItem = memo(({ notification, onClose }) => {
         </div>
 
         <Button
-          size="sm"
+          size="icon"
           variant="ghost"
           onClick={(e) => {
             e.stopPropagation();
             onClose(notification.id);
           }}
-          className="flex-shrink-0 h-6 w-6 p-0 hover:bg-gray-200 opacity-70 hover:opacity-100 transition-opacity"
+          className="flex-shrink-0 h-11 w-11 p-0 text-slate-700 hover:text-slate-900 bg-white/70 hover:bg-white/90 shadow-sm ring-1 ring-black/5 transition-colors"
           aria-label="Close notification"
         >
-          <X className="w-3 h-3" />
+          <X className="w-4 h-4" />
         </Button>
       </div>
     </Card>
@@ -104,7 +112,13 @@ const NotificationSystem = memo(() => {
   }
 
   return (
-    <div className="fixed top-20 right-4 z-50 w-80 max-w-sm">
+    <div
+      className="fixed top-20 right-4 z-50 w-[calc(100vw-2rem)] sm:w-80 max-w-sm pointer-events-none"
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+      }}
+    >
       <div className="space-y-2">
         {state.notifications.slice(0, 5).map(notification => (
           <NotificationItem
@@ -116,7 +130,7 @@ const NotificationSystem = memo(() => {
 
         {/* Show notification count if more than 5 */}
         {state.notifications.length > 5 && (
-          <Card className="p-2 bg-gray-50 border border-gray-200 text-center">
+          <Card className="p-2 bg-gray-50 border border-gray-200 text-center pointer-events-auto">
             <p className="text-xs text-gray-600">
               +{state.notifications.length - 5} more notifications
             </p>
