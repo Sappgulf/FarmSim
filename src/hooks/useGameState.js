@@ -58,14 +58,37 @@ export function useGameState() {
   const level = LEVELS.find(l => l.id === levelId);
   const prestigeData = PRESTIGE_LEVELS[prestige] || PRESTIGE_LEVELS[0];
 
-  // Add notification
-  const addNotification = useCallback((message, type = 'info', duration = GAME_SETTINGS.NOTIFICATION_DURATION) => {
+  /**
+   * Add a notification to the stack
+   * @param {string} message - The notification message
+   * @param {string} type - Notification type: 'info', 'success', 'error', 'warning', 'coins', 'harvest'
+   * @param {object|number} options - Options object or duration in ms
+   *   - duration: auto-dismiss time in ms (default 4000)
+   *   - sticky: if true, notification won't auto-dismiss
+   * @returns {number} notification id
+   */
+  const addNotification = useCallback((message, type = 'info', options = {}) => {
     const id = ++notificationIdRef.current;
-    setNotifications(prev => [...prev.slice(-4), { id, message, type, timestamp: Date.now() }]);
+    
+    // Support legacy signature: addNotification(msg, type, durationMs)
+    const opts = typeof options === 'number' 
+      ? { duration: options }
+      : options;
+    
+    const notification = {
+      id,
+      message,
+      type,
+      timestamp: Date.now(),
+      duration: opts.duration, // Let component use default if undefined
+      sticky: opts.sticky || false,
+    };
+    
+    // Keep max 10 notifications in queue (older ones removed first)
+    setNotifications(prev => [...prev.slice(-9), notification]);
 
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
-    }, duration);
+    // Auto-dismiss is now handled by NotificationStack component
+    // This prevents timer leaks and allows proper cleanup
 
     return id;
   }, []);

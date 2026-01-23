@@ -2,6 +2,37 @@
 
 All notable changes to FarmSim are documented here.
 
+## [2.0.1] - 2026-01-23
+
+### Polish Pass Release
+
+This release focuses on notification system improvements, UI polish, and bug fixes.
+
+### Notifications - Major Improvements
+
+- **Auto-dismiss behavior**: Notifications now auto-dismiss after 4 seconds by default
+- **Sticky notifications**: Support for `sticky: true` option to prevent auto-dismiss for important messages
+- **Timer cleanup**: Proper cleanup of timers on unmount prevents memory leaks
+- **Visible close button**: Increased close "X" button to 44px minimum touch target
+- **Better contrast**: Close button now has type-appropriate colors (green for success, red for error, etc.)
+- **Progress indicator**: Visual progress bar shows time remaining before auto-dismiss
+- **Mobile safe area**: Notifications respect device safe areas (notch, Dynamic Island)
+- **Stack limit**: Max 4 visible notifications, with "+N more" indicator for overflow
+- **Accessibility**: Added ARIA roles and labels for screen readers
+
+### Bug Fixes
+
+- Fixed achievements panel using undefined variable on mobile (`achievements` → `unlockedAchievements`)
+- Fixed lint false positives from section divider comments containing `=======` pattern
+
+### Technical
+
+- Moved auto-dismiss logic from useGameState to NotificationStack component
+- Added JSDoc documentation to `addNotification` function
+- Section dividers in CSS/JS changed from `====` to `----` to avoid merge conflict detection
+
+---
+
 ## [2.0.0] - 2026-01-21
 
 ### Major Overhaul Release
