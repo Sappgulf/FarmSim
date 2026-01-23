@@ -22,6 +22,29 @@
     - `manifest.json` for home screen installation
     - `sw.js` (Service Worker) for offline shell support
 
+---
+
+## v4.4.1 - Notifications & Polish Pass (January 2026)
+
+### Notifications
+- ✅ Auto-dismiss non-sticky toasts (4s default, per-toast override support)
+- ✅ Visible close button with 44x44px hit target and improved contrast
+- ✅ Safe-area aware positioning and non-blocking pointer events
+- ✅ Screen-reader friendly `aria-live` status region
+
+### UI/UX + Gameplay + Performance
+- ⏱️ Extended harvest window to 90s for a more forgiving pacing loop
+- 🥀 Clearer withered plot feedback (reason + tap-to-clear prompt)
+- 🔄 Research + Processing timers now piggyback on centralized tick
+- 🖐️ Touch tooltip timeouts now cleaned up to prevent timer buildup
+
+### Bug Fixes
+- ✅ Processing completion now aggregates inventory updates in one pass
+
+### Verification
+- ✅ `npm run build`
+- ✅ `npm run smoke-test -- --run`
+
 ### UI/UX Improvements
 - Added Reduced Motion toggle in Settings
 - Updated GameHeader with dynamic goal indicator (v4.3.1 polish)

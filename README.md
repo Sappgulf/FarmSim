@@ -31,6 +31,17 @@ Open [http://localhost:5173](http://localhost:5173) to start farming!
 
 ---
 
+## ✅ Smoke Test Checklist
+
+1. **Launch**: `npm run dev` → load the game without console errors.
+2. **Core Loop**: plant a crop → wait → harvest → coins/XP update.
+3. **Notifications**: trigger a toast → auto-dismiss in ~4s → close button works.
+4. **Menus**: open Farming, Shop, Processing, Research, Settings tabs.
+5. **Save/Load**: save in Settings → refresh → load persists.
+6. **Mobile**: check bottom nav, tap targets, and safe-area spacing.
+
+---
+
 ## 🎮 Game Overview
 
 **FarmLife** is an immersive farming simulation where you manage your own virtual farm with realistic agriculture mechanics. Plant crops, breed hybrid varieties, research new technologies, manage pets, battle diseases and disasters, complete daily quests, raise livestock, go fishing, enjoy procedural sound effects and dynamic music, and build advanced agricultural infrastructure.
