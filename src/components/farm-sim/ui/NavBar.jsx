@@ -104,11 +104,11 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
     };
 
     return (
-        <nav className="bg-white border-t border-gray-200 shadow-lg">
+        <nav className="bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-2xl">
             {/* Sub-tabs panel (slides up when section selected) */}
             {showSubTabs && activeSection && NAV_SECTIONS[activeSection].tabs.length > 1 && (
-                <div className="border-b border-gray-100 bg-gray-50 px-2 py-2 animate-fade-in">
-                    <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+                <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 px-2 py-2.5 animate-tab-slide-in">
+                    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
                         {NAV_SECTIONS[activeSection].tabs.map(tabId => {
                             const tabInfo = TAB_INFO[tabId];
                             const isActive = activeTab === tabId;
@@ -117,15 +117,15 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                     key={tabId}
                                     onClick={() => onTabChange(tabId)}
                                     className={`
-                    flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium
-                    whitespace-nowrap transition-all touch-manipulation
+                    flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold
+                    whitespace-nowrap transition-all duration-200 touch-manipulation
                     ${isActive
-                                            ? 'bg-white text-gray-900 shadow-sm'
-                                            : 'text-gray-600 hover:bg-white/50 active:bg-white/70'
+                                            ? 'bg-white text-emerald-700 shadow-md ring-1 ring-emerald-100'
+                                            : 'text-gray-600 hover:bg-white/70 hover:text-gray-800 active:scale-95'
                                         }
                   `}
                                 >
-                                    <span>{tabInfo.emoji}</span>
+                                    <span className="text-base">{tabInfo.emoji}</span>
                                     <span>{tabInfo.label}</span>
                                 </button>
                             );
@@ -135,7 +135,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
             )}
 
             {/* Main section buttons */}
-            <div className="flex justify-around items-center px-1 py-2 safe-area-pb">
+            <div className="flex justify-around items-center px-2 py-2 safe-area-pb">
                 {sections.map(section => {
                     const isActive = activeSection === section.id;
                     const notifCount = getNotificationCount(section.id);
@@ -155,29 +155,29 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                             }}
                             className={`
                 relative flex flex-col items-center justify-center
-                min-w-[60px] min-h-[56px] px-2 py-1.5 rounded-xl
-                transition-all touch-manipulation
+                min-w-[64px] min-h-[60px] px-2 py-1.5 rounded-2xl
+                transition-all duration-200 touch-manipulation
                 ${isActive
-                                    ? 'text-green-700 bg-green-50'
-                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                                    ? 'text-emerald-700 bg-gradient-to-br from-emerald-50 to-green-100 shadow-lg scale-105'
+                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 active:scale-95'
                                 }
               `}
                         >
-                            <span className="text-2xl">{section.emoji}</span>
-                            <span className={`text-xs mt-0.5 font-medium ${isActive ? 'text-green-700' : 'text-gray-500'}`}>
+                            <span className={`text-2xl filter ${isActive ? 'drop-shadow-sm' : ''}`}>{section.emoji}</span>
+                            <span className={`text-[11px] mt-0.5 font-semibold ${isActive ? 'text-emerald-700' : 'text-gray-500'}`}>
                                 {section.label}
                             </span>
 
                             {/* Notification badge */}
                             {notifCount && (
-                                <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-1">
+                                <span className="absolute -top-0.5 -right-0.5 min-w-[20px] h-[20px] flex items-center justify-center bg-gradient-to-br from-red-500 to-rose-600 text-white text-xs font-bold rounded-full px-1 shadow-lg animate-pulse">
                                     {notifCount > 9 ? '9+' : notifCount}
                                 </span>
                             )}
 
                             {/* Active indicator */}
                             {isActive && (
-                                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-green-500 rounded-full" />
+                                <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-10 h-1 bg-gradient-to-r from-emerald-400 to-green-500 rounded-full shadow-sm" />
                             )}
                         </button>
                     );

@@ -99,20 +99,20 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   }, []); // Empty deps - only run once on mount
 
   return (
-    <Card className="h-fit">
+    <Card className="h-fit rounded-2xl shadow-lg border border-gray-100/50 overflow-hidden">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        {/* Tab Navigation - Vertical Scrollable List */}
-        <div className="border-b border-gray-200 bg-gray-50 p-2">
-          <div className="grid grid-cols-2 gap-1 max-h-48 overflow-y-auto">
+        {/* Tab Navigation - Premium styled scrollable grid */}
+        <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 p-2.5">
+          <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-hide">
             {tabConfigs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 className={`
-                  text-xs px-2 py-2 rounded-md transition-colors text-left
+                  text-xs px-2.5 py-2 rounded-lg transition-all duration-200 text-left touch-manipulation
                   ${activeTab === tab.id
-                    ? 'bg-white text-gray-900 font-semibold shadow-sm'
-                    : 'bg-transparent text-gray-600 hover:bg-white/50'
+                    ? 'bg-white text-emerald-700 font-semibold shadow-md ring-1 ring-emerald-100 scale-[1.02]'
+                    : 'bg-transparent text-gray-600 hover:bg-white/70 hover:text-gray-900 active:scale-95'
                   }
                 `}
               >
@@ -137,36 +137,35 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         })}
       </Tabs>
 
-      {/* Quick Stats Footer */}
-      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="text-center">
-            <div className="font-semibold text-gray-800">
+      {/* Quick Stats Footer - Premium styled */}
+      <div className="mt-4 p-3 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border border-gray-100/50">
+        <div className="grid grid-cols-4 gap-2 text-xs">
+          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
+            <div className="font-bold text-emerald-700 text-sm">
               {Object.values(state.inventory || {}).reduce((sum, qty) => {
-                // Handle both numbers and objects - ensure we only count numeric values
                 const count = typeof qty === 'number' ? qty : (typeof qty === 'object' && qty !== null ? (qty.count || qty.quantity || 0) : 0);
                 return sum + (Number(count) || 0);
               }, 0)}
             </div>
-            <div className="text-gray-600">Total Items</div>
+            <div className="text-gray-500 text-[10px] font-medium">Items</div>
           </div>
-          <div className="text-center">
-            <div className="font-semibold text-gray-800">
-              {Object.keys(state.buildings).length}
+          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
+            <div className="font-bold text-amber-600 text-sm">
+              {Object.keys(state.buildings).filter(k => state.buildings[k]?.built).length}
             </div>
-            <div className="text-gray-600">Buildings</div>
+            <div className="text-gray-500 text-[10px] font-medium">Built</div>
           </div>
-          <div className="text-center">
-            <div className="font-semibold text-gray-800">
+          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
+            <div className="font-bold text-blue-600 text-sm">
               {state.livestock?.animals?.length || 0}
             </div>
-            <div className="text-gray-600">Livestock</div>
+            <div className="text-gray-500 text-[10px] font-medium">Animals</div>
           </div>
-          <div className="text-center">
-            <div className="font-semibold text-gray-800">
+          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
+            <div className="font-bold text-purple-600 text-sm">
               {state.social.reputation}
             </div>
-            <div className="text-gray-600">Reputation</div>
+            <div className="text-gray-500 text-[10px] font-medium">Rep</div>
           </div>
         </div>
       </div>

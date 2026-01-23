@@ -53,19 +53,19 @@ const NotificationItem = memo(({ notification, onClose }) => {
   }, [notification.id, notification.duration, onClose]);
 
   return (
-    <Card className={`p-3 mb-2 ${style.bgColor} ${style.borderColor} border-l-4 shadow-sm transition-all duration-300 animate-in slide-in-from-right-2`}>
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 mt-0.5">
+    <Card className={`p-3 ${style.bgColor} ${style.borderColor} border-l-4 shadow-lg backdrop-blur-sm transition-all duration-300 notification-enter rounded-xl`}>
+      <div className="flex items-start gap-2.5">
+        <div className="flex-shrink-0 mt-0.5 p-1.5 rounded-lg bg-white/50">
           {style.icon}
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-medium ${style.textColor}`}>
+          <p className={`text-sm font-semibold ${style.textColor} leading-snug`}>
             {notification.message}
           </p>
 
           {notification.details && (
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-gray-600 mt-1 leading-relaxed">
               {notification.details}
             </p>
           )}
@@ -78,10 +78,10 @@ const NotificationItem = memo(({ notification, onClose }) => {
             e.stopPropagation();
             onClose(notification.id);
           }}
-          className="flex-shrink-0 h-6 w-6 p-0 hover:bg-gray-200 opacity-70 hover:opacity-100 transition-opacity"
+          className="flex-shrink-0 h-7 w-7 p-0 hover:bg-white/50 rounded-lg opacity-60 hover:opacity-100 transition-all"
           aria-label="Close notification"
         >
-          <X className="w-3 h-3" />
+          <X className="w-3.5 h-3.5" />
         </Button>
       </div>
     </Card>
@@ -104,21 +104,28 @@ const NotificationSystem = memo(() => {
   }
 
   return (
-    <div className="fixed top-20 right-4 z-50 w-80 max-w-sm">
+    <div className="fixed top-16 sm:top-20 right-2 sm:right-4 z-50 w-72 sm:w-80 max-w-[calc(100vw-1rem)]">
       <div className="space-y-2">
-        {state.notifications.slice(0, 5).map(notification => (
-          <NotificationItem
+        {state.notifications.slice(0, 4).map((notification, index) => (
+          <div
             key={notification.id}
-            notification={notification}
-            onClose={handleCloseNotification}
-          />
+            style={{
+              animationDelay: `${index * 50}ms`,
+              transform: `translateY(${index * 2}px)`,
+            }}
+          >
+            <NotificationItem
+              notification={notification}
+              onClose={handleCloseNotification}
+            />
+          </div>
         ))}
 
-        {/* Show notification count if more than 5 */}
-        {state.notifications.length > 5 && (
-          <Card className="p-2 bg-gray-50 border border-gray-200 text-center">
-            <p className="text-xs text-gray-600">
-              +{state.notifications.length - 5} more notifications
+        {/* Show notification count if more than 4 */}
+        {state.notifications.length > 4 && (
+          <Card className="p-2 bg-gray-50/90 backdrop-blur-sm border border-gray-200 text-center rounded-xl shadow-sm">
+            <p className="text-xs text-gray-600 font-medium">
+              +{state.notifications.length - 4} more notifications
             </p>
           </Card>
         )}

@@ -142,20 +142,20 @@ const GameHeader = memo(() => {
   const nextGoal = getNextGoal();
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 relative">
+    <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 px-3 sm:px-4 py-2 sm:py-3 relative sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Left side - Game title and basic stats */}
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="text-2xl animate-bounce-slow">🚜</div>
-            <h1 className="text-xl font-bold text-gray-900">FarmSim</h1>
+            <div className="text-2xl sm:text-3xl animate-bounce-slow filter drop-shadow-sm">🚜</div>
+            <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent hidden sm:block">FarmLife</h1>
           </div>
 
           {/* Core stats with animations */}
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1 group cursor-pointer hover:bg-yellow-50 px-2 py-1 rounded transition">
-              <Coins className="w-4 h-4 text-yellow-600 group-hover:animate-spin" />
-              <span className="font-semibold text-gray-900">
+            <div className="flex items-center gap-1.5 group cursor-pointer bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 px-2 sm:px-3 py-1.5 rounded-xl transition-all shadow-sm border border-amber-200/50">
+              <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 group-hover:animate-spin filter drop-shadow-sm" />
+              <span className="font-bold text-amber-700 text-sm sm:text-base coin-display">
                 <AnimatedNumber value={state.coins} />
               </span>
             </div>

@@ -487,18 +487,19 @@ const FarmGrid = memo(() => {
   const plots = Array.isArray(state.plots) ? state.plots : [];
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 relative overflow-hidden">
+    <Card className="p-4 sm:p-6 bg-gradient-to-br from-green-50/90 via-emerald-50/80 to-lime-50/70 relative overflow-hidden rounded-2xl shadow-lg border border-green-100/50 backdrop-blur-sm">
       <div className="mb-4 text-center relative z-20">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-2">
-          🌾 Your Farm
+        <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-600 bg-clip-text text-transparent mb-1.5 flex items-center justify-center gap-2">
+          <span className="text-2xl sm:text-3xl filter drop-shadow-sm">🌾</span>
+          Your Farm
           {selectedPlots.size > 0 && (
-            <Badge className="bg-blue-600 animate-pulse">
+            <Badge className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white animate-pulse shadow-lg">
               {selectedPlots.size} selected
             </Badge>
           )}
         </h2>
-        <p className="text-gray-600">
-          {gridSize}×{gridSize} grid • {plots.filter(p => p.state !== 'empty').length} plots in use
+        <p className="text-gray-500 text-sm font-medium">
+          {gridSize}×{gridSize} grid • <span className="text-emerald-600">{plots.filter(p => p.state !== 'empty').length}</span> plots in use
         </p>
       </div>
 
