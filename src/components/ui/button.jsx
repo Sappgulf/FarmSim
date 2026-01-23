@@ -1,16 +1,23 @@
-import React, { useState, useCallback } from "react";
+import React, { useRef, useState, useCallback } from "react";
 
-export function Button({ children, onClick, variant = "default", size = "default", className = "", juicy = false, ...props }) {
+/**
+ * Premium Button component with juicy animations and ripple effects
+ */
+export function Button({ 
+  children, 
+  onClick, 
+  variant = "default", 
+  size = "default", 
+  className = "", 
+  juicy = false,
+  ...props 
+}) {
+  const buttonRef = useRef(null);
   const [isPressed, setIsPressed] = useState(false);
-
-  const handleClick = useCallback((e) => {
-    setIsPressed(true);
-    setTimeout(() => setIsPressed(false), 150);
-    onClick?.(e);
-  }, [onClick]);
-
+  
   const baseClasses = `
-    inline-flex items-center justify-center rounded-xl text-sm font-semibold
+    relative overflow-hidden inline-flex items-center justify-center 
+    rounded-xl text-sm font-semibold
     transition-all duration-200 ease-out
     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
     disabled:opacity-50 disabled:pointer-events-none
@@ -19,7 +26,7 @@ export function Button({ children, onClick, variant = "default", size = "default
     ${juicy ? 'btn-juicy' : ''}
     ${isPressed ? 'scale-95' : 'active:scale-95'}
   `;
-
+  
   const variants = {
     default: `
       bg-gradient-to-br from-emerald-500 to-emerald-600 text-white
@@ -66,6 +73,13 @@ export function Button({ children, onClick, variant = "default", size = "default
       focus-visible:ring-purple-500
       shadow-purple-200/50 hover:shadow-purple-300/50
     `,
+    gold: `
+      bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 text-amber-900
+      hover:from-amber-300 hover:via-yellow-400 hover:to-amber-500
+      focus-visible:ring-amber-500
+      shadow-amber-200/50 hover:shadow-amber-300/50
+      font-bold
+    `,
   };
 
   const sizes = {
@@ -77,8 +91,43 @@ export function Button({ children, onClick, variant = "default", size = "default
     "icon-sm": "h-8 w-8 p-0",
   };
 
+  const createRipple = useCallback((event) => {
+    const button = buttonRef.current;
+    if (!button) return;
+
+    const ripple = document.createElement("span");
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+
+    ripple.style.cssText = `
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.4);
+      transform: scale(0);
+      animation: ripple-animation 0.6s ease-out;
+      pointer-events: none;
+      width: ${size}px;
+      height: ${size}px;
+      left: ${x}px;
+      top: ${y}px;
+    `;
+
+    button.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  }, []);
+
+  const handleClick = useCallback((event) => {
+    setIsPressed(true);
+    setTimeout(() => setIsPressed(false), 150);
+    createRipple(event);
+    onClick?.(event);
+  }, [onClick, createRipple]);
+
   return (
     <button
+      ref={buttonRef}
       className={`${baseClasses} ${variants[variant] || variants.default} ${sizes[size] || sizes.default} ${className}`}
       onClick={handleClick}
       {...props}
