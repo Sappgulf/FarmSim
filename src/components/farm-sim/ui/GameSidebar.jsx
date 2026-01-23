@@ -37,10 +37,20 @@ const TabLoader = () => (
   </div>
 );
 
-// Game Sidebar Component
-const GameSidebar = memo(() => {
+// Game Sidebar Component - Now accepts controlled props
+const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   const { state } = useGame();
-  const [activeTab, setActiveTab] = useState('farming');
+  // Use controlled mode if props provided, otherwise internal state (backward compat)
+  const [internalTab, setInternalTab] = useState('farming');
+  const activeTab = controlledTab ?? internalTab;
+
+  const handleTabChange = (tabId) => {
+    if (onTabChange) {
+      onTabChange(tabId);
+    } else {
+      setInternalTab(tabId);
+    }
+  };
 
   const tabConfigs = [
     { id: 'farming', label: '🌾 Farming', component: FarmingTab },
@@ -77,7 +87,7 @@ const GameSidebar = memo(() => {
     if (typeof window !== 'undefined') {
       window.switchToTab = (tabId) => {
         if (tabConfigsRef.current.find(t => t.id === tabId)) {
-          setActiveTab(tabId);
+          handleTabChange(tabId);
         }
       };
     }
@@ -90,18 +100,18 @@ const GameSidebar = memo(() => {
 
   return (
     <Card className="h-fit">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         {/* Tab Navigation - Vertical Scrollable List */}
         <div className="border-b border-gray-200 bg-gray-50 p-2">
           <div className="grid grid-cols-2 gap-1 max-h-48 overflow-y-auto">
             {tabConfigs.map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`
                   text-xs px-2 py-2 rounded-md transition-colors text-left
-                  ${activeTab === tab.id 
-                    ? 'bg-white text-gray-900 font-semibold shadow-sm' 
+                  ${activeTab === tab.id
+                    ? 'bg-white text-gray-900 font-semibold shadow-sm'
                     : 'bg-transparent text-gray-600 hover:bg-white/50'
                   }
                 `}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { GameProvider, useGame } from '../context/GameContext';
 import { TickProvider } from '../context/TickContext';
 
@@ -6,6 +6,7 @@ import { TickProvider } from '../context/TickContext';
 import GameHeader from '../ui/GameHeader';
 import FarmGrid from '../ui/FarmGrid';
 import GameSidebar from '../ui/GameSidebar';
+import NavBar, { NAV_SECTIONS } from '../ui/NavBar';
 import NotificationSystem from '../ui/NotificationSystem';
 import { ParticleEffectsManager } from '../ui/ParticleEffect';
 import FPSCounter from '../ui/FPSCounter';
@@ -31,6 +32,29 @@ import { getMusicSystem } from '../systems/MusicSystem';
  */
 function FarmSimCore() {
   const { state, actions } = useGame();
+
+  // Navigation state for new consolidated nav
+  const [activeSection, setActiveSection] = useState('farm');
+  const [activeTab, setActiveTab] = useState('farming');
+
+  // Handle section change
+  const handleSectionChange = (sectionId) => {
+    setActiveSection(sectionId);
+    // Auto-select first tab of section if not already in that section
+    const section = NAV_SECTIONS[sectionId];
+    if (section && !section.tabs.includes(activeTab)) {
+      setActiveTab(section.tabs[0]);
+    }
+  };
+
+  // Handle tab change
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    // Also switch sidebar tab via global method (for legacy compat)
+    if (typeof window.switchToTab === 'function') {
+      window.switchToTab(tabId);
+    }
+  };
 
   // Initialize systems ONCE - don't recreate on state changes!
   // We pass current state to update() method, so no need to recreate
@@ -378,7 +402,7 @@ function FarmSimCore() {
   }, []);
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000`}>
+    <div className={`min-h-screen bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000 flex flex-col`}>
       {/* Performance monitoring (dev only) */}
       {import.meta.env.MODE === 'development' && (
         <div className="fixed top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded z-50">
@@ -389,20 +413,30 @@ function FarmSimCore() {
       {/* Game Header */}
       <GameHeader />
 
-      {/* Main Game Area - Mobile Optimized */}
-      <div className="flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto relative">
+      {/* Main Game Area - Mobile Optimized with bottom padding for NavBar */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto relative w-full pb-24 lg:pb-4">
         {/* Farm Grid - Full width on mobile, larger on desktop */}
         <div className="w-full lg:flex-1 order-2 lg:order-1">
           <FarmGrid />
         </div>
 
-        {/* Game Sidebar - Horizontal scroll on mobile, sidebar on desktop */}
+        {/* Game Sidebar - Shows tabs for active section */}
         <div className="w-full lg:w-80 xl:w-96 order-1 lg:order-2">
-          <GameSidebar />
+          <GameSidebar activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
       </div>
 
-      {/* Notification System - Mobile positioned */}
+      {/* Bottom Navigation Bar - Fixed on mobile */}
+      <div className="fixed bottom-0 left-0 right-0 lg:relative z-40">
+        <NavBar
+          activeSection={activeSection}
+          activeTab={activeTab}
+          onSectionChange={handleSectionChange}
+          onTabChange={handleTabChange}
+        />
+      </div>
+
+      {/* Notification System - Mobile positioned above NavBar */}
       <NotificationSystem />
 
       {/* Particle Effects System */}
