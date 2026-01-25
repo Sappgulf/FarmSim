@@ -13,6 +13,7 @@ import DevDebugOverlay from '../ui/DevDebugOverlay';
 import { ParticleEffectsManager } from '../ui/ParticleEffect';
 import FPSCounter from '../ui/FPSCounter';
 import PerformanceOverlay from '../ui/PerformanceOverlay';
+import LevelUpModal from '../ui/LevelUpModal';
 import Tutorial from '../ui/Tutorial';
 
 // Import systems
@@ -27,7 +28,7 @@ import { LivestockSystem } from '../systems/LivestockSystem';
 import { FishingSystem } from '../systems/FishingSystem';
 import { getSoundSystem } from '../systems/SoundSystem';
 import { getMusicSystem } from '../systems/MusicSystem';
-import { recordPlayerInteraction } from '../services/XPService';
+import { recordPlayerInteraction, isPlayerIdle } from '../services/XPService';
 
 /**
  * Main FarmSim Component (Orchestrator)
@@ -36,6 +37,19 @@ import { recordPlayerInteraction } from '../services/XPService';
  */
 function FarmSimCore() {
   const { state, actions } = useGame();
+
+  // Level Up Modal State
+  const [levelUpState, setLevelUpState] = useState({ show: false, level: 0 });
+  const prevLevelRef = React.useRef(state.level);
+
+  // Detect Level Up
+  useEffect(() => {
+    // Only trigger if level increased and we aren't just initializing
+    if (state.level > prevLevelRef.current && prevLevelRef.current > 0) {
+      setLevelUpState({ show: true, level: state.level });
+    }
+    prevLevelRef.current = state.level;
+  }, [state.level]);
 
   // Navigation state for new consolidated nav
   const [activeSection, setActiveSection] = useState('farm');
@@ -208,23 +222,37 @@ function FarmSimCore() {
     };
   }, [state.gameLoop.paused, seasonSystem, farmingSystem, weatherSystem, economicSystem, achievementSystem, diseaseSystem, disasterSystem, livestockSystem, fishingSystem]);
 
-  // Track player interactions for XP idle detection
+  // Track player interactions for idle detection
   useEffect(() => {
-    const handleInteraction = (e) => {
-      // Don't track keyboard events from debug overlay toggle
-      if (e.type === 'keydown' && e.key === '`') return;
-      recordPlayerInteraction();
-    };
-
-    document.addEventListener('click', handleInteraction);
-    document.addEventListener('keydown', handleInteraction);
-    document.addEventListener('touchstart', handleInteraction);
-
+    const handleInteraction = () => recordPlayerInteraction();
+    window.addEventListener('click', handleInteraction);
+    window.addEventListener('keydown', handleInteraction);
+    window.addEventListener('touchstart', handleInteraction);
     return () => {
-      document.removeEventListener('click', handleInteraction);
-      document.removeEventListener('keydown', handleInteraction);
-      document.removeEventListener('touchstart', handleInteraction);
+      window.removeEventListener('click', handleInteraction);
+      window.removeEventListener('keydown', handleInteraction);
+      window.removeEventListener('touchstart', handleInteraction);
     };
+  }, []);
+
+  // Idle Visuals Interval
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Check idle state using imported service function directly
+      if (isPlayerIdle()) {
+        if (typeof window.triggerParticleEffect === 'function') {
+          // Spawn Zzz particles around the screen center
+          const x = window.innerWidth / 2 + (Math.random() - 0.5) * 200;
+          const y = window.innerHeight / 2 + (Math.random() - 0.5) * 200;
+          window.triggerParticleEffect(x, y, 'text', {
+            text: 'Zzz...',
+            value: 0,
+            shake: false // No shake for idle
+          });
+        }
+      }
+    }, 1500); // Check every 1.5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   // Initialize sound and music systems
@@ -481,6 +509,14 @@ function FarmSimCore() {
 
       {/* Onboarding Tutorial (auto-shows for new players) */}
       <Tutorial />
+
+      {/* Level Up Celebration */}
+      {levelUpState.show && (
+        <LevelUpModal
+          level={levelUpState.level}
+          onClose={() => setLevelUpState(prev => ({ ...prev, show: false }))}
+        />
+      )}
 
       {/* Developer Debug Overlay (dev only) */}
       <DevDebugOverlay />

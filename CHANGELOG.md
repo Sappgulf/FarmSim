@@ -143,6 +143,26 @@
 
 ---
 
+## v4.6.0 - Game Polish & Visuals (January 2026)
+
+### Visual Polish
+- 🎨 **Notification UI**: Glassmorphism styling, improved typography, and smooth exit animations.
+- 🎉 **Level Up Celebration**: New modal with fanfare, burst animations, and unlocked crop preview.
+- ✨ **Visual Feedback**:
+  - **Combos**: "x2", "x3" multipliers for rapid harvesting.
+  - **Floating Text**: Dynamic scaling and improved contrast/shadows.
+  - **Idle State**: "Zzz" particles appear when player is idle (>60s).
+
+### Audio Polish
+- 🔊 **Sound Effects**: Added sounds for notifications, level ups, and unlocks.
+- 🎵 **System Integration**: Wired up `SoundSystem` to new UI components.
+
+### Technical
+- 🏗️ **Particle System**: Optimized with `ParticleEffectsManager` capping at 5 concurrent effects.
+- 📱 **Mobile Optimization**: Notifications respect safe areas.
+
+---
+
 ### Metrics
 | Metric | v4.3.1 | v4.4.0 | Change |
 |--------|--------|--------|--------|

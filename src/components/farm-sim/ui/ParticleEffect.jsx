@@ -4,7 +4,7 @@ import React, { memo, useState, useEffect } from 'react';
  * Particle Effect Component
  * Creates visual particle effects for actions like harvesting, watering, fertilizing
  */
-const ParticleEffect = memo(({ x, y, type, onComplete, text }) => {
+const ParticleEffect = memo(({ x, y, type, onComplete, text, scale }) => {
   // Store particles data in ref to avoid re-renders
   const particlesRef = React.useRef([]);
   // Store DOM refs to manipulate styles directly
@@ -174,14 +174,18 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text }) => {
       {/* Floating text - kept as CSS animation since it's simple */}
       {text && (
         <div
-          className="absolute whitespace-nowrap font-bold text-2xl sm:text-3xl animate-float-up"
+          className="absolute whitespace-nowrap font-black z-50 pointer-events-none select-none animate-float-up"
           style={{
             left: '0',
             top: '-20px',
-            transform: 'translateX(-50%)',
-            color: type === 'harvest' ? '#fbbf24' : type === 'levelup' ? '#a855f7' : '#ef4444',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.6)',
-            animation: 'float-up-fade 2s cubic-bezier(0.33, 1, 0.68, 1) forwards',
+            transform: `translateX(-50%) scale(${scale || 1})`,
+            // Dynamic colors based on type
+            color: type === 'harvest' ? '#fbbf24' : type === 'levelup' ? '#c084fc' : '#f87171',
+            // Improved text shadow for readability on any background
+            textShadow: '0px 2px 0px rgba(0,0,0,0.5), 0px 4px 10px rgba(0,0,0,0.3)',
+            // Simpler animation
+            animation: 'float-up-fade 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+            fontSize: type === 'levelup' ? '2.5rem' : '1.5rem',
           }}
         >
           {text}
@@ -238,21 +242,57 @@ export const ParticleEffectsManager = memo(() => {
   useEffect(() => {
     window.triggerParticleEffect = (x, y, type, options = {}) => {
       setEffects(prev => {
-        // PERF: Cap concurrent effects to prevent FPS drops
-        if (prev.length >= MAX_CONCURRENT_EFFECTS) {
-          // Remove oldest effect to make room
-          const trimmed = prev.slice(1);
-          const id = Date.now() + Math.random();
-          return [...trimmed, { id, x, y, type, text: options.text, value: options.value }];
+        const now = Date.now();
+        // Combo Logic: Check if last effect was recent (within 800ms)
+        const lastEffect = prev[prev.length - 1];
+        let combo = 1;
+
+        if (lastEffect && (now - lastEffect.timestamp < 800)) {
+          combo = (lastEffect.combo || 1) + 1;
         }
-        const id = Date.now() + Math.random();
-        return [...prev, { id, x, y, type, text: options.text, value: options.value }];
+
+        // PERF: Cap concurrent effects
+        let nextEffects = prev;
+        if (prev.length >= MAX_CONCURRENT_EFFECTS) {
+          nextEffects = prev.slice(1);
+        }
+
+        const id = now + Math.random();
+
+        // Calculate dynamic text scale based on combo
+        let text = options.text;
+        let scale = 1.0;
+
+        if (combo > 1 && text) {
+          // Add combo multiplier to text if it's a value (starts with +)
+          if (text.startsWith('+') && combo < 5) {
+            // Subtle feedback for small combos
+            scale = 1 + (combo * 0.1);
+          } else if (combo >= 5) {
+            // HYPE mode for big combos
+            text = `${text} (x${combo}!)`;
+            scale = 1.5;
+            // Trigger stronger shake per 5 combo
+            if (combo % 5 === 0) triggerScreenShake(0.5);
+          }
+        }
+
+        return [...nextEffects, {
+          id,
+          x,
+          y,
+          type,
+          text,
+          value: options.value,
+          combo,
+          scale,
+          timestamp: now
+        }];
       });
 
-      // Trigger screen shake for harvest and levelup (very subtle!)
+      // Trigger screen shake
       if ((type === 'harvest' || type === 'levelup') && options.shake !== false) {
-        // REBALANCED: Level up shake is now very gentle (0.5 instead of 1.5)
-        triggerScreenShake(type === 'levelup' ? 0.5 : 0.2); // Much gentler shake
+        triggerScreenShake(type === 'levelup' ? 0.5 : 0.2);
       }
     };
 
@@ -280,6 +320,7 @@ export const ParticleEffectsManager = memo(() => {
           type={effect.type}
           text={effect.text}
           value={effect.value}
+          scale={effect.scale}
           onComplete={() => handleEffectComplete(effect.id)}
         />
       ))}
