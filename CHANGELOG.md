@@ -143,6 +143,19 @@
 
 ---
 
+## Refactor & Cleanup (January 2026)
+
+### Codebase Cleanup
+- 🧹 **Dead Code Removal**: Deleted unused files `src/performance.js` (unused module), `CommunityNotifications.jsx`, and `Notifications.jsx` (unused UI).
+- 🗑️ **Metadata Cleanup**: Deleted 22+ stale markdown reports and documentation files to reduce clutter.
+- 📁 **Structure**: Verified project structure and dependency usage.
+
+### Verification
+- ✅ **Zero Regressions**: Build passes successfully (`npm run build`).
+- ✅ **Behavior Preserved**: Game logic and UI remain identical to previous version.
+
+---
+
 ## v4.6.0 - Game Polish & Visuals (January 2026)
 
 ### Visual Polish
