@@ -156,6 +156,21 @@
 
 ---
 
+## v4.6.0 - Comprehensive Polish Update (January 2026)
+
+### 🎨 UI/UX Overhaul
+- **Farming Tab**: New grid layout for crop selection with clear cost/growth time indicators. Added icons to bulk action buttons.
+- **Shop Tab**: Added "Owned" tracking for unique upgrades (Greenhouse, Sprinkler). Prevents accidental double-dipping.
+- **Genetics Tab**: New "Breeding Slot" UI for intuitive parent selection.
+- **Research Tab**: Visual overhaul with status icons, progress bars, and clearer prerequisite warnings.
+- **Achievements**: "Ready to Claim" animations and visual separation of unlocked vs locked achievements.
+
+### 🔧 Improvements
+- **Inventory**: Added estimated value display for items.
+- **Settings**: Updated version string and about section.
+
+---
+
 ## v4.6.0 - Game Polish & Visuals (January 2026)
 
 ### Visual Polish

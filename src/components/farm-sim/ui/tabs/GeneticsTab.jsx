@@ -181,37 +181,94 @@ const GeneticsTab = memo(() => {
           <Card className="p-4">
             <h4 className="font-semibold mb-3">Select Parent Crops</h4>
 
-            {/* Parent Selection */}
+            {/* Parent Selection Slots */}
+            <div className="flex justify-center gap-8 mb-6 items-center">
+              {/* Parent 1 Slot */}
+              <div
+                className={`
+                        w-32 h-32 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all
+                        ${selectedParent1 ? 'border-purple-500 bg-purple-50' : 'border-gray-300 hover:border-purple-300 hover:bg-gray-50'}
+                    `}
+                onClick={() => !selectedParent1 && document.getElementById('parent1-select')?.click()}
+              >
+                {selectedParent1 ? (
+                  <>
+                    <div className="text-4xl mb-2">🥕</div>    {/* Dynamic emoji would be better if mapped */}
+                    <div className="font-semibold text-sm capitalize">{selectedParent1}</div>
+                    <Button size="xs" variant="ghost" className="mt-1 h-6 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={(e) => { e.stopPropagation(); setSelectedParent1(null); }}>
+                      Remove
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-gray-400 text-2xl mb-1">+</div>
+                    <div className="text-gray-500 text-xs font-medium">Select Parent 1</div>
+                  </>
+                )}
+              </div>
+
+              <div className="text-2xl text-gray-400 font-bold">+</div>
+
+              {/* Parent 2 Slot */}
+              <div
+                className={`
+                        w-32 h-32 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all
+                        ${selectedParent2 ? 'border-purple-500 bg-purple-50' : 'border-gray-300 hover:border-purple-300 hover:bg-gray-50'}
+                    `}
+                onClick={() => !selectedParent2 && document.getElementById('parent2-select')?.click()}
+              >
+                {selectedParent2 ? (
+                  <>
+                    <div className="text-4xl mb-2">🌽</div> {/* Dynamic emoji placeholder */}
+                    <div className="font-semibold text-sm capitalize">{selectedParent2}</div>
+                    <Button size="xs" variant="ghost" className="mt-1 h-6 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={(e) => { e.stopPropagation(); setSelectedParent2(null); }}>
+                      Remove
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-gray-400 text-2xl mb-1">+</div>
+                    <div className="text-gray-500 text-xs font-medium">Select Parent 2</div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Hidden Selectors (Visible controls below) */}
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Parent 1</label>
-                <div className="grid grid-cols-2 gap-2">
+                <h5 className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Available Crops (Parent 1)</h5>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
                   {availableCrops.map(crop => (
                     <Button
                       key={crop}
                       variant={selectedParent1 === crop ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedParent1(crop)}
-                      className="text-xs"
+                      className={`text-xs justify-start px-2 ${selectedParent1 === crop ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                      disabled={selectedParent2 === crop && (state.inventory[crop] || 0) < 2} // Prevent selecting same single crop twice if only 1 owned
                     >
-                      {crop} ({state.inventory[crop] || 0})
+                      <span className="mr-1">{crop === 'carrot' ? '🥕' : '📦'}</span> {/* Simplified emoji logic for now */}
+                      {crop} <span className="ml-auto opacity-70">x{state.inventory[crop] || 0}</span>
                     </Button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Parent 2</label>
-                <div className="grid grid-cols-2 gap-2">
+                <h5 className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Available Crops (Parent 2)</h5>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
                   {availableCrops.map(crop => (
                     <Button
                       key={crop}
                       variant={selectedParent2 === crop ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedParent2(crop)}
-                      className="text-xs"
+                      className={`text-xs justify-start px-2 ${selectedParent2 === crop ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                      disabled={selectedParent1 === crop && (state.inventory[crop] || 0) < 2}
                     >
-                      {crop} ({state.inventory[crop] || 0})
+                      <span className="mr-1">{crop === 'carrot' ? '🥕' : '📦'}</span>
+                      {crop} <span className="ml-auto opacity-70">x{state.inventory[crop] || 0}</span>
                     </Button>
                   ))}
                 </div>

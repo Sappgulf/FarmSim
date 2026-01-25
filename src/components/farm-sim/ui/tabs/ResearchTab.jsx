@@ -280,85 +280,115 @@ const ResearchTab = memo(() => {
   return (
     <div className="space-y-4">
       {/* Research Lab Status */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50">
+      <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-100">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold text-blue-800">🔬 Research Laboratory</h3>
-            <p className="text-sm text-blue-700">
-              Completed: {state.research?.completed?.length || 0}/{Object.keys(RESEARCH_PROJECTS).length}
+            <h3 className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+              <span className="text-xl">🔬</span> Research Laboratory
+            </h3>
+            <p className="text-sm text-blue-700 mt-1">
+              Completed: <span className="font-bold">{state.research?.completed?.length || 0}</span> / {Object.keys(RESEARCH_PROJECTS).length}
             </p>
           </div>
-          <Badge variant="outline" className="bg-blue-100 text-blue-700">
-            {activeResearch ? '🔄 Researching' : '⏸️ Idle'}
+          <Badge variant={activeResearch ? "default" : "secondary"} className={activeResearch ? "bg-blue-600 animate-pulse" : "bg-gray-200 text-gray-700"}>
+            {activeResearch ? '🔄 Researching' : '⏸️ Lab Idle'}
           </Badge>
         </div>
       </Card>
 
       {/* Active Research */}
       {activeResearch && (
-        <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
-          <h4 className="font-semibold mb-3">⚡ Active Research</h4>
+        <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200 shadow-sm">
+          <h4 className="font-semibold mb-3 flex items-center gap-2 text-yellow-800">
+            <span className="animate-spin">⚡</span> Active Project
+          </h4>
 
-          <div className="flex items-center gap-3 mb-3">
-            <span className="text-2xl">{RESEARCH_PROJECTS[activeResearch].emoji}</span>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-3xl shadow-sm">
+              {RESEARCH_PROJECTS[activeResearch].emoji}
+            </div>
             <div className="flex-1">
-              <div className="font-semibold">{RESEARCH_PROJECTS[activeResearch].name}</div>
-              <div className="text-sm text-gray-600">
-                Time Left: {getTimeLeft(activeResearch)}
+              <div className="font-bold text-lg text-gray-900">{RESEARCH_PROJECTS[activeResearch].name}</div>
+              <div className="text-sm text-gray-600 font-mono">
+                Reviewing results... {getTimeLeft(activeResearch)}
               </div>
             </div>
           </div>
 
-          <Progress value={getResearchProgress(activeResearch)} className="mb-2" />
-          <div className="text-xs text-center text-gray-600">
-            {Math.round(getResearchProgress(activeResearch))}% Complete
+          <div className="relative pt-1">
+            <div className="flex mb-2 items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold inline-block text-yellow-600">
+                  Progress
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-semibold inline-block text-yellow-600">
+                  {Math.round(getResearchProgress(activeResearch))}%
+                </span>
+              </div>
+            </div>
+            <Progress value={getResearchProgress(activeResearch)} className="h-3 bg-yellow-100" indicatorClassName="bg-yellow-500" />
           </div>
         </Card>
       )}
 
       {/* Research Projects */}
       <Card className="p-4">
-        <h4 className="font-semibold mb-3">📚 Research Projects</h4>
+        <h4 className="font-semibold mb-4 flex items-center gap-2">
+          <span>📚</span> Available Projects
+        </h4>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {Object.entries(RESEARCH_PROJECTS).map(([id, research]) => {
             const available = canResearch(id);
             const completed = isCompleted(id);
             const researching = isResearching(id);
 
             return (
-              <Card key={id} className={`p-3 ${getCategoryColor(research.category)}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{research.emoji}</span>
-                    <span className="font-medium">{research.name}</span>
+              <div key={id} className={`
+                p-3 rounded-xl border-2 transition-all relative overflow-hidden
+                ${getCategoryColor(research.category)}
+                ${completed ? 'opacity-80' : 'opacity-100'}
+                ${researching ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
+              `}>
+                <div className="flex justify-between items-start mb-2 relative z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center text-xl backdrop-blur-sm">
+                      {research.emoji}
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-900 leading-tight">{research.name}</div>
+                      <div className="text-[10px] uppercase font-bold tracking-wider opacity-60 mt-0.5">{research.category}</div>
+                    </div>
                   </div>
 
                   <div className="flex gap-1">
-                    {completed && <Badge className="bg-green-500">✓ Done</Badge>}
-                    {researching && <Badge className="bg-blue-500">🔄 Active</Badge>}
-                    {!available && !completed && <Badge variant="outline">🔒 Locked</Badge>}
+                    {completed && <Badge className="bg-green-500 hover:bg-green-600 border-none shadow-sm">✓ Done</Badge>}
+                    {researching && <Badge className="bg-blue-500 hover:bg-blue-600 border-none shadow-sm animate-pulse">Running</Badge>}
+                    {!available && !completed && <Badge variant="outline" className="bg-gray-200/50 border-gray-300 text-gray-500">🔒 Locked</Badge>}
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-600 mb-2">{research.description}</p>
+                <p className="text-sm text-gray-700 mb-3 min-h-[40px] leading-snug">{research.description}</p>
 
-                <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
-                  <span>Cost: {research.cost}🪙</span>
-                  <span>Time: {Math.round(research.time / 60)}m</span>
+                <div className="flex justify-between items-center text-xs font-medium text-gray-600 mb-3 bg-white/40 p-2 rounded-lg">
+                  <span className="flex items-center gap-1">💰 {research.cost}</span>
+                  <span className="flex items-center gap-1">⏱️ {Math.round(research.time / 60)}m</span>
                 </div>
 
                 {/* Prerequisites */}
-                {research.prerequisites.length > 0 && (
-                  <div className="text-xs text-gray-600 mb-2">
-                    Requires: {formatResearchNames(research.prerequisites)}
+                {!available && !completed && research.prerequisites.length > 0 && (
+                  <div className="text-xs text-red-600 mb-3 bg-red-50 p-2 rounded border border-red-100">
+                    <span className="font-bold">Missing: </span>
+                    {formatResearchNames(research.prerequisites.filter(p => !state.research?.completed?.includes(p)))}
                   </div>
                 )}
 
                 {/* Unlocks */}
                 {research.unlocks.length > 0 && (
-                  <div className="text-xs text-green-600 mb-2">
-                    Unlocks: {formatUnlocks(research.unlocks)}
+                  <div className="text-xs text-green-700 mb-3 bg-green-50/50 p-1.5 rounded">
+                    <span className="font-bold">Unlocks: </span> {formatUnlocks(research.unlocks)}
                   </div>
                 )}
 
@@ -367,18 +397,19 @@ const ResearchTab = memo(() => {
                     onClick={() => startResearch(id)}
                     size="sm"
                     disabled={!available || state.coins < research.cost}
-                    className="w-full"
+                    className="w-full font-semibold shadow-sm"
+                    variant={available ? "default" : "secondary"}
                   >
-                    {available ? 'Start Research' : 'Prerequisites Required'}
+                    {available ? (state.coins < research.cost ? 'Insufficient Coins' : 'Start Research') : 'Locked'}
                   </Button>
                 )}
 
                 {researching && (
-                  <div className="text-center text-sm text-blue-600 font-medium">
-                    Researching... ({getTimeLeft(id)})
+                  <div className="text-center py-2 bg-blue-50 rounded-lg text-sm text-blue-700 font-bold border border-blue-100">
+                    Research in Progress...
                   </div>
                 )}
-              </Card>
+              </div>
             );
           })}
         </div>

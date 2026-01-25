@@ -358,17 +358,17 @@ const SettingsTab = memo(() => {
       <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50">
         <h4 className="font-semibold mb-2 text-green-800">🌾 About FarmSim</h4>
         <div className="text-sm text-green-700 space-y-1">
-          <p><strong>Version:</strong> 4.3.0</p>
+          <p><strong>Version:</strong> 4.6.0</p>
           <p><strong>Made with:</strong> React + Vite + Tailwind CSS</p>
           <p className="pt-2">A comprehensive farm simulation game with modular architecture, sound effects, background music, livestock management, fishing, and endless possibilities!</p>
 
           <div className="pt-3 border-t border-green-200 mt-3">
-            <p className="font-semibold">✨ New in v4.3.0:</p>
+            <p className="font-semibold">✨ New in v4.6.0 (Polish Update)</p>
             <ul className="list-disc list-inside text-xs space-y-0.5 mt-1">
-              <li>🎯 Bottom navigation with 5 grouped sections</li>
-              <li>🎓 Interactive onboarding tutorial</li>
-              <li>📱 Mobile-first design with iOS safe-area</li>
-              <li>🎵 Sound effects & seasonal music</li>
+              <li>🎨 <strong>Refined Visuals</strong>: Glassmorphism UI & enhanced animations</li>
+              <li>🎵 <strong>Audio System</strong>: New sound effects for actions & level ups</li>
+              <li>⚡ <strong>Performance</strong>: Modular architecture & optimized visuals</li>
+              <li>🚜 <strong>Gameplay</strong>: New crop selection grid & improved shop logic</li>
             </ul>
           </div>
         </div>

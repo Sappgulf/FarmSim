@@ -21,7 +21,7 @@ const InventoryTab = memo(() => {
   };
 
   const inventoryItems = Object.entries(state.inventory).filter(([_, qty]) => qty > 0);
-  
+
   // Calculate total items
   const totalItems = inventoryItems.reduce((sum, [_, qty]) => sum + (qty || 0), 0);
   const totalValue = inventoryItems.reduce((sum, [itemId, qty]) => {
@@ -54,21 +54,33 @@ const InventoryTab = memo(() => {
           <div className="text-center py-8">
             <div className="text-4xl mb-2">📭</div>
             <p className="text-gray-500">Your inventory is empty</p>
-            <p className="text-sm text-gray-400 mt-1">Harvest crops to fill it!</p>
+            <p className="text-sm text-gray-400 mt-1">Harvest crops or visit the shop!</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {inventoryItems.map(([itemId, quantity]) => (
-              <div key={itemId} className="flex justify-between items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{itemEmojis[itemId] || '📦'}</span>
-                  <span className="font-medium capitalize">{itemId.replace('_', ' ')}</span>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {inventoryItems.map(([itemId, quantity]) => {
+              // Estimate single item value
+              const baseValue = itemId === 'carrot' ? 12 : itemId === 'potato' ? 15 : 5;
+              const displayValue = baseValue * quantity;
+              return (
+                <div key={itemId} className="flex justify-between items-center p-3 bg-white border border-gray-100 hover:border-gray-300 rounded-lg transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full text-2xl">
+                      {itemEmojis[itemId] || '📦'}
+                    </div>
+                    <div>
+                      <div className="font-medium capitalize text-gray-800">{itemId.replace('_', ' ')}</div>
+                      <div className="text-xs text-gray-500">Value: ~{baseValue}🪙 ea</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Badge variant="outline" className="text-sm border-2 border-gray-200">
+                      x{quantity}
+                    </Badge>
+                  </div>
                 </div>
-                <Badge variant="outline" className="text-sm">
-                  x{quantity}
-                </Badge>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>

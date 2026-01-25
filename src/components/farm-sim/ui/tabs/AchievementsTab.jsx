@@ -215,57 +215,71 @@ const AchievementsTab = memo(() => {
         </TabsList>
 
         {/* Achievement List */}
-        <div className="mt-4 space-y-3 max-h-96 overflow-y-auto">
+        <div className="mt-4 space-y-3 max-h-[500px] overflow-y-auto pr-1">
           {filteredAchievements.map(achievement => {
             const isUnlocked = state.achievements.find(a => a.id === achievement.id)?.unlocked;
             const progress = getAchievementProgress(achievement);
             const canClaim = progress >= 100 && !isUnlocked;
 
             return (
-              <Card key={achievement.id} className={`p-3 ${isUnlocked ? 'bg-green-50 border-green-200' : 'bg-white'}`}>
+              <Card
+                key={achievement.id}
+                className={`
+                    p-3 transition-all border-l-4 
+                    ${isUnlocked ? 'bg-green-50 border-l-green-500 border-y-green-100 border-r-green-100' :
+                    canClaim ? 'bg-amber-50 border-l-amber-500 border-y-amber-100 border-r-amber-100 shadow-md transform scale-[1.01]' :
+                      'bg-white border-l-gray-200'}
+                `}
+              >
                 <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{achievement.icon}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm text-2xl">
+                      {achievement.icon}
+                    </div>
                     <div>
-                      <h4 className="font-semibold">{achievement.name}</h4>
-                      <p className="text-sm text-gray-600">{achievement.desc}</p>
+                      <h4 className={`font-semibold ${isUnlocked ? 'text-green-900' : 'text-gray-900'}`}>{achievement.name}</h4>
+                      <p className="text-xs text-gray-600">{achievement.desc}</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-1">
-                    {isUnlocked && <Badge className="bg-green-500">✓ Unlocked</Badge>}
-                    <Badge variant="outline" className="text-xs">
-                      {getCategoryIcon(achievement.category)}
-                    </Badge>
+                  <div className="flex flex-col items-end gap-1">
+                    {isUnlocked && <Badge className="bg-green-600 shadow-sm">Claimed</Badge>}
+                    {canClaim && <Badge className="bg-amber-500 animate-pulse shadow-sm">Ready!</Badge>}
+                    <span className="text-[10px] text-gray-400 font-mono uppercase bg-gray-100 px-1.5 py-0.5 rounded">
+                      {getCategoryIcon(achievement.category)} {achievement.category}
+                    </span>
                   </div>
                 </div>
 
                 {!isUnlocked && (
-                  <>
-                    <div className="flex justify-between text-sm mb-1">
+                  <div className="mt-2 text-sm bg-gray-50/50 p-2 rounded-lg">
+                    <div className="flex justify-between text-xs mb-1 font-medium text-gray-500">
                       <span>Progress</span>
                       <span>{Math.round(progress)}%</span>
                     </div>
 
-                    <Progress value={progress} className="mb-2" />
+                    <Progress value={progress} className={`h-2 mb-2 ${canClaim ? 'bg-amber-200' : 'bg-gray-200'}`} indicatorClassName={canClaim ? 'bg-amber-500' : 'bg-blue-500'} />
 
-                    <div className="text-xs text-gray-500 mb-2">
-                      Requirement: {achievement.requirement.type.replace('_', ' ')} ({achievement.requirement.value})
+                    <div className="text-[10px] text-gray-400 font-mono">
+                      REQ: {achievement.requirement.type.replace('_', ' ').toUpperCase()} ({achievement.requirement.value})
                     </div>
-                  </>
+                  </div>
                 )}
 
-                <div className="flex justify-between items-center">
-                  <div className="text-sm text-green-600 font-medium">
-                    Reward: +{achievement.reward}🪙 +{Math.floor(achievement.reward * 0.5)} XP
+                <div className="flex justify-between items-center mt-3 pt-2 border-t border-gray-100">
+                  <div className="text-xs font-semibold text-gray-500 flex items-center gap-2">
+                    REWARDS:
+                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">+{achievement.reward}🪙</Badge>
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">+{Math.floor(achievement.reward * 0.5)} XP</Badge>
                   </div>
 
                   {canClaim && (
                     <Button
                       onClick={() => claimAchievement(achievement.id)}
                       size="sm"
+                      className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm font-bold animate-bounce"
                     >
-                      Claim
+                      CLAIM REWARD
                     </Button>
                   )}
                 </div>
