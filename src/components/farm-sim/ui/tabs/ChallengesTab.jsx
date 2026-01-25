@@ -97,7 +97,7 @@ const ChallengesTab = memo(() => {
 
     // Grant rewards
     actions.setCoins(state.coins + challenge.reward.coins);
-    actions.setXp(state.xp + challenge.reward.xp);
+    actions.grantXP(challenge.reward.xp, 'challenge_complete', { challengeId: challengeId });
 
     // Mark challenge as completed
     const updatedChallenges = dailyChallenges.map(c =>
@@ -236,8 +236,8 @@ const ChallengesTab = memo(() => {
             <div className="font-medium text-yellow-800">🔥 Streak Bonus!</div>
             <div className="text-yellow-700">
               {state.challengeStreak >= 7 ? '+50% XP from challenges' :
-               state.challengeStreak >= 5 ? '+30% XP from challenges' :
-               '+15% XP from challenges'}
+                state.challengeStreak >= 5 ? '+30% XP from challenges' :
+                  '+15% XP from challenges'}
             </div>
           </div>
         )}

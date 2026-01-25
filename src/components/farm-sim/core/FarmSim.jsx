@@ -8,6 +8,8 @@ import FarmGrid from '../ui/FarmGrid';
 import GameSidebar from '../ui/GameSidebar';
 import NavBar, { NAV_SECTIONS } from '../ui/NavBar';
 import NotificationSystem from '../ui/NotificationSystem';
+
+import DevDebugOverlay from '../ui/DevDebugOverlay';
 import { ParticleEffectsManager } from '../ui/ParticleEffect';
 import FPSCounter from '../ui/FPSCounter';
 import PerformanceOverlay from '../ui/PerformanceOverlay';
@@ -25,6 +27,7 @@ import { LivestockSystem } from '../systems/LivestockSystem';
 import { FishingSystem } from '../systems/FishingSystem';
 import { getSoundSystem } from '../systems/SoundSystem';
 import { getMusicSystem } from '../systems/MusicSystem';
+import { recordPlayerInteraction } from '../services/XPService';
 
 /**
  * Main FarmSim Component (Orchestrator)
@@ -161,9 +164,16 @@ function FarmSimCore() {
 
       // Throttle to target FPS (10 FPS)
       const deltaTime = currentTime - lastUpdateTime;
-      if (deltaTime >= targetFrameTime) {
-        // PERF: Measure update time
-        const updateStart = performance.now();
+
+      // DT CLAMPING: Prevent giant time jumps when tab regains focus (max 1 second)
+      const MAX_DT = 1000;
+      const clampedDeltaTime = Math.min(deltaTime, MAX_DT);
+
+      if (clampedDeltaTime >= targetFrameTime) {
+        // Log if we had to clamp (debugging)
+        if (deltaTime > MAX_DT && import.meta.env.MODE === 'development') {
+          console.debug('[farm] DT clamped:', Math.round(deltaTime), 'ms ->', MAX_DT, 'ms');
+        }
 
         // Batch all system updates in a single frame
         // Order matters: dependencies first, dependents last
@@ -178,9 +188,10 @@ function FarmSimCore() {
         disasterSystem.update(currentState);
 
         // PERF: Record update time for overlay
+        const updateStart = performance.now();
         window.__lastUpdateTime = performance.now() - updateStart;
 
-        lastUpdateTime = currentTime - (deltaTime % targetFrameTime); // Maintain frame timing
+        lastUpdateTime = currentTime - (clampedDeltaTime % targetFrameTime); // Maintain frame timing
       }
 
       // Continue loop
@@ -196,6 +207,25 @@ function FarmSimCore() {
       }
     };
   }, [state.gameLoop.paused, seasonSystem, farmingSystem, weatherSystem, economicSystem, achievementSystem, diseaseSystem, disasterSystem, livestockSystem, fishingSystem]);
+
+  // Track player interactions for XP idle detection
+  useEffect(() => {
+    const handleInteraction = (e) => {
+      // Don't track keyboard events from debug overlay toggle
+      if (e.type === 'keydown' && e.key === '`') return;
+      recordPlayerInteraction();
+    };
+
+    document.addEventListener('click', handleInteraction);
+    document.addEventListener('keydown', handleInteraction);
+    document.addEventListener('touchstart', handleInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+    };
+  }, []);
 
   // Initialize sound and music systems
   useEffect(() => {
@@ -451,6 +481,9 @@ function FarmSimCore() {
 
       {/* Onboarding Tutorial (auto-shows for new players) */}
       <Tutorial />
+
+      {/* Developer Debug Overlay (dev only) */}
+      <DevDebugOverlay />
     </div>
   );
 }

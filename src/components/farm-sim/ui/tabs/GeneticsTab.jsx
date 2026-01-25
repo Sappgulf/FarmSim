@@ -122,7 +122,7 @@ const GeneticsTab = memo(() => {
       actions.updateInventory(updatedInventory);
 
       // Grant XP for successful breeding
-      actions.setXp(state.xp + 25);
+      actions.grantXP(25, 'genetics_breed', { hybridId: recipeKey });
 
       actions.addNotification({
         message: `Successfully bred ${recipe.name}!`,
@@ -230,8 +230,8 @@ const GeneticsTab = memo(() => {
                     const recipeKey = Object.keys(BREEDING_RECIPES).find(key => {
                       const recipe = BREEDING_RECIPES[key];
                       return recipe.parents.includes(selectedParent1) &&
-                             recipe.parents.includes(selectedParent2) &&
-                             recipe.unlockLevel <= state.level;
+                        recipe.parents.includes(selectedParent2) &&
+                        recipe.unlockLevel <= state.level;
                     });
 
                     if (recipeKey) {

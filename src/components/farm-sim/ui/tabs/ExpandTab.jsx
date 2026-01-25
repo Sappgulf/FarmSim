@@ -15,7 +15,7 @@ const ExpandTab = memo(() => {
     if (state.coins >= expansionCost && state.gridSize < maxSize) {
       actions.setCoins(state.coins - expansionCost);
       actions.setGridSize(state.gridSize + 1);
-      actions.setXp(state.xp + 30);
+      actions.grantXP(30, 'farm_expand', { newSize: state.gridSize + 1 });
       actions.addNotification({
         message: `🎉 Farm expanded to ${state.gridSize + 1}×${state.gridSize + 1}!`,
         type: 'success'
@@ -117,8 +117,8 @@ const ExpandTab = memo(() => {
             className={`w-full ${state.coins >= expansionCost ? 'bg-green-600 hover:bg-green-700' : ''}`}
             size="lg"
           >
-            {state.coins >= expansionCost 
-              ? `🏗️ Expand Farm (${expansionCost}🪙)` 
+            {state.coins >= expansionCost
+              ? `🏗️ Expand Farm (${expansionCost}🪙)`
               : `Need ${expansionCost - state.coins} more coins`
             }
           </Button>
@@ -133,22 +133,20 @@ const ExpandTab = memo(() => {
           {[3, 4, 5].map(size => {
             const isCompleted = state.gridSize > size;
             const isCurrent = state.gridSize === size;
-            
+
             return (
-              <div key={size} className={`flex items-center justify-between p-2 rounded ${
-                isCompleted ? 'bg-green-50' :
-                isCurrent ? 'bg-blue-50' :
-                'bg-gray-50'
-              }`}>
+              <div key={size} className={`flex items-center justify-between p-2 rounded ${isCompleted ? 'bg-green-50' :
+                  isCurrent ? 'bg-blue-50' :
+                    'bg-gray-50'
+                }`}>
                 <div className="flex items-center gap-2">
                   {isCompleted && <span className="text-green-600">✓</span>}
                   {isCurrent && <span className="text-blue-600">●</span>}
                   {!isCompleted && !isCurrent && <span className="text-gray-400">○</span>}
-                  <span className={`font-medium ${
-                    isCompleted ? 'text-green-700' :
-                    isCurrent ? 'text-blue-700' :
-                    'text-gray-500'
-                  }`}>
+                  <span className={`font-medium ${isCompleted ? 'text-green-700' :
+                      isCurrent ? 'text-blue-700' :
+                        'text-gray-500'
+                    }`}>
                     {size}×{size} Farm
                   </span>
                 </div>

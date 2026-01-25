@@ -15,9 +15,9 @@ export class AchievementSystem {
       console.error('[farm] AchievementSystem: update() called with null/undefined state');
       return;
     }
-    
+
     this.state = currentState;
-    
+
     // Check achievements periodically (every 5 seconds)
     const now = Date.now();
     if (now - this.lastCheck < 5000) return;
@@ -32,7 +32,7 @@ export class AchievementSystem {
       console.warn('[farm] AchievementSystem: No state available for achievement checks');
       return;
     }
-    
+
     const achievements = this.getAchievements();
     let hasNewAchievement = false;
     const unlockedIds = new Set(
@@ -63,10 +63,15 @@ export class AchievementSystem {
   checkAchievementCondition(achievement) {
     // Safety check - ensure state exists
     if (!this.state) return false;
-    
+
     switch (achievement.id) {
       case 'first_harvest':
-        return (this.state.xp || 0) > 0;
+        // FIXED: Check if player has harvested (has items in inventory), not just XP
+        const inventoryCount = Object.values(this.state.inventory || {}).reduce((sum, qty) => {
+          const count = typeof qty === 'number' ? qty : 0;
+          return sum + count;
+        }, 0);
+        return inventoryCount > 0;
 
       case 'coin_collector':
         return (this.state.coins || 0) >= 300;
@@ -111,11 +116,7 @@ export class AchievementSystem {
         this.actions.setCoins((this.state.coins || 0) + achievement.reward.coins);
       }
       if (achievement.reward.xp) {
-        if (typeof this.actions.addXP === 'function') {
-          this.actions.addXP(achievement.reward.xp, `achievement:${achievement.id}`);
-        } else {
-          this.actions.setXp((this.state.xp || 0) + achievement.reward.xp);
-        }
+        this.actions.grantXP(achievement.reward.xp, 'achievement', { achievementId: achievement.id });
       }
     }
   }

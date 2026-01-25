@@ -1,8 +1,80 @@
 # Codebase Cleanup & Optimization Changelog
 
 **Date:** January 2026  
-**Project:** FarmLife v4.4.0  
-**Status:** Architecture & Accessibility Update ✅
+**Project:** FarmLife v4.5.0  
+**Status:** Architecture, Accessibility & Systems Refinement Update ✅
+
+---
+
+## Phase 5: Systems Refinement Pass ✅ NEW (January 2026)
+
+### 1. Single Source of Truth for XP ✅
+
+**New File:** `src/components/farm-sim/services/XPService.js`
+
+- Created centralized `grantXP(amount, source, meta)` function
+- Added XP rate limiting: 200 XP/min, 3 level-ups/min
+- Source tag tracking for all XP grants
+- Idle detection (90% XP reduction when idle >60s)
+- Dev-mode warnings when limits exceeded
+
+**Files Refactored (13 files):**
+- All `setXp()` calls replaced with `grantXP()` across:
+  - Game systems: FarmingSystem, AchievementSystem, DiseaseSystem, DisasterSystem
+  - UI components: FarmGrid, WeatherTab, ResearchTab, GeneticsTab, ExpandTab, ChallengesTab, DailyQuestsTab, BuildingsTab
+  - GameContext: added `grantXP` action and level-up rate limiting
+
+**Impact:** Complete observability of XP flow, exploit prevention, balanced progression
+
+---
+
+### 2. Enhanced Notification Service ✅
+
+**New File:** `src/components/farm-sim/services/NotificationService.js`
+
+- Priority levels: info, success, warning, error, critical
+- Configurable durations per type
+- Sticky notifications support
+- Duplicate merging via mergeKey
+- One-critical-at-a-time enforcement ready
+
+**Impact:** Ready for gradual adoption, no breaking changes
+
+---
+
+### 3. Developer Debug Overlay ✅
+
+**New File:** `src/components/farm-sim/ui/DevDebugOverlay.jsx`
+
+- Toggle with backtick (`) key (dev mode only)
+- Displays: Level, XP, XP needed, XP/min rolling window
+- Shows: Last 5 XP grant sources with amounts
+- Shows: Game state (weather, season, paused, FPS)
+- Shows: Farm stats (grid size, active plots, buildings)
+
+**Impact:** Real-time observability for debugging XP and progression issues
+
+---
+
+### 4. Game Loop Health Improvements ✅
+
+**File:** `src/components/farm-sim/core/FarmSim.jsx`
+
+- **DT Clamping:** Max 1-second delta time to prevent giant progression jumps when tab regains focus
+- **Player Interaction Tracking:** Records clicks/keys/touches for idle detection
+- Dev logging when DT is clamped
+
+**Impact:** Prevents exploits via tab defocus, fair progression
+
+---
+
+### Summary Phase 5
+
+- **New Files:** 3 service/component files
+- **Files Modified:** 14 files
+- **Build Status:** ✅ Passing
+- **Breaking Changes:** None (setXp deprecated but still works)
+- **XP Sources Tracked:** 18 distinct locations
 
 ---
 

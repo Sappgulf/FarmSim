@@ -12,14 +12,14 @@ import { generateDailyQuests, shouldResetDaily, getStreakBonus } from '../../sys
  */
 const DailyQuestsTab = memo(() => {
   const { state, actions } = useGame();
-  
+
   // Initialize or reset daily quests
   useEffect(() => {
     // Check if quests need to be reset
     if (!state.dailyQuests || shouldResetDaily(state.dailyQuests?.lastResetTime)) {
       const newQuests = generateDailyQuests(state.level, Date.now());
       const streakReset = !state.dailyQuests?.lastResetTime || shouldResetDaily(state.dailyQuests?.lastResetTime);
-      
+
       actions.updateDailyQuests({
         quests: newQuests,
         lastResetTime: Date.now(),
@@ -33,43 +33,43 @@ const DailyQuestsTab = memo(() => {
   const streak = state.dailyQuests?.streak || 0;
   const totalCompleted = state.dailyQuests?.totalCompleted || 0;
   const streakBonus = getStreakBonus(streak);
-  
+
   // Calculate time until reset
   const getTimeUntilReset = () => {
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
-    
+
     const diff = tomorrow - now;
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     return `${hours}h ${minutes}m`;
   };
 
   const handleClaimReward = (questId) => {
     const quest = quests.find(q => q.id === questId);
     if (!quest || !quest.completed || quest.claimed) return;
-    
+
     const reward = Math.floor(quest.reward * streakBonus);
-    
+
     // Grant reward
     actions.setCoins(state.coins + reward);
-    actions.setXp(state.xp + Math.floor(reward * 0.5));
-    
+    actions.grantXP(Math.floor(reward * 0.5), 'quest_complete', { questId, reward });
+
     // Mark as claimed
     const updatedQuests = quests.map(q =>
       q.id === questId ? { ...q, claimed: true } : q
     );
-    
+
     actions.updateDailyQuests({
       ...state.dailyQuests,
       quests: updatedQuests,
       totalCompleted: totalCompleted + 1,
       streak: streak + (updatedQuests.every(q => q.claimed) ? 1 : 0), // Increment streak if all claimed
     });
-    
+
     // Particle effect
     if (typeof window.triggerParticleEffect === 'function') {
       const button = document.querySelector(`[data-quest-id="${questId}"]`);
@@ -78,7 +78,7 @@ const DailyQuestsTab = memo(() => {
         window.triggerParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, 'harvest');
       }
     }
-    
+
     actions.addNotification({
       message: `🎉 Quest Complete! +${reward}🪙 ${streakBonus > 1 ? `(${Math.round((streakBonus - 1) * 100)}% streak bonus!)` : ''}`,
       type: 'success',
@@ -116,7 +116,7 @@ const DailyQuestsTab = memo(() => {
             <div className="text-xs text-gray-600">Day Streak</div>
           </div>
         </div>
-        
+
         <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
@@ -140,9 +140,9 @@ const DailyQuestsTab = memo(() => {
               </div>
               <div className="text-xs text-orange-600 mt-1">
                 {streak >= 30 ? '🏆 Maximum streak bonus!' :
-                 streak >= 14 ? `${30 - streak} days until max bonus!` :
-                 streak >= 7 ? `${14 - streak} days until +75% bonus!` :
-                 `${7 - streak} days until +50% bonus!`}
+                  streak >= 14 ? `${30 - streak} days until max bonus!` :
+                    streak >= 7 ? `${14 - streak} days until +75% bonus!` :
+                      `${7 - streak} days until +50% bonus!`}
               </div>
             </div>
           </div>
@@ -168,7 +168,7 @@ const DailyQuestsTab = memo(() => {
           <Gift className="w-4 h-4" />
           Today's Quests
         </h4>
-        
+
         {quests.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Target className="w-12 h-12 mx-auto mb-2 opacity-50" />
@@ -179,29 +179,28 @@ const DailyQuestsTab = memo(() => {
             {quests.map((quest) => {
               const progressPercent = (quest.progress / quest.target) * 100;
               const finalReward = Math.floor(quest.reward * streakBonus);
-              
+
               return (
                 <Card
                   key={quest.id}
-                  className={`p-4 border-2 transition-all ${
-                    quest.claimed
+                  className={`p-4 border-2 transition-all ${quest.claimed
                       ? 'bg-gray-50 border-gray-300 opacity-60'
                       : quest.completed
-                      ? 'bg-green-50 border-green-400 shadow-lg'
-                      : 'border-gray-200 hover:shadow-md'
-                  }`}
+                        ? 'bg-green-50 border-green-400 shadow-lg'
+                        : 'border-gray-200 hover:shadow-md'
+                    }`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-lg">
                           {quest.type === 'harvest' ? '🌾' :
-                           quest.type === 'plant' ? '🌱' :
-                           quest.type === 'earn' ? '💰' :
-                           quest.type === 'spend' ? '🛒' :
-                           quest.type === 'build' ? '🏗️' :
-                           quest.type === 'level' ? '⭐' :
-                           quest.type === 'weather' ? '🌤️' : '🎯'}
+                            quest.type === 'plant' ? '🌱' :
+                              quest.type === 'earn' ? '💰' :
+                                quest.type === 'spend' ? '🛒' :
+                                  quest.type === 'build' ? '🏗️' :
+                                    quest.type === 'level' ? '⭐' :
+                                      quest.type === 'weather' ? '🌤️' : '🎯'}
                         </span>
                         <span className="font-medium text-gray-800">
                           {quest.description.replace('{count}', quest.target).replace('{crop}', 'special')}
@@ -211,7 +210,7 @@ const DailyQuestsTab = memo(() => {
                         {quest.difficulty}
                       </Badge>
                     </div>
-                    
+
                     {!quest.claimed && (
                       <div className="text-right ml-3">
                         <div className="font-bold text-yellow-600">{finalReward}🪙</div>

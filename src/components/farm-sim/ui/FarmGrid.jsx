@@ -186,7 +186,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
         <div className="flex flex-col items-center justify-center h-full p-0.5 sm:p-1 relative z-10">
           {/* Crop emoji with growth animation - Responsive sizes */}
           <div
-            className={`text-xl sm:text-2xl md:text-3xl mb-0.5 sm:mb-1 transition-transform-medium ${plot?.state === 'growing' ? 'animate-grow' : ''
+            className={`text-xl sm:text-2xl md:text-3xl mb-0.5 sm:mb-1 transition-all duration-300 ${plot?.state === 'growing' ? 'animate-grow' : ''
               } ${plot?.state === 'ready' ? 'animate-ready-pop' : ''
               } ${showPreview ? 'opacity-50' : ''
               }`}
@@ -450,9 +450,8 @@ const FarmGrid = memo(() => {
 
     // Update coins and inventory
     actions.setCoins(state.coins + earnings);
-    // REBALANCED: Consistent 15% XP rate across all harvest methods
-    actions.setXp(state.xp + Math.floor(earnings * 0.15));
-
+    // REBALANCED: Reduced XP to 20% of earnings (was 50%) for slower, more meaningful progression
+    actions.grantXP(Math.floor(earnings * 0.2), 'harvest_ui', { cropId: crop.id, value: earnings });
     // Update inventory
     const updatedInventory = {
       ...state.inventory,

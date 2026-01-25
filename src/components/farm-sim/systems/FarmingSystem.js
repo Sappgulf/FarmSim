@@ -263,7 +263,7 @@ export class FarmingSystem {
     }
 
     this.actions.updatePlots(updatedPlots);
-    this.actions.setXp(this.gameState.xp + 1); // Small XP for planting
+    this.actions.grantXP(1, 'planting', { cropId: cropData.id }); // Small XP for planting
 
     return true;
   }
@@ -291,11 +291,9 @@ export class FarmingSystem {
 
     const harvestValue = calculateHarvestValue(plot, this.gameState?.season?.config);
 
-    // Update coins and XP
-    // Add coins and XP for harvest
+    // REBALANCED: Reduced XP to 20% of earnings (was 50%)
     this.actions.setCoins(this.gameState.coins + harvestValue);
-    // REBALANCED: Consistent 15% XP rate across all harvest methods
-    this.actions.setXp(this.gameState.xp + Math.floor(harvestValue * 0.15));
+    this.actions.grantXP(Math.floor(harvestValue * 0.2), 'harvest', { cropId: crop.id, value: harvestValue });
 
     // Update inventory
     const updatedInventory = {

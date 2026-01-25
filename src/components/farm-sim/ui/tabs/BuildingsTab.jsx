@@ -8,61 +8,61 @@ const BuildingsTab = memo(() => {
   const { state, actions } = useGame();
 
   const buildings = [
-    { 
-      id: 'well', 
-      name: 'Water Well', 
-      emoji: '💧', 
-      cost: 150, 
+    {
+      id: 'well',
+      name: 'Water Well',
+      emoji: '💧',
+      cost: 150,
       requiredLevel: 2,
       description: 'Reduces water needs by 50% + weather protection',
       benefit: '-50% Water',
       category: 'Utility'
     },
-    { 
-      id: 'silo', 
-      name: 'Silo', 
-      emoji: '🗼', 
-      cost: 200, 
+    {
+      id: 'silo',
+      name: 'Silo',
+      emoji: '🗼',
+      cost: 200,
       requiredLevel: 3,
       description: 'Auto-sell crops when storage is full',
       benefit: 'Auto-sell',
       category: 'Storage'
     },
-    { 
-      id: 'barn', 
-      name: 'Barn', 
-      emoji: '🏚️', 
-      cost: 350, 
+    {
+      id: 'barn',
+      name: 'Barn',
+      emoji: '🏚️',
+      cost: 350,
       requiredLevel: 4,
       description: '+20% harvest value + disease protection',
       benefit: '+20% Value',
       category: 'Production'
     },
-    { 
-      id: 'workshop', 
-      name: 'Workshop', 
-      emoji: '🔧', 
-      cost: 450, 
+    {
+      id: 'workshop',
+      name: 'Workshop',
+      emoji: '🔧',
+      cost: 450,
       requiredLevel: 5,
       description: 'Unlocks advanced tool crafting',
       benefit: 'Crafting',
       category: 'Utility'
     },
-    { 
-      id: 'greenhouse', 
-      name: 'Greenhouse', 
-      emoji: '🏠', 
-      cost: 600, 
+    {
+      id: 'greenhouse',
+      name: 'Greenhouse',
+      emoji: '🏠',
+      cost: 600,
       requiredLevel: 6,
       description: '+50% growth + weather damage immunity!',
       benefit: '+50% Growth',
       category: 'Production'
     },
-    { 
-      id: 'windmill', 
-      name: 'Windmill', 
-      emoji: '🏭', 
-      cost: 800, 
+    {
+      id: 'windmill',
+      name: 'Windmill',
+      emoji: '🏭',
+      cost: 800,
       requiredLevel: 7,
       description: 'Processes crops into premium goods',
       benefit: '+2x Value',
@@ -79,14 +79,14 @@ const BuildingsTab = memo(() => {
       });
       return;
     }
-    
+
     if (state.coins >= building.cost && !state.buildings[building.id]) {
       actions.setCoins(state.coins - building.cost);
       actions.updateBuildings({
         ...state.buildings,
         [building.id]: { built: true, level: 1, builtAt: Date.now() }
       });
-      
+
       // Trigger building construction effect (dust particles + screen shake)
       if (typeof window.triggerParticleEffect === 'function') {
         // Find the button that was clicked and get its position
@@ -98,17 +98,17 @@ const BuildingsTab = memo(() => {
           }
         }, 50);
       }
-      
+
       // Play construction sound (using plant sound as proxy)
       if (typeof window.soundSystem !== 'undefined') {
         window.soundSystem.playPlantSound();
       }
-      
+
       actions.addNotification({
         message: `Built ${building.emoji} ${building.name}!`,
         type: 'success'
       });
-      actions.setXp(state.xp + 20);
+      actions.grantXP(20, 'building_purchase', { buildingId: building.id });
     } else if (state.buildings[building.id]) {
       actions.addNotification({
         message: `${building.name} is already built!`,
@@ -160,16 +160,15 @@ const BuildingsTab = memo(() => {
             const isLocked = building.requiredLevel && state.level < building.requiredLevel;
 
             return (
-              <Card 
+              <Card
                 key={building.id}
                 data-building-id={building.id}
-                className={`p-3 border-2 transition-all ${
-                  isBuilt 
-                    ? 'bg-green-50 border-green-300 animate-slide-up' 
+                className={`p-3 border-2 transition-all ${isBuilt
+                    ? 'bg-green-50 border-green-300 animate-slide-up'
                     : isLocked
-                    ? 'bg-gray-50 border-gray-300 opacity-60'
-                    : getCategoryColor(building.category)
-                }`}
+                      ? 'bg-gray-50 border-gray-300 opacity-60'
+                      : getCategoryColor(building.category)
+                  }`}
               >
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-3">
@@ -186,7 +185,7 @@ const BuildingsTab = memo(() => {
                       <div className="text-xs text-gray-500">{building.category}</div>
                     </div>
                   </div>
-                  
+
                   <div className="text-right">
                     {isBuilt ? (
                       <Badge className="bg-green-600">✓ Built</Badge>
@@ -197,14 +196,14 @@ const BuildingsTab = memo(() => {
                     )}
                   </div>
                 </div>
-                
+
                 <p className="text-sm text-gray-700 mb-3">{building.description}</p>
-                
+
                 <div className="flex justify-between items-center">
                   <div className="text-sm">
                     <span className="font-semibold">Cost:</span> {building.cost}🪙
                   </div>
-                  
+
                   {!isBuilt && (
                     <Button
                       onClick={() => handleBuild(building)}
@@ -212,15 +211,15 @@ const BuildingsTab = memo(() => {
                       disabled={!canAfford || isLocked}
                       className={canAfford && !isLocked ? 'bg-green-600 hover:bg-green-700' : ''}
                     >
-                      {isLocked 
-                        ? `🔒 Level ${building.requiredLevel}` 
-                        : canAfford 
-                        ? '🔨 Build Now' 
-                        : `Need ${building.cost}🪙`
+                      {isLocked
+                        ? `🔒 Level ${building.requiredLevel}`
+                        : canAfford
+                          ? '🔨 Build Now'
+                          : `Need ${building.cost}🪙`
                       }
                     </Button>
                   )}
-                  
+
                   {isBuilt && (
                     <div className="text-sm text-green-700 font-medium">
                       🎉 Active

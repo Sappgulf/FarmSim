@@ -94,7 +94,7 @@ const WeatherTab = memo(() => {
 
     // Grant rewards
     actions.setCoins(state.coins + reward.coins);
-    actions.setXp(state.xp + reward.xp);
+    actions.grantXP(reward.xp, 'weather_minigame', { correct: isCorrect });
 
     setPredictionGame(prev => ({
       ...prev,
