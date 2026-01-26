@@ -99,24 +99,33 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   }, []); // Empty deps - only run once on mount
 
   return (
-    <Card className="h-fit">
+    <Card className="h-fit shadow-sm border-gray-200/60 bg-white/50 backdrop-blur-sm">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         {/* Tab Navigation - Vertical Scrollable List */}
-        <div className="border-b border-gray-200 bg-gray-50 p-2">
-          <div className="grid grid-cols-2 gap-1 max-h-48 overflow-y-auto">
+        <div className="border-b border-gray-100 bg-gray-50/50 p-2 rounded-t-xl">
+          <div className="grid grid-cols-2 gap-1.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
             {tabConfigs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 className={`
-                  text-xs px-2 py-2 rounded-md transition-colors text-left
+                  relative overflow-hidden text-xs px-3 py-2.5 rounded-lg transition-all text-left font-medium
+                  flex items-center gap-2 group
                   ${activeTab === tab.id
-                    ? 'bg-white text-gray-900 font-semibold shadow-sm'
-                    : 'bg-transparent text-gray-600 hover:bg-white/50'
+                    ? 'bg-white text-green-700 shadow-sm ring-1 ring-gray-100'
+                    : 'bg-transparent text-gray-500 hover:bg-white/60 hover:text-gray-900'
                   }
                 `}
               >
-                {tab.label}
+                {/* Active Indicator Bar */}
+                {activeTab === tab.id && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 bg-green-500 rounded-r-full"></div>
+                )}
+
+                <span className={`text-base ${activeTab === tab.id ? 'scale-110' : 'group-hover:scale-110'} transition-transform duration-200`}>
+                  {tab.label.split(' ')[0]}
+                </span>
+                <span className="truncate">{tab.label.split(' ').slice(1).join(' ')}</span>
               </button>
             ))}
           </div>
@@ -125,8 +134,10 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         {/* Tab Content with Suspense for lazy loading */}
         {tabConfigs.map(tab => {
           const TabComponent = tab.component;
+          if (activeTab !== tab.id) return null; // Simple optimization to avoid rendering all hidden contents
+
           return (
-            <TabsContent key={tab.id} value={tab.id} className="mt-4">
+            <TabsContent key={tab.id} value={tab.id} className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <Suspense fallback={<TabLoader />}>
                 <TabWrapper>
                   <TabComponent />
@@ -138,35 +149,38 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
       </Tabs>
 
       {/* Quick Stats Footer */}
-      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="text-center">
-            <div className="font-semibold text-gray-800">
+      <div className="mt-4 p-4 bg-gray-50/80 border-t border-gray-100/50 rounded-b-xl">
+        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 text-center">Farm Overview</h4>
+        <div className="grid grid-cols-2 gap-4 text-xs">
+          <div className="bg-white p-2 rounded border border-gray-100 shadow-sm flex flex-col items-center">
+            <span className="font-bold text-lg text-gray-800">
               {Object.values(state.inventory || {}).reduce((sum, qty) => {
-                // Handle both numbers and objects - ensure we only count numeric values
                 const count = typeof qty === 'number' ? qty : (typeof qty === 'object' && qty !== null ? (qty.count || qty.quantity || 0) : 0);
                 return sum + (Number(count) || 0);
               }, 0)}
-            </div>
-            <div className="text-gray-600">Total Items</div>
+            </span>
+            <span className="text-[10px] text-gray-500 font-medium">Items</span>
           </div>
-          <div className="text-center">
-            <div className="font-semibold text-gray-800">
+
+          <div className="bg-white p-2 rounded border border-gray-100 shadow-sm flex flex-col items-center">
+            <span className="font-bold text-lg text-blue-600">
               {Object.keys(state.buildings).length}
-            </div>
-            <div className="text-gray-600">Buildings</div>
+            </span>
+            <span className="text-[10px] text-gray-500 font-medium">Bldgs</span>
           </div>
-          <div className="text-center">
-            <div className="font-semibold text-gray-800">
+
+          <div className="bg-white p-2 rounded border border-gray-100 shadow-sm flex flex-col items-center">
+            <span className="font-bold text-lg text-amber-600">
               {state.livestock?.animals?.length || 0}
-            </div>
-            <div className="text-gray-600">Livestock</div>
+            </span>
+            <span className="text-[10px] text-gray-500 font-medium">Animals</span>
           </div>
-          <div className="text-center">
-            <div className="font-semibold text-gray-800">
+
+          <div className="bg-white p-2 rounded border border-gray-100 shadow-sm flex flex-col items-center">
+            <span className="font-bold text-lg text-purple-600">
               {state.social.reputation}
-            </div>
-            <div className="text-gray-600">Reputation</div>
+            </span>
+            <span className="text-[10px] text-gray-500 font-medium">Rep</span>
           </div>
         </div>
       </div>
