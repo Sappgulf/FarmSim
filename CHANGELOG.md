@@ -166,6 +166,9 @@
 - **Achievements**: "Ready to Claim" animations and visual separation of unlocked vs locked achievements.
 - **Buildings**: Converted to a rich grid layout with clear status indicators (Built/Locked).
 - **Expansion**: Added "Farm Roadmap" progress bar and visual upgrade comparison.
+- **Weather**: New "Oracle's Challenge" UI for prediction minigame and improved forecast strip.
+- **Livestock**: Compact animal cards, cleaner stats, and intuitive "Product Ready" indicators.
+- **Fishing**: Enhanced minigame visuals (tension bar) and "Angler's Journal" collection view.
 
 ### 🔧 Improvements
 - **Inventory**: Added estimated value display for items.

@@ -19,7 +19,7 @@ const LivestockTab = memo(() => {
     capacity: (state.livestock?.capacity) || 10,
     totalProduced: (state.livestock?.totalProduced) || 0
   };
-  
+
   // Safety check for LIVESTOCK_TYPES
   if (!LIVESTOCK_TYPES || typeof LIVESTOCK_TYPES !== 'object') {
     return (
@@ -32,7 +32,7 @@ const LivestockTab = memo(() => {
       </div>
     );
   }
-  
+
   // If system isn't available yet, show loading
   if (!livestockSystem) {
     return (
@@ -45,7 +45,7 @@ const LivestockTab = memo(() => {
       </div>
     );
   }
-  
+
   const stats = livestockSystem.getStats() || {
     totalAnimals: 0,
     capacity: 10,
@@ -92,7 +92,7 @@ const LivestockTab = memo(() => {
 
   const handleFeedAnimal = (animalId) => {
     if (!livestockSystem) return;
-    
+
     const result = livestockSystem.feedAnimal(animalId);
     if (result.success) {
       soundSystem?.playWaterSound();
@@ -103,18 +103,18 @@ const LivestockTab = memo(() => {
 
   const handlePetAnimal = (animalId) => {
     if (!livestockSystem) return;
-    
+
     livestockSystem.petAnimal(animalId);
     soundSystem?.playClickSound();
   };
 
   const handleCollectProduct = (animalId) => {
     if (!livestockSystem) return;
-    
+
     const result = livestockSystem.collectProduct(animalId);
     if (result.success) {
       soundSystem?.playMoneySound();
-      
+
       // Trigger particle effect
       if (typeof window.triggerParticleEffect === 'function') {
         const centerX = window.innerWidth / 2;
@@ -128,7 +128,7 @@ const LivestockTab = memo(() => {
 
   const handleSellAnimal = (animalId) => {
     if (!livestockSystem) return;
-    
+
     const result = livestockSystem.sellAnimal(animalId);
     if (result.success) {
       soundSystem?.playMoneySound();
@@ -137,7 +137,7 @@ const LivestockTab = memo(() => {
 
   const handleUpgradeBarn = () => {
     if (!livestockSystem) return;
-    
+
     const result = livestockSystem.upgradeBarn();
     if (result.success) {
       soundSystem?.playBuildSound();
@@ -168,7 +168,7 @@ const LivestockTab = memo(() => {
             {stats.totalAnimals} Animals
           </Badge>
         </h3>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="text-center">
             <div className="text-2xl font-bold text-amber-700">{stats.totalAnimals}/{stats.capacity}</div>
@@ -187,7 +187,7 @@ const LivestockTab = memo(() => {
             <div className="text-xs text-gray-600">Ready to Collect</div>
           </div>
         </div>
-        
+
         {stats.dailyCost > 0 && (
           <div className="mt-3 text-center text-sm text-gray-600">
             Daily Maintenance: ${stats.dailyCost}
@@ -203,8 +203,8 @@ const LivestockTab = memo(() => {
             <div>
               <h4 className="font-bold text-gray-800">Barn Capacity</h4>
               <div className="flex items-center gap-2 mt-1">
-                <Progress 
-                  value={(stats.spaceUsed / stats.capacity) * 100} 
+                <Progress
+                  value={(stats.spaceUsed / stats.capacity) * 100}
                   className="h-2 w-32"
                   variant="energy"
                 />
@@ -230,196 +230,170 @@ const LivestockTab = memo(() => {
       </Card>
 
       {/* Buy Animals */}
-      <Card className="p-4 shadow-md">
-        <h4 className="font-bold mb-4 flex items-center gap-2 text-lg">
-          🛒 Buy Animals
-          <span className="text-xs text-gray-500 font-normal ml-2">Click to purchase</span>
-        </h4>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {Object.values(LIVESTOCK_TYPES).map(animalType => {
-            const canAfford = state.coins >= animalType.cost;
-            const hasSpace = stats.spaceUsed + animalType.requirements.space <= stats.capacity;
-            const meetsLevel = state.level >= animalType.requirements.level;
-            const canBuy = canAfford && hasSpace && meetsLevel;
+      <h4 className="font-bold px-1 mb-2 text-gray-700 flex items-center justify-between">
+        <span>🛒 Livestock Market</span>
+        <span className="text-xs font-normal text-gray-500 bg-white px-2 py-1 rounded-full border">
+          Barn Space: {stats.spaceUsed}/{stats.capacity}
+        </span>
+      </h4>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
+        {Object.values(LIVESTOCK_TYPES).map(animalType => {
+          const canAfford = state.coins >= animalType.cost;
+          const hasSpace = stats.spaceUsed + animalType.requirements.space <= stats.capacity;
+          const meetsLevel = state.level >= animalType.requirements.level;
+          const canBuy = canAfford && hasSpace && meetsLevel;
+
+          return (
+            <div
+              key={animalType.id}
+              className={`
+                    relative p-3 rounded-xl border-2 transition-all cursor-pointer group
+                    ${canBuy
+                  ? 'bg-white border-gray-200 hover:border-amber-400 hover:shadow-md'
+                  : 'bg-gray-50 border-gray-200 opacity-60 grayscale-[0.3]'
+                }
+                `}
+              onClick={() => canBuy && handleBuyAnimal(animalType.id)}
+            >
+              <div className="text-center relative z-10">
+                <div className="text-4xl mb-1 transform group-hover:scale-110 transition-transform duration-200">
+                  {animalType.emoji}
+                </div>
+                <div className="font-bold text-gray-900 text-sm">{animalType.name}</div>
+
+                <div className="mt-2 space-y-1">
+                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 w-full justify-center">
+                    {animalType.cost}🪙
+                  </Badge>
+                  <div className="text-[10px] text-gray-500">
+                    Produces: <span className="text-green-600 font-semibold">{animalType.products[0].item}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lock/Error Overlays */}
+              {!meetsLevel && (
+                <div className="absolute inset-0 bg-gray-100/80 backdrop-blur-[1px] flex items-center justify-center rounded-lg z-20">
+                  <Badge variant="destructive" className="text-[10px]">Lv.{animalType.requirements.level}</Badge>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Your Animals */}
+      <h4 className="font-bold px-1 mb-2 text-gray-700 flex items-center gap-2">
+        <span>🐾 Your Herd</span>
+        <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">{livestock.animals.length}</Badge>
+      </h4>
+
+      {livestock.animals.length === 0 ? (
+        <Card className="p-8 text-center bg-gray-50 border-dashed border-2 border-gray-200">
+          <div className="text-4xl mb-2 opacity-50">🏚️</div>
+          <p className="text-gray-500 font-medium">Your barn is empty.</p>
+          <p className="text-xs text-gray-400">Visit the market above to start your herd!</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {livestock.animals.map(animal => {
+            const timeSinceProduction = (Date.now() - animal.lastProduction) / 1000;
+            const productionProgress = Math.min(100, (timeSinceProduction / animal.type.productionTime) * 100);
+            const isReady = animal.hasProduct;
 
             return (
-              <Card 
-                key={animalType.id}
-                className={`p-3 cursor-pointer transition-all duration-200 ${
-                  canBuy 
-                    ? 'hover:shadow-lg hover:scale-105 hover:border-green-300 bg-white border-2 border-transparent' 
-                    : 'opacity-50 bg-gray-50 cursor-not-allowed'
-                }`}
-                onClick={() => canBuy && handleBuyAnimal(animalType.id)}
+              <Card
+                key={animal.id}
+                className={`
+                    p-3 transition-all duration-200 border-l-4 relative overflow-hidden
+                    ${isReady ? 'border-l-green-500 shadow-md ring-1 ring-green-100' : 'border-l-gray-300 hover:border-l-amber-300'}
+                  `}
               >
-                <div className="text-center">
-                  <div className="text-4xl mb-2">{animalType.emoji}</div>
-                  <div className="font-bold text-gray-800">{animalType.name}</div>
-                  <div className="text-xs text-gray-600 mb-2">
-                    {animalType.description}
-                  </div>
-                  
-                  <div className="text-sm space-y-1 mb-2">
-                    <div className="flex justify-between text-xs">
-                      <span>Cost:</span>
-                      <span className="font-bold text-yellow-600">${animalType.cost}</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span>Feed:</span>
-                      <span>${animalType.feedCost}</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span>Production:</span>
-                      <span className="font-bold text-green-600">
-                        ${animalType.products[0].value}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span>Time:</span>
-                      <span>{animalType.productionTime}s</span>
+                {isReady && <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-bl-lg animate-pulse" />}
+
+                <div className="flex gap-3">
+                  {/* Animal Icon/Avatar */}
+                  <div className="flex flex-col items-center justify-center min-w-[3rem]">
+                    <div className="text-3xl mb-1">{animal.type.emoji}</div>
+                    <div className="text-[10px] bg-gray-100 px-1.5 rounded text-gray-500">
+                      {Math.floor(animal.age / 60)}m
                     </div>
                   </div>
-                  
-                  {!meetsLevel && (
-                    <Badge variant="destructive" className="text-xs">
-                      Level {animalType.requirements.level} Required
-                    </Badge>
-                  )}
-                  {!hasSpace && meetsLevel && (
-                    <Badge variant="destructive" className="text-xs">
-                      No Space
-                    </Badge>
-                  )}
-                  {!canAfford && meetsLevel && hasSpace && (
-                    <Badge variant="destructive" className="text-xs">
-                      Can't Afford
-                    </Badge>
-                  )}
+
+                  {/* Stats & Controls */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="font-bold text-gray-900 leading-tight">{animal.name}</div>
+                        <div className="text-xs text-gray-500">{animal.type.name}</div>
+                      </div>
+
+                      {/* Mini Status Icons */}
+                      <div className="flex gap-1">
+                        <div className={`text-xs ${getHealthColor(animal.health)}`} title="Health">
+                          ❤️ {Math.floor(animal.health)}
+                        </div>
+                        <div className={`text-xs ${getHappinessColor(animal.happiness)}`} title="Happiness">
+                          😊 {Math.floor(animal.happiness)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Compact Progress Bars */}
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 mb-3">
+                      <div>
+                        <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
+                          <span>Hunger</span>
+                          <span className={animal.hunger > 80 ? 'text-red-500' : ''}>{Math.floor(animal.hunger)}%</span>
+                        </div>
+                        <Progress value={animal.hunger} className="h-1.5" variant={animal.hunger > 80 ? "destructive" : "default"} />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
+                          <span className={isReady ? 'text-green-600 font-bold' : ''}>Production</span>
+                          <span>{Math.floor(productionProgress)}%</span>
+                        </div>
+                        <Progress value={productionProgress} className="h-1.5" variant="growth" />
+                      </div>
+                    </div>
+
+                    {/* Action Buttons Row */}
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleFeedAnimal(animal.id)}
+                        size="xs"
+                        variant="outline"
+                        className="flex-1 h-7 text-[10px] border-amber-200 hover:bg-amber-50 text-amber-800"
+                        disabled={state.coins < animal.type.feedCost}
+                      >
+                        🍎 Feed ({animal.type.feedCost}🪙)
+                      </Button>
+
+                      <Button
+                        onClick={() => handlePetAnimal(animal.id)}
+                        size="xs"
+                        variant="ghost"
+                        className="px-2 h-7 text-[10px] hover:text-pink-600 hover:bg-pink-50"
+                      >
+                        💕
+                      </Button>
+
+                      <Button
+                        onClick={() => handleCollectProduct(animal.id)}
+                        size="xs"
+                        className={`flex-1 h-7 text-[10px] font-bold transition-all ${isReady ? 'bg-green-600 hover:bg-green-700 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}
+                        disabled={!animal.hasProduct}
+                      >
+                        {isReady ? `✨ Collect` : 'Wait'}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </Card>
             );
           })}
         </div>
-      </Card>
-
-      {/* Your Animals */}
-      <Card className="p-4 shadow-md">
-        <h4 className="font-bold mb-4 flex items-center gap-2 text-lg">
-          🐾 Your Animals
-          <Badge className="ml-2">{livestock.animals.length}</Badge>
-        </h4>
-        
-        {livestock.animals.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <div className="text-4xl mb-2">🏚️</div>
-            <p>No animals yet. Buy some above!</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {livestock.animals.map(animal => {
-              const timeSinceProduction = (Date.now() - animal.lastProduction) / 1000;
-              const productionProgress = Math.min(100, (timeSinceProduction / animal.type.productionTime) * 100);
-              
-              return (
-                <Card 
-                  key={animal.id}
-                  className="p-4 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-all duration-200 border-2 border-transparent hover:border-amber-200"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="text-4xl">{animal.type.emoji}</div>
-                      <div>
-                        <div className="font-bold text-gray-800">{animal.name}</div>
-                        <div className="text-xs text-gray-600">
-                          {animal.type.name} • Age: {Math.floor(animal.age / 60)}m
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleSellAnimal(animal.id)}
-                      className="text-xs"
-                    >
-                      Sell
-                    </Button>
-                  </div>
-                  
-                  {/* Stats */}
-                  <div className="space-y-2 mb-3">
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className={getHealthColor(animal.health)}>
-                          ❤️ Health: {Math.floor(animal.health)}%
-                        </span>
-                      </div>
-                      <Progress value={animal.health} variant="health" className="h-2" />
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className={getHappinessColor(animal.happiness)}>
-                          😊 Happiness: {Math.floor(animal.happiness)}%
-                        </span>
-                      </div>
-                      <Progress value={animal.happiness} variant="xp" className="h-2" />
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-orange-600">
-                          🍖 Hunger: {Math.floor(animal.hunger)}%
-                        </span>
-                      </div>
-                      <Progress value={animal.hunger} variant="energy" className="h-2" />
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-green-600">
-                          {animal.type.products[0].item}: {Math.floor(productionProgress)}%
-                        </span>
-                      </div>
-                      <Progress value={productionProgress} variant="growth" className="h-2" />
-                    </div>
-                  </div>
-                  
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleFeedAnimal(animal.id)}
-                      variant="default"
-                      size="sm"
-                      className="flex-1 text-xs"
-                      disabled={state.coins < animal.type.feedCost}
-                    >
-                      Feed (${animal.type.feedCost})
-                    </Button>
-                    <Button
-                      onClick={() => handlePetAnimal(animal.id)}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs"
-                    >
-                      Pet 💕
-                    </Button>
-                    <Button
-                      onClick={() => handleCollectProduct(animal.id)}
-                      variant="primary"
-                      size="sm"
-                      className="flex-1 text-xs"
-                      disabled={!animal.hasProduct}
-                    >
-                      {animal.hasProduct ? '✨ Collect' : '⏳ Wait'}
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </Card>
+      )}
     </div>
   );
 });
