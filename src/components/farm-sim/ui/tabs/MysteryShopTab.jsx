@@ -29,7 +29,7 @@ const MysteryShopTab = memo(() => {
     actions.setCoins(state.coins - pack.cost);
 
     // Roll the mystery seed
-    const result = pack.guaranteedRarity 
+    const result = pack.guaranteedRarity
       ? rollMysterySeedWithGuarantee(pack.guaranteedRarity)
       : rollMysterySeed();
 
@@ -83,84 +83,109 @@ const MysteryShopTab = memo(() => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <Card className="p-4 bg-gradient-to-r from-purple-50 to-pink-50">
-        <div className="flex justify-between items-center">
+      <Card className="p-6 bg-gradient-to-r from-purple-800 to-indigo-900 text-white relative overflow-hidden shadow-xl border-purple-700">
+        <div className="absolute top-0 right-0 p-8 opacity-20 text-9xl pointer-events-none animate-pulse-slow">✨</div>
+        <div className="flex justify-between items-center relative z-10">
           <div>
-            <h3 className="text-lg font-semibold text-purple-800 flex items-center gap-2">
-              <Sparkles className="w-5 h-5" />
-              🎰 Mystery Seed Shop
+            <h3 className="text-2xl font-black flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-400 filter drop-shadow">
+              <Sparkles className="w-6 h-6 text-yellow-300" />
+              Mystery Seed Shop
             </h3>
-            <p className="text-sm text-purple-600 mt-1">Test your luck! Rare seeds await...</p>
+            <p className="text-purple-200 mt-2 font-medium">Rare and legendary seeds await the bold!</p>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-purple-600">{lastReveals.length}</div>
-            <div className="text-xs text-gray-600">Seeds Revealed</div>
+          <div className="text-right bg-black/20 p-3 rounded-xl backdrop-blur-sm border border-white/10">
+            <div className="text-3xl font-bold text-yellow-300">{lastReveals.length}</div>
+            <div className="text-xs text-purple-200 uppercase tracking-widest">Opened</div>
           </div>
         </div>
       </Card>
 
-      {/* Reveal Animation */}
+      {/* Reveal Animation Area */}
       {isRevealing && revealAnimation && (
-        <Card className="p-8 bg-gradient-to-r from-yellow-50 to-amber-50 border-4 border-yellow-400 animate-pulse">
-          <div className="text-center">
-            <div className="text-6xl mb-4 animate-bounce">📦</div>
-            <div className="text-xl font-bold text-gray-800">Opening...</div>
-            <div className="mt-2 text-sm text-gray-600">What will you get?</div>
-          </div>
-        </Card>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <Card className="p-12 bg-gradient-to-br from-indigo-900 to-purple-900 border-4 border-yellow-400 shadow-2xl flex flex-col items-center justify-center gap-6 max-w-md w-full mx-4 relative overflow-hidden">
+            {/* Rays background */}
+            <div className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent_0_20deg,#fbbf24_20deg_40deg,transparent_40deg_60deg,#fbbf24_60deg_80deg,transparent_80deg_100deg,#fbbf24_100deg_120deg,transparent_120deg_140deg,#fbbf24_140deg_160deg,transparent_160deg_180deg,#fbbf24_180deg_200deg,transparent_200deg_220deg,#fbbf24_220deg_240deg,transparent_240deg_260deg,#fbbf24_260deg_280deg,transparent_280deg_300deg,#fbbf24_300deg_320deg,transparent_320deg_340deg,#fbbf24_340deg_360deg)] opacity-10 animate-spin-slow"></div>
+
+            <div className="text-8xl animate-bounce filter drop-shadow-2xl">📦</div>
+            <div className="text-center relative z-10">
+              <h2 className="text-3xl font-bold text-white mb-2">Revealing...</h2>
+              <p className="text-purple-200">Fingers crossed for Legendary!</p>
+            </div>
+          </Card>
+        </div>
       )}
 
       {/* Mystery Packs */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3 flex items-center gap-2">
-          <Gift className="w-4 h-4" />
-          🎁 Available Packs
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {Object.values(MYSTERY_SEED_PACKS).map((pack) => (
-            <Card
-              key={pack.id}
-              className="p-4 border-2 hover:shadow-lg transition-all"
-              style={{
-                borderColor: pack.guaranteedRarity ? getRarityColor(pack.guaranteedRarity) : '#9ca3af',
-              }}
-            >
-              <div className="text-center mb-3">
-                <div className="text-4xl mb-2">{pack.emoji}</div>
-                <div className="font-semibold text-lg">{pack.name}</div>
-                <div className="text-xs text-gray-600 mt-1">{pack.description}</div>
-              </div>
+      <Card className="p-6 border-none bg-transparent shadow-none">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Object.values(MYSTERY_SEED_PACKS).map((pack) => {
+            const isLegendary = pack.id.includes('legendary') || pack.guaranteedRarity === 'rare';
+            const borderColor = pack.guaranteedRarity ? getRarityColor(pack.guaranteedRarity) : '#cbd5e1';
 
-              <div className="space-y-2 mb-3">
-                <div className="text-center">
-                  <Badge className="bg-yellow-600">{pack.cost}🪙</Badge>
-                </div>
-                {pack.guaranteedRarity && (
-                  <div className="text-center">
-                    <Badge
-                      style={{
-                        backgroundColor: getRarityColor(pack.guaranteedRarity),
-                        color: 'white',
-                      }}
-                    >
-                      Min: {pack.guaranteedRarity}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-
-              <Button
-                onClick={() => handleBuyPack(pack)}
-                disabled={state.coins < pack.cost || isRevealing}
-                className="w-full"
+            return (
+              <Card
+                key={pack.id}
+                className={`
+                 relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group
+                 ${isLegendary ? 'bg-gradient-to-br from-slate-900 to-slate-800 text-white border-yellow-500/50' : 'bg-white hover:border-purple-300'}
+              `}
                 style={{
-                  backgroundColor: state.coins >= pack.cost && !isRevealing ? getRarityColor(pack.guaranteedRarity || 'common') : undefined,
+                  borderWidth: '2px',
+                  borderColor: isLegendary ? '#fbbf24' : borderColor,
                 }}
               >
-                {state.coins >= pack.cost ? '🎰 Try Luck' : `Need ${pack.cost}🪙`}
-              </Button>
-            </Card>
-          ))}
+                {/* Shine effect for premium cards */}
+                {isLegendary && (
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent skew-x-12 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none"></div>
+                )}
+
+                <div className="p-5 flex flex-col h-full bg-opacity-90">
+                  <div className="text-center mb-4 flex-grow">
+                    <div className={`text-5xl mb-3 transform transition-transform group-hover:scale-110 drop-shadow-md`}>{pack.emoji}</div>
+                    <div className={`font-bold text-xl mb-1 ${isLegendary ? 'text-yellow-400' : 'text-gray-800'}`}>{pack.name}</div>
+                    <div className={`text-xs ${isLegendary ? 'text-gray-400' : 'text-gray-500'}`}>{pack.description}</div>
+                  </div>
+
+                  <div className="space-y-3 mt-auto">
+                    {pack.guaranteedRarity && (
+                      <div className="flex justify-center">
+                        <Badge
+                          className="px-3 py-1 text-xs uppercase tracking-wider font-bold shadow-sm"
+                          style={{
+                            backgroundColor: getRarityColor(pack.guaranteedRarity),
+                            color: 'white',
+                          }}
+                        >
+                          Min: {pack.guaranteedRarity}
+                        </Badge>
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={() => handleBuyPack(pack)}
+                      disabled={state.coins < pack.cost || isRevealing}
+                      className={`
+                        w-full font-bold h-10 transition-all shadow-md
+                        ${state.coins >= pack.cost
+                          ? isLegendary
+                            ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white border-0'
+                            : 'bg-white border-2 border-purple-600 text-purple-700 hover:bg-purple-50'
+                          : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        }
+                    `}
+                    >
+                      {state.coins >= pack.cost ? (
+                        <span className="flex items-center gap-2">
+                          {isLegendary ? '🎰 High Stakes' : '🎲 Open Pack'} <span className="text-xs bg-black/20 px-1.5 py-0.5 rounded-full">{pack.cost}🪙</span>
+                        </span>
+                      ) : `Need ${pack.cost}🪙`}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )
+          })}
         </div>
       </Card>
 

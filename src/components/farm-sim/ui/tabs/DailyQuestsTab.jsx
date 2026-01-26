@@ -99,33 +99,49 @@ const DailyQuestsTab = memo(() => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <Card className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50">
-        <div className="flex justify-between items-start">
+      <Card className="p-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white overflow-hidden relative shadow-lg">
+        <div className="absolute top-0 right-0 p-6 opacity-10 text-9xl pointer-events-none">🎯</div>
+        <div className="flex justify-between items-start relative z-10">
           <div>
-            <h3 className="text-lg font-semibold text-indigo-800 flex items-center gap-2">
-              <Target className="w-5 h-5" />
-              📋 Daily Quests
+            <h3 className="text-2xl font-bold flex items-center gap-3">
+              <span className="bg-white/20 p-2 rounded-xl backdrop-blur-sm">🎯</span> Daily Quests
             </h3>
-            <p className="text-sm text-indigo-600 mt-1">Complete daily goals for rewards!</p>
+            <p className="text-indigo-100 mt-2 max-w-xs">Complete daily tasks to maintain your streak and earn huge bonuses!</p>
           </div>
-          <div className="text-right">
-            <div className="flex items-center gap-1 text-orange-600 mb-1">
-              <Flame className="w-4 h-4" />
-              <span className="text-xl font-bold">{streak}</span>
+
+          <div className="flex flex-col items-end gap-3">
+            {/* Streak Counter */}
+            <div className={`
+                 px-4 py-2 rounded-xl border border-white/20 backdrop-blur-md flex items-center gap-2
+                 ${streak > 0 ? 'bg-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.5)]' : 'bg-black/20'}
+             `}>
+              <div className={`relative ${streak > 0 ? 'animate-bounce-slow' : ''}`}>
+                <Flame className={`w-6 h-6 ${streak > 0 ? 'text-orange-400 fill-orange-400 drop-shadow-lg' : 'text-gray-400'}`} />
+                {streak > 5 && <div className="absolute inset-0 animate-ping opacity-50 text-orange-400"><Flame className="w-6 h-6 fill-current" /></div>}
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-black leading-none">{streak}</div>
+                <div className="text-[10px] uppercase font-bold tracking-widest text-white/70">Streak</div>
+              </div>
             </div>
-            <div className="text-xs text-gray-600">Day Streak</div>
+
+            <div className="text-xs font-mono bg-black/30 px-2 py-1 rounded text-white/60 flex items-center gap-1">
+              <Calendar className="w-3 h-3" /> Resets in {getTimeUntilReset()}
+            </div>
           </div>
         </div>
 
-        <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
-          <div className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            <span>Resets in: {getTimeUntilReset()}</span>
+        {/* Progress Strip */}
+        <div className="mt-6 bg-black/20 p-3 rounded-lg flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-yellow-400" />
+            <span className="text-sm font-medium">{totalCompleted} quests completed total</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Trophy className="w-3 h-3" />
-            <span>{totalCompleted} total completed</span>
-          </div>
+          {streakBonus > 1 && (
+            <Badge className="bg-orange-500 text-white border-0 animate-pulse">
+              🔥 {Math.round((streakBonus - 1) * 100)}% Bonus Active
+            </Badge>
+          )}
         </div>
       </Card>
 
@@ -184,10 +200,10 @@ const DailyQuestsTab = memo(() => {
                 <Card
                   key={quest.id}
                   className={`p-4 border-2 transition-all ${quest.claimed
-                      ? 'bg-gray-50 border-gray-300 opacity-60'
-                      : quest.completed
-                        ? 'bg-green-50 border-green-400 shadow-lg'
-                        : 'border-gray-200 hover:shadow-md'
+                    ? 'bg-gray-50 border-gray-300 opacity-60'
+                    : quest.completed
+                      ? 'bg-green-50 border-green-400 shadow-lg'
+                      : 'border-gray-200 hover:shadow-md'
                     }`}
                 >
                   <div className="flex items-start justify-between mb-2">

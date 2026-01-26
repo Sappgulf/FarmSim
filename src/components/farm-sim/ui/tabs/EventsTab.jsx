@@ -90,7 +90,7 @@ const SEASONAL_EVENTS = {
 const EventsTab = memo(() => {
   const { state, actions } = useGame();
   const [eventHistory, setEventHistory] = useState([]);
-  
+
   // Ensure event-related state exists
   const activeSeasonalEvents = state.activeSeasonalEvents || [];
   const seasonalEvents = state.seasonalEvents || [];
@@ -191,112 +191,143 @@ const EventsTab = memo(() => {
   return (
     <div className="space-y-4">
       {/* Season Header */}
-      <Card className="p-4 bg-gradient-to-r from-green-50 to-blue-50">
-        <div className="flex justify-between items-center">
+      <Card className={`p-6 bg-gradient-to-r ${currentSeason === 'spring' ? 'from-green-400 to-emerald-600' :
+          currentSeason === 'summer' ? 'from-yellow-400 to-orange-500' :
+            currentSeason === 'autumn' ? 'from-orange-500 to-red-600' :
+              'from-blue-400 to-indigo-600'
+        } text-white shadow-lg overflow-hidden relative`}>
+        <div className="absolute top-0 right-0 p-8 opacity-20 text-9xl pointer-events-none animate-spin-slow">
+          {currentSeason === 'spring' ? '🌸' :
+            currentSeason === 'summer' ? '☀️' :
+              currentSeason === 'autumn' ? '🍂' : '❄️'}
+        </div>
+
+        <div className="flex justify-between items-center relative z-10">
           <div>
-            <h3 className="text-lg font-semibold text-green-800">🎉 Seasonal Events</h3>
-            <p className="text-sm text-green-700 capitalize">
-              Current Season: {currentSeason} {currentSeason === 'spring' ? '🌸' :
-                                              currentSeason === 'summer' ? '☀️' :
-                                              currentSeason === 'autumn' ? '🍂' : '❄️'}
+            <h3 className="text-2xl font-black flex items-center gap-2 drop-shadow-md">
+              🎉 Seasonal Events
+            </h3>
+            <p className="text-white/90 font-medium capitalize mt-1 flex items-center gap-2">
+              Current Season: <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm">{currentSeason}</Badge>
             </p>
           </div>
-          <Badge variant="outline" className="bg-green-100 text-green-700">
-            {seasonEvents.length} Events Available
-          </Badge>
+          <div className="text-right bg-black/20 p-3 rounded-xl backdrop-blur-sm border border-white/10">
+            <div className="text-2xl font-bold">{seasonEvents.length}</div>
+            <div className="text-xs text-white/80 uppercase tracking-widest">Available</div>
+          </div>
         </div>
       </Card>
 
-      {/* Active Event */}
+      {/* Active Event - Hero Card */}
       {activeEvent && (
-        <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
-          <div className="flex justify-between items-start mb-3">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{activeEvent.emoji}</span>
-              <div>
-                <h4 className="font-semibold text-lg">{activeEvent.name}</h4>
-                <p className="text-sm text-gray-600">{activeEvent.description}</p>
-              </div>
-            </div>
-            <Badge className={getRarityColor(activeEvent.rarity)}>
-              {activeEvent.rarity}
-            </Badge>
-          </div>
-
-          <div className="mb-3">
-            <div className="flex justify-between text-sm mb-1">
-              <span>Time Remaining</span>
-              <span className="font-mono">{getEventTimeLeft(activeEvent)}</span>
-            </div>
-            <Progress
-              value={((activeEvent.endsAt - Date.now()) / (activeEvent.duration * 1000)) * 100}
-              className="h-2"
-            />
-          </div>
-
-          {/* Event Effects */}
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            {Object.entries(activeEvent.effects).map(([effect, value]) => (
-              <div key={effect} className="flex justify-between p-2 bg-white rounded">
-                <span className="capitalize">{effect.replace('_', ' ')}:</span>
-                <span className="font-semibold">
-                  {typeof value === 'boolean' ? (value ? '✓' : '✗') :
-                   typeof value === 'number' && value > 1 ? `+${Math.round((value - 1) * 100)}%` :
-                   value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Trigger Event */}
-      {!activeEvent && (
-        <Card className="p-4">
-          <div className="text-center">
-            <div className="text-gray-500 mb-4">
-              <div className="text-4xl mb-2">🎲</div>
-              <p>No active seasonal events</p>
-              <p className="text-sm">Trigger a random event to earn rewards!</p>
-            </div>
-            <Button
-              onClick={triggerSeasonalEvent}
-              className="w-full"
-              disabled={seasonEvents.length === 0}
-            >
-              🎲 Trigger {currentSeason} Event
-            </Button>
-            {seasonEvents.length === 0 && (
-              <p className="text-xs text-gray-500 mt-2">
-                No events available for this season
-              </p>
-            )}
-          </div>
-        </Card>
-      )}
-
-      {/* Available Events */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">📅 Available {currentSeason} Events</h4>
-
-        <div className="space-y-3">
-          {seasonEvents.map(event => (
-            <div key={event.id} className="p-3 border rounded">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">{event.emoji}</span>
-                  <span className="font-medium">{event.name}</span>
+        <Card className="p-1 border-0 shadow-xl bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 animate-in zoom-in-95 duration-500">
+          <div className="bg-white/90 backdrop-blur-xl rounded-xl p-5 h-full">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-4">
+                <div className="text-5xl animate-bounce filter drop-shadow-md">{activeEvent.emoji}</div>
+                <div>
+                  <h4 className="font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
+                    {activeEvent.name}
+                  </h4>
+                  <p className="text-sm font-medium text-gray-600 max-w-md">{activeEvent.description}</p>
                 </div>
-                <Badge variant="outline" className={getRarityColor(event.rarity)}>
+              </div>
+              <Badge className={`px-3 py-1 shadow-sm ${getRarityColor(activeEvent.rarity)}`}>
+                {activeEvent.rarity}
+              </Badge>
+            </div>
+
+            <div className="mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
+              <div className="flex justify-between text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
+                <span>Event Duration</span>
+                <span className="font-mono text-amber-600">{getEventTimeLeft(activeEvent)}</span>
+              </div>
+              <Progress
+                value={((activeEvent.endsAt - Date.now()) / (activeEvent.duration * 1000)) * 100}
+                className="h-3"
+              />
+            </div>
+
+            {/* Event Effects Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              {Object.entries(activeEvent.effects).map(([effect, value]) => (
+                <div key={effect} className="flex justify-between items-center p-2.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-orange-100 rounded-lg">
+                  <span className="capitalize text-sm font-medium text-amber-900">{effect.replace('_', ' ')}:</span>
+                  <Badge className="bg-amber-100 text-amber-700 border-0">
+                    {typeof value === 'boolean' ? (value ? 'ACTIVE' : 'INACTIVE') :
+                      typeof value === 'number' && value > 1 ? `+${Math.round((value - 1) * 100)}%` :
+                        value}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Trigger Event / Empty State */}
+      {!activeEvent && (
+        <Card className="p-8 border-dashed border-2 border-gray-200 bg-gray-50/50 flex flex-col items-center justify-center text-center gap-4 hover:border-blue-300 transition-colors group">
+          <div className="transform transition-transform group-hover:scale-110 duration-300">
+            <div className="text-6xl mb-2 opacity-50 grayscale group-hover:grayscale-0 transition-all">🎲</div>
+          </div>
+
+          <div className="max-w-sm">
+            <h4 className="text-xl font-bold text-gray-700">No Event Active</h4>
+            <p className="text-gray-500 mt-1">Roll the dice to trigger a seasonal event and earn special bonuses!</p>
+          </div>
+
+          <Button
+            onClick={triggerSeasonalEvent}
+            className={`
+                 font-bold text-lg px-8 py-6 shadow-lg transition-all hover:-translate-y-1 rounded-xl gap-2
+                 ${seasonEvents.length > 0
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
+              `}
+            disabled={seasonEvents.length === 0}
+          >
+            {seasonEvents.length > 0 ? (
+              <>🎲 Trigger {currentSeason} Event</>
+            ) : (
+              'No Events Available'
+            )}
+          </Button>
+        </Card>
+      )}
+
+      {/* Available Events List */}
+      <Card className="p-6 border-white shadow-sm bg-white/80 backdrop-blur-sm">
+        <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <span className="bg-gray-100 p-1.5 rounded-lg">📅</span> Available {currentSeason} Events
+        </h4>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {seasonEvents.map(event => (
+            <div key={event.id} className="p-4 border border-gray-100 rounded-xl hover:shadow-md transition-all hover:border-blue-200 bg-white group">
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl transform group-hover:scale-110 transition-transform">{event.emoji}</span>
+                  <div>
+                    <span className="font-bold text-gray-800 block leading-tight">{event.name}</span>
+                    <span className="text-[10px] text-gray-400 font-mono uppercase tracking-wide">
+                      {Math.round(event.duration / 60)} Minutes
+                    </span>
+                  </div>
+                </div>
+                <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider ${getRarityColor(event.rarity)}`}>
                   {event.rarity}
                 </Badge>
               </div>
 
-              <p className="text-sm text-gray-600 mb-2">{event.description}</p>
+              <p className="text-xs text-gray-600 mb-3 leading-relaxed border-t border-gray-50 pt-2 mt-2">
+                {event.description}
+              </p>
 
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Duration: {Math.round(event.duration / 60)}m</span>
-                <span>Reward: {event.rewards.coins}🪙</span>
+              <div className="flex items-center justify-end">
+                <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                  💰 {event.rewards.coins} Coins
+                </Badge>
               </div>
             </div>
           ))}
@@ -304,21 +335,26 @@ const EventsTab = memo(() => {
       </Card>
 
       {/* Event History */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">📜 Recent Events</h4>
+      <Card className="p-6">
+        <h4 className="font-bold text-gray-800 mb-4">📜 Recent History</h4>
 
         {eventHistory.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">No completed events yet</p>
+          <div className="text-gray-400 text-center py-6 italic bg-gray-50 rounded-xl border border-dashed border-gray-200">
+            No completed events recorded yet.
+          </div>
         ) : (
           <div className="space-y-2">
             {eventHistory.slice(0, 5).map((event, index) => (
-              <div key={index} className="p-2 bg-gray-50 rounded text-sm">
-                <div className="flex justify-between items-center">
-                  <span>{event.emoji} {event.name}</span>
-                  <span className="text-green-600 font-semibold">+{event.rewards.coins}🪙</span>
+              <div key={index} className="p-3 bg-gray-50 rounded-xl text-sm flex items-center justify-between hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-100 transition-all">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{event.emoji}</span>
+                  <span className="font-medium text-gray-700">{event.name}</span>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {new Date(event.completedAt).toLocaleDateString()}
+                <div className="text-right">
+                  <div className="text-green-600 font-bold text-xs">+{event.rewards.coins}🪙</div>
+                  <div className="text-[10px] text-gray-400">
+                    {new Date(event.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
                 </div>
               </div>
             ))}

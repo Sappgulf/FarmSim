@@ -7,7 +7,7 @@ import { Progress } from '../../../ui/progress';
 
 const SocialTab = memo(() => {
   const { state, actions } = useGame();
-  
+
   // Ensure social state exists
   const social = state.social || { friends: [], reputation: 0, marketListings: [] };
 
@@ -43,95 +43,118 @@ const SocialTab = memo(() => {
   return (
     <div className="space-y-4">
       {/* Social Overview */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50">
-        <div className="flex justify-between items-center">
+      <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-5 text-9xl pointer-events-none">👥</div>
+        <div className="flex justify-between items-center relative z-10">
           <div>
-            <h3 className="text-lg font-semibold text-blue-800">👥 Social Hub</h3>
-            <p className="text-sm text-blue-700">
-              Reputation: {social.reputation} • Friends: {social.friends.length}
-            </p>
+            <h3 className="text-xl font-bold text-blue-900 flex items-center gap-2">
+              <span className="bg-blue-100 p-2 rounded-lg">👥</span> Social Hub
+            </h3>
+            <p className="text-sm text-blue-700 mt-1">Connect, help friends, and climb the ranks!</p>
           </div>
-          <Badge variant="outline" className="bg-blue-100 text-blue-700">
-            Level {state.level}
-          </Badge>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <div className="text-sm text-blue-600 font-medium">Your Reputation</div>
+              <div className="text-2xl font-bold text-blue-800">{social.reputation} 🌟</div>
+            </div>
+            <div className="h-10 w-px bg-blue-200"></div>
+            <div className="text-right">
+              <div className="text-sm text-blue-600 font-medium">Friends</div>
+              <div className="text-2xl font-bold text-blue-800">{social.friends.length}</div>
+            </div>
+          </div>
         </div>
       </Card>
 
       {/* Your Profile */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">📋 Your Profile</h4>
-        
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="text-center p-2 bg-green-50 rounded">
-            <div className="font-bold text-green-600">{state.level}</div>
-            <div className="text-green-700">Farm Level</div>
+      <Card className="p-5 border-gray-200 shadow-sm">
+        <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <span className="text-xl">📋</span> Your Farmer Profile
+        </h4>
+
+        <div className="grid grid-cols-4 gap-4">
+          <div className="flex flex-col items-center justify-center p-3 bg-green-50 rounded-xl border border-green-100">
+            <div className="text-2xl mb-1">🧑‍🌾</div>
+            <div className="font-bold text-green-700 text-lg">{state.level}</div>
+            <div className="text-xs font-semibold text-green-600 uppercase tracking-wide">Level</div>
           </div>
-          <div className="text-center p-2 bg-blue-50 rounded">
-            <div className="font-bold text-blue-600">{social.reputation}</div>
-            <div className="text-blue-700">Reputation</div>
+          <div className="flex flex-col items-center justify-center p-3 bg-blue-50 rounded-xl border border-blue-100">
+            <div className="text-2xl mb-1">🌟</div>
+            <div className="font-bold text-blue-700 text-lg">{social.reputation}</div>
+            <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Rep</div>
           </div>
-          <div className="text-center p-2 bg-yellow-50 rounded">
-            <div className="font-bold text-yellow-600">{state.coins}🪙</div>
-            <div className="text-yellow-700">Total Coins</div>
+          <div className="flex flex-col items-center justify-center p-3 bg-yellow-50 rounded-xl border border-yellow-100">
+            <div className="text-2xl mb-1">💰</div>
+            <div className="font-bold text-yellow-700 text-lg">{state.coins}</div>
+            <div className="text-xs font-semibold text-yellow-600 uppercase tracking-wide">Coins</div>
           </div>
-          <div className="text-center p-2 bg-purple-50 rounded">
-            <div className="font-bold text-purple-600">{state.xp} XP</div>
-            <div className="text-purple-700">Experience</div>
+          <div className="flex flex-col items-center justify-center p-3 bg-purple-50 rounded-xl border border-purple-100">
+            <div className="text-2xl mb-1">✨</div>
+            <div className="font-bold text-purple-700 text-lg">{state.xp}</div>
+            <div className="text-xs font-semibold text-purple-600 uppercase tracking-wide">XP</div>
           </div>
         </div>
       </Card>
 
       {/* Friends List */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">👫 Friends</h4>
+      <Card className="p-5 border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center mb-4">
+          <h4 className="font-bold text-gray-800 flex items-center gap-2">
+            <span className="text-xl">👫</span> Friends List
+          </h4>
+          <Button size="sm" variant="outline" className="text-xs">
+            🔍 Find Friends
+          </Button>
+        </div>
 
         {mockFriends.length === 0 ? (
-          <div className="text-center py-4">
-            <p className="text-gray-500 mb-4">No friends yet</p>
-            <Button size="sm">
-              🔍 Find Friends
-            </Button>
+          <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+            <div className="text-4xl mb-3 opacity-50">👥</div>
+            <p className="text-gray-500 font-medium">No friends yet</p>
+            <p className="text-sm text-gray-400 mb-4">Add friends to visit their farms!</p>
+            <Button size="sm">Add Frinds</Button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {mockFriends.map(friend => (
-              <Card key={friend.id} className="p-3">
-                <div className="flex justify-between items-start mb-2">
+              <Card key={friend.id} className="p-4 hover:shadow-md transition-shadow border-gray-100">
+                <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="text-2xl">👤</div>
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center text-xl border border-blue-200 shadow-inner">
+                      👤
+                    </div>
                     <div>
-                      <div className="font-medium">{friend.name}</div>
-                      <div className="text-xs text-gray-600">
-                        Level {friend.level} • {friend.reputation} reputation
+                      <div className="font-bold text-gray-800">{friend.name}</div>
+                      <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                        <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">Lvl {friend.level}</span>
+                        <span className="text-emerald-600 flex items-center gap-0.5">
+                          <span className="text-[10px]">⭐</span> {friend.reputation}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <Badge variant={friend.status === 'online' ? 'default' : 'outline'}>
-                    {friend.status === 'online' ? '🟢 Online' : '⚪ Offline'}
+                  <Badge variant={friend.status === 'online' ? 'default' : 'secondary'} className={friend.status === 'online' ? 'bg-green-500 hover:bg-green-600' : ''}>
+                    {friend.status === 'online' ? '● Online' : '○ Offline'}
                   </Badge>
                 </div>
 
-                <div className="text-xs text-gray-500 mb-2">
-                  Last active: {friend.lastActive}
-                </div>
-
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-2">
                   <Button
                     onClick={() => handleVisitFarm(friend.id)}
                     size="sm"
                     variant="outline"
-                    className="text-xs flex-1"
+                    className="flex-1 h-8 text-xs border-blue-200 text-blue-700 hover:bg-blue-50"
                   >
-                    🏠 Visit Farm
+                    🏠 Visit
                   </Button>
                   <Button
                     onClick={() => handleSendGift(friend.id)}
                     size="sm"
                     variant="outline"
-                    className="text-xs flex-1"
+                    className="flex-1 h-8 text-xs border-pink-200 text-pink-700 hover:bg-pink-50"
                     disabled={state.coins < 10}
                   >
-                    🎁 Send Gift (10🪙)
+                    🎁 Gift (10🪙)
                   </Button>
                 </div>
               </Card>
@@ -141,25 +164,48 @@ const SocialTab = memo(() => {
       </Card>
 
       {/* Leaderboard */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">🏆 Leaderboard</h4>
+      <Card className="p-5 border-gray-200 shadow-sm overflow-hidden relative">
+        <div className="absolute top-0 right-0 p-6 opacity-5 text-8xl pointer-events-none -rotate-12">🏆</div>
+        <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2 relative z-10">
+          <span className="text-xl">🏆</span> Global Leaderboard
+        </h4>
 
-        <div className="space-y-2">
+        <div className="space-y-2 relative z-10">
           {[...mockFriends]
             .sort((a, b) => b.reputation - a.reputation)
-            .map((friend, index) => (
-              <div key={friend.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="w-8 text-center">
-                    #{index + 1}
-                  </Badge>
-                  <span className="font-medium">{friend.name}</span>
+            .map((friend, index) => {
+              let rankStyle = "bg-gray-50 border-gray-100";
+              let rankIcon = `#${index + 1}`;
+
+              if (index === 0) {
+                rankStyle = "bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 ring-1 ring-yellow-100";
+                rankIcon = "🥇";
+              } else if (index === 1) {
+                rankStyle = "bg-gradient-to-r from-slate-50 to-gray-50 border-slate-200";
+                rankIcon = "🥈";
+              } else if (index === 2) {
+                rankStyle = "bg-gradient-to-r from-orange-50 to-amber-50/50 border-orange-200";
+                rankIcon = "🥉";
+              }
+
+              return (
+                <div key={friend.id} className={`flex justify-between items-center p-3 rounded-xl border transition-all hover:scale-[1.01] ${rankStyle}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 flex items-center justify-center font-bold text-lg">
+                      {rankIcon}
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-800">{friend.name}</div>
+                      <div className="text-xs text-gray-500">Farmer Level {friend.level}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-blue-700">{friend.reputation}</div>
+                    <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Reputation</div>
+                  </div>
                 </div>
-                <span className="text-sm text-blue-600 font-semibold">
-                  {friend.reputation} 🏆
-                </span>
-              </div>
-            ))}
+              );
+            })}
         </div>
       </Card>
 

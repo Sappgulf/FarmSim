@@ -17,7 +17,6 @@ const WeatherTab = lazy(() => import('./tabs/WeatherTab'));
 const PetsTab = lazy(() => import('./tabs/PetsTab'));
 const LivestockTab = lazy(() => import('./tabs/LivestockTab'));
 const FishingTab = lazy(() => import('./tabs/FishingTab'));
-const ChallengesTab = lazy(() => import('./tabs/ChallengesTab'));
 const EventsTab = lazy(() => import('./tabs/EventsTab'));
 const ProcessingTab = lazy(() => import('./tabs/ProcessingTab'));
 const AchievementsTab = lazy(() => import('./tabs/AchievementsTab'));
@@ -63,7 +62,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
     { id: 'pets', label: '🐕 Pets', component: PetsTab },
     { id: 'livestock', label: '🐄 Livestock', component: LivestockTab },
     { id: 'fishing', label: '🎣 Fishing', component: FishingTab },
-    { id: 'challenges', label: '🎯 Challenges', component: ChallengesTab },
+    // Challenges merged into Quests
     { id: 'events', label: '🎉 Events', component: EventsTab },
     { id: 'processing', label: '🏭 Processing', component: ProcessingTab },
     { id: 'achievements', label: '🏆 Achievements', component: AchievementsTab },
