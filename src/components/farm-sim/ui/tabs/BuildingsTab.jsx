@@ -151,86 +151,114 @@ const BuildingsTab = memo(() => {
       </Card>
 
       {/* Available Buildings */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">🏘️ Available Buildings</h4>
-        <div className="space-y-3">
-          {buildings.map(building => {
-            const isBuilt = state.buildings[building.id]?.built;
-            const canAfford = state.coins >= building.cost;
-            const isLocked = building.requiredLevel && state.level < building.requiredLevel;
+      <h4 className="font-semibold px-1 mb-2 text-gray-700">🏘️ Construction Projects</h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {buildings.map(building => {
+          const isBuilt = state.buildings[building.id]?.built;
+          const canAfford = state.coins >= building.cost;
+          const isLocked = building.requiredLevel && state.level < building.requiredLevel;
 
-            return (
-              <Card
-                key={building.id}
-                data-building-id={building.id}
-                className={`p-3 border-2 transition-all ${isBuilt
-                    ? 'bg-green-50 border-green-300 animate-slide-up'
-                    : isLocked
-                      ? 'bg-gray-50 border-gray-300 opacity-60'
-                      : getCategoryColor(building.category)
-                  }`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{isLocked ? '🔒' : building.emoji}</span>
-                    <div>
-                      <div className="font-semibold text-lg flex items-center gap-2">
-                        {building.name}
-                        {building.requiredLevel && (
-                          <Badge variant="outline" className="text-xs">
-                            Lv.{building.requiredLevel}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="text-xs text-gray-500">{building.category}</div>
-                    </div>
+          return (
+            <div
+              key={building.id}
+              data-building-id={building.id}
+              className={`
+                relative p-4 rounded-xl border-2 transition-all group overflow-hidden
+                ${isBuilt
+                  ? 'bg-green-50 border-green-400 opacity-90'
+                  : isLocked
+                    ? 'bg-gray-100 border-gray-200 opacity-70 grayscale-[0.5]'
+                    : `bg-white hover:shadow-md ${getCategoryColor(building.category)}`
+                }
+              `}
+            >
+              {/* Background Pattern/Decor */}
+              <div className="absolute right-0 top-0 opacity-5 text-[5rem] leading-none pointer-events-none select-none">
+                {building.emoji}
+              </div>
+
+              <div className="flex justify-between items-start mb-3 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className={`
+                    w-12 h-12 rounded-lg flex items-center justify-center text-3xl shadow-sm
+                    ${isBuilt ? 'bg-white' : 'bg-white/80'}
+                  `}>
+                    {isLocked ? '🔒' : building.emoji}
                   </div>
-
-                  <div className="text-right">
-                    {isBuilt ? (
-                      <Badge className="bg-green-600">✓ Built</Badge>
-                    ) : isLocked ? (
-                      <Badge className="bg-gray-400">🔒 Locked</Badge>
-                    ) : (
-                      <Badge variant="outline">{building.benefit}</Badge>
-                    )}
+                  <div>
+                    <div className="font-bold text-gray-900 flex items-center gap-2">
+                      {building.name}
+                    </div>
+                    <Badge variant="outline" className="text-[10px] uppercase bg-white/50 backdrop-blur-sm mt-1">
+                      {building.category}
+                    </Badge>
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-700 mb-3">{building.description}</p>
+                <div className="text-right">
+                  {state.buildings[building.id]?.builtAt && (
+                    <div className="text-[10px] text-gray-500 mb-1">
+                      Built Lv.{state.buildings[building.id].level}
+                    </div>
+                  )}
+                  {isBuilt ? (
+                    <Badge className="bg-green-600 shadow-sm">✓ Built</Badge>
+                  ) : isLocked ? (
+                    <Badge variant="secondary" className="bg-gray-200 text-gray-600">Lv.{building.requiredLevel}</Badge>
+                  ) : (
+                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200">
+                      {building.benefit}
+                    </Badge>
+                  )}
+                </div>
+              </div>
 
-                <div className="flex justify-between items-center">
-                  <div className="text-sm">
-                    <span className="font-semibold">Cost:</span> {building.cost}🪙
+              <p className="text-sm text-gray-600 mb-4 min-h-[40px] leading-snug relative z-10">
+                {building.description}
+              </p>
+
+              <div className="flex justify-between items-center relative z-10">
+                {!isBuilt && (
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Construction Cost</span>
+                    <div className={`font-bold ${canAfford ? 'text-gray-900' : 'text-red-600'}`}>
+                      {building.cost}🪙
+                    </div>
                   </div>
+                )}
 
-                  {!isBuilt && (
-                    <Button
-                      onClick={() => handleBuild(building)}
-                      size="sm"
-                      disabled={!canAfford || isLocked}
-                      className={canAfford && !isLocked ? 'bg-green-600 hover:bg-green-700' : ''}
-                    >
-                      {isLocked
-                        ? `🔒 Level ${building.requiredLevel}`
-                        : canAfford
-                          ? '🔨 Build Now'
-                          : `Need ${building.cost}🪙`
+                {!isBuilt && (
+                  <Button
+                    onClick={() => handleBuild(building)}
+                    size="sm"
+                    disabled={!canAfford || isLocked}
+                    className={`
+                        shadow-sm font-semibold transition-all
+                        ${canAfford && !isLocked
+                        ? 'bg-green-600 hover:bg-green-700 w-full ml-4'
+                        : 'w-full ml-4 opacity-80'
                       }
-                    </Button>
-                  )}
+                    `}
+                  >
+                    {isLocked
+                      ? `Locked (Lv.${building.requiredLevel})`
+                      : canAfford
+                        ? '🔨 Build'
+                        : 'Insufficient Funds'
+                    }
+                  </Button>
+                )}
 
-                  {isBuilt && (
-                    <div className="text-sm text-green-700 font-medium">
-                      🎉 Active
-                    </div>
-                  )}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </Card>
+                {isBuilt && (
+                  <div className="w-full text-center py-1.5 bg-green-100/50 rounded-lg border border-green-200 text-sm text-green-800 font-bold flex items-center justify-center gap-2">
+                    <span className="animate-pulse">●</span> Operational
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Building Benefits Summary */}
       {builtCount > 0 && (

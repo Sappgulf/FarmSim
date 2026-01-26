@@ -164,6 +164,8 @@
 - **Genetics Tab**: New "Breeding Slot" UI for intuitive parent selection.
 - **Research Tab**: Visual overhaul with status icons, progress bars, and clearer prerequisite warnings.
 - **Achievements**: "Ready to Claim" animations and visual separation of unlocked vs locked achievements.
+- **Buildings**: Converted to a rich grid layout with clear status indicators (Built/Locked).
+- **Expansion**: Added "Farm Roadmap" progress bar and visual upgrade comparison.
 
 ### 🔧 Improvements
 - **Inventory**: Added estimated value display for items.
