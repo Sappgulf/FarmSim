@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback, u
 import { getSoundSystem } from '../systems/SoundSystem';
 import { createXPGranter, recordLevelUp, recordPlayerInteraction } from '../services/XPService';
 import { calculateHarvestValue } from '../constants/cropData';
+import { updateQuestProgress } from '../systems/QuestSystem';
 
 // Game Context for centralized state management
 // Provide a default value to prevent "useGame must be used within a GameProvider" errors
@@ -627,6 +628,42 @@ export function GameProvider({ children }) {
     dispatchRef.current = dispatch;
   }, [dispatch]);
 
+  const updateDailyQuestProgress = useCallback((actionType, actionData = {}) => {
+    const currentDailyQuests = stateRef.current.dailyQuests;
+    if (!currentDailyQuests?.quests?.length) return;
+
+    const updatedQuests = updateQuestProgress(
+      currentDailyQuests.quests,
+      actionType,
+      actionData
+    );
+
+    const hasChanges = updatedQuests.some((quest, index) => {
+      const previousQuest = currentDailyQuests.quests[index];
+      return (
+        quest.progress !== previousQuest.progress
+        || quest.completed !== previousQuest.completed
+      );
+    });
+
+    if (!hasChanges) return;
+
+    if (dispatchRef.current) {
+      dispatchRef.current({
+        type: GAME_ACTIONS.UPDATE_DAILY_QUESTS,
+        payload: { ...currentDailyQuests, quests: updatedQuests },
+      });
+    }
+  }, []);
+
+  const previousLevelRef = useRef(state.level);
+  useEffect(() => {
+    if (state.level > previousLevelRef.current) {
+      updateDailyQuestProgress('level_up', { level: state.level });
+    }
+    previousLevelRef.current = state.level;
+  }, [state.level, updateDailyQuestProgress]);
+
   // Debounced auto-save management
   const autoSaveTimeoutRef = useRef(null);
   const lastSaveStateRef = useRef('');
@@ -754,7 +791,10 @@ export function GameProvider({ children }) {
   }, []);
 
   // Memoized action creators
-  const actions = useMemo(() => ({
+  const actions = useMemo(() => {
+    const grantXP = createXPGranter(dispatch, () => stateRef.current, GAME_ACTIONS.SET_XP);
+
+    return ({
     // Core property setters
     setCoins: (coins) => dispatch({ type: GAME_ACTIONS.SET_COINS, payload: coins }),
     /**
@@ -774,7 +814,13 @@ export function GameProvider({ children }) {
      * @param {string} source - Source tag for debugging
      * @param {Object} meta - Optional metadata
      */
-    grantXP: createXPGranter(dispatch, () => stateRef.current, GAME_ACTIONS.SET_XP),
+    grantXP: (amount, source, meta) => {
+      const granted = grantXP(amount, source, meta);
+      if (granted > 0) {
+        updateDailyQuestProgress('gain_xp', { amount: granted });
+      }
+      return granted;
+    },
     /**
      * Records player interaction for idle detection
      */
@@ -791,6 +837,8 @@ export function GameProvider({ children }) {
     updateLivestock: (livestock) => dispatch({ type: GAME_ACTIONS.UPDATE_LIVESTOCK, payload: livestock }),
     updateFishing: (fishing) => dispatch({ type: GAME_ACTIONS.UPDATE_FISHING, payload: fishing }),
     updateAchievements: (achievements) => dispatch({ type: GAME_ACTIONS.UPDATE_ACHIEVEMENTS, payload: achievements }),
+    updateDailyQuests: (dailyQuests) => dispatch({ type: GAME_ACTIONS.UPDATE_DAILY_QUESTS, payload: dailyQuests }),
+    updateDailyQuestProgress,
     updateSeason: (season) => dispatch({ type: GAME_ACTIONS.UPDATE_SEASON, payload: season }),
 
     // UI & Settings
@@ -899,12 +947,16 @@ export function GameProvider({ children }) {
      */
     earnMoney: (amount) => {
       dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (currentCoins) => currentCoins + amount });
+      updateDailyQuestProgress('earn_coins', { amount });
     },
 
     addXP: (amount, source = 'legacy_addXP') => {
       // Forward to grantXP for tracking
       const grantXP = createXPGranter(dispatch, () => stateRef.current, GAME_ACTIONS.SET_XP);
-      grantXP(amount, source);
+      const granted = grantXP(amount, source);
+      if (granted > 0) {
+        updateDailyQuestProgress('gain_xp', { amount: granted });
+      }
     },
 
     // Bulk actions
@@ -1066,6 +1118,20 @@ export function GameProvider({ children }) {
               inventoryUpdates[cropId] = (inventoryUpdates[cropId] || 0) + 1;
             }
           });
+
+          const harvestedCount = Object.values(inventoryUpdates).reduce((sum, count) => sum + count, 0);
+          if (harvestedCount > 0) {
+            updateDailyQuestProgress('harvest', {
+              amount: harvestedCount,
+              weather: currentState.weather,
+            });
+          }
+          if (totalEarnings > 0) {
+            updateDailyQuestProgress('earn_coins', { amount: totalEarnings });
+          }
+          if (totalXp > 0) {
+            updateDailyQuestProgress('gain_xp', { amount: totalXp });
+          }
 
           // Apply all updates after a delay to ensure state consistency
           setTimeout(() => {

@@ -10,6 +10,18 @@
 
 - **Planned**
   - **Scope:** frontend
+  - **What:** fix Daily Quests and Expand tab runtime errors; verify core flows still render.
+  - **Why:** tabs are throwing errors and not functioning.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** restored Daily Quests actions/progress tracking across planting, harvesting, building, bulk harvests, and expansion; fixed Expand tab missing badge import.
+  - **Why:** ensure quest and expand tabs render without errors and quests advance with gameplay actions.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Planned**
+  - **Scope:** frontend
   - **What:** validate inventory item usage and repair Farming quick action buttons; tighten bulk action performance.
   - **Why:** user request to ensure items and quick buttons work, with additional polish.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").

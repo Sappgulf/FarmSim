@@ -135,12 +135,13 @@ export function updateQuestProgress(quests, actionType, actionData = {}) {
     switch (quest.type) {
       case QUEST_TYPES.HARVEST:
         if (actionType === 'harvest') {
+          const increment = Number.isFinite(actionData.amount) ? actionData.amount : 1;
           if (quest.requiresCrop && actionData.cropId) {
             // Specific crop harvest (would need to specify in quest)
-            newProgress += 1;
+            newProgress += increment;
           } else if (!quest.requiresCrop) {
             // Any harvest
-            newProgress += 1;
+            newProgress += increment;
           }
         }
         break;
@@ -155,7 +156,8 @@ export function updateQuestProgress(quests, actionType, actionData = {}) {
             newProgress = actionData.allPlotsFilled ? 1 : 0;
           } else {
             // Simple plant count
-            newProgress += 1;
+            const increment = Number.isFinite(actionData.amount) ? actionData.amount : 1;
+            newProgress += increment;
           }
         }
         break;
@@ -231,4 +233,3 @@ export default {
   updateQuestProgress,
   getStreakBonus,
 };
-

@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
+import { Badge } from '../../../ui/badge';
 
 const ExpandTab = memo(() => {
   const { state, actions } = useGame();
@@ -14,6 +15,7 @@ const ExpandTab = memo(() => {
   const handleExpand = () => {
     if (state.coins >= expansionCost && state.gridSize < maxSize) {
       actions.setCoins(state.coins - expansionCost);
+      actions.updateDailyQuestProgress?.('spend_coins', { amount: expansionCost });
       actions.setGridSize(state.gridSize + 1);
       actions.grantXP(30, 'farm_expand', { newSize: state.gridSize + 1 });
       actions.addNotification({

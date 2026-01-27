@@ -82,10 +82,15 @@ const BuildingsTab = memo(() => {
 
     if (state.coins >= building.cost && !state.buildings[building.id]) {
       actions.setCoins(state.coins - building.cost);
-      actions.updateBuildings({
+      actions.updateDailyQuestProgress?.('spend_coins', { amount: building.cost });
+
+      const updatedBuildings = {
         ...state.buildings,
         [building.id]: { built: true, level: 1, builtAt: Date.now() }
-      });
+      };
+      actions.updateBuildings(updatedBuildings);
+      const buildingCount = Object.keys(updatedBuildings).filter(id => updatedBuildings[id]?.built).length;
+      actions.updateDailyQuestProgress?.('build', { buildingCount });
 
       // Trigger building construction effect (dust particles + screen shake)
       if (typeof window.triggerParticleEffect === 'function') {
