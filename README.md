@@ -424,6 +424,7 @@ actualValue = baseValue * qualityModifier
 4. 🎯 **Target Zone** - Keep reel in green zone to gain progress
 5. ✅ **Success** - Reach 100% progress to catch
 6. ❌ **Escape** - Fish escapes if progress drops or time runs out
+7. 🔥 **Streak Bonus** - Consecutive catches boost value up to +20%
 
 **Mini-Game UI:**
 ```

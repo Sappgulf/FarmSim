@@ -56,6 +56,20 @@
   - **Why:** fix inconsistent value calculations and improve UI clarity for players.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-01-28
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** add light gameplay expansion and visual polish, plus targeted performance improvements.
+  - **Why:** improve moment-to-moment gameplay depth without introducing major new systems.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** added fishing streak bonuses with UI surfacing, improved pond population update throttling, and documented the new streak mechanic.
+  - **Why:** expand gameplay depth while reducing redundant state updates for better runtime performance.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## Phase 5: Systems Refinement Pass ✅ NEW (January 2026)
 
 ### 1. Single Source of Truth for XP ✅
