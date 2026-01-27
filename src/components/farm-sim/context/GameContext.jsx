@@ -908,6 +908,124 @@ export function GameProvider({ children }) {
     },
 
     // Bulk actions
+    waterAllPlots: () => {
+      const currentState = stateRef.current;
+      if (!currentState?.plots?.length) return;
+
+      const hasWaterBoost = (currentState.inventory?.water_boost || 0) > 0;
+      const updatedPlots = currentState.plots.map(plot => {
+        if (plot.state === 'empty') return plot;
+        return {
+          ...plot,
+          waterLevel: hasWaterBoost ? 100 : Math.min(100, (plot.waterLevel || 0) + 25),
+        };
+      });
+
+      dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
+
+      if (hasWaterBoost) {
+        dispatch({
+          type: GAME_ACTIONS.UPDATE_INVENTORY,
+          payload: (currentState) => ({
+            ...currentState.inventory,
+            water_boost: Math.max(0, (currentState.inventory?.water_boost || 0) - 1),
+          }),
+        });
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: { message: '💧 Water Boost used! All plots refreshed.', type: 'success' },
+        });
+      }
+    },
+    fertilizeAllPlots: () => {
+      const currentState = stateRef.current;
+      if (!currentState?.plots?.length) return;
+
+      const hasFertilizer = (currentState.inventory?.fertilizer || 0) > 0;
+      const cost = 15;
+      if (!hasFertilizer && currentState.coins < cost) {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: { message: 'Not enough coins (15) to fertilize all plots.', type: 'error' },
+        });
+        return;
+      }
+
+      const updatedPlots = currentState.plots.map(plot => {
+        if (plot.state === 'empty') return plot;
+        return {
+          ...plot,
+          soilFertility: Math.min(1.5, (plot.soilFertility || 1.0) + 0.3),
+          waterLevel: Math.min(100, (plot.waterLevel || 0) + 10),
+          fertilizer: (plot.fertilizer || 0) + 1,
+        };
+      });
+
+      dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
+
+      if (hasFertilizer) {
+        dispatch({
+          type: GAME_ACTIONS.UPDATE_INVENTORY,
+          payload: (currentState) => ({
+            ...currentState.inventory,
+            fertilizer: Math.max(0, (currentState.inventory?.fertilizer || 0) - 1),
+          }),
+        });
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: { message: '🌱 Fertilizer applied to all plots.', type: 'success' },
+        });
+      } else {
+        dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentState.coins - cost });
+      }
+    },
+    treatAllDiseases: () => {
+      const currentState = stateRef.current;
+      if (!currentState?.plots?.length) return;
+
+      const hasPesticide = (currentState.inventory?.pesticide || 0) > 0;
+      const cost = 20;
+      if (!hasPesticide && currentState.coins < cost) {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: { message: 'Not enough coins (20) to treat all diseases.', type: 'error' },
+        });
+        return;
+      }
+
+      const diseasedCount = currentState.plots.filter(plot => plot.disease).length;
+      if (diseasedCount === 0) {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: { message: 'No diseased crops to treat.', type: 'info' },
+        });
+        return;
+      }
+
+      const updatedPlots = currentState.plots.map(plot => (
+        plot.disease
+          ? { ...plot, disease: null, diseasedAt: null }
+          : plot
+      ));
+
+      dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
+
+      if (hasPesticide) {
+        dispatch({
+          type: GAME_ACTIONS.UPDATE_INVENTORY,
+          payload: (currentState) => ({
+            ...currentState.inventory,
+            pesticide: Math.max(0, (currentState.inventory?.pesticide || 0) - 1),
+          }),
+        });
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: { message: '🐛 Pesticide applied. Crops are healthy again!', type: 'success' },
+        });
+      } else {
+        dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentState.coins - cost });
+      }
+    },
     harvestAllReadyCrops: () => {
       // Delegate to harvestAllReadyCrops logic (similar to 45febc0 but preserving earnings calculation)
       dispatch({

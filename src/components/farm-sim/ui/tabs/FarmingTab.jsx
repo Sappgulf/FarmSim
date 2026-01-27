@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Button } from '../../../ui/button';
 import { Card } from '../../../ui/card';
@@ -13,18 +13,20 @@ const FarmingTab = memo(() => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Get crops available at player's level
-  const availableCrops = getCropsByLevel(state.level);
+  const availableCrops = useMemo(() => getCropsByLevel(state.level), [state.level]);
 
   // Filter by category
-  const crops = selectedCategory === 'all'
-    ? availableCrops
-    : availableCrops.filter(crop => crop.category === selectedCategory);
+  const crops = useMemo(() => (
+    selectedCategory === 'all'
+      ? availableCrops
+      : availableCrops.filter(crop => crop.category === selectedCategory)
+  ), [availableCrops, selectedCategory]);
 
-  const cropList = crops.map(crop => ({
+  const cropList = useMemo(() => crops.map(crop => ({
     ...crop,
     value: crop.baseValue,
     time: crop.growthTime,
-  }));
+  })), [crops]);
 
   const handleSelectCrop = (cropId) => {
     actions.setSelectedCrop(cropId);
@@ -50,14 +52,14 @@ const FarmingTab = memo(() => {
         break;
       case 'Fertilize All':
         // Logic handled in action, just UI trigger here
-        if (state.coins >= 15) {
+        if (state.coins >= 15 || (state.inventory?.fertilizer || 0) > 0) {
           actions.fertilizeAllPlots();
         } else {
           actions.addNotification({ message: "Not enough coins (15 per plot)", type: "error" });
         }
         break;
       case 'Pesticide All':
-        if (state.coins >= 20) {
+        if (state.coins >= 20 || (state.inventory?.pesticide || 0) > 0) {
           actions.treatAllDiseases();
         } else {
           actions.addNotification({ message: "Not enough coins (20 per plot)", type: "error" });
