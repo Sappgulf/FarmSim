@@ -10,6 +10,18 @@
 
 - **Planned**
   - **Scope:** frontend
+  - **What:** validate inventory item usage and repair Farming quick action buttons; tighten bulk action performance.
+  - **Why:** user request to ensure items and quick buttons work, with additional polish.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** wired quick actions to new bulk handlers, added inventory-backed water/fertilizer/pesticide usage, and memoized crop lists for lighter renders.
+  - **Why:** make quick buttons functional, allow purchased consumables to apply across plots, and reduce unnecessary recomputation.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Planned**
+  - **Scope:** frontend
   - **What:** review UI polish opportunities; tighten inventory value display accuracy and clarity.
   - **Why:** user request to polish the experience and align UI with current data definitions.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
