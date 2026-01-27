@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-01-27
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** review UI polish opportunities; tighten inventory value display accuracy and clarity.
+  - **Why:** user request to polish the experience and align UI with current data definitions.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** aligned Inventory item display with crop data and shop metadata, showing accurate emojis/names and consistent value estimates.
+  - **Why:** fix inconsistent value calculations and improve UI clarity for players.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## Phase 5: Systems Refinement Pass ✅ NEW (January 2026)
 
 ### 1. Single Source of Truth for XP ✅
@@ -574,4 +588,3 @@ React.useEffect(() => {
 ---
 
 **Status:** ✅ Phase 1 & 2 Complete - Ready for Phase 3 & 4
-
