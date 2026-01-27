@@ -794,7 +794,7 @@ export function GameProvider({ children }) {
   const actions = useMemo(() => {
     const grantXP = createXPGranter(dispatch, () => stateRef.current, GAME_ACTIONS.SET_XP);
 
-    return ({
+    return {
     // Core property setters
     setCoins: (coins) => dispatch({ type: GAME_ACTIONS.SET_COINS, payload: coins }),
     /**
@@ -1157,7 +1157,8 @@ export function GameProvider({ children }) {
         }
       });
     },
-  }), [dispatch]); // CRITICAL: Only dispatch is stable, use refs for everything else
+  };
+}, [dispatch]); // CRITICAL: Only dispatch is stable, use refs for everything else
 
   return (
     <GameContext.Provider value={{ state, actions, systems }}>
