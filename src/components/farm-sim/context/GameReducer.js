@@ -32,7 +32,9 @@ export const initialState = {
             totalCaught: 0,
             totalValue: 0,
             largestFish: 0,
-            byType: {}
+            byType: {},
+            streak: 0,
+            bestStreak: 0
         }
     },
 

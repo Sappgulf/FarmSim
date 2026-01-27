@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useMemo } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
@@ -24,7 +24,7 @@ const FishingTab = memo(() => {
   }, [fishingSystem]);
 
 
-  const fishing = {
+  const fishing = useMemo(() => ({
     pond: {
       level: (state.fishing?.pond?.level) || 1,
       population: (state.fishing?.pond?.population) || 100,
@@ -34,9 +34,11 @@ const FishingTab = memo(() => {
       totalCaught: (state.fishing?.stats?.totalCaught) || 0,
       totalValue: (state.fishing?.stats?.totalValue) || 0,
       largestFish: (state.fishing?.stats?.largestFish) || 0,
-      byType: (state.fishing?.stats?.byType) || {}
+      byType: (state.fishing?.stats?.byType) || {},
+      streak: (state.fishing?.stats?.streak) || 0,
+      bestStreak: (state.fishing?.stats?.bestStreak) || 0
     }
-  };
+  }), [state.fishing]);
 
   // Safety check for imports
   if (!FISH_TYPES || !POND_UPGRADES || typeof FISH_TYPES !== 'object' || typeof POND_UPGRADES !== 'object') {
@@ -65,6 +67,7 @@ const FishingTab = memo(() => {
   }
 
   const stats = fishingSystem.getStats() || fishing.stats;
+  const streakBonusPercent = Math.min(20, (stats.streak || 0) * 2);
   const pondLevel = fishing.pond.level || 1;
   const currentUpgrade = POND_UPGRADES[Object.keys(POND_UPGRADES)[pondLevel - 1]];
   const nextUpgrade = POND_UPGRADES[Object.keys(POND_UPGRADES)[pondLevel]];
@@ -234,7 +237,7 @@ const FishingTab = memo(() => {
           </Badge>
         </h3>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-700">{stats.totalCaught}</div>
             <div className="text-xs text-gray-600">Fish Caught</div>
@@ -250,6 +253,14 @@ const FishingTab = memo(() => {
           <div className="text-center">
             <div className="text-2xl font-bold text-cyan-600">{Math.floor(fishing.pond.population)}</div>
             <div className="text-xs text-gray-600">Population</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-amber-600">x{stats.streak || 0}</div>
+            <div className="text-xs text-gray-600">Streak</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-rose-600">x{stats.bestStreak || 0}</div>
+            <div className="text-xs text-gray-600">Best Streak</div>
           </div>
         </div>
       </Card>
@@ -341,6 +352,11 @@ const FishingTab = memo(() => {
               <div className="text-right">
                 <div className="text-xs text-blue-300 uppercase font-bold">Target Value</div>
                 <div className="text-xl font-mono text-green-400">${gameState?.fish.baseValue}</div>
+                {stats.streak > 0 && (
+                  <div className="text-[10px] text-emerald-300 font-semibold mt-1">
+                    Streak Bonus +{streakBonusPercent}%
+                  </div>
+                )}
               </div>
             </div>
 
@@ -495,6 +511,7 @@ const FishingTab = memo(() => {
           <li>• Keep your 🎣 reel in the green zone to catch fish</li>
           <li>• Rarer fish are harder to catch but worth more</li>
           <li>• Pond population regenerates over time</li>
+          <li>• Build a streak for up to +20% catch value</li>
           <li>• Upgrade your pond for better fish and faster regeneration</li>
           <li>• Use keyboard (A/D or Arrow Keys) for faster control</li>
         </ul>
@@ -506,4 +523,3 @@ const FishingTab = memo(() => {
 FishingTab.displayName = 'FishingTab';
 
 export default FishingTab;
-

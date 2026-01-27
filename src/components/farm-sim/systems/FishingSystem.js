@@ -103,6 +103,7 @@ export class FishingSystem {
     this.gameState = gameState;
     this.actions = gameActions;
     this.lastUpdate = Date.now();
+    this.pondPopulation = null;
     
     // Mini-game state
     this.activeCatch = null;
@@ -132,19 +133,28 @@ export class FishingSystem {
       return;
     }
     
-    if (pond.population < pond.maxPopulation) {
+    if (!Number.isFinite(this.pondPopulation)) {
+      this.pondPopulation = pond.population;
+    }
+
+    if (this.pondPopulation < pond.maxPopulation) {
       const newPopulation = Math.min(
         pond.maxPopulation,
-        pond.population + (upgrade.regenRate * deltaTime / 60) // Regen per minute
+        this.pondPopulation + (upgrade.regenRate * deltaTime / 60) // Regen per minute
       );
-      
-      this.actions.updateFishing({
-        ...this.gameState.fishing,
-        pond: {
-          ...pond,
-          population: newPopulation
-        }
-      });
+
+      this.pondPopulation = newPopulation;
+
+      const shouldSync = Math.abs(newPopulation - pond.population) >= 0.5 || newPopulation >= pond.maxPopulation;
+      if (shouldSync) {
+        this.actions.updateFishing({
+          ...this.gameState.fishing,
+          pond: {
+            ...pond,
+            population: newPopulation
+          }
+        });
+      }
     }
   }
 
@@ -185,11 +195,14 @@ export class FishingSystem {
     };
 
     // Reduce pond population
+    const newPopulation = Math.max(0, (this.pondPopulation ?? this.gameState.fishing.pond.population) - 5);
+    this.pondPopulation = newPopulation;
+
     this.actions.updateFishing({
       ...this.gameState.fishing,
       pond: {
         ...this.gameState.fishing.pond,
-        population: Math.max(0, this.gameState.fishing.pond.population - 5)
+        population: newPopulation
       }
     });
 
@@ -295,7 +308,9 @@ export class FishingSystem {
     // Calculate value based on size (with bonus for perfect catches)
     const sizeMultiplier = 1 + ((size - fish.size.min) / (fish.size.max - fish.size.min));
     const difficultyBonus = this.activeCatch.difficulty * 0.5; // Bonus for harder fish
-    const value = Math.floor(fish.baseValue * sizeMultiplier * (1 + difficultyBonus));
+    const currentStreak = (this.gameState.fishing.stats?.streak || 0) + 1;
+    const streakBonus = Math.min(0.2, currentStreak * 0.02);
+    const value = Math.floor(fish.baseValue * sizeMultiplier * (1 + difficultyBonus) * (1 + streakBonus));
 
     // Give rewards
     this.actions.earnMoney(value);
@@ -312,7 +327,9 @@ export class FishingSystem {
       byType: {
         ...(this.gameState.fishing.stats?.byType || {}),
         [fish.id]: ((this.gameState.fishing.stats?.byType || {})[fish.id] || 0) + 1
-      }
+      },
+      streak: currentStreak,
+      bestStreak: Math.max(this.gameState.fishing.stats?.bestStreak || 0, currentStreak)
     };
 
     this.actions.updateFishing({
@@ -320,8 +337,9 @@ export class FishingSystem {
       stats: newStats
     });
 
+    const streakMessage = currentStreak > 1 ? ` (Streak x${currentStreak})` : '';
     this.actions.addNotification({
-      message: `${fish.emoji} Caught ${fish.name} (${size}cm)! +$${value}`,
+      message: `${fish.emoji} Caught ${fish.name} (${size}cm)! +$${value}${streakMessage}`,
       type: 'success'
     });
 
@@ -343,8 +361,19 @@ export class FishingSystem {
 
     const fish = this.activeCatch.fish;
 
+    const nextStats = {
+      ...(this.gameState.fishing?.stats || {}),
+      streak: 0,
+      bestStreak: this.gameState.fishing?.stats?.bestStreak || 0
+    };
+
+    this.actions.updateFishing({
+      ...this.gameState.fishing,
+      stats: nextStats
+    });
+
     this.actions.addNotification({
-      message: `${fish.emoji} The ${fish.name} got away!`,
+      message: `${fish.emoji} The ${fish.name} got away! Streak reset.`,
       type: 'warning'
     });
 
@@ -375,12 +404,19 @@ export class FishingSystem {
 
     this.actions.spendMoney(nextUpgrade.cost);
     
+    const nextMaxPopulation = 100 + (currentLevel * 50);
+    this.pondPopulation = Math.min(
+      this.pondPopulation ?? this.gameState.fishing.pond.population,
+      nextMaxPopulation
+    );
+
     this.actions.updateFishing({
       ...this.gameState.fishing,
       pond: {
         ...this.gameState.fishing.pond,
         level: currentLevel + 1,
-        maxPopulation: 100 + (currentLevel * 50)
+        maxPopulation: nextMaxPopulation,
+        population: this.pondPopulation
       }
     });
 
@@ -417,6 +453,8 @@ export class FishingSystem {
         totalValue: 0,
         largestFish: 0,
         byType: {},
+        streak: 0,
+        bestStreak: 0,
         pondLevel: 1,
         pondPopulation: 0
       };
@@ -427,6 +465,8 @@ export class FishingSystem {
       totalValue: this.gameState.fishing?.stats?.totalValue || 0,
       largestFish: this.gameState.fishing?.stats?.largestFish || 0,
       byType: this.gameState.fishing?.stats?.byType || {},
+      streak: this.gameState.fishing?.stats?.streak || 0,
+      bestStreak: this.gameState.fishing?.stats?.bestStreak || 0,
       pondLevel: this.gameState.fishing?.pond?.level || 1,
       pondPopulation: Math.floor(this.gameState.fishing?.pond?.population || 0)
     };
@@ -434,4 +474,3 @@ export class FishingSystem {
 }
 
 export default FishingSystem;
-

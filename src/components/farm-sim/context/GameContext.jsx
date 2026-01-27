@@ -200,7 +200,7 @@ function migrateSaveData(savedData) {
       console.warn('[farm]', 'Invalid fishing data, resetting to defaults');
       migratedData.fishing = {
         pond: { level: 1, population: 100, maxPopulation: 100 },
-        stats: { totalCaught: 0, totalValue: 0, largestFish: 0, byType: {} }
+        stats: { totalCaught: 0, totalValue: 0, largestFish: 0, byType: {}, streak: 0, bestStreak: 0 }
       };
     } else {
       // Ensure pond structure
@@ -209,7 +209,14 @@ function migrateSaveData(savedData) {
       }
       // Ensure stats structure
       if (!migratedData.fishing.stats || typeof migratedData.fishing.stats !== 'object') {
-        migratedData.fishing.stats = { totalCaught: 0, totalValue: 0, largestFish: 0, byType: {} };
+        migratedData.fishing.stats = { totalCaught: 0, totalValue: 0, largestFish: 0, byType: {}, streak: 0, bestStreak: 0 };
+      } else {
+        if (typeof migratedData.fishing.stats.streak !== 'number') {
+          migratedData.fishing.stats.streak = 0;
+        }
+        if (typeof migratedData.fishing.stats.bestStreak !== 'number') {
+          migratedData.fishing.stats.bestStreak = 0;
+        }
       }
     }
 

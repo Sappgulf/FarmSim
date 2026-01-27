@@ -114,8 +114,22 @@ export function migrateSaveData(savedData) {
         if (!migratedData.fishing || typeof migratedData.fishing !== 'object') {
             migratedData.fishing = {
                 pond: { level: 1, population: 100, maxPopulation: 100 },
-                stats: { totalCaught: 0, totalValue: 0, largestFish: 0, byType: {} }
+                stats: { totalCaught: 0, totalValue: 0, largestFish: 0, byType: {}, streak: 0, bestStreak: 0 }
             };
+        } else {
+            if (!migratedData.fishing.pond || typeof migratedData.fishing.pond !== 'object') {
+                migratedData.fishing.pond = { level: 1, population: 100, maxPopulation: 100 };
+            }
+            if (!migratedData.fishing.stats || typeof migratedData.fishing.stats !== 'object') {
+                migratedData.fishing.stats = { totalCaught: 0, totalValue: 0, largestFish: 0, byType: {}, streak: 0, bestStreak: 0 };
+            } else {
+                if (typeof migratedData.fishing.stats.streak !== 'number') {
+                    migratedData.fishing.stats.streak = 0;
+                }
+                if (typeof migratedData.fishing.stats.bestStreak !== 'number') {
+                    migratedData.fishing.stats.bestStreak = 0;
+                }
+            }
         }
 
         // Ensure gridSize matches plots length
