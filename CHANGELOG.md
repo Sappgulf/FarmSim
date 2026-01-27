@@ -10,6 +10,30 @@
 
 - **Planned**
   - **Scope:** frontend
+  - **What:** resolve Vite build failure after daily quest changes; restore production build.
+  - **Why:** GitHub/Vercel checks failed with a syntax error in GameContext.
+  - **Verification:** `npm run build` (failed: Expected ";" but found ")" in GameContext.jsx).
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** fixed useMemo return syntax in GameContext to close the callback properly.
+  - **Why:** eliminate the build-time syntax error and restore production builds.
+  - **Verification:** `npm run build` (warned: Unknown env config "http-proxy").
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** fix Daily Quests and Expand tab runtime errors; verify core flows still render.
+  - **Why:** tabs are throwing errors and not functioning.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** restored Daily Quests actions/progress tracking across planting, harvesting, building, bulk harvests, and expansion; fixed Expand tab missing badge import.
+  - **Why:** ensure quest and expand tabs render without errors and quests advance with gameplay actions.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Planned**
+  - **Scope:** frontend
   - **What:** validate inventory item usage and repair Farming quick action buttons; tighten bulk action performance.
   - **Why:** user request to ensure items and quick buttons work, with additional polish.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").

@@ -242,6 +242,9 @@ export class FarmingSystem {
 
     // Deduct cost
     this.actions.setCoins(this.gameState.coins - cost);
+    if (cost > 0) {
+      this.actions.updateDailyQuestProgress?.('spend_coins', { amount: cost });
+    }
 
     // Plant crop
     const plantedAt = Date.now();
@@ -264,6 +267,12 @@ export class FarmingSystem {
 
     this.actions.updatePlots(updatedPlots);
     this.actions.grantXP(1, 'planting', { cropId: cropData.id }); // Small XP for planting
+    const uniqueCrops = new Set(updatedPlots.filter(plot => plot.crop).map(plot => plot.crop.id)).size;
+    const allPlotsFilled = updatedPlots.every(plot => plot.state !== 'empty');
+    this.actions.updateDailyQuestProgress?.('plant', {
+      uniqueCrops,
+      allPlotsFilled,
+    });
 
     return true;
   }
@@ -294,6 +303,8 @@ export class FarmingSystem {
     // REBALANCED: Reduced XP to 20% of earnings (was 50%)
     this.actions.setCoins(this.gameState.coins + harvestValue);
     this.actions.grantXP(Math.floor(harvestValue * 0.2), 'harvest', { cropId: crop.id, value: harvestValue });
+    this.actions.updateDailyQuestProgress?.('earn_coins', { amount: harvestValue });
+    this.actions.updateDailyQuestProgress?.('harvest', { cropId: crop.id, weather: this.gameState.weather });
 
     // Update inventory
     const updatedInventory = {
