@@ -142,6 +142,21 @@
 
 ---
 
+## v4.4.1 - PWA Static Support (January 2026)
+
+### New Features
+- 📱 **Static PWA Wiring** - Added offline-first PWA support:
+    - `manifest.webmanifest` (root) for installability
+    - `sw.js` (root) for app-shell caching
+    - `icons/` generated for standalone mode
+    - `index.html` wired with manual Service Worker registration
+
+### Technical Details
+- **Zero-Build Requirement:** PWA implementation works with simple static servers (e.g. `python -m http.server`) without relying on Vite/React build steps for the shell.
+- **Cache Strategy:** Conservative Cache-First for app shell, Network-First/Network-Only for other requests.
+
+---
+
 ## v4.4.0 - Architecture & Accessibility (January 2026)
 
 ### Major Changes

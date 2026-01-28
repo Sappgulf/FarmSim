@@ -29,6 +29,27 @@ npm run preview
 
 Open [http://localhost:5173](http://localhost:5173) to start farming!
 
+
+
+---
+
+## 📱 PWA & Offline Support
+
+FarmLife works as a Progressive Web App (PWA) and can be installed on your device for an app-like experience.
+
+### Local PWA Testing
+To verify PWA features (Service Worker, Offline Mode) without a full build:
+
+1. **Start a static server at the project root:**
+   ```bash
+   # Python 3
+   python3 -m http.server 8080
+   ```
+2. **Open in Browser:** `http://localhost:8080`
+3. **Install:** Click the "Install Farm Sim" icon in your address bar.
+
+*Note: The app logic (React) still requires a build process or Vite dev server to function fully, but the PWA shell (manifest, icons, caching) is wired to work statically.*
+
 ---
 
 ## ✅ Smoke Test Checklist
