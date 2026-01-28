@@ -456,7 +456,10 @@ function gameReducer(state, action) {
       };
 
     case GAME_ACTIONS.UPDATE_PLOTS:
-      return { ...state, plots: action.payload };
+      return {
+        ...state,
+        plots: typeof action.payload === 'function' ? action.payload(state) : action.payload
+      };
 
     case GAME_ACTIONS.SET_GRID_SIZE:
       const newGridSize = action.payload;
@@ -746,10 +749,14 @@ export function GameProvider({ children }) {
 
       frameCount++;
       if (currentTime - lastFPSUpdate >= 1000) {
+        const fps = Math.round((frameCount * 1000) / (currentTime - lastFPSUpdate));
+        if (typeof window !== 'undefined') {
+          window.__currentFPS = fps;
+        }
         dispatch({
           type: GAME_ACTIONS.UPDATE_GAME_LOOP,
           payload: {
-            fps: Math.round((frameCount * 1000) / (currentTime - lastFPSUpdate)),
+            fps,
             lastUpdate: Date.now()
           },
         });
@@ -844,9 +851,22 @@ export function GameProvider({ children }) {
     updateLivestock: (livestock) => dispatch({ type: GAME_ACTIONS.UPDATE_LIVESTOCK, payload: livestock }),
     updateFishing: (fishing) => dispatch({ type: GAME_ACTIONS.UPDATE_FISHING, payload: fishing }),
     updateAchievements: (achievements) => dispatch({ type: GAME_ACTIONS.UPDATE_ACHIEVEMENTS, payload: achievements }),
+    setSeasonalEvents: (events) => dispatch({ type: GAME_ACTIONS.SET_SEASONAL_EVENTS, payload: events }),
+    updateActiveEvents: (events) => dispatch({ type: GAME_ACTIONS.UPDATE_ACTIVE_EVENTS, payload: events }),
+    setDailyChallenges: (challenges) => dispatch({ type: GAME_ACTIONS.SET_DAILY_CHALLENGES, payload: challenges }),
+    updateChallengeProgress: (progress) => dispatch({ type: GAME_ACTIONS.UPDATE_CHALLENGE_PROGRESS, payload: progress }),
     updateDailyQuests: (dailyQuests) => dispatch({ type: GAME_ACTIONS.UPDATE_DAILY_QUESTS, payload: dailyQuests }),
     updateDailyQuestProgress,
+    updateDisasterProtections: (protections) => dispatch({ type: GAME_ACTIONS.UPDATE_DISASTER_PROTECTIONS, payload: protections }),
+    updatePrestige: (prestige) => dispatch({ type: GAME_ACTIONS.UPDATE_PRESTIGE, payload: prestige }),
     updateSeason: (season) => dispatch({ type: GAME_ACTIONS.UPDATE_SEASON, payload: season }),
+    updateResearch: (research) => dispatch({ type: GAME_ACTIONS.UPDATE_RESEARCH, payload: research }),
+    updateGenetics: (genetics) => dispatch({ type: GAME_ACTIONS.UPDATE_GENETICS, payload: genetics }),
+    updateSocial: (social) => dispatch({ type: GAME_ACTIONS.UPDATE_SOCIAL, payload: social }),
+    updatePets: (pets) => dispatch({ type: GAME_ACTIONS.UPDATE_PETS, payload: pets }),
+    updateProcessingFacilities: (facilities) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSING_FACILITIES, payload: facilities }),
+    updateProcessingQueue: (queue) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSING_QUEUE, payload: queue }),
+    updateProcessedInventory: (inventory) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSED_INVENTORY, payload: inventory }),
 
     // UI & Settings
     addNotification: (notification) => dispatch({ type: GAME_ACTIONS.ADD_NOTIFICATION, payload: notification }),
@@ -955,6 +975,45 @@ export function GameProvider({ children }) {
     earnMoney: (amount) => {
       dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (currentCoins) => currentCoins + amount });
       updateDailyQuestProgress('earn_coins', { amount });
+    },
+    /**
+     * Spends money if available
+     * @param {number} amount - Amount to spend
+     * @returns {boolean} True if spent successfully
+     */
+    spendMoney: (amount) => {
+      const currentCoins = stateRef.current?.coins || 0;
+      if (currentCoins < amount) return false;
+      dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentCoins - amount });
+      updateDailyQuestProgress('spend_coins', { amount });
+      return true;
+    },
+
+    /**
+     * Adds items to inventory
+     * @param {string} itemId - Inventory item ID
+     * @param {number} amount - Quantity to add
+     */
+    addToInventory: (itemId, amount = 1) => {
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_INVENTORY,
+        payload: (currentInventory) => {
+          const currentEntry = currentInventory?.[itemId];
+          const currentCount = typeof currentEntry === 'number'
+            ? currentEntry
+            : (typeof currentEntry === 'object' && currentEntry !== null
+              ? (currentEntry.count || currentEntry.quantity || 0)
+              : 0);
+          const nextCount = currentCount + amount;
+
+          return {
+            ...currentInventory,
+            [itemId]: typeof currentEntry === 'object' && currentEntry !== null
+              ? { ...currentEntry, count: nextCount }
+              : nextCount,
+          };
+        },
+      });
     },
 
     addXP: (amount, source = 'legacy_addXP') => {

@@ -47,7 +47,7 @@ export const NAV_SECTIONS = {
         id: 'more',
         label: 'More',
         emoji: '⚙️',
-        tabs: ['settings', 'achievements', 'quests', 'analytics', 'weather', 'events', 'challenges', 'social', 'mystery', 'diseases'],
+        tabs: ['settings', 'achievements', 'quests', 'analytics', 'weather', 'events', 'social', 'mystery', 'diseases'],
         description: 'Settings and extras'
     }
 };
@@ -71,7 +71,6 @@ export const TAB_INFO = {
     analytics: { label: 'Analytics', emoji: '📊' },
     weather: { label: 'Weather', emoji: '🌤️' },
     events: { label: 'Events', emoji: '🎉' },
-    challenges: { label: 'Challenges', emoji: '🎯' },
     social: { label: 'Social', emoji: '👥' },
     mystery: { label: 'Mystery', emoji: '🎰' },
     diseases: { label: 'Diseases', emoji: '🐛' },
