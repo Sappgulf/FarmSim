@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { useTick } from '../context/TickContext';
 import { Card } from '../../ui/card';
@@ -8,7 +8,7 @@ import { CROP_DATA, calculateHarvestValue, HARVEST_WINDOW_MS } from '../constant
 import { getDiseaseById } from '../constants/diseaseData';
 
 // Enhanced plot component with tooltips and animations
-const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0 }) => {
+const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0, tick }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const hideTooltipTimeoutRef = useRef(null);
@@ -22,11 +22,9 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
     };
   }, []);
 
-  // PERF: Use centralized tick instead of per-plot setInterval
-  // This reduces N intervals to 1 for the entire grid
-  const tick = useTick();
+  const now = useMemo(() => Date.now(), [tick]);
 
-  const getPlotDisplay = () => {
+  const display = useMemo(() => {
     if (!plot || plot.state === 'empty') {
       return {
         emoji: '🌱',
@@ -63,7 +61,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
 
     if (plot.state === 'ready') {
       // Calculate harvest window countdown
-      const timeSinceReady = Date.now() - (plot.readyAt || Date.now());
+      const timeSinceReady = now - (plot.readyAt || now);
       const timeRemaining = Math.max(0, HARVEST_WINDOW_MS - timeSinceReady);
       const minutesLeft = Math.floor(timeRemaining / 60000);
       const secondsLeft = Math.floor((timeRemaining % 60000) / 1000);
@@ -101,21 +99,23 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
       text: 'Unknown',
       hoverEffect: ''
     };
-  };
-
-  const display = getPlotDisplay();
-  const diseaseInfo = plot?.disease ? getDiseaseById(plot.disease) : null;
-  const diseasePenalty = typeof diseaseInfo?.yieldPenalty === 'number'
-    ? Math.round(diseaseInfo.yieldPenalty * 100)
-    : null;
+  }, [plot, seasonBonus, now]);
+  const { diseasePenalty } = useMemo(() => {
+    const info = plot?.disease ? getDiseaseById(plot.disease) : null;
+    return {
+      diseasePenalty: typeof info?.yieldPenalty === 'number'
+        ? Math.round(info.yieldPenalty * 100)
+        : null
+    };
+  }, [plot?.disease]);
 
   // Get soil fertility color gradient
-  const getSoilGradient = () => {
+  const soilGradient = useMemo(() => {
     const fertility = plot?.soilFertility || 1.0;
     if (fertility > 0.8) return 'from-green-900/5 to-transparent';
     if (fertility > 0.6) return 'from-yellow-900/5 to-transparent';
     return 'from-red-900/10 to-transparent';
-  };
+  }, [plot?.soilFertility]);
 
   const handleClick = useCallback((e) => {
     if (e.shiftKey) {
@@ -181,7 +181,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
         }}
       >
         {/* Soil fertility gradient overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-t ${getSoilGradient()} pointer-events-none`} />
+        <div className={`absolute inset-0 bg-gradient-to-t ${soilGradient} pointer-events-none`} />
 
         <div className="flex flex-col items-center justify-center h-full p-0.5 sm:p-1 relative z-10">
           {/* Crop emoji with growth animation - Responsive sizes */}
@@ -334,14 +334,23 @@ FarmPlot.displayName = 'FarmPlot';
 // Main Farm Grid Component with multi-select
 const FarmGrid = memo(() => {
   const { state, actions } = useGame();
+  const tick = useTick();
   const seasonBonus = state.season?.config?.bonuses?.growthSpeed || 1.0;
   const [selectedPlots, setSelectedPlots] = useState(new Set());
-  const [bulkMode, setBulkMode] = useState(false);
+
+  const stateRef = useRef(state);
+  const actionsRef = useRef(actions);
+
+  stateRef.current = state;
+  actionsRef.current = actions;
 
   const handlePlotClick = useCallback((index, action) => {
+    const currentState = stateRef.current;
+    const currentActions = actionsRef.current;
+
     // Handle clearing withered crops
     if (action === 'clear') {
-      const plotsArray = Array.isArray(state.plots) ? state.plots : [];
+      const plotsArray = Array.isArray(currentState.plots) ? currentState.plots : [];
       const plot = plotsArray[index];
       if (plot?.state === 'withered') {
         // Clear the withered crop
@@ -360,8 +369,8 @@ const FarmGrid = memo(() => {
           witherReason: null,
           witheredAt: null
         };
-        actions.updatePlots(updatedPlots);
-        actions.addNotification({
+        currentActions.updatePlots(updatedPlots);
+        currentActions.addNotification({
           message: `🗑️ Cleared withered crop from plot ${index + 1}`,
           type: 'info'
         });
@@ -370,11 +379,11 @@ const FarmGrid = memo(() => {
     }
 
     // Handle plot interaction
-    actions.addNotification({
+    currentActions.addNotification({
       message: `Plot ${index + 1} info displayed`,
       type: 'info'
     });
-  }, [actions, Array.isArray(state.plots) ? state.plots : []]);
+  }, []);
 
   const handleToggleSelect = useCallback((index) => {
     setSelectedPlots(prev => {
@@ -389,38 +398,43 @@ const FarmGrid = memo(() => {
   }, []);
 
   const handlePlant = useCallback((index) => {
+    const currentState = stateRef.current;
+    const currentActions = actionsRef.current;
+
     // Use consolidated crop data
-    const selectedCrop = CROP_DATA[state.selectedCrop] || CROP_DATA.carrot;
+    const selectedCrop = CROP_DATA[currentState.selectedCrop] || CROP_DATA.carrot;
 
     // Check if player has enough coins
-    if (state.coins >= selectedCrop.cost) {
-      actions.setCoins(state.coins - selectedCrop.cost);
-      actions.plantCrop(index, selectedCrop.id, selectedCrop);
+    if (currentState.coins >= selectedCrop.cost) {
+      currentActions.setCoins(currentState.coins - selectedCrop.cost);
+      currentActions.plantCrop(index, selectedCrop.id, selectedCrop);
 
       // Play plant sound
       if (typeof window.soundSystem !== 'undefined') {
         window.soundSystem.playPlantSound();
       }
 
-      actions.addNotification({
+      currentActions.addNotification({
         message: `Planted ${selectedCrop.emoji} ${selectedCrop.name} on plot ${index + 1}`,
         type: 'success'
       });
     } else {
-      actions.addNotification({
+      currentActions.addNotification({
         message: `Not enough coins! Need ${selectedCrop.cost}🪙`,
         type: 'error'
       });
     }
-  }, [actions, state.coins, state.selectedCrop]);
+  }, []);
 
   const handleHarvest = useCallback((index) => {
-    const plotsArray = Array.isArray(state.plots) ? state.plots : [];
+    const currentState = stateRef.current;
+    const currentActions = actionsRef.current;
+    const plotsArray = Array.isArray(currentState.plots) ? currentState.plots : [];
     const plot = plotsArray[index];
     if (!plot || plot.state !== 'ready') return;
 
     const crop = plot.crop;
-    const seasonConfig = state.season?.config;
+    const seasonConfig = currentState.season?.config;
     const earnings = calculateHarvestValue(plot, seasonConfig);
 
     // Trigger particle effect with earnings text
@@ -449,35 +463,35 @@ const FarmGrid = memo(() => {
     }, 300);
 
     // Update coins and inventory
-    actions.setCoins(state.coins + earnings);
+    currentActions.setCoins(currentState.coins + earnings);
     // REBALANCED: Reduced XP to 20% of earnings (was 50%) for slower, more meaningful progression
-    actions.grantXP(Math.floor(earnings * 0.2), 'harvest_ui', { cropId: crop.id, value: earnings });
+    currentActions.grantXP(Math.floor(earnings * 0.2), 'harvest_ui', { cropId: crop.id, value: earnings });
     // Update inventory
     const updatedInventory = {
-      ...state.inventory,
-      [crop.id]: (state.inventory[crop.id] || 0) + 1
+      ...currentState.inventory,
+      [crop.id]: (currentState.inventory[crop.id] || 0) + 1
     };
-    actions.updateInventory(updatedInventory);
+    currentActions.updateInventory(updatedInventory);
 
     // Reset plot
-    actions.harvestCrop(index, earnings);
+    currentActions.harvestCrop(index, earnings);
 
-    actions.addNotification({
+    currentActions.addNotification({
       message: `Harvested ${crop.emoji} ${crop.name}! +${earnings}🪙`,
       type: 'success'
     });
-  }, [actions, Array.isArray(state.plots) ? state.plots : [], state.coins, state.xp, state.inventory]);
+  }, []);
 
   // Bulk actions
   const handleBulkHarvest = useCallback(() => {
     let totalEarnings = 0;
     let harvestedCount = 0;
-    const plotsArray = Array.isArray(state.plots) ? state.plots : [];
+    const plotsArray = Array.isArray(stateRef.current.plots) ? stateRef.current.plots : [];
 
     selectedPlots.forEach(index => {
       const plot = plotsArray[index];
       if (plot?.state === 'ready') {
-        const earnings = calculateHarvestValue(plot, state.season?.config);
+        const earnings = calculateHarvestValue(plot, stateRef.current.season?.config);
         totalEarnings += earnings;
         harvestedCount++;
         handleHarvest(index);
@@ -485,19 +499,19 @@ const FarmGrid = memo(() => {
     });
 
     if (harvestedCount > 0) {
-      actions.addNotification({
+      actionsRef.current.addNotification({
         message: `Bulk harvested ${harvestedCount} crops! +${totalEarnings}🪙`,
         type: 'success'
       });
     }
 
     setSelectedPlots(new Set());
-  }, [selectedPlots, Array.isArray(state.plots) ? state.plots : [], handleHarvest, actions]);
+  }, [selectedPlots, handleHarvest]);
 
   const handleSelectAll = useCallback(() => {
-    const plotsArray = Array.isArray(state.plots) ? state.plots : [];
+    const plotsArray = Array.isArray(stateRef.current.plots) ? stateRef.current.plots : [];
     setSelectedPlots(new Set(plotsArray.map((_, index) => index)));
-  }, [state.plots]);
+  }, []);
 
   const handleClearSelection = useCallback(() => {
     setSelectedPlots(new Set());
@@ -506,7 +520,13 @@ const FarmGrid = memo(() => {
   // Generate grid based on current grid size
   const gridSize = state.gridSize || 3;
   // FIXED: Ensure plots is always an array
-  const plots = Array.isArray(state.plots) ? state.plots : [];
+  const plots = useMemo(() => (Array.isArray(state.plots) ? state.plots : []), [state.plots]);
+  const selectedCropData = useMemo(() => CROP_DATA[state.selectedCrop] || CROP_DATA.carrot, [state.selectedCrop]);
+  const plotsInUse = useMemo(() => plots.reduce((count, plot) => count + (plot?.state !== 'empty' ? 1 : 0), 0), [plots]);
+  const gridStyle = useMemo(() => ({
+    gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+    maxWidth: `min(100%, ${gridSize * 120}px)` // Larger for better touch targets
+  }), [gridSize]);
 
   return (
     <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 relative overflow-hidden">
@@ -520,7 +540,7 @@ const FarmGrid = memo(() => {
           )}
         </h2>
         <p className="text-gray-600">
-          {gridSize}×{gridSize} grid • {plots.filter(p => p.state !== 'empty').length} plots in use
+          {gridSize}×{gridSize} grid • {plotsInUse} plots in use
         </p>
       </div>
 
@@ -566,10 +586,7 @@ const FarmGrid = memo(() => {
       {/* Farm Grid - Responsive with larger touch targets on mobile */}
       <div
         className="grid gap-2 sm:gap-3 md:gap-4 mx-auto justify-center farm-grid relative"
-        style={{
-          gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
-          maxWidth: `min(100%, ${gridSize * 120}px)` // Larger for better touch targets
-        }}
+        style={gridStyle}
       >
         {plots.map((plot, index) => (
           <FarmPlot
@@ -581,8 +598,9 @@ const FarmGrid = memo(() => {
             onHarvest={handleHarvest}
             isSelected={selectedPlots.has(index)}
             onToggleSelect={handleToggleSelect}
-            selectedCrop={CROP_DATA[state.selectedCrop]}
+            selectedCrop={selectedCropData}
             seasonBonus={seasonBonus}
+            tick={plot?.state === 'planted' || plot?.state === 'growing' || plot?.state === 'ready' ? tick : undefined}
           />
         ))}
       </div>

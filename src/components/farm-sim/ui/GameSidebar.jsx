@@ -1,9 +1,7 @@
-import React, { memo, useState, lazy, Suspense } from 'react';
+import React, { memo, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import { useGame } from '../context/GameContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs';
+import { Tabs, TabsContent } from '../../ui/tabs';
 import { Card } from '../../ui/card';
-import { Button } from '../../ui/button';
-import { Badge } from '../../ui/badge';
 import TabWrapper from './tabs/TabWrapper';
 
 // Lazy load tab components for better performance
@@ -51,7 +49,16 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
     }
   };
 
-  const tabConfigs = [
+  const inventoryCount = useMemo(() => Object.values(state.inventory || {}).reduce((sum, qty) => {
+    const count = typeof qty === 'number' ? qty : (typeof qty === 'object' && qty !== null ? (qty.count || qty.quantity || 0) : 0);
+    return sum + (Number(count) || 0);
+  }, 0), [state.inventory]);
+
+  const buildingsCount = useMemo(() => Object.keys(state.buildings).length, [state.buildings]);
+  const animalsCount = useMemo(() => state.livestock?.animals?.length || 0, [state.livestock?.animals?.length]);
+  const reputation = state.social.reputation;
+
+  const tabConfigs = useMemo(() => ([
     { id: 'farming', label: '🌾 Farming', component: FarmingTab },
     { id: 'inventory', label: '🎒 Inventory', component: InventoryTab },
     { id: 'shop', label: '🛒 Shop', component: ShopTab },
@@ -73,14 +80,11 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
     { id: 'diseases', label: '🐛 Diseases', component: DiseaseManagementTab },
     { id: 'expand', label: '📈 Expand', component: ExpandTab },
     { id: 'settings', label: '⚙️ Settings', component: SettingsTab },
-  ];
+  ]), []);
 
   // Expose tab switching globally so header buttons can use it
   // FIXED: tabConfigs is recreated every render, use stable ref instead
-  const tabConfigsRef = React.useRef(tabConfigs);
-  React.useEffect(() => {
-    tabConfigsRef.current = tabConfigs;
-  });
+  const tabConfigsRef = useRef(tabConfigs);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -153,31 +157,28 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         <div className="grid grid-cols-2 gap-4 text-xs">
           <div className="bg-white p-2 rounded border border-gray-100 shadow-sm flex flex-col items-center">
             <span className="font-bold text-lg text-gray-800">
-              {Object.values(state.inventory || {}).reduce((sum, qty) => {
-                const count = typeof qty === 'number' ? qty : (typeof qty === 'object' && qty !== null ? (qty.count || qty.quantity || 0) : 0);
-                return sum + (Number(count) || 0);
-              }, 0)}
+              {inventoryCount}
             </span>
             <span className="text-[10px] text-gray-500 font-medium">Items</span>
           </div>
 
           <div className="bg-white p-2 rounded border border-gray-100 shadow-sm flex flex-col items-center">
             <span className="font-bold text-lg text-blue-600">
-              {Object.keys(state.buildings).length}
+              {buildingsCount}
             </span>
             <span className="text-[10px] text-gray-500 font-medium">Bldgs</span>
           </div>
 
           <div className="bg-white p-2 rounded border border-gray-100 shadow-sm flex flex-col items-center">
             <span className="font-bold text-lg text-amber-600">
-              {state.livestock?.animals?.length || 0}
+              {animalsCount}
             </span>
             <span className="text-[10px] text-gray-500 font-medium">Animals</span>
           </div>
 
           <div className="bg-white p-2 rounded border border-gray-100 shadow-sm flex flex-col items-center">
             <span className="font-bold text-lg text-purple-600">
-              {state.social.reputation}
+              {reputation}
             </span>
             <span className="text-[10px] text-gray-500 font-medium">Rep</span>
           </div>
