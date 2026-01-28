@@ -60,6 +60,19 @@
 
 - **Planned**
   - **Scope:** frontend
+  - **What:** investigate runtime crashes during extended play sessions; identify and fix underlying exceptions or resource leaks.
+  - **Why:** user reports the game crashes after playing for a while.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** aligned save metadata constants across UI and context, ensured default fishing streak stats, corrected error-boundary reset to clear the active save, and pruned notification sound tracking IDs to avoid unbounded growth.
+  - **Why:** prevent mismatched save handling and avoid memory growth that could destabilize long sessions.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+
+- **Planned**
+  - **Scope:** frontend
   - **What:** add light gameplay expansion and visual polish, plus targeted performance improvements.
   - **Why:** improve moment-to-moment gameplay depth without introducing major new systems.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
