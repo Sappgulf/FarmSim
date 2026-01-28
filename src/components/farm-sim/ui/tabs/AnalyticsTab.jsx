@@ -2,7 +2,7 @@ import React, { memo, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
-import { Button } from '../../../ui/button';
+import { CROP_DATA } from '../../constants/cropData';
 import { TrendingUp, TrendingDown, DollarSign, Zap, Target, Award, BarChart3, PieChart } from 'lucide-react';
 
 /**
@@ -12,20 +12,33 @@ import { TrendingUp, TrendingDown, DollarSign, Zap, Target, Award, BarChart3, Pi
 const AnalyticsTab = memo(() => {
   const { state } = useGame();
   const [timeRange, setTimeRange] = useState('session'); // session, today, week, allTime
+  const timeRanges = [
+    { id: 'session', label: 'Session', enabled: true },
+    { id: 'today', label: 'Today', enabled: false },
+    { id: 'week', label: 'Week', enabled: false },
+    { id: 'allTime', label: 'All', enabled: false },
+  ];
 
   // Calculate comprehensive stats
   const analytics = useMemo(() => {
-    const activePlots = (state.plots || []).filter(p => p.state !== 'empty');
-    const readyPlots = (state.plots || []).filter(p => p.state === 'ready');
-    const growingPlots = (state.plots || []).filter(p => p.state === 'growing' || p.state === 'planted');
-    const witheredPlots = (state.plots || []).filter(p => p.state === 'withered');
+    const plots = state.plots || [];
+    const plotCount = plots.length;
+    const activePlots = plots.filter(p => p.state !== 'empty');
+    const readyPlots = plots.filter(p => p.state === 'ready');
+    const growingPlots = plots.filter(p => p.state === 'growing' || p.state === 'planted');
+    const witheredPlots = plots.filter(p => p.state === 'withered');
 
     // Calculate total harvests and earnings
-    const totalHarvests = state.inventory ? Object.values(state.inventory).reduce((sum, count) => sum + count, 0) : 0;
-    const estimatedEarnings = totalHarvests * 15; // Rough estimate based on average crop value
+    const inventoryEntries = Object.entries(state.inventory || {});
+    const cropEntries = inventoryEntries.filter(([itemId, count]) => count > 0 && CROP_DATA[itemId]);
+    const totalHarvests = cropEntries.reduce((sum, [, count]) => sum + count, 0);
+    const estimatedEarnings = cropEntries.reduce(
+      (sum, [itemId, count]) => sum + CROP_DATA[itemId].baseValue * count,
+      0
+    );
 
     // Calculate efficiency metrics
-    const plotUtilization = (activePlots.length / state.plots.length) * 100;
+    const plotUtilization = plotCount > 0 ? (activePlots.length / plotCount) * 100 : 0;
     const harvestReadiness = readyPlots.length > 0 ? (readyPlots.length / activePlots.length) * 100 : 0;
     const healthRate = activePlots.length > 0 ? ((activePlots.length - witheredPlots.length) / activePlots.length) * 100 : 100;
 
@@ -35,10 +48,12 @@ const AnalyticsTab = memo(() => {
 
     // Crop diversity
     const uniqueCrops = new Set(activePlots.map(p => p.crop?.id).filter(Boolean));
-    const diversityScore = (uniqueCrops.size / 17) * 100; // Out of 17 total crops
+    const totalCropTypes = Math.max(Object.keys(CROP_DATA).length, 1);
+    const diversityScore = (uniqueCrops.size / totalCropTypes) * 100;
 
     // Building efficiency
-    const buildingsOwned = Object.keys(state.buildings).filter(id => state.buildings[id]?.built).length;
+    const buildings = state.buildings || {};
+    const buildingsOwned = Object.keys(buildings).filter(id => buildings[id]?.built).length;
     const buildingScore = (buildingsOwned / 6) * 100; // Out of 6 total buildings
 
     // XP per hour estimate (rough)
@@ -47,7 +62,7 @@ const AnalyticsTab = memo(() => {
 
     return {
       plots: {
-        total: state.plots.length,
+        total: plotCount,
         active: activePlots.length,
         ready: readyPlots.length,
         growing: growingPlots.length,
@@ -79,11 +94,17 @@ const AnalyticsTab = memo(() => {
 
   // Get top performing crops
   const topCrops = useMemo(() => {
-    if (!state.inventory) return [];
-    return Object.entries(state.inventory)
+    const cropEntries = Object.entries(state.inventory || {})
+      .filter(([cropId, count]) => count > 0 && CROP_DATA[cropId])
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([cropId, count]) => ({ id: cropId, count }));
+      .slice(0, 5);
+
+    return cropEntries.map(([cropId, count]) => ({
+      id: cropId,
+      count,
+      name: CROP_DATA[cropId]?.name ?? cropId,
+      emoji: CROP_DATA[cropId]?.emoji ?? '🌾',
+    }));
   }, [state.inventory]);
 
   // Insights and recommendations
@@ -125,12 +146,21 @@ const AnalyticsTab = memo(() => {
   }, [analytics, state]);
 
   // Stat card component
-  const StatCard = ({ icon: Icon, label, value, change, trend, color = 'blue' }) => (
-    <Card className={`p-4 border-l-4 border-${color}-500`}>
+  const colorStyles = {
+    green: { border: 'border-green-500', bg: 'bg-green-100', icon: 'text-green-600' },
+    yellow: { border: 'border-yellow-500', bg: 'bg-yellow-100', icon: 'text-yellow-600' },
+    blue: { border: 'border-blue-500', bg: 'bg-blue-100', icon: 'text-blue-600' },
+    purple: { border: 'border-purple-500', bg: 'bg-purple-100', icon: 'text-purple-600' },
+  };
+
+  const StatCard = ({ icon: Icon, label, value, change, trend, color = 'blue' }) => {
+    const styles = colorStyles[color] || colorStyles.blue;
+    return (
+      <Card className={`p-4 border-l-4 ${styles.border}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`p-2 bg-${color}-100 rounded-lg`}>
-            <Icon className={`w-5 h-5 text-${color}-600`} />
+          <div className={`p-2 ${styles.bg} rounded-lg`}>
+            <Icon className={`w-5 h-5 ${styles.icon}`} />
           </div>
           <div>
             <p className="text-sm text-gray-600">{label}</p>
@@ -151,7 +181,8 @@ const AnalyticsTab = memo(() => {
         </div>
       </div>
     </Card>
-  );
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -167,19 +198,24 @@ const AnalyticsTab = memo(() => {
             <p className="text-blue-100 opacity-90 mt-1">Real-time performance metrics and insights</p>
           </div>
           <div className="flex gap-1 bg-white/20 p-1 rounded-lg backdrop-blur-sm">
-            {['session', 'today', 'week', 'allTime'].map((range) => (
+            {timeRanges.map((range) => (
               <button
-                key={range}
-                onClick={() => setTimeRange(range)}
+                key={range.id}
+                onClick={() => setTimeRange(range.id)}
+                disabled={!range.enabled}
+                aria-pressed={timeRange === range.id}
+                title={range.enabled ? undefined : 'Historical tracking coming soon'}
                 className={`
                     px-3 py-1.5 rounded-md text-xs font-semibold transition-all
-                    ${timeRange === range ? 'bg-white text-blue-700 shadow-sm' : 'text-blue-100 hover:bg-white/10'}
+                    ${timeRange === range.id ? 'bg-white text-blue-700 shadow-sm' : 'text-blue-100 hover:bg-white/10'}
+                    ${range.enabled ? '' : 'opacity-60 cursor-not-allowed'}
                 `}
               >
-                {range === 'session' ? 'Session' : range === 'today' ? 'Today' : range === 'week' ? 'Week' : 'All'}
+                {range.label}
               </button>
             ))}
           </div>
+          <p className="text-[11px] text-blue-100 mt-2">Historical ranges are coming soon. Showing session stats.</p>
         </div>
       </Card>
 
@@ -284,17 +320,17 @@ const AnalyticsTab = memo(() => {
               <div className="h-4 bg-gray-200 rounded-full overflow-hidden flex">
                 <div
                   className="bg-yellow-500"
-                  style={{ width: `${(analytics.plots.ready / analytics.plots.total) * 100}%` }}
+                  style={{ width: `${analytics.plots.total ? (analytics.plots.ready / analytics.plots.total) * 100 : 0}%` }}
                   title="Ready"
                 />
                 <div
                   className="bg-green-500"
-                  style={{ width: `${(analytics.plots.growing / analytics.plots.total) * 100}%` }}
+                  style={{ width: `${analytics.plots.total ? (analytics.plots.growing / analytics.plots.total) * 100 : 0}%` }}
                   title="Growing"
                 />
                 <div
                   className="bg-red-500"
-                  style={{ width: `${(analytics.plots.withered / analytics.plots.total) * 100}%` }}
+                  style={{ width: `${analytics.plots.total ? (analytics.plots.withered / analytics.plots.total) * 100 : 0}%` }}
                   title="Withered"
                 />
               </div>
@@ -342,7 +378,10 @@ const AnalyticsTab = memo(() => {
                 <div key={crop.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div className="flex items-center gap-2">
                     <Badge className="bg-amber-600">{idx + 1}</Badge>
-                    <span className="text-sm capitalize">{crop.id}</span>
+                    <span className="text-sm flex items-center gap-1">
+                      <span>{crop.emoji}</span>
+                      <span>{crop.name}</span>
+                    </span>
                   </div>
                   <span className="font-semibold">{crop.count} harvested</span>
                 </div>
@@ -456,4 +495,3 @@ const AnalyticsTab = memo(() => {
 
 AnalyticsTab.displayName = 'AnalyticsTab';
 export default AnalyticsTab;
-
