@@ -2,6 +2,13 @@ import { GAME_ACTIONS } from './GameActions';
 import { SAVE_VERSION, initializePlots } from './GamePersistence';
 import { getLevelFromXp, getXpForLevel, MAX_LEVEL_GAIN_PER_GRANT } from '../constants/progression';
 
+const MAX_NOTIFICATIONS = 25;
+const pruneNotifications = (notifications) => (
+    notifications.length > MAX_NOTIFICATIONS
+        ? notifications.slice(-MAX_NOTIFICATIONS)
+        : notifications
+);
+
 // Initial game state
 export const initialState = {
     // Save metadata
@@ -159,7 +166,7 @@ export function gameReducer(state, action) {
                 xp: newXp,
                 level: newLevel,
                 ...(didLevelUp && {
-                    notifications: [
+                    notifications: pruneNotifications([
                         ...state.notifications,
                         {
                             id: `${levelUpTimestamp}-${Math.random().toString(36).substr(2, 9)}`,
@@ -168,7 +175,7 @@ export function gameReducer(state, action) {
                             createdAt: levelUpTimestamp,
                             timestamp: levelUpTimestamp,
                         }
-                    ]
+                    ])
                 })
             };
 
@@ -272,12 +279,12 @@ export function gameReducer(state, action) {
             const uniqueId = `${createdAt}-${Math.random().toString(36).substr(2, 9)}`;
             return {
                 ...state,
-                notifications: [...state.notifications, {
+                notifications: pruneNotifications([...state.notifications, {
                     id: uniqueId,
                     ...action.payload,
                     timestamp: createdAt,
                     createdAt,
-                }],
+                }]),
             };
 
         case GAME_ACTIONS.CLEAR_NOTIFICATION:
