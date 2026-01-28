@@ -83,6 +83,20 @@
   - **Why:** expand gameplay depth while reducing redundant state updates for better runtime performance.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-01-29
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** refine analytics visuals and accuracy (color classes, crop labels, and estimates) plus guard edge cases.
+  - **Why:** ensure analytics UI styles render reliably and metrics better reflect current game data.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** stabilized analytics card styling with fixed Tailwind classes, improved crop-based estimates/top-crop labels, added time-range messaging, and safeguarded plot math.
+  - **Why:** keep analytics visuals consistent while aligning metrics with real crop data and avoiding NaN edge cases.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## Phase 5: Systems Refinement Pass ✅ NEW (January 2026)
 
 ### 1. Single Source of Truth for XP ✅
