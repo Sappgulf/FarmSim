@@ -5,6 +5,7 @@ import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Progress } from '../../ui/progress';
 import { getXpForLevel } from '../constants/progression';
+import { SAVE_KEY } from '../context/GamePersistence';
 import { Coins, Star, Trophy, Settings, Save, Play, Pause, ChevronDown, TrendingUp, Calendar } from 'lucide-react';
 
 // Animated number counter component
@@ -324,7 +325,7 @@ const GameHeader = memo(() => {
               variant="ghost"
               onClick={() => {
                 try {
-                  localStorage.setItem('farm_sim_enhanced_v2', JSON.stringify(state));
+                  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
                   actions.updateGameLoop({ lastSaveTime: Date.now() });
                   actions.addNotification({ message: '💾 Game saved!', type: 'success' });
                 } catch (error) {

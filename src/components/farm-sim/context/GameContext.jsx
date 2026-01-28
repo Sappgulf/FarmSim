@@ -3,6 +3,7 @@ import { getSoundSystem } from '../systems/SoundSystem';
 import { createXPGranter, recordLevelUp, recordPlayerInteraction } from '../services/XPService';
 import { calculateHarvestValue } from '../constants/cropData';
 import { updateQuestProgress } from '../systems/QuestSystem';
+import { SAVE_KEY, SAVE_VERSION } from './GamePersistence';
 
 // Game Context for centralized state management
 // Provide a default value to prevent "useGame must be used within a GameProvider" errors
@@ -11,10 +12,6 @@ const GameContext = createContext(null);
 
 // Initialize sound system
 const soundSystem = getSoundSystem();
-
-// Save format version for migration
-const SAVE_VERSION = 1;
-const SAVE_KEY = 'farm_sim_enhanced_v2';
 
 // Action types
 const GAME_ACTIONS = {
@@ -311,7 +308,9 @@ const initialState = {
       totalCaught: 0,
       totalValue: 0,
       largestFish: 0,
-      byType: {}
+      byType: {},
+      streak: 0,
+      bestStreak: 0
     }
   },
 

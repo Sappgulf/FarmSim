@@ -186,6 +186,15 @@ const NotificationSystem = memo(() => {
   // Sound Effect Trigger
   const processedIdsRef = useRef(new Set());
   useEffect(() => {
+    const activeIds = new Set(state.notifications.map(notification => notification.id));
+    processedIdsRef.current.forEach((id) => {
+      if (!activeIds.has(id)) {
+        processedIdsRef.current.delete(id);
+      }
+    });
+  }, [state.notifications]);
+
+  useEffect(() => {
     state.notifications.forEach(notification => {
       if (!processedIdsRef.current.has(notification.id)) {
         processedIdsRef.current.add(notification.id);

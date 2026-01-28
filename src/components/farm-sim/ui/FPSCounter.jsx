@@ -1,4 +1,5 @@
 import React, { memo, useState, useEffect } from 'react';
+import { SAVE_KEY } from '../context/GamePersistence';
 
 const FPSCounter = memo(() => {
     const [fps, setFps] = useState(60);
@@ -7,7 +8,7 @@ const FPSCounter = memo(() => {
     // Check settings from localStorage on mount
     useEffect(() => {
         try {
-            const saved = localStorage.getItem('farm_sim_enhanced_v2');
+            const saved = localStorage.getItem(SAVE_KEY);
             if (saved) {
                 const data = JSON.parse(saved);
                 setShowFPS(data?.settings?.showFPS ?? false);

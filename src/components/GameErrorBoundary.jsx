@@ -1,4 +1,5 @@
 import React from 'react';
+import { SAVE_KEY } from './farm-sim/context/GamePersistence';
 
 class GameErrorBoundary extends React.Component {
   constructor(props) {
@@ -26,7 +27,10 @@ class GameErrorBoundary extends React.Component {
 
     // Optionally clear save data if corrupted
     if (window.confirm('Would you like to reset your save data? This might fix the error but will delete your progress.')) {
-      localStorage.removeItem('farmLifeSave');
+      localStorage.removeItem(SAVE_KEY);
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith(`${SAVE_KEY}_corrupted_`))
+        .forEach((key) => localStorage.removeItem(key));
       window.location.reload();
     }
   };
