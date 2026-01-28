@@ -97,6 +97,20 @@
   - **Why:** keep analytics visuals consistent while aligning metrics with real crop data and avoiding NaN edge cases.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-01-30
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** investigate crashes when closing notifications or planting large batches; add guardrails and polish.
+  - **Why:** user reports the game crashes during notification dismissal or heavy planting.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** capped notification backlog to prevent timer storms and memory growth during rapid planting or repeated dismissals.
+  - **Why:** keep the notification system bounded so large bursts cannot overwhelm the UI.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## Phase 5: Systems Refinement Pass ✅ NEW (January 2026)
 
 ### 1. Single Source of Truth for XP ✅
