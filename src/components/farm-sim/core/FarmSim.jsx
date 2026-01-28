@@ -189,6 +189,8 @@ function FarmSimCore() {
           console.debug('[farm] DT clamped:', Math.round(deltaTime), 'ms ->', MAX_DT, 'ms');
         }
 
+        const updateStart = performance.now();
+
         // Batch all system updates in a single frame
         // Order matters: dependencies first, dependents last
         seasonSystem.update(currentState);
@@ -202,7 +204,6 @@ function FarmSimCore() {
         disasterSystem.update(currentState);
 
         // PERF: Record update time for overlay
-        const updateStart = performance.now();
         window.__lastUpdateTime = performance.now() - updateStart;
 
         lastUpdateTime = currentTime - (clampedDeltaTime % targetFrameTime); // Maintain frame timing
