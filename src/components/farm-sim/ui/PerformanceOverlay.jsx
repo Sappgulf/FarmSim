@@ -1,6 +1,6 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { useGame } from '../context/GameContext';
-import { getPerfMetrics, isDebugEnabled } from '../services/DebugService';
+import { getPerfMetrics, getProfilerStats, isDebugEnabled } from '../services/DebugService';
 import { addTrackedEventListener } from '../services/EventListenerService';
 
 /**
@@ -13,20 +13,23 @@ const PerformanceOverlay = memo(() => {
     const [isVisible, setIsVisible] = useState(false);
     const [metrics, setMetrics] = useState({
         fps: 0,
+        avgFps: 0,
         frameTime: 0,
+        worstFrameTime: 0,
         updateTime: 0,
         renderTime: 0,
         memory: 0,
         entityCount: 0,
+        plotCount: 0,
+        notificationCount: 0,
         activeTiles: 0,
         particleCount: 0,
         listenerCount: 0,
+        activeTimers: 0,
         tickTime: 0,
+        profiles: [],
     });
 
-    const frameTimesRef = useRef([]);
-    const lastFrameTimeRef = useRef(performance.now());
-    const updateStartRef = useRef(0);
     const debugEnabled = isDebugEnabled();
 
     // Toggle visibility with backtick key
@@ -45,10 +48,23 @@ const PerformanceOverlay = memo(() => {
         if (!isVisible) return;
 
         const collectMetrics = () => {
-            // PERF FIX: Use window globals for FPS
             const fps = window.__currentFPS || 60;
-            const avgFrameTime = fps > 0 ? (1000 / fps) : 16.67;
             const perfMetrics = getPerfMetrics();
+            const now = Date.now();
+            const frameSamples = perfMetrics?.frameTimes || [];
+            let frameTotal = 0;
+            let frameCount = 0;
+            let worstFrame = 0;
+            const cutoff = now - 5000;
+            for (let i = frameSamples.length - 1; i >= 0; i -= 1) {
+                const sample = frameSamples[i];
+                if (sample.t < cutoff) break;
+                frameTotal += sample.dt;
+                frameCount += 1;
+                if (sample.dt > worstFrame) worstFrame = sample.dt;
+            }
+            const avgFrameTime = frameCount > 0 ? frameTotal / frameCount : 16.67;
+            const avgFps = avgFrameTime > 0 ? Math.min(999, Math.round(1000 / avgFrameTime)) : 0;
 
             // Memory (Chrome only)
             const memory = performance.memory
@@ -67,15 +83,21 @@ const PerformanceOverlay = memo(() => {
 
             setMetrics({
                 fps,
+                avgFps,
                 frameTime: avgFrameTime.toFixed(1),
+                worstFrameTime: worstFrame.toFixed(1),
                 updateTime: (perfMetrics?.lastUpdateTime || window.__lastUpdateTime || 0).toFixed(1),
                 renderTime: (perfMetrics?.lastRenderTime || 0).toFixed(1),
                 memory,
                 entityCount,
+                plotCount: plots,
+                notificationCount: notifications,
                 activeTiles,
                 particleCount,
                 listenerCount: perfMetrics?.listenerCount || 0,
+                activeTimers: perfMetrics?.activeTimers || 0,
                 tickTime: (perfMetrics?.lastTickTime || 0).toFixed(1),
+                profiles: getProfilerStats(5000).slice(0, 3),
             });
         };
 
@@ -131,11 +153,23 @@ const PerformanceOverlay = memo(() => {
                     <span className={getFPSColor(metrics.fps)}>{metrics.fps}</span>
                 </div>
 
+                <div className="flex justify-between">
+                    <span>FPS (avg):</span>
+                    <span className={getFPSColor(metrics.avgFps)}>{metrics.avgFps}</span>
+                </div>
+
                 {/* Frame Time */}
                 <div className="flex justify-between">
                     <span>Frame:</span>
                     <span className={getFrameTimeColor(parseFloat(metrics.frameTime))}>
                         {metrics.frameTime}ms
+                    </span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span>Worst (5s):</span>
+                    <span className={getFrameTimeColor(parseFloat(metrics.worstFrameTime))}>
+                        {metrics.worstFrameTime}ms
                     </span>
                 </div>
 
@@ -184,6 +218,16 @@ const PerformanceOverlay = memo(() => {
                 </div>
 
                 <div className="flex justify-between">
+                    <span>Plots:</span>
+                    <span className="text-gray-300">{metrics.plotCount}</span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span>Notifs:</span>
+                    <span className="text-gray-300">{metrics.notificationCount}</span>
+                </div>
+
+                <div className="flex justify-between">
                     <span>Active Tiles:</span>
                     <span className={metrics.activeTiles > 50 ? 'text-yellow-400' : 'text-gray-300'}>
                         {metrics.activeTiles}
@@ -204,6 +248,13 @@ const PerformanceOverlay = memo(() => {
                     </span>
                 </div>
 
+                <div className="flex justify-between">
+                    <span>Timers:</span>
+                    <span className={metrics.activeTimers > 50 ? 'text-yellow-400' : 'text-gray-300'}>
+                        {metrics.activeTimers}
+                    </span>
+                </div>
+
                 {/* Game State */}
                 <div className="border-t border-gray-700 my-2" />
                 <div className="flex justify-between">
@@ -217,6 +268,25 @@ const PerformanceOverlay = memo(() => {
                     </span>
                 </div>
             </div>
+
+            {metrics.profiles.length > 0 && (
+                <>
+                    <div className="border-t border-gray-700 my-2" />
+                    <div className="text-gray-400 text-[10px] mb-1">Top 3 hot sections (avg/ms)</div>
+                    <div className="space-y-1">
+                        {metrics.profiles.map(profile => (
+                            <div key={profile.name} className="flex justify-between">
+                                <span className="truncate max-w-[120px]" title={profile.name}>
+                                    {profile.name}
+                                </span>
+                                <span className="text-gray-300">
+                                    {profile.avg.toFixed(2)} / {profile.max.toFixed(2)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
 
             <div className="text-gray-500 text-[10px] mt-2 border-t border-gray-700 pt-2">
                 Press ` to toggle

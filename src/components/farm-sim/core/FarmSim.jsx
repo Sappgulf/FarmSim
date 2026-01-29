@@ -150,6 +150,12 @@ function FarmSimCore() {
   React.useEffect(() => {
     const newSystems = {
       farmingSystem,
+      seasonSystem,
+      weatherSystem,
+      economicSystem,
+      achievementSystem,
+      diseaseSystem,
+      disasterSystem,
       livestockSystem,
       fishingSystem,
       soundSystem,
@@ -159,6 +165,12 @@ function FarmSimCore() {
     // Only update if systems actually changed (by reference)
     const systemsChanged =
       systemsRef.current.farmingSystem !== farmingSystem ||
+      systemsRef.current.seasonSystem !== seasonSystem ||
+      systemsRef.current.weatherSystem !== weatherSystem ||
+      systemsRef.current.economicSystem !== economicSystem ||
+      systemsRef.current.achievementSystem !== achievementSystem ||
+      systemsRef.current.diseaseSystem !== diseaseSystem ||
+      systemsRef.current.disasterSystem !== disasterSystem ||
       systemsRef.current.livestockSystem !== livestockSystem ||
       systemsRef.current.fishingSystem !== fishingSystem ||
       systemsRef.current.soundSystem !== soundSystem ||
@@ -171,97 +183,19 @@ function FarmSimCore() {
     }
     // Removed actions from dependencies - using ref instead to prevent infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [farmingSystem, livestockSystem, fishingSystem, soundSystem, musicSystem]);
-
-  // System update loop - Optimized with requestAnimationFrame for better timing
-  useEffect(() => {
-    if (state.gameLoop.paused) return;
-
-    let lastUpdateTime = performance.now();
-    const targetFPS = 10; // 10 FPS = 100ms per frame
-    const targetFrameTime = 1000 / targetFPS; // 100ms
-
-    let animationFrameId = null;
-    const visibilityRef = { current: typeof document === 'undefined' ? true : !document.hidden };
-    const handleVisibilityChange = () => {
-      if (typeof document === 'undefined') return;
-      visibilityRef.current = !document.hidden;
-      if (!visibilityRef.current) {
-        lastUpdateTime = performance.now();
-      }
-    };
-    const cleanupVisibility = typeof document === 'undefined'
-      ? () => {}
-      : addTrackedEventListener(document, 'visibilitychange', handleVisibilityChange);
-
-    const systemUpdateLoop = (currentTime) => {
-      // Use stateRef.current to always get latest state (fixes stale closure bug!)
-      const currentState = stateRef.current;
-
-      if (currentState.gameLoop.paused) {
-        return;
-      }
-
-      if (!visibilityRef.current) {
-        lastUpdateTime = currentTime;
-        animationFrameId = requestAnimationFrame(systemUpdateLoop);
-        return;
-      }
-
-      // Throttle to target FPS (10 FPS)
-      const deltaTime = currentTime - lastUpdateTime;
-
-      // DT CLAMPING: Prevent giant time jumps when tab regains focus (max 1 second)
-      const MAX_DT = 1000;
-      const clampedDeltaTime = Math.min(deltaTime, MAX_DT);
-
-      if (clampedDeltaTime >= targetFrameTime) {
-        // Log if we had to clamp (debugging)
-        if (deltaTime > MAX_DT && import.meta.env.MODE === 'development') {
-          console.debug('[farm] DT clamped:', Math.round(deltaTime), 'ms ->', MAX_DT, 'ms');
-        }
-
-        const updateStart = performance.now();
-
-        // Batch all system updates in a single frame
-        // Order matters: dependencies first, dependents last
-        seasonSystem.update(currentState);
-        weatherSystem.update(currentState);
-        farmingSystem.update(currentState);
-        livestockSystem.update(currentState);
-        fishingSystem.update(currentState);
-        economicSystem.update(currentState);
-        achievementSystem.update(currentState);
-        diseaseSystem.update(currentState);
-        disasterSystem.update(currentState);
-
-        // PERF: Record update time for overlay
-        if (debugEnabled) {
-          const metrics = getPerfMetrics();
-          if (metrics) {
-            metrics.lastUpdateTime = performance.now() - updateStart;
-          } else {
-            window.__lastUpdateTime = performance.now() - updateStart;
-          }
-        }
-
-        lastUpdateTime = currentTime - (clampedDeltaTime % targetFrameTime); // Maintain frame timing
-      }
-
-      // Continue loop
-      animationFrameId = requestAnimationFrame(systemUpdateLoop);
-    };
-
-    // Start the loop
-    animationFrameId = requestAnimationFrame(systemUpdateLoop);
-
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-      cleanupVisibility();
-    };
-  }, [debugEnabled, state.gameLoop.paused, seasonSystem, farmingSystem, weatherSystem, economicSystem, achievementSystem, diseaseSystem, disasterSystem, livestockSystem, fishingSystem]);
+  }, [
+    farmingSystem,
+    seasonSystem,
+    weatherSystem,
+    economicSystem,
+    achievementSystem,
+    diseaseSystem,
+    disasterSystem,
+    livestockSystem,
+    fishingSystem,
+    soundSystem,
+    musicSystem,
+  ]);
 
   // Track player interactions for idle detection
   useEffect(() => {
