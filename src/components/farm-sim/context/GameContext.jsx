@@ -553,8 +553,9 @@ function gameReducer(state, action) {
     case GAME_ACTIONS.ADD_NOTIFICATION:
       // FIXED: Generate truly unique ID using timestamp + random
       const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const existingNotifications = Array.isArray(state.notifications) ? state.notifications : [];
       const nextNotifications = [
-        ...state.notifications,
+        ...existingNotifications,
         {
           id: uniqueId,
           ...action.payload,
@@ -569,6 +570,9 @@ function gameReducer(state, action) {
       };
 
     case GAME_ACTIONS.CLEAR_NOTIFICATION:
+      if (!Array.isArray(state.notifications)) {
+        return { ...state, notifications: [] };
+      }
       return {
         ...state,
         notifications: state.notifications.filter(n => n.id !== action.payload),

@@ -111,6 +111,20 @@
   - **Why:** lower per-tick overhead, eliminate stacked rAF loops, and provide accurate hot-path visibility without impacting production.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-02-03
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** investigate notification dismissal crashes and harden close handling and stress tooling.
+  - **Why:** user reports the game still crashes when notifications are closed rapidly.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** hardened notification state handling to tolerate invalid entries, added close guards, and ensured timer/sound logic uses sanitized notification arrays.
+  - **Why:** prevent crashes when closing notifications rapidly if the notification list becomes corrupted or includes undefined entries.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## 2026-01-29
 
 - **Planned**
