@@ -117,6 +117,7 @@ NotificationItem.displayName = 'NotificationItem';
 // Main Notification System Component
 const NotificationSystem = memo(() => {
   const { state, actions } = useGame();
+  const notifications = Array.isArray(state.notifications) ? state.notifications : [];
   const timersRef = useRef(new Map());
   const [exitingIds, setExitingIds] = React.useState(new Set()); // Track exiting notifications for animation
   const closingIdsRef = useRef(new Set());
@@ -127,6 +128,7 @@ const NotificationSystem = memo(() => {
     && window.__farmDebug?.notifications;
 
   const handleCloseNotification = useCallback((id, reason = 'manual') => {
+    if (!id) return;
     if (closingIdsRef.current.has(id)) return;
     closingIdsRef.current.add(id);
     traceAction('notification_close', { id, reason }, state);
@@ -166,7 +168,7 @@ const NotificationSystem = memo(() => {
   // Centralized auto-dismiss handling
   useEffect(() => {
     const timers = timersRef.current;
-    const activeIds = new Set(state.notifications.map(n => n.id));
+    const activeIds = new Set(notifications.map(n => n?.id).filter(Boolean));
 
     // Cleanup timers for removed notifications
     timers.forEach((timer, id) => {
@@ -183,7 +185,8 @@ const NotificationSystem = memo(() => {
     });
 
     // Schedule timers for new notifications
-    state.notifications.forEach(notification => {
+    notifications.forEach(notification => {
+      if (!notification?.id) return;
       if (notification.sticky) return;
       if (timers.has(notification.id)) return;
       if (exitingIds.has(notification.id)) return; // Don't schedule if already exiting
@@ -197,21 +200,22 @@ const NotificationSystem = memo(() => {
 
       timers.set(notification.id, timerId);
     });
-  }, [state.notifications, exitingIds, handleCloseNotification]);
+  }, [notifications, exitingIds, handleCloseNotification]);
 
   // Sound Effect Trigger
   const processedIdsRef = useRef(new Set());
   useEffect(() => {
-    const activeIds = new Set(state.notifications.map(notification => notification.id));
+    const activeIds = new Set(notifications.map(notification => notification?.id).filter(Boolean));
     processedIdsRef.current.forEach((id) => {
       if (!activeIds.has(id)) {
         processedIdsRef.current.delete(id);
       }
     });
-  }, [state.notifications]);
+  }, [notifications]);
 
   useEffect(() => {
-    state.notifications.forEach(notification => {
+    notifications.forEach(notification => {
+      if (!notification?.id) return;
       if (!processedIdsRef.current.has(notification.id)) {
         processedIdsRef.current.add(notification.id);
 
@@ -224,7 +228,7 @@ const NotificationSystem = memo(() => {
         }
       }
     });
-  }, [state.notifications]);
+  }, [notifications]);
 
   useEffect(() => {
     return () => {
@@ -235,7 +239,7 @@ const NotificationSystem = memo(() => {
     };
   }, []);
 
-  if (state.notifications.length === 0) return null;
+  if (notifications.length === 0) return null;
 
   return (
     <div
@@ -249,8 +253,8 @@ const NotificationSystem = memo(() => {
       aria-atomic="false"
     >
       {/* Render notifications including those that are 'exiting' but still in state */}
-      {state.notifications.slice(0, 5).map(notification => (
-        <div key={notification.id} className="pointer-events-auto w-full flex justify-end">
+      {notifications.slice(0, 5).filter(Boolean).map((notification, index) => (
+        <div key={notification?.id ?? `notification-${index}`} className="pointer-events-auto w-full flex justify-end">
           <NotificationItem
             notification={notification}
             onClose={handleCloseNotification}
@@ -259,9 +263,9 @@ const NotificationSystem = memo(() => {
         </div>
       ))}
 
-      {state.notifications.length > 5 && (
+      {notifications.length > 5 && (
         <div className="pointer-events-auto bg-white/90 backdrop-blur border rounded-full px-4 py-1 text-xs font-medium text-slate-600 shadow-sm animate-in fade-in slide-in-from-bottom-2">
-          +{state.notifications.length - 5} more
+          +{notifications.length - 5} more
         </div>
       )}
     </div>
