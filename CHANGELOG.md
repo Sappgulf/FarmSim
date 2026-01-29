@@ -70,6 +70,20 @@
   - **Why:** prevent mismatched save handling and avoid memory growth that could destabilize long sessions.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-02-01
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** add debug crash instrumentation, reproduce plot/notification stress crashes, and harden plot/notification handling.
+  - **Why:** user reports stress-induced crashes around plots and notification closing.
+  - **Verification:** `npm run test -- --runInBand` (failed: Vitest does not support --runInBand).
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** added debug error overlay + stress panel, action tracing, invariant checks, notification close hardening, plot index validation, and capped notification backlog; updated bug/perf docs.
+  - **Why:** make plot and notification stress failures reproducible and prevent crash-prone edge cases from destabilizing the game loop.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 
 - **Planned**
   - **Scope:** frontend

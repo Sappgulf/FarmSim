@@ -1,9 +1,8 @@
 import React, { memo, useCallback, useEffect, useRef } from 'react';
 import { useGame } from '../context/GameContext';
-import { Card } from '../../ui/card';
-import { Button } from '../../ui/button';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { getSoundSystem } from '../systems/SoundSystem';
+import { traceAction } from '../services/DebugTraceService';
 
 const DEFAULT_NOTIFICATION_DURATION_MS = 4000;
 const getNotificationDurationMs = (notification) => {
@@ -63,6 +62,7 @@ const NotificationItem = memo(({ notification, onClose, isExiting }) => {
         p-4 mb-2 overflow-hidden ${style.className} ${animationClass}
       `}
       role="alert"
+      data-notification-id={notification.id}
     >
       <div className="flex items-start gap-4">
         {/* Icon container with subtle glow */}
@@ -119,18 +119,25 @@ const NotificationSystem = memo(() => {
   const { state, actions } = useGame();
   const timersRef = useRef(new Map());
   const [exitingIds, setExitingIds] = React.useState(new Set()); // Track exiting notifications for animation
+  const closingIdsRef = useRef(new Set());
+  const mountedRef = useRef(true);
 
   const debugNotifications = import.meta.env.MODE === 'development'
     && typeof window !== 'undefined'
     && window.__farmDebug?.notifications;
 
   const handleCloseNotification = useCallback((id, reason = 'manual') => {
+    if (closingIdsRef.current.has(id)) return;
+    closingIdsRef.current.add(id);
+    traceAction('notification_close', { id, reason }, state);
     // 1. Mark as exiting first to trigger animation
-    setExitingIds(prev => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
+    if (mountedRef.current) {
+      setExitingIds(prev => {
+        const next = new Set(prev);
+        next.add(id);
+        return next;
+      });
+    }
 
     const timers = timersRef.current;
     if (timers.has(id)) {
@@ -140,19 +147,21 @@ const NotificationSystem = memo(() => {
 
     // 2. Wait for animation then remove from state
     setTimeout(() => {
+      if (!mountedRef.current) return;
       actions.clearNotification(id);
       setExitingIds(prev => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
+      closingIdsRef.current.delete(id);
 
       if (debugNotifications) {
         console.debug('[farm]', 'Notification dismissed', { id, reason });
       }
     }, 300); // 300ms matches animation duration
 
-  }, [actions, debugNotifications]);
+  }, [actions, debugNotifications, state]);
 
   // Centralized auto-dismiss handling
   useEffect(() => {
@@ -164,6 +173,12 @@ const NotificationSystem = memo(() => {
       if (!activeIds.has(id)) {
         clearTimeout(timer);
         timers.delete(id);
+      }
+    });
+
+    closingIdsRef.current.forEach((id) => {
+      if (!activeIds.has(id)) {
+        closingIdsRef.current.delete(id);
       }
     });
 
@@ -213,6 +228,7 @@ const NotificationSystem = memo(() => {
 
   useEffect(() => {
     return () => {
+      mountedRef.current = false;
       const timers = timersRef.current;
       timers.forEach((timer) => clearTimeout(timer));
       timers.clear();

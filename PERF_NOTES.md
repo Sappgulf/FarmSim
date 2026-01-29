@@ -23,3 +23,9 @@
 5. Switch the tab away for a few seconds, then return:
    - The update loop remains stable (no giant jumps).
    - The tick counter resumes smoothly.
+
+## 2026-02-01 Stress Stabilization Pass
+- Added debug-only action tracing and error capture to isolate hot paths without impacting production performance.
+- Added a capped notification backlog to prevent timer storms under rapid toast bursts.
+- Hardened notification close handling to avoid redundant timers/state churn during rapid dismissals.
+- Added debug-only invariant checks to surface DOM/state mismatches for plots and notifications before they degrade performance.

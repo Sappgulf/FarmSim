@@ -5,6 +5,7 @@ import { calculateHarvestValue } from '../constants/cropData';
 import { updateQuestProgress } from '../systems/QuestSystem';
 import { SAVE_KEY, SAVE_VERSION } from './GamePersistence';
 import { addTrackedEventListener } from '../services/EventListenerService';
+import { initializeDebugTracing, runDebugInvariants, traceAction } from '../services/DebugTraceService';
 
 // Game Context for centralized state management
 // Provide a default value to prevent "useGame must be used within a GameProvider" errors
@@ -99,6 +100,8 @@ const GAME_ACTIONS = {
   // Save/Load
   LOAD_GAME: 'LOAD_GAME',
 };
+
+const MAX_NOTIFICATION_BACKLOG = 100;
 
 // Helper function to initialize plots
 const initializePlots = (gridSize) => {
@@ -549,13 +552,19 @@ function gameReducer(state, action) {
     case GAME_ACTIONS.ADD_NOTIFICATION:
       // FIXED: Generate truly unique ID using timestamp + random
       const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      return {
-        ...state,
-        notifications: [...state.notifications, {
+      const nextNotifications = [
+        ...state.notifications,
+        {
           id: uniqueId,
           ...action.payload,
           timestamp: Date.now(),
-        }],
+        },
+      ];
+      return {
+        ...state,
+        notifications: nextNotifications.length > MAX_NOTIFICATION_BACKLOG
+          ? nextNotifications.slice(-MAX_NOTIFICATION_BACKLOG)
+          : nextNotifications,
       };
 
     case GAME_ACTIONS.CLEAR_NOTIFICATION:
@@ -627,10 +636,17 @@ export function GameProvider({ children }) {
     }
   );
 
+  useEffect(() => {
+    initializeDebugTracing();
+  }, []);
+
   // Use refs to access latest state without causing re-renders in callbacks
   const stateRef = useRef(state);
   useEffect(() => {
     stateRef.current = state;
+  }, [state]);
+  useEffect(() => {
+    runDebugInvariants(state);
   }, [state]);
   const visibilityRef = useRef(typeof document === 'undefined' ? true : !document.hidden);
 
@@ -838,20 +854,30 @@ export function GameProvider({ children }) {
   // Memoized action creators
   const actions = useMemo(() => {
     const grantXP = createXPGranter(dispatch, () => stateRef.current, GAME_ACTIONS.SET_XP);
+    const trace = (type, details = {}) => traceAction(type, details, stateRef.current);
+    const isValidPlotIndex = (plots, index) => (
+      Number.isInteger(index) && index >= 0 && index < plots.length
+    );
 
     return {
     // Core property setters
-    setCoins: (coins) => dispatch({ type: GAME_ACTIONS.SET_COINS, payload: coins }),
+    setCoins: (coins) => {
+      trace('coins_set', { coins });
+      dispatch({ type: GAME_ACTIONS.SET_COINS, payload: coins });
+    },
     /**
      * Set XP amount (supports function updater, auto-calculates level)
      * @param {number|Function} xp - XP amount or updater function
      * @deprecated Use grantXP instead for proper tracking and rate limiting
      */
-    setXp: (xp, source) => dispatch({
-      type: GAME_ACTIONS.SET_XP,
-      payload: xp,
-      meta: buildXpMeta(source),
-    }),
+    setXp: (xp, source) => {
+      trace('xp_set', { xp, source });
+      dispatch({
+        type: GAME_ACTIONS.SET_XP,
+        payload: xp,
+        meta: buildXpMeta(source),
+      });
+    },
 
     /**
      * Grants XP with source tracking and rate limiting (PREFERRED)
@@ -864,16 +890,34 @@ export function GameProvider({ children }) {
       if (granted > 0) {
         updateDailyQuestProgress('gain_xp', { amount: granted });
       }
+      trace('xp_grant', { amount: granted, source });
       return granted;
     },
     /**
      * Records player interaction for idle detection
      */
     recordInteraction: recordPlayerInteraction,
-    updatePlot: (index, plot) => dispatch({ type: GAME_ACTIONS.UPDATE_PLOT, payload: { index, plot } }),
-    updatePlots: (plots) => dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: plots }),
-    setGridSize: (size) => dispatch({ type: GAME_ACTIONS.SET_GRID_SIZE, payload: size }),
-    updateInventory: (inventory) => dispatch({ type: GAME_ACTIONS.UPDATE_INVENTORY, payload: inventory }),
+    updatePlot: (index, plot) => {
+      const currentPlots = Array.isArray(stateRef.current?.plots) ? stateRef.current.plots : [];
+      if (!isValidPlotIndex(currentPlots, index)) {
+        trace('plot_update_invalid', { index });
+        return;
+      }
+      trace('plot_update', { index });
+      dispatch({ type: GAME_ACTIONS.UPDATE_PLOT, payload: { index, plot } });
+    },
+    updatePlots: (plots) => {
+      trace('plots_update', { count: Array.isArray(plots) ? plots.length : 'fn' });
+      dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: plots });
+    },
+    setGridSize: (size) => {
+      trace('grid_resize', { size });
+      dispatch({ type: GAME_ACTIONS.SET_GRID_SIZE, payload: size });
+    },
+    updateInventory: (inventory) => {
+      trace('inventory_update', { entries: inventory ? Object.keys(inventory).length : 0 });
+      dispatch({ type: GAME_ACTIONS.UPDATE_INVENTORY, payload: inventory });
+    },
 
     // Systems & Metadata
     setWeather: (weather) => dispatch({ type: GAME_ACTIONS.SET_WEATHER, payload: weather }),
@@ -900,8 +944,14 @@ export function GameProvider({ children }) {
     updateProcessedInventory: (inventory) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSED_INVENTORY, payload: inventory }),
 
     // UI & Settings
-    addNotification: (notification) => dispatch({ type: GAME_ACTIONS.ADD_NOTIFICATION, payload: notification }),
-    clearNotification: (id) => dispatch({ type: GAME_ACTIONS.CLEAR_NOTIFICATION, payload: id }),
+    addNotification: (notification) => {
+      trace('notification_add', { type: notification?.type, message: notification?.message });
+      dispatch({ type: GAME_ACTIONS.ADD_NOTIFICATION, payload: notification });
+    },
+    clearNotification: (id) => {
+      trace('notification_clear', { id });
+      dispatch({ type: GAME_ACTIONS.CLEAR_NOTIFICATION, payload: id });
+    },
     setSelectedCrop: (cropId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_CROP, payload: cropId }),
     updateSettings: (settings) => dispatch({ type: GAME_ACTIONS.UPDATE_SETTINGS, payload: settings }),
     updateGameLoop: (data) => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: data }),
@@ -922,9 +972,11 @@ export function GameProvider({ children }) {
     loadGame: () => {
       const savedState = loadSavedState();
       if (savedState) {
+        trace('game_load', { plots: savedState.plots?.length || 0 });
         dispatch({ type: GAME_ACTIONS.LOAD_GAME, payload: savedState });
         return true;
       }
+      trace('game_load_failed', {});
       return false;
     },
     /**
@@ -942,9 +994,11 @@ export function GameProvider({ children }) {
         };
         localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
         dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { lastSaveTime: saveTimestamp } });
+        trace('game_save', { saveTimestamp });
         return true;
       } catch (error) {
         console.error('[farm] Manual save failed', error);
+        trace('game_save_failed', { message: error?.message });
         return false;
       }
     },
@@ -961,9 +1015,15 @@ export function GameProvider({ children }) {
      * @returns {boolean} True if planting succeeded
      */
     plantCrop: (plotIndex, cropType, cropData) => {
+      const currentPlots = Array.isArray(stateRef.current?.plots) ? stateRef.current.plots : [];
+      if (!isValidPlotIndex(currentPlots, plotIndex)) {
+        trace('plant_crop_invalid', { plotIndex, cropType });
+        return false;
+      }
       const currentSystems = systemsRef.current;
       if (currentSystems.farmingSystem?.plantCrop) {
         currentSystems.farmingSystem.update(stateRef.current);
+        trace('plant_crop', { plotIndex, cropType });
         return currentSystems.farmingSystem.plantCrop(plotIndex, cropData);
       }
       // Fallback
@@ -973,6 +1033,7 @@ export function GameProvider({ children }) {
       };
 
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
+      trace('plant_crop_fallback', { plotIndex, cropType });
       return true;
     },
 
@@ -984,14 +1045,24 @@ export function GameProvider({ children }) {
     harvestCrop: (plotIndex, earnings) => {
       // Delegate to farming system via plot update
       const currentState = stateRef.current;
+      const currentPlots = Array.isArray(currentState?.plots) ? currentState.plots : [];
+      if (!isValidPlotIndex(currentPlots, plotIndex)) {
+        trace('harvest_crop_invalid', { plotIndex });
+        return false;
+      }
       const updatedPlots = [...currentState.plots];
       const plot = updatedPlots[plotIndex];
+      if (!plot) {
+        trace('harvest_crop_missing', { plotIndex });
+        return false;
+      }
 
       updatedPlots[plotIndex] = {
         ...plot, state: 'empty', crop: null, plantedAt: null, growthStage: 0, waterLevel: 50, progress: 0,
         soilFertility: Math.max(0.5, (plot?.soilFertility || 1.0) - 0.1)
       };
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
+      trace('harvest_crop', { plotIndex, earnings });
       return true;
     },
 
@@ -1006,6 +1077,7 @@ export function GameProvider({ children }) {
     earnMoney: (amount) => {
       dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (currentCoins) => currentCoins + amount });
       updateDailyQuestProgress('earn_coins', { amount });
+      trace('earn_money', { amount });
     },
     /**
      * Spends money if available
@@ -1017,6 +1089,7 @@ export function GameProvider({ children }) {
       if (currentCoins < amount) return false;
       dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentCoins - amount });
       updateDailyQuestProgress('spend_coins', { amount });
+      trace('spend_money', { amount });
       return true;
     },
 
@@ -1062,6 +1135,7 @@ export function GameProvider({ children }) {
       if (!currentState?.plots?.length) return;
 
       const hasWaterBoost = (currentState.inventory?.water_boost || 0) > 0;
+      trace('water_all_plots', { hasWaterBoost });
       const updatedPlots = currentState.plots.map(plot => {
         if (plot.state === 'empty') return plot;
         return {
@@ -1092,6 +1166,7 @@ export function GameProvider({ children }) {
 
       const hasFertilizer = (currentState.inventory?.fertilizer || 0) > 0;
       const cost = 15;
+      trace('fertilize_all_plots', { hasFertilizer, cost });
       if (!hasFertilizer && currentState.coins < cost) {
         dispatch({
           type: GAME_ACTIONS.ADD_NOTIFICATION,
@@ -1134,6 +1209,7 @@ export function GameProvider({ children }) {
 
       const hasPesticide = (currentState.inventory?.pesticide || 0) > 0;
       const cost = 20;
+      trace('treat_all_diseases', { hasPesticide, cost });
       if (!hasPesticide && currentState.coins < cost) {
         dispatch({
           type: GAME_ACTIONS.ADD_NOTIFICATION,
