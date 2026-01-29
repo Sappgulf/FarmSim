@@ -1,5 +1,7 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
+import { getPerfMetrics, isDebugEnabled } from '../services/DebugService';
+import { addTrackedEventListener } from '../services/EventListenerService';
 
 /**
  * Performance Overlay Component
@@ -16,24 +18,27 @@ const PerformanceOverlay = memo(() => {
         renderTime: 0,
         memory: 0,
         entityCount: 0,
+        activeTiles: 0,
         particleCount: 0,
         listenerCount: 0,
+        tickTime: 0,
     });
 
     const frameTimesRef = useRef([]);
     const lastFrameTimeRef = useRef(performance.now());
     const updateStartRef = useRef(0);
+    const debugEnabled = isDebugEnabled();
 
     // Toggle visibility with backtick key
     useEffect(() => {
+        if (!debugEnabled) return () => {};
         const handleKeyPress = (e) => {
             if (e.key === '`' || e.key === '~') {
                 setIsVisible(prev => !prev);
             }
         };
-        window.addEventListener('keydown', handleKeyPress);
-        return () => window.removeEventListener('keydown', handleKeyPress);
-    }, []);
+        return addTrackedEventListener(window, 'keydown', handleKeyPress);
+    }, [debugEnabled]);
 
     // Collect metrics at lower frequency (2Hz instead of 60Hz)
     useEffect(() => {
@@ -43,6 +48,7 @@ const PerformanceOverlay = memo(() => {
             // PERF FIX: Use window globals for FPS
             const fps = window.__currentFPS || 60;
             const avgFrameTime = fps > 0 ? (1000 / fps) : 16.67;
+            const perfMetrics = getPerfMetrics();
 
             // Memory (Chrome only)
             const memory = performance.memory
@@ -53,6 +59,7 @@ const PerformanceOverlay = memo(() => {
             const plots = state.plots?.length || 0;
             const animals = state.livestock?.animals?.length || 0;
             const notifications = state.notifications?.length || 0;
+            const activeTiles = state.plots?.filter(p => p?.state && p.state !== 'empty').length || 0;
             const entityCount = plots + animals + notifications;
 
             // Particle count (from global)
@@ -61,12 +68,14 @@ const PerformanceOverlay = memo(() => {
             setMetrics({
                 fps,
                 frameTime: avgFrameTime.toFixed(1),
-                updateTime: (window.__lastUpdateTime || 0).toFixed(1),
-                renderTime: 0,
+                updateTime: (perfMetrics?.lastUpdateTime || window.__lastUpdateTime || 0).toFixed(1),
+                renderTime: (perfMetrics?.lastRenderTime || 0).toFixed(1),
                 memory,
                 entityCount,
+                activeTiles,
                 particleCount,
-                listenerCount: 0,
+                listenerCount: perfMetrics?.listenerCount || 0,
+                tickTime: (perfMetrics?.lastTickTime || 0).toFixed(1),
             });
         };
 
@@ -78,7 +87,7 @@ const PerformanceOverlay = memo(() => {
     }, [isVisible, state.plots?.length, state.livestock?.animals?.length, state.notifications?.length]);
 
     // Don't render in production unless explicitly enabled
-    if (import.meta.env.PROD && !window.__PERF_OVERLAY_ENABLED) {
+    if (!debugEnabled) {
         return null;
     }
 
@@ -138,6 +147,22 @@ const PerformanceOverlay = memo(() => {
                     </span>
                 </div>
 
+                {/* Render Time */}
+                <div className="flex justify-between">
+                    <span>Render:</span>
+                    <span className={getFrameTimeColor(parseFloat(metrics.renderTime))}>
+                        {metrics.renderTime}ms
+                    </span>
+                </div>
+
+                {/* Tick Time */}
+                <div className="flex justify-between">
+                    <span>Tick:</span>
+                    <span className={getFrameTimeColor(parseFloat(metrics.tickTime))}>
+                        {metrics.tickTime}ms
+                    </span>
+                </div>
+
                 {/* Memory */}
                 {metrics.memory > 0 && (
                     <div className="flex justify-between">
@@ -159,9 +184,23 @@ const PerformanceOverlay = memo(() => {
                 </div>
 
                 <div className="flex justify-between">
+                    <span>Active Tiles:</span>
+                    <span className={metrics.activeTiles > 50 ? 'text-yellow-400' : 'text-gray-300'}>
+                        {metrics.activeTiles}
+                    </span>
+                </div>
+
+                <div className="flex justify-between">
                     <span>Particles:</span>
                     <span className={metrics.particleCount > 50 ? 'text-yellow-400' : 'text-gray-300'}>
                         {metrics.particleCount}
+                    </span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span>Listeners:</span>
+                    <span className={metrics.listenerCount > 50 ? 'text-yellow-400' : 'text-gray-300'}>
+                        {metrics.listenerCount}
                     </span>
                 </div>
 

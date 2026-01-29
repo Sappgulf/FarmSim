@@ -4,6 +4,7 @@ import { createXPGranter, recordLevelUp, recordPlayerInteraction } from '../serv
 import { calculateHarvestValue } from '../constants/cropData';
 import { updateQuestProgress } from '../systems/QuestSystem';
 import { SAVE_KEY, SAVE_VERSION } from './GamePersistence';
+import { addTrackedEventListener } from '../services/EventListenerService';
 
 // Game Context for centralized state management
 // Provide a default value to prevent "useGame must be used within a GameProvider" errors
@@ -631,6 +632,7 @@ export function GameProvider({ children }) {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+  const visibilityRef = useRef(typeof document === 'undefined' ? true : !document.hidden);
 
   const dispatchRef = useRef(dispatch);
   useEffect(() => {
@@ -742,9 +744,25 @@ export function GameProvider({ children }) {
     let lastAutoSaveCheck = Date.now();
     let animationFrameId = null;
 
+    const handleVisibilityChange = () => {
+      if (typeof document === 'undefined') return;
+      visibilityRef.current = !document.hidden;
+      if (!visibilityRef.current) {
+        lastFPSUpdate = performance.now();
+      }
+    };
+    const cleanupVisibility = typeof document === 'undefined'
+      ? () => {}
+      : addTrackedEventListener(document, 'visibilitychange', handleVisibilityChange);
+
     const masterGameLoop = (currentTime) => {
       const currentState = stateRef.current;
       if (currentState.gameLoop.paused) return;
+
+      if (!visibilityRef.current) {
+        animationFrameId = requestAnimationFrame(masterGameLoop);
+        return;
+      }
 
       frameCount++;
       if (currentTime - lastFPSUpdate >= 1000) {
@@ -777,8 +795,22 @@ export function GameProvider({ children }) {
     return () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+      cleanupVisibility();
     };
   }, [state.gameLoop.paused, state.settings.autoSave, debouncedAutoSave]);
+
+  useEffect(() => {
+    if (!state.settings.autoSave) return;
+    const handleVisibilityChange = () => {
+      if (typeof document === 'undefined') return;
+      if (document.hidden) {
+        debouncedAutoSave(stateRef.current);
+      }
+    };
+    return typeof document === 'undefined'
+      ? () => {}
+      : addTrackedEventListener(document, 'visibilitychange', handleVisibilityChange);
+  }, [debouncedAutoSave, state.settings.autoSave]);
 
   // System management (bridging React state with external game systems)
   const [systems, setSystemsState] = useState({});

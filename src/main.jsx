@@ -2,7 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import FarmSim from "./components/farm-sim/core/FarmSim";
 import GameErrorBoundary from "./components/GameErrorBoundary";
+import { initializeDebugGlobals } from "./components/farm-sim/services/DebugService";
 import "./index.css";
+
+initializeDebugGlobals();
 
 // Register service worker for PWA/offline support (production only)
 if (import.meta.env.PROD && "serviceWorker" in navigator) {

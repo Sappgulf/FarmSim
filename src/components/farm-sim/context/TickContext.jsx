@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { getPerfMetrics, isDebugEnabled } from '../services/DebugService';
+import { addTrackedEventListener } from '../services/EventListenerService';
 
 /**
  * TickContext - Provides a centralized 1-second tick for UI updates
@@ -15,14 +17,52 @@ const TickContext = createContext(0);
  */
 export function TickProvider({ children, interval = 1000 }) {
     const [tick, setTick] = useState(0);
+    const visibilityRef = useRef(typeof document === 'undefined' ? true : !document.hidden);
+    const debugEnabled = isDebugEnabled();
 
     useEffect(() => {
-        const id = setInterval(() => {
-            setTick(t => t + 1);
-        }, interval);
+        let id = null;
 
-        return () => clearInterval(id);
-    }, [interval]);
+        const startTick = () => {
+            if (id) return;
+            id = setInterval(() => {
+                const start = performance.now();
+                setTick(t => t + 1);
+                if (debugEnabled) {
+                    const metrics = getPerfMetrics();
+                    if (metrics) {
+                        metrics.lastTickTime = performance.now() - start;
+                    }
+                }
+            }, interval);
+        };
+
+        const stopTick = () => {
+            if (!id) return;
+            clearInterval(id);
+            id = null;
+        };
+
+        const handleVisibilityChange = () => {
+            if (typeof document === 'undefined') return;
+            visibilityRef.current = !document.hidden;
+            if (!visibilityRef.current) {
+                stopTick();
+            } else {
+                startTick();
+            }
+        };
+
+        startTick();
+        const cleanupVisibility = typeof document === 'undefined'
+            ? () => {}
+            : addTrackedEventListener(document, 'visibilitychange', handleVisibilityChange);
+
+        return () => {
+            stopTick();
+            cleanupVisibility();
+        };
+    }, [debugEnabled, interval]);
 
     return (
         <TickContext.Provider value={tick}>

@@ -5,6 +5,7 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { FISH_TYPES, POND_UPGRADES } from '../../systems/FishingSystem';
+import { addTrackedEventListener } from '../../services/EventListenerService';
 
 const FishingTab = memo(() => {
   const { state, actions, systems } = useGame();
@@ -206,8 +207,7 @@ const FishingTab = memo(() => {
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    return addTrackedEventListener(window, 'keydown', handleKeyPress);
   }, [isPlaying]);
 
   const getRarityColor = (rarity) => {

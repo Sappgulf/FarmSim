@@ -7,6 +7,7 @@ import { Progress } from '../../ui/progress';
 import { getXpForLevel } from '../constants/progression';
 import { SAVE_KEY } from '../context/GamePersistence';
 import { Coins, Star, Trophy, Settings, Save, Play, Pause, ChevronDown, TrendingUp, Calendar } from 'lucide-react';
+import { addTrackedEventListener } from '../services/EventListenerService';
 
 // Animated number counter component
 const AnimatedNumber = memo(({ value, duration = 500 }) => {
@@ -55,6 +56,7 @@ const GameHeader = memo(() => {
   const [showStatsDropdown, setShowStatsDropdown] = useState(false);
   const prevLevelRef = useRef(state.level);
   const statsDropdownRef = useRef(null);
+  const headerRef = useRef(null);
 
   // Use ref for actions to avoid dependency issues
   const actionsRef = useRef(actions);
@@ -77,14 +79,14 @@ const GameHeader = memo(() => {
       }
     };
 
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('touchstart', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
+    const cleanups = [
+      addTrackedEventListener(document, 'mousedown', handlePointerDown),
+      addTrackedEventListener(document, 'touchstart', handlePointerDown),
+      addTrackedEventListener(document, 'keydown', handleKeyDown),
+    ];
 
     return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('touchstart', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
+      cleanups.forEach(cleanup => cleanup());
     };
   }, [showStatsDropdown]);
 
@@ -92,7 +94,7 @@ const GameHeader = memo(() => {
   useEffect(() => {
     if (state.level > prevLevelRef.current) {
       // LEVEL UP FANFARE!
-      const headerElement = document.querySelector('header');
+      const headerElement = headerRef.current;
       if (headerElement) {
         const rect = headerElement.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
@@ -175,7 +177,7 @@ const GameHeader = memo(() => {
   const nextGoal = getNextGoal();
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-200/50 px-4 py-3 transition-all duration-300">
+    <header ref={headerRef} className="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-200/50 px-4 py-3 transition-all duration-300">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Left side - Game title and basic stats */}
         <div className="flex items-center gap-6">
