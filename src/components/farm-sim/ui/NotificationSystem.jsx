@@ -96,6 +96,7 @@ const NotificationItem = memo(({ notification, onClose, isExiting }) => {
             flex-shrink-0 -mr-2 -mt-2 p-2 rounded-full
             opacity-60 hover:opacity-100 transition-opacity
             text-slate-500 hover:bg-black/5 dark:hover:bg-white/10
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white/80
           `}
           aria-label="Close"
         >
@@ -228,6 +229,8 @@ const NotificationSystem = memo(() => {
         paddingRight: 'env(safe-area-inset-right, 16px)',
       }}
       role="status"
+      aria-live="polite"
+      aria-atomic="false"
     >
       {/* Render notifications including those that are 'exiting' but still in state */}
       {state.notifications.slice(0, 5).map(notification => (

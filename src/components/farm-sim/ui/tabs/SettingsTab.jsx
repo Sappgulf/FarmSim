@@ -11,6 +11,7 @@ import { GameplaySettings } from './settings/GameplaySettings';
 import { GameStats } from './settings/GameStats';
 import { resetTutorial } from '../../ui/Tutorial';
 import { SAVE_KEY } from '../../context/GamePersistence';
+import { addTrackedEventListener } from '../../services/EventListenerService';
 
 const SettingsTab = memo(() => {
   const { state, actions } = useGame();
@@ -239,8 +240,7 @@ const SettingsTab = memo(() => {
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    return addTrackedEventListener(window, 'keydown', handleKeyPress);
   }, [state.gameLoop?.paused, actions, handleSaveGame]);
 
   return (

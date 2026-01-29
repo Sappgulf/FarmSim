@@ -217,6 +217,14 @@ export class DiseaseSystem {
     if (typeof window.triggerParticleEffect === 'function') {
       // Find the plot element and trigger effect
       setTimeout(() => {
+        const center = typeof window.__getPlotCenter === 'function'
+          ? window.__getPlotCenter(plotIndex)
+          : null;
+        if (center) {
+          window.triggerParticleEffect(center.x, center.y, 'plant');
+          return;
+        }
+
         const plotElement = document.querySelector(`[data-plot-index="${plotIndex}"]`);
         if (plotElement) {
           const rect = plotElement.getBoundingClientRect();
@@ -295,4 +303,3 @@ export class DiseaseSystem {
 }
 
 export default DiseaseSystem;
-

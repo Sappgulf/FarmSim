@@ -87,6 +87,18 @@
 
 - **Planned**
   - **Scope:** frontend
+  - **What:** add debug-gated performance instrumentation, reduce per-frame work, fix stability bugs, and apply targeted UI polish while preserving gameplay.
+  - **Why:** improve performance on low-end devices and harden runtime behavior without changing features.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** added debug-gated perf instrumentation, visibility-aware loops, plot DOM caching, listener tracking, and notification focus polish; clamped negative coin updates; added PERF_NOTES and dev server no-open guard.
+  - **Why:** reduce background work, improve observability, prevent invalid economy state, and keep UI feedback crisp without changing gameplay.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy"); `npm run build`.
+
+- **Planned**
+  - **Scope:** frontend
   - **What:** refine analytics visuals and accuracy (color classes, crop labels, and estimates) plus guard edge cases.
   - **Why:** ensure analytics UI styles render reliably and metrics better reflect current game data.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").

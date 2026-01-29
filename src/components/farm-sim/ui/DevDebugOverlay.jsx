@@ -1,6 +1,8 @@
 import React, { memo, useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import { getXPTrackingState, getXPConfig } from '../services/XPService';
+import { isDebugEnabled } from '../services/DebugService';
+import { addTrackedEventListener } from '../services/EventListenerService';
 
 /**
  * Developer Debug Overlay - Shows game state and XP tracking info
@@ -10,18 +12,19 @@ const DevDebugOverlay = memo(() => {
     const { state } = useGame();
     const [isVisible, setIsVisible] = useState(false);
     const [xpState, setXpState] = useState(null);
+    const debugEnabled = isDebugEnabled();
 
     // Toggle overlay with backtick key
     useEffect(() => {
+        if (!debugEnabled) return () => {};
         const handleKeyDown = (e) => {
             if (e.key === '`') {
                 setIsVisible((prev) => !prev);
             }
         };
 
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+        return addTrackedEventListener(window, 'keydown', handleKeyDown);
+    }, [debugEnabled]);
 
     // Update XP state every second
     useEffect(() => {
@@ -38,7 +41,7 @@ const DevDebugOverlay = memo(() => {
     }, [isVisible]);
 
     // Don't render in production
-    if (import.meta.env.MODE !== 'development') {
+    if (!debugEnabled) {
         return null;
     }
 

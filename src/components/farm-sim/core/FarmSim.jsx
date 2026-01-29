@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { GameProvider, useGame } from '../context/GameContext';
 import { TickProvider } from '../context/TickContext';
 
@@ -29,6 +29,8 @@ import { FishingSystem } from '../systems/FishingSystem';
 import { getSoundSystem } from '../systems/SoundSystem';
 import { getMusicSystem } from '../systems/MusicSystem';
 import { recordPlayerInteraction, isPlayerIdle } from '../services/XPService';
+import { getPerfMetrics, isDebugEnabled } from '../services/DebugService';
+import { addTrackedEventListener } from '../services/EventListenerService';
 
 /**
  * Main FarmSim Component (Orchestrator)
@@ -37,10 +39,21 @@ import { recordPlayerInteraction, isPlayerIdle } from '../services/XPService';
  */
 function FarmSimCore() {
   const { state, actions } = useGame();
+  const debugEnabled = isDebugEnabled();
 
   // Level Up Modal State
   const [levelUpState, setLevelUpState] = useState({ show: false, level: 0 });
   const prevLevelRef = React.useRef(state.level);
+  const renderStartRef = React.useRef(0);
+  renderStartRef.current = performance.now();
+
+  useLayoutEffect(() => {
+    if (!debugEnabled) return;
+    const metrics = getPerfMetrics();
+    if (metrics) {
+      metrics.lastRenderTime = performance.now() - renderStartRef.current;
+    }
+  });
 
   // Detect Level Up
   useEffect(() => {
@@ -167,12 +180,29 @@ function FarmSimCore() {
     const targetFrameTime = 1000 / targetFPS; // 100ms
 
     let animationFrameId = null;
+    const visibilityRef = { current: typeof document === 'undefined' ? true : !document.hidden };
+    const handleVisibilityChange = () => {
+      if (typeof document === 'undefined') return;
+      visibilityRef.current = !document.hidden;
+      if (!visibilityRef.current) {
+        lastUpdateTime = performance.now();
+      }
+    };
+    const cleanupVisibility = typeof document === 'undefined'
+      ? () => {}
+      : addTrackedEventListener(document, 'visibilitychange', handleVisibilityChange);
 
     const systemUpdateLoop = (currentTime) => {
       // Use stateRef.current to always get latest state (fixes stale closure bug!)
       const currentState = stateRef.current;
 
       if (currentState.gameLoop.paused) {
+        return;
+      }
+
+      if (!visibilityRef.current) {
+        lastUpdateTime = currentTime;
+        animationFrameId = requestAnimationFrame(systemUpdateLoop);
         return;
       }
 
@@ -204,7 +234,14 @@ function FarmSimCore() {
         disasterSystem.update(currentState);
 
         // PERF: Record update time for overlay
-        window.__lastUpdateTime = performance.now() - updateStart;
+        if (debugEnabled) {
+          const metrics = getPerfMetrics();
+          if (metrics) {
+            metrics.lastUpdateTime = performance.now() - updateStart;
+          } else {
+            window.__lastUpdateTime = performance.now() - updateStart;
+          }
+        }
 
         lastUpdateTime = currentTime - (clampedDeltaTime % targetFrameTime); // Maintain frame timing
       }
@@ -220,25 +257,27 @@ function FarmSimCore() {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
+      cleanupVisibility();
     };
-  }, [state.gameLoop.paused, seasonSystem, farmingSystem, weatherSystem, economicSystem, achievementSystem, diseaseSystem, disasterSystem, livestockSystem, fishingSystem]);
+  }, [debugEnabled, state.gameLoop.paused, seasonSystem, farmingSystem, weatherSystem, economicSystem, achievementSystem, diseaseSystem, disasterSystem, livestockSystem, fishingSystem]);
 
   // Track player interactions for idle detection
   useEffect(() => {
     const handleInteraction = () => recordPlayerInteraction();
-    window.addEventListener('click', handleInteraction);
-    window.addEventListener('keydown', handleInteraction);
-    window.addEventListener('touchstart', handleInteraction);
+    const cleanups = [
+      addTrackedEventListener(window, 'click', handleInteraction),
+      addTrackedEventListener(window, 'keydown', handleInteraction),
+      addTrackedEventListener(window, 'touchstart', handleInteraction),
+    ];
     return () => {
-      window.removeEventListener('click', handleInteraction);
-      window.removeEventListener('keydown', handleInteraction);
-      window.removeEventListener('touchstart', handleInteraction);
+      cleanups.forEach(cleanup => cleanup());
     };
   }, []);
 
   // Idle Visuals Interval
   useEffect(() => {
     const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       // Check idle state using imported service function directly
       if (isPlayerIdle()) {
         if (typeof window.triggerParticleEffect === 'function') {
@@ -264,9 +303,6 @@ function FarmSimCore() {
     window.soundSystem = soundSystem;
     window.musicSystem = musicSystem;
 
-    soundSystem.setEnabled(state.settings?.soundEnabled !== false);
-    musicSystem.setEnabled(state.settings?.musicEnabled !== false);
-
     // Resume audio context only after user interaction (browser requirement)
     // Don't auto-resume here - let user interaction trigger it
     let hasInteracted = false;
@@ -279,15 +315,11 @@ function FarmSimCore() {
         await musicSystem.resume();
 
         // Start music after audio context is resumed
-        if (state.settings?.musicEnabled !== false && !musicSystem.isPlaying) {
-          musicSystem.setSeason(state.season?.current || 'spring');
+        const currentSettings = stateRef.current.settings;
+        if (currentSettings?.musicEnabled !== false && !musicSystem.isPlaying) {
+          musicSystem.setSeason(stateRef.current.season?.current || 'spring');
           musicSystem.play();
         }
-
-        // Remove listeners after first interaction
-        document.removeEventListener('click', handleUserInteraction);
-        document.removeEventListener('keydown', handleUserInteraction);
-        document.removeEventListener('touchstart', handleUserInteraction);
       } catch (error) {
         // Silent fail - audio might not be available
         if (import.meta.env.MODE === 'development') {
@@ -297,20 +329,15 @@ function FarmSimCore() {
     };
 
     // Wait for user interaction before resuming audio
-    document.addEventListener('click', handleUserInteraction, { once: true });
-    document.addEventListener('keydown', handleUserInteraction, { once: true });
-    document.addEventListener('touchstart', handleUserInteraction, { once: true });
-
-    // Set season for music (will start playing after user interaction)
-    if (state.settings?.musicEnabled !== false) {
-      musicSystem.setSeason(state.season?.current || 'spring');
-    }
+    const cleanups = [
+      addTrackedEventListener(document, 'click', handleUserInteraction, { once: true }),
+      addTrackedEventListener(document, 'keydown', handleUserInteraction, { once: true }),
+      addTrackedEventListener(document, 'touchstart', handleUserInteraction, { once: true }),
+    ];
 
     return () => {
       // Cleanup on unmount
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('keydown', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
+      cleanups.forEach(cleanup => cleanup());
       if (window.soundSystem) {
         delete window.soundSystem;
       }
@@ -319,7 +346,18 @@ function FarmSimCore() {
         delete window.musicSystem;
       }
     };
-  }, [state.settings?.soundEnabled, state.settings?.musicEnabled]);
+  }, []);
+
+  useEffect(() => {
+    const soundSystem = getSoundSystem();
+    const musicSystem = getMusicSystem();
+    soundSystem.setEnabled(state.settings?.soundEnabled !== false);
+    musicSystem.setEnabled(state.settings?.musicEnabled !== false);
+
+    if (state.settings?.musicEnabled !== false) {
+      musicSystem.setSeason(state.season?.current || 'spring');
+    }
+  }, [state.settings?.soundEnabled, state.settings?.musicEnabled, state.season?.current]);
 
   // Update music when season changes
   const prevSeasonRef = React.useRef(state.season?.current);
@@ -464,7 +502,7 @@ function FarmSimCore() {
   return (
     <div className={`min-h-screen bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000 flex flex-col`}>
       {/* Performance monitoring (dev only) */}
-      {import.meta.env.MODE === 'development' && (
+      {debugEnabled && (
         <div className="fixed top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded z-50">
           FPS: {state.gameLoop.fps}
         </div>

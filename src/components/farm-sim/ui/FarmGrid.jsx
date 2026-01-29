@@ -8,7 +8,7 @@ import { CROP_DATA, calculateHarvestValue, HARVEST_WINDOW_MS } from '../constant
 import { getDiseaseById } from '../constants/diseaseData';
 
 // Enhanced plot component with tooltips and animations
-const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0, tick }) => {
+const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0, tick, plotRef }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const hideTooltipTimeoutRef = useRef(null);
@@ -135,7 +135,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
   }, [plot, index, onPlotClick, onPlant, onHarvest, onToggleSelect]);
 
   return (
-    <div className="relative" data-plot-index={index}>
+    <div ref={plotRef} className="relative" data-plot-index={index}>
       <Card
         className={`
           w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 cursor-pointer relative overflow-hidden
@@ -340,9 +340,25 @@ const FarmGrid = memo(() => {
 
   const stateRef = useRef(state);
   const actionsRef = useRef(actions);
+  const plotRefs = useRef([]);
 
   stateRef.current = state;
   actionsRef.current = actions;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.__getPlotElement = (index) => plotRefs.current[index] || null;
+    window.__getPlotCenter = (index) => {
+      const element = plotRefs.current[index];
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    };
+    return () => {
+      delete window.__getPlotElement;
+      delete window.__getPlotCenter;
+    };
+  }, []);
 
   const handlePlotClick = useCallback((index, action) => {
     const currentState = stateRef.current;
@@ -440,7 +456,7 @@ const FarmGrid = memo(() => {
     // Trigger particle effect with earnings text
     if (typeof window.triggerParticleEffect === 'function') {
       // Get plot position
-      const plotElement = document.querySelector(`.farm-grid > div:nth-child(${index + 1})`);
+      const plotElement = plotRefs.current[index];
       if (plotElement) {
         const rect = plotElement.getBoundingClientRect();
         window.triggerParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, 'harvest', {
@@ -601,6 +617,9 @@ const FarmGrid = memo(() => {
             selectedCrop={selectedCropData}
             seasonBonus={seasonBonus}
             tick={plot?.state === 'planted' || plot?.state === 'growing' || plot?.state === 'ready' ? tick : undefined}
+            plotRef={(element) => {
+              plotRefs.current[index] = element;
+            }}
           />
         ))}
       </div>

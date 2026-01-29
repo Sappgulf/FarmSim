@@ -120,7 +120,8 @@ export function gameReducer(state, action) {
     switch (action.type) {
         case GAME_ACTIONS.SET_COINS:
             const newCoins = typeof action.payload === 'function' ? action.payload(state.coins) : action.payload;
-            return { ...state, coins: newCoins };
+            const safeCoins = Number.isFinite(newCoins) ? Math.max(0, newCoins) : state.coins;
+            return { ...state, coins: safeCoins };
 
         case GAME_ACTIONS.SET_XP:
             const rawXp = typeof action.payload === 'function' ? action.payload(state.xp) : action.payload;
