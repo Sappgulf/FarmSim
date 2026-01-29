@@ -97,6 +97,20 @@
   - **Why:** expand gameplay depth while reducing redundant state updates for better runtime performance.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-02-02
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** add debug-gated profiling (FPS/frame/tick/update/render, counts, timer tracking), consolidate the simulation loop with a fixed timestep, and address the top measured hot paths.
+  - **Why:** improve runtime smoothness and observability on low-end devices while keeping gameplay identical.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** centralized the simulation loop with a fixed-step accumulator, added debug profiling helpers + perf overlay metrics, tracked active timers, and reduced farming-system allocations on growth/withering/soil updates.
+  - **Why:** lower per-tick overhead, eliminate stacked rAF loops, and provide accurate hot-path visibility without impacting production.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## 2026-01-29
 
 - **Planned**

@@ -5,6 +5,7 @@ import { calculateHarvestValue } from '../constants/cropData';
 import { updateQuestProgress } from '../systems/QuestSystem';
 import { SAVE_KEY, SAVE_VERSION } from './GamePersistence';
 import { addTrackedEventListener } from '../services/EventListenerService';
+import { getPerfMetrics, isDebugEnabled, profileEnd, profileStart, recordFrameTime } from '../services/DebugService';
 import { initializeDebugTracing, runDebugInvariants, traceAction } from '../services/DebugTraceService';
 
 // Game Context for centralized state management
@@ -750,13 +751,25 @@ export function GameProvider({ children }) {
     }, 2000);
   }, []);
 
-  // Performance loops: FPS monitoring and Auto-save trigger
-  const fpsRef = useRef(60);
+  // System management (bridging React state with external game systems)
+  const [systems, setSystemsState] = useState({});
+  // CRITICAL: Use ref to access systems without triggering re-memoization
+  const systemsRef = React.useRef(systems);
+  React.useEffect(() => {
+    systemsRef.current = systems;
+  }, [systems]);
+
+  // Master game loop: fixed timestep simulation, FPS monitoring, and auto-save
   useEffect(() => {
     if (state.gameLoop.paused) return;
 
+    const debugEnabled = isDebugEnabled();
+    const fixedStepMs = 100; // 10 FPS sim step to preserve existing pacing
+    const maxStepsPerFrame = 5;
+    let accumulator = 0;
     let frameCount = 0;
-    let lastFPSUpdate = performance.now();
+    let lastFrameTime = performance.now();
+    let lastFPSUpdate = lastFrameTime;
     let lastAutoSaveCheck = Date.now();
     let animationFrameId = null;
 
@@ -764,23 +777,101 @@ export function GameProvider({ children }) {
       if (typeof document === 'undefined') return;
       visibilityRef.current = !document.hidden;
       if (!visibilityRef.current) {
-        lastFPSUpdate = performance.now();
+        lastFrameTime = performance.now();
+        lastFPSUpdate = lastFrameTime;
       }
     };
     const cleanupVisibility = typeof document === 'undefined'
       ? () => {}
       : addTrackedEventListener(document, 'visibilitychange', handleVisibilityChange);
 
+    const runSystems = (currentState) => {
+      const currentSystems = systemsRef.current;
+      if (!currentSystems) return;
+
+      if (debugEnabled) profileStart('systems:update');
+
+      const updateStart = performance.now();
+
+      if (debugEnabled) profileStart('system:season');
+      currentSystems.seasonSystem?.update?.(currentState);
+      if (debugEnabled) profileEnd('system:season');
+
+      if (debugEnabled) profileStart('system:weather');
+      currentSystems.weatherSystem?.update?.(currentState);
+      if (debugEnabled) profileEnd('system:weather');
+
+      if (debugEnabled) profileStart('system:farming');
+      currentSystems.farmingSystem?.update?.(currentState);
+      if (debugEnabled) profileEnd('system:farming');
+
+      if (debugEnabled) profileStart('system:livestock');
+      currentSystems.livestockSystem?.update?.(currentState);
+      if (debugEnabled) profileEnd('system:livestock');
+
+      if (debugEnabled) profileStart('system:fishing');
+      currentSystems.fishingSystem?.update?.(currentState);
+      if (debugEnabled) profileEnd('system:fishing');
+
+      if (debugEnabled) profileStart('system:economic');
+      currentSystems.economicSystem?.update?.(currentState);
+      if (debugEnabled) profileEnd('system:economic');
+
+      if (debugEnabled) profileStart('system:achievement');
+      currentSystems.achievementSystem?.update?.(currentState);
+      if (debugEnabled) profileEnd('system:achievement');
+
+      if (debugEnabled) profileStart('system:disease');
+      currentSystems.diseaseSystem?.update?.(currentState);
+      if (debugEnabled) profileEnd('system:disease');
+
+      if (debugEnabled) profileStart('system:disaster');
+      currentSystems.disasterSystem?.update?.(currentState);
+      if (debugEnabled) profileEnd('system:disaster');
+
+      const updateDuration = performance.now() - updateStart;
+      if (debugEnabled) {
+        const metrics = getPerfMetrics();
+        if (metrics) {
+          metrics.lastUpdateTime = updateDuration;
+        } else {
+          window.__lastUpdateTime = updateDuration;
+        }
+      }
+
+      if (debugEnabled) profileEnd('systems:update');
+    };
+
     const masterGameLoop = (currentTime) => {
       const currentState = stateRef.current;
       if (currentState.gameLoop.paused) return;
+
+      const delta = currentTime - lastFrameTime;
+      lastFrameTime = currentTime;
 
       if (!visibilityRef.current) {
         animationFrameId = requestAnimationFrame(masterGameLoop);
         return;
       }
 
-      frameCount++;
+      if (debugEnabled) {
+        recordFrameTime(delta);
+      }
+
+      accumulator += delta;
+      let steps = 0;
+
+      while (accumulator >= fixedStepMs && steps < maxStepsPerFrame) {
+        runSystems(currentState);
+        accumulator -= fixedStepMs;
+        steps += 1;
+      }
+
+      if (steps === maxStepsPerFrame) {
+        accumulator = 0;
+      }
+
+      frameCount += 1;
       if (currentTime - lastFPSUpdate >= 1000) {
         const fps = Math.round((frameCount * 1000) / (currentTime - lastFPSUpdate));
         if (typeof window !== 'undefined') {
@@ -799,7 +890,9 @@ export function GameProvider({ children }) {
 
       const now = Date.now();
       if (currentState.settings.autoSave && (now - lastAutoSaveCheck >= 30000)) {
+        if (debugEnabled) profileStart('autosave:debounced');
         debouncedAutoSave(currentState);
+        if (debugEnabled) profileEnd('autosave:debounced');
         lastAutoSaveCheck = now;
       }
 
@@ -827,14 +920,6 @@ export function GameProvider({ children }) {
       ? () => {}
       : addTrackedEventListener(document, 'visibilitychange', handleVisibilityChange);
   }, [debouncedAutoSave, state.settings.autoSave]);
-
-  // System management (bridging React state with external game systems)
-  const [systems, setSystemsState] = useState({});
-  // CRITICAL: Use ref to access systems without triggering re-memoization
-  const systemsRef = React.useRef(systems);
-  React.useEffect(() => {
-    systemsRef.current = systems;
-  }, [systems]);
 
   const buildXpMeta = useCallback((source) => {
     if (import.meta.env.MODE !== 'development') return undefined;

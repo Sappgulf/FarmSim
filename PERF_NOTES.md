@@ -29,3 +29,25 @@
 - Added a capped notification backlog to prevent timer storms under rapid toast bursts.
 - Hardened notification close handling to avoid redundant timers/state churn during rapid dismissals.
 - Added debug-only invariant checks to surface DOM/state mismatches for plots and notifications before they degrade performance.
+
+## 2026-02-02 Profiling + Loop Consolidation Pass
+
+### Baseline Metrics (debug=1, Playwright headless, 3s sample after Fill all plots + Spawn 50 notifications)
+- FPS: 1 (rolling avg FPS: 3)
+- Frame time avg: 388.5ms (worst 1016.6ms / last 5s)
+- Update time: 0.10ms
+- Render time: 11.3ms
+- Tick time: 0.10ms
+
+### Top 3 Bottlenecks (avg/max over 5s, same run)
+1. `systems:update` — avg 0.84ms, max 4.10ms
+2. `system:farming` — avg 0.49ms, max 2.90ms
+3. `system:livestock` — avg 0.14ms, max 3.50ms
+
+### Improvements Applied
+- Consolidated to a single authoritative game loop with fixed timestep and accumulator.
+- Added debug-gated profiler helpers + perf overlay enhancements (rolling FPS, worst frame, timers).
+- Reduced allocations in farming growth/withering/soil updates by avoiding full-array rebuilds when unchanged.
+
+### After Metrics
+- Unable to capture headless Playwright post-change metrics due to a Chromium crash (SIGSEGV). Re-run with `?debug=1`, press backtick to show the overlay, and use the Stress Panel (Fill all plots + Spawn 50 notifications) to capture updated FPS/frame/tick/update/render values.
