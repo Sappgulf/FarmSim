@@ -20,6 +20,20 @@
   - **Why:** ensure the game area is accessible on initial load while preserving the desktop layout.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-02-05
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** diagnose crash after planting ~5 plots and harden achievement/save handling to prevent runtime failures.
+  - **Why:** user reports the game crashes once several plots are planted; stability must be improved.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** ensured save migration initializes missing achievements and hardened achievement unlocks against undefined achievement arrays.
+  - **Why:** prevent runtime crashes when planting enough crops to unlock the “Big Farmer” achievement on older saves.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## 2026-01-27
 
 - **Planned**

@@ -91,7 +91,9 @@ export class AchievementSystem {
   }
 
   unlockAchievement(achievement) {
-    const updatedAchievements = [...this.state.achievements];
+    const updatedAchievements = Array.isArray(this.state?.achievements)
+      ? [...this.state.achievements]
+      : [];
     const achievementIndex = updatedAchievements.findIndex(a => a.id === achievement.id);
 
     if (achievementIndex >= 0) {

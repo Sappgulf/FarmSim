@@ -105,6 +105,10 @@ export function migrateSaveData(savedData) {
             migratedData.plots = initializePlots(migratedData.gridSize || 3);
         }
 
+        if (!Array.isArray(migratedData.achievements)) {
+            migratedData.achievements = [];
+        }
+
         // Ensure livestock structure exists
         if (!migratedData.livestock || typeof migratedData.livestock !== 'object') {
             migratedData.livestock = { animals: [], capacity: 10, totalProduced: 0 };
