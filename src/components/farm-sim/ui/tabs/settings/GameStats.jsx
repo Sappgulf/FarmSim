@@ -32,11 +32,11 @@ export const GameStats = memo(({ state }) => {
                     <div className="text-gray-600">Fish Caught</div>
                 </div>
                 <div className="text-center p-2 bg-white rounded">
-                    <div className="font-bold text-pink-600">{state.season?.current || 'spring'}</div>
+                    <div className="font-bold text-pink-600 capitalize">{state.season?.current || 'spring'}</div>
                     <div className="text-gray-600 capitalize">Current Season</div>
                 </div>
                 <div className="text-center p-2 bg-white rounded">
-                    <div className="font-bold text-gray-600">{state.weather || 'sunny'}</div>
+                    <div className="font-bold text-gray-600 capitalize">{state.weather || 'sunny'}</div>
                     <div className="text-gray-600 capitalize">Weather</div>
                 </div>
             </div>
