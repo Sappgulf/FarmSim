@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-02-04
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** adjust mobile layout so the game grid is immediately accessible without the sidebar dominating the view.
+  - **Why:** user reports the sidebar takes over the screen on mobile, hiding the game view on load.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** reordered the mobile layout so the farm grid renders before the sidebar, keeping menus below the game on small screens.
+  - **Why:** ensure the game area is accessible on initial load while preserving the desktop layout.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## 2026-01-27
 
 - **Planned**
