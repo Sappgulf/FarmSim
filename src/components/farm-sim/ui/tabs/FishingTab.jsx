@@ -199,10 +199,21 @@ const FishingTab = memo(() => {
   useEffect(() => {
     if (!isPlaying) return;
 
+    const isEditableTarget = (target) => {
+      if (!target || typeof target !== 'object') return false;
+      const tagName = target.tagName;
+      if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(tagName)) return true;
+      if (target.isContentEditable) return true;
+      return false;
+    };
+
     const handleKeyPress = (e) => {
+      if (isEditableTarget(e.target)) return;
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        if (e.key === 'ArrowLeft') e.preventDefault();
         handleReelRef.current('left');
       } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        if (e.key === 'ArrowRight') e.preventDefault();
         handleReelRef.current('right');
       }
     };

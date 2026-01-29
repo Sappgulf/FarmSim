@@ -219,15 +219,24 @@ const SettingsTab = memo(() => {
 
   // Keyboard shortcuts - added after all handlers are defined
   React.useEffect(() => {
+    const isEditableTarget = (target) => {
+      if (!target || typeof target !== 'object') return false;
+      const tagName = target.tagName;
+      if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(tagName)) return true;
+      if (target.isContentEditable) return true;
+      return false;
+    };
+
     const handleKeyPress = (e) => {
       try {
+        const targetIsEditable = isEditableTarget(e.target);
         // Ctrl + S - Quick Save
         if (e.ctrlKey && e.key === 's') {
           e.preventDefault();
           handleSaveGame();
         }
         // Space - Pause/Resume (only if not in input field)
-        if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        if (e.key === ' ' && !targetIsEditable) {
           e.preventDefault();
           if (state.gameLoop?.paused) {
             actions.resumeGame();

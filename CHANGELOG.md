@@ -34,6 +34,20 @@
   - **Why:** prevent runtime crashes when planting enough crops to unlock the “Big Farmer” achievement on older saves.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-02-06
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** run a targeted bug check across core gameplay UI flows and apply polish improvements where needed.
+  - **Why:** user requested a stability and polish pass across the farm sim experience.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** safeguarded keyboard shortcuts from firing while editing fields, prevented fishing arrow keys from scrolling the page, and polished Settings stats capitalization.
+  - **Why:** avoid accidental pauses during input, keep fishing controls focused on gameplay, and improve readability.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## 2026-01-27
 
 - **Planned**
