@@ -6,6 +6,7 @@ import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { CROP_DATA, calculateHarvestValue, HARVEST_WINDOW_MS } from '../constants/cropData';
 import { getDiseaseById } from '../constants/diseaseData';
+import { traceAction } from '../services/DebugTraceService';
 
 // Enhanced plot component with tooltips and animations
 const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0, tick, plotRef }) => {
@@ -364,6 +365,8 @@ const FarmGrid = memo(() => {
     const currentState = stateRef.current;
     const currentActions = actionsRef.current;
 
+    traceAction('plot_click', { index, action }, currentState);
+
     // Handle clearing withered crops
     if (action === 'clear') {
       const plotsArray = Array.isArray(currentState.plots) ? currentState.plots : [];
@@ -409,6 +412,7 @@ const FarmGrid = memo(() => {
       } else {
         newSet.add(index);
       }
+      traceAction('plot_toggle_select', { index, selected: newSet.has(index) }, stateRef.current);
       return newSet;
     });
   }, []);

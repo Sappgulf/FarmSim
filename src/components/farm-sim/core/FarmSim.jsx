@@ -15,6 +15,8 @@ import FPSCounter from '../ui/FPSCounter';
 import PerformanceOverlay from '../ui/PerformanceOverlay';
 import LevelUpModal from '../ui/LevelUpModal';
 import Tutorial from '../ui/Tutorial';
+import DevErrorOverlay from '../ui/DevErrorOverlay';
+import DevStressPanel from '../ui/DevStressPanel';
 
 // Import systems
 import { FarmingSystem } from '../systems/FarmingSystem';
@@ -559,6 +561,12 @@ function FarmSimCore() {
 
       {/* Developer Debug Overlay (dev only) */}
       <DevDebugOverlay />
+
+      {/* Developer Stress Panel (dev only) */}
+      <DevStressPanel />
+
+      {/* Developer Error Overlay (dev only, shows on errors) */}
+      <DevErrorOverlay />
     </div>
   );
 }
