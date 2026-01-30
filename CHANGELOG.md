@@ -48,6 +48,20 @@
   - **Why:** avoid accidental pauses during input, keep fishing controls focused on gameplay, and improve readability.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-02-07
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** polish upgrade completion messaging in Shop and Research tabs so players see when everything is fully upgraded.
+  - **Why:** clarify endgame state and ensure there are no ambiguous "upgrades left" moments.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** added upgrade completion status in the Shop header and a premium upgrade completion callout, plus a full-research completion banner and status badge in the Research tab.
+  - **Why:** make endgame completion explicit so players know when there are no remaining permanent upgrades.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy"); `npm run build`.
+
 ## 2026-01-27
 
 - **Planned**
