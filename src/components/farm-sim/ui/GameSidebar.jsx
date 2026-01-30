@@ -1,30 +1,36 @@
-import React, { memo, useMemo, useRef, useState, lazy, Suspense } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import { useGame } from '../context/GameContext';
 import { Tabs, TabsContent } from '../../ui/tabs';
 import { Card } from '../../ui/card';
 import TabWrapper from './tabs/TabWrapper';
 
 // Lazy load tab components for better performance
-const FarmingTab = lazy(() => import('./tabs/FarmingTab'));
-const InventoryTab = lazy(() => import('./tabs/InventoryTab'));
-const ShopTab = lazy(() => import('./tabs/ShopTab'));
-const BuildingsTab = lazy(() => import('./tabs/BuildingsTab'));
-const ResearchTab = lazy(() => import('./tabs/ResearchTab'));
-const GeneticsTab = lazy(() => import('./tabs/GeneticsTab'));
-const WeatherTab = lazy(() => import('./tabs/WeatherTab'));
-const PetsTab = lazy(() => import('./tabs/PetsTab'));
-const LivestockTab = lazy(() => import('./tabs/LivestockTab'));
-const FishingTab = lazy(() => import('./tabs/FishingTab'));
-const EventsTab = lazy(() => import('./tabs/EventsTab'));
-const ProcessingTab = lazy(() => import('./tabs/ProcessingTab'));
-const AchievementsTab = lazy(() => import('./tabs/AchievementsTab'));
-const SocialTab = lazy(() => import('./tabs/SocialTab'));
-const AnalyticsTab = lazy(() => import('./tabs/AnalyticsTab'));
-const MysteryShopTab = lazy(() => import('./tabs/MysteryShopTab'));
-const DailyQuestsTab = lazy(() => import('./tabs/DailyQuestsTab'));
-const DiseaseManagementTab = lazy(() => import('./tabs/DiseaseManagementTab'));
-const ExpandTab = lazy(() => import('./tabs/ExpandTab'));
-const SettingsTab = lazy(() => import('./tabs/SettingsTab'));
+const lazyWithPreload = (importer) => {
+  const Component = lazy(importer);
+  Component.preload = importer;
+  return Component;
+};
+
+const FarmingTab = lazyWithPreload(() => import('./tabs/FarmingTab'));
+const InventoryTab = lazyWithPreload(() => import('./tabs/InventoryTab'));
+const ShopTab = lazyWithPreload(() => import('./tabs/ShopTab'));
+const BuildingsTab = lazyWithPreload(() => import('./tabs/BuildingsTab'));
+const ResearchTab = lazyWithPreload(() => import('./tabs/ResearchTab'));
+const GeneticsTab = lazyWithPreload(() => import('./tabs/GeneticsTab'));
+const WeatherTab = lazyWithPreload(() => import('./tabs/WeatherTab'));
+const PetsTab = lazyWithPreload(() => import('./tabs/PetsTab'));
+const LivestockTab = lazyWithPreload(() => import('./tabs/LivestockTab'));
+const FishingTab = lazyWithPreload(() => import('./tabs/FishingTab'));
+const EventsTab = lazyWithPreload(() => import('./tabs/EventsTab'));
+const ProcessingTab = lazyWithPreload(() => import('./tabs/ProcessingTab'));
+const AchievementsTab = lazyWithPreload(() => import('./tabs/AchievementsTab'));
+const SocialTab = lazyWithPreload(() => import('./tabs/SocialTab'));
+const AnalyticsTab = lazyWithPreload(() => import('./tabs/AnalyticsTab'));
+const MysteryShopTab = lazyWithPreload(() => import('./tabs/MysteryShopTab'));
+const DailyQuestsTab = lazyWithPreload(() => import('./tabs/DailyQuestsTab'));
+const DiseaseManagementTab = lazyWithPreload(() => import('./tabs/DiseaseManagementTab'));
+const ExpandTab = lazyWithPreload(() => import('./tabs/ExpandTab'));
+const SettingsTab = lazyWithPreload(() => import('./tabs/SettingsTab'));
 
 // Loading fallback component
 const TabLoader = () => (
@@ -37,9 +43,12 @@ const TabLoader = () => (
 // Game Sidebar Component - Now accepts controlled props
 const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   const { state } = useGame();
+  const TAB_CACHE_LIMIT = 4;
   // Use controlled mode if props provided, otherwise internal state (backward compat)
   const [internalTab, setInternalTab] = useState('farming');
   const activeTab = controlledTab ?? internalTab;
+  const [mountedTabs, setMountedTabs] = useState(() => ['farming']);
+  const tabButtonRefs = useRef([]);
 
   const handleTabChange = (tabId) => {
     if (onTabChange) {
@@ -82,6 +91,46 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
     { id: 'settings', label: '⚙️ Settings', component: SettingsTab },
   ]), []);
 
+  useEffect(() => {
+    setMountedTabs(prev => {
+      if (prev.includes(activeTab)) {
+        return prev;
+      }
+      const next = [...prev, activeTab];
+      if (next.length > TAB_CACHE_LIMIT) {
+        next.shift();
+      }
+      return next;
+    });
+  }, [activeTab]);
+
+  const handleTabKeyDown = (event, index) => {
+    const { key } = event;
+    const maxIndex = tabConfigs.length - 1;
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(key)) {
+      return;
+    }
+
+    event.preventDefault();
+    let nextIndex = index;
+
+    if (key === 'Home') {
+      nextIndex = 0;
+    } else if (key === 'End') {
+      nextIndex = maxIndex;
+    } else if (key === 'ArrowUp' || key === 'ArrowLeft') {
+      nextIndex = index === 0 ? maxIndex : index - 1;
+    } else if (key === 'ArrowDown' || key === 'ArrowRight') {
+      nextIndex = index === maxIndex ? 0 : index + 1;
+    }
+
+    const nextTab = tabConfigs[nextIndex];
+    if (nextTab) {
+      handleTabChange(nextTab.id);
+      tabButtonRefs.current[nextIndex]?.focus();
+    }
+  };
+
   // Expose tab switching globally so header buttons can use it
   // FIXED: tabConfigs is recreated every render, use stable ref instead
   const tabConfigsRef = useRef(tabConfigs);
@@ -106,14 +155,32 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         {/* Tab Navigation - Vertical Scrollable List */}
         <div className="border-b border-gray-100 bg-gray-50/50 p-2 rounded-t-xl">
-          <div className="grid grid-cols-2 gap-1.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
-            {tabConfigs.map(tab => (
+          <div
+            className="grid grid-cols-2 gap-1.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-1"
+            role="tablist"
+            aria-label="Game tabs"
+            aria-orientation="vertical"
+          >
+            {tabConfigs.map((tab, index) => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
+                onMouseEnter={() => tab.component.preload?.()}
+                onFocus={() => tab.component.preload?.()}
+                ref={(node) => {
+                  tabButtonRefs.current[index] = node;
+                }}
+                type="button"
+                role="tab"
+                id={`tab-${tab.id}`}
+                aria-controls={`panel-${tab.id}`}
+                aria-selected={activeTab === tab.id}
+                tabIndex={activeTab === tab.id ? 0 : -1}
                 className={`
                   relative overflow-hidden text-xs px-3 py-2.5 rounded-lg transition-all text-left font-medium
                   flex items-center gap-2 group
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2
                   ${activeTab === tab.id
                     ? 'bg-white text-green-700 shadow-sm ring-1 ring-gray-100'
                     : 'bg-transparent text-gray-500 hover:bg-white/60 hover:text-gray-900'
@@ -137,10 +204,17 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         {/* Tab Content with Suspense for lazy loading */}
         {tabConfigs.map(tab => {
           const TabComponent = tab.component;
-          if (activeTab !== tab.id) return null; // Simple optimization to avoid rendering all hidden contents
+          const isActive = activeTab === tab.id;
+          const shouldMount = isActive || mountedTabs.includes(tab.id);
+          if (!shouldMount) return null;
 
           return (
-            <TabsContent key={tab.id} value={tab.id} className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <TabsContent
+              key={tab.id}
+              value={tab.id}
+              forceMount={mountedTabs.includes(tab.id)}
+              className={`mt-4 motion-reduce:transition-none motion-reduce:animate-none ${isActive ? 'animate-in fade-in slide-in-from-bottom-2 duration-300' : ''}`}
+            >
               <Suspense fallback={<TabLoader />}>
                 <TabWrapper>
                   <TabComponent />

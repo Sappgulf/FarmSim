@@ -201,8 +201,17 @@ ParticleEffect.displayName = 'ParticleEffect';
  * Screen Shake Utility
  * Triggers a subtle screen shake effect
  */
+let cachedGameContainer = null;
+const getGameContainer = () => {
+  if (cachedGameContainer && document.body.contains(cachedGameContainer)) {
+    return cachedGameContainer;
+  }
+  cachedGameContainer = document.querySelector('.min-h-screen');
+  return cachedGameContainer;
+};
+
 const triggerScreenShake = (intensity = 1) => {
-  const gameContainer = document.querySelector('.min-h-screen');
+  const gameContainer = getGameContainer();
   if (!gameContainer) return;
 
   // REBALANCED: Much gentler shake - reduced intensity and longer duration for smoother effect
@@ -331,4 +340,3 @@ export const ParticleEffectsManager = memo(() => {
 ParticleEffectsManager.displayName = 'ParticleEffectsManager';
 
 export default ParticleEffect;
-

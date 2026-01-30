@@ -51,3 +51,25 @@
 
 ### After Metrics
 - Unable to capture headless Playwright post-change metrics due to a Chromium crash (SIGSEGV). Re-run with `?debug=1`, press backtick to show the overlay, and use the Stress Panel (Fill all plots + Spawn 50 notifications) to capture updated FPS/frame/tick/update/render values.
+
+## 2026-02-09 Tab Navigation + Cache Pass
+
+### Baseline Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.
+
+### Improvements Applied
+- Added tab preloading on hover/focus to reduce tab-switch latency.
+- Added a small keep-alive cache for the most recent tabs to avoid heavy remount work on rapid switching.
+- Cached screen shake container lookup to avoid repeated DOM queries during visual feedback.
+
+### After Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.
+
+### Biggest Bottleneck Removed
+- Removed repeated DOM lookup on screen shake triggers; reduced tab switch jank by keeping recently visited tab panels mounted.
