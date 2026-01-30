@@ -115,9 +115,12 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                 <button
                                     key={tabId}
                                     onClick={() => onTabChange(tabId)}
+                                    type="button"
+                                    aria-current={isActive ? 'page' : undefined}
                                     className={`
                     flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium
                     whitespace-nowrap transition-all touch-manipulation
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2
                     ${isActive
                                             ? 'bg-white text-gray-900 shadow-sm'
                                             : 'text-gray-600 hover:bg-white/50 active:bg-white/70'
@@ -152,10 +155,13 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                     onTabChange(section.tabs[0]);
                                 }
                             }}
+                            type="button"
+                            aria-current={isActive ? 'page' : undefined}
                             className={`
                 relative flex flex-col items-center justify-center
                 min-w-[60px] min-h-[56px] px-2 py-1.5 rounded-xl
                 transition-all touch-manipulation
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2
                 ${isActive
                                     ? 'text-green-700 bg-green-50'
                                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 active:bg-gray-100'

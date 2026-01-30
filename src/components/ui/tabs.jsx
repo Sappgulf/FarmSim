@@ -73,14 +73,18 @@ export function TabsTrigger({ value, children, className = "", activeTab, onValu
   );
 }
 
-export function TabsContent({ value, children, className = "", activeTab }) {
-  if (activeTab !== value) return null;
-  
+export function TabsContent({ value, children, className = "", activeTab, forceMount = false }) {
+  const isActive = activeTab === value;
+  if (!isActive && !forceMount) return null;
+
   return (
     <div
       role="tabpanel"
       id={`panel-${value}`}
       aria-labelledby={`tab-${value}`}
+      aria-hidden={!isActive}
+      hidden={!isActive}
+      tabIndex={isActive ? 0 : -1}
       className={`mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${className}`}
     >
       {children}

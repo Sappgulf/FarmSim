@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-02-09
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** audit tab navigation and tab panels for accessibility/perf polish, update QA/perf notes, and improve tab switching responsiveness.
+  - **Why:** ensure all tabs remain fast, accessible, and mobile-friendly while keeping performance tight.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** added tab preloading + small keep-alive cache for recent tabs, improved tablist ARIA/keyboard focus handling, tightened NavBar focus states, cached screen shake DOM lookup, and added QA/perf notes for the tab audit.
+  - **Why:** speed up tab switching, improve accessibility, and reduce redundant DOM work.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## 2026-02-08
 
 - **Planned**
