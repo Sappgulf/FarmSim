@@ -78,6 +78,21 @@ const PET_TYPES = {
   }
 };
 
+const SUPPLY_LABELS = {
+  pet_food: { singular: 'pet food', plural: 'pet food' },
+  attention: { singular: 'toy', plural: 'toys' },
+  vet_care: { singular: 'vet care visit', plural: 'vet care visits' }
+};
+
+const formatTrait = (trait) => trait.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+const getSupplyLabel = (type, { plural = false } = {}) => {
+  const label = SUPPLY_LABELS[type];
+  if (!label) {
+    return type.replace('_', ' ');
+  }
+  return plural ? label.plural : label.singular;
+};
+
 const PetsTab = memo(() => {
   const { state, actions } = useGame();
   // Use pet supplies from global state
@@ -115,7 +130,7 @@ const PetsTab = memo(() => {
       });
     } else {
       actions.addNotification({
-        message: 'Not enough coins to adopt this pet!',
+        message: "You don't have enough coins to adopt this pet.",
         type: 'error'
       });
     }
@@ -183,12 +198,12 @@ const PetsTab = memo(() => {
       actions.updateInventory(updatedInventory);
 
       actions.addNotification({
-        message: `Cared for ${pet.name}!`,
+        message: `${pet.name} feels better already.`,
         type: 'success'
       });
     } else {
       actions.addNotification({
-        message: `Not enough ${need.type} supplies!`,
+        message: `You're out of ${getSupplyLabel(need.type, { plural: true })}.`,
         type: 'warning'
       });
     }
@@ -210,14 +225,13 @@ const PetsTab = memo(() => {
         }
       };
       actions.updateInventory(updatedInventory);
-
       actions.addNotification({
-        message: `Bought ${quantity} ${supplyType.replace('_', ' ')}!`,
+        message: `Purchased ${getSupplyLabel(supplyType)} x${quantity}.`,
         type: 'success'
       });
     } else {
       actions.addNotification({
-        message: 'Not enough coins!',
+        message: "You don't have enough coins.",
         type: 'error'
       });
     }
@@ -244,7 +258,7 @@ const PetsTab = memo(() => {
         <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50">
           <h3 className="font-semibold mb-3 text-orange-800">🏠 Adopt Your First Pet</h3>
           <p className="text-sm text-orange-700 mb-4">
-            Pets provide various bonuses and help protect your farm!
+            Pets lend a paw around the farm and unlock steady bonuses.
           </p>
           <div className="grid grid-cols-1 gap-3">
             {Object.entries(PET_TYPES).map(([petType, pet]) => (
@@ -253,7 +267,7 @@ const PetsTab = memo(() => {
                   <span className="text-2xl">{pet.emoji}</span>
                   <div>
                     <div className="font-medium">{pet.name}</div>
-                    <div className="text-xs text-gray-600">{pet.traits.join(', ')}</div>
+                    <div className="text-xs text-gray-600">{pet.traits.map(formatTrait).join(' • ')}</div>
                   </div>
                 </div>
                 <Button
@@ -261,7 +275,7 @@ const PetsTab = memo(() => {
                   size="sm"
                   disabled={state.coins < pet.cost}
                 >
-                  Adopt ({pet.cost}🪙)
+                  Adopt for {pet.cost}🪙
                 </Button>
               </div>
             ))}
@@ -288,7 +302,7 @@ const PetsTab = memo(() => {
                         <div>
                           <div className="font-semibold">{pet.name}</div>
                           <div className="text-sm text-gray-600">
-                            Level {pet.level} • {getHappinessEmoji(pet.happiness)} {Math.round(pet.happiness)}% Happy
+                            Level {pet.level} • {getHappinessEmoji(pet.happiness)} {Math.round(pet.happiness)}% Happiness
                           </div>
                         </div>
                       </div>
@@ -308,14 +322,14 @@ const PetsTab = memo(() => {
                       </div>
                       <div>
                         <div className="flex justify-between mb-1">
-                          <span>Hunger</span>
+                          <span>Fullness</span>
                           <span>{100 - pet.hunger}%</span>
                         </div>
                         <Progress value={100 - pet.hunger} className="h-2" />
                       </div>
                       <div>
                         <div className="flex justify-between mb-1">
-                          <span>Play</span>
+                          <span>Playfulness</span>
                           <span>{pet.playfulness}%</span>
                         </div>
                         <Progress value={pet.playfulness} className="h-2" />
@@ -349,7 +363,7 @@ const PetsTab = memo(() => {
                         className="text-xs flex-1"
                         disabled={petSupplies.vet_care < 1}
                       >
-                        🏥 Vet
+                        🏥 Vet Visit
                       </Button>
                     </div>
                   </Card>
@@ -360,7 +374,7 @@ const PetsTab = memo(() => {
 
           {/* Pet Supplies */}
           <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
-            <h3 className="font-semibold mb-3 text-blue-800">🛍️ Pet Supplies</h3>
+            <h3 className="font-semibold mb-3 text-blue-800">🛍️ Care Supplies</h3>
 
             <div className="grid grid-cols-3 gap-3 mb-4 text-sm">
               <div className="text-center p-2 bg-white rounded">
@@ -368,7 +382,7 @@ const PetsTab = memo(() => {
                 <div className="text-lg font-bold text-blue-600">{petSupplies.pet_food}</div>
               </div>
               <div className="text-center p-2 bg-white rounded">
-                <div className="font-medium">❤️ Attention</div>
+                <div className="font-medium">🎾 Toys</div>
                 <div className="text-lg font-bold text-blue-600">{petSupplies.attention}</div>
               </div>
               <div className="text-center p-2 bg-white rounded">
@@ -385,7 +399,7 @@ const PetsTab = memo(() => {
                 className="text-xs flex-1"
                 disabled={state.coins < 20}
               >
-                Buy Food (20🪙)
+                Buy Pet Food (20🪙)
               </Button>
               <Button
                 onClick={() => handleBuySupplies('attention', 15)}
@@ -394,7 +408,7 @@ const PetsTab = memo(() => {
                 className="text-xs flex-1"
                 disabled={state.coins < 15}
               >
-                Buy Attention (15🪙)
+                Buy Toys (15🪙)
               </Button>
               <Button
                 onClick={() => handleBuySupplies('vet_care', 30)}
@@ -403,7 +417,7 @@ const PetsTab = memo(() => {
                 className="text-xs flex-1"
                 disabled={state.coins < 30}
               >
-                Vet Care (30🪙)
+                Buy Vet Care (30🪙)
               </Button>
             </div>
           </Card>

@@ -249,6 +249,18 @@
   - **Why:** keep the notification system bounded so large bursts cannot overwhelm the UI.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+- **Planned**
+  - **Scope:** frontend
+  - **What:** polish Pets tab copy for clearer, more consistent wording.
+  - **Why:** pet tab text reads informal/sloppy and needs tighter phrasing.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** refined Pets tab copy with clearer labels, friendlier notifications, and readable trait/supply phrasing.
+  - **Why:** make pet-related messaging consistent and polished without changing behavior.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## Phase 5: Systems Refinement Pass ✅ NEW (January 2026)
 
 ### 1. Single Source of Truth for XP ✅
