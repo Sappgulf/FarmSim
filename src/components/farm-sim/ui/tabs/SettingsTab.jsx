@@ -10,7 +10,7 @@ import { SaveLoadSettings } from './settings/SaveLoadSettings';
 import { GameplaySettings } from './settings/GameplaySettings';
 import { GameStats } from './settings/GameStats';
 import { resetTutorial } from '../../ui/Tutorial';
-import { SAVE_KEY } from '../../context/GamePersistence';
+import { SAVE_BACKUP_KEY, SAVE_KEY } from '../../context/GamePersistence';
 import { addTrackedEventListener } from '../../services/EventListenerService';
 
 const SettingsTab = memo(() => {
@@ -133,6 +133,7 @@ const SettingsTab = memo(() => {
     if (window.confirm('Are you sure you want to reset your farm? This cannot be undone!')) {
       try {
         localStorage.removeItem(SAVE_KEY);
+        localStorage.removeItem(SAVE_BACKUP_KEY);
         window.location.reload();
       } catch (error) {
         actions.addNotification({
@@ -177,6 +178,10 @@ const SettingsTab = memo(() => {
       reader.onload = (event) => {
         try {
           const importedData = JSON.parse(event.target.result);
+          const existingSave = localStorage.getItem(SAVE_KEY);
+          if (existingSave) {
+            localStorage.setItem(SAVE_BACKUP_KEY, existingSave);
+          }
           localStorage.setItem(SAVE_KEY, JSON.stringify(importedData));
           actions.addNotification({
             message: '📥 Save imported! Reloading...',
@@ -200,9 +205,13 @@ const SettingsTab = memo(() => {
       try {
         // Clear all localStorage except save
         const saveData = localStorage.getItem(SAVE_KEY);
+        const backupData = localStorage.getItem(SAVE_BACKUP_KEY);
         localStorage.clear();
         if (saveData) {
           localStorage.setItem(SAVE_KEY, saveData);
+        }
+        if (backupData) {
+          localStorage.setItem(SAVE_BACKUP_KEY, backupData);
         }
         actions.addNotification({
           message: '🗑️ Cache cleared successfully!',

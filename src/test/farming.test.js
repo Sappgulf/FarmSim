@@ -11,7 +11,10 @@ describe('FarmingSystem', () => {
             setCoins: vi.fn(),
             updatePlots: vi.fn(),
             setXp: vi.fn(),
+            grantXP: vi.fn(),
             updateInventory: vi.fn(),
+            updateDailyQuestProgress: vi.fn(),
+            updateAutomation: vi.fn(),
         };
 
         mockGameState = {

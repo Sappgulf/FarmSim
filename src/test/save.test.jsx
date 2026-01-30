@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import GameContext, { GameProvider, useGame } from '../components/farm-sim/context/GameContext'; // check export later
 import { renderHook, act } from '@testing-library/react';
+import { SAVE_BACKUP_KEY, SAVE_KEY } from '../components/farm-sim/context/GamePersistence';
 
 // Access internal functions if possible, but GameContext usually doesn't export them directly.
 // We will test via the Provider's context values.
@@ -28,7 +29,7 @@ describe('Save System Stability', () => {
 
     it('should handle corrupted save data gracefully and fallback to default', () => {
         // Inject corrupted JSON
-        localStorage.setItem('farm_sim_enhanced_v2', '{ "corrupted": true, "coins": "NaN" }');
+        localStorage.setItem(SAVE_KEY, '{ "corrupted": true, "coins": "NaN" }');
 
         // We expect it to either load what it can or reset if validation fails
         // In this codebase, let's see behavior. Ideally it should not crash.
@@ -66,7 +67,22 @@ describe('Save System Stability', () => {
         });
 
         // Check localStorage
-        const saved = JSON.parse(localStorage.getItem('farm_sim_enhanced_v2'));
+        const saved = JSON.parse(localStorage.getItem(SAVE_KEY));
         expect(saved.coins).toBe(500);
+    });
+
+    it('should keep a backup save before overwriting', () => {
+        const initialSave = JSON.stringify({ coins: 250, saveVersion: 2 });
+        localStorage.setItem(SAVE_KEY, initialSave);
+
+        const { result } = renderHook(() => useGame(), { wrapper: GameProvider });
+
+        act(() => {
+            result.current.actions.setCoins(800);
+            result.current.actions.saveGame();
+        });
+
+        const backup = JSON.parse(localStorage.getItem(SAVE_BACKUP_KEY));
+        expect(backup.coins).toBe(250);
     });
 });

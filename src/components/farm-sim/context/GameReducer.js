@@ -65,6 +65,7 @@ export const initialState = {
     lastChallengeReset: Date.now(),
     challengeStreak: 0,
     dailyQuests: null,
+    weeklyContracts: null,
     disasterProtections: {},
     prestige: {
         tier: 0,
@@ -99,6 +100,9 @@ export const initialState = {
         soundEnabled: true,
         musicEnabled: true,
         animationsEnabled: true,
+    },
+    automation: {
+        lastAutoWaterAt: 0,
     },
 
     // Performance state
@@ -254,6 +258,9 @@ export function gameReducer(state, action) {
         case GAME_ACTIONS.UPDATE_DAILY_QUESTS:
             return { ...state, dailyQuests: action.payload };
 
+        case GAME_ACTIONS.UPDATE_WEEKLY_CONTRACTS:
+            return { ...state, weeklyContracts: action.payload };
+
         case GAME_ACTIONS.UPDATE_DISASTER_PROTECTIONS:
             return { ...state, disasterProtections: action.payload };
 
@@ -302,6 +309,9 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_SETTINGS:
             return { ...state, settings: { ...state.settings, ...action.payload } };
+
+        case GAME_ACTIONS.UPDATE_AUTOMATION:
+            return { ...state, automation: { ...state.automation, ...action.payload } };
 
         case GAME_ACTIONS.UPDATE_GAME_LOOP:
             return { ...state, gameLoop: { ...state.gameLoop, ...action.payload } };

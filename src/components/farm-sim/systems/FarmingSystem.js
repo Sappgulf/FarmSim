@@ -39,11 +39,68 @@ export class FarmingSystem {
     // Update crop growth - NO THROTTLING, just calculate from timestamp
     this.updateCropGrowth();
 
+    // Apply earned automation (auto-watering)
+    this.applyAutomation();
+
     // Check for withered crops
     this.checkWitheredCrops();
 
     // Update soil fertility slowly
     this.updateSoilFertility();
+  }
+
+  applyAutomation() {
+    if (!this.gameState?.plots || !Array.isArray(this.gameState.plots)) return;
+
+    const sprinklerCount = this.gameState.inventory?.sprinkler || 0;
+    const wellState = this.gameState.buildings?.well;
+    const hasWellAuto = !!(wellState?.built && (wellState.level || 0) >= 3);
+
+    if (sprinklerCount <= 0 && !hasWellAuto) return;
+
+    const now = Date.now();
+    const lastAutoWaterAt = this.gameState.automation?.lastAutoWaterAt || 0;
+    const baseInterval = hasWellAuto ? 10000 : 14000;
+    const intervalMs = Math.max(6000, baseInterval - sprinklerCount * 1000);
+
+    if (now - lastAutoWaterAt < intervalMs) return;
+
+    const plots = this.gameState.plots;
+    const candidates = [];
+    for (let i = 0; i < plots.length; i += 1) {
+      const plot = plots[i];
+      if (!plot) continue;
+      if (plot.state !== 'planted' && plot.state !== 'growing') continue;
+      const waterLevel = plot.waterLevel || 0;
+      if (waterLevel >= 100) continue;
+      candidates.push({ index: i, waterLevel });
+    }
+
+    if (candidates.length === 0) return;
+
+    candidates.sort((a, b) => a.waterLevel - b.waterLevel);
+    const maxPlots = Math.min(candidates.length, 2 + sprinklerCount * 2 + (hasWellAuto ? 2 : 0));
+    const waterAmount = Math.min(40, 15 + sprinklerCount * 5 + (hasWellAuto ? 10 : 0));
+
+    let updatedPlots = null;
+    for (let i = 0; i < maxPlots; i += 1) {
+      const { index } = candidates[i];
+      const plot = plots[index];
+      const nextWater = Math.min(100, (plot.waterLevel || 0) + waterAmount);
+      if (nextWater === plot.waterLevel) continue;
+      if (!updatedPlots) {
+        updatedPlots = plots.slice();
+      }
+      updatedPlots[index] = {
+        ...plot,
+        waterLevel: nextWater,
+      };
+    }
+
+    if (updatedPlots) {
+      this.actions.updatePlots(updatedPlots);
+      this.actions.updateAutomation?.({ lastAutoWaterAt: now });
+    }
   }
 
   /**

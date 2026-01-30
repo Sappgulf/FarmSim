@@ -5,7 +5,6 @@ import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Progress } from '../../ui/progress';
 import { getXpForLevel } from '../constants/progression';
-import { SAVE_KEY } from '../context/GamePersistence';
 import { Coins, Star, Trophy, Settings, Save, Play, Pause, ChevronDown, TrendingUp, Calendar } from 'lucide-react';
 import { addTrackedEventListener } from '../services/EventListenerService';
 
@@ -326,13 +325,11 @@ const GameHeader = memo(() => {
               size="sm"
               variant="ghost"
               onClick={() => {
-                try {
-                  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-                  actions.updateGameLoop({ lastSaveTime: Date.now() });
-                  actions.addNotification({ message: '💾 Game saved!', type: 'success' });
-                } catch (error) {
-                  actions.addNotification({ message: '❌ Save failed', type: 'error' });
-                }
+                const success = actions.saveGame();
+                actions.addNotification({
+                  message: success ? '💾 Game saved!' : '❌ Save failed',
+                  type: success ? 'success' : 'error',
+                });
               }}
               className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full group relative"
             >
