@@ -5,7 +5,7 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { Target, Gift, Flame, Calendar, Trophy } from 'lucide-react';
-import { generateDailyQuests, shouldResetDaily, getStreakBonus } from '../../systems/QuestSystem';
+import { generateDailyQuests, generateWeeklyContracts, shouldResetDaily, shouldResetWeekly, getStreakBonus } from '../../systems/QuestSystem';
 
 /**
  * Daily Quests Tab - Provides daily goals and rewards
@@ -13,7 +13,7 @@ import { generateDailyQuests, shouldResetDaily, getStreakBonus } from '../../sys
 const DailyQuestsTab = memo(() => {
   const { state, actions } = useGame();
 
-  // Initialize or reset daily quests
+  // Initialize or reset daily quests + weekly contracts
   useEffect(() => {
     // Check if quests need to be reset
     if (!state.dailyQuests || shouldResetDaily(state.dailyQuests?.lastResetTime)) {
@@ -27,12 +27,23 @@ const DailyQuestsTab = memo(() => {
         totalCompleted: state.dailyQuests?.totalCompleted || 0,
       });
     }
-  }, [state.level, state.dailyQuests, actions]);
+
+    if (!state.weeklyContracts || shouldResetWeekly(state.weeklyContracts?.lastResetTime)) {
+      const newContracts = generateWeeklyContracts(state.level, Date.now());
+      actions.updateWeeklyContracts({
+        quests: newContracts,
+        lastResetTime: Date.now(),
+        totalCompleted: state.weeklyContracts?.totalCompleted || 0,
+      });
+    }
+  }, [state.level, state.dailyQuests, state.weeklyContracts, actions]);
 
   const quests = state.dailyQuests?.quests || [];
   const streak = state.dailyQuests?.streak || 0;
   const totalCompleted = state.dailyQuests?.totalCompleted || 0;
   const streakBonus = getStreakBonus(streak);
+  const weeklyContracts = state.weeklyContracts?.quests || [];
+  const weeklyCompleted = state.weeklyContracts?.totalCompleted || 0;
 
   // Calculate time until reset
   const getTimeUntilReset = () => {
@@ -48,27 +59,53 @@ const DailyQuestsTab = memo(() => {
     return `${hours}h ${minutes}m`;
   };
 
-  const handleClaimReward = (questId) => {
-    const quest = quests.find(q => q.id === questId);
+  const getTimeUntilWeeklyReset = () => {
+    const now = new Date();
+    const nextMonday = new Date(now);
+    const day = nextMonday.getDay();
+    const diff = (8 - day) % 7 || 7;
+    nextMonday.setDate(nextMonday.getDate() + diff);
+    nextMonday.setHours(0, 0, 0, 0);
+
+    const diffMs = nextMonday - now;
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+    return `${days}d ${hours}h`;
+  };
+
+  const handleClaimReward = (questId, cadence = 'daily') => {
+    const isDaily = cadence === 'daily';
+    const activeQuests = isDaily ? quests : weeklyContracts;
+    const quest = activeQuests.find(q => q.id === questId);
     if (!quest || !quest.completed || quest.claimed) return;
 
-    const reward = Math.floor(quest.reward * streakBonus);
+    const bonusMultiplier = isDaily ? streakBonus : 1;
+    const reward = Math.floor(quest.reward * bonusMultiplier);
 
     // Grant reward
     actions.setCoins(state.coins + reward);
     actions.grantXP(Math.floor(reward * 0.5), 'quest_complete', { questId, reward });
 
     // Mark as claimed
-    const updatedQuests = quests.map(q =>
+    const updatedQuests = activeQuests.map(q =>
       q.id === questId ? { ...q, claimed: true } : q
     );
 
-    actions.updateDailyQuests({
-      ...state.dailyQuests,
-      quests: updatedQuests,
-      totalCompleted: totalCompleted + 1,
-      streak: streak + (updatedQuests.every(q => q.claimed) ? 1 : 0), // Increment streak if all claimed
-    });
+    if (isDaily) {
+      actions.updateDailyQuests({
+        ...state.dailyQuests,
+        quests: updatedQuests,
+        totalCompleted: totalCompleted + 1,
+        streak: streak + (updatedQuests.every(q => q.claimed) ? 1 : 0), // Increment streak if all claimed
+      });
+    } else {
+      actions.updateWeeklyContracts({
+        ...state.weeklyContracts,
+        quests: updatedQuests,
+        totalCompleted: weeklyCompleted + 1,
+      });
+    }
 
     // Particle effect
     if (typeof window.triggerParticleEffect === 'function') {
@@ -80,7 +117,7 @@ const DailyQuestsTab = memo(() => {
     }
 
     actions.addNotification({
-      message: `🎉 Quest Complete! +${reward}🪙 ${streakBonus > 1 ? `(${Math.round((streakBonus - 1) * 100)}% streak bonus!)` : ''}`,
+      message: `🎉 ${isDaily ? 'Quest' : 'Contract'} Complete! +${reward}🪙 ${bonusMultiplier > 1 ? `(${Math.round((bonusMultiplier - 1) * 100)}% streak bonus!)` : ''}`,
       type: 'success',
     });
   };
@@ -95,6 +132,7 @@ const DailyQuestsTab = memo(() => {
   };
 
   const allQuestsCompleted = quests.length > 0 && quests.every(q => q.claimed);
+  const allWeeklyCompleted = weeklyContracts.length > 0 && weeklyContracts.every(q => q.claimed);
 
   return (
     <div className="space-y-4">
@@ -275,6 +313,122 @@ const DailyQuestsTab = memo(() => {
         )}
       </Card>
 
+      {/* Weekly Contracts */}
+      <Card className="p-4 border-2 border-indigo-200 bg-indigo-50/60">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-semibold flex items-center gap-2 text-indigo-900">
+            <Trophy className="w-4 h-4" />
+            Weekly Contracts
+          </h4>
+          <div className="text-xs font-mono bg-white/70 px-2 py-1 rounded text-indigo-700 flex items-center gap-1">
+            <Calendar className="w-3 h-3" /> Resets in {getTimeUntilWeeklyReset()}
+          </div>
+        </div>
+
+        <div className="text-xs text-indigo-700 mb-3">
+          {weeklyCompleted} contracts completed total · Bigger rewards, slower cadence
+        </div>
+
+        {weeklyContracts.length === 0 ? (
+          <div className="text-center py-6 text-gray-500">
+            <Target className="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <p>Generating weekly contracts...</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {weeklyContracts.map((quest) => {
+              const progressPercent = (quest.progress / quest.target) * 100;
+              const finalReward = Math.floor(quest.reward);
+
+              return (
+                <Card
+                  key={quest.id}
+                  className={`p-4 border-2 transition-all ${quest.claimed
+                    ? 'bg-gray-50 border-gray-300 opacity-60'
+                    : quest.completed
+                      ? 'bg-emerald-50 border-emerald-400 shadow-lg'
+                      : 'border-indigo-200 hover:shadow-md'
+                    }`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg">
+                          {quest.type === 'harvest' ? '🌾' :
+                            quest.type === 'plant' ? '🌱' :
+                              quest.type === 'earn' ? '💰' :
+                                quest.type === 'spend' ? '🛒' :
+                                  quest.type === 'build' ? '🏗️' :
+                                    quest.type === 'level' ? '⭐' :
+                                      quest.type === 'weather' ? '🌦️' : '🎯'}
+                        </span>
+                        <span className="font-medium text-gray-800">
+                          {quest.description.replace('{count}', quest.target).replace('{crop}', 'premium')}
+                        </span>
+                      </div>
+                      <Badge className={`${getDifficultyColor(quest.difficulty)} text-xs`}>
+                        {quest.difficulty}
+                      </Badge>
+                    </div>
+
+                    {!quest.claimed && (
+                      <div className="text-right ml-3">
+                        <div className="font-bold text-yellow-700">{finalReward}🪙</div>
+                        <div className="text-xs text-gray-500">
+                          +{Math.floor(finalReward * 0.5)} XP
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {!quest.claimed && (
+                    <div className="mb-3">
+                      <div className="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Progress</span>
+                        <span>{quest.progress} / {quest.target}</span>
+                      </div>
+                      <Progress value={progressPercent} className="h-2" />
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    {quest.claimed ? (
+                      <div className="flex items-center gap-2 text-green-700">
+                        <Badge className="bg-green-600">✓ Claimed</Badge>
+                      </div>
+                    ) : quest.completed ? (
+                      <Button
+                        data-quest-id={quest.id}
+                        onClick={() => handleClaimReward(quest.id, 'weekly')}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        🎁 Claim Contract
+                      </Button>
+                    ) : (
+                      <div className="text-sm text-gray-500 italic">
+                        In progress...
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+
+      {allWeeklyCompleted && (
+        <Card className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-400 text-center">
+          <div className="text-4xl mb-2">🏆</div>
+          <div className="text-lg font-bold text-emerald-800 mb-1">
+            Weekly Contracts Complete!
+          </div>
+          <div className="text-sm text-emerald-700">
+            New contracts arrive every Monday. Keep the farm humming!
+          </div>
+        </Card>
+      )}
+
       {/* Streak Milestones */}
       <Card className="p-4 bg-gray-50">
         <h4 className="font-semibold mb-3">🔥 Streak Milestones</h4>
@@ -305,6 +459,7 @@ const DailyQuestsTab = memo(() => {
           <li>Complete all quests each day to build your streak!</li>
           <li>Longer streaks = bigger rewards!</li>
           <li>Quests reset daily at midnight</li>
+          <li>Weekly contracts reset every Monday for bigger payouts</li>
           <li>Quest difficulty scales with your level</li>
         </ul>
       </Card>
@@ -314,4 +469,3 @@ const DailyQuestsTab = memo(() => {
 
 DailyQuestsTab.displayName = 'DailyQuestsTab';
 export default DailyQuestsTab;
-

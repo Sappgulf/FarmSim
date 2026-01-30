@@ -3,7 +3,7 @@ import { getSoundSystem } from '../systems/SoundSystem';
 import { createXPGranter, recordLevelUp, recordPlayerInteraction } from '../services/XPService';
 import { calculateHarvestValue } from '../constants/cropData';
 import { updateQuestProgress } from '../systems/QuestSystem';
-import { SAVE_KEY, SAVE_VERSION } from './GamePersistence';
+import { SAVE_VERSION, loadSavedState, persistSaveData } from './GamePersistence';
 import { addTrackedEventListener } from '../services/EventListenerService';
 import { getPerfMetrics, isDebugEnabled, profileEnd, profileStart, recordFrameTime } from '../services/DebugService';
 import { initializeDebugTracing, runDebugInvariants, traceAction } from '../services/DebugTraceService';
@@ -57,6 +57,7 @@ const GAME_ACTIONS = {
 
   // Daily quests
   UPDATE_DAILY_QUESTS: 'UPDATE_DAILY_QUESTS',
+  UPDATE_WEEKLY_CONTRACTS: 'UPDATE_WEEKLY_CONTRACTS',
 
   // Disaster protections
   UPDATE_DISASTER_PROTECTIONS: 'UPDATE_DISASTER_PROTECTIONS',
@@ -86,6 +87,7 @@ const GAME_ACTIONS = {
 
   // Game settings
   UPDATE_SETTINGS: 'UPDATE_SETTINGS',
+  UPDATE_AUTOMATION: 'UPDATE_AUTOMATION',
 
   // Performance
   UPDATE_GAME_LOOP: 'UPDATE_GAME_LOOP',
@@ -120,168 +122,6 @@ const initializePlots = (gridSize) => {
     progress: 0
   }));
 };
-
-/**
- * Migration helper for save data
- */
-function migrateSaveData(savedData) {
-  try {
-    // Get save version (defaults to 0 for old saves)
-    const saveVersion = savedData.saveVersion || 0;
-    let migratedData = { ...savedData };
-
-    // Version 0 → 1: Add save version and any new fields
-    if (saveVersion < 1) {
-      if (import.meta.env.MODE === 'development') {
-        console.debug('[farm]', 'Migrating save from version 0 to 1');
-      }
-      migratedData.saveVersion = 1;
-
-      // Ensure all required fields exist with fallbacks
-      migratedData.settings = migratedData.settings || {
-        autoSave: true,
-        soundEnabled: true,
-        animationsEnabled: true,
-      };
-
-      migratedData.gameLoop = migratedData.gameLoop || {
-        lastUpdate: Date.now(),
-        fps: 60,
-        paused: false,
-      };
-      if (typeof migratedData.gameLoop.lastSaveTime !== 'number') {
-        migratedData.gameLoop.lastSaveTime = Date.now();
-      }
-    }
-
-    // Validate critical fields
-    if (typeof migratedData.coins !== 'number' || migratedData.coins < 0) {
-      console.warn('[farm]', 'Invalid coins value, resetting to 0');
-      migratedData.coins = 0;
-    }
-
-    if (typeof migratedData.xp !== 'number' || migratedData.xp < 0) {
-      console.warn('[farm]', 'Invalid XP value, resetting to 0');
-      migratedData.xp = 0;
-    }
-
-    if (typeof migratedData.level !== 'number' || migratedData.level < 1) {
-      console.warn('[farm]', 'Invalid level value, resetting to 1');
-      migratedData.level = 1;
-    }
-
-    if (!Array.isArray(migratedData.plots)) {
-      console.warn('[farm]', 'Invalid plots data, will reinitialize');
-      migratedData.plots = initializePlots(migratedData.gridSize || 3);
-    }
-
-    // Ensure livestock structure exists
-    if (!migratedData.livestock || typeof migratedData.livestock !== 'object') {
-      console.warn('[farm]', 'Invalid livestock data, resetting to defaults');
-      migratedData.livestock = {
-        animals: [],
-        capacity: 10,
-        totalProduced: 0
-      };
-    } else {
-      // Ensure required properties exist
-      if (!Array.isArray(migratedData.livestock.animals)) {
-        console.warn('[farm]', 'Invalid livestock animals array, resetting');
-        migratedData.livestock.animals = [];
-      }
-      if (typeof migratedData.livestock.capacity !== 'number') {
-        migratedData.livestock.capacity = 10;
-      }
-      if (typeof migratedData.livestock.totalProduced !== 'number') {
-        migratedData.livestock.totalProduced = 0;
-      }
-    }
-
-    // Ensure fishing structure exists
-    if (!migratedData.fishing || typeof migratedData.fishing !== 'object') {
-      console.warn('[farm]', 'Invalid fishing data, resetting to defaults');
-      migratedData.fishing = {
-        pond: { level: 1, population: 100, maxPopulation: 100 },
-        stats: { totalCaught: 0, totalValue: 0, largestFish: 0, byType: {}, streak: 0, bestStreak: 0 }
-      };
-    } else {
-      // Ensure pond structure
-      if (!migratedData.fishing.pond || typeof migratedData.fishing.pond !== 'object') {
-        migratedData.fishing.pond = { level: 1, population: 100, maxPopulation: 100 };
-      }
-      // Ensure stats structure
-      if (!migratedData.fishing.stats || typeof migratedData.fishing.stats !== 'object') {
-        migratedData.fishing.stats = { totalCaught: 0, totalValue: 0, largestFish: 0, byType: {}, streak: 0, bestStreak: 0 };
-      } else {
-        if (typeof migratedData.fishing.stats.streak !== 'number') {
-          migratedData.fishing.stats.streak = 0;
-        }
-        if (typeof migratedData.fishing.stats.bestStreak !== 'number') {
-          migratedData.fishing.stats.bestStreak = 0;
-        }
-      }
-    }
-
-    // Ensure gridSize matches plots length
-    if (migratedData.plots.length !== migratedData.gridSize * migratedData.gridSize) {
-      console.warn('[farm]', 'Plot count mismatch, reinitializing plots');
-      migratedData.plots = initializePlots(migratedData.gridSize || 3);
-    }
-
-    // Set current save version
-    migratedData.saveVersion = SAVE_VERSION;
-
-    if (import.meta.env.MODE === 'development') {
-      console.debug('[farm]', `Save data migrated to version ${SAVE_VERSION}`);
-    }
-    return migratedData;
-  } catch (error) {
-    console.error('[farm]', 'Error migrating save data', error);
-    return null;
-  }
-}
-
-/**
- * Loads and validates saved game state from localStorage
- * @returns {Object|null} - Loaded state or null if no valid save exists
- */
-function loadSavedState() {
-  try {
-    const savedDataString = localStorage.getItem(SAVE_KEY);
-    if (!savedDataString) {
-      if (import.meta.env.MODE === 'development') {
-        console.debug('[farm]', 'No saved game found');
-      }
-      return null;
-    }
-
-    const savedData = JSON.parse(savedDataString);
-    const migratedData = migrateSaveData(savedData);
-
-    if (!migratedData) {
-      console.warn('[farm]', 'Could not migrate save data, starting fresh');
-      return null;
-    }
-
-    // Clear notifications on load (they're transient)
-    migratedData.notifications = [];
-
-    return migratedData;
-  } catch (error) {
-    console.error('[farm]', 'Failed to load saved game', error);
-    // Backup corrupted save
-    try {
-      const corruptedSave = localStorage.getItem(SAVE_KEY);
-      localStorage.setItem(`${SAVE_KEY}_corrupted_${Date.now()}`, corruptedSave);
-      if (import.meta.env.MODE === 'development') {
-        console.debug('[farm]', 'Corrupted save backed up');
-      }
-    } catch (backupError) {
-      console.error('[farm]', 'Could not backup corrupted save', backupError);
-    }
-    return null;
-  }
-}
 
 // Initial game state
 const initialState = {
@@ -339,6 +179,7 @@ const initialState = {
   lastChallengeReset: Date.now(),
   challengeStreak: 0,
   dailyQuests: null, // Will be initialized on first render
+  weeklyContracts: null,
   disasterProtections: {}, // Disaster insurance and protections
   prestige: {
     tier: 0,
@@ -373,6 +214,9 @@ const initialState = {
     soundEnabled: true,
     musicEnabled: true,
     animationsEnabled: true,
+  },
+  automation: {
+    lastAutoWaterAt: 0,
   },
 
   // Performance state
@@ -528,6 +372,9 @@ function gameReducer(state, action) {
     case GAME_ACTIONS.UPDATE_DAILY_QUESTS:
       return { ...state, dailyQuests: action.payload };
 
+    case GAME_ACTIONS.UPDATE_WEEKLY_CONTRACTS:
+      return { ...state, weeklyContracts: action.payload };
+
     case GAME_ACTIONS.UPDATE_DISASTER_PROTECTIONS:
       return { ...state, disasterProtections: action.payload };
 
@@ -586,6 +433,9 @@ function gameReducer(state, action) {
 
     case GAME_ACTIONS.UPDATE_SETTINGS:
       return { ...state, settings: { ...state.settings, ...action.payload } };
+
+    case GAME_ACTIONS.UPDATE_AUTOMATION:
+      return { ...state, automation: { ...state.automation, ...action.payload } };
 
     case GAME_ACTIONS.UPDATE_GAME_LOOP:
       return { ...state, gameLoop: { ...state.gameLoop, ...action.payload } };
@@ -660,41 +510,47 @@ export function GameProvider({ children }) {
     dispatchRef.current = dispatch;
   }, [dispatch]);
 
-  const updateDailyQuestProgress = useCallback((actionType, actionData = {}) => {
-    const currentDailyQuests = stateRef.current.dailyQuests;
-    if (!currentDailyQuests?.quests?.length) return;
-
-    const updatedQuests = updateQuestProgress(
-      currentDailyQuests.quests,
-      actionType,
-      actionData
-    );
-
-    const hasChanges = updatedQuests.some((quest, index) => {
-      const previousQuest = currentDailyQuests.quests[index];
-      return (
-        quest.progress !== previousQuest.progress
-        || quest.completed !== previousQuest.completed
+  const updateContractProgress = useCallback((actionType, actionData = {}) => {
+    const updateForCadence = (currentContracts, actionTypeOverride, updaterType) => {
+      if (!currentContracts?.quests?.length) return;
+      const updatedQuests = updateQuestProgress(
+        currentContracts.quests,
+        actionTypeOverride,
+        actionData
       );
-    });
 
-    if (!hasChanges) return;
-
-    if (dispatchRef.current) {
-      dispatchRef.current({
-        type: GAME_ACTIONS.UPDATE_DAILY_QUESTS,
-        payload: { ...currentDailyQuests, quests: updatedQuests },
+      const hasChanges = updatedQuests.some((quest, index) => {
+        const previousQuest = currentContracts.quests[index];
+        return (
+          quest.progress !== previousQuest.progress
+          || quest.completed !== previousQuest.completed
+        );
       });
-    }
+
+      if (!hasChanges) return;
+
+      if (dispatchRef.current) {
+        dispatchRef.current({
+          type: updaterType,
+          payload: { ...currentContracts, quests: updatedQuests },
+        });
+      }
+    };
+
+    updateForCadence(stateRef.current.dailyQuests, actionType, GAME_ACTIONS.UPDATE_DAILY_QUESTS);
+    updateForCadence(stateRef.current.weeklyContracts, actionType, GAME_ACTIONS.UPDATE_WEEKLY_CONTRACTS);
   }, []);
 
   const previousLevelRef = useRef(state.level);
   useEffect(() => {
     if (state.level > previousLevelRef.current) {
-      updateDailyQuestProgress('level_up', { level: state.level });
+      updateContractProgress('level_up', {
+        level: state.level,
+        levelDelta: state.level - previousLevelRef.current,
+      });
     }
     previousLevelRef.current = state.level;
-  }, [state.level, updateDailyQuestProgress]);
+  }, [state.level, updateContractProgress]);
 
   // Debounced auto-save management
   const autoSaveTimeoutRef = useRef(null);
@@ -718,20 +574,9 @@ export function GameProvider({ children }) {
     autoSaveTimeoutRef.current = setTimeout(() => {
       try {
         const saveTimestamp = Date.now();
-        const saveData = {
-          ...stateToSave,
-          saveVersion: SAVE_VERSION,
-          notifications: [],
-          gameLoop: { ...stateToSave.gameLoop, lastSaveTime: saveTimestamp },
-        };
-        const serialized = JSON.stringify(saveData);
-
-        // Use async storage write to avoid blocking main thread
-        // localStorage.setItem is synchronous, but we can defer it with setTimeout
-        // requestIdleCallback has limited browser support, so use setTimeout fallback
         const saveToStorage = () => {
           try {
-            localStorage.setItem(SAVE_KEY, serialized);
+            persistSaveData(stateToSave, { saveTimestamp });
             lastSaveStateRef.current = stateString;
             if (dispatchRef.current) {
               dispatchRef.current({
@@ -977,7 +822,7 @@ export function GameProvider({ children }) {
     grantXP: (amount, source, meta) => {
       const granted = grantXP(amount, source, meta);
       if (granted > 0) {
-        updateDailyQuestProgress('gain_xp', { amount: granted });
+        updateContractProgress('gain_xp', { amount: granted });
       }
       trace('xp_grant', { amount: granted, source });
       return granted;
@@ -1020,7 +865,9 @@ export function GameProvider({ children }) {
     setDailyChallenges: (challenges) => dispatch({ type: GAME_ACTIONS.SET_DAILY_CHALLENGES, payload: challenges }),
     updateChallengeProgress: (progress) => dispatch({ type: GAME_ACTIONS.UPDATE_CHALLENGE_PROGRESS, payload: progress }),
     updateDailyQuests: (dailyQuests) => dispatch({ type: GAME_ACTIONS.UPDATE_DAILY_QUESTS, payload: dailyQuests }),
-    updateDailyQuestProgress,
+    updateWeeklyContracts: (weeklyContracts) => dispatch({ type: GAME_ACTIONS.UPDATE_WEEKLY_CONTRACTS, payload: weeklyContracts }),
+    updateDailyQuestProgress: updateContractProgress,
+    updateContractProgress,
     updateDisasterProtections: (protections) => dispatch({ type: GAME_ACTIONS.UPDATE_DISASTER_PROTECTIONS, payload: protections }),
     updatePrestige: (prestige) => dispatch({ type: GAME_ACTIONS.UPDATE_PRESTIGE, payload: prestige }),
     updateSeason: (season) => dispatch({ type: GAME_ACTIONS.UPDATE_SEASON, payload: season }),
@@ -1043,6 +890,7 @@ export function GameProvider({ children }) {
     },
     setSelectedCrop: (cropId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_CROP, payload: cropId }),
     updateSettings: (settings) => dispatch({ type: GAME_ACTIONS.UPDATE_SETTINGS, payload: settings }),
+    updateAutomation: (automation) => dispatch({ type: GAME_ACTIONS.UPDATE_AUTOMATION, payload: automation }),
     updateGameLoop: (data) => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: data }),
     pauseGame: () => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { paused: true } }),
     resumeGame: () => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { paused: false } }),
@@ -1075,13 +923,7 @@ export function GameProvider({ children }) {
     saveGame: () => {
       try {
         const saveTimestamp = Date.now();
-        const stateToSave = {
-          ...stateRef.current,
-          saveVersion: SAVE_VERSION,
-          notifications: [],
-          gameLoop: { ...stateRef.current.gameLoop, lastSaveTime: saveTimestamp },
-        };
-        localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
+        persistSaveData(stateRef.current, { saveTimestamp });
         dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { lastSaveTime: saveTimestamp } });
         trace('game_save', { saveTimestamp });
         return true;
@@ -1165,7 +1007,7 @@ export function GameProvider({ children }) {
      */
     earnMoney: (amount) => {
       dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (currentCoins) => currentCoins + amount });
-      updateDailyQuestProgress('earn_coins', { amount });
+      updateContractProgress('earn_coins', { amount });
       trace('earn_money', { amount });
     },
     /**
@@ -1177,7 +1019,7 @@ export function GameProvider({ children }) {
       const currentCoins = stateRef.current?.coins || 0;
       if (currentCoins < amount) return false;
       dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentCoins - amount });
-      updateDailyQuestProgress('spend_coins', { amount });
+      updateContractProgress('spend_coins', { amount });
       trace('spend_money', { amount });
       return true;
     },
@@ -1214,7 +1056,7 @@ export function GameProvider({ children }) {
       const grantXP = createXPGranter(dispatch, () => stateRef.current, GAME_ACTIONS.SET_XP);
       const granted = grantXP(amount, source);
       if (granted > 0) {
-        updateDailyQuestProgress('gain_xp', { amount: granted });
+        updateContractProgress('gain_xp', { amount: granted });
       }
     },
 
@@ -1383,16 +1225,16 @@ export function GameProvider({ children }) {
 
           const harvestedCount = Object.values(inventoryUpdates).reduce((sum, count) => sum + count, 0);
           if (harvestedCount > 0) {
-            updateDailyQuestProgress('harvest', {
+            updateContractProgress('harvest', {
               amount: harvestedCount,
               weather: currentState.weather,
             });
           }
           if (totalEarnings > 0) {
-            updateDailyQuestProgress('earn_coins', { amount: totalEarnings });
+            updateContractProgress('earn_coins', { amount: totalEarnings });
           }
           if (totalXp > 0) {
-            updateDailyQuestProgress('gain_xp', { amount: totalXp });
+            updateContractProgress('gain_xp', { amount: totalXp });
           }
 
           // Apply all updates after a delay to ensure state consistency

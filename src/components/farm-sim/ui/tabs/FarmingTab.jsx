@@ -28,6 +28,15 @@ const FarmingTab = memo(() => {
     time: crop.growthTime,
   })), [crops]);
 
+  const sprinklerCount = state.inventory?.sprinkler || 0;
+  const hasWellAuto = !!(state.buildings?.well?.built && (state.buildings?.well?.level || 0) >= 3);
+  const automationActive = sprinklerCount > 0 || hasWellAuto;
+  const automationIntervalMs = Math.max(6000, (hasWellAuto ? 10000 : 14000) - sprinklerCount * 1000);
+  const automationWaterAmount = Math.min(40, 15 + sprinklerCount * 5 + (hasWellAuto ? 10 : 0));
+  const automationMaxPlots = Math.min(state.plots?.length || 0, 2 + sprinklerCount * 2 + (hasWellAuto ? 2 : 0));
+  const lastAutoWaterAt = state.automation?.lastAutoWaterAt || 0;
+  const secondsUntilNextAuto = Math.max(0, Math.ceil((automationIntervalMs - (Date.now() - lastAutoWaterAt)) / 1000));
+
   const handleSelectCrop = (cropId) => {
     actions.setSelectedCrop(cropId);
     // Notification handled by selection visual feedback implies action, 
@@ -123,6 +132,28 @@ const FarmingTab = memo(() => {
           <span className="text-xs font-medium">Treat All</span>
         </Button>
       </div>
+
+      {automationActive && (
+        <Card className="p-4 border-2 border-blue-200 bg-blue-50/70">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-semibold text-blue-900 flex items-center gap-2">
+                <Droplets className="w-4 h-4" />
+                Automation Active
+              </div>
+              <div className="text-xs text-blue-700 mt-1">
+                Auto-watering up to {automationMaxPlots} thirsty plots for +{automationWaterAmount} water.
+              </div>
+              <div className="text-xs text-blue-600 mt-1">
+                {hasWellAuto ? 'Well Lv.3+ adds steady irrigation.' : 'Sprinkler tool unlocked.'}
+              </div>
+            </div>
+            <div className="text-right text-xs font-mono text-blue-700 bg-white/70 px-2 py-1 rounded">
+              Next cycle: {secondsUntilNextAuto}s
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Available Crops Grid */}
       <Card className="p-4">

@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-02-08
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** audit docs/codebase, formalize player/dev docs, add weekly contracts, implement earned automation for auto-watering, and harden save/versioning with backups.
+  - **Why:** expand retention loops without duplicating systems, improve clarity, and protect player progress.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** added weekly contracts alongside daily quests, implemented earned auto-watering via sprinklers and upgraded wells, hardened save persistence with backup slot + validation, and created GAME_GUIDE/DEV_NOTES/ROADMAP docs.
+  - **Why:** deepen retention loops, make automation meaningful, and keep saves resilient without duplicating features.
+  - **Verification:** `npm run test -- --run` (warned: ReactDOMTestUtils.act deprecation, invalid plots warnings in tests).
+
 ## 2026-02-04
 
 - **Planned**

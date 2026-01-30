@@ -4,8 +4,9 @@
 
 import { XP_PER_LEVEL_BASE } from '../constants/progression';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
+export const SAVE_BACKUP_KEY = `${SAVE_KEY}_backup`;
 
 /**
  * Helper function to initialize plots
@@ -26,6 +27,42 @@ export const initializePlots = (gridSize) => {
         soilFertility: 1.0,
         progress: 0
     }));
+};
+
+const clampNumber = (value, fallback, min = null, max = null) => {
+    const safeValue = Number.isFinite(value) ? value : fallback;
+    if (min !== null && safeValue < min) return min;
+    if (max !== null && safeValue > max) return max;
+    return safeValue;
+};
+
+const normalizeQuestState = (questState, defaults = {}) => {
+    if (!questState || typeof questState !== 'object') {
+        return {
+            ...defaults,
+            quests: [],
+            lastResetTime: null,
+            totalCompleted: 0,
+        };
+    }
+    return {
+        ...defaults,
+        ...questState,
+        quests: Array.isArray(questState.quests) ? questState.quests : [],
+        lastResetTime: typeof questState.lastResetTime === 'number' ? questState.lastResetTime : null,
+        totalCompleted: clampNumber(questState.totalCompleted, 0, 0),
+        streak: clampNumber(questState.streak, defaults.streak ?? 0, 0),
+    };
+};
+
+const normalizeAutomation = (automation) => {
+    if (!automation || typeof automation !== 'object') {
+        return { lastAutoWaterAt: 0 };
+    }
+    return {
+        ...automation,
+        lastAutoWaterAt: clampNumber(automation.lastAutoWaterAt, 0, 0),
+    };
 };
 
 /**
@@ -89,16 +126,36 @@ export function migrateSaveData(savedData) {
             );
         }
 
+        // Version 2 → 3: Add weekly contracts + automation metadata
+        if (saveVersion < 3) {
+            if (import.meta.env.MODE === 'development') {
+                console.debug('[farm]', 'Migrating save from version 2 to 3 (contracts + automation)');
+            }
+            migratedData.weeklyContracts = migratedData.weeklyContracts || null;
+            migratedData.automation = migratedData.automation || { lastAutoWaterAt: 0 };
+        }
+
         // Validate critical fields
-        if (typeof migratedData.coins !== 'number' || !Number.isFinite(migratedData.coins) || migratedData.coins < 0) {
-            migratedData.coins = 100; // Reset to default if corrupted
-        }
-        if (typeof migratedData.xp !== 'number' || !Number.isFinite(migratedData.xp) || migratedData.xp < 0) {
-            migratedData.xp = 0;
-        }
-        if (typeof migratedData.level !== 'number' || !Number.isFinite(migratedData.level) || migratedData.level < 1) {
-            migratedData.level = 1;
-        }
+        migratedData.coins = clampNumber(migratedData.coins, 100, 0);
+        migratedData.xp = clampNumber(migratedData.xp, 0, 0);
+        migratedData.level = clampNumber(migratedData.level, 1, 1);
+        migratedData.gridSize = clampNumber(migratedData.gridSize, 3, 1);
+
+        migratedData.settings = {
+            autoSave: true,
+            soundEnabled: true,
+            musicEnabled: true,
+            animationsEnabled: true,
+            ...(migratedData.settings || {}),
+        };
+
+        migratedData.gameLoop = {
+            lastUpdate: Date.now(),
+            fps: 60,
+            paused: false,
+            lastSaveTime: Date.now(),
+            ...(migratedData.gameLoop || {}),
+        };
 
         if (!Array.isArray(migratedData.plots)) {
             console.warn('[farm]', 'Invalid plots data, will reinitialize');
@@ -108,6 +165,20 @@ export function migrateSaveData(savedData) {
         if (!Array.isArray(migratedData.achievements)) {
             migratedData.achievements = [];
         }
+
+        if (!migratedData.dailyQuests || typeof migratedData.dailyQuests !== 'object') {
+            migratedData.dailyQuests = null;
+        } else {
+            migratedData.dailyQuests = normalizeQuestState(migratedData.dailyQuests, { streak: 0 });
+        }
+
+        if (!migratedData.weeklyContracts || typeof migratedData.weeklyContracts !== 'object') {
+            migratedData.weeklyContracts = null;
+        } else {
+            migratedData.weeklyContracts = normalizeQuestState(migratedData.weeklyContracts);
+        }
+
+        migratedData.automation = normalizeAutomation(migratedData.automation);
 
         // Ensure livestock structure exists
         if (!migratedData.livestock || typeof migratedData.livestock !== 'object') {
@@ -156,18 +227,60 @@ export function migrateSaveData(savedData) {
 export function loadSavedState() {
     try {
         const savedDataString = localStorage.getItem(SAVE_KEY);
-        if (!savedDataString) return null;
+        const backupDataString = localStorage.getItem(SAVE_BACKUP_KEY);
 
-        const savedData = JSON.parse(savedDataString);
-        const migratedData = migrateSaveData(savedData);
+        if (!savedDataString && !backupDataString) return null;
 
-        if (!migratedData) return null;
+        const attemptLoad = (dataString, sourceLabel) => {
+            if (!dataString) return null;
+            try {
+                const savedData = JSON.parse(dataString);
+                const migratedData = migrateSaveData(savedData);
+                if (migratedData) {
+                    migratedData.notifications = [];
+                    return migratedData;
+                }
+            } catch (error) {
+                console.error('[farm]', `Failed to parse ${sourceLabel} save`, error);
+            }
+            return null;
+        };
 
-        // Clear notifications on load
-        migratedData.notifications = [];
-        return migratedData;
+        const primary = attemptLoad(savedDataString, 'primary');
+        if (primary) return primary;
+
+        const backup = attemptLoad(backupDataString, 'backup');
+        if (backup) {
+            console.warn('[farm]', 'Primary save invalid, restored from backup');
+            return backup;
+        }
+
+        return null;
     } catch (error) {
         console.error('[farm]', 'Failed to load saved game', error);
         return null;
     }
+}
+
+export function buildSavePayload(stateToSave, saveTimestamp = Date.now()) {
+    return {
+        ...stateToSave,
+        saveVersion: SAVE_VERSION,
+        notifications: [],
+        gameLoop: { ...stateToSave.gameLoop, lastSaveTime: saveTimestamp },
+    };
+}
+
+export function persistSaveData(stateToSave, options = {}) {
+    const saveTimestamp = options.saveTimestamp || Date.now();
+    const payload = buildSavePayload(stateToSave, saveTimestamp);
+    const serialized = JSON.stringify(payload);
+
+    const previous = localStorage.getItem(SAVE_KEY);
+    if (previous) {
+        localStorage.setItem(SAVE_BACKUP_KEY, previous);
+    }
+
+    localStorage.setItem(SAVE_KEY, serialized);
+    return { saveTimestamp, payload };
 }
