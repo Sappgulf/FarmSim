@@ -6,6 +6,8 @@ import { Button } from '../../../ui/button';
 const ShopTab = memo(() => {
   const { state, actions } = useGame();
 
+  const UNIQUE_UPGRADE_IDS = ['watering_can', 'sprinkler', 'greenhouse', 'soil_analyzer', 'compost_bin'];
+
   const shopItems = {
     supplies: [
       { id: 'fertilizer', name: 'Fertilizer', emoji: '🌱', cost: 8, description: 'Boosts crop growth by 25%', effect: '+25% growth speed' },
@@ -26,11 +28,12 @@ const ShopTab = memo(() => {
 
   // Check if item is already owned (for one-time purchases)
   const isOwned = (itemId) => {
-    // List of unique upgrade IDs
-    const uniqueItems = ['watering_can', 'sprinkler', 'greenhouse', 'soil_analyzer', 'compost_bin'];
-    if (!uniqueItems.includes(itemId)) return false;
+    if (!UNIQUE_UPGRADE_IDS.includes(itemId)) return false;
     return (state.inventory[itemId] || 0) > 0;
   };
+
+  const ownedUpgradeCount = UNIQUE_UPGRADE_IDS.filter((id) => (state.inventory[id] || 0) > 0).length;
+  const allUpgradesOwned = ownedUpgradeCount === UNIQUE_UPGRADE_IDS.length;
 
   const handlePurchase = (item) => {
     if (isOwned(item.id)) {
@@ -108,12 +111,20 @@ const ShopTab = memo(() => {
           <div>
             <h3 className="text-lg font-semibold text-orange-800">🛒 Farm Shop</h3>
             <p className="text-sm text-orange-600">Your one-stop shop for farming needs</p>
+            <p className="text-xs text-orange-700/80 mt-1">
+              Upgrades collected: <span className="font-semibold">{ownedUpgradeCount}</span> / {UNIQUE_UPGRADE_IDS.length}
+            </p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-green-600">{state.coins}🪙</div>
             <div className="text-xs text-gray-600">Available</div>
           </div>
         </div>
+        {allUpgradesOwned && (
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+            🌟 All permanent upgrades collected
+          </div>
+        )}
       </Card>
 
       {/* Supplies */}
@@ -135,6 +146,11 @@ const ShopTab = memo(() => {
       {/* Upgrades */}
       <Card className="p-4">
         <h4 className="font-semibold mb-3 text-purple-700">⭐ Premium Upgrades</h4>
+        {allUpgradesOwned && (
+          <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            You have every permanent upgrade. Stock up on supplies or focus on new achievements!
+          </div>
+        )}
         <div className="space-y-2">
           {shopItems.upgrades.map(item => renderShopItem(item, 'bg-purple-50', 'bg-purple-600 text-white hover:bg-purple-700'))}
         </div>

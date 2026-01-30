@@ -148,6 +148,9 @@ const ResearchTab = memo(() => {
   // Use research state from global state
   const activeResearch = state.research?.active || null;
   const researchStartTime = state.research?.startTime || null;
+  const completedCount = state.research?.completed?.length || 0;
+  const totalProjects = Object.keys(RESEARCH_PROJECTS).length;
+  const allResearchCompleted = completedCount >= totalProjects;
 
   // Research progress simulation (centralized tick)
   useEffect(() => {
@@ -287,14 +290,31 @@ const ResearchTab = memo(() => {
               <span className="text-xl">🔬</span> Research Laboratory
             </h3>
             <p className="text-sm text-blue-700 mt-1">
-              Completed: <span className="font-bold">{state.research?.completed?.length || 0}</span> / {Object.keys(RESEARCH_PROJECTS).length}
+              Completed: <span className="font-bold">{completedCount}</span> / {totalProjects}
             </p>
           </div>
-          <Badge variant={activeResearch ? "default" : "secondary"} className={activeResearch ? "bg-blue-600 animate-pulse" : "bg-gray-200 text-gray-700"}>
-            {activeResearch ? '🔄 Researching' : '⏸️ Lab Idle'}
+          <Badge
+            variant={activeResearch ? "default" : "secondary"}
+            className={activeResearch ? "bg-blue-600 animate-pulse" : allResearchCompleted ? "bg-emerald-600 text-white" : "bg-gray-200 text-gray-700"}
+          >
+            {activeResearch ? '🔄 Researching' : allResearchCompleted ? '✅ Fully Researched' : '⏸️ Lab Idle'}
           </Badge>
         </div>
       </Card>
+
+      {allResearchCompleted && !activeResearch && (
+        <Card className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+          <div className="flex items-center gap-3">
+            <div className="text-3xl">🏁</div>
+            <div>
+              <h4 className="font-semibold text-emerald-900">All research completed</h4>
+              <p className="text-sm text-emerald-800/80">
+                Every upgrade is unlocked. Focus on production, expansion, and achievements to keep growing your legacy.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Active Research */}
       {activeResearch && (
@@ -422,14 +442,14 @@ const ResearchTab = memo(() => {
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="text-center p-2 bg-white rounded">
             <div className="font-bold text-blue-600">
-              {state.research?.completed?.length || 0}
+              {completedCount}
             </div>
             <div className="text-blue-700">Projects Completed</div>
           </div>
 
           <div className="text-center p-2 bg-white rounded">
             <div className="font-bold text-green-600">
-              {Object.keys(RESEARCH_PROJECTS).length - (state.research?.completed?.length || 0)}
+              {Math.max(0, totalProjects - completedCount)}
             </div>
             <div className="text-green-700">Projects Remaining</div>
           </div>
