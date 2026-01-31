@@ -139,192 +139,233 @@ const WeatherTab = memo(() => {
     }
   };
 
+  const getCozyWeather = (weather) => getCozyWeatherType(weather);
+
   const cozyWeather = getCozyWeatherType(state.weather);
   const weatherEffects = COZY_WEATHER_EFFECTS[cozyWeather] || COZY_WEATHER_EFFECTS.cloudy;
 
+  // Dynamic header theme based on weather
+  const getWeatherTheme = (type) => {
+    switch (type) {
+      case 'sunny': return 'from-orange-400 via-amber-400 to-yellow-300 shadow-[0_20px_50px_rgba(251,191,36,0.2)]';
+      case 'rainy': return 'from-blue-600 via-indigo-600 to-sky-600 shadow-[0_20px_50px_rgba(37,99,235,0.2)]';
+      case 'stormy': return 'from-indigo-900 via-purple-900 to-blue-900 shadow-[0_20px_50px_rgba(75,85,99,0.3)]';
+      case 'snow': return 'from-slate-100 via-sky-100 to-white shadow-[0_20px_50px_rgba(203,213,225,0.2)] text-slate-800';
+      case 'heatwave': return 'from-red-600 via-orange-600 to-yellow-600 shadow-[0_20px_50px_rgba(220,38,38,0.2)]';
+      default: return 'from-sky-400 via-blue-500 to-indigo-500 shadow-[0_20px_50px_rgba(14,165,233,0.2)]';
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Current Weather Status - Premium */}
-      <Card className="p-5 bg-gradient-to-br from-sky-50/95 via-blue-50/90 to-cyan-50/95 backdrop-blur-sm border-sky-200/60 shadow-lg shadow-sky-200/30 relative overflow-hidden">
-        {/* Decorative weather */}
-        <div className="absolute -right-4 -top-2 text-6xl opacity-10 rotate-12">🌤️</div>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Current Weather Status - Premium AAA Card */}
+      <Card className={`p-8 bg-gradient-to-br ${getWeatherTheme(cozyWeather)} border-none relative overflow-hidden group transition-all duration-1000`}>
+        {/* Animated clouds/atmosphere decoration */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-2xl" />
+        </div>
 
         <div className="flex justify-between items-center relative z-10">
-          <div>
-            <h3 className="text-xl font-bold bg-gradient-to-r from-sky-700 to-blue-600 bg-clip-text text-transparent flex items-center gap-2">
-              🌤️ Current Weather
+          <div className="space-y-2">
+            <h3 className={`text-sm font-black uppercase tracking-[0.3em] ${cozyWeather === 'snow' ? 'text-slate-500' : 'text-white/70'}`}>
+              Atmospheric Status
             </h3>
-            <div className="flex items-center gap-3 mt-2">
-              <span className="text-4xl drop-shadow-sm">{COZY_WEATHER_EMOJI[cozyWeather]}</span>
-              <span className="text-lg font-bold capitalize text-slate-800">{COZY_WEATHER_LABELS[cozyWeather]}</span>
+            <div className="flex items-center gap-6">
+              <div className="text-8xl drop-shadow-[0_10px_20px_rgba(0,0,0,0.2)] animate-bounce-subtle">
+                {COZY_WEATHER_EMOJI[cozyWeather]}
+              </div>
+              <div>
+                <div className={`text-5xl font-black tracking-tighter ${cozyWeather === 'snow' ? 'text-slate-900' : 'text-white'} flex items-center gap-3`}>
+                  {COZY_WEATHER_LABELS[cozyWeather]}
+                  <span className="w-3 h-3 rounded-full bg-white animate-ping" />
+                </div>
+                <p className={`text-lg font-bold mt-1 ${cozyWeather === 'snow' ? 'text-slate-600' : 'text-white/80'}`}>
+                  {state.weather === 'heatwave' ? 'Extreme Heat Active' : 'Optimal growing conditions'}
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-sky-700/80 mt-1 font-medium">
-              Cozy forecast based on {state.weather} conditions.
-            </p>
           </div>
-          <Badge className="bg-gradient-to-r from-sky-500 to-blue-500 text-white font-bold px-3 py-1.5 shadow-md shadow-sky-200/40">
-            {weatherEffects.growth} Growth
-          </Badge>
-        </div>
-      </Card>
 
-      {/* Weather Effects - Premium */}
-      <Card className="p-5 bg-gradient-to-br from-white/95 to-slate-50/90 backdrop-blur-sm shadow-lg border-slate-200/60">
-        <h4 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
-          📊 Cozy Weather Effects
-        </h4>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-3 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border border-emerald-100 hover:shadow-md transition-all">
-            <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-br from-emerald-400 to-green-500 rounded-xl flex items-center justify-center text-white text-xl shadow-md">
-              🌱
+          <div className="text-right flex flex-col items-end gap-3">
+            <Badge className="h-12 px-6 bg-white/20 backdrop-blur-md text-white border-white/20 font-black text-xl rounded-2xl shadow-xl">
+              {weatherEffects.growth} GROWTH
+            </Badge>
+            <div className={`text-sm font-bold opacity-60 ${cozyWeather === 'snow' ? 'text-slate-500' : 'text-white'}`}>
+              Updated Every Cycle
             </div>
-            <div className="font-bold text-sm text-emerald-800">Growth Rate</div>
-            <div className="text-emerald-600 font-semibold">{weatherEffects.growth}</div>
-          </div>
-          <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100 hover:shadow-md transition-all">
-            <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl flex items-center justify-center text-white text-xl shadow-md">
-              💧
-            </div>
-            <div className="font-bold text-sm text-blue-800">Water Usage</div>
-            <div className="text-blue-600 font-semibold">{weatherEffects.water}</div>
-          </div>
-          <div className="text-center p-3 bg-gradient-to-br from-red-50 to-rose-50 rounded-xl border border-red-100 hover:shadow-md transition-all">
-            <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-br from-red-400 to-rose-500 rounded-xl flex items-center justify-center text-white text-xl shadow-md">
-              🦠
-            </div>
-            <div className="font-bold text-sm text-red-800">Disease Risk</div>
-            <div className="text-red-600 font-semibold">{weatherEffects.disease}</div>
           </div>
         </div>
       </Card>
 
-      {/* Weather Forecast - Premium */}
+      {/* Weather Effects - Premium Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[
+          { label: 'Growth Rate', val: weatherEffects.growth, icon: '🌱', color: 'from-emerald-400 to-green-600', bg: 'bg-emerald-50' },
+          { label: 'Hydration Usage', val: weatherEffects.water, icon: '💧', color: 'from-blue-400 to-sky-600', bg: 'bg-blue-50' },
+          { label: 'Disease Risk', val: weatherEffects.disease, icon: '🦠', color: 'from-rose-400 to-red-600', bg: 'bg-red-50' }
+        ].map((eff, i) => (
+          <Card key={i} className={`p-6 bg-white/80 backdrop-blur-md shadow-xl border-slate-100 rounded-3xl group/eff transition-all duration-300 hover:-translate-y-1`}>
+            <div className="flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${eff.color} flex items-center justify-center text-2xl text-white shadow-lg group-hover/eff:rotate-6 transition-transform`}>
+                {eff.icon}
+              </div>
+              <div>
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{eff.label}</div>
+                <div className="text-xl font-black text-slate-800">{eff.val}</div>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Weather Forecast - High-End Timeline */}
       {state.weatherForecast && state.weatherForecast.length > 0 && (
-        <Card className="p-5 bg-gradient-to-br from-white/95 to-indigo-50/50 backdrop-blur-sm shadow-lg border-indigo-100">
-          <h4 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
-            📅 3-Day Forecast
+        <Card className="p-8 bg-white shadow-2xl border-slate-200/50 rounded-[2.5rem]">
+          <h4 className="font-black text-2xl text-slate-800 mb-8 flex items-center gap-3">
+            <span className="w-2 h-8 bg-indigo-500 rounded-full" />
+            Meteorological Forecast
           </h4>
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {state.weatherForecast.slice(0, 3).map((forecast, index) => (
-              <div
+              <Card
                 key={index}
-                className="flex-1 min-w-[110px] text-center p-4 bg-gradient-to-br from-white to-slate-50/80 rounded-xl shadow-md border border-slate-200/60 flex flex-col items-center justify-between hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+                className="p-6 bg-slate-50 border-2 border-transparent hover:border-indigo-500/30 transition-all duration-500 group/forecast rounded-3xl text-center flex flex-col items-center gap-4"
               >
-                <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">
-                  {index === 0 ? 'Tomorrow' : `Day ${index + 1}`}
-                </span>
-                <div className="text-5xl mb-3 drop-shadow-sm hover:scale-110 transition-transform cursor-default">
+                <div className="text-xs font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">
+                  {index === 0 ? 'TOMORROW' : `CYCLE +${index + 1}`}
+                </div>
+                <div className="text-7xl group-hover/forecast:scale-110 transition-transform duration-500 drop-shadow-md cursor-default py-4">
                   {getWeatherEmoji(forecast.type)}
                 </div>
-                <Badge className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold capitalize px-2.5 py-1 shadow-sm">
+                <div className="text-lg font-black text-slate-800 capitalize tracking-tight">
                   {COZY_WEATHER_LABELS[getCozyWeather(forecast.type)]}
-                </Badge>
-              </div>
+                </div>
+                <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden mt-2">
+                  <div className="h-full bg-indigo-500 rounded-full animate-progress-indeterminate" style={{ width: '60%' }} />
+                </div>
+              </Card>
             ))}
           </div>
         </Card>
       )}
 
-      {/* Weather Prediction Game */}
-      <Card className="p-1 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-sm border-indigo-100">
-        <div className="p-4">
-          <h4 className="font-bold mb-4 text-indigo-900 flex items-center gap-2">
-            <span className="text-xl">🔮</span> Oracle's Challenge
-          </h4>
+      {/* Oracle's Challenge - Mystical Interface */}
+      <Card className="p-1.5 bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-900 shadow-2xl rounded-[2.5rem] border-4 border-indigo-500/20 relative overflow-hidden group">
+        {/* Magical aura decorations */}
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.2)_0%,transparent_70%)] pointer-events-none" />
+
+        <div className="p-10 relative z-10">
+          <div className="flex justify-between items-start mb-10">
+            <div>
+              <h4 className="font-black text-4xl text-white tracking-widest flex items-center gap-4">
+                <span className="text-indigo-400 animate-pulse">🔮</span> ORACLE'S CHALLENGE
+              </h4>
+              <p className="text-indigo-200/60 font-bold text-sm tracking-wide mt-2 uppercase">Decode the sequence of nature</p>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest opacity-60">Success Rate</div>
+              <div className="text-2xl font-black text-white">{meteorologicalStats.accuracy}%</div>
+            </div>
+          </div>
 
           {!predictionGame.active ? (
-            <div className="text-center py-6 bg-white/50 rounded-xl border border-indigo-100/50">
-              <div className="text-6xl mb-4 animate-pulse grayscale opacity-50">⚡</div>
-              <h3 className="text-lg font-semibold text-indigo-800 mb-2">Predict the Future</h3>
-              <p className="text-sm text-indigo-600/80 mb-6 max-w-xs mx-auto">
-                Analyze weather patterns and predict the next shift to earn XP and Coins.
+            <div className="text-center py-12 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-md">
+              <div className="text-7xl mb-6 filter drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] lab-icon-float">✨</div>
+              <h3 className="text-2xl font-black text-white mb-2 tracking-tight">PREDICT THE FUTURE</h3>
+              <p className="text-indigo-200/80 font-medium mb-8 max-w-md mx-auto leading-relaxed">
+                Harness celestial data to identify incoming weather cycles.
+                Perfect predictions grant legendary rewards.
               </p>
 
               <Button
                 onClick={startPredictionGame}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 shadow-md hover:shadow-lg transition-all"
+                className="h-16 px-12 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-black text-xl rounded-2xl shadow-[0_10px_40px_rgba(99,102,241,0.4)] transform transition-all duration-300 hover:scale-105 active:scale-95 group-hover:shadow-[0_20px_60px_rgba(99,102,241,0.5)]"
                 disabled={!state.weatherForecast || state.weatherForecast.length < 3}
               >
-                Start Prediction
+                INITIATE SCAN
               </Button>
 
               {(!state.weatherForecast || state.weatherForecast.length < 3) && (
-                <div className="mt-3 text-xs text-red-400 bg-red-50 inline-block px-3 py-1 rounded-full border border-red-100">
-                  Researching atmosphere... (Need 3+ history)
+                <div className="mt-4 text-xs font-black text-indigo-400/60 uppercase tracking-widest bg-black/40 inline-block px-4 py-2 rounded-full">
+                  Collecting Satellite Data...
                 </div>
               )}
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-indigo-100 relative overflow-hidden">
-                {/* Pattern Visualization */}
-                <div className="flex justify-center items-center gap-4 mb-8 relative z-10">
+            <div className="animate-in fade-in zoom-in-95 duration-500">
+              <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/10">
+                <div className="flex justify-center items-center gap-8 mb-12">
                   {predictionGame.currentPattern.map((weather, index) => (
                     <div key={index} className="flex flex-col items-center">
-                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-3xl shadow-inner border border-gray-100">
+                      <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center text-4xl shadow-inner border border-white/10 group-hover:rotate-3 transition-transform">
                         {getWeatherEmoji(weather)}
                       </div>
-                      <div className="w-0.5 h-4 bg-gray-300 my-1"></div>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">Day {index - 2}</span>
+                      <div className="h-4 w-px bg-white/20 my-2" />
+                      <span className="text-[10px] font-black text-indigo-300 uppercase opacity-50">T - {2 - index}</span>
                     </div>
                   ))}
 
-                  <div className="text-gray-300 text-2xl animate-pulse">➜</div>
+                  <div className="text-white/20 text-4xl mx-2">➞</div>
 
                   <div className="flex flex-col items-center">
-                    <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center text-4xl shadow-md border-2 border-indigo-200 animate-bounce-slow">
+                    <div className="w-24 h-24 bg-indigo-500/20 rounded-[2rem] flex items-center justify-center text-5xl shadow-2xl border-4 border-indigo-400/30 animate-pulse text-indigo-300 font-black">
                       ?
                     </div>
-                    <div className="w-0.5 h-4 bg-indigo-300 my-1"></div>
-                    <span className="text-xs font-bold text-indigo-600 uppercase">Next?</span>
+                    <div className="h-4 w-px bg-indigo-400/40 my-2" />
+                    <span className="text-[10px] font-black text-indigo-300 uppercase">FUTURE</span>
                   </div>
                 </div>
 
-                {/* Hint */}
-                <div className="bg-amber-50 border border-amber-100 p-3 rounded-lg flex items-start gap-3 mb-6">
-                  <span className="text-xl">💡</span>
+                <Card className="p-6 bg-amber-950/30 border border-amber-500/20 rounded-2xl flex items-center gap-6 mb-10">
+                  <div className="text-5xl filter drop-shadow-[0_0_10px_rgba(245,158,11,0.4)]">💡</div>
                   <div>
-                    <h5 className="text-xs font-bold text-amber-800 uppercase tracking-wide">Observation</h5>
-                    <p className="text-sm text-amber-900 italic">"{predictionGame.hint}"</p>
+                    <h5 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] mb-1">Oracle's Insight</h5>
+                    <p className="text-lg text-amber-100 font-bold italic">"{predictionGame.hint}"</p>
                   </div>
-                </div>
+                </Card>
 
-                {/* Choices */}
                 {!predictionGame.result ? (
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     {["sunny", "rainy", "cloudy", "stormy", "heatwave"].map(weather => (
                       <Button
                         key={weather}
                         onClick={() => makePrediction(weather)}
-                        variant="outline"
-                        className="h-auto py-3 border-2 hover:border-indigo-400 hover:bg-indigo-50 transition-all group"
+                        className="h-28 bg-white/5 hover:bg-white/20 border-2 border-white/10 hover:border-indigo-400 transition-all group/opt rounded-2xl"
                       >
                         <div className="flex flex-col items-center">
-                          <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">{getWeatherEmoji(weather)}</span>
-                          <span className="text-xs font-semibold capitalize">{weather}</span>
+                          <span className="text-4xl mb-2 group-hover/opt:scale-125 transition-all duration-300">{getWeatherEmoji(weather)}</span>
+                          <span className="text-xs font-black uppercase tracking-widest text-indigo-100">{weather}</span>
                         </div>
                       </Button>
                     ))}
                   </div>
                 ) : (
                   <div className={`
-                                p-4 rounded-xl text-center animate-in fade-in zoom-in duration-300 border-2
-                                ${predictionGame.result.correct
-                      ? 'bg-green-50 border-green-200 text-green-900'
-                      : 'bg-red-50 border-red-200 text-red-900'}
-                             `}>
-                    <div className="text-4xl mb-2">{predictionGame.result.correct ? '🎉' : '🌩️'}</div>
-                    <h3 className="text-xl font-bold mb-1">
-                      {predictionGame.result.correct ? 'Correct Prediction!' : 'Prediction Failed'}
+                                  p-8 rounded-[2rem] text-center animate-in fade-in zoom-in-95 duration-500 border-4
+                                  ${predictionGame.result.correct
+                      ? 'bg-emerald-500/20 border-emerald-400/30 shadow-[0_0_50px_rgba(16,185,129,0.2)]'
+                      : 'bg-rose-500/20 border-rose-400/30 shadow-[0_0_50px_rgba(244,63,94,0.2)]'}
+                               `}>
+                    <div className="text-7xl mb-4">{predictionGame.result.correct ? '🏆' : '💀'}</div>
+                    <h3 className="text-3xl font-black text-white mb-2 tracking-tight">
+                      {predictionGame.result.correct ? 'VISION CONFIRMED' : 'SIGNAL LOST'}
                     </h3>
-                    <p className="text-sm mb-3 opacity-90">
-                      The actual weather was <span className="font-bold uppercase">{predictionGame.result.actualWeather}</span>
+                    <p className="text-indigo-200/60 font-medium mb-6 uppercase tracking-widest">
+                      RESULT: <span className="text-white font-black">{predictionGame.result.actualWeather}</span>
                     </p>
 
                     {predictionGame.result.correct && (
-                      <div className="inline-flex gap-2 text-sm font-bold bg-white/50 px-3 py-1 rounded-full">
-                        <span className="text-yellow-600">+{predictionGame.result.reward.coins}🪙</span>
-                        <span className="text-blue-600">+{predictionGame.result.reward.xp} XP</span>
+                      <div className="inline-flex gap-4 p-4 bg-white/10 rounded-2xl backdrop-blur-md">
+                        <div className="text-center px-4">
+                          <div className="text-[10px] text-indigo-300 uppercase font-black mb-1">Coins</div>
+                          <div className="text-xl font-black text-yellow-400">+{predictionGame.result.reward.coins}</div>
+                        </div>
+                        <div className="w-px h-10 bg-white/10" />
+                        <div className="text-center px-4">
+                          <div className="text-[10px] text-indigo-300 uppercase font-black mb-1">Experience</div>
+                          <div className="text-xl font-black text-blue-400">+{predictionGame.result.reward.xp}</div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -335,32 +376,29 @@ const WeatherTab = memo(() => {
         </div>
       </Card>
 
-      {/* Weather Statistics - Premium */}
-      <Card className="p-5 bg-gradient-to-br from-slate-50/95 to-gray-50/90 backdrop-blur-sm shadow-lg border-slate-200/60">
-        <h4 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
-          📊 Meteorological Data
-        </h4>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 flex flex-col items-center justify-center hover:shadow-md transition-all">
-            <div className="w-10 h-10 mb-2 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-xl flex items-center justify-center text-white text-xl shadow-md">
-              🎯
-            </div>
-            <div className="text-xs text-indigo-600 uppercase tracking-wide font-bold mb-1">Accuracy</div>
-            <div className="font-black text-2xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              {meteorologicalStats.accuracy}%
-            </div>
+      {/* Meteorological Data - Detailed Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+        <Card className="p-8 bg-slate-50 border-slate-200/60 rounded-[2rem] flex items-center justify-between group hover:shadow-xl transition-all">
+          <div>
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Prediction Yield</div>
+            <div className="text-4xl font-black text-slate-800">{meteorologicalStats.accuracy}%</div>
+            <p className="text-xs text-slate-500 mt-2 font-medium">Global consensus from Oracle predictions</p>
           </div>
-          <div className="p-4 bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl border border-slate-200 flex flex-col items-center justify-center hover:shadow-md transition-all">
-            <div className="w-10 h-10 mb-2 bg-gradient-to-br from-slate-400 to-gray-500 rounded-xl flex items-center justify-center text-white text-xl shadow-md">
-              📈
-            </div>
-            <div className="text-xs text-slate-600 uppercase tracking-wide font-bold mb-1">Total Forecasts</div>
-            <div className="font-black text-2xl text-slate-800">
-              {meteorologicalStats.totalForecasts}
-            </div>
+          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-lg border border-slate-200 group-hover:scale-110 transition-transform">
+            🎯
           </div>
-        </div>
-      </Card>
+        </Card>
+        <Card className="p-8 bg-slate-50 border-slate-200/60 rounded-[2rem] flex items-center justify-between group hover:shadow-xl transition-all">
+          <div>
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Historical Log</div>
+            <div className="text-4xl font-black text-slate-800">{meteorologicalStats.totalForecasts}</div>
+            <p className="text-xs text-slate-500 mt-2 font-medium">Total atmospheric scans completed</p>
+          </div>
+          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-lg border border-slate-200 group-hover:scale-110 transition-transform">
+            📜
+          </div>
+        </Card>
+      </div>
     </div>
   );
 });

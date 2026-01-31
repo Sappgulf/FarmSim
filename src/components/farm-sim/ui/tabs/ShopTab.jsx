@@ -84,152 +84,201 @@ const ShopTab = memo(() => {
     const canAfford = state.coins >= finalCost;
 
     return (
-      <div
+      <Card
         key={item.id}
         className={`
-          flex justify-between items-center p-4 rounded-xl transition-all duration-200 border
+          relative overflow-hidden group/shop-item transition-all duration-300 border-2
           ${owned
-            ? 'bg-slate-100/60 opacity-70 border-slate-200'
-            : `${colorClass} hover:shadow-md hover:scale-[1.01] border-transparent hover:border-slate-200/50`
+            ? 'bg-slate-50/50 border-slate-200 opacity-75'
+            : `bg-white hover:bg-gradient-to-br ${colorClass} hover:border-white shadow-md hover:shadow-2xl hover:-translate-y-1.5 border-slate-100`
           }
+          p-5 rounded-[1.5rem]
         `}
       >
-        <div className="flex items-center gap-3 flex-1">
-          <div className={`text-3xl ${owned ? 'grayscale opacity-60' : 'drop-shadow-sm'}`}>
-            {item.emoji}
+        {/* Glow effect on hover */}
+        {!owned && (
+          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover/shop-item:opacity-100 transition-opacity pointer-events-none" />
+        )}
+
+        <div className="flex justify-between items-center relative z-10">
+          <div className="flex items-center gap-4 flex-1">
+            <div className={`
+              w-14 h-14 rounded-2xl flex items-center justify-center text-4xl
+              transition-all duration-500 group-hover/shop-item:scale-110 group-hover/shop-item:rotate-6
+              ${owned ? 'bg-slate-200 grayscale' : 'bg-white shadow-inner'}
+            `}>
+              {item.emoji}
+            </div>
+
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <div className={`font-black text-lg tracking-tight ${owned ? 'text-slate-500' : 'text-slate-800'}`}>
+                  {item.name}
+                </div>
+                {owned && (
+                  <Badge className="bg-emerald-500/10 text-emerald-700 border-none font-black text-[10px] uppercase tracking-widest px-2 py-0.5">
+                    Collected
+                  </Badge>
+                )}
+              </div>
+              <div className="text-sm text-slate-500 font-medium mt-0.5 leading-tight">{item.description}</div>
+
+              <div className="flex items-center gap-3 mt-3">
+                <Badge variant="secondary" className="bg-white/60 text-slate-600 border-none font-bold text-[10px] uppercase tracking-wider px-2 py-1">
+                  ⚡ {item.effect}
+                </Badge>
+                {discountLabel && !owned && (
+                  <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-black uppercase tracking-widest">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Promo Active
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <div className={`font-bold ${owned ? 'text-slate-500' : 'text-slate-800'}`}>{item.name}</div>
-              {owned && (
-                <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">
-                  ✓ OWNED
-                </span>
-              )}
-            </div>
-            <div className="text-xs text-slate-600 mt-0.5">{item.description}</div>
-            <div className={`text-xs font-semibold mt-1 ${btnColorClass.replace('bg-', 'text-').replace('text-white', '').replace('hover:bg-', 'hover:text-')}`}>
-              ⚡ {item.effect}
-            </div>
-            {discountLabel && !owned && (
-              <div className="text-[10px] text-emerald-600 mt-1 font-medium">Town discount applied</div>
+
+          <div className="ml-4">
+            {owned ? (
+              <div className="w-12 h-12 rounded-full border-2 border-slate-200 flex items-center justify-center text-slate-300 font-black text-xl">
+                ✓
+              </div>
+            ) : (
+              <Button
+                onClick={() => handlePurchase(item)}
+                disabled={!canAfford}
+                className={`
+                  h-14 px-6 rounded-2xl font-black text-lg shadow-xl transition-all duration-300
+                  ${canAfford
+                    ? `${btnColorClass} hover:scale-105 active:scale-95 hover:shadow-[0_10px_25px_rgba(0,0,0,0.2)]`
+                    : 'bg-slate-100 text-slate-400 cursor-not-allowed border-none'
+                  }
+                `}
+              >
+                <span className="mr-1.5">💰</span>
+                {finalCost}
+              </Button>
             )}
           </div>
         </div>
-        {owned ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled
-            className="ml-3 text-slate-400"
-          >
-            Owned
-          </Button>
-        ) : (
-          <Button
-            onClick={() => handlePurchase(item)}
-            size="sm"
-            disabled={!canAfford}
-            className={`
-              ml-3 font-bold shadow-md transition-all
-              ${canAfford
-                ? `${btnColorClass} hover:scale-105 hover:shadow-lg`
-                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
-              }
-            `}
-          >
-            💰 {finalCost}
-          </Button>
-        )}
-      </div>
+      </Card>
     );
   };
 
   return (
-    <div className="space-y-4">
-      {/* Player Balance - Premium */}
-      <Card className="p-5 bg-gradient-to-br from-amber-50/95 via-orange-50/90 to-yellow-50/95 backdrop-blur-sm border-amber-200/60 shadow-lg shadow-amber-200/30 relative overflow-hidden">
-        {/* Decorative coin icon */}
-        <div className="absolute -right-6 -top-4 text-7xl opacity-10 rotate-12">💰</div>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Player Balance - Premium AAA Card */}
+      <Card className="p-8 bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 border-none shadow-[0_20px_50px_rgba(245,158,11,0.3)] relative overflow-hidden group">
+        {/* Animated particles background */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.4)_0%,transparent_50%)]" />
+          <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_80%_70%,rgba(0,0,0,0.2)_0%,transparent_50%)]" />
+        </div>
 
-        <div className="flex justify-between items-center relative z-10">
-          <div>
-            <h3 className="text-xl font-bold bg-gradient-to-r from-amber-700 to-orange-600 bg-clip-text text-transparent flex items-center gap-2">
-              🛒 Farm Shop
-            </h3>
-            <p className="text-sm text-amber-700/80 font-medium mt-1">Your one-stop shop for farming needs</p>
-            <p className="text-xs text-amber-600/70 mt-1">
-              Upgrades: <span className="font-bold text-amber-800">{ownedUpgradeCount}</span> / {UNIQUE_UPGRADE_IDS.length}
-            </p>
-            {discountLabel && (
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-100/80 px-2.5 py-1 text-xs font-semibold text-emerald-700 shadow-sm">
-                🏡 Town perk: {discountLabel} shop prices
+        {/* Decorative coin icon - Enhanced */}
+        <div className="absolute -right-8 -top-8 text-[12rem] opacity-10 rotate-12 transition-transform duration-1000 group-hover:scale-110 group-hover:rotate-0">💰</div>
+
+        <div className="flex justify-between items-end relative z-10">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-4xl font-black text-white tracking-tighter drop-shadow-md">FARM SHOP</h3>
+              <p className="text-amber-100/80 font-bold text-sm uppercase tracking-[0.2em] mt-1">Global Supplies & Tech</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-xl border border-white/20 shadow-inner">
+                <div className="text-[10px] font-black text-amber-100 tracking-widest uppercase">Legacy Items</div>
+                <div className="text-xl font-black text-white">{ownedUpgradeCount}<span className="text-white/40 font-bold mx-1">/</span>{UNIQUE_UPGRADE_IDS.length}</div>
               </div>
-            )}
+
+              {discountLabel && (
+                <div className="px-4 py-2 bg-emerald-500/30 backdrop-blur-md rounded-xl border border-emerald-400/30 shadow-inner flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+                  <div className="text-xs font-black text-white uppercase tracking-wider">{discountLabel} SAVINGS</div>
+                </div>
+              )}
+            </div>
           </div>
+
           <div className="text-right">
-            <div className="text-3xl font-black bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent drop-shadow-sm">
-              {state.coins}🪙
+            <div className="text-xs font-black text-amber-100 uppercase tracking-widest mb-1 opacity-80">Your Treasury</div>
+            <div className="text-6xl font-black text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.3)] flex items-center justify-end gap-2">
+              {state.coins}
+              <span className="text-4xl">🪙</span>
             </div>
-            <div className="text-xs text-amber-600 font-medium">Available Balance</div>
           </div>
         </div>
-        {allUpgradesOwned && (
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-100 to-green-100 px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-sm">
-            🌟 All permanent upgrades collected!
-          </div>
-        )}
       </Card>
 
-      <Card className="p-4 border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="text-xs uppercase font-semibold text-emerald-700">Daily Market Board</div>
-            <div className="text-sm font-semibold text-emerald-900 mt-1">
-              {marketState?.dailyMood?.emoji} {marketState?.dailyMood?.label || 'Steady Market'}
+      {/* Daily Market Board - Premium HUD Widget */}
+      <Card className="p-6 border-emerald-500/20 bg-gradient-to-r from-emerald-900 to-teal-900 shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-32 h-full bg-gradient-to-l from-white/5 to-transparent pointer-events-none" />
+
+        <div className="flex flex-wrap items-center justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 rounded-[1.25rem] bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-4xl shadow-inner">
+              {marketState?.dailyMood?.emoji || '📈'}
             </div>
-            <p className="text-[11px] text-emerald-700 mt-1">
-              {marketState?.dailyMood?.description || 'Local buyers are browsing.'}
-            </p>
-          </div>
-          <div className="rounded-lg border border-emerald-100 bg-white px-3 py-2 text-center">
-            <div className="text-[10px] uppercase text-emerald-600">Featured Crop</div>
-            <div className="text-lg">
-              {featuredCrop ? `${featuredCrop.emoji} ${featuredCrop.name}` : '—'}
+            <div>
+              <div className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-1">Market Sentiment</div>
+              <div className="text-2xl font-black text-white tracking-tight">{marketState?.dailyMood?.label || 'Steady Market'}</div>
+              <div className="text-xs text-emerald-200/60 font-medium mt-1">{marketState?.dailyMood?.description}</div>
             </div>
-            <div className="text-[10px] text-emerald-600">{getMarketBonusLabel(marketState)} bonus</div>
+          </div>
+
+          <div className="h-12 w-px bg-white/10 hidden md:block" />
+
+          <div className="flex items-center gap-5 bg-black/20 px-6 py-3 rounded-2xl border border-white/5">
+            <div className="text-right">
+              <div className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Stock of the Day</div>
+              <div className="text-xl font-black text-white tracking-wide">
+                {featuredCrop ? featuredCrop.name : 'NO DATA'}
+              </div>
+              <div className="text-[10px] font-black text-yellow-500 uppercase flex items-center justify-end gap-1 mt-1">
+                <span className="animate-bounce">▲</span> {getMarketBonusLabel(marketState)} Yield
+              </div>
+            </div>
+            <div className="text-5xl filter drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+              {featuredCrop ? featuredCrop.emoji : '❓'}
+            </div>
           </div>
         </div>
       </Card>
 
-      {/* Supplies */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3 text-green-700">🌱 Farming Supplies</h4>
-        <div className="space-y-2">
-          {shopItems.supplies.map(item => renderShopItem(item, 'bg-green-50', 'bg-green-600 text-white hover:bg-green-700'))}
-        </div>
-      </Card>
-
-      {/* Tools */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3 text-blue-700">🔧 Tools & Equipment</h4>
-        <div className="space-y-2">
-          {shopItems.tools.map(item => renderShopItem(item, 'bg-blue-50', 'bg-blue-600 text-white hover:bg-blue-700'))}
-        </div>
-      </Card>
-
-      {/* Upgrades */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3 text-purple-700">⭐ Premium Upgrades</h4>
-        {allUpgradesOwned && (
-          <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            You have every permanent upgrade. Stock up on supplies or focus on new achievements!
+      {/* Shop Categories */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Supplies */}
+        <div className="space-y-4">
+          <h4 className="font-black text-xl text-slate-800 flex items-center gap-3 ml-2">
+            <span className="w-1.5 h-6 bg-green-500 rounded-full" />
+            🌱 Farming Supplies
+          </h4>
+          <div className="grid grid-cols-1 gap-4">
+            {shopItems.supplies.map(item => renderShopItem(item, 'from-green-50 to-emerald-50', 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white'))}
           </div>
-        )}
-        <div className="space-y-2">
-          {shopItems.upgrades.map(item => renderShopItem(item, 'bg-purple-50', 'bg-purple-600 text-white hover:bg-purple-700'))}
         </div>
-      </Card>
+
+        {/* Tools */}
+        <div className="space-y-4">
+          <h4 className="font-black text-xl text-slate-800 flex items-center gap-3 ml-2">
+            <span className="w-1.5 h-6 bg-blue-500 rounded-full" />
+            🔧 Tools & Equipment
+          </h4>
+          <div className="grid grid-cols-1 gap-4">
+            {shopItems.tools.map(item => renderShopItem(item, 'from-blue-50 to-indigo-50', 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white'))}
+          </div>
+        </div>
+      </div>
+
+      {/* Upgrades - Full Width */}
+      <div className="space-y-4 pt-4">
+        <h4 className="font-black text-xl text-slate-800 flex items-center gap-3 ml-2">
+          <span className="w-1.5 h-6 bg-purple-500 rounded-full" />
+          ⭐ Kingdom Upgrades
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {shopItems.upgrades.map(item => renderShopItem(item, 'from-purple-50 to-violet-50', 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white'))}
+        </div>
+      </div>
     </div>
   );
 });

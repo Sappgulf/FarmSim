@@ -241,21 +241,21 @@ const FarmPlot = memo(({
       <Card
         className={`
           w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 cursor-pointer relative overflow-hidden
-          transition-all duration-200 ease-out farm-plot rounded-2xl
-          backdrop-blur-sm bg-gradient-to-br
+          transition-all duration-300 ease-out farm-plot rounded-3xl
+          backdrop-blur-md bg-gradient-to-br
           ${plot?.state === 'empty'
-            ? 'from-amber-50/90 to-amber-100/80 border-amber-300/60 shadow-amber-200/40'
+            ? 'from-amber-50/95 via-amber-100/90 to-amber-200/80 border-amber-400/60 shadow-[0_8px_16px_rgba(180,83,9,0.2)]'
             : plot?.state === 'ready'
-              ? 'from-emerald-50/95 to-green-100/90 border-emerald-400/70 shadow-emerald-300/50'
-              : 'from-green-50/90 to-emerald-100/80 border-green-300/60 shadow-green-200/40'
+              ? 'from-emerald-50/95 via-green-100/90 to-emerald-200/95 border-emerald-500/70 shadow-[0_10px_25px_rgba(34,197,94,0.3)] ring-2 ring-emerald-400/50'
+              : 'from-green-50/90 via-emerald-100/85 to-green-200/80 border-green-400/60 shadow-[0_8px_20px_rgba(20,83,45,0.2)]'
           }
-          border-2 shadow-lg
-          hover:shadow-xl hover:scale-[1.03] hover:-translate-y-0.5
-          active:scale-[0.97] active:shadow-md
-          ${plot?.disease ? 'ring-2 ring-red-400/60 ring-offset-1' : ''}
-          ${plot?.fertilizer > 0 ? 'ring-2 ring-emerald-400/60 ring-offset-1' : ''}
-          ${isSelected ? 'ring-4 ring-blue-500/70 scale-105 shadow-blue-300/40' : ''}
-          ${showPreview && plot?.state === 'empty' ? 'ring-4 ring-emerald-400/70 shadow-emerald-200/50' : ''}
+          border-2
+          hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:scale-105 hover:-translate-y-2 hover:rotate-1
+          active:scale-95 active:shadow-inner active:rotate-0
+          ${plot?.disease ? 'ring-4 ring-red-500/40 ring-offset-2 animate-pulse-gentle' : ''}
+          ${plot?.fertilizer > 0 ? 'ring-4 ring-emerald-400/30 ring-offset-2' : ''}
+          ${isSelected ? 'ring-4 ring-blue-500/70 scale-110 shadow-blue-300/60 z-30' : ''}
+          ${showPreview && plot?.state === 'empty' ? 'ring-4 ring-emerald-400/70 shadow-emerald-200/50 scale-105' : ''}
           touch-manipulation select-none
         `}
         data-state={plot?.state || 'empty'}
