@@ -39,6 +39,7 @@ Grow a thriving farm by planting crops, harvesting for profit, and investing in 
 - **Four seasons** rotate on a gentle day-based cadence.
 - Each season adds small bonuses to growth and prices.
 - **Season day** is shown in the Cozy Status Bar so you can plan harvest timing.
+- The farm view now shifts color with each season (spring blossoms, summer greens, fall warmth, winter frost).
 
 ## Contracts & Quests
 - **Daily Quests**: Refresh every midnight. Completing all daily quests increases your streak, boosting rewards.
@@ -49,6 +50,22 @@ Grow a thriving farm by planting crops, harvesting for profit, and investing in 
 - Weather stays positive or neutral: **Clear**, **Rain**, **Cloudy**, **Heatwave**.
 - Rain helps with watering, cloudy days are gentle, and heatwaves only add mild thirst.
 - Weather changes on day rollover, with a 3-day outlook shown in the Weather tab.
+- Cozy overlays add rain sheen, soft cloud lighting, and warm heatwave tints.
+
+## Day/Night Lighting
+- The farm scene gently transitions through **Day → Evening → Night** on the day clock.
+- Lighting is cosmetic only and keeps the farm readable at night.
+
+## Town Board
+- The **Town Board** (below the header) highlights:
+  - Today’s season + weather
+  - Town Rep progress and next tier
+  - Daily featured crop and market mood
+  - A short “what’s happening today” hint
+
+## Reduced Effects
+- Toggle **Reduced Effects / Motion** in Settings to minimize lighting transitions, ambient life, and weather overlays.
+- This does not affect gameplay or save data.
 
 ## Town Reputation
 - **Town Rep** increases from harvesting and completing contracts.

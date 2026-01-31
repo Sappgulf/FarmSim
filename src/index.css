@@ -1068,6 +1068,194 @@
   pointer-events: none;
 }
 
+.cozy-world-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.cozy-season-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0.32;
+  mix-blend-mode: soft-light;
+}
+
+.cozy-season-overlay.season-spring {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(244, 114, 182, 0.28), transparent 55%),
+    radial-gradient(circle at 80% 30%, rgba(134, 239, 172, 0.35), transparent 50%),
+    linear-gradient(140deg, rgba(187, 247, 208, 0.45), rgba(240, 253, 250, 0.65));
+}
+
+.cozy-season-overlay.season-summer {
+  background:
+    radial-gradient(circle at 15% 80%, rgba(34, 197, 94, 0.35), transparent 55%),
+    radial-gradient(circle at 85% 20%, rgba(74, 222, 128, 0.35), transparent 50%),
+    linear-gradient(130deg, rgba(16, 185, 129, 0.25), rgba(187, 247, 208, 0.5));
+}
+
+.cozy-season-overlay.season-fall {
+  background:
+    radial-gradient(circle at 12% 85%, rgba(251, 146, 60, 0.4), transparent 60%),
+    radial-gradient(circle at 90% 15%, rgba(234, 88, 12, 0.35), transparent 55%),
+    linear-gradient(135deg, rgba(253, 186, 116, 0.25), rgba(254, 215, 170, 0.45));
+}
+
+.cozy-season-overlay.season-winter {
+  background:
+    radial-gradient(circle at 20% 15%, rgba(191, 219, 254, 0.4), transparent 55%),
+    radial-gradient(circle at 85% 75%, rgba(224, 242, 254, 0.35), transparent 60%),
+    linear-gradient(160deg, rgba(226, 232, 240, 0.5), rgba(241, 245, 249, 0.8));
+}
+
+.cozy-weather-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.cozy-weather-overlay.weather-rain {
+  opacity: 0.22;
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.15), transparent 65%);
+}
+
+.cozy-weather-overlay.weather-cloudy {
+  opacity: 0.18;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.2), transparent 70%);
+}
+
+.cozy-weather-overlay.weather-heatwave {
+  opacity: 0.2;
+  background: linear-gradient(160deg, rgba(251, 146, 60, 0.18), transparent 65%);
+}
+
+.cozy-weather-overlay.reduced-effects {
+  opacity: 0.08 !important;
+}
+
+.cozy-lighting {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1s ease, background 1s ease;
+}
+
+.cozy-lighting.cozy-lighting-day {
+  opacity: 0;
+}
+
+.cozy-lighting.cozy-lighting-evening {
+  opacity: 0.35;
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.25), rgba(251, 113, 133, 0.15));
+}
+
+.cozy-lighting.cozy-lighting-night {
+  opacity: 0.55;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.55), rgba(30, 41, 59, 0.35));
+}
+
+.cozy-lighting.cozy-lighting-static {
+  transition: none;
+}
+
+.cozy-ambient-life {
+  position: absolute;
+  inset: 0;
+  z-index: 14;
+  pointer-events: none;
+}
+
+.cozy-ambient-life.is-paused .ambient-item {
+  animation-play-state: paused;
+}
+
+.ambient-item {
+  position: absolute;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  opacity: 0;
+}
+
+.ambient-item.ambient-spring,
+.ambient-item.ambient-summer {
+  animation-name: ambient-float;
+}
+
+.ambient-item.ambient-fall,
+.ambient-item.ambient-winter {
+  animation-name: ambient-fall;
+}
+
+.farm-scene-card.weather-rain .farm-plot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(148, 197, 255, 0.05));
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.farm-scene-card.weather-cloudy .farm-plot {
+  filter: saturate(0.95);
+}
+
+.farm-scene-card.weather-heatwave .farm-plot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  background: radial-gradient(circle at 30% 20%, rgba(251, 146, 60, 0.2), transparent 60%);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.farm-scene-card.reduced-effects .cozy-season-overlay {
+  opacity: 0.18;
+}
+
+.farm-scene-card.reduced-effects .farm-plot::after {
+  opacity: 0.18;
+}
+
+.farm-scene-card.time-night .farm-decoration[data-decoration-type='lantern'] {
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.5), 0 0 24px rgba(251, 191, 36, 0.35);
+}
+
+@keyframes ambient-float {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.9);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(24px, -18px, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(48px, 12px, 0) scale(0.95);
+    opacity: 0;
+  }
+}
+
+@keyframes ambient-fall {
+  0% {
+    transform: translate3d(0, -20px, 0) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate3d(30px, 140px, 0) rotate(120deg);
+    opacity: 0;
+  }
+}
+
 .farm-decoration {
   position: absolute;
   top: 0;
@@ -1093,6 +1281,131 @@
 
 .farm-decoration-moving {
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.6), 0 8px 18px rgba(16, 185, 129, 0.2);
+}
+
+.town-board-card {
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.85), rgba(255, 251, 235, 0.95));
+  border: 2px solid rgba(251, 191, 36, 0.25) !important;
+  box-shadow: 0 12px 24px rgba(120, 53, 15, 0.12);
+}
+
+.town-board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.town-board-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #92400e;
+}
+
+.town-board-subtitle {
+  font-size: 0.75rem;
+  color: rgba(146, 64, 14, 0.7);
+}
+
+.town-board-toggle {
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(251, 191, 36, 0.2);
+  color: #92400e;
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.town-board-toggle:hover {
+  background: rgba(251, 191, 36, 0.3);
+  transform: translateY(-1px);
+}
+
+.town-board-content {
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+}
+
+.town-board-content.closed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.town-board-content.open {
+  max-height: 420px;
+  opacity: 1;
+}
+
+.town-board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.town-board-block {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  box-shadow: inset 0 1px 2px rgba(251, 191, 36, 0.12);
+}
+
+.town-board-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(146, 64, 14, 0.7);
+}
+
+.town-board-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  color: #78350f;
+}
+
+.town-board-tier {
+  margin-left: auto;
+  font-size: 0.65rem;
+  color: rgba(146, 64, 14, 0.7);
+}
+
+.town-board-bar {
+  margin-top: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(251, 191, 36, 0.25);
+  overflow: hidden;
+}
+
+.town-board-bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.9), rgba(251, 191, 36, 0.9));
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+.town-board-hint {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: rgba(120, 53, 15, 0.7);
+}
+
+.town-board-footer {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px dashed rgba(217, 119, 6, 0.35);
+  color: #78350f;
+  font-size: 0.8rem;
 }
 
 .farm-anchor {

@@ -20,6 +20,20 @@
   - **Why:** speed up tab switching, improve accessibility, and reduce redundant DOM work.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-02-13
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** audit cozy scene systems and docs, then add Cozy World v1 visuals (season/weather overlays, day-night lighting, ambient life), a reduced effects toggle, and a Town Board UI with a performance pass.
+  - **Why:** deliver cozy ambiance updates without duplicating systems or adding per-frame work.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** added cozy seasonal/weather overlays with day-night lighting, ambient life, reduced-effects handling, and a Town Board panel; updated docs and perf notes to reflect the new visuals.
+  - **Why:** provide Cozy World v1 atmosphere while keeping rendering event-driven and low-cost.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## 2026-02-12
 
 - **Planned**

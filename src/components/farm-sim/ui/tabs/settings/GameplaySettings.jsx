@@ -84,8 +84,8 @@ export const GameplaySettings = memo(({
                     {/* Reduced Motion */}
                     <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
                         <div>
-                            <div className="font-medium">Reduced Motion</div>
-                            <div className="text-sm text-gray-600">Disable heavy animations</div>
+                            <div className="font-medium">Reduced Effects / Motion</div>
+                            <div className="text-sm text-gray-600">Minimize ambient and lighting effects</div>
                         </div>
                         <button
                             onClick={() => actions.updateSettings({

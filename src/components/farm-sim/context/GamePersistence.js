@@ -134,6 +134,7 @@ export function migrateSaveData(savedData) {
                 autoSave: true,
                 soundEnabled: true,
                 animationsEnabled: true,
+                reducedMotion: false,
             };
 
             migratedData.gameLoop = migratedData.gameLoop || {
@@ -239,6 +240,7 @@ export function migrateSaveData(savedData) {
             soundEnabled: true,
             musicEnabled: true,
             animationsEnabled: true,
+            reducedMotion: false,
             ...(migratedData.settings || {}),
         };
 

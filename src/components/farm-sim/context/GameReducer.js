@@ -116,6 +116,7 @@ export const initialState = {
         soundEnabled: true,
         musicEnabled: true,
         animationsEnabled: true,
+        reducedMotion: false,
     },
     automation: {
         lastAutoWaterAt: 0,

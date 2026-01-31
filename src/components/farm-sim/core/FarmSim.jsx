@@ -8,6 +8,7 @@ import FarmGrid from '../ui/FarmGrid';
 import GameSidebar from '../ui/GameSidebar';
 import NavBar, { NAV_SECTIONS } from '../ui/NavBar';
 import NotificationSystem from '../ui/NotificationSystem';
+import TownBoard from '../ui/TownBoard';
 
 import DevDebugOverlay from '../ui/DevDebugOverlay';
 import { ParticleEffectsManager } from '../ui/ParticleEffect';
@@ -446,6 +447,10 @@ function FarmSimCore() {
 
       {/* Game Header */}
       <GameHeader />
+
+      <div className="w-full px-2 sm:px-4 max-w-7xl mx-auto mt-2">
+        <TownBoard />
+      </div>
 
       {/* Main Game Area - Mobile Optimized with bottom padding for NavBar */}
       <div className="flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto relative w-full pb-24 lg:pb-4">
