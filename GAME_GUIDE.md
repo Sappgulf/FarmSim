@@ -35,6 +35,13 @@ Grow a thriving farm by planting crops, harvesting for profit, and investing in 
   4. Use **Move** to pick up a decoration and place it elsewhere.
 - Decorations are cosmetic and do not affect crop growth.
 
+## Placeable Buildings (Cozy Expansion)
+- Build key structures in the **Buildings** tab, then place them on the farm grid.
+- **Greenhouse (🏠)**: Covers nearby plots so growth ignores season slowdowns and gains a small boost.
+- **Water Well (💧)**: Auto-waters a few nearby plots each morning.
+- **Barn (🏚️)**: Nearby harvests lose less soil fertility.
+- Buildings must be placed on empty plots and cannot overlap decorations.
+
 ## Seasons (Cozy Cycle)
 - **Four seasons** rotate on a gentle day-based cadence.
 - Each season adds small bonuses to growth and prices.
@@ -62,6 +69,7 @@ Grow a thriving farm by planting crops, harvesting for profit, and investing in 
   - Town Rep progress and next tier
   - Daily featured crop and market mood
   - A short “what’s happening today” hint
+  - **Today’s Plan** with 2–3 daily suggestions
 
 ## Reduced Effects
 - Toggle **Reduced Effects / Motion** in Settings to minimize lighting transitions, ambient life, and weather overlays.
@@ -109,3 +117,9 @@ Grow a thriving farm by planting crops, harvesting for profit, and investing in 
 - Time harvests with seasonal bonuses.
 - Use quests/contracts to fund your next upgrade tier.
 - Keep automation steady to prevent crop losses.
+
+## Compost & Fertilizer Loop
+- Every harvest adds **compost** to your inventory.
+- Convert **3 compost → fertilizer** in the Farming tab.
+- Fertilizer is applied **before planting** and gives a small growth boost.
+- Compost Bin upgrades increase fertilizer yield when crafting.

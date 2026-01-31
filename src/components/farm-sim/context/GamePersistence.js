@@ -7,8 +7,10 @@ import { createDefaultCropCollections, normalizeCollectionsState } from '../cons
 import { DEFAULT_DAY_LENGTH_MS, DEFAULT_DAYS_PER_SEASON, SEASONS, SEASON_CONFIG } from '../systems/SeasonSystem';
 import { createDefaultMarketState } from '../constants/marketData';
 import { DECORATION_LOOKUP } from '../constants/decorationData';
+import { PLACEABLE_BUILDING_LOOKUP } from '../constants/placeableBuildingData';
+import { buildDailyPlan } from '../constants/townPlan';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const SAVE_BACKUP_KEY = `${SAVE_KEY}_backup`;
 
@@ -102,6 +104,28 @@ const normalizeDecorations = (decorations, gridSize) => {
             y,
             rotation: clampNumber(decor.rotation, 0, 0, 359),
         });
+        return acc;
+    }, []);
+};
+
+const normalizeBuildingPlacements = (placements, gridSize) => {
+    if (!Array.isArray(placements)) return [];
+    const seenCells = new Set();
+    const seenBuildings = new Set();
+    const maxIndex = Math.max(0, gridSize - 1);
+    return placements.reduce((acc, placement) => {
+        if (!placement || typeof placement !== 'object') return acc;
+        if (!PLACEABLE_BUILDING_LOOKUP[placement.id]) return acc;
+        if (seenBuildings.has(placement.id)) return acc;
+        const x = Number.isFinite(placement.x) ? Math.floor(placement.x) : null;
+        const y = Number.isFinite(placement.y) ? Math.floor(placement.y) : null;
+        if (!Number.isInteger(x) || !Number.isInteger(y)) return acc;
+        if (x < 0 || y < 0 || x > maxIndex || y > maxIndex) return acc;
+        const key = `${x}-${y}`;
+        if (seenCells.has(key)) return acc;
+        seenCells.add(key);
+        seenBuildings.add(placement.id);
+        acc.push({ id: placement.id, x, y });
         return acc;
     }, []);
 };
@@ -229,6 +253,17 @@ export function migrateSaveData(savedData) {
             migratedData.movingDecorationId = null;
         }
 
+        // Version 6 → 7: Add placeable building placements + town plan
+        if (saveVersion < 7) {
+            if (import.meta.env.MODE === 'development') {
+                console.debug('[farm]', 'Migrating save from version 6 to 7 (placeable buildings + town plan)');
+            }
+            migratedData.buildingPlacements = [];
+            migratedData.placeBuildingMode = false;
+            migratedData.selectedBuildingPlacement = 'greenhouse';
+            migratedData.dailyPlan = buildDailyPlan(migratedData);
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, 0);
         migratedData.xp = clampNumber(migratedData.xp, 0, 0);
@@ -303,6 +338,17 @@ export function migrateSaveData(savedData) {
         migratedData.movingDecorationId = typeof migratedData.movingDecorationId === 'string'
             ? migratedData.movingDecorationId
             : null;
+        migratedData.buildingPlacements = normalizeBuildingPlacements(migratedData.buildingPlacements, migratedData.gridSize);
+        migratedData.placeBuildingMode = Boolean(migratedData.placeBuildingMode);
+        migratedData.selectedBuildingPlacement = PLACEABLE_BUILDING_LOOKUP[migratedData.selectedBuildingPlacement]
+            ? migratedData.selectedBuildingPlacement
+            : 'greenhouse';
+        migratedData.dailyPlan = migratedData.dailyPlan && typeof migratedData.dailyPlan === 'object'
+            ? {
+                dayCount: clampNumber(migratedData.dailyPlan.dayCount, migratedData.season?.dayCount || 1, 1),
+                items: Array.isArray(migratedData.dailyPlan.items) ? migratedData.dailyPlan.items.slice(0, 3) : [],
+            }
+            : buildDailyPlan(migratedData);
 
         if (!migratedData.season || typeof migratedData.season !== 'object') {
             migratedData.season = {

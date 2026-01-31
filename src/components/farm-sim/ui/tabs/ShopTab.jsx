@@ -22,7 +22,7 @@ const ShopTab = memo(() => {
 
   const shopItems = {
     supplies: [
-      { id: 'fertilizer', name: 'Fertilizer', emoji: '🌱', cost: 8, description: 'Boosts crop growth by 25%', effect: '+25% growth speed' },
+      { id: 'fertilizer', name: 'Fertilizer', emoji: '🌱', cost: 8, description: 'Prep soil for faster growth', effect: '+10% growth speed' },
       { id: 'pesticide', name: 'Pesticide', emoji: '🐛', cost: 6, description: 'Eliminates crop diseases', effect: 'Cure diseases' },
       { id: 'water_boost', name: 'Water Boost', emoji: '💧', cost: 5, description: 'Maintains water level', effect: '+100% water' },
     ],
@@ -34,7 +34,7 @@ const ShopTab = memo(() => {
     upgrades: [
       { id: 'soil_analyzer', name: 'Soil Analyzer', emoji: '🔬', cost: 150, description: 'Shows soil fertility levels', effect: 'Visibility' },
       { id: 'greenhouse', name: 'Mini Greenhouse', emoji: '🏡', cost: 300, description: 'Weather-proof single plot', effect: 'Weather immunity' },
-      { id: 'compost_bin', name: 'Compost Bin', emoji: '🗑️', cost: 75, description: 'Restore soil fertility faster', effect: '+50% fertility' },
+      { id: 'compost_bin', name: 'Compost Bin', emoji: '🗑️', cost: 75, description: 'Boosts compost-to-fertilizer yield', effect: '+1 fertilizer craft' },
     ]
   };
 

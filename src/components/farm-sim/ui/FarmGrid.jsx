@@ -10,6 +10,7 @@ import { getMarketBonusMultiplier } from '../constants/marketData';
 import { getTownRepBonus } from '../constants/townData';
 import { getDiseaseById } from '../constants/diseaseData';
 import { DECORATION_LOOKUP } from '../constants/decorationData';
+import { PLACEABLE_BUILDING_LOOKUP, getPlacementKey } from '../constants/placeableBuildingData';
 import { getCozyWeatherType } from '../constants/cozyWeather';
 import { traceAction } from '../services/DebugTraceService';
 import CozyWorldOverlays from './CozyWorldOverlays';
@@ -85,7 +86,22 @@ const useTimeOfDay = (dayStartTime, dayLengthMs) => {
 };
 
 // Enhanced plot component with tooltips and animations
-const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0, tick, plotRef, decorateMode }) => {
+const FarmPlot = memo(({
+  plot,
+  index,
+  onPlotClick,
+  onPlant,
+  onHarvest,
+  isSelected,
+  onToggleSelect,
+  selectedCrop,
+  seasonBonus = 1.0,
+  tick,
+  plotRef,
+  decorateMode,
+  placeBuildingMode,
+  onHover,
+}) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const hideTooltipTimeoutRef = useRef(null);
@@ -120,7 +136,12 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
       // Match FarmingSystem calculation exactly
       const baseGrowthTime = plot.crop?.growthTime || 15; // Use seconds directly
       const weatherModifier = plot.weatherModifier || 1.0;
-      const effectiveGrowthTime = baseGrowthTime / (weatherModifier * seasonBonus);
+      const fertilizerBoost = plot.fertilizer ? Math.min(1.3, 1 + plot.fertilizer * 0.1) : 1.0;
+      const greenhouseBoost = plot.greenhouseBoost ? 1.1 : 1.0;
+      const seasonMultiplier = plot.greenhouseBoost ? Math.max(1, seasonBonus) : seasonBonus;
+      const effectiveGrowthTime = baseGrowthTime / (
+        weatherModifier * seasonMultiplier * fertilizerBoost * greenhouseBoost
+      );
       const timeElapsed = progress * effectiveGrowthTime;
       const timeRemaining = Math.max(0, effectiveGrowthTime - timeElapsed);
       const secondsLeft = Math.ceil(timeRemaining);
@@ -195,7 +216,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
   }, [plot?.soilFertility]);
 
   const handleClick = useCallback((e) => {
-    if (decorateMode) {
+    if (decorateMode || placeBuildingMode) {
       onPlotClick(index, 'decorate');
       return;
     }
@@ -213,7 +234,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
     } else {
       onPlotClick(index);
     }
-  }, [decorateMode, plot, index, onPlotClick, onPlant, onHarvest, onToggleSelect]);
+  }, [decorateMode, placeBuildingMode, plot, index, onPlotClick, onPlant, onHarvest, onToggleSelect]);
 
   return (
     <div ref={plotRef} className="relative" data-plot-index={index}>
@@ -238,10 +259,16 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
           if (plot?.state === 'empty' && selectedCrop) {
             setShowPreview(true);
           }
+          if (onHover) {
+            onHover(index);
+          }
         }}
         onMouseLeave={() => {
           setShowTooltip(false);
           setShowPreview(false);
+          if (onHover) {
+            onHover(null);
+          }
         }}
         onTouchStart={() => {
           if (hideTooltipTimeoutRef.current) {
@@ -252,6 +279,9 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
           if (plot?.state === 'empty' && selectedCrop) {
             setShowPreview(true);
           }
+          if (onHover) {
+            onHover(index);
+          }
         }}
         onTouchEnd={() => {
           if (hideTooltipTimeoutRef.current) {
@@ -261,6 +291,9 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
             setShowTooltip(false);
             setShowPreview(false);
           }, 2000);
+          if (onHover) {
+            onHover(null);
+          }
         }}
       >
         <div className={`absolute inset-0 pointer-events-none ${plot?.state === 'empty' ? 'plot-soil-tilled' : 'plot-soil-planted'}`} />
@@ -343,6 +376,9 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
             {plot?.fertilizer > 0 && (
               <div className="w-3 h-3 bg-green-500 rounded-full shadow-lg" title="Fertilized" />
             )}
+            {plot?.greenhouseBoost && (
+              <div className="text-xs" title="Greenhouse Boost">🏠</div>
+            )}
           </div>
 
           {/* Weather icon on plot */}
@@ -386,6 +422,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
                   <div>💧 Water: {Math.round(plot.waterLevel || 0)}%</div>
                   <div>🌱 Fertility: {Math.round((plot.soilFertility || 1.0) * 100)}%</div>
                   {plot.fertilizer > 0 && <div>✨ Fertilizer: +{plot.fertilizer * 10}%</div>}
+                  {plot.greenhouseBoost && <div>🏠 Greenhouse: growth protected</div>}
                   {plot.disease && (
                     <div className="text-red-400">
                       🐛 Diseased{diseasePenalty !== null ? ` • Yield -${diseasePenalty}%` : '!'}
@@ -405,6 +442,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
             {plot.state === 'empty' && (
               <div className="text-gray-400">
                 <div>🌱 Fertility: {Math.round((plot.soilFertility || 1.0) * 100)}%</div>
+                {plot.fertilizer > 0 && <div>✨ Fertilized soil ready</div>}
                 <div className="mt-1 text-xs">Click to plant!</div>
               </div>
             )}
@@ -452,6 +490,8 @@ const FarmGrid = memo(() => {
   const decorateTool = state.decorateTool;
   const selectedDecoration = state.selectedDecoration;
   const movingDecorationId = state.movingDecorationId;
+  const placeBuildingMode = state.placeBuildingMode;
+  const selectedBuildingPlacement = state.selectedBuildingPlacement;
 
   const decorations = useMemo(
     () => (Array.isArray(state.decorations) ? state.decorations : []),
@@ -465,6 +505,19 @@ const FarmGrid = memo(() => {
     });
     return map;
   }, [decorations]);
+  const buildingPlacements = useMemo(
+    () => (Array.isArray(state.buildingPlacements) ? state.buildingPlacements : []),
+    [state.buildingPlacements]
+  );
+  const buildingPlacementMap = useMemo(() => {
+    const map = new Map();
+    buildingPlacements.forEach((placement) => {
+      if (!placement || typeof placement.x !== 'number' || typeof placement.y !== 'number') return;
+      map.set(getPlacementKey(placement.x, placement.y), placement);
+    });
+    return map;
+  }, [buildingPlacements]);
+  const [hoveredBuildingCell, setHoveredBuildingCell] = useState(null);
 
   useEffect(() => {
     if (!recentDecorationId) return undefined;
@@ -479,6 +532,18 @@ const FarmGrid = memo(() => {
       setSelectedPlots(new Set());
     }
   }, [decorateMode]);
+
+  useEffect(() => {
+    if (placeBuildingMode) {
+      setSelectedPlots(new Set());
+    }
+  }, [placeBuildingMode]);
+
+  useEffect(() => {
+    if (!placeBuildingMode) {
+      setHoveredBuildingCell(null);
+    }
+  }, [placeBuildingMode]);
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined' || !gridRef.current) return;
@@ -545,10 +610,20 @@ const FarmGrid = memo(() => {
     const currentActions = actionsRef.current;
     const { x, y } = getCellFromIndex(index);
     const plot = Array.isArray(currentState.plots) ? currentState.plots[index] : null;
+    const buildingHere = Array.isArray(currentState.buildingPlacements)
+      ? currentState.buildingPlacements.find((placement) => placement.x === x && placement.y === y)
+      : null;
 
     if (plot && plot.state !== 'empty' && currentState.decorateTool !== 'remove') {
       currentActions.addNotification({
         message: 'Decorations can only be placed on empty plots.',
+        type: 'info',
+      });
+      return;
+    }
+    if (buildingHere && currentState.decorateTool !== 'remove') {
+      currentActions.addNotification({
+        message: 'That space is reserved for a building.',
         type: 'info',
       });
       return;
@@ -660,11 +735,79 @@ const FarmGrid = memo(() => {
     });
   }, [getCellFromIndex]);
 
+  const isBuildingPlacementValid = useCallback((index) => {
+    const currentState = stateRef.current;
+    const { x, y } = getCellFromIndex(index);
+    const plot = Array.isArray(currentState.plots) ? currentState.plots[index] : null;
+    if (plot && plot.state !== 'empty') return false;
+    const placementKey = getPlacementKey(x, y);
+    if (decorationMap.has(placementKey)) return false;
+    if (buildingPlacementMap.has(placementKey)) return false;
+    return true;
+  }, [getCellFromIndex, decorationMap, buildingPlacementMap]);
+
+  const handleBuildingPlacement = useCallback((index) => {
+    const currentState = stateRef.current;
+    const currentActions = actionsRef.current;
+    const selectedBuilding = PLACEABLE_BUILDING_LOOKUP[currentState.selectedBuildingPlacement];
+    if (!selectedBuilding) {
+      currentActions.addNotification({
+        message: 'Select a building to place.',
+        type: 'info',
+      });
+      return;
+    }
+
+    if (!currentState.buildings?.[selectedBuilding.id]?.built) {
+      currentActions.addNotification({
+        message: `${selectedBuilding.emoji} ${selectedBuilding.name} must be built first.`,
+        type: 'warning',
+      });
+      return;
+    }
+
+    const { x, y } = getCellFromIndex(index);
+    const placementKey = getPlacementKey(x, y);
+    if (buildingPlacementMap.has(placementKey)) {
+      currentActions.addNotification({
+        message: 'A building already occupies this spot.',
+        type: 'info',
+      });
+      return;
+    }
+
+    if (!isBuildingPlacementValid(index)) {
+      currentActions.addNotification({
+        message: 'Buildings can only be placed on empty, clear plots.',
+        type: 'info',
+      });
+      return;
+    }
+
+    const currentPlacements = Array.isArray(currentState.buildingPlacements)
+      ? currentState.buildingPlacements
+      : [];
+    const nextPlacements = [
+      ...currentPlacements.filter((placement) => placement.id !== selectedBuilding.id),
+      { id: selectedBuilding.id, x, y },
+    ];
+    currentActions.updateBuildingPlacements(nextPlacements);
+    currentActions.addNotification({
+      message: `🏗️ Placed ${selectedBuilding.emoji} ${selectedBuilding.name}.`,
+      type: 'success',
+    });
+  }, [getCellFromIndex, buildingPlacementMap, isBuildingPlacementValid]);
+
   const handlePlotClick = useCallback((index, action) => {
     const currentState = stateRef.current;
     const currentActions = actionsRef.current;
 
     traceAction('plot_click', { index, action }, currentState);
+
+    if (currentState.placeBuildingMode) {
+      handleBuildingPlacement(index);
+      return;
+    }
 
     if (currentState.decorateMode) {
       handleDecorateCell(index);
@@ -686,6 +829,7 @@ const FarmGrid = memo(() => {
           growthStage: 0,
           waterLevel: 100,
           fertilizer: 0,
+          greenhouseBoost: false,
           disease: null,
           soilFertility: (plot?.soilFertility || 1.0) * 0.95, // Slight fertility loss
           progress: 0,
@@ -709,7 +853,7 @@ const FarmGrid = memo(() => {
   }, []);
 
   const handleToggleSelect = useCallback((index) => {
-    if (stateRef.current.decorateMode) return;
+    if (stateRef.current.decorateMode || stateRef.current.placeBuildingMode) return;
     setSelectedPlots(prev => {
       const newSet = new Set(prev);
       if (newSet.has(index)) {
@@ -725,6 +869,15 @@ const FarmGrid = memo(() => {
   const handlePlant = useCallback((index) => {
     const currentState = stateRef.current;
     const currentActions = actionsRef.current;
+    const { x, y } = getCellFromIndex(index);
+    const placementKey = getPlacementKey(x, y);
+    if (buildingPlacementMap.has(placementKey)) {
+      currentActions.addNotification({
+        message: 'This plot is occupied by a building.',
+        type: 'info',
+      });
+      return;
+    }
 
     // Use consolidated crop data
     const selectedCrop = CROP_DATA[currentState.selectedCrop] || CROP_DATA.carrot;
@@ -749,7 +902,7 @@ const FarmGrid = memo(() => {
         type: 'error'
       });
     }
-  }, []);
+  }, [getCellFromIndex, buildingPlacementMap]);
 
   const handleHarvest = useCallback((index) => {
     const currentState = stateRef.current;
@@ -804,6 +957,7 @@ const FarmGrid = memo(() => {
       [crop.id]: (currentState.inventory[crop.id] || 0) + 1
     };
     currentActions.updateInventory(updatedInventory);
+    currentActions.awardCompost?.(1);
 
     // Reset plot
     currentActions.harvestCrop(index, earnings);
@@ -860,11 +1014,24 @@ const FarmGrid = memo(() => {
   // FIXED: Ensure plots is always an array
   const plots = useMemo(() => (Array.isArray(state.plots) ? state.plots : []), [state.plots]);
   const selectedCropData = useMemo(() => CROP_DATA[state.selectedCrop] || CROP_DATA.carrot, [state.selectedCrop]);
+  const selectedBuildingMeta = PLACEABLE_BUILDING_LOOKUP[selectedBuildingPlacement];
+  const selectedBuildingBuilt = Boolean(state.buildings?.[selectedBuildingPlacement]?.built);
   const plotsInUse = useMemo(() => plots.reduce((count, plot) => count + (plot?.state !== 'empty' ? 1 : 0), 0), [plots]);
   const gridStyle = useMemo(() => ({
     gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
     maxWidth: `min(100%, ${gridSize * 120}px)` // Larger for better touch targets
   }), [gridSize]);
+  const ghostPlacement = useMemo(() => {
+    if (!placeBuildingMode || hoveredBuildingCell === null || !Number.isInteger(hoveredBuildingCell)) {
+      return null;
+    }
+    return getCellFromIndex(hoveredBuildingCell);
+  }, [placeBuildingMode, hoveredBuildingCell, getCellFromIndex]);
+  const ghostValid = useMemo(() => {
+    if (!placeBuildingMode || hoveredBuildingCell === null) return false;
+    if (!selectedBuildingBuilt) return false;
+    return isBuildingPlacementValid(hoveredBuildingCell);
+  }, [placeBuildingMode, hoveredBuildingCell, selectedBuildingBuilt, isBuildingPlacementValid]);
 
   return (
     <Card className={`p-6 farm-scene-card relative overflow-hidden season-${seasonId} weather-${cozyWeather} time-${timeOfDay} ${reducedEffects ? 'reduced-effects' : ''}`}>
@@ -887,6 +1054,11 @@ const FarmGrid = memo(() => {
           {decorateMode && (
             <Badge className="bg-emerald-600">
               🎨 Decorate Mode
+            </Badge>
+          )}
+          {placeBuildingMode && (
+            <Badge className="bg-indigo-600">
+              🏗️ Building Placement
             </Badge>
           )}
         </h2>
@@ -968,6 +1140,41 @@ const FarmGrid = memo(() => {
           })}
         </div>
         <div className="absolute inset-0 pointer-events-none z-20">
+          {buildingPlacements.map((placement) => {
+            const meta = PLACEABLE_BUILDING_LOOKUP[placement.id];
+            if (!meta || !gridMetrics.cellSize) return null;
+            const left = placement.x * (gridMetrics.cellSize + gridMetrics.gap);
+            const top = placement.y * (gridMetrics.cellSize + gridMetrics.gap);
+            return (
+              <div
+                key={placement.id}
+                className="farm-building"
+                style={{
+                  width: gridMetrics.cellSize,
+                  height: gridMetrics.cellSize,
+                  transform: `translate(${left}px, ${top}px)`,
+                }}
+              >
+                <span className="farm-building-emoji" aria-hidden="true">{meta.emoji}</span>
+                <span className="farm-building-label">{meta.name}</span>
+              </div>
+            );
+          })}
+          {ghostPlacement && selectedBuildingMeta && gridMetrics.cellSize > 0 && (
+            <div
+              className={`farm-building farm-building-ghost ${ghostValid ? 'farm-building-valid' : 'farm-building-invalid'}`}
+              style={{
+                width: gridMetrics.cellSize,
+                height: gridMetrics.cellSize,
+                transform: `translate(${ghostPlacement.x * (gridMetrics.cellSize + gridMetrics.gap)}px, ${ghostPlacement.y * (gridMetrics.cellSize + gridMetrics.gap)}px)`,
+              }}
+            >
+              <span className="farm-building-emoji" aria-hidden="true">{selectedBuildingMeta.emoji}</span>
+              <span className="farm-building-label">{ghostValid ? 'Place' : 'Blocked'}</span>
+            </div>
+          )}
+        </div>
+        <div className="absolute inset-0 pointer-events-none z-20">
           {gridMetrics.cellSize > 0 && FARM_ANCHORS.map((anchor) => {
             const x = anchor.gridX === -1 ? gridSize - 1 : anchor.gridX;
             const y = anchor.gridY;
@@ -1010,6 +1217,8 @@ const FarmGrid = memo(() => {
             seasonBonus={seasonBonus}
             tick={plot?.state === 'planted' || plot?.state === 'growing' || plot?.state === 'ready' ? tick : undefined}
             decorateMode={decorateMode}
+            placeBuildingMode={placeBuildingMode}
+            onHover={placeBuildingMode ? setHoveredBuildingCell : null}
             plotRef={(element) => {
               plotRefs.current[index] = element;
             }}

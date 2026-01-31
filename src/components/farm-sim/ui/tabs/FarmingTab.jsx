@@ -17,6 +17,9 @@ const FarmingTab = memo(() => {
   const selectedDecoration = state.selectedDecoration;
   const movingDecorationId = state.movingDecorationId;
   const decorationsPlaced = Array.isArray(state.decorations) ? state.decorations.length : 0;
+  const compostCount = state.inventory?.compost || 0;
+  const fertilizerCount = state.inventory?.fertilizer || 0;
+  const hasCompostBin = (state.inventory?.compost_bin || 0) > 0;
 
   const unlockedSeeds = state.social?.unlockedSeeds || [];
   const cropsByLevel = useMemo(() => getCropsByLevel(state.level), [state.level]);
@@ -75,7 +78,7 @@ const FarmingTab = memo(() => {
           actions.addNotification({ message: `No crops ready to harvest!`, type: 'info' });
         }
         break;
-      case 'Fertilize All':
+      case 'Prep Soil':
         // Logic handled in action, just UI trigger here
         if (state.coins >= 15 || (state.inventory?.fertilizer || 0) > 0) {
           actions.fertilizeAllPlots();
@@ -98,6 +101,9 @@ const FarmingTab = memo(() => {
   const handleDecorateToggle = () => {
     const nextMode = !decorateMode;
     actions.setDecorateMode(nextMode);
+    if (nextMode) {
+      actions.setPlaceBuildingMode(false);
+    }
     if (!nextMode) {
       actions.setMovingDecorationId(null);
     }
@@ -183,6 +189,37 @@ const FarmingTab = memo(() => {
           </div>
         )}
       </Card>
+      <Card className="p-4 bg-gradient-to-r from-emerald-50 to-lime-50 border-emerald-100">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-emerald-900 flex items-center gap-2">
+              ♻️ Compost & Fertilizer
+            </h3>
+            <p className="text-xs text-emerald-700 mt-1">
+              Harvest leftovers become compost. Craft fertilizer before planting for a growth boost.
+            </p>
+          </div>
+          <div className="text-right text-xs text-emerald-700">
+            <div>Compost: <span className="font-semibold">{compostCount}</span></div>
+            <div>Fertilizer: <span className="font-semibold">{fertilizerCount}</span></div>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            onClick={() => actions.convertCompostToFertilizer?.(3)}
+            disabled={compostCount < 3}
+            className="min-h-[44px]"
+          >
+            Turn 3 compost into fertilizer
+          </Button>
+          {hasCompostBin && (
+            <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200">
+              Compost Bin bonus: +1 extra fertilizer
+            </Badge>
+          )}
+        </div>
+      </Card>
       {/* Category Filter */}
       <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-green-100">
         <h3 className="font-semibold mb-3 text-green-800 flex items-center gap-2">
@@ -225,9 +262,9 @@ const FarmingTab = memo(() => {
           <Wheat className="w-5 h-5" />
           <span className="text-xs font-medium">Harvest All</span>
         </Button>
-        <Button onClick={() => handleBulkAction('Fertilize All')} variant="outline" className="h-auto py-3 flex flex-col gap-1 items-center bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800">
+        <Button onClick={() => handleBulkAction('Prep Soil')} variant="outline" className="h-auto py-3 flex flex-col gap-1 items-center bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800">
           <Sprout className="w-5 h-5" />
-          <span className="text-xs font-medium">Fertilize All</span>
+          <span className="text-xs font-medium">Prep Soil</span>
         </Button>
         <Button onClick={() => handleBulkAction('Pesticide All')} variant="outline" className="h-auto py-3 flex flex-col gap-1 items-center bg-red-50 hover:bg-red-100 border-red-200 text-red-800">
           <Bug className="w-5 h-5" />

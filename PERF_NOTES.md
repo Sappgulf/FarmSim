@@ -158,3 +158,25 @@
 
 ### Biggest Bottleneck Removed
 - Avoided per-tick overlay updates by making visuals event-driven and CSS-animated only.
+
+## 2026-02-14 Cozy Farm Expansion v1 Pass
+
+### Baseline Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.
+
+### Improvements Applied
+- Precomputed placeable building coverage maps on placement changes to keep coverage checks O(1).
+- Applied greenhouse/well/barn effects only on plant, harvest, and day rollover (no per-tick grid scans).
+- Reused cached grid metrics for building overlays and ghost previews to avoid layout thrashing.
+
+### After Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.
+
+### Biggest Bottleneck Removed
+- Eliminated any need to scan the full grid for building effects during ticks.

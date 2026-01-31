@@ -169,9 +169,19 @@ export class FarmingSystem {
       const weatherModifier = currentWeatherEffects.growthModifier;
 
       const seasonBonus = this.gameState.season?.config?.bonuses?.growthSpeed || 1.0;
+      const fertilizerBoost = plot.fertilizer
+        ? Math.min(1.3, 1 + plot.fertilizer * 0.1)
+        : 1.0;
+      const greenhouseBoost = plot.greenhouseBoost ? 1.1 : 1.0;
+      const seasonMultiplier = plot.greenhouseBoost ? Math.max(1, seasonBonus) : seasonBonus;
       const timeSincePlanted = (now - plot.plantedAt) / 1000; // seconds
       const baseGrowthTime = plot.crop.growthTime || 10;
-      const effectiveGrowthTime = baseGrowthTime / (weatherModifier * seasonBonus);
+      const effectiveGrowthTime = baseGrowthTime / (
+        weatherModifier
+        * seasonMultiplier
+        * fertilizerBoost
+        * greenhouseBoost
+      );
       const progress = Math.min(1.0, timeSincePlanted / effectiveGrowthTime);
 
 
@@ -314,7 +324,7 @@ export class FarmingSystem {
    * @param {Object} cropData - Crop data object with id, name, growthTime, etc.
    * @returns {boolean} True if planting succeeded
    */
-  plantCrop(plotIndex, cropData) {
+  plantCrop(plotIndex, cropData, options = {}) {
     // Safety checks
     if (!cropData || !this.gameState || !this.gameState.plots || plotIndex < 0 || plotIndex >= this.gameState.plots.length) {
       return false;
@@ -349,6 +359,7 @@ export class FarmingSystem {
       waterLevel: 85, // Start with ample water for growth
       soilFertility: plot.soilFertility || 1.0,
       weatherModifier: 1.0,
+      greenhouseBoost: Boolean(options.greenhouseBoost),
     };
 
     if (import.meta.env.MODE === 'development') {
@@ -372,7 +383,7 @@ export class FarmingSystem {
    * @param {number} plotIndex - Index of the plot to harvest
    * @returns {boolean} True if harvest succeeded
    */
-  harvestCrop(plotIndex) {
+  harvestCrop(plotIndex, options = {}) {
     // Safety checks
     if (!this.gameState || !this.gameState.plots || plotIndex < 0 || plotIndex >= this.gameState.plots.length) {
       return false;
@@ -411,6 +422,9 @@ export class FarmingSystem {
     this.actions.updateInventory(updatedInventory);
     this.actions.recordHarvest?.(crop.id, crop.name, harvestValue, 1);
 
+    const fertilityLossMultiplier = Number.isFinite(options.fertilityLossMultiplier)
+      ? options.fertilityLossMultiplier
+      : 1;
     // Clear plot and reduce fertility
     const updatedPlots = [...this.gameState.plots];
     updatedPlots[plotIndex] = {
@@ -422,8 +436,10 @@ export class FarmingSystem {
       readyAt: null,
       growthStage: 0,
       progress: 0,
-      soilFertility: Math.max(0.5, (plot.soilFertility || 1.0) - 0.1),
+      soilFertility: Math.max(0.5, (plot.soilFertility || 1.0) - 0.1 * fertilityLossMultiplier),
       waterLevel: 50,
+      fertilizer: 0,
+      greenhouseBoost: false,
     };
 
     this.actions.updatePlots(updatedPlots);
