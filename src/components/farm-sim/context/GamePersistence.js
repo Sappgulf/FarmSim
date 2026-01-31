@@ -5,8 +5,9 @@
 import { XP_PER_LEVEL_BASE } from '../constants/progression';
 import { createDefaultCropCollections, normalizeCollectionsState } from '../constants/collectionData';
 import { DEFAULT_DAY_LENGTH_MS, DEFAULT_DAYS_PER_SEASON, SEASONS, SEASON_CONFIG } from '../systems/SeasonSystem';
+import { createDefaultMarketState } from '../constants/marketData';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const SAVE_BACKUP_KEY = `${SAVE_KEY}_backup`;
 
@@ -64,6 +65,18 @@ const normalizeAutomation = (automation) => {
     return {
         ...automation,
         lastAutoWaterAt: clampNumber(automation.lastAutoWaterAt, 0, 0),
+    };
+};
+
+const normalizeMarket = (market) => {
+    const defaults = createDefaultMarketState();
+    if (!market || typeof market !== 'object') {
+        return defaults;
+    }
+    return {
+        dailyFeaturedCrop: market.dailyFeaturedCrop || defaults.dailyFeaturedCrop,
+        dailyMood: market.dailyMood || defaults.dailyMood,
+        lastUpdatedDay: clampNumber(market.lastUpdatedDay, defaults.lastUpdatedDay, 1),
     };
 };
 
@@ -164,6 +177,19 @@ export function migrateSaveData(savedData) {
                 : migratedData.season.lastChangeTime || Date.now();
         }
 
+        // Version 4 → 5: Add market daily flavor + town reward tracking
+        if (saveVersion < 5) {
+            if (import.meta.env.MODE === 'development') {
+                console.debug('[farm]', 'Migrating save from version 4 to 5 (market daily + town rewards)');
+            }
+            migratedData.market = createDefaultMarketState();
+            migratedData.social = migratedData.social || { friends: [], reputation: 0, marketListings: [] };
+            migratedData.social.claimedRewards = migratedData.social.claimedRewards || [];
+            migratedData.social.unlockedSeeds = migratedData.social.unlockedSeeds || [];
+            migratedData.social.cosmetics = migratedData.social.cosmetics || [];
+            migratedData.social.vendorDiscount = migratedData.social.vendorDiscount || 0;
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, 0);
         migratedData.xp = clampNumber(migratedData.xp, 0, 0);
@@ -206,6 +232,10 @@ export function migrateSaveData(savedData) {
             marketListings: Array.isArray(migratedData.social.marketListings) ? migratedData.social.marketListings : [],
             townTier: migratedData.social.townTier || null,
             unlockedPerks: Array.isArray(migratedData.social.unlockedPerks) ? migratedData.social.unlockedPerks : [],
+            claimedRewards: Array.isArray(migratedData.social.claimedRewards) ? migratedData.social.claimedRewards : [],
+            unlockedSeeds: Array.isArray(migratedData.social.unlockedSeeds) ? migratedData.social.unlockedSeeds : [],
+            cosmetics: Array.isArray(migratedData.social.cosmetics) ? migratedData.social.cosmetics : [],
+            vendorDiscount: clampNumber(migratedData.social.vendorDiscount, 0, 0),
         };
 
         if (!migratedData.dailyQuests || typeof migratedData.dailyQuests !== 'object') {
@@ -221,6 +251,7 @@ export function migrateSaveData(savedData) {
         }
 
         migratedData.automation = normalizeAutomation(migratedData.automation);
+        migratedData.market = normalizeMarket(migratedData.market);
 
         if (!migratedData.season || typeof migratedData.season !== 'object') {
             migratedData.season = {

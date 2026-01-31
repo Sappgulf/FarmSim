@@ -4,7 +4,7 @@ import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { CROP_DATA } from '../../constants/cropData';
-import { CROP_COLLECTION_MILESTONES, getCropLore } from '../../constants/collectionData';
+import { CROP_COLLECTION_MILESTONES, getCollectionRewardLabel, getCropLore } from '../../constants/collectionData';
 
 const CollectionsTab = memo(() => {
   const { state } = useGame();
@@ -105,6 +105,9 @@ const CollectionsTab = memo(() => {
                         </span>
                       </div>
                       <Progress value={progress} className={`h-2 ${achieved ? 'bg-emerald-100' : 'bg-gray-100'}`} />
+                      <div className={`text-[10px] ${achieved ? 'text-emerald-600' : 'text-gray-400'}`}>
+                        {getCollectionRewardLabel(milestone.id)}
+                      </div>
                     </div>
                   );
                 })}

@@ -2,8 +2,9 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback, u
 import { getSoundSystem } from '../systems/SoundSystem';
 import { createXPGranter, recordLevelUp, recordPlayerInteraction } from '../services/XPService';
 import { calculateHarvestValue } from '../constants/cropData';
-import { createDefaultCropCollections, updateCropCollectionProgress } from '../constants/collectionData';
-import { getHarvestReputationGain, getTownRepBonus, getTownTierByRep, getTownTierIndex, TOWN_REP_TIERS } from '../constants/townData';
+import { createDefaultCropCollections, getCollectionBonusMultiplier, updateCropCollectionProgress } from '../constants/collectionData';
+import { createDefaultMarketState, getMarketBonusMultiplier } from '../constants/marketData';
+import { getHarvestReputationGain, getTownRepBonus, getTownTierById, getTownTierByRep, getTownTierIndex, TOWN_REP_TIERS } from '../constants/townData';
 import { DEFAULT_DAY_LENGTH_MS, DEFAULT_DAYS_PER_SEASON } from '../systems/SeasonSystem';
 import { updateQuestProgress } from '../systems/QuestSystem';
 import { SAVE_VERSION, loadSavedState, persistSaveData } from './GamePersistence';
@@ -105,6 +106,9 @@ const GAME_ACTIONS = {
   UPDATE_PROCESSING_FACILITIES: 'UPDATE_PROCESSING_FACILITIES',
   UPDATE_PROCESSING_QUEUE: 'UPDATE_PROCESSING_QUEUE',
   UPDATE_PROCESSED_INVENTORY: 'UPDATE_PROCESSED_INVENTORY',
+
+  // Market
+  UPDATE_MARKET: 'UPDATE_MARKET',
 
   // Save/Load
   LOAD_GAME: 'LOAD_GAME',
@@ -209,9 +213,15 @@ const initialState = {
     marketListings: [],
     townTier: null,
     unlockedPerks: [],
+    claimedRewards: [],
+    unlockedSeeds: [],
+    cosmetics: [],
+    vendorDiscount: 0,
   },
 
   collections: createDefaultCropCollections(),
+
+  market: createDefaultMarketState(),
 
   // Pets system
   pets: [],
@@ -469,6 +479,9 @@ function gameReducer(state, action) {
 
     case GAME_ACTIONS.UPDATE_PROCESSED_INVENTORY:
       return { ...state, processedInventory: action.payload };
+
+    case GAME_ACTIONS.UPDATE_MARKET:
+      return { ...state, market: action.payload };
 
     case GAME_ACTIONS.LOAD_GAME:
       // Merge loaded state with current state, preserving game loop and clearing notifications
@@ -816,6 +829,10 @@ export function GameProvider({ children }) {
       marketListings: [],
       townTier: null,
       unlockedPerks: [],
+      claimedRewards: [],
+      unlockedSeeds: [],
+      cosmetics: [],
+      vendorDiscount: 0,
       ...(stateRef.current?.social || {}),
     });
     const notifyTownTierUnlock = (tier) => {
@@ -849,10 +866,11 @@ export function GameProvider({ children }) {
         });
       }
       newlyUnlocked.forEach((milestone) => {
+        const rewardLabel = milestone.reward?.description ? ` ${milestone.reward.description}` : '';
         dispatch({
           type: GAME_ACTIONS.ADD_NOTIFICATION,
           payload: {
-            message: `📚 ${cropLabel || cropId} collection milestone reached (${milestone.target})!`,
+            message: `📚 ${cropLabel || cropId} milestone reached (${milestone.target})!${rewardLabel}`,
             type: 'success',
           },
         });
@@ -890,6 +908,59 @@ export function GameProvider({ children }) {
       });
       trace('reputation_grant', { amount: safeAmount, source });
       return safeAmount;
+    };
+    const claimTownReward = (tierId) => {
+      const currentSocial = getSocialState();
+      const tier = getTownTierById(tierId);
+      if (!tier || currentSocial.reputation < tier.minRep) return false;
+      if (currentSocial.claimedRewards?.includes(tierId)) return false;
+
+      const reward = tier.reward;
+      const nextSocial = {
+        ...currentSocial,
+        claimedRewards: [...(currentSocial.claimedRewards || []), tierId],
+      };
+
+      if (reward?.type === 'seed' && reward.cropId) {
+        nextSocial.unlockedSeeds = Array.from(new Set([...(currentSocial.unlockedSeeds || []), reward.cropId]));
+      } else if (reward?.type === 'cosmetic') {
+        const cosmeticLabel = reward.label || reward.id;
+        if (cosmeticLabel) {
+          nextSocial.cosmetics = Array.from(new Set([...(currentSocial.cosmetics || []), cosmeticLabel]));
+        }
+      } else if (reward?.type === 'vendor' && reward.discount) {
+        nextSocial.vendorDiscount = Math.max(currentSocial.vendorDiscount || 0, reward.discount);
+      }
+
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_SOCIAL,
+        payload: nextSocial,
+      });
+
+      if (reward?.label) {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: {
+            message: `🎁 Claimed town reward: ${reward.label}!`,
+            type: 'success',
+          },
+        });
+      }
+
+      trace('town_reward_claimed', { tierId, reward: reward?.label });
+      return true;
+    };
+    const handleDayAdvance = (dayInfo) => {
+      const currentSystems = systemsRef.current;
+      const currentState = stateRef.current;
+      currentSystems.weatherSystem?.onDayAdvance?.(dayInfo, currentState);
+      currentSystems.economicSystem?.onDayAdvance?.(dayInfo, currentState);
+      trace('day_advance', {
+        dayCount: dayInfo?.dayCount,
+        dayInSeason: dayInfo?.dayInSeason,
+        season: dayInfo?.season,
+        daysElapsed: dayInfo?.daysElapsed,
+      });
     };
 
     return {
@@ -979,6 +1050,7 @@ export function GameProvider({ children }) {
     updateProcessingFacilities: (facilities) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSING_FACILITIES, payload: facilities }),
     updateProcessingQueue: (queue) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSING_QUEUE, payload: queue }),
     updateProcessedInventory: (inventory) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSED_INVENTORY, payload: inventory }),
+    updateMarket: (market) => dispatch({ type: GAME_ACTIONS.UPDATE_MARKET, payload: market }),
     recordHarvest: (cropId, cropLabel, harvestValue, amount = 1) => {
       const currentCollections = stateRef.current?.collections || createDefaultCropCollections();
       applyCollectionProgress(currentCollections, cropId, cropLabel, amount);
@@ -987,6 +1059,8 @@ export function GameProvider({ children }) {
         grantReputation(repGain, 'harvest');
       }
     },
+    claimTownReward,
+    onDayAdvance: handleDayAdvance,
 
     // UI & Settings
     addNotification: (notification) => {
@@ -1304,7 +1378,13 @@ export function GameProvider({ children }) {
 
       currentState.plots.forEach((plot) => {
         if (plot.state === 'ready' && plot.crop) {
-          const earnings = calculateHarvestValue(plot, currentState.season?.config, townBonus);
+          const collectionBonus = getCollectionBonusMultiplier(currentState.collections, plot.crop.id);
+          const marketBonus = getMarketBonusMultiplier(currentState.market, plot.crop.id);
+          const earnings = calculateHarvestValue(
+            plot,
+            currentState.season?.config,
+            townBonus * collectionBonus * marketBonus
+          );
           totalEarnings += earnings;
           totalXp += Math.floor(earnings * 0.2);
           totalRepGain += getHarvestReputationGain(earnings);

@@ -5,8 +5,9 @@ import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Progress } from '../../ui/progress';
 import { getXpForLevel } from '../constants/progression';
-import { Coins, Star, Trophy, Settings, Save, Play, Pause, ChevronDown, TrendingUp, Calendar } from 'lucide-react';
+import { Coins, Star, Settings, Save, Play, Pause, TrendingUp } from 'lucide-react';
 import { addTrackedEventListener } from '../services/EventListenerService';
+import CozyStatusBar from './CozyStatusBar';
 
 // Animated number counter component
 const AnimatedNumber = memo(({ value, duration = 500 }) => {
@@ -133,30 +134,6 @@ const GameHeader = memo(() => {
     return num.toString();
   };
 
-  const formatBonusPercent = (multiplier) => {
-    const percent = Math.round((multiplier - 1) * 100);
-    if (percent === 0) return '0%';
-    return `${percent > 0 ? '+' : ''}${percent}%`;
-  };
-
-  const cozyWeatherMap = {
-    sunny: { label: 'Clear', emoji: '☀️' },
-    rainy: { label: 'Rain', emoji: '🌧️' },
-    cloudy: { label: 'Cloudy', emoji: '☁️' },
-    stormy: { label: 'Rain', emoji: '🌧️' },
-    snow: { label: 'Cloudy', emoji: '☁️' },
-    windy: { label: 'Cloudy', emoji: '☁️' },
-    drought: { label: 'Heatwave', emoji: '🌤️' },
-    heatwave: { label: 'Heatwave', emoji: '🌤️' },
-    hot: { label: 'Heatwave', emoji: '🌤️' },
-  };
-  const cozyWeather = cozyWeatherMap[state.weather] || { label: state.weather, emoji: '🌤️' };
-  const seasonDayLengthMs = state.season?.dayLengthMs || 30000;
-  const seasonDayStart = state.season?.dayStartTime || state.season?.lastChangeTime || currentTime;
-  const timeUntilNextDay = Math.max(0, seasonDayLengthMs - (currentTime - seasonDayStart));
-  const dayInSeason = state.season?.dayInSeason || 1;
-  const daysPerSeason = state.season?.daysPerSeason || 4;
-
   const getTimeSinceLastSave = () => {
     const lastSavedAt = state.gameLoop?.lastSaveTime;
     if (!lastSavedAt) {
@@ -245,53 +222,8 @@ const GameHeader = memo(() => {
           </div>
         </div>
 
-        {/* Right side - Controls and weather */}
+        {/* Right side - Controls */}
         <div className="flex items-center gap-3">
-          {/* Season display */}
-          {state.season?.config && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white border border-purple-100 rounded-lg shadow-sm hover:shadow-md transition-all group relative cursor-help">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-50/50 to-pink-50/50 rounded-lg opacity-50 group-hover:opacity-100 transition-opacity"></div>
-              <span className="text-lg relative z-10">{state.season.config.emoji}</span>
-              <span className="text-xs font-bold text-purple-900 uppercase tracking-wider relative z-10">
-                {state.season.config.name}
-              </span>
-              <span className="text-[10px] font-semibold text-purple-700 relative z-10">
-                Day {dayInSeason}/{daysPerSeason}
-              </span>
-
-              {/* Tooltip */}
-              <div className="absolute top-full right-0 mt-3 w-56 bg-white/95 backdrop-blur-sm rounded-xl p-3 shadow-xl border border-purple-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 transform translate-y-2 group-hover:translate-y-0">
-                <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
-                  <span className="font-bold text-gray-800">{state.season.config.name}</span>
-                  <span className="text-xs text-gray-500">Season {state.season.current}</span>
-                </div>
-                <p className="text-xs text-gray-600 mb-2 italic">{state.season.config.description}</p>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] text-gray-500">
-                    <span>Market Trend</span>
-                    <span className="font-mono font-bold text-purple-600">{formatBonusPercent(state.season.config.bonuses?.marketPrices || 1.0)}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px] text-gray-500">
-                    <span>Season Day</span>
-                    <span className="font-mono text-gray-800">{dayInSeason}/{daysPerSeason}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px] text-gray-500">
-                    <span>Next Day</span>
-                    <span className="font-mono text-gray-800">{Math.floor(timeUntilNextDay / 1000)}s</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Weather display */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50/50 border border-blue-100 rounded-lg shadow-sm">
-            <span className="text-lg animate-weather filter drop-shadow-sm">
-              {cozyWeather.emoji}
-            </span>
-            <span className="text-xs font-bold text-blue-800 uppercase">{cozyWeather.label}</span>
-          </div>
-
           {/* Stats Toggle */}
           <div className="relative" ref={statsDropdownRef}>
             <Button
@@ -371,6 +303,9 @@ const GameHeader = memo(() => {
             </Button>
           </div>
         </div>
+      </div>
+      <div className="max-w-7xl mx-auto">
+        <CozyStatusBar />
       </div>
     </header>
   );

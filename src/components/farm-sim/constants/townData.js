@@ -4,39 +4,43 @@
 
 export const TOWN_REP_TIERS = [
   {
-    id: 'newcomer',
-    name: 'Newcomer',
+    id: 'neighbor',
+    name: 'Garden Neighbor',
     minRep: 0,
     sellBonus: 1.0,
-    perks: ['Welcome basket from the town market.'],
+    perks: ['Lavender seed license ready to claim.'],
+    reward: {
+      type: 'seed',
+      cropId: 'lavender',
+      label: 'Lavender Seeds',
+      description: 'Unlock the Lavender seed line.',
+    },
   },
   {
-    id: 'neighbor',
-    name: 'Good Neighbor',
-    minRep: 25,
+    id: 'caretaker',
+    name: 'Cozy Caretaker',
+    minRep: 40,
     sellBonus: 1.02,
-    perks: ['+2% crop sale bonus at the market.'],
-  },
-  {
-    id: 'helper',
-    name: 'Town Helper',
-    minRep: 75,
-    sellBonus: 1.04,
-    perks: ['+4% crop sale bonus at the market.', 'Seasonal seed swap invites.'],
+    perks: ['+2% crop sale bonus at the market.', 'Town Banner decor unlocked.'],
+    reward: {
+      type: 'cosmetic',
+      id: 'town_banner',
+      label: 'Town Banner Decor',
+      description: 'Hang a cozy banner near your farm.',
+    },
   },
   {
     id: 'partner',
-    name: 'Local Partner',
-    minRep: 150,
-    sellBonus: 1.06,
-    perks: ['+6% crop sale bonus at the market.', 'Friendly vendor discounts.'],
-  },
-  {
-    id: 'favorite',
-    name: 'Town Favorite',
-    minRep: 300,
-    sellBonus: 1.08,
-    perks: ['+8% crop sale bonus at the market.', 'Festival spotlight perks.'],
+    name: 'Market Partner',
+    minRep: 120,
+    sellBonus: 1.04,
+    perks: ['+4% crop sale bonus at the market.', 'Vendor discount unlocked.'],
+    reward: {
+      type: 'vendor',
+      discount: 0.03,
+      label: 'Vendor Discount',
+      description: 'Enjoy 3% off shop purchases.',
+    },
   },
 ];
 
@@ -58,6 +62,8 @@ export const getNextTownTier = (reputation = 0) => {
   const currentIndex = getTownTierIndex(reputation);
   return TOWN_REP_TIERS[currentIndex + 1] || null;
 };
+
+export const getTownTierById = (tierId) => TOWN_REP_TIERS.find((tier) => tier.id === tierId);
 
 export const getTownRepBonus = (reputation = 0) => {
   const tier = getTownTierByRep(reputation);

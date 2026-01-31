@@ -224,7 +224,7 @@ const WeatherTab = memo(() => {
                   {COZY_WEATHER_LABELS[getCozyWeather(forecast.type)]}
                 </Badge>
                 <div className="text-[10px] text-gray-500 font-mono">
-                  {forecast.duration}s duration
+                  Day +{forecast.dayOffset || index + 1} outlook
                 </div>
               </div>
             ))}

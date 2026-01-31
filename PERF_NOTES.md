@@ -92,3 +92,25 @@
 - Worst frame: Not measured in this environment.
 - Tick time: Not measured in this environment.
 - Render time: Not measured in this environment.
+
+## 2026-02-11 Day Rollover + Cozy HUD Pass
+
+### Baseline Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.
+
+### Improvements Applied
+- Moved weather + market rerolls to a single day rollover event to avoid per-tick churn.
+- Added a Cozy Status Bar that updates via cached DOM refs + dirty checks to limit HUD churn.
+- Updated daily forecast + market boards to refresh on day advances only.
+
+### After Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.
+
+### Biggest Bottleneck Removed
+- Eliminated timed weather/market reroll intervals in favor of the day rollover backbone.

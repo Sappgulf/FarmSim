@@ -34,6 +34,20 @@
   - **Why:** deliver the Cozy Sim progression layer while keeping existing systems intact and performant.
   - **Verification:** `npm run smoke-test` (warned: Unknown env config "http-proxy"; ReactDOMTestUtils.act deprecation warning).
 
+## 2026-02-11
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** audit cozy systems and docs, add a single day rollover backbone, integrate a cozy status bar HUD, tighten town rep tiers + rewards, tune collections with subtle bonuses, add daily market flavor, polish tabs/UI, and run a targeted performance pass with updated documentation.
+  - **Why:** align Path B Cozy Sim milestones around one day-driven cadence without duplicating existing systems.
+  - **Verification:** `npm run smoke-test` (warned: Unknown env config "http-proxy"; ReactDOMTestUtils.act deprecation warning).
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** centralized day rollover events to drive daily weather + market updates, added a cozy status bar with season/weather/rep/collections, tightened town rep tiers with claimable rewards + vendor perks, added collections sell-bonus milestones, introduced a daily market board, and updated docs/perf notes.
+  - **Why:** deliver the cohesive Cozy Sim milestone without duplicate systems and reduce per-tick churn.
+  - **Verification:** `npm run smoke-test` (warned: Unknown env config "http-proxy"; ReactDOMTestUtils.act deprecation warning).
+
 ## 2026-02-08
 
 - **Planned**

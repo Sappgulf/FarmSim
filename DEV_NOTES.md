@@ -31,21 +31,26 @@
 ## Feature Inventory
 | Feature | Status | Location | Notes / Gaps |
 | --- | --- | --- | --- |
+| Day rollover backbone | Implemented | `SeasonSystem.js`, `GameContext.jsx` | Single day advance event triggers weather + market refreshes. |
+| Seasons | ALREADY IMPLEMENTED (polished) | `SeasonSystem.js`, `GameHeader.jsx`, `CozyStatusBar.jsx` | Day-in-season shown in cozy status bar. |
+| Weather | ALREADY IMPLEMENTED (polished) | `WeatherSystem.js`, `WeatherTab.jsx`, `CozyStatusBar.jsx` | Changes only on day rollover + daily outlook forecast. |
+| Town reputation | Implemented | `SocialTab.jsx`, `GameContext.jsx`, `constants/townData.js` | 3 tiers with claimable rewards and vendor perk. |
+| Collections / encyclopedia | Implemented | `CollectionsTab.jsx`, `constants/collectionData.js`, `GameContext.jsx` | Milestones + subtle sell bonuses per crop. |
+| Market daily changes | Implemented | `EconomicSystem.js`, `constants/marketData.js`, `ShopTab.jsx` | Daily featured crop + market mood. |
+| HUD/top bar | Implemented | `GameHeader.jsx`, `CozyStatusBar.jsx` | Compact status bar with season/weather/rep/collections. |
+| Tab system rendering | ALREADY IMPLEMENTED | `GameSidebar.jsx`, `NavBar.jsx`, `TabWrapper.jsx` | Tab cache + keyboard/focus handling. |
+| Performance instrumentation | ALREADY IMPLEMENTED | `DebugService.js`, `PerformanceOverlay.jsx`, `FPSCounter.jsx` | Debug-gated overlay + metrics counters. |
+| Save versioning/migrations | ALREADY IMPLEMENTED (updated) | `GamePersistence.js` | v5 migration with market + town rewards. |
 | Core farming loop | Implemented | `FarmingSystem.js`, `FarmGrid.jsx` | Stable growth/harvest loop with water + fertility. |
 | Daily quests | Implemented | `QuestSystem.js`, `DailyQuestsTab.jsx` | Streak bonus and claim flow. |
-| Weekly contracts | Implemented | `QuestSystem.js`, `DailyQuestsTab.jsx` | New weekly cadence (Mon reset). |
+| Weekly contracts | Implemented | `QuestSystem.js`, `DailyQuestsTab.jsx` | Weekly cadence (Mon reset). |
 | Upgrade system | Partial | `ShopTab.jsx`, `ResearchTab.jsx`, `buildingData.js` | Shop + research upgrades exist; building upgrade UI is limited. |
 | Automation (earned) | Implemented | `FarmingSystem.js`, `ShopTab.jsx`, `buildingData.js` | Sprinkler tool + well auto-watering. |
 | Data-driven crops | Implemented | `constants/cropData.js` | New crops via config. |
 | Data-driven buildings | Implemented | `constants/buildingData.js` | Levels and effects in config. |
 | Data-driven quests | Implemented | `constants/questData.js` | Daily/weekly templates in config. |
-| Save versioning/migration | Implemented | `GamePersistence.js` | Handles version upgrades. |
 | Save validation + backup | Implemented | `GamePersistence.js` | Backup slot + fallback on load. |
 | Notifications/toasts | Implemented | `NotificationSystem.jsx` | Capped, auto-dismiss, close guards. |
-| Seasons (4-season cycle) | Implemented | `SeasonSystem.js`, `GameHeader.jsx` | ALREADY IMPLEMENTED; day-in-season tracking added for cozy cadence. |
-| Weather system | Implemented | `WeatherSystem.js`, `WeatherTab.jsx` | ALREADY IMPLEMENTED; cozy weather layer added with positive effects. |
-| Town reputation | Implemented | `SocialTab.jsx`, `GameContext.jsx`, `constants/townData.js` | Lightweight rep meter + tier perks; gains via harvests + contracts. |
-| Collections / encyclopedia | Implemented | `CollectionsTab.jsx`, `constants/collectionData.js`, `FarmingSystem.js` | Track crop discoveries + harvest milestones. |
 | Livestock system | Implemented | `LivestockSystem.js`, `LivestockTab.jsx` | Production loops. |
 | Fishing system | Implemented | `FishingSystem.js`, `FishingTab.jsx` | Minigame + upgrades. |
 
