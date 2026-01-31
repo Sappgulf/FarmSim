@@ -47,7 +47,7 @@ export const NAV_SECTIONS = {
         id: 'more',
         label: 'More',
         emoji: '⚙️',
-        tabs: ['settings', 'achievements', 'quests', 'analytics', 'weather', 'events', 'social', 'mystery', 'diseases'],
+        tabs: ['settings', 'achievements', 'collections', 'quests', 'analytics', 'weather', 'events', 'social', 'mystery', 'diseases'],
         description: 'Settings and extras'
     }
 };
@@ -67,6 +67,7 @@ export const TAB_INFO = {
     fishing: { label: 'Fishing', emoji: '🎣' },
     settings: { label: 'Settings', emoji: '⚙️' },
     achievements: { label: 'Achievements', emoji: '🏆' },
+    collections: { label: 'Collections', emoji: '📚' },
     quests: { label: 'Quests', emoji: '📋' },
     analytics: { label: 'Analytics', emoji: '📊' },
     weather: { label: 'Weather', emoji: '🌤️' },

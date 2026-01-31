@@ -2,6 +2,9 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback, u
 import { getSoundSystem } from '../systems/SoundSystem';
 import { createXPGranter, recordLevelUp, recordPlayerInteraction } from '../services/XPService';
 import { calculateHarvestValue } from '../constants/cropData';
+import { createDefaultCropCollections, updateCropCollectionProgress } from '../constants/collectionData';
+import { getHarvestReputationGain, getTownRepBonus, getTownTierByRep, getTownTierIndex, TOWN_REP_TIERS } from '../constants/townData';
+import { DEFAULT_DAY_LENGTH_MS, DEFAULT_DAYS_PER_SEASON } from '../systems/SeasonSystem';
 import { updateQuestProgress } from '../systems/QuestSystem';
 import { SAVE_VERSION, loadSavedState, persistSaveData } from './GamePersistence';
 import { addTrackedEventListener } from '../services/EventListenerService';
@@ -46,6 +49,9 @@ const GAME_ACTIONS = {
 
   // Achievements
   UPDATE_ACHIEVEMENTS: 'UPDATE_ACHIEVEMENTS',
+
+  // Collections
+  UPDATE_COLLECTIONS: 'UPDATE_COLLECTIONS',
 
   // Seasonal events
   SET_SEASONAL_EVENTS: 'SET_SEASONAL_EVENTS',
@@ -167,6 +173,11 @@ const initialState = {
   season: {
     current: 'spring',
     lastChangeTime: Date.now(),
+    dayInSeason: 1,
+    dayCount: 1,
+    dayLengthMs: DEFAULT_DAY_LENGTH_MS,
+    daysPerSeason: DEFAULT_DAYS_PER_SEASON,
+    dayStartTime: Date.now(),
     config: null
   },
 
@@ -196,7 +207,11 @@ const initialState = {
     friends: [],
     reputation: 0,
     marketListings: [],
+    townTier: null,
+    unlockedPerks: [],
   },
+
+  collections: createDefaultCropCollections(),
 
   // Pets system
   pets: [],
@@ -356,6 +371,9 @@ function gameReducer(state, action) {
 
     case GAME_ACTIONS.UPDATE_ACHIEVEMENTS:
       return { ...state, achievements: action.payload };
+
+    case GAME_ACTIONS.UPDATE_COLLECTIONS:
+      return { ...state, collections: typeof action.payload === 'function' ? action.payload(state.collections) : action.payload };
 
     case GAME_ACTIONS.SET_SEASONAL_EVENTS:
       return { ...state, seasonalEvents: action.payload };
@@ -792,6 +810,87 @@ export function GameProvider({ children }) {
     const isValidPlotIndex = (plots, index) => (
       Number.isInteger(index) && index >= 0 && index < plots.length
     );
+    const getSocialState = () => ({
+      friends: [],
+      reputation: 0,
+      marketListings: [],
+      townTier: null,
+      unlockedPerks: [],
+      ...(stateRef.current?.social || {}),
+    });
+    const notifyTownTierUnlock = (tier) => {
+      if (!tier) return;
+      dispatch({
+        type: GAME_ACTIONS.ADD_NOTIFICATION,
+        payload: {
+          message: `🌟 Town Rep Up! You are now a ${tier.name}.`,
+          type: 'success',
+        },
+      });
+    };
+    const applyCollectionProgress = (currentCollections, cropId, cropLabel, amount) => {
+      const wasDiscovered = Boolean(currentCollections?.crops?.[cropId]?.discovered);
+      const { collections: nextCollections, newlyUnlocked } = updateCropCollectionProgress(
+        currentCollections,
+        cropId,
+        amount
+      );
+      if (nextCollections !== currentCollections) {
+        dispatch({ type: GAME_ACTIONS.UPDATE_COLLECTIONS, payload: nextCollections });
+      }
+      const isDiscovered = Boolean(nextCollections?.crops?.[cropId]?.discovered);
+      if (!wasDiscovered && isDiscovered) {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: {
+            message: `📖 New crop discovered: ${cropLabel || cropId}!`,
+            type: 'success',
+          },
+        });
+      }
+      newlyUnlocked.forEach((milestone) => {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: {
+            message: `📚 ${cropLabel || cropId} collection milestone reached (${milestone.target})!`,
+            type: 'success',
+          },
+        });
+      });
+      return nextCollections;
+    };
+    const grantReputation = (amount = 0, source = 'general') => {
+      const safeAmount = Number.isFinite(amount) ? Math.max(0, amount) : 0;
+      if (safeAmount <= 0) return 0;
+      const currentSocial = getSocialState();
+      const nextReputation = currentSocial.reputation + safeAmount;
+      const currentTierIndex = getTownTierIndex(currentSocial.reputation);
+      const nextTierIndex = getTownTierIndex(nextReputation);
+      const nextTier = getTownTierByRep(nextReputation);
+
+      const unlockedPerks = [...currentSocial.unlockedPerks];
+      if (nextTierIndex > currentTierIndex) {
+        for (let i = currentTierIndex + 1; i <= nextTierIndex; i += 1) {
+          const tier = TOWN_REP_TIERS[i];
+          if (tier?.id && !unlockedPerks.includes(tier.id)) {
+            unlockedPerks.push(tier.id);
+            notifyTownTierUnlock(tier);
+          }
+        }
+      }
+
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_SOCIAL,
+        payload: {
+          ...currentSocial,
+          reputation: nextReputation,
+          townTier: nextTier?.id || currentSocial.townTier,
+          unlockedPerks,
+        },
+      });
+      trace('reputation_grant', { amount: safeAmount, source });
+      return safeAmount;
+    };
 
     return {
     // Core property setters
@@ -860,6 +959,7 @@ export function GameProvider({ children }) {
     updateLivestock: (livestock) => dispatch({ type: GAME_ACTIONS.UPDATE_LIVESTOCK, payload: livestock }),
     updateFishing: (fishing) => dispatch({ type: GAME_ACTIONS.UPDATE_FISHING, payload: fishing }),
     updateAchievements: (achievements) => dispatch({ type: GAME_ACTIONS.UPDATE_ACHIEVEMENTS, payload: achievements }),
+    updateCollections: (collections) => dispatch({ type: GAME_ACTIONS.UPDATE_COLLECTIONS, payload: collections }),
     setSeasonalEvents: (events) => dispatch({ type: GAME_ACTIONS.SET_SEASONAL_EVENTS, payload: events }),
     updateActiveEvents: (events) => dispatch({ type: GAME_ACTIONS.UPDATE_ACTIVE_EVENTS, payload: events }),
     setDailyChallenges: (challenges) => dispatch({ type: GAME_ACTIONS.SET_DAILY_CHALLENGES, payload: challenges }),
@@ -874,10 +974,19 @@ export function GameProvider({ children }) {
     updateResearch: (research) => dispatch({ type: GAME_ACTIONS.UPDATE_RESEARCH, payload: research }),
     updateGenetics: (genetics) => dispatch({ type: GAME_ACTIONS.UPDATE_GENETICS, payload: genetics }),
     updateSocial: (social) => dispatch({ type: GAME_ACTIONS.UPDATE_SOCIAL, payload: social }),
+    grantReputation,
     updatePets: (pets) => dispatch({ type: GAME_ACTIONS.UPDATE_PETS, payload: pets }),
     updateProcessingFacilities: (facilities) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSING_FACILITIES, payload: facilities }),
     updateProcessingQueue: (queue) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSING_QUEUE, payload: queue }),
     updateProcessedInventory: (inventory) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSED_INVENTORY, payload: inventory }),
+    recordHarvest: (cropId, cropLabel, harvestValue, amount = 1) => {
+      const currentCollections = stateRef.current?.collections || createDefaultCropCollections();
+      applyCollectionProgress(currentCollections, cropId, cropLabel, amount);
+      const repGain = getHarvestReputationGain(harvestValue);
+      if (repGain > 0) {
+        grantReputation(repGain, 'harvest');
+      }
+    },
 
     // UI & Settings
     addNotification: (notification) => {
@@ -1183,6 +1292,50 @@ export function GameProvider({ children }) {
       }
     },
     harvestAllReadyCrops: () => {
+      const currentState = stateRef.current;
+      if (!currentState?.plots?.length) return;
+
+      const townBonus = getTownRepBonus(currentState.social?.reputation);
+      const inventoryUpdates = {};
+      let totalEarnings = 0;
+      let totalXp = 0;
+      let totalRepGain = 0;
+      let updatedCollections = currentState.collections || createDefaultCropCollections();
+
+      currentState.plots.forEach((plot) => {
+        if (plot.state === 'ready' && plot.crop) {
+          const earnings = calculateHarvestValue(plot, currentState.season?.config, townBonus);
+          totalEarnings += earnings;
+          totalXp += Math.floor(earnings * 0.2);
+          totalRepGain += getHarvestReputationGain(earnings);
+          inventoryUpdates[plot.crop.id] = (inventoryUpdates[plot.crop.id] || 0) + 1;
+        }
+      });
+
+      Object.entries(inventoryUpdates).forEach(([cropId, amount]) => {
+        const cropName = currentState.plots.find(plot => plot?.crop?.id === cropId)?.crop?.name;
+        updatedCollections = applyCollectionProgress(updatedCollections, cropId, cropName, amount);
+      });
+
+      const harvestedCount = Object.values(inventoryUpdates).reduce((sum, count) => sum + count, 0);
+      if (harvestedCount === 0) return;
+
+      if (harvestedCount > 0) {
+        updateContractProgress('harvest', {
+          amount: harvestedCount,
+          weather: currentState.weather,
+        });
+      }
+      if (totalEarnings > 0) {
+        updateContractProgress('earn_coins', { amount: totalEarnings });
+      }
+      if (totalXp > 0) {
+        updateContractProgress('gain_xp', { amount: totalXp });
+      }
+      if (totalRepGain > 0) {
+        grantReputation(totalRepGain, 'bulk_harvest');
+      }
+
       // Delegate to harvestAllReadyCrops logic (similar to 45febc0 but preserving earnings calculation)
       dispatch({
         type: GAME_ACTIONS.UPDATE_PLOTS, payload: (currentState) => {
@@ -1205,38 +1358,6 @@ export function GameProvider({ children }) {
           });
 
           // Calculate totals from ready crops before resetting
-          let totalEarnings = 0;
-          let totalXp = 0;
-          const inventoryUpdates = {};
-
-          currentState.plots.forEach(plot => {
-            if (plot.state === 'ready' && plot.crop) {
-              const earnings = calculateHarvestValue(plot, currentState.season?.config);
-
-              totalEarnings += earnings;
-              // REBALANCED: Reduced XP to 20% of earnings (was 50%)
-              totalXp += Math.floor(earnings * 0.2);
-
-              // Track inventory updates
-              const cropId = plot.crop.id;
-              inventoryUpdates[cropId] = (inventoryUpdates[cropId] || 0) + 1;
-            }
-          });
-
-          const harvestedCount = Object.values(inventoryUpdates).reduce((sum, count) => sum + count, 0);
-          if (harvestedCount > 0) {
-            updateContractProgress('harvest', {
-              amount: harvestedCount,
-              weather: currentState.weather,
-            });
-          }
-          if (totalEarnings > 0) {
-            updateContractProgress('earn_coins', { amount: totalEarnings });
-          }
-          if (totalXp > 0) {
-            updateContractProgress('gain_xp', { amount: totalXp });
-          }
-
           // Apply all updates after a delay to ensure state consistency
           setTimeout(() => {
             if (totalEarnings > 0) {

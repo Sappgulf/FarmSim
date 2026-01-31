@@ -68,6 +68,11 @@ _Note: Statuses below are based on static review and code-level validation. Full
 - **Status:** Needs follow-up
 - **Files:** `src/components/farm-sim/ui/tabs/AchievementsTab.jsx`
 
+## 📚 Collections
+- **Key actions:** view discovered crops, track milestones, review lore.
+- **Status:** Needs follow-up
+- **Files:** `src/components/farm-sim/ui/tabs/CollectionsTab.jsx`
+
 ## 👥 Social
 - **Key actions:** view friends/leaderboard, review reputation.
 - **Status:** Needs follow-up

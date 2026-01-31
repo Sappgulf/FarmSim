@@ -3,8 +3,10 @@
  */
 
 import { XP_PER_LEVEL_BASE } from '../constants/progression';
+import { createDefaultCropCollections, normalizeCollectionsState } from '../constants/collectionData';
+import { DEFAULT_DAY_LENGTH_MS, DEFAULT_DAYS_PER_SEASON, SEASONS, SEASON_CONFIG } from '../systems/SeasonSystem';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const SAVE_BACKUP_KEY = `${SAVE_KEY}_backup`;
 
@@ -135,6 +137,33 @@ export function migrateSaveData(savedData) {
             migratedData.automation = migratedData.automation || { lastAutoWaterAt: 0 };
         }
 
+        // Version 3 → 4: Add collections + town reputation metadata + season day tracking
+        if (saveVersion < 4) {
+            if (import.meta.env.MODE === 'development') {
+                console.debug('[farm]', 'Migrating save from version 3 to 4 (collections + town rep + season days)');
+            }
+            migratedData.collections = migratedData.collections || createDefaultCropCollections();
+            migratedData.social = migratedData.social || { friends: [], reputation: 0, marketListings: [] };
+            migratedData.social.townTier = migratedData.social.townTier || null;
+            migratedData.social.unlockedPerks = migratedData.social.unlockedPerks || [];
+            migratedData.season = migratedData.season || {
+                current: SEASONS.SPRING,
+                lastChangeTime: Date.now(),
+                config: SEASON_CONFIG[SEASONS.SPRING],
+            };
+            migratedData.season.dayLengthMs = migratedData.season.dayLengthMs || DEFAULT_DAY_LENGTH_MS;
+            migratedData.season.daysPerSeason = migratedData.season.daysPerSeason || DEFAULT_DAYS_PER_SEASON;
+            migratedData.season.dayInSeason = Number.isFinite(migratedData.season.dayInSeason)
+                ? migratedData.season.dayInSeason
+                : 1;
+            migratedData.season.dayCount = Number.isFinite(migratedData.season.dayCount)
+                ? migratedData.season.dayCount
+                : 1;
+            migratedData.season.dayStartTime = typeof migratedData.season.dayStartTime === 'number'
+                ? migratedData.season.dayStartTime
+                : migratedData.season.lastChangeTime || Date.now();
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, 0);
         migratedData.xp = clampNumber(migratedData.xp, 0, 0);
@@ -166,6 +195,19 @@ export function migrateSaveData(savedData) {
             migratedData.achievements = [];
         }
 
+        migratedData.collections = normalizeCollectionsState(migratedData.collections);
+
+        if (!migratedData.social || typeof migratedData.social !== 'object') {
+            migratedData.social = { friends: [], reputation: 0, marketListings: [] };
+        }
+        migratedData.social = {
+            friends: Array.isArray(migratedData.social.friends) ? migratedData.social.friends : [],
+            reputation: clampNumber(migratedData.social.reputation, 0, 0),
+            marketListings: Array.isArray(migratedData.social.marketListings) ? migratedData.social.marketListings : [],
+            townTier: migratedData.social.townTier || null,
+            unlockedPerks: Array.isArray(migratedData.social.unlockedPerks) ? migratedData.social.unlockedPerks : [],
+        };
+
         if (!migratedData.dailyQuests || typeof migratedData.dailyQuests !== 'object') {
             migratedData.dailyQuests = null;
         } else {
@@ -179,6 +221,25 @@ export function migrateSaveData(savedData) {
         }
 
         migratedData.automation = normalizeAutomation(migratedData.automation);
+
+        if (!migratedData.season || typeof migratedData.season !== 'object') {
+            migratedData.season = {
+                current: SEASONS.SPRING,
+                lastChangeTime: Date.now(),
+                config: SEASON_CONFIG[SEASONS.SPRING],
+            };
+        }
+        migratedData.season = {
+            ...migratedData.season,
+            current: migratedData.season.current || SEASONS.SPRING,
+            lastChangeTime: clampNumber(migratedData.season.lastChangeTime, Date.now(), 0),
+            config: migratedData.season.config || SEASON_CONFIG[migratedData.season.current || SEASONS.SPRING],
+            dayLengthMs: clampNumber(migratedData.season.dayLengthMs, DEFAULT_DAY_LENGTH_MS, 5000),
+            daysPerSeason: clampNumber(migratedData.season.daysPerSeason, DEFAULT_DAYS_PER_SEASON, 1),
+            dayInSeason: clampNumber(migratedData.season.dayInSeason, 1, 1),
+            dayCount: clampNumber(migratedData.season.dayCount, 1, 1),
+            dayStartTime: clampNumber(migratedData.season.dayStartTime, migratedData.season.lastChangeTime || Date.now(), 0),
+        };
 
         // Ensure livestock structure exists
         if (!migratedData.livestock || typeof migratedData.livestock !== 'object') {

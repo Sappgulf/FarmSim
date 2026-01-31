@@ -1,38 +1,39 @@
 # FarmSim Roadmap
 
 ## Scope Summary
-This roadmap focuses on retention loops and stability without duplicating existing systems.
+This roadmap focuses on the Path B "Cozy Sim" direction while preserving existing gameplay systems.
 
-### Upgraded (Existing Systems)
-- **Daily Quests → Daily + Weekly Contracts**
-  - Added weekly cadence alongside existing daily quests.
-- **Save System → Hardened Persistence**
-  - Added backup save slot, stricter validation, and migration to version 3.
-- **Automation → Earned Auto-Watering**
-  - Sprinkler tool and well upgrades now enable auto-watering.
+### Polished (Existing Systems)
+- **Seasons (already implemented)**
+  - Add day-in-season tracking, UI clarity, and configurable day length.
+- **Weather (already implemented)**
+  - Cozy weather layer with positive/neutral effects and clearer UI.
+- **Town Reputation (partial)**
+  - Tie rep gains to harvests + contracts, add tiered perks, and surface in UI.
 
 ### Newly Added
-- **Data-driven weekly contract templates** (`constants/questData.js`).
+- **Collections / Encyclopedia**
+  - Track crop discoveries + harvest milestones with a new Collections tab.
 
 ## Order of Operations (Stability-First)
 1. **Audit & Docs**
-   - Capture current systems and avoid duplication.
-2. **Contracts/Quests**
-   - Add weekly cadence + UI panel.
-3. **Automation**
-   - Implement auto-watering tied to earned tools/buildings.
-4. **Data-driven Content**
-   - Centralize quest templates in config.
-5. **Save Hardening**
-   - Add backup slot and validation logic.
+   - Capture current systems, mark already-implemented features, and avoid duplication.
+2. **Seasons → Weather**
+   - Add day-in-season tracking and cozy weather UI layer.
+3. **Town Reputation**
+   - Connect rep gains and surface perks in the Social/Town UI.
+4. **Collections**
+   - New encyclopedia tab with milestones and lore.
+5. **UI/Perf**
+   - Apply consistency polish and reduce hot-path work.
 
 ## Risks & Mitigation
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
 | Save migration errors | Lost progress | Versioned migrations + backup restore on load. |
-| Balance swing from automation | Faster growth | Limit interval + cap number of auto-watered plots. |
-| Quest fatigue | Reduced retention | Weekly contracts provide longer-term goals. |
-| UI clutter | Poor UX | Keep weekly contracts in existing tab with clear separation. |
+| Rep bonus balance | Inflated economy | Keep bonuses small (≤8%) and gate by tiers. |
+| UI clutter | Poor UX | Use light cards and concise sections; no new heavy panels. |
+| Collection overhead | Performance | Update collections only on harvest actions. |
 
 ## Next Targets (Future Pass)
 - **Upgrade depth**: expose building level upgrades in the Buildings tab UI.

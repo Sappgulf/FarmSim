@@ -139,6 +139,24 @@ const GameHeader = memo(() => {
     return `${percent > 0 ? '+' : ''}${percent}%`;
   };
 
+  const cozyWeatherMap = {
+    sunny: { label: 'Clear', emoji: '☀️' },
+    rainy: { label: 'Rain', emoji: '🌧️' },
+    cloudy: { label: 'Cloudy', emoji: '☁️' },
+    stormy: { label: 'Rain', emoji: '🌧️' },
+    snow: { label: 'Cloudy', emoji: '☁️' },
+    windy: { label: 'Cloudy', emoji: '☁️' },
+    drought: { label: 'Heatwave', emoji: '🌤️' },
+    heatwave: { label: 'Heatwave', emoji: '🌤️' },
+    hot: { label: 'Heatwave', emoji: '🌤️' },
+  };
+  const cozyWeather = cozyWeatherMap[state.weather] || { label: state.weather, emoji: '🌤️' };
+  const seasonDayLengthMs = state.season?.dayLengthMs || 30000;
+  const seasonDayStart = state.season?.dayStartTime || state.season?.lastChangeTime || currentTime;
+  const timeUntilNextDay = Math.max(0, seasonDayLengthMs - (currentTime - seasonDayStart));
+  const dayInSeason = state.season?.dayInSeason || 1;
+  const daysPerSeason = state.season?.daysPerSeason || 4;
+
   const getTimeSinceLastSave = () => {
     const lastSavedAt = state.gameLoop?.lastSaveTime;
     if (!lastSavedAt) {
@@ -237,6 +255,9 @@ const GameHeader = memo(() => {
               <span className="text-xs font-bold text-purple-900 uppercase tracking-wider relative z-10">
                 {state.season.config.name}
               </span>
+              <span className="text-[10px] font-semibold text-purple-700 relative z-10">
+                Day {dayInSeason}/{daysPerSeason}
+              </span>
 
               {/* Tooltip */}
               <div className="absolute top-full right-0 mt-3 w-56 bg-white/95 backdrop-blur-sm rounded-xl p-3 shadow-xl border border-purple-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 transform translate-y-2 group-hover:translate-y-0">
@@ -251,8 +272,12 @@ const GameHeader = memo(() => {
                     <span className="font-mono font-bold text-purple-600">{formatBonusPercent(state.season.config.bonuses?.marketPrices || 1.0)}</span>
                   </div>
                   <div className="flex justify-between text-[10px] text-gray-500">
-                    <span>Next Season</span>
-                    <span className="font-mono text-gray-800">{Math.floor((120000 - (Date.now() - state.season.lastChangeTime)) / 1000)}s</span>
+                    <span>Season Day</span>
+                    <span className="font-mono text-gray-800">{dayInSeason}/{daysPerSeason}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-gray-500">
+                    <span>Next Day</span>
+                    <span className="font-mono text-gray-800">{Math.floor(timeUntilNextDay / 1000)}s</span>
                   </div>
                 </div>
               </div>
@@ -262,12 +287,9 @@ const GameHeader = memo(() => {
           {/* Weather display */}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50/50 border border-blue-100 rounded-lg shadow-sm">
             <span className="text-lg animate-weather filter drop-shadow-sm">
-              {state.weather === 'sunny' ? '☀️' :
-                state.weather === 'rainy' ? '🌧️' :
-                  state.weather === 'stormy' ? '⛈️' :
-                    state.weather === 'snowy' || state.weather === 'snow' ? '❄️' : '☀️'}
+              {cozyWeather.emoji}
             </span>
-            <span className="text-xs font-bold text-blue-800 uppercase">{state.weather}</span>
+            <span className="text-xs font-bold text-blue-800 uppercase">{cozyWeather.label}</span>
           </div>
 
           {/* Stats Toggle */}

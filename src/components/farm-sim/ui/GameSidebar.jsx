@@ -24,6 +24,7 @@ const FishingTab = lazyWithPreload(() => import('./tabs/FishingTab'));
 const EventsTab = lazyWithPreload(() => import('./tabs/EventsTab'));
 const ProcessingTab = lazyWithPreload(() => import('./tabs/ProcessingTab'));
 const AchievementsTab = lazyWithPreload(() => import('./tabs/AchievementsTab'));
+const CollectionsTab = lazyWithPreload(() => import('./tabs/CollectionsTab'));
 const SocialTab = lazyWithPreload(() => import('./tabs/SocialTab'));
 const AnalyticsTab = lazyWithPreload(() => import('./tabs/AnalyticsTab'));
 const MysteryShopTab = lazyWithPreload(() => import('./tabs/MysteryShopTab'));
@@ -82,6 +83,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
     { id: 'events', label: '🎉 Events', component: EventsTab },
     { id: 'processing', label: '🏭 Processing', component: ProcessingTab },
     { id: 'achievements', label: '🏆 Achievements', component: AchievementsTab },
+    { id: 'collections', label: '📚 Collections', component: CollectionsTab },
     { id: 'social', label: '👥 Social', component: SocialTab },
     { id: 'analytics', label: '📊 Analytics', component: AnalyticsTab },
     { id: 'mystery', label: '🎰 Mystery', component: MysteryShopTab },

@@ -42,7 +42,10 @@
 | Save versioning/migration | Implemented | `GamePersistence.js` | Handles version upgrades. |
 | Save validation + backup | Implemented | `GamePersistence.js` | Backup slot + fallback on load. |
 | Notifications/toasts | Implemented | `NotificationSystem.jsx` | Capped, auto-dismiss, close guards. |
-| Weather & seasons | Implemented | `WeatherSystem.js`, `SeasonSystem` (config in context) | Visual effects and growth modifiers. |
+| Seasons (4-season cycle) | Implemented | `SeasonSystem.js`, `GameHeader.jsx` | ALREADY IMPLEMENTED; day-in-season tracking added for cozy cadence. |
+| Weather system | Implemented | `WeatherSystem.js`, `WeatherTab.jsx` | ALREADY IMPLEMENTED; cozy weather layer added with positive effects. |
+| Town reputation | Implemented | `SocialTab.jsx`, `GameContext.jsx`, `constants/townData.js` | Lightweight rep meter + tier perks; gains via harvests + contracts. |
+| Collections / encyclopedia | Implemented | `CollectionsTab.jsx`, `constants/collectionData.js`, `FarmingSystem.js` | Track crop discoveries + harvest milestones. |
 | Livestock system | Implemented | `LivestockSystem.js`, `LivestockTab.jsx` | Production loops. |
 | Fishing system | Implemented | `FishingSystem.js`, `FishingTab.jsx` | Minigame + upgrades. |
 

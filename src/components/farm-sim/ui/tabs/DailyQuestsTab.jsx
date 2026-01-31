@@ -86,6 +86,8 @@ const DailyQuestsTab = memo(() => {
     // Grant reward
     actions.setCoins(state.coins + reward);
     actions.grantXP(Math.floor(reward * 0.5), 'quest_complete', { questId, reward });
+    const repGain = isDaily ? 2 : 5;
+    actions.grantReputation?.(repGain, isDaily ? 'daily_quest' : 'weekly_contract');
 
     // Mark as claimed
     const updatedQuests = activeQuests.map(q =>
@@ -117,7 +119,7 @@ const DailyQuestsTab = memo(() => {
     }
 
     actions.addNotification({
-      message: `🎉 ${isDaily ? 'Quest' : 'Contract'} Complete! +${reward}🪙 ${bonusMultiplier > 1 ? `(${Math.round((bonusMultiplier - 1) * 100)}% streak bonus!)` : ''}`,
+      message: `🎉 ${isDaily ? 'Quest' : 'Contract'} Complete! +${reward}🪙 +${repGain}⭐ ${bonusMultiplier > 1 ? `(${Math.round((bonusMultiplier - 1) * 100)}% streak bonus!)` : ''}`,
       type: 'success',
     });
   };

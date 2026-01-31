@@ -23,10 +23,30 @@ Grow a thriving farm by planting crops, harvesting for profit, and investing in 
 - **Harvest**: Harvest within the window to avoid withering.
 - **Soil Fertility**: Repeated harvesting reduces fertility (fertilize to recover).
 
+## Seasons (Cozy Cycle)
+- **Four seasons** rotate on a gentle day-based cadence.
+- Each season adds small bonuses to growth and prices.
+- **Season day** is shown in the header so you can plan harvest timing.
+
 ## Contracts & Quests
 - **Daily Quests**: Refresh every midnight. Completing all daily quests increases your streak, boosting rewards.
 - **Weekly Contracts**: Refresh every Monday. Larger goals and bigger rewards.
 - **Claim Rewards**: Completed objectives must be claimed in the Quests tab.
+
+## Weather (Cozy Forecast)
+- Weather stays positive or neutral: **Clear**, **Rain**, **Cloudy**, **Heatwave**.
+- Rain helps with watering, cloudy days are gentle, and heatwaves only add mild thirst.
+- Forecasts update throughout the day and appear in the Weather tab.
+
+## Town Reputation
+- **Town Rep** increases from harvesting and completing contracts.
+- Higher rep unlocks small market perks and town flavor bonuses.
+- Track your tier and next reward in the Social (Town) tab.
+
+## Collections / Encyclopedia
+- The **Collections** tab tracks every crop you discover.
+- Milestones: **First Harvest**, **50 Harvests**, **200 Harvests** per crop.
+- Use it as a cozy completion checklist and lore book.
 
 ## Upgrades & Progression
 - **Shop Upgrades**: Permanent tools like watering cans and sprinklers.

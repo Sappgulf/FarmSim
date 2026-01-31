@@ -20,6 +20,20 @@
   - **Why:** speed up tab switching, improve accessibility, and reduce redundant DOM work.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-02-10
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** audit cozy-sim systems already present, then polish seasons/weather, add town reputation and crop collections, refine UI consistency, and run a focused performance pass with save/version updates.
+  - **Why:** align the FarmSim experience with the Path B Cozy Sim direction without duplicating existing systems.
+  - **Verification:** `npm run smoke-test` (warned: Unknown env config "http-proxy"; ReactDOMTestUtils.act deprecation warning).
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** added day-based season tracking, cozy weather display, town reputation perks, and crop collections with milestone tracking; updated UI surfaces (header, Weather, Social, Collections); and trimmed weather loop allocations with collection batching.
+  - **Why:** deliver the Cozy Sim progression layer while keeping existing systems intact and performant.
+  - **Verification:** `npm run smoke-test` (warned: Unknown env config "http-proxy"; ReactDOMTestUtils.act deprecation warning).
+
 ## 2026-02-08
 
 - **Planned**

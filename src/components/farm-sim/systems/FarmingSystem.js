@@ -1,4 +1,5 @@
 import { calculateHarvestValue, HARVEST_WINDOW_MS } from '../constants/cropData';
+import { getTownRepBonus } from '../constants/townData';
 
 /**
  * Farming System - Handles crop growth, planting, harvesting
@@ -385,7 +386,8 @@ export class FarmingSystem {
       return false;
     }
 
-    const harvestValue = calculateHarvestValue(plot, this.gameState?.season?.config);
+    const townBonus = getTownRepBonus(this.gameState?.social?.reputation);
+    const harvestValue = calculateHarvestValue(plot, this.gameState?.season?.config, townBonus);
 
     // REBALANCED: Reduced XP to 20% of earnings (was 50%)
     this.actions.setCoins(this.gameState.coins + harvestValue);
@@ -399,6 +401,7 @@ export class FarmingSystem {
       [crop.id]: (this.gameState.inventory[crop.id] || 0) + 1
     };
     this.actions.updateInventory(updatedInventory);
+    this.actions.recordHarvest?.(crop.id, crop.name, harvestValue, 1);
 
     // Clear plot and reduce fertility
     const updatedPlots = [...this.gameState.plots];
