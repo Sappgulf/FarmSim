@@ -94,6 +94,11 @@ export const GAME_ACTIONS = {
 
     // Save/Load
     LOAD_GAME: 'LOAD_GAME',
+
+    // Calendar & Cozy Cadence
+    UPDATE_CALENDAR: 'UPDATE_CALENDAR',
+    UPDATE_FESTIVAL: 'UPDATE_FESTIVAL',
+    PURCHASE_COSMETIC: 'PURCHASE_COSMETIC',
 };
 
 export default GAME_ACTIONS;

@@ -117,10 +117,22 @@ export const initialState = {
         musicEnabled: true,
         animationsEnabled: true,
         reducedMotion: false,
+        dayLength: 'normal', // Slow (12min), Normal (8min), Fast (4min)
     },
     automation: {
         lastAutoWaterAt: 0,
     },
+
+    // Calendar & Cozy Cadence
+    calendar: {
+        dayNumber: 1,
+        dayOfWeek: 1,
+        weekNumber: 1,
+        seasonDay: 1,
+        lastAdvance: Date.now(),
+    },
+    activeFestival: null,
+    ownedCosmetics: [],
 
     // Performance state
     gameLoop: {
@@ -376,6 +388,24 @@ export function gameReducer(state, action) {
                 },
                 notifications: [],
             };
+
+        // Calendar & Cozy Cadence
+        case GAME_ACTIONS.UPDATE_CALENDAR:
+            return { ...state, calendar: { ...state.calendar, ...action.payload } };
+
+        case GAME_ACTIONS.UPDATE_FESTIVAL:
+            return { ...state, activeFestival: action.payload };
+
+        case GAME_ACTIONS.PURCHASE_COSMETIC: {
+            const { cosmeticId, price } = action.payload;
+            if (state.coins < price) return state;
+            if (state.ownedCosmetics.includes(cosmeticId)) return state;
+            return {
+                ...state,
+                coins: state.coins - price,
+                ownedCosmetics: [...state.ownedCosmetics, cosmeticId],
+            };
+        }
 
         default:
             return state;
