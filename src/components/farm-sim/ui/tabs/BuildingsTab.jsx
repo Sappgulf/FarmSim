@@ -169,16 +169,23 @@ const BuildingsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Farm Overview */}
-      <Card className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50">
-        <div className="flex justify-between items-center">
+      {/* Farm Overview - Premium */}
+      <Card className="p-5 bg-gradient-to-br from-amber-50/95 via-yellow-50/90 to-orange-50/95 backdrop-blur-sm border-amber-200/60 shadow-lg shadow-amber-200/30 relative overflow-hidden">
+        {/* Decorative crane */}
+        <div className="absolute -right-4 -top-2 text-6xl opacity-10 rotate-12">🏗️</div>
+
+        <div className="flex justify-between items-center relative z-10">
           <div>
-            <h3 className="text-lg font-semibold text-amber-800">🏗️ Farm Buildings</h3>
-            <p className="text-sm text-amber-600">Construct buildings to boost your farm</p>
+            <h3 className="text-xl font-bold bg-gradient-to-r from-amber-700 to-orange-600 bg-clip-text text-transparent flex items-center gap-2">
+              🏗️ Farm Buildings
+            </h3>
+            <p className="text-sm text-amber-700/80 font-medium mt-1">Construct buildings to boost your farm</p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-green-600">{builtCount}/{buildings.length}</div>
-            <div className="text-xs text-gray-600">Constructed</div>
+            <div className="text-3xl font-black bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
+              {builtCount}/{buildings.length}
+            </div>
+            <div className="text-xs text-amber-600 font-medium">Constructed</div>
           </div>
         </div>
       </Card>
@@ -376,17 +383,22 @@ const BuildingsTab = memo(() => {
         })}
       </div>
 
-      {/* Building Benefits Summary */}
+      {/* Building Benefits Summary - Premium */}
       {builtCount > 0 && (
-        <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50">
-          <h4 className="font-semibold mb-3 text-green-800">✨ Active Benefits</h4>
-          <div className="grid grid-cols-2 gap-2 text-sm">
+        <Card className="p-5 bg-gradient-to-br from-emerald-50/95 via-green-50/90 to-teal-50/95 backdrop-blur-sm border-emerald-200/60 shadow-lg shadow-emerald-200/30">
+          <h4 className="font-bold text-lg text-emerald-800 mb-3 flex items-center gap-2">
+            ✨ Active Benefits
+          </h4>
+          <div className="grid grid-cols-2 gap-3">
             {buildings
               .filter(b => state.buildings[b.id]?.built)
               .map(building => (
-                <div key={building.id} className="flex items-center gap-2 p-2 bg-white rounded">
-                  <span className="text-lg">{building.emoji}</span>
-                  <span className="text-green-700 font-medium">{building.benefit}</span>
+                <div
+                  key={building.id}
+                  className="flex items-center gap-3 p-3 bg-white/80 rounded-xl border border-emerald-100 hover:shadow-md transition-all duration-200"
+                >
+                  <span className="text-2xl">{building.emoji}</span>
+                  <span className="text-emerald-700 font-bold text-sm">{building.benefit}</span>
                 </div>
               ))
             }

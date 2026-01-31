@@ -138,40 +138,56 @@ const WeatherTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Current Weather Status */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50">
-        <div className="flex justify-between items-center">
+      {/* Current Weather Status - Premium */}
+      <Card className="p-5 bg-gradient-to-br from-sky-50/95 via-blue-50/90 to-cyan-50/95 backdrop-blur-sm border-sky-200/60 shadow-lg shadow-sky-200/30 relative overflow-hidden">
+        {/* Decorative weather */}
+        <div className="absolute -right-4 -top-2 text-6xl opacity-10 rotate-12">🌤️</div>
+
+        <div className="flex justify-between items-center relative z-10">
           <div>
-            <h3 className="text-lg font-semibold text-blue-800">🌤️ Current Weather</h3>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-3xl">{COZY_WEATHER_EMOJI[cozyWeather]}</span>
-              <span className="text-lg font-medium capitalize">{COZY_WEATHER_LABELS[cozyWeather]}</span>
+            <h3 className="text-xl font-bold bg-gradient-to-r from-sky-700 to-blue-600 bg-clip-text text-transparent flex items-center gap-2">
+              🌤️ Current Weather
+            </h3>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-4xl drop-shadow-sm">{COZY_WEATHER_EMOJI[cozyWeather]}</span>
+              <span className="text-lg font-bold capitalize text-slate-800">{COZY_WEATHER_LABELS[cozyWeather]}</span>
             </div>
-            <p className="text-xs text-blue-600 mt-1">
+            <p className="text-xs text-sky-700/80 mt-1 font-medium">
               Cozy forecast based on {state.weather} conditions.
             </p>
           </div>
-          <Badge variant="outline" className="bg-blue-100 text-blue-700">
+          <Badge className="bg-gradient-to-r from-sky-500 to-blue-500 text-white font-bold px-3 py-1.5 shadow-md shadow-sky-200/40">
             {weatherEffects.growth} Growth
           </Badge>
         </div>
       </Card>
 
-      {/* Weather Effects */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">📊 Cozy Weather Effects</h4>
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div className="text-center p-2 bg-green-50 rounded">
-            <div className="font-medium text-green-800">Growth Rate</div>
-            <div className="text-green-600">{weatherEffects.growth}</div>
+      {/* Weather Effects - Premium */}
+      <Card className="p-5 bg-gradient-to-br from-white/95 to-slate-50/90 backdrop-blur-sm shadow-lg border-slate-200/60">
+        <h4 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
+          📊 Cozy Weather Effects
+        </h4>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="text-center p-3 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border border-emerald-100 hover:shadow-md transition-all">
+            <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-br from-emerald-400 to-green-500 rounded-xl flex items-center justify-center text-white text-xl shadow-md">
+              🌱
+            </div>
+            <div className="font-bold text-sm text-emerald-800">Growth Rate</div>
+            <div className="text-emerald-600 font-semibold">{weatherEffects.growth}</div>
           </div>
-          <div className="text-center p-2 bg-blue-50 rounded">
-            <div className="font-medium text-blue-800">Water Usage</div>
-            <div className="text-blue-600">{weatherEffects.water}</div>
+          <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100 hover:shadow-md transition-all">
+            <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl flex items-center justify-center text-white text-xl shadow-md">
+              💧
+            </div>
+            <div className="font-bold text-sm text-blue-800">Water Usage</div>
+            <div className="text-blue-600 font-semibold">{weatherEffects.water}</div>
           </div>
-          <div className="text-center p-2 bg-red-50 rounded">
-            <div className="font-medium text-red-800">Disease Risk</div>
-            <div className="text-red-600">{weatherEffects.disease}</div>
+          <div className="text-center p-3 bg-gradient-to-br from-red-50 to-rose-50 rounded-xl border border-red-100 hover:shadow-md transition-all">
+            <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-br from-red-400 to-rose-500 rounded-xl flex items-center justify-center text-white text-xl shadow-md">
+              🦠
+            </div>
+            <div className="font-bold text-sm text-red-800">Disease Risk</div>
+            <div className="text-red-600 font-semibold">{weatherEffects.disease}</div>
           </div>
         </div>
       </Card>

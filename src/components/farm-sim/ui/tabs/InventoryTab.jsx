@@ -52,53 +52,65 @@ const InventoryTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Inventory Overview */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50">
-        <h3 className="text-lg font-semibold text-blue-800 mb-2">🎒 Your Inventory</h3>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="text-center p-2 bg-white rounded">
-            <div className="font-bold text-blue-600">{totalItems}</div>
-            <div className="text-blue-700">Total Items</div>
+      {/* Inventory Overview - Premium */}
+      <Card className="p-5 bg-gradient-to-br from-blue-50/95 via-indigo-50/90 to-purple-50/95 backdrop-blur-sm border-blue-200/60 shadow-lg shadow-blue-200/30 relative overflow-hidden">
+        {/* Decorative backpack */}
+        <div className="absolute -right-4 -top-2 text-6xl opacity-10 rotate-12">🎒</div>
+
+        <h3 className="text-xl font-bold bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent mb-3 flex items-center gap-2 relative z-10">
+          🎒 Your Inventory
+        </h3>
+        <div className="grid grid-cols-2 gap-4 relative z-10">
+          <div className="text-center p-3 bg-white/80 rounded-xl shadow-sm border border-blue-100">
+            <div className="text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
+              {totalItems}
+            </div>
+            <div className="text-xs text-blue-700 font-medium">Total Items</div>
           </div>
-          <div className="text-center p-2 bg-white rounded">
-            <div className="font-bold text-green-600">{totalValue}🪙</div>
-            <div className="text-green-700">Est. Value</div>
+          <div className="text-center p-3 bg-white/80 rounded-xl shadow-sm border border-emerald-100">
+            <div className="text-2xl font-black bg-gradient-to-r from-emerald-600 to-green-500 bg-clip-text text-transparent">
+              {totalValue}💰
+            </div>
+            <div className="text-xs text-emerald-700 font-medium">Est. Value</div>
           </div>
         </div>
       </Card>
 
-      {/* Items List */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">📦 Items</h4>
+      {/* Items List - Premium */}
+      <Card className="p-5 bg-gradient-to-br from-white/95 to-slate-50/90 backdrop-blur-sm shadow-lg border-slate-200/60">
+        <h4 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
+          📦 Items
+        </h4>
 
         {inventoryItems.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-4xl mb-2">📭</div>
-            <p className="text-gray-500">Your inventory is empty</p>
-            <p className="text-sm text-gray-400 mt-1">Harvest crops or visit the shop!</p>
+          <div className="text-center py-10 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+            <div className="text-5xl mb-3 opacity-60">📭</div>
+            <p className="text-slate-500 font-medium">Your inventory is empty</p>
+            <p className="text-sm text-slate-400 mt-1">Harvest crops or visit the shop!</p>
           </div>
         ) : (
-          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+          <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
             {inventoryItems.map(([itemId, quantity]) => {
               const { name, emoji, unitValue } = getItemDetails(itemId);
               return (
-                <div key={itemId} className="flex justify-between items-center p-3 bg-white border border-gray-100 hover:border-gray-300 rounded-lg transition-colors">
+                <div
+                  key={itemId}
+                  className="flex justify-between items-center p-3.5 bg-gradient-to-r from-white to-slate-50/80 border border-slate-200/60 hover:border-slate-300 hover:shadow-md rounded-xl transition-all duration-200 hover:scale-[1.01]"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full text-2xl">
+                    <div className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50 rounded-xl text-2xl shadow-sm">
                       {emoji}
                     </div>
                     <div>
-                      <div className="font-medium text-gray-800">{name}</div>
-                      <div className="text-xs text-gray-500">
-                        {unitValue ? `Value: ~${unitValue}🪙 ea` : 'Value: —'}
+                      <div className="font-bold text-slate-800">{name}</div>
+                      <div className="text-xs text-slate-500">
+                        {unitValue ? `💰 ~${unitValue} each` : 'Special Item'}
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <Badge variant="outline" className="text-sm border-2 border-gray-200">
-                      x{quantity}
-                    </Badge>
-                  </div>
+                  <Badge className="text-sm font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-3 py-1 shadow-md shadow-blue-200/40">
+                    ×{quantity}
+                  </Badge>
                 </div>
               );
             })}
@@ -106,14 +118,16 @@ const InventoryTab = memo(() => {
         )}
       </Card>
 
-      {/* Quick Actions */}
+      {/* Tips - Premium */}
       {inventoryItems.length > 0 && (
-        <Card className="p-4 bg-gray-50">
-          <h4 className="font-semibold mb-2">💡 Tips</h4>
-          <ul className="text-sm text-gray-700 space-y-1">
-            <li>• Use items from Shop tab to boost your farm</li>
-            <li>• Sell crops at the best prices for profit</li>
-            <li>• Build processing facilities to increase crop value</li>
+        <Card className="p-4 bg-gradient-to-br from-amber-50/80 to-yellow-50/70 border-amber-200/50 shadow-sm">
+          <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2">
+            💡 Pro Tips
+          </h4>
+          <ul className="text-sm text-amber-700/80 space-y-1.5">
+            <li className="flex items-start gap-2"><span className="text-amber-500">•</span> Use items from Shop tab to boost your farm</li>
+            <li className="flex items-start gap-2"><span className="text-amber-500">•</span> Sell crops at the best prices for profit</li>
+            <li className="flex items-start gap-2"><span className="text-amber-500">•</span> Build processing facilities to increase crop value</li>
           </ul>
         </Card>
       )}
