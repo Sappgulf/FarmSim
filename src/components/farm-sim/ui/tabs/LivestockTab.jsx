@@ -160,37 +160,40 @@ const LivestockTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Header Stats */}
-      <Card className="p-4 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 shadow-md hover:shadow-lg transition-all">
-        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-amber-800">
+      {/* Header Stats - Premium */}
+      <Card className="p-5 bg-gradient-to-br from-amber-50/95 via-orange-50/90 to-yellow-50/95 backdrop-blur-sm border-amber-200/60 shadow-lg shadow-amber-200/30 relative overflow-hidden">
+        {/* Decorative cow */}
+        <div className="absolute -right-4 -top-2 text-6xl opacity-10 rotate-12">🐄</div>
+
+        <h3 className="text-xl font-bold mb-4 bg-gradient-to-r from-amber-700 to-orange-600 bg-clip-text text-transparent flex items-center gap-2 relative z-10">
           🐄 Livestock Management
-          <Badge variant="outline" className="ml-auto text-xs">
+          <Badge variant="outline" className="ml-auto text-xs bg-white/80 shadow-sm">
             {stats.totalAnimals} Animals
           </Badge>
         </h3>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-amber-700">{stats.totalAnimals}/{stats.capacity}</div>
-            <div className="text-xs text-gray-600">Animals</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10">
+          <div className="text-center p-3 bg-white/70 rounded-xl border border-amber-100 shadow-sm">
+            <div className="text-2xl font-black bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">{stats.totalAnimals}/{stats.capacity}</div>
+            <div className="text-xs text-amber-700/80 font-medium">Animals</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{Math.floor(stats.avgHealth)}%</div>
-            <div className="text-xs text-gray-600">Avg Health</div>
+          <div className="text-center p-3 bg-white/70 rounded-xl border border-green-100 shadow-sm">
+            <div className="text-2xl font-black text-green-600">{Math.floor(stats.avgHealth)}%</div>
+            <div className="text-xs text-green-700/80 font-medium">Avg Health</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{Math.floor(stats.avgHappiness)}%</div>
-            <div className="text-xs text-gray-600">Avg Happiness</div>
+          <div className="text-center p-3 bg-white/70 rounded-xl border border-blue-100 shadow-sm">
+            <div className="text-2xl font-black text-blue-600">{Math.floor(stats.avgHappiness)}%</div>
+            <div className="text-xs text-blue-700/80 font-medium">Avg Happiness</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">{stats.readyProducts}</div>
-            <div className="text-xs text-gray-600">Ready to Collect</div>
+          <div className="text-center p-3 bg-white/70 rounded-xl border border-purple-100 shadow-sm">
+            <div className="text-2xl font-black text-purple-600">{stats.readyProducts}</div>
+            <div className="text-xs text-purple-700/80 font-medium">Ready to Collect</div>
           </div>
         </div>
 
         {stats.dailyCost > 0 && (
-          <div className="mt-3 text-center text-sm text-gray-600">
-            Daily Maintenance: ${stats.dailyCost}
+          <div className="mt-3 text-center text-sm text-amber-700/70 font-medium relative z-10">
+            💰 Daily Maintenance: ${stats.dailyCost}
           </div>
         )}
       </Card>

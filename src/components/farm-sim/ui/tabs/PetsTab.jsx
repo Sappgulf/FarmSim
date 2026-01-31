@@ -253,27 +253,33 @@ const PetsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Pet Adoption */}
+      {/* Pet Adoption - Premium */}
       {state.pets.length === 0 && (
-        <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50">
-          <h3 className="font-semibold mb-3 text-orange-800">🏠 Adopt Your First Pet</h3>
-          <p className="text-sm text-orange-700 mb-4">
+        <Card className="p-5 bg-gradient-to-br from-amber-50/95 via-orange-50/90 to-pink-50/95 backdrop-blur-sm border-orange-200/60 shadow-lg shadow-orange-200/30 relative overflow-hidden">
+          {/* Decorative paw */}
+          <div className="absolute -right-4 -top-2 text-6xl opacity-10 rotate-12">🐾</div>
+
+          <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent relative z-10">
+            🏠 Adopt Your First Pet
+          </h3>
+          <p className="text-sm text-orange-700/80 mb-4 relative z-10">
             Pets lend a paw around the farm and unlock steady bonuses.
           </p>
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 gap-3 relative z-10">
             {Object.entries(PET_TYPES).map(([petType, pet]) => (
-              <div key={petType} className="flex justify-between items-center p-3 border rounded">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{pet.emoji}</span>
+              <div key={petType} className="flex justify-between items-center p-4 bg-white/80 border border-orange-100 rounded-xl shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{pet.emoji}</span>
                   <div>
-                    <div className="font-medium">{pet.name}</div>
-                    <div className="text-xs text-gray-600">{pet.traits.map(formatTrait).join(' • ')}</div>
+                    <div className="font-bold text-gray-800">{pet.name}</div>
+                    <div className="text-xs text-orange-600">{pet.traits.map(formatTrait).join(' • ')}</div>
                   </div>
                 </div>
                 <Button
                   onClick={() => handleAdoptPet(petType)}
                   size="sm"
                   disabled={state.coins < pet.cost}
+                  className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white shadow-md"
                 >
                   Adopt for {pet.cost}🪙
                 </Button>
@@ -286,8 +292,13 @@ const PetsTab = memo(() => {
       {/* Active Pets */}
       {state.pets.length > 0 && (
         <div className="space-y-4">
-          <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50">
-            <h3 className="font-semibold mb-3 text-green-800">🐾 Your Pets ({state.pets.length})</h3>
+          <Card className="p-5 bg-gradient-to-br from-green-50/95 via-emerald-50/90 to-teal-50/95 backdrop-blur-sm border-green-200/60 shadow-lg shadow-green-200/30 relative overflow-hidden">
+            {/* Decorative paw */}
+            <div className="absolute -right-4 -top-2 text-6xl opacity-10 rotate-12">🐾</div>
+
+            <h3 className="text-xl font-bold mb-3 bg-gradient-to-r from-green-700 to-emerald-600 bg-clip-text text-transparent relative z-10">
+              🐾 Your Pets ({state.pets.length})
+            </h3>
 
             <div className="space-y-3">
               {state.pets.map(pet => {

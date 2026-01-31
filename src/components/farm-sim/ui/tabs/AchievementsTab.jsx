@@ -184,19 +184,27 @@ const AchievementsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Achievement Overview */}
-      <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50">
-        <div className="flex justify-between items-center">
+      {/* Achievement Overview - Premium */}
+      <Card className="p-5 bg-gradient-to-br from-amber-50/95 via-orange-50/90 to-yellow-50/95 backdrop-blur-sm border-amber-200/60 shadow-lg shadow-amber-200/30 relative overflow-hidden">
+        {/* Decorative trophy */}
+        <div className="absolute -right-4 -top-2 text-6xl opacity-10 rotate-12">🏆</div>
+
+        <div className="flex justify-between items-center relative z-10">
           <div>
-            <h3 className="text-lg font-semibold text-orange-800">🏆 Achievements</h3>
-            <p className="text-sm text-orange-700">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-amber-700 to-orange-600 bg-clip-text text-transparent flex items-center gap-2">
+              🏆 Achievements
+            </h3>
+            <p className="text-sm text-amber-700/80 font-medium mt-1">
               {achievementStats.unlocked}/{achievementStats.total} Unlocked ({achievementStats.completionRate}%)
             </p>
           </div>
-          <Badge variant="outline" className="bg-orange-100 text-orange-700">
-            {achievementStats.unlocked} / {achievementStats.total}
-          </Badge>
+          <div className="text-center p-3 bg-white/80 rounded-xl border border-amber-100 shadow-sm">
+            <div className="text-2xl font-black bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">{achievementStats.unlocked}</div>
+            <div className="text-xs text-amber-700 font-medium">of {achievementStats.total}</div>
+          </div>
         </div>
+
+        <Progress value={achievementStats.completionRate} className="h-3 mt-4 bg-amber-100" />
       </Card>
 
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
