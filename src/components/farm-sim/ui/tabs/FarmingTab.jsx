@@ -5,12 +5,18 @@ import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { getCropsByLevel, CROP_CATEGORIES } from '../../constants/cropData';
+import { DECORATION_ITEMS } from '../../constants/decorationData';
 import { Droplets, Sprout, Bug, Wheat, Check, Clock, Coins } from 'lucide-react';
 
 // Farming Tab Component
 const FarmingTab = memo(() => {
   const { state, actions } = useGame();
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const decorateMode = state.decorateMode;
+  const decorateTool = state.decorateTool;
+  const selectedDecoration = state.selectedDecoration;
+  const movingDecorationId = state.movingDecorationId;
+  const decorationsPlaced = Array.isArray(state.decorations) ? state.decorations.length : 0;
 
   const unlockedSeeds = state.social?.unlockedSeeds || [];
   const cropsByLevel = useMemo(() => getCropsByLevel(state.level), [state.level]);
@@ -89,8 +95,94 @@ const FarmingTab = memo(() => {
     }
   };
 
+  const handleDecorateToggle = () => {
+    const nextMode = !decorateMode;
+    actions.setDecorateMode(nextMode);
+    if (!nextMode) {
+      actions.setMovingDecorationId(null);
+    }
+  };
+
+  const handleDecorateTool = (tool) => {
+    actions.setDecorateTool(tool);
+    if (tool !== 'move') {
+      actions.setMovingDecorationId(null);
+    }
+  };
+
+  const handleDecorationSelect = (decorationId) => {
+    actions.setSelectedDecoration(decorationId);
+    actions.setDecorateTool('place');
+  };
+
   return (
     <div className="space-y-4">
+      <Card className="p-4 bg-gradient-to-r from-amber-50 to-emerald-50 border-emerald-100">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-emerald-900 flex items-center gap-2">
+              🎨 Decorate Mode
+            </h3>
+            <p className="text-xs text-emerald-700 mt-1">
+              Add cozy props to your farm scene. {decorationsPlaced} placed.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant={decorateMode ? 'default' : 'outline'}
+            onClick={handleDecorateToggle}
+            className="min-h-[44px]"
+          >
+            {decorateMode ? 'Decorating' : 'Start Decorating'}
+          </Button>
+        </div>
+        {decorateMode && (
+          <div className="mt-4 space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {['place', 'move', 'remove'].map((tool) => (
+                <Button
+                  key={tool}
+                  size="sm"
+                  variant={decorateTool === tool ? 'default' : 'outline'}
+                  onClick={() => handleDecorateTool(tool)}
+                  className="text-xs"
+                >
+                  {tool === 'place' && '➕ Place'}
+                  {tool === 'move' && '📦 Move'}
+                  {tool === 'remove' && '🧹 Remove'}
+                </Button>
+              ))}
+            </div>
+            {decorateTool === 'move' && (
+              <div className="text-xs text-emerald-700">
+                {movingDecorationId ? 'Tap a new empty plot to place it.' : 'Tap a decoration to pick it up.'}
+              </div>
+            )}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {DECORATION_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleDecorationSelect(item.id)}
+                  className={`
+                    flex items-center gap-2 px-2 py-2 rounded-lg border text-xs text-left transition
+                    ${selectedDecoration === item.id
+                      ? 'bg-emerald-100 border-emerald-400 text-emerald-900'
+                      : 'bg-white/70 border-emerald-100 hover:border-emerald-300'
+                    }
+                  `}
+                >
+                  <span className="text-lg">{item.emoji}</span>
+                  <span className="flex-1">
+                    <div className="font-semibold">{item.label}</div>
+                    <div className="text-[10px] text-gray-500">{item.description}</div>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </Card>
       {/* Category Filter */}
       <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-green-100">
         <h3 className="font-semibold mb-3 text-green-800 flex items-center gap-2">

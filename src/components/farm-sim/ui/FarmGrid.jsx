@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { useTick } from '../context/TickContext';
 import { Card } from '../../ui/card';
@@ -9,10 +9,34 @@ import { getCollectionBonusMultiplier } from '../constants/collectionData';
 import { getMarketBonusMultiplier } from '../constants/marketData';
 import { getTownRepBonus } from '../constants/townData';
 import { getDiseaseById } from '../constants/diseaseData';
+import { DECORATION_LOOKUP } from '../constants/decorationData';
 import { traceAction } from '../services/DebugTraceService';
 
+const FARM_ANCHORS = [
+  {
+    id: 'farmhouse',
+    label: 'Farmhouse',
+    emoji: '🏡',
+    tab: 'settings',
+    gridX: 0,
+    gridY: 0,
+    offset: { x: -0.55, y: -0.9 },
+  },
+  {
+    id: 'shipping',
+    label: 'Shipping Crate',
+    emoji: '📦',
+    tab: 'shop',
+    gridX: -1,
+    gridY: 0,
+    offset: { x: 0.55, y: -0.9 },
+  },
+];
+
+const createDecorationId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
 // Enhanced plot component with tooltips and animations
-const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0, tick, plotRef }) => {
+const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0, tick, plotRef, decorateMode }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const hideTooltipTimeoutRef = useRef(null);
@@ -122,6 +146,10 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
   }, [plot?.soilFertility]);
 
   const handleClick = useCallback((e) => {
+    if (decorateMode) {
+      onPlotClick(index, 'decorate');
+      return;
+    }
     if (e.shiftKey) {
       onToggleSelect(index);
     } else if (plot?.state === 'ready') {
@@ -136,14 +164,14 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
     } else {
       onPlotClick(index);
     }
-  }, [plot, index, onPlotClick, onPlant, onHarvest, onToggleSelect]);
+  }, [decorateMode, plot, index, onPlotClick, onPlant, onHarvest, onToggleSelect]);
 
   return (
     <div ref={plotRef} className="relative" data-plot-index={index}>
       <Card
         className={`
           w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 cursor-pointer relative overflow-hidden
-          transition-all-fast hover-lift
+          transition-all-fast hover-lift farm-plot shadow-sm hover:shadow-md rounded-2xl
           ${display.bgColor} ${display.borderColor} border-2
           ${display.hoverEffect} active:scale-95
           ${display.animation || ''}
@@ -153,6 +181,8 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
           ${showPreview && plot?.state === 'empty' ? 'ring-4 ring-emerald-400 ring-opacity-70' : ''}
           touch-manipulation select-none
         `}
+        data-state={plot?.state || 'empty'}
+        data-growth={plot?.growthStage || 0}
         onClick={handleClick}
         onMouseEnter={() => {
           setShowTooltip(true);
@@ -184,6 +214,17 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
           }, 2000);
         }}
       >
+        <div className={`absolute inset-0 pointer-events-none ${plot?.state === 'empty' ? 'plot-soil-tilled' : 'plot-soil-planted'}`} />
+        <div
+          className={`absolute inset-0 pointer-events-none ${plot?.state === 'empty'
+            ? 'plot-moisture-tilled'
+            : plot?.waterLevel > 70
+              ? 'plot-moisture-wet'
+              : plot?.waterLevel > 40
+                ? 'plot-moisture-damp'
+                : 'plot-moisture-dry'
+            }`}
+        />
         {/* Soil fertility gradient overlay */}
         <div className={`absolute inset-0 bg-gradient-to-t ${soilGradient} pointer-events-none`} />
 
@@ -341,13 +382,90 @@ const FarmGrid = memo(() => {
   const tick = useTick();
   const seasonBonus = state.season?.config?.bonuses?.growthSpeed || 1.0;
   const [selectedPlots, setSelectedPlots] = useState(new Set());
+  const [recentDecorationId, setRecentDecorationId] = useState(null);
 
   const stateRef = useRef(state);
   const actionsRef = useRef(actions);
   const plotRefs = useRef([]);
+  const gridRef = useRef(null);
+  const [gridMetrics, setGridMetrics] = useState({ cellSize: 0, gap: 0 });
+
+  const gridSize = state.gridSize || 3;
 
   stateRef.current = state;
   actionsRef.current = actions;
+
+  const decorateMode = state.decorateMode;
+  const decorateTool = state.decorateTool;
+  const selectedDecoration = state.selectedDecoration;
+  const movingDecorationId = state.movingDecorationId;
+
+  const decorations = useMemo(
+    () => (Array.isArray(state.decorations) ? state.decorations : []),
+    [state.decorations]
+  );
+  const decorationMap = useMemo(() => {
+    const map = new Map();
+    decorations.forEach((decor) => {
+      if (!decor || typeof decor.x !== 'number' || typeof decor.y !== 'number') return;
+      map.set(`${decor.x}-${decor.y}`, decor);
+    });
+    return map;
+  }, [decorations]);
+
+  useEffect(() => {
+    if (!recentDecorationId) return undefined;
+    const timeout = setTimeout(() => {
+      setRecentDecorationId(null);
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [recentDecorationId]);
+
+  useEffect(() => {
+    if (decorateMode) {
+      setSelectedPlots(new Set());
+    }
+  }, [decorateMode]);
+
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined' || !gridRef.current) return;
+    const gridElement = gridRef.current;
+    let rafId = null;
+
+    const updateMetrics = () => {
+      if (!gridElement) return;
+      const style = window.getComputedStyle(gridElement);
+      const gapValue = parseFloat(style.gap || style.columnGap || '0') || 0;
+      const width = gridElement.clientWidth;
+      const cellSize = gridSize > 0
+        ? (width - gapValue * (gridSize - 1)) / gridSize
+        : 0;
+      setGridMetrics({ cellSize, gap: gapValue });
+    };
+
+    const handleResize = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateMetrics);
+    };
+
+    updateMetrics();
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(handleResize)
+      : null;
+    if (observer) {
+      observer.observe(gridElement);
+    }
+    window.addEventListener('orientationchange', handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (observer) {
+        observer.disconnect();
+      }
+      window.removeEventListener('orientationchange', handleResize);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [gridSize]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -364,11 +482,141 @@ const FarmGrid = memo(() => {
     };
   }, []);
 
+  const getCellFromIndex = useCallback((index) => ({
+    x: index % gridSize,
+    y: Math.floor(index / gridSize),
+  }), [gridSize]);
+
+  const handleDecorateCell = useCallback((index) => {
+    const currentState = stateRef.current;
+    const currentActions = actionsRef.current;
+    const { x, y } = getCellFromIndex(index);
+    const plot = Array.isArray(currentState.plots) ? currentState.plots[index] : null;
+
+    if (plot && plot.state !== 'empty' && currentState.decorateTool !== 'remove') {
+      currentActions.addNotification({
+        message: 'Decorations can only be placed on empty plots.',
+        type: 'info',
+      });
+      return;
+    }
+
+    const currentDecorations = Array.isArray(currentState.decorations) ? currentState.decorations : [];
+    const existingDecoration = currentDecorations.find((decor) => decor.x === x && decor.y === y);
+    const tool = currentState.decorateTool || 'place';
+    const selectedType = currentState.selectedDecoration;
+
+    if (tool === 'remove') {
+      if (!existingDecoration) {
+        currentActions.addNotification({
+          message: 'No decoration to remove here.',
+          type: 'info',
+        });
+        return;
+      }
+      currentActions.updateDecorations(currentDecorations.filter((decor) => decor.id !== existingDecoration.id));
+      if (currentState.movingDecorationId === existingDecoration.id) {
+        currentActions.setMovingDecorationId(null);
+      }
+      currentActions.addNotification({
+        message: '🧹 Decoration removed.',
+        type: 'success',
+      });
+      return;
+    }
+
+    if (tool === 'move') {
+      if (currentState.movingDecorationId) {
+        if (existingDecoration) {
+          currentActions.addNotification({
+            message: 'That spot is already decorated.',
+            type: 'info',
+          });
+          return;
+        }
+        const movingDecoration = currentDecorations.find((decor) => decor.id === currentState.movingDecorationId);
+        if (!movingDecoration) {
+          currentActions.setMovingDecorationId(null);
+          return;
+        }
+        const nextDecorations = currentDecorations.map((decor) => (
+          decor.id === movingDecoration.id
+            ? { ...decor, x, y }
+            : decor
+        ));
+        currentActions.updateDecorations(nextDecorations);
+        currentActions.setMovingDecorationId(null);
+        setRecentDecorationId(movingDecoration.id);
+        currentActions.addNotification({
+          message: '📦 Decoration moved.',
+          type: 'success',
+        });
+        return;
+      }
+
+      if (existingDecoration) {
+        currentActions.setMovingDecorationId(existingDecoration.id);
+        currentActions.setSelectedDecoration(existingDecoration.type);
+        currentActions.addNotification({
+          message: 'Pick a new spot for this decoration.',
+          type: 'info',
+        });
+        return;
+      }
+
+      currentActions.addNotification({
+        message: 'Tap a decoration to move it.',
+        type: 'info',
+      });
+      return;
+    }
+
+    if (!DECORATION_LOOKUP[selectedType]) {
+      currentActions.addNotification({
+        message: 'Select a decoration before placing.',
+        type: 'info',
+      });
+      return;
+    }
+
+    const nextDecorations = existingDecoration
+      ? currentDecorations.map((decor) => (
+        decor.id === existingDecoration.id
+          ? { ...decor, type: selectedType }
+          : decor
+      ))
+      : [
+        ...currentDecorations,
+        {
+          id: createDecorationId(),
+          type: selectedType,
+          x,
+          y,
+          rotation: 0,
+        }
+      ];
+
+    const placedDecorationId = existingDecoration?.id || nextDecorations[nextDecorations.length - 1]?.id;
+    currentActions.updateDecorations(nextDecorations);
+    if (placedDecorationId) {
+      setRecentDecorationId(placedDecorationId);
+    }
+    currentActions.addNotification({
+      message: existingDecoration ? '✨ Decoration updated.' : '✨ Decoration placed.',
+      type: 'success',
+    });
+  }, [getCellFromIndex]);
+
   const handlePlotClick = useCallback((index, action) => {
     const currentState = stateRef.current;
     const currentActions = actionsRef.current;
 
     traceAction('plot_click', { index, action }, currentState);
+
+    if (currentState.decorateMode) {
+      handleDecorateCell(index);
+      return;
+    }
 
     // Handle clearing withered crops
     if (action === 'clear') {
@@ -408,6 +656,7 @@ const FarmGrid = memo(() => {
   }, []);
 
   const handleToggleSelect = useCallback((index) => {
+    if (stateRef.current.decorateMode) return;
     setSelectedPlots(prev => {
       const newSet = new Set(prev);
       if (newSet.has(index)) {
@@ -555,7 +804,6 @@ const FarmGrid = memo(() => {
   }, []);
 
   // Generate grid based on current grid size
-  const gridSize = state.gridSize || 3;
   // FIXED: Ensure plots is always an array
   const plots = useMemo(() => (Array.isArray(state.plots) ? state.plots : []), [state.plots]);
   const selectedCropData = useMemo(() => CROP_DATA[state.selectedCrop] || CROP_DATA.carrot, [state.selectedCrop]);
@@ -566,13 +814,20 @@ const FarmGrid = memo(() => {
   }), [gridSize]);
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 relative overflow-hidden">
+    <Card className="p-6 farm-scene-card relative overflow-hidden">
+      <div className="farm-scene-backdrop" aria-hidden="true"></div>
+      <div className="farm-scene-fence" aria-hidden="true"></div>
       <div className="mb-4 text-center relative z-20">
         <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-2">
           🌾 Your Farm
           {selectedPlots.size > 0 && (
             <Badge className="bg-blue-600 animate-pulse">
               {selectedPlots.size} selected
+            </Badge>
+          )}
+          {decorateMode && (
+            <Badge className="bg-emerald-600">
+              🎨 Decorate Mode
             </Badge>
           )}
         </h2>
@@ -622,9 +877,65 @@ const FarmGrid = memo(() => {
 
       {/* Farm Grid - Responsive with larger touch targets on mobile */}
       <div
-        className="grid gap-2 sm:gap-3 md:gap-4 mx-auto justify-center farm-grid relative"
+        ref={gridRef}
+        className="grid gap-2 sm:gap-3 md:gap-4 mx-auto justify-center farm-grid relative z-10"
         style={gridStyle}
       >
+        <div className="absolute inset-0 pointer-events-none z-10">
+          {decorations.map((decor) => {
+            const meta = DECORATION_LOOKUP[decor.type];
+            if (!meta || !gridMetrics.cellSize) return null;
+            const left = decor.x * (gridMetrics.cellSize + gridMetrics.gap);
+            const top = decor.y * (gridMetrics.cellSize + gridMetrics.gap);
+            const isMoving = movingDecorationId === decor.id;
+            return (
+              <button
+                key={decor.id}
+                type="button"
+                className={`farm-decoration ${recentDecorationId === decor.id ? 'farm-decoration-pop' : ''} ${isMoving ? 'farm-decoration-moving' : ''}`}
+                style={{
+                  width: gridMetrics.cellSize,
+                  height: gridMetrics.cellSize,
+                  transform: `translate(${left}px, ${top}px) rotate(${decor.rotation || 0}deg)`,
+                  pointerEvents: decorateMode ? 'auto' : 'none',
+                }}
+                onClick={() => decorateMode && handleDecorateCell(decor.y * gridSize + decor.x)}
+              >
+                <span className="farm-decoration-emoji" aria-hidden="true">{meta.emoji}</span>
+                <span className="sr-only">{meta.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="absolute inset-0 pointer-events-none z-20">
+          {gridMetrics.cellSize > 0 && FARM_ANCHORS.map((anchor) => {
+            const x = anchor.gridX === -1 ? gridSize - 1 : anchor.gridX;
+            const y = anchor.gridY;
+            const left = x * (gridMetrics.cellSize + gridMetrics.gap);
+            const top = y * (gridMetrics.cellSize + gridMetrics.gap);
+            return (
+              <button
+                key={anchor.id}
+                type="button"
+                className="farm-anchor"
+                style={{
+                  width: gridMetrics.cellSize,
+                  height: gridMetrics.cellSize,
+                  transform: `translate(${left}px, ${top}px) translate(${anchor.offset.x * 100}%, ${anchor.offset.y * 100}%)`,
+                  pointerEvents: 'auto',
+                }}
+                onClick={() => {
+                  if (typeof window !== 'undefined' && typeof window.switchToTab === 'function') {
+                    window.switchToTab(anchor.tab);
+                  }
+                }}
+              >
+                <span className="farm-anchor-emoji" aria-hidden="true">{anchor.emoji}</span>
+                <span className="farm-anchor-label">{anchor.label}</span>
+              </button>
+            );
+          })}
+        </div>
         {plots.map((plot, index) => (
           <FarmPlot
             key={index}
@@ -638,6 +949,7 @@ const FarmGrid = memo(() => {
             selectedCrop={selectedCropData}
             seasonBonus={seasonBonus}
             tick={plot?.state === 'planted' || plot?.state === 'growing' || plot?.state === 'ready' ? tick : undefined}
+            decorateMode={decorateMode}
             plotRef={(element) => {
               plotRefs.current[index] = element;
             }}

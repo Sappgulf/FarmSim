@@ -234,6 +234,11 @@ const initialState = {
   // UI state
   notifications: [],
   selectedCrop: 'carrot', // Currently selected crop for planting
+  decorateMode: false,
+  decorateTool: 'place',
+  selectedDecoration: 'fence-post',
+  movingDecorationId: null,
+  decorations: [],
   settings: {
     autoSave: true,
     soundEnabled: true,
@@ -338,6 +343,16 @@ function gameReducer(state, action) {
       const newGridSize = action.payload;
       const newTotalPlots = newGridSize * newGridSize;
       const existingPlots = state.plots;
+      const nextDecorations = Array.isArray(state.decorations)
+        ? state.decorations.filter((decor) => (
+          Number.isInteger(decor?.x)
+          && Number.isInteger(decor?.y)
+          && decor.x >= 0
+          && decor.y >= 0
+          && decor.x < newGridSize
+          && decor.y < newGridSize
+        ))
+        : [];
 
       // Add new empty plots if expanding
       const updatedPlots = existingPlots.length < newTotalPlots
@@ -358,7 +373,7 @@ function gameReducer(state, action) {
         ]
         : existingPlots.slice(0, newTotalPlots);
 
-      return { ...state, gridSize: newGridSize, plots: updatedPlots };
+      return { ...state, gridSize: newGridSize, plots: updatedPlots, decorations: nextDecorations };
 
     case GAME_ACTIONS.UPDATE_INVENTORY:
       const newInventory = typeof action.payload === 'function' ? action.payload(state) : action.payload;
@@ -458,6 +473,21 @@ function gameReducer(state, action) {
 
     case GAME_ACTIONS.SET_SELECTED_CROP:
       return { ...state, selectedCrop: action.payload };
+
+    case GAME_ACTIONS.SET_DECORATE_MODE:
+      return { ...state, decorateMode: Boolean(action.payload) };
+
+    case GAME_ACTIONS.SET_DECORATE_TOOL:
+      return { ...state, decorateTool: action.payload };
+
+    case GAME_ACTIONS.SET_SELECTED_DECORATION:
+      return { ...state, selectedDecoration: action.payload };
+
+    case GAME_ACTIONS.SET_MOVING_DECORATION:
+      return { ...state, movingDecorationId: action.payload };
+
+    case GAME_ACTIONS.UPDATE_DECORATIONS:
+      return { ...state, decorations: action.payload };
 
     case GAME_ACTIONS.UPDATE_SETTINGS:
       return { ...state, settings: { ...state.settings, ...action.payload } };
@@ -1072,6 +1102,11 @@ export function GameProvider({ children }) {
       dispatch({ type: GAME_ACTIONS.CLEAR_NOTIFICATION, payload: id });
     },
     setSelectedCrop: (cropId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_CROP, payload: cropId }),
+    setDecorateMode: (enabled) => dispatch({ type: GAME_ACTIONS.SET_DECORATE_MODE, payload: enabled }),
+    setDecorateTool: (tool) => dispatch({ type: GAME_ACTIONS.SET_DECORATE_TOOL, payload: tool }),
+    setSelectedDecoration: (decorationId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_DECORATION, payload: decorationId }),
+    setMovingDecorationId: (decorationId) => dispatch({ type: GAME_ACTIONS.SET_MOVING_DECORATION, payload: decorationId }),
+    updateDecorations: (decorations) => dispatch({ type: GAME_ACTIONS.UPDATE_DECORATIONS, payload: decorations }),
     updateSettings: (settings) => dispatch({ type: GAME_ACTIONS.UPDATE_SETTINGS, payload: settings }),
     updateAutomation: (automation) => dispatch({ type: GAME_ACTIONS.UPDATE_AUTOMATION, payload: automation }),
     updateGameLoop: (data) => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: data }),

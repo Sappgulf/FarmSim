@@ -1043,6 +1043,141 @@
   contain: layout style paint;
 }
 
+.farm-scene-card {
+  background: transparent !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+}
+
+.farm-scene-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(167, 243, 208, 0.55), transparent 45%),
+    radial-gradient(circle at 90% 10%, rgba(110, 231, 183, 0.5), transparent 40%),
+    linear-gradient(135deg, rgba(220, 252, 231, 0.9) 0%, rgba(240, 253, 250, 0.85) 45%, rgba(187, 247, 208, 0.8) 100%);
+}
+
+.farm-scene-fence {
+  position: absolute;
+  inset: 18px;
+  border-radius: 18px;
+  border: 2px dashed rgba(148, 163, 184, 0.5);
+  opacity: 0.55;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.farm-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 2;
+}
+
+.farm-decoration-emoji {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.farm-decoration-pop {
+  animation: decoration-pop 0.4s ease-out;
+}
+
+.farm-decoration-moving {
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.6), 0 8px 18px rgba(16, 185, 129, 0.2);
+}
+
+.farm-anchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.18);
+  border: 2px solid rgba(16, 185, 129, 0.25);
+  padding: 4px;
+  z-index: 3;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.farm-anchor:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.25);
+}
+
+.farm-anchor-emoji {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.farm-anchor-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #065f46;
+  margin-top: 2px;
+}
+
+.farm-plot {
+  background-clip: padding-box;
+}
+
+.plot-soil-tilled {
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.15), rgba(180, 83, 9, 0.12));
+}
+
+.plot-soil-planted {
+  background: linear-gradient(135deg, rgba(20, 83, 45, 0.08), rgba(74, 222, 128, 0.08));
+}
+
+.plot-moisture-tilled {
+  background: radial-gradient(circle at 50% 60%, rgba(214, 211, 209, 0.25), transparent 60%);
+}
+
+.plot-moisture-wet {
+  background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.15), transparent 65%);
+}
+
+.plot-moisture-damp {
+  background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.12), transparent 70%);
+}
+
+.plot-moisture-dry {
+  background: radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.16), transparent 65%);
+}
+
+@keyframes decoration-pop {
+  0% {
+    transform: scale(0.85);
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .farm-decoration-pop {
+    animation: none;
+  }
+  .farm-anchor {
+    transition: none;
+  }
+}
+
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }

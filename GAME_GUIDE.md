@@ -23,6 +23,18 @@ Grow a thriving farm by planting crops, harvesting for profit, and investing in 
 - **Harvest**: Harvest within the window to avoid withering.
 - **Soil Fertility**: Repeated harvesting reduces fertility (fertilize to recover).
 
+## Farm Scene & Decorate Mode
+- **Farm Scene**: The farm view now includes a cozy background layer and fixed anchors to make the grid feel like a place.
+- **Anchors**:
+  - **Farmhouse (🏡)** opens the Settings tab.
+  - **Shipping Crate (📦)** opens the Shop tab for selling/market access.
+- **Decorate Mode** (Farming tab):
+  1. Toggle **Decorate Mode** on.
+  2. Choose a tool: **Place**, **Move**, or **Remove**.
+  3. Pick a decoration and tap empty plots to place props.
+  4. Use **Move** to pick up a decoration and place it elsewhere.
+- Decorations are cosmetic and do not affect crop growth.
+
 ## Seasons (Cozy Cycle)
 - **Four seasons** rotate on a gentle day-based cadence.
 - Each season adds small bonuses to growth and prices.
