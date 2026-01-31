@@ -264,34 +264,40 @@ const SettingsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Game Controls Header (Kept inline as it's simple) */}
-      <Card className="p-4 bg-gradient-to-r from-purple-50 to-blue-50">
-        <h3 className="text-lg font-semibold text-purple-800 mb-3">⚙️ Game Settings</h3>
+      {/* Game Controls Header - Premium */}
+      <Card className="p-5 bg-gradient-to-br from-purple-50/95 via-indigo-50/90 to-blue-50/95 backdrop-blur-sm border-purple-200/60 shadow-lg shadow-purple-200/30 relative overflow-hidden">
+        {/* Decorative gear */}
+        <div className="absolute -right-4 -top-2 text-6xl opacity-10 rotate-12">⚙️</div>
 
-        <div className="space-y-3">
+        <h3 className="text-xl font-bold bg-gradient-to-r from-purple-700 to-indigo-600 bg-clip-text text-transparent mb-4 flex items-center gap-2 relative z-10">
+          ⚙️ Game Settings
+        </h3>
+
+        <div className="space-y-3 relative z-10">
           {/* Pause/Resume */}
-          <div className="flex justify-between items-center p-3 bg-white rounded">
+          <div className="flex justify-between items-center p-4 bg-white/80 rounded-xl border border-purple-100 hover:shadow-md transition-all">
             <div>
-              <div className="font-medium">Game Status</div>
-              <div className="text-sm text-gray-600">
+              <div className="font-bold text-slate-800">Game Status</div>
+              <div className="text-sm text-slate-600">
                 {state.gameLoop.paused ? 'Game is paused' : 'Game is running'}
               </div>
             </div>
             <Button
               onClick={state.gameLoop.paused ? actions.resumeGame : actions.pauseGame}
               variant={state.gameLoop.paused ? 'default' : 'outline'}
+              className={state.gameLoop.paused ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-md' : ''}
             >
               {state.gameLoop.paused ? '▶️ Resume' : '⏸️ Pause'}
             </Button>
           </div>
 
           {/* FPS Display */}
-          <div className="flex justify-between items-center p-3 bg-white rounded">
+          <div className="flex justify-between items-center p-4 bg-white/80 rounded-xl border border-purple-100 hover:shadow-md transition-all">
             <div>
-              <div className="font-medium">Performance</div>
-              <div className="text-sm text-gray-600">Current frame rate</div>
+              <div className="font-bold text-slate-800">Performance</div>
+              <div className="text-sm text-slate-600">Current frame rate</div>
             </div>
-            <Badge variant="outline" className="text-lg">
+            <Badge className="text-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold px-3 py-1.5 shadow-md">
               {state.gameLoop.fps} FPS
             </Badge>
           </div>

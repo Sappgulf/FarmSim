@@ -239,39 +239,42 @@ const FishingTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Header Stats */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50 shadow-md hover:shadow-lg transition-all">
-        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-blue-800">
+      {/* Header Stats - Premium */}
+      <Card className="p-5 bg-gradient-to-br from-sky-50/95 via-cyan-50/90 to-blue-50/95 backdrop-blur-sm border-sky-200/60 shadow-lg shadow-sky-200/30 relative overflow-hidden">
+        {/* Decorative fish */}
+        <div className="absolute -right-4 -top-2 text-6xl opacity-10 rotate-12">🎣</div>
+
+        <h3 className="text-xl font-bold bg-gradient-to-r from-sky-700 to-blue-600 bg-clip-text text-transparent mb-4 flex items-center gap-2 relative z-10">
           🎣 Fishing Pond
-          <Badge variant="outline" className="ml-auto text-xs">
+          <Badge className="ml-auto bg-gradient-to-r from-sky-500 to-blue-500 text-white font-bold shadow-md">
             Level {pondLevel}
           </Badge>
         </h3>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-700">{stats.totalCaught}</div>
-            <div className="text-xs text-gray-600">Fish Caught</div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 relative z-10">
+          <div className="text-center p-3 bg-white/80 rounded-xl border border-blue-100 shadow-sm">
+            <div className="text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">{stats.totalCaught}</div>
+            <div className="text-xs text-blue-700 font-medium">Fish Caught</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">${stats.totalValue}</div>
-            <div className="text-xs text-gray-600">Total Value</div>
+          <div className="text-center p-3 bg-white/80 rounded-xl border border-emerald-100 shadow-sm">
+            <div className="text-2xl font-black bg-gradient-to-r from-emerald-600 to-green-500 bg-clip-text text-transparent">${stats.totalValue}</div>
+            <div className="text-xs text-emerald-700 font-medium">Total Value</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">{stats.largestFish}cm</div>
-            <div className="text-xs text-gray-600">Biggest Fish</div>
+          <div className="text-center p-3 bg-white/80 rounded-xl border border-purple-100 shadow-sm">
+            <div className="text-2xl font-black bg-gradient-to-r from-purple-600 to-violet-500 bg-clip-text text-transparent">{stats.largestFish}cm</div>
+            <div className="text-xs text-purple-700 font-medium">Biggest Fish</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-cyan-600">{Math.floor(fishing.pond.population)}</div>
-            <div className="text-xs text-gray-600">Population</div>
+          <div className="text-center p-3 bg-white/80 rounded-xl border border-cyan-100 shadow-sm">
+            <div className="text-2xl font-black bg-gradient-to-r from-cyan-600 to-teal-500 bg-clip-text text-transparent">{Math.floor(fishing.pond.population)}</div>
+            <div className="text-xs text-cyan-700 font-medium">Population</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-amber-600">x{stats.streak || 0}</div>
-            <div className="text-xs text-gray-600">Streak</div>
+          <div className="text-center p-3 bg-white/80 rounded-xl border border-amber-100 shadow-sm">
+            <div className="text-2xl font-black bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">x{stats.streak || 0}</div>
+            <div className="text-xs text-amber-700 font-medium">Streak</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-rose-600">x{stats.bestStreak || 0}</div>
-            <div className="text-xs text-gray-600">Best Streak</div>
+          <div className="text-center p-3 bg-white/80 rounded-xl border border-rose-100 shadow-sm">
+            <div className="text-2xl font-black bg-gradient-to-r from-rose-600 to-pink-500 bg-clip-text text-transparent">x{stats.bestStreak || 0}</div>
+            <div className="text-xs text-rose-700 font-medium">Best Streak</div>
           </div>
         </div>
       </Card>
@@ -513,18 +516,18 @@ const FishingTab = memo(() => {
         </div>
       </Card>
 
-      {/* Tips */}
-      <Card className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50">
-        <h4 className="font-bold mb-2 flex items-center gap-2">
+      {/* Tips - Premium */}
+      <Card className="p-4 bg-gradient-to-br from-amber-50/80 to-yellow-50/70 border-amber-200/50 shadow-sm">
+        <h4 className="font-bold text-amber-800 mb-3 flex items-center gap-2">
           💡 Fishing Tips
         </h4>
-        <ul className="text-sm text-gray-700 space-y-1">
-          <li>• Keep your 🎣 reel in the green zone to catch fish</li>
-          <li>• Rarer fish are harder to catch but worth more</li>
-          <li>• Pond population regenerates over time</li>
-          <li>• Build a streak for up to +20% catch value</li>
-          <li>• Upgrade your pond for better fish and faster regeneration</li>
-          <li>• Use keyboard (A/D or Arrow Keys) for faster control</li>
+        <ul className="text-sm text-amber-700/80 space-y-1.5">
+          <li className="flex items-start gap-2"><span className="text-amber-500">•</span> Keep your 🎣 reel in the green zone to catch fish</li>
+          <li className="flex items-start gap-2"><span className="text-amber-500">•</span> Rarer fish are harder to catch but worth more</li>
+          <li className="flex items-start gap-2"><span className="text-amber-500">•</span> Pond population regenerates over time</li>
+          <li className="flex items-start gap-2"><span className="text-amber-500">•</span> Build a streak for up to +20% catch value</li>
+          <li className="flex items-start gap-2"><span className="text-amber-500">•</span> Upgrade your pond for better fish and faster regeneration</li>
+          <li className="flex items-start gap-2"><span className="text-amber-500">•</span> Use keyboard (A/D or Arrow Keys) for faster control</li>
         </ul>
       </Card>
     </div>

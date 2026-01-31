@@ -192,27 +192,27 @@ const WeatherTab = memo(() => {
         </div>
       </Card>
 
-      {/* Weather Forecast */}
+      {/* Weather Forecast - Premium */}
       {state.weatherForecast && state.weatherForecast.length > 0 && (
-        <Card className="p-4 border-2 border-blue-50">
-          <h4 className="font-semibold mb-4 flex items-center gap-2 text-gray-700">
-            <span>📅</span> 3-Day Forecast
+        <Card className="p-5 bg-gradient-to-br from-white/95 to-indigo-50/50 backdrop-blur-sm shadow-lg border-indigo-100">
+          <h4 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
+            📅 3-Day Forecast
           </h4>
           <div className="flex gap-4 overflow-x-auto pb-2">
             {state.weatherForecast.slice(0, 3).map((forecast, index) => (
-              <div key={index} className="flex-1 min-w-[100px] text-center p-3 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-between">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              <div
+                key={index}
+                className="flex-1 min-w-[110px] text-center p-4 bg-gradient-to-br from-white to-slate-50/80 rounded-xl shadow-md border border-slate-200/60 flex flex-col items-center justify-between hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+              >
+                <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">
                   {index === 0 ? 'Tomorrow' : `Day ${index + 1}`}
                 </span>
-                <div className="text-4xl mb-2 filter drop-shadow-sm transform hover:scale-110 transition-transform cursor-default">
+                <div className="text-5xl mb-3 drop-shadow-sm hover:scale-110 transition-transform cursor-default">
                   {getWeatherEmoji(forecast.type)}
                 </div>
-                <Badge variant="secondary" className="mb-1 capitalize bg-gray-50">
+                <Badge className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold capitalize px-2.5 py-1 shadow-sm">
                   {COZY_WEATHER_LABELS[getCozyWeather(forecast.type)]}
                 </Badge>
-                <div className="text-[10px] text-gray-500 font-mono">
-                  Day +{forecast.dayOffset || index + 1} outlook
-                </div>
               </div>
             ))}
           </div>
@@ -329,19 +329,27 @@ const WeatherTab = memo(() => {
         </div>
       </Card>
 
-      {/* Weather Statistics */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3 text-gray-700">📊 Meteorological Data</h4>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col items-center justify-center">
-            <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Accuracy</div>
-            <div className="font-bold text-2xl text-indigo-600">
+      {/* Weather Statistics - Premium */}
+      <Card className="p-5 bg-gradient-to-br from-slate-50/95 to-gray-50/90 backdrop-blur-sm shadow-lg border-slate-200/60">
+        <h4 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
+          📊 Meteorological Data
+        </h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 flex flex-col items-center justify-center hover:shadow-md transition-all">
+            <div className="w-10 h-10 mb-2 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-xl flex items-center justify-center text-white text-xl shadow-md">
+              🎯
+            </div>
+            <div className="text-xs text-indigo-600 uppercase tracking-wide font-bold mb-1">Accuracy</div>
+            <div className="font-black text-2xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               {Math.floor(Math.random() * 30 + 70)}%
             </div>
           </div>
-          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col items-center justify-center">
-            <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Total Forecasts</div>
-            <div className="font-bold text-2xl text-gray-800">
+          <div className="p-4 bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl border border-slate-200 flex flex-col items-center justify-center hover:shadow-md transition-all">
+            <div className="w-10 h-10 mb-2 bg-gradient-to-br from-slate-400 to-gray-500 rounded-xl flex items-center justify-center text-white text-xl shadow-md">
+              📈
+            </div>
+            <div className="text-xs text-slate-600 uppercase tracking-wide font-bold mb-1">Total Forecasts</div>
+            <div className="font-black text-2xl text-slate-800">
               {Math.floor(Math.random() * 50) + 10}
             </div>
           </div>
