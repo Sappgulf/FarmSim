@@ -312,6 +312,49 @@ function FarmSimCore() {
     }
   }, [state.season?.current, state.settings?.musicEnabled]);
 
+  // Page Visibility API - pause music/audio when tab hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const musicSystem = getMusicSystem();
+      if (document.hidden) {
+        // Pause music when tab is hidden
+        if (musicSystem.isPlaying) {
+          musicSystem.stop();
+          if (import.meta.env.MODE === 'development') {
+            console.debug('[farm]', 'Music paused (tab hidden)');
+          }
+        }
+      } else {
+        // Resume music when tab is visible (if enabled)
+        if (stateRef.current?.settings?.musicEnabled !== false && !musicSystem.isPlaying) {
+          musicSystem.play();
+          if (import.meta.env.MODE === 'development') {
+            console.debug('[farm]', 'Music resumed (tab visible)');
+          }
+        }
+      }
+    };
+
+    return addTrackedEventListener(document, 'visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // Photo mode toggle handler
+  const handlePhotoModeToggle = React.useCallback(() => {
+    actions.setPhotoMode(!state.photoMode);
+    if (!state.photoMode) {
+      // Entering photo mode - play sound
+      if (window.soundSystem) {
+        window.soundSystem.playClickSound();
+      }
+    }
+  }, [actions, state.photoMode]);
+
+  // Apply theme to document root
+  useEffect(() => {
+    const theme = state.theme || 'default';
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [state.theme]);
+
   // Get season colors for theming
   const seasonColors = state.season?.config?.colors || {
     primary: 'from-green-50 to-blue-50'
@@ -437,36 +480,38 @@ function FarmSimCore() {
   }, []);
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000 flex flex-col`}>
+    <div className={`min-h-screen bg-gradient-to-br ${seasonColors.primary} theme-bg transition-colors duration-1000 flex flex-col ${state.photoMode ? 'photo-mode' : ''}`}>
       {/* Performance monitoring (dev only) */}
       {debugEnabled && (
-        <div className="fixed top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded z-50">
+        <div className="fixed top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded z-50 photo-mode-hide">
           FPS: {state.gameLoop.fps}
         </div>
       )}
 
       {/* Game Header */}
-      <GameHeader />
+      <div className="photo-mode-hide">
+        <GameHeader />
+      </div>
 
-      <div className="w-full px-2 sm:px-4 max-w-7xl mx-auto mt-2">
+      <div className="w-full px-2 sm:px-4 max-w-7xl mx-auto mt-2 photo-mode-hide">
         <TownBoard />
       </div>
 
       {/* Main Game Area - Mobile Optimized with bottom padding for NavBar */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto relative w-full pb-24 lg:pb-4">
+      <div className={`flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto relative w-full pb-24 lg:pb-4 ${state.photoMode ? 'farm-grid-container' : ''}`}>
         {/* Farm Grid - Full width on mobile, larger on desktop */}
-        <div className="w-full lg:flex-1">
+        <div className={`w-full lg:flex-1 ${state.photoMode ? '' : ''}`}>
           <FarmGrid />
         </div>
 
         {/* Game Sidebar - Shows tabs for active section */}
-        <div className="w-full lg:w-80 xl:w-96">
+        <div className="w-full lg:w-80 xl:w-96 photo-mode-hide">
           <GameSidebar activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
       </div>
 
       {/* Bottom Navigation Bar - Fixed on mobile */}
-      <div className="fixed bottom-0 left-0 right-0 lg:relative z-40">
+      <div className="fixed bottom-0 left-0 right-0 lg:relative z-40 photo-mode-hide">
         <NavBar
           activeSection={activeSection}
           activeTab={activeTab}
@@ -476,22 +521,30 @@ function FarmSimCore() {
       </div>
 
       {/* Notification System - Mobile positioned above NavBar */}
-      <NotificationSystem />
+      <div className="photo-mode-hide">
+        <NotificationSystem />
+      </div>
 
       {/* Particle Effects System */}
       <ParticleEffectsManager />
 
       {/* FPS Overlay */}
-      <FPSCounter />
+      <div className="photo-mode-hide">
+        <FPSCounter />
+      </div>
 
       {/* Performance Overlay (dev, toggle with `) */}
-      <PerformanceOverlay />
+      <div className="photo-mode-hide">
+        <PerformanceOverlay />
+      </div>
 
       {/* Onboarding Tutorial (auto-shows for new players) */}
-      <Tutorial />
+      <div className="photo-mode-hide">
+        <Tutorial />
+      </div>
 
       {/* Level Up Celebration */}
-      {levelUpState.show && (
+      {levelUpState.show && !state.photoMode && (
         <LevelUpModal
           level={levelUpState.level}
           onClose={() => setLevelUpState(prev => ({ ...prev, show: false }))}
@@ -499,13 +552,29 @@ function FarmSimCore() {
       )}
 
       {/* Developer Debug Overlay (dev only) */}
-      <DevDebugOverlay />
+      <div className="photo-mode-hide">
+        <DevDebugOverlay />
+      </div>
 
       {/* Developer Stress Panel (dev only) */}
-      <DevStressPanel />
+      <div className="photo-mode-hide">
+        <DevStressPanel />
+      </div>
 
       {/* Developer Error Overlay (dev only, shows on errors) */}
-      <DevErrorOverlay />
+      <div className="photo-mode-hide">
+        <DevErrorOverlay />
+      </div>
+
+      {/* Photo Mode Toggle Button */}
+      <button
+        onClick={handlePhotoModeToggle}
+        className="photo-mode-btn"
+        title={state.photoMode ? 'Exit Photo Mode' : 'Enter Photo Mode'}
+        aria-label={state.photoMode ? 'Exit Photo Mode' : 'Enter Photo Mode'}
+      >
+        {state.photoMode ? '✖ Exit' : '📷 Photo'}
+      </button>
     </div>
   );
 }

@@ -59,7 +59,7 @@ const TownBoard = memo(() => {
     <Card className="town-board-card">
       <div className="town-board-header">
         <div>
-          <div className="town-board-title">📌 Town Board</div>
+          <div className="town-board-title">🏡 {state.farmName || 'My Farm'}</div>
           <div className="town-board-subtitle">Daily vibes from the village square</div>
         </div>
         <button

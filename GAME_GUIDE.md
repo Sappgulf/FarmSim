@@ -118,6 +118,47 @@ Grow a thriving farm by planting crops, harvesting for profit, and investing in 
 - Use quests/contracts to fund your next upgrade tier.
 - Keep automation steady to prevent crop losses.
 
+## Farm Identity (Cozy Identity v1)
+- **Farm Name**: Give your farm a personal name in Settings. It displays on the Town Board header.
+- **Theme Palettes**: Choose from 5 cozy color themes in Settings:
+  - **Classic Farm** (green/blue)
+  - **Spring Blossom** (pink/green)
+  - **Autumn Harvest** (orange/amber)
+  - **Pastel Dreams** (purple/cyan)
+  - **Cozy Midnight** (indigo/slate)
+- Themes change UI colors instantly and persist across sessions.
+
+## Photo Mode
+- Click the **Photo** button (bottom-right) to enter Photo Mode.
+- All UI hides, leaving only your farm centered on screen.
+- Perfect for screenshots and sharing your cozy creation.
+- Click **Exit** to return to normal gameplay.
+- Photo Mode does not affect game state or timers.
+
+## Achievements (Cozy Achievements)
+- The **Achievements** tab tracks your progress across many categories.
+- **Cozy-specific achievements** include:
+  - **Collection milestones**: First discovery, steadfast collector, legendary collector
+  - **Town reputation**: Newcomer, friendly farmer, town favorite, beloved farmer
+  - **Seasonal harvests**: Spring spirit, summer sunshine, fall bounty, winter warmth
+  - **Photo enthusiast**: Use photo mode for the first time
+  - **Farm decorator**: Place 10+ decorations
+  - **Cozy homesteader**: Name your farm or choose a theme
+- Achievements grant coin and XP rewards when unlocked.
+
+## Audio & Music
+- **Background Music**: Seasonal procedural music plays automatically after your first interaction.
+- **Sound Effects**: Various sounds for planting, harvesting, leveling up, and more.
+- **Controls** (in Settings):
+  - Toggle sound effects on/off
+  - Toggle music on/off
+  - Adjust volume sliders
+- Music pauses automatically when you switch tabs and resumes when you return.
+
+## QoL Tools
+- **Undo Placement**: In Decorate Mode, an Undo button appears when you have placement history. Tap to revert your last decoration or building placement.
+- **Bulk Harvest**: Shift+click to select multiple plots, then harvest all at once.
+
 ## Compost & Fertilizer Loop
 - Every harvest adds **compost** to your inventory.
 - Convert **3 compost → fertilizer** in the Farming tab.

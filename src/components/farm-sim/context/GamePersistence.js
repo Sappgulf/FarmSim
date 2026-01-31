@@ -10,7 +10,16 @@ import { DECORATION_LOOKUP } from '../constants/decorationData';
 import { PLACEABLE_BUILDING_LOOKUP } from '../constants/placeableBuildingData';
 import { buildDailyPlan } from '../constants/townPlan';
 
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
+
+// Available theme palettes
+export const THEME_PALETTES = {
+    spring: { id: 'spring', name: 'Spring Blossom', emoji: '🌸', primary: '#10b981', accent: '#f472b6', bg: 'from-green-50 to-pink-50' },
+    autumn: { id: 'autumn', name: 'Autumn Harvest', emoji: '🍂', primary: '#f59e0b', accent: '#dc2626', bg: 'from-orange-50 to-amber-50' },
+    pastel: { id: 'pastel', name: 'Pastel Dreams', emoji: '🎀', primary: '#a78bfa', accent: '#67e8f9', bg: 'from-purple-50 to-cyan-50' },
+    midnight: { id: 'midnight', name: 'Cozy Midnight', emoji: '🌙', primary: '#6366f1', accent: '#818cf8', bg: 'from-slate-100 to-indigo-100' },
+    default: { id: 'default', name: 'Classic Farm', emoji: '🌿', primary: '#22c55e', accent: '#3b82f6', bg: 'from-green-50 to-blue-50' },
+};
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const SAVE_BACKUP_KEY = `${SAVE_KEY}_backup`;
 
@@ -264,6 +273,17 @@ export function migrateSaveData(savedData) {
             migratedData.dailyPlan = buildDailyPlan(migratedData);
         }
 
+        // Version 7 → 8: Add farm identity (name, theme) + photo mode + undo stack
+        if (saveVersion < 8) {
+            if (import.meta.env.MODE === 'development') {
+                console.debug('[farm]', 'Migrating save from version 7 to 8 (farm identity + theme + photo mode)');
+            }
+            migratedData.farmName = migratedData.farmName || 'My Farm';
+            migratedData.theme = migratedData.theme || 'default';
+            migratedData.photoMode = false;
+            migratedData.undoStack = [];
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, 0);
         migratedData.xp = clampNumber(migratedData.xp, 0, 0);
@@ -400,6 +420,16 @@ export function migrateSaveData(savedData) {
         if (migratedData.plots.length !== migratedData.gridSize * migratedData.gridSize) {
             migratedData.plots = initializePlots(migratedData.gridSize || 3);
         }
+
+        // Validate farm identity fields
+        migratedData.farmName = typeof migratedData.farmName === 'string' && migratedData.farmName.trim()
+            ? migratedData.farmName.slice(0, 30)
+            : 'My Farm';
+        migratedData.theme = THEME_PALETTES[migratedData.theme] ? migratedData.theme : 'default';
+        migratedData.photoMode = false; // Always reset photo mode on load
+        migratedData.undoStack = Array.isArray(migratedData.undoStack)
+            ? migratedData.undoStack.slice(-10)
+            : [];
 
         migratedData.saveVersion = SAVE_VERSION;
         return migratedData;
