@@ -156,15 +156,24 @@ const GeneticsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Lab Status */}
-      <Card className="p-4 bg-gradient-to-r from-purple-50 to-blue-50">
-        <div className="flex justify-between items-center">
+      {/* Lab Status - Premium Styling */}
+      <Card className="p-5 bg-gradient-to-br from-purple-50/95 via-indigo-50/90 to-blue-50/95 backdrop-blur-sm border-purple-200/60 shadow-lg shadow-purple-200/30 relative overflow-hidden">
+        {/* DNA Helix Decoration */}
+        <div className="absolute -right-4 top-0 bottom-0 w-24 opacity-10">
+          <div className="text-6xl animate-pulse">🧬</div>
+        </div>
+
+        <div className="flex justify-between items-center relative z-10">
           <div>
-            <h3 className="text-lg font-semibold text-purple-800">🧬 Genetics Laboratory</h3>
-            <p className="text-sm text-purple-600">Level {Math.floor(state.level / 2) + 1} • XP: {state.xp}</p>
+            <h3 className="text-xl font-bold bg-gradient-to-r from-purple-700 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2">
+              🧬 Genetics Laboratory
+            </h3>
+            <p className="text-sm text-purple-600/80 font-medium mt-1">
+              Lab Level {Math.floor(state.level / 2) + 1} • <span className="text-indigo-600">{state.xp} XP</span>
+            </p>
           </div>
-          <Badge variant="outline" className="bg-purple-100 text-purple-700">
-            {Object.keys(state.genetics?.discoveredHybrids || {}).length} Hybrids Discovered
+          <Badge className="bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 border-purple-300/50 shadow-sm px-3 py-1.5 font-semibold">
+            ✨ {Object.keys(state.genetics?.discoveredHybrids || {}).length} Hybrids
           </Badge>
         </div>
       </Card>
@@ -178,57 +187,78 @@ const GeneticsTab = memo(() => {
 
         {/* Breeding Tab */}
         <TabsContent value="breeding" className="space-y-4">
-          <Card className="p-4">
-            <h4 className="font-semibold mb-3">Select Parent Crops</h4>
+          <Card className="p-5 bg-gradient-to-br from-white/95 to-slate-50/90 backdrop-blur-sm shadow-lg border-slate-200/60">
+            <h4 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
+              🧪 Select Parent Crops
+            </h4>
 
-            {/* Parent Selection Slots */}
-            <div className="flex justify-center gap-8 mb-6 items-center">
+            {/* Parent Selection Slots - Premium */}
+            <div className="flex justify-center gap-6 sm:gap-10 mb-6 items-center">
               {/* Parent 1 Slot */}
               <div
                 className={`
-                        w-32 h-32 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all
-                        ${selectedParent1 ? 'border-purple-500 bg-purple-50' : 'border-gray-300 hover:border-purple-300 hover:bg-gray-50'}
-                    `}
+                  w-28 h-28 sm:w-36 sm:h-36 border-3 rounded-2xl flex flex-col items-center justify-center cursor-pointer 
+                  transition-all duration-300 ease-out relative overflow-hidden
+                  ${selectedParent1
+                    ? 'border-purple-400 bg-gradient-to-br from-purple-50 to-indigo-50 shadow-lg shadow-purple-200/50 scale-105'
+                    : 'border-dashed border-slate-300 hover:border-purple-300 hover:bg-purple-50/50 hover:shadow-md hover:scale-[1.02]'
+                  }
+                `}
                 onClick={() => !selectedParent1 && document.getElementById('parent1-select')?.click()}
               >
+                {/* Glow effect when selected */}
+                {selectedParent1 && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-indigo-400/10 animate-pulse" />
+                )}
+
                 {selectedParent1 ? (
-                  <>
-                    <div className="text-4xl mb-2">🥕</div>    {/* Dynamic emoji would be better if mapped */}
-                    <div className="font-semibold text-sm capitalize">{selectedParent1}</div>
-                    <Button size="xs" variant="ghost" className="mt-1 h-6 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={(e) => { e.stopPropagation(); setSelectedParent1(null); }}>
-                      Remove
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="text-5xl mb-2 drop-shadow-sm">🥕</div>
+                    <div className="font-bold text-sm capitalize text-purple-800">{selectedParent1}</div>
+                    <Button size="xs" variant="ghost" className="mt-2 h-6 text-xs text-red-500 hover:text-red-700 hover:bg-red-50/80" onClick={(e) => { e.stopPropagation(); setSelectedParent1(null); }}>
+                      ✕ Remove
                     </Button>
-                  </>
+                  </div>
                 ) : (
                   <>
-                    <div className="text-gray-400 text-2xl mb-1">+</div>
-                    <div className="text-gray-500 text-xs font-medium">Select Parent 1</div>
+                    <div className="text-slate-400 text-3xl mb-1 font-light">+</div>
+                    <div className="text-slate-500 text-xs font-semibold">Parent 1</div>
                   </>
                 )}
               </div>
 
-              <div className="text-2xl text-gray-400 font-bold">+</div>
+              {/* Plus Icon */}
+              <div className="text-3xl text-purple-300 font-black">×</div>
 
               {/* Parent 2 Slot */}
               <div
                 className={`
-                        w-32 h-32 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all
-                        ${selectedParent2 ? 'border-purple-500 bg-purple-50' : 'border-gray-300 hover:border-purple-300 hover:bg-gray-50'}
-                    `}
+                  w-28 h-28 sm:w-36 sm:h-36 border-3 rounded-2xl flex flex-col items-center justify-center cursor-pointer 
+                  transition-all duration-300 ease-out relative overflow-hidden
+                  ${selectedParent2
+                    ? 'border-purple-400 bg-gradient-to-br from-purple-50 to-indigo-50 shadow-lg shadow-purple-200/50 scale-105'
+                    : 'border-dashed border-slate-300 hover:border-purple-300 hover:bg-purple-50/50 hover:shadow-md hover:scale-[1.02]'
+                  }
+                `}
                 onClick={() => !selectedParent2 && document.getElementById('parent2-select')?.click()}
               >
+                {/* Glow effect when selected */}
+                {selectedParent2 && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-indigo-400/10 animate-pulse" />
+                )}
+
                 {selectedParent2 ? (
-                  <>
-                    <div className="text-4xl mb-2">🌽</div> {/* Dynamic emoji placeholder */}
-                    <div className="font-semibold text-sm capitalize">{selectedParent2}</div>
-                    <Button size="xs" variant="ghost" className="mt-1 h-6 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={(e) => { e.stopPropagation(); setSelectedParent2(null); }}>
-                      Remove
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="text-5xl mb-2 drop-shadow-sm">🌽</div>
+                    <div className="font-bold text-sm capitalize text-purple-800">{selectedParent2}</div>
+                    <Button size="xs" variant="ghost" className="mt-2 h-6 text-xs text-red-500 hover:text-red-700 hover:bg-red-50/80" onClick={(e) => { e.stopPropagation(); setSelectedParent2(null); }}>
+                      ✕ Remove
                     </Button>
-                  </>
+                  </div>
                 ) : (
                   <>
-                    <div className="text-gray-400 text-2xl mb-1">+</div>
-                    <div className="text-gray-500 text-xs font-medium">Select Parent 2</div>
+                    <div className="text-slate-400 text-3xl mb-1 font-light">+</div>
+                    <div className="text-slate-500 text-xs font-semibold">Parent 2</div>
                   </>
                 )}
               </div>

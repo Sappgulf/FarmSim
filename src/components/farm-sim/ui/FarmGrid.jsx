@@ -237,18 +237,25 @@ const FarmPlot = memo(({
   }, [decorateMode, placeBuildingMode, plot, index, onPlotClick, onPlant, onHarvest, onToggleSelect]);
 
   return (
-    <div ref={plotRef} className="relative" data-plot-index={index}>
+    <div ref={plotRef} className="relative group" data-plot-index={index}>
       <Card
         className={`
           w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 cursor-pointer relative overflow-hidden
-          transition-all-fast hover-lift farm-plot shadow-sm hover:shadow-md rounded-2xl
-          ${display.bgColor} ${display.borderColor} border-2
-          ${display.hoverEffect} active:scale-95
-          ${display.animation || ''}
-          ${plot?.disease ? 'ring-2 ring-red-400 ring-opacity-50' : ''}
-          ${plot?.fertilizer > 0 ? 'ring-2 ring-green-400 ring-opacity-50' : ''}
-          ${isSelected ? 'ring-4 ring-blue-500 ring-opacity-70 scale-105' : ''}
-          ${showPreview && plot?.state === 'empty' ? 'ring-4 ring-emerald-400 ring-opacity-70' : ''}
+          transition-all duration-200 ease-out farm-plot rounded-2xl
+          backdrop-blur-sm bg-gradient-to-br
+          ${plot?.state === 'empty'
+            ? 'from-amber-50/90 to-amber-100/80 border-amber-300/60 shadow-amber-200/40'
+            : plot?.state === 'ready'
+              ? 'from-emerald-50/95 to-green-100/90 border-emerald-400/70 shadow-emerald-300/50'
+              : 'from-green-50/90 to-emerald-100/80 border-green-300/60 shadow-green-200/40'
+          }
+          border-2 shadow-lg
+          hover:shadow-xl hover:scale-[1.03] hover:-translate-y-0.5
+          active:scale-[0.97] active:shadow-md
+          ${plot?.disease ? 'ring-2 ring-red-400/60 ring-offset-1' : ''}
+          ${plot?.fertilizer > 0 ? 'ring-2 ring-emerald-400/60 ring-offset-1' : ''}
+          ${isSelected ? 'ring-4 ring-blue-500/70 scale-105 shadow-blue-300/40' : ''}
+          ${showPreview && plot?.state === 'empty' ? 'ring-4 ring-emerald-400/70 shadow-emerald-200/50' : ''}
           touch-manipulation select-none
         `}
         data-state={plot?.state || 'empty'}
