@@ -29,10 +29,17 @@ const LevelUpModal = ({ level, onClose }) => {
         // Entrance animation delay
         const timer = setTimeout(() => setIsVisible(true), 100);
 
-        // Play sound
-        const soundSystem = getSoundSystem();
-        if (soundSystem) {
-            soundSystem.playSound('achievement_unlock'); // Fallback to existing sound
+        // Play level up sound
+        try {
+            const soundSystem = getSoundSystem();
+            if (soundSystem && typeof soundSystem.playLevelUpSound === 'function') {
+                soundSystem.playLevelUpSound();
+            }
+        } catch (error) {
+            // Silent fail - sound is non-critical
+            if (import.meta.env.MODE === 'development') {
+                console.debug('[farm] LevelUpModal sound error:', error);
+            }
         }
 
         return () => clearTimeout(timer);
