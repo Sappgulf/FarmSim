@@ -642,6 +642,11 @@ const FarmGrid = memo(() => {
         });
         return;
       }
+      // Push undo stack before removing
+      currentActions.pushUndo({
+        type: 'decoration',
+        previousDecorations: [...currentDecorations],
+      });
       currentActions.updateDecorations(currentDecorations.filter((decor) => decor.id !== existingDecoration.id));
       if (currentState.movingDecorationId === existingDecoration.id) {
         currentActions.setMovingDecorationId(null);
@@ -667,6 +672,11 @@ const FarmGrid = memo(() => {
           currentActions.setMovingDecorationId(null);
           return;
         }
+        // Push undo stack before moving
+        currentActions.pushUndo({
+          type: 'decoration',
+          previousDecorations: [...currentDecorations],
+        });
         const nextDecorations = currentDecorations.map((decor) => (
           decor.id === movingDecoration.id
             ? { ...decor, x, y }
@@ -706,6 +716,12 @@ const FarmGrid = memo(() => {
       });
       return;
     }
+
+    // Push undo stack before placing/updating
+    currentActions.pushUndo({
+      type: 'decoration',
+      previousDecorations: [...currentDecorations],
+    });
 
     const nextDecorations = existingDecoration
       ? currentDecorations.map((decor) => (
@@ -787,6 +803,13 @@ const FarmGrid = memo(() => {
     const currentPlacements = Array.isArray(currentState.buildingPlacements)
       ? currentState.buildingPlacements
       : [];
+
+    // Push undo stack before placing building
+    currentActions.pushUndo({
+      type: 'building',
+      previousPlacements: [...currentPlacements],
+    });
+
     const nextPlacements = [
       ...currentPlacements.filter((placement) => placement.id !== selectedBuilding.id),
       { id: selectedBuilding.id, x, y },
@@ -1052,9 +1075,20 @@ const FarmGrid = memo(() => {
             </Badge>
           )}
           {decorateMode && (
-            <Badge className="bg-emerald-600">
-              🎨 Decorate Mode
-            </Badge>
+            <>
+              <Badge className="bg-emerald-600">
+                🎨 Decorate Mode
+              </Badge>
+              {(state.undoStack?.length || 0) > 0 && (
+                <button
+                  onClick={() => actionsRef.current.popUndo()}
+                  className="px-2 py-1 text-sm bg-amber-100 hover:bg-amber-200 rounded border border-amber-300 transition-colors"
+                  title="Undo last decoration change"
+                >
+                  ↩ Undo
+                </button>
+              )}
+            </>
           )}
           {placeBuildingMode && (
             <Badge className="bg-indigo-600">

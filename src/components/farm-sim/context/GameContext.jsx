@@ -123,6 +123,13 @@ const GAME_ACTIONS = {
 
   // Save/Load
   LOAD_GAME: 'LOAD_GAME',
+
+  // Cozy Identity v1
+  SET_FARM_NAME: 'SET_FARM_NAME',
+  SET_THEME: 'SET_THEME',
+  SET_PHOTO_MODE: 'SET_PHOTO_MODE',
+  PUSH_UNDO: 'PUSH_UNDO',
+  POP_UNDO: 'POP_UNDO',
 };
 
 const MAX_NOTIFICATION_BACKLOG = 100;
@@ -253,6 +260,13 @@ const initialState = {
   decorations: [],
   placeBuildingMode: false,
   selectedBuildingPlacement: 'greenhouse',
+
+  // Cozy Identity v1
+  farmName: 'My Farm',
+  theme: 'default',
+  photoMode: false,
+  undoStack: [],
+
   dailyPlan: buildDailyPlan({
     season: {
       current: 'spring',
@@ -580,6 +594,42 @@ function gameReducer(state, action) {
         },
         notifications: [], // Clear old notifications
       };
+
+    // Cozy Identity v1 actions
+    case GAME_ACTIONS.SET_FARM_NAME:
+      const farmName = typeof action.payload === 'string' ? action.payload.slice(0, 30) : 'My Farm';
+      return { ...state, farmName };
+
+    case GAME_ACTIONS.SET_THEME:
+      return { ...state, theme: action.payload || 'default' };
+
+    case GAME_ACTIONS.SET_PHOTO_MODE:
+      return { ...state, photoMode: Boolean(action.payload) };
+
+    case GAME_ACTIONS.PUSH_UNDO:
+      // Keep undo stack limited to 10 items
+      const newUndoStack = [...(state.undoStack || []), action.payload].slice(-10);
+      return { ...state, undoStack: newUndoStack };
+
+    case GAME_ACTIONS.POP_UNDO:
+      if (!state.undoStack || state.undoStack.length === 0) return state;
+      const lastUndo = state.undoStack[state.undoStack.length - 1];
+      const remainingStack = state.undoStack.slice(0, -1);
+      // Apply the undo based on type
+      if (lastUndo?.type === 'decoration') {
+        return {
+          ...state,
+          undoStack: remainingStack,
+          decorations: lastUndo.previousDecorations || state.decorations,
+        };
+      } else if (lastUndo?.type === 'building') {
+        return {
+          ...state,
+          undoStack: remainingStack,
+          buildingPlacements: lastUndo.previousPlacements || state.buildingPlacements,
+        };
+      }
+      return { ...state, undoStack: remainingStack };
 
     default:
       return state;
@@ -1309,6 +1359,14 @@ export function GameProvider({ children }) {
     setPlaceBuildingMode: (enabled) => dispatch({ type: GAME_ACTIONS.SET_PLACE_BUILDING_MODE, payload: enabled }),
     setSelectedBuildingPlacement: (buildingId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_BUILDING_PLACEMENT, payload: buildingId }),
     updateBuildingPlacements: (placements) => dispatch({ type: GAME_ACTIONS.UPDATE_BUILDING_PLACEMENTS, payload: placements }),
+
+    // Cozy Identity v1 actions
+    setFarmName: (name) => dispatch({ type: GAME_ACTIONS.SET_FARM_NAME, payload: name }),
+    setTheme: (theme) => dispatch({ type: GAME_ACTIONS.SET_THEME, payload: theme }),
+    setPhotoMode: (enabled) => dispatch({ type: GAME_ACTIONS.SET_PHOTO_MODE, payload: enabled }),
+    pushUndo: (undoEntry) => dispatch({ type: GAME_ACTIONS.PUSH_UNDO, payload: undoEntry }),
+    popUndo: () => dispatch({ type: GAME_ACTIONS.POP_UNDO }),
+
     updateSettings: (settings) => dispatch({ type: GAME_ACTIONS.UPDATE_SETTINGS, payload: settings }),
     updateAutomation: (automation) => dispatch({ type: GAME_ACTIONS.UPDATE_AUTOMATION, payload: automation }),
     updateGameLoop: (data) => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: data }),

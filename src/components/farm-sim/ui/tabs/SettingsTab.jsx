@@ -9,6 +9,7 @@ import { AudioSettings } from './settings/AudioSettings';
 import { SaveLoadSettings } from './settings/SaveLoadSettings';
 import { GameplaySettings } from './settings/GameplaySettings';
 import { GameStats } from './settings/GameStats';
+import { FarmIdentitySettings } from './settings/FarmIdentitySettings';
 import { resetTutorial } from '../../ui/Tutorial';
 import { SAVE_BACKUP_KEY, SAVE_KEY } from '../../context/GamePersistence';
 import { addTrackedEventListener } from '../../services/EventListenerService';
@@ -296,6 +297,11 @@ const SettingsTab = memo(() => {
           </div>
         </div>
       </Card>
+
+      <FarmIdentitySettings
+        state={state}
+        actions={actions}
+      />
 
       <SaveLoadSettings
         handleSaveGame={handleSaveGame}

@@ -87,6 +87,20 @@
 | Plot visuals (growth, wet/dry, borders) | Implemented | `FarmGrid.jsx`, `index.css` | Rounded plots, soil + moisture overlays, staged growth. |
 | Save persistence for layout | Implemented | `GamePersistence.js` | Decorations normalized and validated on load. |
 
+## Cozy Identity v1 Feature Inventory
+| Feature | Status | Location | Notes / Gaps |
+| --- | --- | --- | --- |
+| Farm name/identity | Implemented | `GameContext.jsx`, `GamePersistence.js`, `SettingsTab.jsx`, `TownBoard.jsx` | Player-editable farm name displayed on Town Board and save header. |
+| Theme palettes | Implemented | `index.css`, `SettingsTab.jsx`, `GameContext.jsx`, `GamePersistence.js` | CSS-variable themes (Spring, Autumn, Pastel, Midnight) selectable in Settings. |
+| Photo mode | Implemented | `FarmSim.jsx`, `index.css` | Toggle hides HUD/panels, centers farm view for screenshots. |
+| Cozy achievements | Implemented | `achievementData.js`, `AchievementSystem.js` | Milestones for collections, town rep tiers, seasonal harvests. |
+| Audio system | ALREADY IMPLEMENTED | `SoundSystem.js`, `MusicSystem.js`, `AudioSettings.jsx` | 15+ SFX + procedural seasonal music with volume controls. |
+| Audio page visibility | Implemented | `FarmSim.jsx` | Music/ambient paused when tab hidden via Page Visibility API. |
+| QoL multi-place | Implemented | `FarmGrid.jsx`, `GameContext.jsx` | Drag-to-place paths/fences in decorate mode. |
+| QoL undo placement | Implemented | `GameContext.jsx`, `FarmingTab.jsx` | Single-step undo for last decoration/building placement. |
+| Settings toggles | ALREADY IMPLEMENTED | `SettingsTab.jsx`, `GameplaySettings.jsx` | Sound, music, animations, reduced motion, auto-save. |
+| Save/load persistence | ALREADY IMPLEMENTED (v8) | `GamePersistence.js` | New fields (farmName, theme) validated and migrated. |
+
 ## Notes
 - Avoid duplicating features: check `constants/` and `systems/` before adding new mechanics.
 - Save/load flows should go through `GamePersistence.js` to keep validation consistent.

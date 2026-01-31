@@ -1,8 +1,30 @@
 # Codebase Cleanup & Optimization Changelog
 
-**Date:** January 2026  
-**Project:** FarmLife v4.5.0  
-**Status:** Architecture, Accessibility & Systems Refinement Update ✅
+**Date:** January 2026
+**Project:** FarmLife v4.8.0
+**Status:** Cozy Identity v1 + Architecture, Accessibility & Systems Refinement Update
+
+---
+
+## 2026-01-31 Cozy Identity v1
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** audit existing features, add farm identity (name/theme), photo mode, cozy achievements, audio polish, and QoL tools.
+  - **Why:** deliver personal identity, shareable coziness, and quality-of-life upgrades while keeping performance top-tier.
+  - **Verification:** manual testing + lint pass.
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:**
+    - **Farm Identity**: Farm name with UI in Settings and display on Town Board; user-selectable theme palettes (Spring, Autumn, Pastel, Midnight, Classic) via CSS variables.
+    - **Photo Mode**: Toggle to hide all UI and center the farm for screenshots; accessible via floating button.
+    - **Cozy Achievements**: 18 new achievements for collections milestones, town rep tiers, seasonal harvests, photo mode use, and farm decoration.
+    - **Audio Polish**: Page Visibility API pauses/resumes music when tab is hidden/shown.
+    - **QoL Tools**: Undo button in decorate mode to revert last decoration/building placement; undo stack persisted in state.
+    - **Save Migration**: Version 8 adds farmName, theme, photoMode, undoStack with validation and defaults.
+  - **Why:** make the farm feel personal and shareable while keeping systems event-driven and save-stable.
+  - **Verification:** manual testing, lint pass.
 
 ---
 

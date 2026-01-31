@@ -180,3 +180,34 @@
 
 ### Biggest Bottleneck Removed
 - Eliminated any need to scan the full grid for building effects during ticks.
+
+## 2026-01-31 Cozy Identity v1 Pass
+
+### Baseline Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.
+
+### Improvements Applied
+- **Farm Identity**: State-only changes (farmName, theme); no per-tick work. Theme applied via CSS variables on document root.
+- **Photo Mode**: Toggle state only; UI elements hidden via CSS class, no per-tick logic.
+- **Cozy Achievements**: Uses existing AchievementSystem 5-second check interval; no new per-tick work added.
+- **Audio Page Visibility**: Event-driven via Page Visibility API; music pauses/resumes only on visibility change.
+- **Undo Stack**: State-based undo with capped history (10 items); no per-tick processing.
+- **Theme Application**: Single useEffect on theme change to set data-theme attribute; CSS handles the rest.
+
+### After Metrics (debug=1)
+- Average FPS: No regression expected (all features event-driven).
+- Worst frame: No regression expected.
+- Tick time: No additional per-tick work added.
+- Render time: No additional render work added.
+
+### Biggest Bottleneck Avoided
+- All Cozy Identity v1 features are event-driven only:
+  - Farm name/theme: Changed via user action, applied instantly via CSS variables.
+  - Photo mode: Toggle on user click, CSS-only UI hiding.
+  - Achievements: Checked every 5 seconds (existing system), not per-tick.
+  - Audio visibility: Uses native Page Visibility API event.
+  - Undo: Push on action, pop on user click; no background processing.
+- No per-tick loops, no DOM queries in hot paths, no layout thrashing.
