@@ -286,20 +286,14 @@ export class SeasonSystem {
       config: nextConfig,
     });
 
-    // Trigger celebration particles
-    if (typeof window.triggerParticleEffect === 'function') {
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 3;
-      window.triggerParticleEffect(centerX, centerY, 'levelup', {
-        text: `${nextConfig.emoji} ${nextConfig.name} has arrived!`,
-        shake: false
-      });
-    }
+    // Note: Removed redundant particle effect - full-screen transition is sufficient
+    // The season transition overlay already provides visual celebration
 
-    // Add notification
+    // Add notification (single, not spammy)
     this.actions.addNotification({
       message: `${nextConfig.emoji} ${nextConfig.name} has begun! ${nextConfig.description}`,
-      type: 'success'
+      type: 'success',
+      durationMs: 5000, // Show for 5 seconds
     });
   }
 
@@ -325,18 +319,18 @@ export class SeasonSystem {
   getSeasonalWeather() {
     const config = this.getCurrentConfig();
     const weights = config.weatherWeights;
-    
+
     // Random weighted selection
     const random = Math.random();
     let cumulative = 0;
-    
+
     for (const [weather, weight] of Object.entries(weights)) {
       cumulative += weight;
       if (random <= cumulative) {
         return weather;
       }
     }
-    
+
     return 'sunny'; // Fallback
   }
 
@@ -347,7 +341,7 @@ export class SeasonSystem {
     const dayLengthMs = this.gameState.season?.dayLengthMs || DEFAULT_DAY_LENGTH_MS;
     const timeSinceDayStart = now - dayStartTime;
     const timeRemaining = Math.max(0, dayLengthMs - timeSinceDayStart);
-    
+
     return {
       milliseconds: timeRemaining,
       seconds: Math.floor(timeRemaining / 1000),

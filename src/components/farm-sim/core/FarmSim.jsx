@@ -382,7 +382,7 @@ function FarmSimCore() {
           overlay.style.opacity = '0.95';
         });
 
-        // Add season icon with dramatic entrance
+        // Add season icon with dramatic entrance (reduced size for subtler effect)
         const icon = document.createElement('div');
         icon.textContent = seasonConfig.emoji;
         icon.style.cssText = `
@@ -390,11 +390,11 @@ function FarmSimCore() {
           top: 40%;
           left: 50%;
           transform: translate(-50%, -50%) scale(0);
-          font-size: 150px;
+          font-size: 80px;
           z-index: 10000;
           pointer-events: none;
-          filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.9));
-          animation: season-icon-pop 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.7));
+          animation: season-icon-pop 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         `;
         document.body.appendChild(icon);
 
@@ -406,13 +406,13 @@ function FarmSimCore() {
           top: 55%;
           left: 50%;
           transform: translate(-50%, -50%) scale(0);
-          font-size: 48px;
+          font-size: 36px;
           font-weight: bold;
           color: rgba(255, 255, 255, 0.95);
           z-index: 10000;
           pointer-events: none;
           text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-          animation: season-text-appear 2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
+          animation: season-text-appear 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
         `;
         document.body.appendChild(text);
 
@@ -424,7 +424,7 @@ function FarmSimCore() {
           top: 62%;
           left: 50%;
           transform: translate(-50%, -50%);
-          font-size: 18px;
+          font-size: 16px;
           color: rgba(255, 255, 255, 0.85);
           z-index: 10000;
           pointer-events: none;
@@ -432,12 +432,12 @@ function FarmSimCore() {
           text-align: center;
           max-width: 80%;
           opacity: 0;
-          animation: fade-in 1s ease-in 0.8s forwards;
+          animation: fade-in 1s ease-in 0.6s forwards;
         `;
         document.body.appendChild(desc);
 
-        // Create decorative particles
-        const particleCount = 30;
+        // Create decorative particles (reduced from 30 to 8 for subtler effect)
+        const particleCount = 8;
         const particles = [];
         for (let i = 0; i < particleCount; i++) {
           const particle = document.createElement('div');
@@ -446,7 +446,7 @@ function FarmSimCore() {
             position: fixed;
             top: ${Math.random() * 100}%;
             left: ${Math.random() * 100}%;
-            font-size: ${20 + Math.random() * 30}px;
+            font-size: ${16 + Math.random() * 12}px;
             z-index: 9998;
             pointer-events: none;
             opacity: 0;
