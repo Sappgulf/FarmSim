@@ -264,53 +264,94 @@ const GeneticsTab = memo(() => {
               </div>
             </div>
 
-            {/* Hidden Selectors (Visible controls below) */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <h5 className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Available Crops (Parent 1)</h5>
-                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+            {/* Crop Selection Grid - Premium */}
+            <div className="grid grid-cols-2 gap-5 mb-5">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-purple-50/80 to-indigo-50/60 border border-purple-100">
+                <h5 className="text-xs font-bold text-purple-700 mb-3 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-purple-400" />
+                  Parent 1 Crops
+                </h5>
+                <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
                   {availableCrops.map(crop => (
-                    <Button
+                    <button
                       key={crop}
-                      variant={selectedParent1 === crop ? "default" : "outline"}
-                      size="sm"
                       onClick={() => setSelectedParent1(crop)}
-                      className={`text-xs justify-start px-2 ${selectedParent1 === crop ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
-                      disabled={selectedParent2 === crop && (state.inventory[crop] || 0) < 2} // Prevent selecting same single crop twice if only 1 owned
+                      disabled={selectedParent2 === crop && (state.inventory[crop] || 0) < 2}
+                      className={`
+                        p-2.5 rounded-xl text-left transition-all duration-200 border-2
+                        ${selectedParent1 === crop
+                          ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white border-purple-400 shadow-lg shadow-purple-300/40 scale-[1.02]'
+                          : 'bg-white/80 hover:bg-purple-50 border-slate-200 hover:border-purple-300 hover:shadow-md'
+                        }
+                        disabled:opacity-40 disabled:cursor-not-allowed
+                      `}
                     >
-                      <span className="mr-1">{crop === 'carrot' ? '🥕' : '📦'}</span> {/* Simplified emoji logic for now */}
-                      {crop} <span className="ml-auto opacity-70">x{state.inventory[crop] || 0}</span>
-                    </Button>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🌱</span>
+                        <div className="flex-1 min-w-0">
+                          <div className={`font-semibold text-sm capitalize truncate ${selectedParent1 === crop ? 'text-white' : 'text-slate-800'}`}>
+                            {crop}
+                          </div>
+                          <div className={`text-xs ${selectedParent1 === crop ? 'text-purple-200' : 'text-slate-500'}`}>
+                            ×{state.inventory[crop] || 0} available
+                          </div>
+                        </div>
+                      </div>
+                    </button>
                   ))}
                 </div>
               </div>
 
-              <div>
-                <h5 className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Available Crops (Parent 2)</h5>
-                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-50/80 to-blue-50/60 border border-indigo-100">
+                <h5 className="text-xs font-bold text-indigo-700 mb-3 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-indigo-400" />
+                  Parent 2 Crops
+                </h5>
+                <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
                   {availableCrops.map(crop => (
-                    <Button
+                    <button
                       key={crop}
-                      variant={selectedParent2 === crop ? "default" : "outline"}
-                      size="sm"
                       onClick={() => setSelectedParent2(crop)}
-                      className={`text-xs justify-start px-2 ${selectedParent2 === crop ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
                       disabled={selectedParent1 === crop && (state.inventory[crop] || 0) < 2}
+                      className={`
+                        p-2.5 rounded-xl text-left transition-all duration-200 border-2
+                        ${selectedParent2 === crop
+                          ? 'bg-gradient-to-br from-indigo-500 to-blue-600 text-white border-indigo-400 shadow-lg shadow-indigo-300/40 scale-[1.02]'
+                          : 'bg-white/80 hover:bg-indigo-50 border-slate-200 hover:border-indigo-300 hover:shadow-md'
+                        }
+                        disabled:opacity-40 disabled:cursor-not-allowed
+                      `}
                     >
-                      <span className="mr-1">{crop === 'carrot' ? '🥕' : '📦'}</span>
-                      {crop} <span className="ml-auto opacity-70">x{state.inventory[crop] || 0}</span>
-                    </Button>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🌱</span>
+                        <div className="flex-1 min-w-0">
+                          <div className={`font-semibold text-sm capitalize truncate ${selectedParent2 === crop ? 'text-white' : 'text-slate-800'}`}>
+                            {crop}
+                          </div>
+                          <div className={`text-xs ${selectedParent2 === crop ? 'text-indigo-200' : 'text-slate-500'}`}>
+                            ×{state.inventory[crop] || 0} available
+                          </div>
+                        </div>
+                      </div>
+                    </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Breeding Preview */}
+            {/* Breeding Preview - Premium */}
             {selectedParent1 && selectedParent2 && (
-              <Card className="p-3 bg-yellow-50 border-yellow-200">
-                <div className="text-center">
-                  <div className="text-lg mb-2">
-                    {selectedParent1} + {selectedParent2}
+              <Card className="p-4 bg-gradient-to-br from-amber-50/95 via-yellow-50/90 to-orange-50/80 border-amber-200/70 shadow-lg shadow-amber-200/30 relative overflow-hidden">
+                {/* Sparkle decoration */}
+                <div className="absolute top-2 right-3 text-2xl opacity-30 animate-pulse">✨</div>
+
+                <div className="text-center relative z-10">
+                  <div className="text-lg mb-3 font-semibold text-amber-800 flex items-center justify-center gap-3">
+                    <span className="text-2xl">🌱</span>
+                    <span className="capitalize">{selectedParent1}</span>
+                    <span className="text-amber-400 font-black">×</span>
+                    <span className="capitalize">{selectedParent2}</span>
+                    <span className="text-2xl">🌱</span>
                   </div>
 
                   {(() => {
@@ -324,26 +365,29 @@ const GeneticsTab = memo(() => {
                     if (recipeKey) {
                       const recipe = BREEDING_RECIPES[recipeKey];
                       return (
-                        <div>
-                          <div className="text-xl mb-1">{recipe.emoji}</div>
-                          <div className="font-semibold">{recipe.name}</div>
-                          <div className="text-sm text-gray-600 mb-2">{recipe.description}</div>
-                          <div className="flex justify-center gap-2 mb-3">
+                        <div className="space-y-3">
+                          <div className="text-4xl mb-2 drop-shadow-sm">{recipe.emoji}</div>
+                          <div className="font-bold text-lg text-amber-900">{recipe.name}</div>
+                          <div className="text-sm text-amber-700/80">{recipe.description}</div>
+                          <div className="flex justify-center gap-2 flex-wrap">
                             {recipe.traits.map(trait => (
-                              <Badge key={trait} variant="outline" className="text-xs">
-                                {trait.replace('_', ' ')}
+                              <Badge key={trait} className="bg-amber-100 text-amber-800 border-amber-300/50 text-xs px-2 py-0.5">
+                                ⚡ {trait.replace('_', ' ')}
                               </Badge>
                             ))}
                           </div>
-                          <Button onClick={handleBreed} className="w-full">
-                            Breed Hybrid (+25 XP)
+                          <Button
+                            onClick={handleBreed}
+                            className="w-full mt-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-300/40 py-5"
+                          >
+                            🧬 Breed Hybrid (+25 XP)
                           </Button>
                         </div>
                       );
                     } else {
                       return (
-                        <div className="text-gray-600">
-                          <div className="text-lg mb-1">❓</div>
+                        <div className="py-4 text-amber-700/70">
+                          <div className="text-3xl mb-2 opacity-60">❓</div>
                           <div className="font-semibold">Unknown Combination</div>
                           <div className="text-sm">Try different crops or level up!</div>
                         </div>
@@ -358,8 +402,10 @@ const GeneticsTab = memo(() => {
 
         {/* Hybrids Tab */}
         <TabsContent value="hybrids" className="space-y-4">
-          <Card className="p-4">
-            <h4 className="font-semibold mb-3">🌱 Discovered Hybrids</h4>
+          <Card className="p-5 bg-gradient-to-br from-white/95 to-emerald-50/30 backdrop-blur-sm shadow-lg border-emerald-100">
+            <h4 className="font-bold text-lg text-emerald-800 mb-4 flex items-center gap-2">
+              🌱 Discovered Hybrids
+            </h4>
 
             <div className="grid grid-cols-1 gap-3">
               {Object.entries(BREEDING_RECIPES).map(([key, recipe]) => {
@@ -367,38 +413,68 @@ const GeneticsTab = memo(() => {
                 const unlocked = recipe.unlockLevel <= state.level;
 
                 return (
-                  <Card key={key} className={`p-3 ${unlocked ? 'bg-white' : 'bg-gray-50 opacity-60'}`}>
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{recipe.emoji}</span>
+                  <Card
+                    key={key}
+                    className={`
+                      p-4 transition-all duration-300 relative overflow-hidden
+                      ${unlocked
+                        ? 'bg-gradient-to-br from-white to-slate-50/80 shadow-md hover:shadow-lg hover:scale-[1.01] border-slate-200'
+                        : 'bg-slate-100/60 opacity-50 border-slate-200'
+                      }
+                      ${recipe.quality >= 3.0 ? 'ring-2 ring-purple-300/50' : ''}
+                      ${recipe.quality >= 2.0 && recipe.quality < 3.0 ? 'ring-1 ring-blue-300/40' : ''}
+                    `}
+                  >
+                    {/* Rarity glow for legendary */}
+                    {recipe.quality >= 3.0 && unlocked && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-transparent to-purple-500/5 animate-pulse" />
+                    )}
+
+                    <div className="flex justify-between items-start relative z-10">
+                      <div className="flex items-center gap-4">
+                        <div className={`text-4xl ${unlocked ? 'drop-shadow-sm' : 'grayscale opacity-60'}`}>
+                          {recipe.emoji}
+                        </div>
                         <div>
-                          <div className="font-semibold">{recipe.name}</div>
-                          <div className="text-sm text-gray-600">{recipe.description}</div>
-                          <div className="flex gap-1 mt-1">
+                          <div className="font-bold text-slate-800">{recipe.name}</div>
+                          <div className="text-sm text-slate-600">{recipe.description}</div>
+                          <div className="flex gap-1.5 mt-2 flex-wrap">
                             {recipe.traits.map(trait => (
-                              <Badge key={trait} variant="outline" className="text-xs">
-                                {trait.replace('_', ' ')}
+                              <Badge
+                                key={trait}
+                                className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200/50 px-2 py-0.5"
+                              >
+                                ⚡ {trait.replace('_', ' ')}
                               </Badge>
                             ))}
                           </div>
                         </div>
                       </div>
 
-                      <div className="text-right">
+                      <div className="text-right flex flex-col items-end gap-1">
                         <Badge
-                          variant="outline"
-                          className={getRarityColor(recipe.quality)}
+                          className={`
+                            font-semibold px-2.5 py-1
+                            ${recipe.quality >= 3.0
+                              ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg shadow-purple-300/40'
+                              : recipe.quality >= 2.0
+                                ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-300/30'
+                                : recipe.quality >= 1.5
+                                  ? 'bg-gradient-to-r from-emerald-400 to-green-500 text-white'
+                                  : 'bg-slate-200 text-slate-700'
+                            }
+                          `}
                         >
                           {getRarityLabel(recipe.quality)}
                         </Badge>
                         <div className="text-sm mt-1">
                           {unlocked ? (
                             <>
-                              <div>Owned: {owned}</div>
-                              <div className="text-green-600">Value: {recipe.baseValue}🪙</div>
+                              <div className="font-medium text-slate-700">Owned: {owned}</div>
+                              <div className="font-semibold text-emerald-600">💰 {recipe.baseValue}</div>
                             </>
                           ) : (
-                            <div className="text-gray-500">Unlock at level {recipe.unlockLevel}</div>
+                            <div className="text-slate-500 text-xs">🔒 Level {recipe.unlockLevel}</div>
                           )}
                         </div>
                       </div>
@@ -412,36 +488,31 @@ const GeneticsTab = memo(() => {
 
         {/* Traits Tab */}
         <TabsContent value="traits" className="space-y-4">
-          <Card className="p-4">
-            <h4 className="font-semibold mb-3">⚡ Genetic Traits</h4>
+          <Card className="p-5 bg-gradient-to-br from-white/95 to-yellow-50/30 backdrop-blur-sm shadow-lg border-yellow-100">
+            <h4 className="font-bold text-lg text-yellow-800 mb-4 flex items-center gap-2">
+              ⚡ Genetic Traits Guide
+            </h4>
 
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="p-2 bg-green-50 rounded">
-                  <div className="font-medium text-green-800">Fast Growth</div>
-                  <div className="text-green-600">25% faster growth time</div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[
+                { name: 'Fast Growth', icon: '🚀', effect: '25% faster growth', color: 'from-green-400 to-emerald-500' },
+                { name: 'High Value', icon: '💎', effect: '50% higher price', color: 'from-blue-400 to-indigo-500' },
+                { name: 'Disease Resistant', icon: '🛡️', effect: '75% less disease risk', color: 'from-purple-400 to-violet-500' },
+                { name: 'Weather Resistant', icon: '☀️', effect: 'Immune to weather', color: 'from-orange-400 to-amber-500' },
+                { name: 'Pest Repellent', icon: '🐛', effect: 'Natural protection', color: 'from-red-400 to-rose-500' },
+                { name: 'Premium Quality', icon: '⭐', effect: 'Higher quality grades', color: 'from-yellow-400 to-orange-400' },
+              ].map(trait => (
+                <div
+                  key={trait.name}
+                  className="p-3 rounded-xl bg-gradient-to-br from-white to-slate-50 border border-slate-200 hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
+                >
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${trait.color} flex items-center justify-center text-xl mb-2 shadow-md`}>
+                    {trait.icon}
+                  </div>
+                  <div className="font-bold text-sm text-slate-800">{trait.name}</div>
+                  <div className="text-xs text-slate-600 mt-0.5">{trait.effect}</div>
                 </div>
-                <div className="p-2 bg-blue-50 rounded">
-                  <div className="font-medium text-blue-800">High Value</div>
-                  <div className="text-blue-600">50% higher selling price</div>
-                </div>
-                <div className="p-2 bg-purple-50 rounded">
-                  <div className="font-medium text-purple-800">Disease Resistant</div>
-                  <div className="text-purple-600">75% less disease risk</div>
-                </div>
-                <div className="p-2 bg-orange-50 rounded">
-                  <div className="font-medium text-orange-800">Weather Resistant</div>
-                  <div className="text-orange-600">Immune to weather damage</div>
-                </div>
-                <div className="p-2 bg-red-50 rounded">
-                  <div className="font-medium text-red-800">Pest Repellent</div>
-                  <div className="text-red-600">Natural pest protection</div>
-                </div>
-                <div className="p-2 bg-yellow-50 rounded">
-                  <div className="font-medium text-yellow-800">Premium Quality</div>
-                  <div className="text-yellow-600">Higher quality grades</div>
-                </div>
-              </div>
+              ))}
             </div>
           </Card>
         </TabsContent>

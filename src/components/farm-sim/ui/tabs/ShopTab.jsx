@@ -81,19 +81,38 @@ const ShopTab = memo(() => {
   const renderShopItem = (item, colorClass, btnColorClass) => {
     const owned = isOwned(item.id);
     const finalCost = getDiscountedCost(item.cost);
+    const canAfford = state.coins >= finalCost;
+
     return (
-      <div key={item.id} className={`flex justify-between items-center p-3 rounded-lg transition-all ${owned ? 'bg-gray-100 opacity-80' : `${colorClass} hover:opacity-90`}`}>
+      <div
+        key={item.id}
+        className={`
+          flex justify-between items-center p-4 rounded-xl transition-all duration-200 border
+          ${owned
+            ? 'bg-slate-100/60 opacity-70 border-slate-200'
+            : `${colorClass} hover:shadow-md hover:scale-[1.01] border-transparent hover:border-slate-200/50`
+          }
+        `}
+      >
         <div className="flex items-center gap-3 flex-1">
-          <span className="text-2xl">{item.emoji}</span>
+          <div className={`text-3xl ${owned ? 'grayscale opacity-60' : 'drop-shadow-sm'}`}>
+            {item.emoji}
+          </div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <div className="font-medium">{item.name}</div>
-              {owned && <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full font-bold">OWNED</span>}
+              <div className={`font-bold ${owned ? 'text-slate-500' : 'text-slate-800'}`}>{item.name}</div>
+              {owned && (
+                <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">
+                  ✓ OWNED
+                </span>
+              )}
             </div>
-            <div className="text-xs text-gray-600">{item.description}</div>
-            <div className={`text-xs font-medium mt-0.5 ${btnColorClass.replace('bg-', 'text-').replace('text-white', '')}`}>{item.effect}</div>
+            <div className="text-xs text-slate-600 mt-0.5">{item.description}</div>
+            <div className={`text-xs font-semibold mt-1 ${btnColorClass.replace('bg-', 'text-').replace('text-white', '').replace('hover:bg-', 'hover:text-')}`}>
+              ⚡ {item.effect}
+            </div>
             {discountLabel && !owned && (
-              <div className="text-[10px] text-emerald-700 mt-1">Town perk applied ({discountLabel})</div>
+              <div className="text-[10px] text-emerald-600 mt-1 font-medium">Town discount applied</div>
             )}
           </div>
         </div>
@@ -102,7 +121,7 @@ const ShopTab = memo(() => {
             size="sm"
             variant="ghost"
             disabled
-            className="ml-2 text-gray-500"
+            className="ml-3 text-slate-400"
           >
             Owned
           </Button>
@@ -110,10 +129,16 @@ const ShopTab = memo(() => {
           <Button
             onClick={() => handlePurchase(item)}
             size="sm"
-            disabled={state.coins < finalCost}
-            className={`ml-2 ${btnColorClass}`}
+            disabled={!canAfford}
+            className={`
+              ml-3 font-bold shadow-md transition-all
+              ${canAfford
+                ? `${btnColorClass} hover:scale-105 hover:shadow-lg`
+                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+              }
+            `}
           >
-            {finalCost}🪙
+            💰 {finalCost}
           </Button>
         )}
       </div>
@@ -122,29 +147,36 @@ const ShopTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Player Balance */}
-      <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50">
-        <div className="flex justify-between items-center">
+      {/* Player Balance - Premium */}
+      <Card className="p-5 bg-gradient-to-br from-amber-50/95 via-orange-50/90 to-yellow-50/95 backdrop-blur-sm border-amber-200/60 shadow-lg shadow-amber-200/30 relative overflow-hidden">
+        {/* Decorative coin icon */}
+        <div className="absolute -right-6 -top-4 text-7xl opacity-10 rotate-12">💰</div>
+
+        <div className="flex justify-between items-center relative z-10">
           <div>
-            <h3 className="text-lg font-semibold text-orange-800">🛒 Farm Shop</h3>
-            <p className="text-sm text-orange-600">Your one-stop shop for farming needs</p>
-            <p className="text-xs text-orange-700/80 mt-1">
-              Upgrades collected: <span className="font-semibold">{ownedUpgradeCount}</span> / {UNIQUE_UPGRADE_IDS.length}
+            <h3 className="text-xl font-bold bg-gradient-to-r from-amber-700 to-orange-600 bg-clip-text text-transparent flex items-center gap-2">
+              🛒 Farm Shop
+            </h3>
+            <p className="text-sm text-amber-700/80 font-medium mt-1">Your one-stop shop for farming needs</p>
+            <p className="text-xs text-amber-600/70 mt-1">
+              Upgrades: <span className="font-bold text-amber-800">{ownedUpgradeCount}</span> / {UNIQUE_UPGRADE_IDS.length}
             </p>
             {discountLabel && (
-              <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-100/80 px-2.5 py-1 text-xs font-semibold text-emerald-700 shadow-sm">
                 🏡 Town perk: {discountLabel} shop prices
               </div>
             )}
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-green-600">{state.coins}🪙</div>
-            <div className="text-xs text-gray-600">Available</div>
+            <div className="text-3xl font-black bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent drop-shadow-sm">
+              {state.coins}🪙
+            </div>
+            <div className="text-xs text-amber-600 font-medium">Available Balance</div>
           </div>
         </div>
         {allUpgradesOwned && (
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-            🌟 All permanent upgrades collected
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-100 to-green-100 px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-sm">
+            🌟 All permanent upgrades collected!
           </div>
         )}
       </Card>
