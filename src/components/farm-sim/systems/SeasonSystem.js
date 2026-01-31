@@ -10,11 +10,14 @@ export const SEASONS = {
   WINTER: 'winter'
 };
 
+export const DEFAULT_DAY_LENGTH_MS = 30000;
+export const DEFAULT_DAYS_PER_SEASON = 4;
+
 export const SEASON_CONFIG = {
   [SEASONS.SPRING]: {
     name: 'Spring',
     emoji: '🌸',
-    duration: 120000, // 2 minutes in milliseconds
+    duration: 120000, // 2 minutes in milliseconds (legacy)
     colors: {
       primary: 'from-pink-100 to-green-100',
       accent: 'from-pink-200 to-green-200',
@@ -56,11 +59,12 @@ export const SEASON_CONFIG = {
       diseaseResistance: 0.9 // 10% less resistant
     },
     weatherWeights: {
-      sunny: 0.6,
+      sunny: 0.55,
       rainy: 0.1,
       cloudy: 0.15,
       stormy: 0.05,
-      drought: 0.1,
+      drought: 0.05,
+      heatwave: 0.1,
       snow: 0,
       windy: 0
     },
@@ -136,39 +140,113 @@ export class SeasonSystem {
     this.gameState = currentState;
 
     // Initialize season config if not set
-    if (!this.gameState.season?.config) {
+    if (!this.gameState.season?.config
+      || typeof this.gameState.season?.dayInSeason !== 'number'
+      || typeof this.gameState.season?.dayLengthMs !== 'number'
+      || typeof this.gameState.season?.daysPerSeason !== 'number'
+      || typeof this.gameState.season?.dayStartTime !== 'number'
+    ) {
       const currentSeason = this.gameState.season?.current || SEASONS.SPRING;
+      const dayLengthMs = this.gameState.season?.dayLengthMs || DEFAULT_DAY_LENGTH_MS;
+      const daysPerSeason = this.gameState.season?.daysPerSeason || DEFAULT_DAYS_PER_SEASON;
+      const dayStartTime = this.gameState.season?.dayStartTime || Date.now();
+      const dayInSeason = Number.isFinite(this.gameState.season?.dayInSeason)
+        ? this.gameState.season.dayInSeason
+        : 1;
+      const dayCount = Number.isFinite(this.gameState.season?.dayCount)
+        ? this.gameState.season.dayCount
+        : 1;
       const config = SEASON_CONFIG[currentSeason];
       this.actions.updateSeason({
         current: currentSeason,
-        lastChangeTime: this.gameState.season?.lastChangeTime || Date.now(),
-        config: config
+        lastChangeTime: this.gameState.season?.lastChangeTime || dayStartTime,
+        dayInSeason,
+        dayCount,
+        dayLengthMs,
+        daysPerSeason,
+        dayStartTime,
+        config,
       });
       return;
     }
 
     // Check if we need to change seasons
     const now = Date.now();
-    const timeSinceLastChange = now - (this.gameState.season?.lastChangeTime || now);
     const currentSeason = this.gameState.season?.current || SEASONS.SPRING;
     const currentConfig = SEASON_CONFIG[currentSeason];
+    const dayLengthMs = this.gameState.season?.dayLengthMs || DEFAULT_DAY_LENGTH_MS;
+    const daysPerSeason = this.gameState.season?.daysPerSeason || DEFAULT_DAYS_PER_SEASON;
+    const dayStartTime = this.gameState.season?.dayStartTime || this.gameState.season?.lastChangeTime || now;
+    const dayInSeason = Number.isFinite(this.gameState.season?.dayInSeason)
+      ? this.gameState.season.dayInSeason
+      : 1;
+    const dayCount = Number.isFinite(this.gameState.season?.dayCount)
+      ? this.gameState.season.dayCount
+      : 1;
 
-    // Change season every 2 minutes
-    if (timeSinceLastChange >= currentConfig.duration) {
-      this.changeSeason();
+    const timeSinceDayStart = now - dayStartTime;
+    if (timeSinceDayStart < dayLengthMs) {
+      return;
     }
+
+    const daysElapsed = Math.floor(timeSinceDayStart / dayLengthMs);
+    const nextDayStartTime = dayStartTime + (daysElapsed * dayLengthMs);
+    let nextDayInSeason = dayInSeason + daysElapsed;
+    let nextDayCount = dayCount + daysElapsed;
+    let nextSeason = currentSeason;
+    let seasonChanged = false;
+
+    while (nextDayInSeason > daysPerSeason) {
+      nextDayInSeason -= daysPerSeason;
+      nextSeason = this.getNextSeason(nextSeason);
+      seasonChanged = true;
+    }
+
+    if (seasonChanged) {
+      this.changeSeason({
+        nextSeason,
+        dayInSeason: nextDayInSeason,
+        dayCount: nextDayCount,
+        dayStartTime: nextDayStartTime,
+        dayLengthMs,
+        daysPerSeason,
+      });
+      return;
+    }
+
+    this.actions.updateSeason({
+      current: currentSeason,
+      lastChangeTime: this.gameState.season?.lastChangeTime || now,
+      dayInSeason: nextDayInSeason,
+      dayCount: nextDayCount,
+      dayLengthMs,
+      daysPerSeason,
+      dayStartTime: nextDayStartTime,
+      config: currentConfig,
+    });
   }
 
-  changeSeason() {
-    const currentSeason = this.gameState.season?.current || SEASONS.SPRING;
+  getNextSeason(currentSeason) {
     const seasons = Object.values(SEASONS);
     const currentIndex = seasons.indexOf(currentSeason);
     const nextIndex = (currentIndex + 1) % seasons.length;
-    const nextSeason = seasons[nextIndex];
-    const nextConfig = SEASON_CONFIG[nextSeason];
+    return seasons[nextIndex] || SEASONS.SPRING;
+  }
+
+  changeSeason({
+    nextSeason,
+    dayInSeason = 1,
+    dayCount = 1,
+    dayStartTime = Date.now(),
+    dayLengthMs = DEFAULT_DAY_LENGTH_MS,
+    daysPerSeason = DEFAULT_DAYS_PER_SEASON,
+  } = {}) {
+    const currentSeason = this.gameState.season?.current || SEASONS.SPRING;
+    const resolvedNextSeason = nextSeason || this.getNextSeason(currentSeason);
+    const nextConfig = SEASON_CONFIG[resolvedNextSeason];
 
     if (import.meta.env.MODE === 'development') {
-      console.debug('[farm]', `Season changed: ${currentSeason} → ${nextSeason}`);
+      console.debug('[farm]', `Season changed: ${currentSeason} → ${resolvedNextSeason}`);
     }
 
     // Trigger visual season transition effect first
@@ -178,9 +256,14 @@ export class SeasonSystem {
 
     // Update season state
     this.actions.updateSeason({
-      current: nextSeason,
-      lastChangeTime: Date.now(),
-      config: nextConfig
+      current: resolvedNextSeason,
+      lastChangeTime: dayStartTime,
+      dayInSeason,
+      dayCount,
+      dayLengthMs,
+      daysPerSeason,
+      dayStartTime,
+      config: nextConfig,
     });
 
     // Trigger celebration particles
@@ -240,9 +323,10 @@ export class SeasonSystem {
   // Get time remaining in current season
   getTimeRemaining() {
     const now = Date.now();
-    const timeSinceLastChange = now - (this.gameState.season?.lastChangeTime || now);
-    const config = this.getCurrentConfig();
-    const timeRemaining = Math.max(0, config.duration - timeSinceLastChange);
+    const dayStartTime = this.gameState.season?.dayStartTime || this.gameState.season?.lastChangeTime || now;
+    const dayLengthMs = this.gameState.season?.dayLengthMs || DEFAULT_DAY_LENGTH_MS;
+    const timeSinceDayStart = now - dayStartTime;
+    const timeRemaining = Math.max(0, dayLengthMs - timeSinceDayStart);
     
     return {
       milliseconds: timeRemaining,
@@ -253,4 +337,3 @@ export class SeasonSystem {
 }
 
 export default SeasonSystem;
-

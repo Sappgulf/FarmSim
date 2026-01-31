@@ -1,9 +1,44 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
+
+const COZY_WEATHER_MAP = {
+  sunny: 'clear',
+  rainy: 'rain',
+  cloudy: 'cloudy',
+  stormy: 'rain',
+  snow: 'cloudy',
+  windy: 'cloudy',
+  drought: 'heatwave',
+  heatwave: 'heatwave',
+  hot: 'heatwave',
+};
+
+const COZY_WEATHER_LABELS = {
+  clear: 'Clear',
+  rain: 'Rain',
+  cloudy: 'Cloudy',
+  heatwave: 'Heatwave',
+};
+
+const COZY_WEATHER_EMOJI = {
+  clear: '☀️',
+  rain: '🌧️',
+  cloudy: '☁️',
+  heatwave: '🌤️',
+};
+
+const COZY_WEATHER_EFFECTS = {
+  clear: { growth: '+15%', water: 'Light drain', disease: 'Low' },
+  rain: { growth: '+10%', water: 'Auto-water', disease: 'Low' },
+  cloudy: { growth: '+5%', water: 'Gentle', disease: 'Very low' },
+  heatwave: { growth: 'Normal', water: 'Extra thirst', disease: 'Low' },
+};
+
+const getCozyWeather = (weather) => COZY_WEATHER_MAP[weather] || 'cloudy';
 
 // Weather prediction patterns from original system
 const WEATHER_PATTERNS = [
@@ -26,10 +61,10 @@ const WEATHER_PATTERNS = [
     hint: "Strong winds often bring storms"
   },
   {
-    pattern: ["sunny", "hot"],
-    nextWeather: "drought",
+    pattern: ["sunny", "heatwave"],
+    nextWeather: "heatwave",
     confidence: 0.6,
-    hint: "Extended heat may cause drought"
+    hint: "Extended heat suggests a heatwave"
   }
 ];
 
@@ -121,26 +156,14 @@ const WeatherTab = memo(() => {
       case 'snow': return '❄️';
       case 'windy': return '💨';
       case 'drought': return '🏜️';
+      case 'heatwave': return '🌤️';
       case 'hot': return '🔥';
       default: return '❓';
     }
   };
 
-  const getCurrentWeatherEffects = () => {
-    const effects = {
-      sunny: { growth: '+20%', water: '-10%', disease: 'Low' },
-      rainy: { growth: '+10%', water: '+50%', disease: 'Medium' },
-      cloudy: { growth: 'Normal', water: 'Normal', disease: 'Low' },
-      stormy: { growth: '-20%', water: '+20%', disease: 'High' },
-      snow: { growth: '-70%', water: '+10%', disease: 'None' },
-      windy: { growth: '-10%', water: '-5%', disease: 'Medium' },
-      drought: { growth: '-30%', water: '-20%', disease: 'High' },
-      hot: { growth: '+15%', water: '-15%', disease: 'Medium' }
-    };
-    return effects[state.weather] || effects.cloudy;
-  };
-
-  const weatherEffects = getCurrentWeatherEffects();
+  const cozyWeather = getCozyWeather(state.weather);
+  const weatherEffects = COZY_WEATHER_EFFECTS[cozyWeather] || COZY_WEATHER_EFFECTS.cloudy;
 
   return (
     <div className="space-y-4">
@@ -150,9 +173,12 @@ const WeatherTab = memo(() => {
           <div>
             <h3 className="text-lg font-semibold text-blue-800">🌤️ Current Weather</h3>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-3xl">{getWeatherEmoji(state.weather)}</span>
-              <span className="text-lg font-medium capitalize">{state.weather}</span>
+              <span className="text-3xl">{COZY_WEATHER_EMOJI[cozyWeather]}</span>
+              <span className="text-lg font-medium capitalize">{COZY_WEATHER_LABELS[cozyWeather]}</span>
             </div>
+            <p className="text-xs text-blue-600 mt-1">
+              Cozy forecast based on {state.weather} conditions.
+            </p>
           </div>
           <Badge variant="outline" className="bg-blue-100 text-blue-700">
             {weatherEffects.growth} Growth
@@ -162,7 +188,7 @@ const WeatherTab = memo(() => {
 
       {/* Weather Effects */}
       <Card className="p-4">
-        <h4 className="font-semibold mb-3">📊 Weather Effects</h4>
+        <h4 className="font-semibold mb-3">📊 Cozy Weather Effects</h4>
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div className="text-center p-2 bg-green-50 rounded">
             <div className="font-medium text-green-800">Growth Rate</div>
@@ -195,7 +221,7 @@ const WeatherTab = memo(() => {
                   {getWeatherEmoji(forecast.type)}
                 </div>
                 <Badge variant="secondary" className="mb-1 capitalize bg-gray-50">
-                  {forecast.type}
+                  {COZY_WEATHER_LABELS[getCozyWeather(forecast.type)]}
                 </Badge>
                 <div className="text-[10px] text-gray-500 font-mono">
                   {forecast.duration}s duration
@@ -272,8 +298,8 @@ const WeatherTab = memo(() => {
 
                 {/* Choices */}
                 {!predictionGame.result ? (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {["sunny", "rainy", "stormy", "cloudy"].map(weather => (
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {["sunny", "rainy", "cloudy", "stormy", "heatwave"].map(weather => (
                       <Button
                         key={weather}
                         onClick={() => makePrediction(weather)}

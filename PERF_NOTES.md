@@ -73,3 +73,22 @@
 
 ### Biggest Bottleneck Removed
 - Removed repeated DOM lookup on screen shake triggers; reduced tab switch jank by keeping recently visited tab panels mounted.
+
+## 2026-02-10 Cozy Systems + Loop Trim Pass
+
+### Baseline Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.
+
+### Improvements Applied
+- Reduced per-tick allocations in WeatherSystem by only copying plots when changes occur.
+- Added early exits in season day tracking to avoid unnecessary updates when no day rolls over.
+- Batched collection updates on harvest actions rather than per-render updates.
+
+### After Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.

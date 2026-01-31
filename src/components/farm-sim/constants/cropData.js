@@ -304,14 +304,17 @@ export function calculateProfitPerSecond(crop) {
  * Calculate harvest value for a plot with modifiers applied.
  * @param {Object} plot - Plot data with crop and fertility
  * @param {Object} [seasonConfig] - Season config for market bonuses
+ * @param {number} [bonusMultiplier=1] - Additional multiplier (town rep, events, etc.)
  * @returns {number}
  */
-export function calculateHarvestValue(plot, seasonConfig) {
+export function calculateHarvestValue(plot, seasonConfig, bonusMultiplier = 1) {
   if (!plot?.crop) return 0;
   const baseValue = plot.crop.baseValue || 10;
   const fertilityMultiplier = typeof plot.soilFertility === 'number' ? plot.soilFertility : 1.0;
   const marketMultiplier = seasonConfig?.bonuses?.marketPrices || 1.0;
-  const totalMultiplier = Math.max(0, fertilityMultiplier) * Math.max(0, marketMultiplier);
+  const totalMultiplier = Math.max(0, fertilityMultiplier)
+    * Math.max(0, marketMultiplier)
+    * Math.max(0, bonusMultiplier);
   const disease = plot.disease ? getDiseaseById(plot.disease) : null;
   const penaltyMultiplier = disease && typeof disease.yieldPenalty === 'number'
     ? Math.max(0, 1 - disease.yieldPenalty)

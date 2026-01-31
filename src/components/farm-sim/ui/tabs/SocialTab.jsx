@@ -1,15 +1,21 @@
-import React, { memo, useState } from 'react';
+import React, { memo } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
+import { getNextTownTier, getTownTierByRep, TOWN_REP_TIERS } from '../../constants/townData';
 
 const SocialTab = memo(() => {
   const { state, actions } = useGame();
 
   // Ensure social state exists
-  const social = state.social || { friends: [], reputation: 0, marketListings: [] };
+  const social = state.social || { friends: [], reputation: 0, marketListings: [], unlockedPerks: [] };
+  const currentTier = getTownTierByRep(social.reputation);
+  const nextTier = getNextTownTier(social.reputation);
+  const repProgress = nextTier
+    ? Math.min(100, ((social.reputation - currentTier.minRep) / (nextTier.minRep - currentTier.minRep)) * 100)
+    : 100;
 
   // Mock friends data (in real game, this would come from state)
   const mockFriends = [
@@ -21,6 +27,7 @@ const SocialTab = memo(() => {
   const handleSendGift = (friendId) => {
     if (state.coins >= 10) {
       actions.setCoins(state.coins - 10);
+      actions.grantReputation?.(1, 'gift');
       actions.addNotification({
         message: 'Gift sent! Your friend will be notified.',
         type: 'success'
@@ -54,7 +61,7 @@ const SocialTab = memo(() => {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <div className="text-sm text-blue-600 font-medium">Your Reputation</div>
+              <div className="text-sm text-blue-600 font-medium">Town Reputation</div>
               <div className="text-2xl font-bold text-blue-800">{social.reputation} 🌟</div>
             </div>
             <div className="h-10 w-px bg-blue-200"></div>
@@ -62,6 +69,66 @@ const SocialTab = memo(() => {
               <div className="text-sm text-blue-600 font-medium">Friends</div>
               <div className="text-2xl font-bold text-blue-800">{social.friends.length}</div>
             </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Town Reputation */}
+      <Card className="p-5 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h4 className="font-bold text-amber-900 flex items-center gap-2">
+              <span className="text-xl">🏡</span> Town Standing
+            </h4>
+            <p className="text-xs text-amber-700">Earn rep by harvesting quality crops and completing contracts.</p>
+          </div>
+          <Badge className="bg-amber-500 text-white border-0">{currentTier.name}</Badge>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white/70 rounded-xl p-3 border border-amber-100">
+            <div className="text-xs text-amber-700 uppercase font-semibold tracking-wide">Rep Progress</div>
+            <div className="text-lg font-bold text-amber-900">{social.reputation} rep</div>
+            <Progress value={repProgress} className="h-2 mt-2 bg-amber-100" />
+            {nextTier && (
+              <div className="text-[10px] text-amber-700 mt-2">
+                {nextTier.minRep - social.reputation} rep to reach {nextTier.name}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white/70 rounded-xl p-3 border border-amber-100">
+            <div className="text-xs text-amber-700 uppercase font-semibold tracking-wide">Market Perk</div>
+            <div className="text-sm font-bold text-amber-900 mt-1">
+              {Math.round((currentTier.sellBonus - 1) * 100)}% crop bonus
+            </div>
+            <p className="text-[11px] text-amber-700 mt-2">
+              Town vendors reward steady farmers with cozy price boosts.
+            </p>
+          </div>
+
+          <div className="bg-white/70 rounded-xl p-3 border border-amber-100">
+            <div className="text-xs text-amber-700 uppercase font-semibold tracking-wide">Unlocked Perks</div>
+            <ul className="text-[11px] text-amber-800 mt-2 space-y-1">
+              {currentTier.perks.map((perk) => (
+                <li key={perk}>• {perk}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-2">Town Ladder</div>
+          <div className="flex flex-wrap gap-2">
+            {TOWN_REP_TIERS.map((tier) => (
+              <Badge
+                key={tier.id}
+                variant="outline"
+                className={`text-[10px] ${social.reputation >= tier.minRep ? 'border-amber-400 text-amber-800 bg-white/70' : 'border-amber-100 text-amber-500'}`}
+              >
+                {tier.name}
+              </Badge>
+            ))}
           </div>
         </div>
       </Card>

@@ -1,5 +1,7 @@
 import { GAME_ACTIONS } from './GameActions';
 import { SAVE_VERSION, initializePlots } from './GamePersistence';
+import { createDefaultCropCollections } from '../constants/collectionData';
+import { DEFAULT_DAY_LENGTH_MS, DEFAULT_DAYS_PER_SEASON } from '../systems/SeasonSystem';
 import { getLevelFromXp, getXpForLevel, MAX_LEVEL_GAIN_PER_GRANT } from '../constants/progression';
 
 const MAX_NOTIFICATIONS = 25;
@@ -53,6 +55,11 @@ export const initialState = {
     season: {
         current: 'spring',
         lastChangeTime: Date.now(),
+        dayInSeason: 1,
+        dayCount: 1,
+        dayLengthMs: DEFAULT_DAY_LENGTH_MS,
+        daysPerSeason: DEFAULT_DAYS_PER_SEASON,
+        dayStartTime: Date.now(),
         config: null
     },
 
@@ -82,7 +89,11 @@ export const initialState = {
         friends: [],
         reputation: 0,
         marketListings: [],
+        townTier: null,
+        unlockedPerks: [],
     },
+
+    collections: createDefaultCropCollections(),
 
     // Pets system
     pets: [],
@@ -242,6 +253,9 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_ACHIEVEMENTS:
             return { ...state, achievements: action.payload };
+
+        case GAME_ACTIONS.UPDATE_COLLECTIONS:
+            return { ...state, collections: typeof action.payload === 'function' ? action.payload(state.collections) : action.payload };
 
         case GAME_ACTIONS.SET_SEASONAL_EVENTS:
             return { ...state, seasonalEvents: action.payload };
