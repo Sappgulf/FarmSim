@@ -57,6 +57,12 @@ const WeatherTab = memo(() => {
     result: null
   });
 
+  // Memoize random stats so they don't change on every render
+  const [meteorologicalStats] = useState(() => ({
+    accuracy: Math.floor(Math.random() * 30 + 70),
+    totalForecasts: Math.floor(Math.random() * 50) + 10
+  }));
+
   const startPredictionGame = () => {
     // Need at least 3 weather history entries
     if (!state.weatherForecast || state.weatherForecast.length < 3) {
@@ -341,7 +347,7 @@ const WeatherTab = memo(() => {
             </div>
             <div className="text-xs text-indigo-600 uppercase tracking-wide font-bold mb-1">Accuracy</div>
             <div className="font-black text-2xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              {Math.floor(Math.random() * 30 + 70)}%
+              {meteorologicalStats.accuracy}%
             </div>
           </div>
           <div className="p-4 bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl border border-slate-200 flex flex-col items-center justify-center hover:shadow-md transition-all">
@@ -350,7 +356,7 @@ const WeatherTab = memo(() => {
             </div>
             <div className="text-xs text-slate-600 uppercase tracking-wide font-bold mb-1">Total Forecasts</div>
             <div className="font-black text-2xl text-slate-800">
-              {Math.floor(Math.random() * 50) + 10}
+              {meteorologicalStats.totalForecasts}
             </div>
           </div>
         </div>
