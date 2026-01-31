@@ -6,8 +6,9 @@ import { XP_PER_LEVEL_BASE } from '../constants/progression';
 import { createDefaultCropCollections, normalizeCollectionsState } from '../constants/collectionData';
 import { DEFAULT_DAY_LENGTH_MS, DEFAULT_DAYS_PER_SEASON, SEASONS, SEASON_CONFIG } from '../systems/SeasonSystem';
 import { createDefaultMarketState } from '../constants/marketData';
+import { DECORATION_LOOKUP } from '../constants/decorationData';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const SAVE_BACKUP_KEY = `${SAVE_KEY}_backup`;
 
@@ -78,6 +79,31 @@ const normalizeMarket = (market) => {
         dailyMood: market.dailyMood || defaults.dailyMood,
         lastUpdatedDay: clampNumber(market.lastUpdatedDay, defaults.lastUpdatedDay, 1),
     };
+};
+
+const normalizeDecorations = (decorations, gridSize) => {
+    if (!Array.isArray(decorations)) return [];
+    const seen = new Set();
+    const maxIndex = Math.max(0, gridSize - 1);
+    return decorations.reduce((acc, decor) => {
+        if (!decor || typeof decor !== 'object') return acc;
+        if (!DECORATION_LOOKUP[decor.type]) return acc;
+        const x = Number.isFinite(decor.x) ? Math.floor(decor.x) : null;
+        const y = Number.isFinite(decor.y) ? Math.floor(decor.y) : null;
+        if (!Number.isInteger(x) || !Number.isInteger(y)) return acc;
+        if (x < 0 || y < 0 || x > maxIndex || y > maxIndex) return acc;
+        const key = `${x}-${y}`;
+        if (seen.has(key)) return acc;
+        seen.add(key);
+        acc.push({
+            id: typeof decor.id === 'string' ? decor.id : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            type: decor.type,
+            x,
+            y,
+            rotation: clampNumber(decor.rotation, 0, 0, 359),
+        });
+        return acc;
+    }, []);
 };
 
 /**
@@ -190,6 +216,18 @@ export function migrateSaveData(savedData) {
             migratedData.social.vendorDiscount = migratedData.social.vendorDiscount || 0;
         }
 
+        // Version 5 → 6: Add farm decorations + decorate mode UI defaults
+        if (saveVersion < 6) {
+            if (import.meta.env.MODE === 'development') {
+                console.debug('[farm]', 'Migrating save from version 5 to 6 (decorations)');
+            }
+            migratedData.decorations = [];
+            migratedData.decorateMode = false;
+            migratedData.decorateTool = 'place';
+            migratedData.selectedDecoration = 'fence-post';
+            migratedData.movingDecorationId = null;
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, 0);
         migratedData.xp = clampNumber(migratedData.xp, 0, 0);
@@ -252,6 +290,17 @@ export function migrateSaveData(savedData) {
 
         migratedData.automation = normalizeAutomation(migratedData.automation);
         migratedData.market = normalizeMarket(migratedData.market);
+        migratedData.decorations = normalizeDecorations(migratedData.decorations, migratedData.gridSize);
+        migratedData.decorateMode = Boolean(migratedData.decorateMode);
+        migratedData.decorateTool = ['place', 'move', 'remove'].includes(migratedData.decorateTool)
+            ? migratedData.decorateTool
+            : 'place';
+        migratedData.selectedDecoration = DECORATION_LOOKUP[migratedData.selectedDecoration]
+            ? migratedData.selectedDecoration
+            : 'fence-post';
+        migratedData.movingDecorationId = typeof migratedData.movingDecorationId === 'string'
+            ? migratedData.movingDecorationId
+            : null;
 
         if (!migratedData.season || typeof migratedData.season !== 'object') {
             migratedData.season = {

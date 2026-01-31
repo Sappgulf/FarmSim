@@ -106,6 +106,11 @@ export const initialState = {
     // UI state
     notifications: [],
     selectedCrop: 'carrot',
+    decorateMode: false,
+    decorateTool: 'place',
+    selectedDecoration: 'fence-post',
+    movingDecorationId: null,
+    decorations: [],
     settings: {
         autoSave: true,
         soundEnabled: true,
@@ -256,6 +261,21 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_COLLECTIONS:
             return { ...state, collections: typeof action.payload === 'function' ? action.payload(state.collections) : action.payload };
+
+        case GAME_ACTIONS.SET_DECORATE_MODE:
+            return { ...state, decorateMode: Boolean(action.payload) };
+
+        case GAME_ACTIONS.SET_DECORATE_TOOL:
+            return { ...state, decorateTool: action.payload };
+
+        case GAME_ACTIONS.SET_SELECTED_DECORATION:
+            return { ...state, selectedDecoration: action.payload };
+
+        case GAME_ACTIONS.SET_MOVING_DECORATION:
+            return { ...state, movingDecorationId: action.payload };
+
+        case GAME_ACTIONS.UPDATE_DECORATIONS:
+            return { ...state, decorations: action.payload };
 
         case GAME_ACTIONS.SET_SEASONAL_EVENTS:
             return { ...state, seasonalEvents: action.payload };

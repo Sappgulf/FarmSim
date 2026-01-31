@@ -54,6 +54,16 @@
 | Livestock system | Implemented | `LivestockSystem.js`, `LivestockTab.jsx` | Production loops. |
 | Fishing system | Implemented | `FishingSystem.js`, `FishingTab.jsx` | Minigame + upgrades. |
 
+## Farm Scene v1 Inventory
+| Feature | Status | Location | Notes / Gaps |
+| --- | --- | --- | --- |
+| Plot grid rendering | Implemented | `FarmGrid.jsx` | Responsive grid with plot interactions. |
+| Background / scene layer | Implemented | `FarmGrid.jsx`, `index.css` | Static grass/edge framing layer behind plots. |
+| Decorations / placeables | Implemented | `FarmGrid.jsx`, `decorationData.js`, `GameContext.jsx`, `GamePersistence.js` | Grid-snapped decor with decorate mode + save validation. |
+| Buildings / anchors | Implemented | `FarmGrid.jsx` | Farmhouse + shipping crate anchor to existing tabs. |
+| Plot visuals (growth, wet/dry, borders) | Implemented | `FarmGrid.jsx`, `index.css` | Rounded plots, soil + moisture overlays, staged growth. |
+| Save persistence for layout | Implemented | `GamePersistence.js` | Decorations normalized and validated on load. |
+
 ## Notes
 - Avoid duplicating features: check `constants/` and `systems/` before adding new mechanics.
 - Save/load flows should go through `GamePersistence.js` to keep validation consistent.

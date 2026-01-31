@@ -20,6 +20,20 @@
   - **Why:** speed up tab switching, improve accessibility, and reduce redundant DOM work.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-02-12
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** audit the farm grid rendering and documentation, then build Farm Scene v1 (background layer, anchors, decorate mode, plot visual polish) with persistence and a performance pass.
+  - **Why:** deliver a cozy farm scene without duplicating existing systems while keeping gameplay and saves stable.
+  - **Verification:** `npx vitest src/test/smoke.test.jsx --run` (warned: Unknown env config "http-proxy"; ReactDOMTestUtils.act deprecation warning).
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** added a static farm scene backdrop, farmhouse/shipping anchors, decorate mode with grid-snapped props and persistence, plus plot soil/moisture visual polish and cached grid metrics to avoid per-tick reads.
+  - **Why:** make the farm grid feel like a lived-in place while keeping gameplay unchanged and performance steady.
+  - **Verification:** `npx vitest src/test/smoke.test.jsx --run` (warned: Unknown env config "http-proxy"; ReactDOMTestUtils.act deprecation warning).
+
 ## 2026-02-10
 
 - **Planned**

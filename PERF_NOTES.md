@@ -114,3 +114,25 @@
 
 ### Biggest Bottleneck Removed
 - Eliminated timed weather/market reroll intervals in favor of the day rollover backbone.
+
+## 2026-02-12 Farm Scene v1 + Decorate Mode Pass
+
+### Baseline Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.
+
+### Improvements Applied
+- Added a static farm scene background layer that does not re-render on tick.
+- Introduced a grid-snapped decoration layer with cached grid measurements (ResizeObserver + rAF) to avoid per-tick layout reads.
+- Anchors and decorations render in fixed overlays with pointer-events management to prevent plot interaction churn.
+
+### After Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.
+
+### Biggest Bottleneck Removed
+- Avoided any per-tick DOM reads for decorations/anchors by caching grid metrics and only updating on resize.
