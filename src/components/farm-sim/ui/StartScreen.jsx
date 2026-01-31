@@ -1,197 +1,194 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 /**
- * StartScreen - Fun, friendly farm-themed landing page
- * Shows before the main game loads
+ * StartScreen - AAA Polished Farm Landing Page
+ * Features parallax background, atmospheric effects, and premium glassmorphism UI
  */
 const StartScreen = ({ onStartGame, hasSaveData }) => {
-    const [animatedEmoji, setAnimatedEmoji] = useState(0);
-    const [cloudOffset, setCloudOffset] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const containerRef = useRef(null);
 
-    // Floating farm animals
-    const farmAnimals = ['🐄', '🐔', '🐷', '🐑', '🐴', '🦆'];
-
-    // Animate emoji cycle
+    // Handle parallax mouse movement
     useEffect(() => {
-        const interval = setInterval(() => {
-            setAnimatedEmoji(prev => (prev + 1) % farmAnimals.length);
-        }, 2000);
-        return () => clearInterval(interval);
-    }, []);
+        const handleMouseMove = (e) => {
+            if (!containerRef.current) return;
+            const { innerWidth, innerHeight } = window;
+            const x = (e.clientX / innerWidth - 0.5) * 20; // 20px max movement
+            const y = (e.clientY / innerHeight - 0.5) * 20;
+            setMousePos({ x, y });
+        };
 
-    // Cloud animation
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCloudOffset(prev => (prev + 0.5) % 200);
-        }, 50);
-        return () => clearInterval(interval);
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
 
     const handleStart = (newGame = false) => {
         setIsLoading(true);
+        // Add a slight delay for the transition animation
         setTimeout(() => {
             onStartGame(newGame);
-        }, 500);
+        }, 800);
     };
 
     return (
-        <div className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden">
-            {/* Sky gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-b from-sky-400 via-sky-300 to-emerald-200" />
+        <div
+            ref={containerRef}
+            className={`fixed inset-0 flex flex-col items-center justify-center overflow-hidden transition-opacity duration-1000 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+            style={{ backgroundColor: '#1a202c' }}
+        >
+            {/* --- BACKGROUND LAYERS (PARALLAX) --- */}
 
-            {/* Sun */}
-            <div className="absolute top-8 right-12 w-24 h-24 bg-gradient-to-br from-yellow-300 to-orange-400 rounded-full shadow-lg animate-pulse" style={{ boxShadow: '0 0 60px rgba(255, 200, 0, 0.6)' }} />
+            {/* Main Farm Background */}
+            <div
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-300 ease-out scale-110"
+                style={{
+                    backgroundImage: 'url("/farm_bg.png")',
+                    transform: `translate(${mousePos.x * 0.5}px, ${mousePos.y * 0.5}px) scale(1.1)`,
+                }}
+            />
 
-            {/* Clouds */}
-            <div className="absolute top-16 left-0 right-0 flex justify-around pointer-events-none" style={{ transform: `translateX(${cloudOffset - 100}px)` }}>
-                <span className="text-6xl opacity-90 animate-float-slow">☁️</span>
-                <span className="text-5xl opacity-80 animate-float" style={{ animationDelay: '1s' }}>☁️</span>
-                <span className="text-7xl opacity-85 animate-float-slow" style={{ animationDelay: '0.5s' }}>☁️</span>
-                <span className="text-4xl opacity-75 animate-float" style={{ animationDelay: '1.5s' }}>☁️</span>
-                <span className="text-6xl opacity-90 animate-float-slow" style={{ animationDelay: '0.3s' }}>☁️</span>
-            </div>
+            {/* Atmospheric Overlay: Warm Sunset Glow */}
+            <div className="absolute inset-0 bg-gradient-to-t from-orange-500/10 via-transparent to-purple-900/20 pointer-events-none" />
 
-            {/* Rolling hills background */}
-            <div className="absolute bottom-0 left-0 right-0 h-48">
-                <div className="absolute bottom-12 left-0 right-0 h-40 bg-gradient-to-t from-green-500 to-green-400 rounded-t-[100%]" style={{ transform: 'scaleX(1.5)' }} />
-                <div className="absolute bottom-0 left-0 right-0 h-36 bg-gradient-to-t from-green-600 to-green-500 rounded-t-[80%]" style={{ transform: 'scaleX(1.3) translateX(-20px)' }} />
-                <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-green-700 to-green-600" />
-            </div>
+            {/* --- ATMOSPHERIC EFFECTS --- */}
 
-            {/* Animated farm animals on the field */}
-            <div className="absolute bottom-32 left-0 right-0 flex justify-around px-12 pointer-events-none">
-                {farmAnimals.map((animal, i) => (
-                    <span
+            {/* God Rays (Sun Rays) */}
+            <div className="absolute top-0 right-0 w-[800px] h-[600px] pointer-events-none opacity-40 mix-blend-screen overflow-hidden">
+                {[...Array(5)].map((_, i) => (
+                    <div
                         key={i}
-                        className={`text-4xl transition-all duration-500 ${i === animatedEmoji ? 'scale-125 -translate-y-2' : 'scale-100'}`}
+                        className="absolute top-[-100px] right-[-100px] w-[100px] h-[1000px] bg-gradient-to-b from-yellow-200/40 to-transparent rotate-[45deg] blur-2xl animate-beam"
                         style={{
-                            animationDelay: `${i * 0.3}s`,
-                            filter: i === animatedEmoji ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' : 'none'
+                            left: `${i * 150}px`,
+                            animationDelay: `${i * 1.5}s`,
                         }}
-                    >
-                        {animal}
-                    </span>
+                    />
                 ))}
             </div>
 
-            {/* Barn */}
-            <div className="absolute bottom-36 left-1/4 text-6xl pointer-events-none drop-shadow-lg">
-                🏠
+            {/* Floating Particles (Pollen/Dust) */}
+            <div className="absolute inset-0 pointer-events-none">
+                {[...Array(20)].map((_, i) => (
+                    <div
+                        key={i}
+                        className="absolute w-1 h-1 bg-yellow-100 rounded-full animate-float-particle mix-blend-screen"
+                        style={{
+                            top: `${Math.random() * 100}%`,
+                            left: `${Math.random() * 100}%`,
+                            opacity: Math.random() * 0.5 + 0.2,
+                            animationDuration: `${Math.random() * 10 + 10}s`,
+                            animationDelay: `${Math.random() * 5}s`,
+                        }}
+                    />
+                ))}
             </div>
 
-            {/* Tree */}
-            <div className="absolute bottom-36 right-1/4 text-5xl pointer-events-none drop-shadow-lg">
-                🌳
-            </div>
+            {/* --- UI CONTENT --- */}
 
-            {/* Main content card */}
-            <div className="relative z-10 flex flex-col items-center bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl border-4 border-amber-400 max-w-md mx-4">
-
-                {/* Logo area */}
-                <div className="relative mb-4">
-                    <div className="text-6xl mb-2 animate-bounce-slow">🌾</div>
-                    <h1 className="text-4xl font-black bg-gradient-to-r from-green-600 via-emerald-500 to-teal-500 bg-clip-text text-transparent">
-                        FarmSim
-                    </h1>
-                    <p className="text-amber-700 font-medium text-center mt-1">
-                        🌱 Grow • 🏡 Build • 🐄 Thrive 🌻
+            {/* Main Menu Container */}
+            <div
+                className="relative z-20 flex flex-col items-center animate-fade-in-up"
+                style={{
+                    transform: `translate(${mousePos.x * -0.2}px, ${mousePos.y * -0.2}px)`,
+                }}
+            >
+                {/* Title / Logo Area */}
+                <div className="mb-10 text-center">
+                    <div className="inline-block relative">
+                        <h1 className="text-8xl font-black tracking-tighter text-white drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] select-none">
+                            Farm<span className="text-amber-400">Sim</span>
+                        </h1>
+                        <div className="absolute -top-6 -right-8 text-5xl animate-bounce-slow">🥕</div>
+                    </div>
+                    <p className="text-xl font-medium text-white/90 tracking-[0.2em] uppercase mt-2 drop-shadow-md">
+                        The Ultimate Agricultural Odyssey
                     </p>
                 </div>
 
-                {/* Decorative wheat */}
-                <div className="flex gap-2 mb-6 text-2xl">
-                    <span className="animate-sway">🌾</span>
-                    <span className="animate-sway" style={{ animationDelay: '0.2s' }}>🌾</span>
-                    <span className="animate-sway" style={{ animationDelay: '0.4s' }}>🌾</span>
-                    <span className="animate-sway" style={{ animationDelay: '0.6s' }}>🌾</span>
-                    <span className="animate-sway" style={{ animationDelay: '0.8s' }}>🌾</span>
-                </div>
+                {/* Action Buttons: Premium Glassmorphism */}
+                <div className="w-[380px] space-y-4 p-8 bg-white/10 backdrop-blur-xl rounded-[2.5rem] border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
 
-                {/* Action buttons */}
-                <div className="flex flex-col gap-3 w-full">
                     {hasSaveData && (
                         <button
                             onClick={() => handleStart(false)}
                             disabled={isLoading}
-                            className="w-full py-4 px-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold text-lg rounded-2xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50"
+                            className="group relative w-full py-5 px-8 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-black text-xl rounded-2xl shadow-[0_10px_20px_rgba(16,185,129,0.3)] transform transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_30px_rgba(16,185,129,0.4)] active:scale-95 disabled:opacity-50 overflow-hidden"
                         >
-                            {isLoading ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <span className="animate-spin">🌻</span> Loading...
-                                </span>
-                            ) : (
-                                <span className="flex items-center justify-center gap-2">
-                                    🚜 Continue Farm
-                                </span>
-                            )}
+                            <div className="relative z-10 flex items-center justify-center gap-3">
+                                <span className="text-2xl group-hover:rotate-12 transition-transform">🚜</span>
+                                <span>{isLoading ? 'Loading Farm...' : 'CONTINUE FARM'}</span>
+                            </div>
+                            {/* Shine effect */}
+                            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shine" />
                         </button>
                     )}
 
                     <button
                         onClick={() => handleStart(true)}
                         disabled={isLoading}
-                        className={`w-full py-4 px-6 font-bold text-lg rounded-2xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 ${hasSaveData
-                                ? 'bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-amber-900'
-                                : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white'
+                        className={`group relative w-full py-5 px-8 font-black text-xl rounded-2xl transform transition-all duration-300 hover:-translate-y-1 active:scale-95 disabled:opacity-50 overflow-hidden ${hasSaveData
+                                ? 'bg-white/10 border-2 border-white/30 text-white hover:bg-white/20 shadow-lg'
+                                : 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-amber-950 shadow-[0_10px_20px_rgba(245,158,11,0.3)] hover:shadow-[0_20px_30px_rgba(245,158,11,0.4)]'
                             }`}
                     >
-                        {isLoading && !hasSaveData ? (
-                            <span className="flex items-center justify-center gap-2">
-                                <span className="animate-spin">🌱</span> Planting Seeds...
-                            </span>
-                        ) : (
-                            <span className="flex items-center justify-center gap-2">
-                                🌱 {hasSaveData ? 'New Farm' : 'Start Farming!'}
-                            </span>
-                        )}
+                        <div className="relative z-10 flex items-center justify-center gap-3">
+                            <span className="text-2xl group-hover:scale-125 transition-transform">🌱</span>
+                            <span>{hasSaveData ? 'START NEW FARM' : 'BEGIN YOUR HARVEST'}</span>
+                        </div>
+                        {/* Shine effect */}
+                        {!hasSaveData && <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-shine" />}
                     </button>
+
+                    {!hasSaveData && (
+                        <div className="pt-4 text-center">
+                            <p className="text-white/60 text-sm font-medium animate-pulse">
+                                ✨ Join over 1,000,000 virtual farmers
+                            </p>
+                        </div>
+                    )}
                 </div>
 
-                {/* Fun tips */}
-                <div className="mt-6 text-center text-sm text-amber-700/80">
-                    <p className="animate-pulse">🌟 Tip: Plant crops, raise animals, and build your dream farm!</p>
+                {/* Footer: Social / Version */}
+                <div className="mt-12 flex gap-8">
+                    <div className="flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors cursor-pointer text-sm font-bold tracking-widest uppercase">
+                        <span>v2.5.0 Gold Edition</span>
+                    </div>
                 </div>
             </div>
 
-            {/* Footer decorative crops */}
-            <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-4 text-3xl pointer-events-none">
-                <span className="animate-grow-pop" style={{ animationDelay: '0s' }}>🥕</span>
-                <span className="animate-grow-pop" style={{ animationDelay: '0.3s' }}>🌽</span>
-                <span className="animate-grow-pop" style={{ animationDelay: '0.6s' }}>🍅</span>
-                <span className="animate-grow-pop" style={{ animationDelay: '0.9s' }}>🥬</span>
-                <span className="animate-grow-pop" style={{ animationDelay: '1.2s' }}>🍆</span>
-            </div>
-
-            {/* CSS animations */}
-            <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
+            {/* Transitions / Styles */}
+            <style dangerouslySetInnerHTML={{
+                __html: `
+        @keyframes beam {
+          0% { opacity: 0; transform: translateX(-50px) rotate(45deg); }
+          50% { opacity: 1; }
+          100% { opacity: 0; transform: translateX(50px) rotate(45deg); }
         }
-        @keyframes float-slow {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-15px); }
+        @keyframes float-particle {
+          0%, 100% { transform: translate(0, 0); }
+          25% { transform: translate(20px, -20px); }
+          50% { transform: translate(-10px, -40px); }
+          75% { transform: translate(-30px, -20px); }
+        }
+        @keyframes fade-in-up {
+          from { opacity: 0; transform: translateY(40px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shine {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
         }
         @keyframes bounce-slow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
+          0%, 100% { transform: translateY(0) rotate(0); }
+          50% { transform: translateY(-15px) rotate(15deg); }
         }
-        @keyframes sway {
-          0%, 100% { transform: rotate(-5deg); }
-          50% { transform: rotate(5deg); }
-        }
-        @keyframes grow-pop {
-          0% { transform: scale(0); opacity: 0; }
-          50% { transform: scale(1.2); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        .animate-float { animation: float 3s ease-in-out infinite; }
-        .animate-float-slow { animation: float-slow 4s ease-in-out infinite; }
-        .animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
-        .animate-sway { animation: sway 2s ease-in-out infinite; }
-        .animate-grow-pop { animation: grow-pop 0.6s ease-out forwards; }
-      `}</style>
+        .animate-beam { animation: beam 6s ease-in-out infinite; }
+        .animate-float-particle { animation: float-particle linear infinite; }
+        .animate-fade-in-up { animation: fade-in-up 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .animate-shine { animation: shine 0.8s ease-in-out forwards; }
+        .animate-bounce-slow { animation: bounce-slow 3s ease-in-out infinite; }
+      `}} />
         </div>
     );
 };
