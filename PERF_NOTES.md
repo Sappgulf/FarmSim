@@ -136,3 +136,25 @@
 
 ### Biggest Bottleneck Removed
 - Avoided any per-tick DOM reads for decorations/anchors by caching grid metrics and only updating on resize.
+
+## 2026-02-13 Cozy World v1 Visuals Pass
+
+### Baseline Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.
+
+### Improvements Applied
+- Added season/weather/day-night overlays that update only on state changes (no per-frame DOM work).
+- Paused ambient animations on page hide via the Page Visibility API.
+- Reduced lighting transitions and overlay intensity when Reduced Effects is enabled.
+
+### After Metrics (debug=1)
+- Average FPS: Not measured in this environment.
+- Worst frame: Not measured in this environment.
+- Tick time: Not measured in this environment.
+- Render time: Not measured in this environment.
+
+### Biggest Bottleneck Removed
+- Avoided per-tick overlay updates by making visuals event-driven and CSS-animated only.

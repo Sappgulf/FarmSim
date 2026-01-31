@@ -10,7 +10,9 @@ import { getMarketBonusMultiplier } from '../constants/marketData';
 import { getTownRepBonus } from '../constants/townData';
 import { getDiseaseById } from '../constants/diseaseData';
 import { DECORATION_LOOKUP } from '../constants/decorationData';
+import { getCozyWeatherType } from '../constants/cozyWeather';
 import { traceAction } from '../services/DebugTraceService';
+import CozyWorldOverlays from './CozyWorldOverlays';
 
 const FARM_ANCHORS = [
   {
@@ -34,6 +36,53 @@ const FARM_ANCHORS = [
 ];
 
 const createDecorationId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+const getTimeOfDayPhase = (ratio) => {
+  if (ratio >= 0.75) return 'night';
+  if (ratio >= 0.55) return 'evening';
+  return 'day';
+};
+
+const useTimeOfDay = (dayStartTime, dayLengthMs) => {
+  const [phase, setPhase] = useState('day');
+
+  useEffect(() => {
+    if (!Number.isFinite(dayStartTime) || !Number.isFinite(dayLengthMs) || dayLengthMs <= 0) {
+      setPhase('day');
+      return undefined;
+    }
+
+    let timeoutId = null;
+
+    const scheduleUpdate = () => {
+      const now = Date.now();
+      const elapsed = now - dayStartTime;
+      const cycleOffset = elapsed % dayLengthMs;
+      const ratio = Math.min(1, Math.max(0, cycleOffset / dayLengthMs));
+      const nextPhase = getTimeOfDayPhase(ratio);
+
+      setPhase((current) => (current === nextPhase ? current : nextPhase));
+
+      const currentCycleStart = now - cycleOffset;
+      const nextThreshold = nextPhase === 'day' ? 0.55 : nextPhase === 'evening' ? 0.75 : 1.0;
+      let nextTime = currentCycleStart + nextThreshold * dayLengthMs;
+      if (nextTime <= now) {
+        nextTime += dayLengthMs;
+      }
+      const delay = Math.max(250, nextTime - now + 25);
+      timeoutId = setTimeout(scheduleUpdate, delay);
+    };
+
+    scheduleUpdate();
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [dayStartTime, dayLengthMs]);
+
+  return phase;
+};
 
 // Enhanced plot component with tooltips and animations
 const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0, tick, plotRef, decorateMode }) => {
@@ -383,6 +432,10 @@ const FarmGrid = memo(() => {
   const seasonBonus = state.season?.config?.bonuses?.growthSpeed || 1.0;
   const [selectedPlots, setSelectedPlots] = useState(new Set());
   const [recentDecorationId, setRecentDecorationId] = useState(null);
+  const seasonId = state.season?.current || 'spring';
+  const cozyWeather = getCozyWeatherType(state.weather);
+  const timeOfDay = useTimeOfDay(state.season?.dayStartTime, state.season?.dayLengthMs);
+  const reducedEffects = Boolean(state.settings?.reducedMotion);
 
   const stateRef = useRef(state);
   const actionsRef = useRef(actions);
@@ -814,9 +867,15 @@ const FarmGrid = memo(() => {
   }), [gridSize]);
 
   return (
-    <Card className="p-6 farm-scene-card relative overflow-hidden">
+    <Card className={`p-6 farm-scene-card relative overflow-hidden season-${seasonId} weather-${cozyWeather} time-${timeOfDay} ${reducedEffects ? 'reduced-effects' : ''}`}>
       <div className="farm-scene-backdrop" aria-hidden="true"></div>
       <div className="farm-scene-fence" aria-hidden="true"></div>
+      <CozyWorldOverlays
+        season={seasonId}
+        weather={state.weather}
+        timeOfDay={timeOfDay}
+        reducedEffects={reducedEffects}
+      />
       <div className="mb-4 text-center relative z-20">
         <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-2">
           🌾 Your Farm
@@ -893,6 +952,7 @@ const FarmGrid = memo(() => {
                 key={decor.id}
                 type="button"
                 className={`farm-decoration ${recentDecorationId === decor.id ? 'farm-decoration-pop' : ''} ${isMoving ? 'farm-decoration-moving' : ''}`}
+                data-decoration-type={decor.type}
                 style={{
                   width: gridMetrics.cellSize,
                   height: gridMetrics.cellSize,

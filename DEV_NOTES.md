@@ -54,6 +54,18 @@
 | Livestock system | Implemented | `LivestockSystem.js`, `LivestockTab.jsx` | Production loops. |
 | Fishing system | Implemented | `FishingSystem.js`, `FishingTab.jsx` | Minigame + upgrades. |
 
+## Cozy World v1 Feature Inventory
+| Feature | Status | Location | Notes / Gaps |
+| --- | --- | --- | --- |
+| Seasons logic | ALREADY IMPLEMENTED | `src/components/farm-sim/systems/SeasonSystem.js` | Season cadence and bonuses already day-driven. |
+| Weather logic | ALREADY IMPLEMENTED | `src/components/farm-sim/systems/WeatherSystem.js` | Cozy weather runs on day rollover and forecast. |
+| Day/night lighting | Implemented | `src/components/farm-sim/ui/FarmGrid.jsx`, `src/index.css` | Phase-based lighting overlay with gentle tints. |
+| Visual overlays | Implemented | `src/components/farm-sim/ui/CozyWorldOverlays.jsx`, `src/index.css` | Season/weather overlays, wet sheen, lighting. |
+| Ambient effects/actors | Implemented | `src/components/farm-sim/ui/CozyWorldOverlays.jsx`, `src/index.css` | Low-count butterflies/leaves/snowflakes, visibility-paused. |
+| Settings (reduced motion/effects) | Implemented | `src/components/farm-sim/ui/tabs/settings/GameplaySettings.jsx`, `src/components/farm-sim/context/GamePersistence.js` | Toggle persists and disables ambient + transitions. |
+| Town Board UI | Implemented | `src/components/farm-sim/ui/TownBoard.jsx`, `src/components/farm-sim/core/FarmSim.jsx` | Cozy board with season/weather/rep/market hints. |
+| Performance instrumentation | ALREADY IMPLEMENTED | `src/components/farm-sim/services/DebugService.js`, `src/components/farm-sim/ui/PerformanceOverlay.jsx` | Debug-gated metrics overlays. |
+
 ## Farm Scene v1 Inventory
 | Feature | Status | Location | Notes / Gaps |
 | --- | --- | --- | --- |
