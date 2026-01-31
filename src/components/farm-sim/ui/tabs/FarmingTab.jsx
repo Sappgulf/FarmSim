@@ -12,8 +12,18 @@ const FarmingTab = memo(() => {
   const { state, actions } = useGame();
   const [selectedCategory, setSelectedCategory] = useState('all');
 
+  const unlockedSeeds = state.social?.unlockedSeeds || [];
+  const cropsByLevel = useMemo(() => getCropsByLevel(state.level), [state.level]);
   // Get crops available at player's level
-  const availableCrops = useMemo(() => getCropsByLevel(state.level), [state.level]);
+  const availableCrops = useMemo(() => (
+    cropsByLevel.filter((crop) => (
+      !crop.requiresTownUnlock || unlockedSeeds.includes(crop.id)
+    ))
+  ), [cropsByLevel, unlockedSeeds]);
+  const lockedTownCrops = useMemo(
+    () => cropsByLevel.filter((crop) => crop.requiresTownUnlock && !unlockedSeeds.includes(crop.id)),
+    [cropsByLevel, unlockedSeeds]
+  );
 
   // Filter by category
   const crops = useMemo(() => (
@@ -152,6 +162,15 @@ const FarmingTab = memo(() => {
               Next cycle: {secondsUntilNextAuto}s
             </div>
           </div>
+        </Card>
+      )}
+
+      {lockedTownCrops.length > 0 && (
+        <Card className="p-4 border-2 border-amber-200 bg-amber-50/70">
+          <div className="font-semibold text-amber-900">🏡 Town Seeds Locked</div>
+          <p className="text-xs text-amber-700 mt-1">
+            Earn Town Rep and claim rewards in the Social tab to unlock {lockedTownCrops.length} cozy seed{lockedTownCrops.length > 1 ? 's' : ''}.
+          </p>
         </Card>
       )}
 

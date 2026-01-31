@@ -5,6 +5,8 @@ import { Card } from '../../ui/card';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { CROP_DATA, calculateHarvestValue, HARVEST_WINDOW_MS } from '../constants/cropData';
+import { getCollectionBonusMultiplier } from '../constants/collectionData';
+import { getMarketBonusMultiplier } from '../constants/marketData';
 import { getTownRepBonus } from '../constants/townData';
 import { getDiseaseById } from '../constants/diseaseData';
 import { traceAction } from '../services/DebugTraceService';
@@ -457,7 +459,13 @@ const FarmGrid = memo(() => {
     const crop = plot.crop;
     const seasonConfig = currentState.season?.config;
     const townBonus = getTownRepBonus(stateRef.current?.social?.reputation);
-    const earnings = calculateHarvestValue(plot, seasonConfig, townBonus);
+    const collectionBonus = getCollectionBonusMultiplier(currentState.collections, crop.id);
+    const marketBonus = getMarketBonusMultiplier(currentState.market, crop.id);
+    const earnings = calculateHarvestValue(
+      plot,
+      seasonConfig,
+      townBonus * collectionBonus * marketBonus
+    );
 
     // Trigger particle effect with earnings text
     if (typeof window.triggerParticleEffect === 'function') {
@@ -514,7 +522,13 @@ const FarmGrid = memo(() => {
       const plot = plotsArray[index];
       if (plot?.state === 'ready') {
         const townBonus = getTownRepBonus(stateRef.current?.social?.reputation);
-        const earnings = calculateHarvestValue(plot, stateRef.current.season?.config, townBonus);
+        const collectionBonus = getCollectionBonusMultiplier(stateRef.current.collections, plot.crop.id);
+        const marketBonus = getMarketBonusMultiplier(stateRef.current.market, plot.crop.id);
+        const earnings = calculateHarvestValue(
+          plot,
+          stateRef.current.season?.config,
+          townBonus * collectionBonus * marketBonus
+        );
         totalEarnings += earnings;
         harvestedCount++;
         handleHarvest(index);

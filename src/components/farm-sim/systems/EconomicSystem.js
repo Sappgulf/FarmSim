@@ -1,3 +1,6 @@
+import { CROP_DATA } from '../constants/cropData';
+import { createDefaultMarketState, rollDailyMarket } from '../constants/marketData';
+
 /**
  * Economic System - Handles market dynamics, pricing, and economic calculations
  */
@@ -6,8 +9,7 @@ export class EconomicSystem {
   constructor(gameState, gameActions) {
     this.state = gameState;
     this.actions = gameActions;
-    this.lastMarketUpdate = Date.now();
-    this.marketUpdateInterval = 30000; // Update market every 30 seconds
+    this.lastMarketDay = null;
   }
 
   update(currentState) {
@@ -18,16 +20,34 @@ export class EconomicSystem {
     }
     
     this.state = currentState;
-    
-    const now = Date.now();
-
-    if (now - this.lastMarketUpdate > this.marketUpdateInterval) {
-      this.updateMarketPrices();
-      this.lastMarketUpdate = now;
+    const currentDay = this.state.season?.dayCount || 1;
+    const needsMarket = !this.state.market?.dailyFeaturedCrop || this.state.market.lastUpdatedDay !== currentDay;
+    if (needsMarket) {
+      this.applyDailyMarket(currentDay, this.state.season?.current);
     }
 
     // Process any pending economic events
     this.processEconomicEvents();
+  }
+
+  onDayAdvance(dayInfo, currentState) {
+    if (!dayInfo) return;
+    if (currentState) {
+      this.state = currentState;
+    }
+    if (this.lastMarketDay === dayInfo.dayCount) return;
+    this.lastMarketDay = dayInfo.dayCount;
+    this.applyDailyMarket(dayInfo.dayCount, dayInfo.season);
+  }
+
+  applyDailyMarket(dayCount, season) {
+    const market = {
+      ...createDefaultMarketState(),
+      ...rollDailyMarket({ season }),
+      lastUpdatedDay: dayCount,
+    };
+    this.actions.updateMarket?.(market);
+    this.updateMarketPrices();
   }
 
   updateMarketPrices() {
@@ -38,7 +58,7 @@ export class EconomicSystem {
     }
     
     // Simple market fluctuation system
-    const crops = ['carrot', 'potato', 'corn', 'tomato'];
+    const crops = Object.keys(CROP_DATA);
     const updatedInventory = { ...this.state.inventory };
 
     crops.forEach(crop => {
@@ -141,7 +161,7 @@ export class EconomicSystem {
       return {};
     }
     
-    const crops = ['carrot', 'potato', 'corn', 'tomato'];
+    const crops = Object.keys(CROP_DATA);
     const prices = {};
     const inventory = this.state.inventory || {};
 

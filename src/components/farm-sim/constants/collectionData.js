@@ -10,6 +10,27 @@ export const CROP_COLLECTION_MILESTONES = [
   { id: 'legend', label: '200 Harvests', target: 200 },
 ];
 
+export const CROP_COLLECTION_REWARDS = {
+  first: {
+    id: 'first',
+    label: 'Cozy Market Nod',
+    description: '+1% sell price for this crop.',
+    bonusMultiplier: 0.01,
+  },
+  steadfast: {
+    id: 'steadfast',
+    label: 'Town Favorite',
+    description: '+2% sell price for this crop.',
+    bonusMultiplier: 0.02,
+  },
+  legend: {
+    id: 'legend',
+    label: 'Legendary Harvest',
+    description: '+3% sell price for this crop.',
+    bonusMultiplier: 0.03,
+  },
+};
+
 const DEFAULT_LORE_BY_CATEGORY = {
   vegetable: 'A cozy staple of the town market.',
   grain: 'A pantry favorite that keeps the town fed.',
@@ -97,7 +118,12 @@ export const updateCropCollectionProgress = (collections, cropId, amount = 1) =>
   CROP_COLLECTION_MILESTONES.forEach((milestone) => {
     if (!nextMilestones[milestone.id] && nextHarvested >= milestone.target) {
       nextMilestones[milestone.id] = true;
-      newlyUnlocked.push({ cropId, milestone: milestone.id, target: milestone.target });
+      newlyUnlocked.push({
+        cropId,
+        milestone: milestone.id,
+        target: milestone.target,
+        reward: CROP_COLLECTION_REWARDS[milestone.id] || null,
+      });
     }
   });
 
@@ -120,4 +146,23 @@ export const updateCropCollectionProgress = (collections, cropId, amount = 1) =>
   };
 
   return { collections: nextCollections, newlyUnlocked };
+};
+
+export const getCollectionRewardLabel = (milestoneId) => {
+  const reward = CROP_COLLECTION_REWARDS[milestoneId];
+  return reward?.description || 'Cozy badge unlocked.';
+};
+
+export const getCollectionBonusMultiplier = (collections, cropId) => {
+  if (!collections?.crops?.[cropId]?.milestones) return 1.0;
+  const milestones = collections.crops[cropId].milestones;
+  let bonus = 0;
+  Object.entries(milestones).forEach(([milestoneId, achieved]) => {
+    if (!achieved) return;
+    const reward = CROP_COLLECTION_REWARDS[milestoneId];
+    if (reward?.bonusMultiplier) {
+      bonus += reward.bonusMultiplier;
+    }
+  });
+  return 1 + bonus;
 };

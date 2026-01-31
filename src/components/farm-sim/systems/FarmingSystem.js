@@ -1,4 +1,6 @@
 import { calculateHarvestValue, HARVEST_WINDOW_MS } from '../constants/cropData';
+import { getCollectionBonusMultiplier } from '../constants/collectionData';
+import { getMarketBonusMultiplier } from '../constants/marketData';
 import { getTownRepBonus } from '../constants/townData';
 
 /**
@@ -387,7 +389,13 @@ export class FarmingSystem {
     }
 
     const townBonus = getTownRepBonus(this.gameState?.social?.reputation);
-    const harvestValue = calculateHarvestValue(plot, this.gameState?.season?.config, townBonus);
+    const collectionBonus = getCollectionBonusMultiplier(this.gameState?.collections, crop.id);
+    const marketBonus = getMarketBonusMultiplier(this.gameState?.market, crop.id);
+    const harvestValue = calculateHarvestValue(
+      plot,
+      this.gameState?.season?.config,
+      townBonus * collectionBonus * marketBonus
+    );
 
     // REBALANCED: Reduced XP to 20% of earnings (was 50%)
     this.actions.setCoins(this.gameState.coins + harvestValue);

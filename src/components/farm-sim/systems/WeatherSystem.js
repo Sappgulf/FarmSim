@@ -7,8 +7,7 @@ export class WeatherSystem {
   constructor(gameState, gameActions) {
     this.gameState = gameState;
     this.actions = gameActions;
-    this.lastWeatherChange = Date.now();
-    this.weatherCycleDuration = 25000; // 25 seconds per weather type
+    this.lastWeatherDay = null;
   }
 
   update(currentState) {
@@ -20,24 +19,29 @@ export class WeatherSystem {
     
     this.gameState = currentState;
 
-    const now = Date.now();
-
-    // Change weather periodically
-    if (now - this.lastWeatherChange > this.weatherCycleDuration) {
-      this.changeWeather();
-      this.lastWeatherChange = now;
-    }
-
     // Update weather effects on crops
     this.applyWeatherEffects();
   }
 
-  changeWeather() {
+  onDayAdvance(dayInfo, currentState) {
+    if (!dayInfo) return;
+    if (currentState) {
+      this.gameState = currentState;
+    }
+    if (this.lastWeatherDay === dayInfo.dayCount) return;
+    this.lastWeatherDay = dayInfo.dayCount;
+    this.changeWeather(dayInfo);
+  }
+
+  changeWeather(dayInfo = {}) {
     // Use seasonal weather patterns if available
     let newWeather;
-    if (this.gameState.season?.config?.weatherWeights) {
+    const seasonConfig = dayInfo.season
+      ? this.gameState.season?.config
+      : this.gameState.season?.config;
+    if (seasonConfig?.weatherWeights) {
       // Weighted random selection based on season
-      const weights = this.gameState.season.config.weatherWeights;
+      const weights = seasonConfig.weatherWeights;
       const random = Math.random();
       let cumulative = 0;
 
@@ -58,9 +62,11 @@ export class WeatherSystem {
       newWeather = weatherTypes[nextIndex];
     }
 
-    this.actions.setWeather(newWeather);
+    if (newWeather) {
+      this.actions.setWeather(newWeather);
+    }
 
-    // Update weather forecast
+    // Update weather forecast (daily outlook)
     this.updateForecast();
 
     // Apply immediate weather effects
@@ -75,7 +81,7 @@ export class WeatherSystem {
       const randomWeather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
       forecast.push({
         type: randomWeather,
-        duration: Math.floor(Math.random() * 20) + 15, // 15-35 seconds
+        dayOffset: i + 1,
         effects: this.getWeatherEffects(randomWeather)
       });
     }
@@ -326,12 +332,12 @@ export class WeatherSystem {
   }
 
   getCurrentWeather() {
+    const dayLengthMs = this.gameState.season?.dayLengthMs || 30000;
+    const dayStartTime = this.gameState.season?.dayStartTime || Date.now();
     return {
       type: this.gameState.weather,
       effects: this.getWeatherEffects(this.gameState.weather),
-      timeRemaining: Math.max(0,
-        this.weatherCycleDuration - (Date.now() - this.lastWeatherChange)
-      )
+      timeRemaining: Math.max(0, dayLengthMs - (Date.now() - dayStartTime))
     };
   }
 }

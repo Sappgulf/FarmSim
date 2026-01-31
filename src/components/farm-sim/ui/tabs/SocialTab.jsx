@@ -16,6 +16,7 @@ const SocialTab = memo(() => {
   const repProgress = nextTier
     ? Math.min(100, ((social.reputation - currentTier.minRep) / (nextTier.minRep - currentTier.minRep)) * 100)
     : 100;
+  const claimedRewards = new Set(social.claimedRewards || []);
 
   // Mock friends data (in real game, this would come from state)
   const mockFriends = [
@@ -36,6 +37,16 @@ const SocialTab = memo(() => {
       actions.addNotification({
         message: 'Not enough coins to send gift!',
         type: 'error'
+      });
+    }
+  };
+
+  const handleClaimReward = (tierId) => {
+    const success = actions.claimTownReward?.(tierId);
+    if (!success) {
+      actions.addNotification({
+        message: 'Reward not ready yet. Keep earning rep!',
+        type: 'info'
       });
     }
   };
@@ -103,7 +114,9 @@ const SocialTab = memo(() => {
               {Math.round((currentTier.sellBonus - 1) * 100)}% crop bonus
             </div>
             <p className="text-[11px] text-amber-700 mt-2">
-              Town vendors reward steady farmers with cozy price boosts.
+              {social.vendorDiscount
+                ? `Vendor discount: ${Math.round(social.vendorDiscount * 100)}% off shop items.`
+                : 'Town vendors reward steady farmers with cozy price boosts.'}
             </p>
           </div>
 
@@ -124,12 +137,54 @@ const SocialTab = memo(() => {
               <Badge
                 key={tier.id}
                 variant="outline"
-                className={`text-[10px] ${social.reputation >= tier.minRep ? 'border-amber-400 text-amber-800 bg-white/70' : 'border-amber-100 text-amber-500'}`}
+                className={`text-[10px] ${
+                  social.reputation >= tier.minRep
+                    ? 'border-amber-400 text-amber-800 bg-white/70'
+                    : 'border-amber-100 text-amber-500'
+                } ${currentTier.id === tier.id ? 'ring-2 ring-amber-300' : ''}`}
               >
                 {tier.name}
               </Badge>
             ))}
           </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-2">Town Rewards</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {TOWN_REP_TIERS.map((tier) => {
+              const reward = tier.reward;
+              const isUnlocked = social.reputation >= tier.minRep;
+              const isClaimed = claimedRewards.has(tier.id);
+              return (
+                <div key={tier.id} className={`rounded-lg border p-3 text-xs ${isUnlocked ? 'border-amber-200 bg-white/80' : 'border-gray-200 bg-gray-50'}`}>
+                  <div className="font-semibold text-amber-900">{tier.name}</div>
+                  <div className="text-[11px] text-amber-700 mt-1">
+                    {reward?.label || 'Cozy reward'} — {reward?.description || 'Town appreciation.'}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <Badge variant="outline" className={`text-[10px] ${isUnlocked ? 'border-amber-300 text-amber-700' : 'border-gray-200 text-gray-400'}`}>
+                      {isClaimed ? 'Claimed' : isUnlocked ? 'Ready' : `Reach ${tier.minRep} rep`}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-[10px] h-7 px-2"
+                      disabled={!isUnlocked || isClaimed}
+                      onClick={() => handleClaimReward(tier.id)}
+                    >
+                      {isClaimed ? 'Claimed' : 'Claim'}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {social.cosmetics?.length > 0 && (
+            <div className="mt-3 text-[11px] text-amber-700">
+              Cozy decor unlocked: {social.cosmetics.join(', ')}.
+            </div>
+          )}
         </div>
       </Card>
 

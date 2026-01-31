@@ -211,6 +211,16 @@ export class SeasonSystem {
         dayLengthMs,
         daysPerSeason,
       });
+      this.actions.onDayAdvance?.({
+        dayCount: nextDayCount,
+        dayInSeason: nextDayInSeason,
+        season: nextSeason,
+        daysElapsed,
+        dayLengthMs,
+        daysPerSeason,
+        dayStartTime: nextDayStartTime,
+        seasonChanged: true,
+      });
       return;
     }
 
@@ -223,6 +233,16 @@ export class SeasonSystem {
       daysPerSeason,
       dayStartTime: nextDayStartTime,
       config: currentConfig,
+    });
+    this.actions.onDayAdvance?.({
+      dayCount: nextDayCount,
+      dayInSeason: nextDayInSeason,
+      season: currentSeason,
+      daysElapsed,
+      dayLengthMs,
+      daysPerSeason,
+      dayStartTime: nextDayStartTime,
+      seasonChanged: false,
     });
   }
 

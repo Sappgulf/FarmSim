@@ -26,7 +26,7 @@ Grow a thriving farm by planting crops, harvesting for profit, and investing in 
 ## Seasons (Cozy Cycle)
 - **Four seasons** rotate on a gentle day-based cadence.
 - Each season adds small bonuses to growth and prices.
-- **Season day** is shown in the header so you can plan harvest timing.
+- **Season day** is shown in the Cozy Status Bar so you can plan harvest timing.
 
 ## Contracts & Quests
 - **Daily Quests**: Refresh every midnight. Completing all daily quests increases your streak, boosting rewards.
@@ -36,17 +36,25 @@ Grow a thriving farm by planting crops, harvesting for profit, and investing in 
 ## Weather (Cozy Forecast)
 - Weather stays positive or neutral: **Clear**, **Rain**, **Cloudy**, **Heatwave**.
 - Rain helps with watering, cloudy days are gentle, and heatwaves only add mild thirst.
-- Forecasts update throughout the day and appear in the Weather tab.
+- Weather changes on day rollover, with a 3-day outlook shown in the Weather tab.
 
 ## Town Reputation
 - **Town Rep** increases from harvesting and completing contracts.
-- Higher rep unlocks small market perks and town flavor bonuses.
-- Track your tier and next reward in the Social (Town) tab.
+- Three tiers offer clear rewards:
+  - **Tier 1**: Unlock a new seed line (claim in Social tab).
+  - **Tier 2**: Unlock a cozy decor cosmetic.
+  - **Tier 3**: Unlock a small vendor discount perk.
+- Track your tier, rewards, and claimables in the Social (Town) tab.
 
 ## Collections / Encyclopedia
 - The **Collections** tab tracks every crop you discover.
 - Milestones: **First Harvest**, **50 Harvests**, **200 Harvests** per crop.
+- Each milestone grants a tiny sell-price bonus for that crop.
 - Use it as a cozy completion checklist and lore book.
+
+## Daily Market Flavor
+- The Shop tab highlights a **Daily Featured Crop** and **Market Mood**.
+- Featured crops receive a small bonus on the day they’re highlighted.
 
 ## Upgrades & Progression
 - **Shop Upgrades**: Permanent tools like watering cans and sprinklers.

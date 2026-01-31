@@ -1,10 +1,22 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
+import { CROP_DATA } from '../../constants/cropData';
+import { getMarketBonusLabel } from '../../constants/marketData';
 
 const ShopTab = memo(() => {
   const { state, actions } = useGame();
+  const vendorDiscount = state.social?.vendorDiscount || 0;
+  const marketState = state.market;
+  const featuredCrop = useMemo(() => (
+    marketState?.dailyFeaturedCrop ? CROP_DATA[marketState.dailyFeaturedCrop] : null
+  ), [marketState?.dailyFeaturedCrop]);
+  const discountLabel = vendorDiscount > 0 ? `-${Math.round(vendorDiscount * 100)}%` : null;
+  const getDiscountedCost = (cost) => {
+    if (!vendorDiscount) return cost;
+    return Math.max(1, Math.round(cost * (1 - vendorDiscount)));
+  };
 
   const UNIQUE_UPGRADE_IDS = ['watering_can', 'sprinkler', 'greenhouse', 'soil_analyzer', 'compost_bin'];
 
@@ -40,8 +52,9 @@ const ShopTab = memo(() => {
       return; // Double safety
     }
 
-    if (state.coins >= item.cost) {
-      actions.setCoins(state.coins - item.cost);
+    const finalCost = getDiscountedCost(item.cost);
+    if (state.coins >= finalCost) {
+      actions.setCoins(state.coins - finalCost);
       actions.updateInventory({
         ...state.inventory,
         [item.id]: (state.inventory[item.id] || 0) + 1
@@ -58,7 +71,7 @@ const ShopTab = memo(() => {
 
     } else {
       actions.addNotification({
-        message: `Not enough coins! Need ${item.cost}🪙`,
+        message: `Not enough coins! Need ${finalCost}🪙`,
         type: 'error'
       });
       if (window.soundSystem) window.soundSystem.playErrorSound();
@@ -67,6 +80,7 @@ const ShopTab = memo(() => {
 
   const renderShopItem = (item, colorClass, btnColorClass) => {
     const owned = isOwned(item.id);
+    const finalCost = getDiscountedCost(item.cost);
     return (
       <div key={item.id} className={`flex justify-between items-center p-3 rounded-lg transition-all ${owned ? 'bg-gray-100 opacity-80' : `${colorClass} hover:opacity-90`}`}>
         <div className="flex items-center gap-3 flex-1">
@@ -78,6 +92,9 @@ const ShopTab = memo(() => {
             </div>
             <div className="text-xs text-gray-600">{item.description}</div>
             <div className={`text-xs font-medium mt-0.5 ${btnColorClass.replace('bg-', 'text-').replace('text-white', '')}`}>{item.effect}</div>
+            {discountLabel && !owned && (
+              <div className="text-[10px] text-emerald-700 mt-1">Town perk applied ({discountLabel})</div>
+            )}
           </div>
         </div>
         {owned ? (
@@ -93,10 +110,10 @@ const ShopTab = memo(() => {
           <Button
             onClick={() => handlePurchase(item)}
             size="sm"
-            disabled={state.coins < item.cost}
+            disabled={state.coins < finalCost}
             className={`ml-2 ${btnColorClass}`}
           >
-            {item.cost}🪙
+            {finalCost}🪙
           </Button>
         )}
       </div>
@@ -114,6 +131,11 @@ const ShopTab = memo(() => {
             <p className="text-xs text-orange-700/80 mt-1">
               Upgrades collected: <span className="font-semibold">{ownedUpgradeCount}</span> / {UNIQUE_UPGRADE_IDS.length}
             </p>
+            {discountLabel && (
+              <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                🏡 Town perk: {discountLabel} shop prices
+              </div>
+            )}
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-green-600">{state.coins}🪙</div>
@@ -125,6 +147,27 @@ const ShopTab = memo(() => {
             🌟 All permanent upgrades collected
           </div>
         )}
+      </Card>
+
+      <Card className="p-4 border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-xs uppercase font-semibold text-emerald-700">Daily Market Board</div>
+            <div className="text-sm font-semibold text-emerald-900 mt-1">
+              {marketState?.dailyMood?.emoji} {marketState?.dailyMood?.label || 'Steady Market'}
+            </div>
+            <p className="text-[11px] text-emerald-700 mt-1">
+              {marketState?.dailyMood?.description || 'Local buyers are browsing.'}
+            </p>
+          </div>
+          <div className="rounded-lg border border-emerald-100 bg-white px-3 py-2 text-center">
+            <div className="text-[10px] uppercase text-emerald-600">Featured Crop</div>
+            <div className="text-lg">
+              {featuredCrop ? `${featuredCrop.emoji} ${featuredCrop.name}` : '—'}
+            </div>
+            <div className="text-[10px] text-emerald-600">{getMarketBonusLabel(marketState)} bonus</div>
+          </div>
+        </div>
       </Card>
 
       {/* Supplies */}
