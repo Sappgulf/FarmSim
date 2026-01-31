@@ -311,18 +311,19 @@ const FarmPlot = memo(({
         <div className={`absolute inset-0 bg-gradient-to-t ${soilGradient} pointer-events-none`} />
 
         <div className="flex flex-col items-center justify-center h-full p-0.5 sm:p-1 relative z-10">
-          {/* Crop emoji with growth animation - Responsive sizes */}
+          {/* Crop emoji with growth animation - Larger, more visible sizes */}
           <div
-            className={`text-xl sm:text-2xl md:text-3xl mb-0.5 sm:mb-1 transition-all duration-300 ${plot?.state === 'growing' ? 'animate-grow' : ''
-              } ${plot?.state === 'ready' ? 'animate-ready-pop' : ''
+            className={`text-2xl sm:text-3xl md:text-4xl mb-0.5 sm:mb-1 transition-all duration-300 ${plot?.state === 'growing' ? 'animate-grow' : ''
+              } ${plot?.state === 'ready' ? 'animate-bounce-subtle' : ''
               } ${showPreview ? 'opacity-50' : ''
               }`}
             style={{
               transform: plot?.state === 'growing'
-                ? `scale(${0.6 + (plot.progress || 0) * 0.6})`  // Grows from 60% to 120% size
+                ? `scale(${0.7 + (plot.progress || 0) * 0.5})`  // Grows from 70% to 120% size
                 : plot?.state === 'ready'
-                  ? 'scale(1.2)'
-                  : 'scale(1)'
+                  ? 'scale(1.15)'
+                  : 'scale(1)',
+              filter: plot?.state === 'ready' ? 'drop-shadow(0 0 8px rgba(34, 197, 94, 0.6))' : 'none'
             }}
           >
             {display.emoji}

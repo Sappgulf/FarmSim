@@ -481,6 +481,23 @@
   }
 }
 
+/* Subtle bounce for ready-to-harvest crops */
+@keyframes bounce-subtle {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1.15);
+  }
+
+  50% {
+    transform: translateY(-3px) scale(1.18);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 1.5s ease-in-out infinite;
+}
+
 @keyframes disease-pulse {
 
   0%,
@@ -1341,12 +1358,15 @@
     transform: translate3d(0, 0, 0) scale(0.9);
     opacity: 0;
   }
+
   15% {
     opacity: 0.85;
   }
+
   50% {
     transform: translate3d(24px, -18px, 0) scale(1);
   }
+
   100% {
     transform: translate3d(48px, 12px, 0) scale(0.95);
     opacity: 0;
@@ -1358,9 +1378,11 @@
     transform: translate3d(0, -20px, 0) rotate(0deg);
     opacity: 0;
   }
+
   15% {
     opacity: 0.8;
   }
+
   100% {
     transform: translate3d(30px, 140px, 0) rotate(120deg);
     opacity: 0;
@@ -1665,9 +1687,11 @@
   0% {
     transform: scale(0.85);
   }
+
   60% {
     transform: scale(1.1);
   }
+
   100% {
     transform: scale(1);
   }
@@ -1677,6 +1701,7 @@
   .farm-decoration-pop {
     animation: none;
   }
+
   .farm-anchor {
     transition: none;
   }
