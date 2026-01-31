@@ -8,6 +8,8 @@ import { getHarvestReputationGain, getTownRepBonus, getTownTierById, getTownTier
 import { DEFAULT_DAY_LENGTH_MS, DEFAULT_DAYS_PER_SEASON } from '../systems/SeasonSystem';
 import { updateQuestProgress } from '../systems/QuestSystem';
 import { SAVE_VERSION, loadSavedState, persistSaveData } from './GamePersistence';
+import { PLACEABLE_BUILDING_LOOKUP, buildBuildingCoverageMap } from '../constants/placeableBuildingData';
+import { buildDailyPlan } from '../constants/townPlan';
 import { addTrackedEventListener } from '../services/EventListenerService';
 import { getPerfMetrics, isDebugEnabled, profileEnd, profileStart, recordFrameTime } from '../services/DebugService';
 import { initializeDebugTracing, runDebugInvariants, traceAction } from '../services/DebugTraceService';
@@ -41,6 +43,7 @@ const GAME_ACTIONS = {
 
   // Buildings
   UPDATE_BUILDINGS: 'UPDATE_BUILDINGS',
+  UPDATE_BUILDING_PLACEMENTS: 'UPDATE_BUILDING_PLACEMENTS',
 
   // Livestock
   UPDATE_LIVESTOCK: 'UPDATE_LIVESTOCK',
@@ -91,6 +94,13 @@ const GAME_ACTIONS = {
 
   // UI state
   SET_SELECTED_CROP: 'SET_SELECTED_CROP',
+  SET_DECORATE_MODE: 'SET_DECORATE_MODE',
+  SET_DECORATE_TOOL: 'SET_DECORATE_TOOL',
+  SET_SELECTED_DECORATION: 'SET_SELECTED_DECORATION',
+  SET_MOVING_DECORATION: 'SET_MOVING_DECORATION',
+  UPDATE_DECORATIONS: 'UPDATE_DECORATIONS',
+  SET_PLACE_BUILDING_MODE: 'SET_PLACE_BUILDING_MODE',
+  SET_SELECTED_BUILDING_PLACEMENT: 'SET_SELECTED_BUILDING_PLACEMENT',
 
   // Game settings
   UPDATE_SETTINGS: 'UPDATE_SETTINGS',
@@ -109,6 +119,7 @@ const GAME_ACTIONS = {
 
   // Market
   UPDATE_MARKET: 'UPDATE_MARKET',
+  UPDATE_DAILY_PLAN: 'UPDATE_DAILY_PLAN',
 
   // Save/Load
   LOAD_GAME: 'LOAD_GAME',
@@ -148,6 +159,7 @@ const initialState = {
   plots: initializePlots(3),
   inventory: {},
   buildings: {},
+  buildingPlacements: [],
   livestock: {
     animals: [],
     capacity: 10,
@@ -239,6 +251,18 @@ const initialState = {
   selectedDecoration: 'fence-post',
   movingDecorationId: null,
   decorations: [],
+  placeBuildingMode: false,
+  selectedBuildingPlacement: 'greenhouse',
+  dailyPlan: buildDailyPlan({
+    season: {
+      current: 'spring',
+      config: null,
+      dayCount: 1,
+    },
+    weather: 'sunny',
+    market: createDefaultMarketState(),
+    social: { reputation: 0 },
+  }),
   settings: {
     autoSave: true,
     soundEnabled: true,
@@ -354,6 +378,16 @@ function gameReducer(state, action) {
           && decor.y < newGridSize
         ))
         : [];
+      const nextBuildingPlacements = Array.isArray(state.buildingPlacements)
+        ? state.buildingPlacements.filter((placement) => (
+          Number.isInteger(placement?.x)
+          && Number.isInteger(placement?.y)
+          && placement.x >= 0
+          && placement.y >= 0
+          && placement.x < newGridSize
+          && placement.y < newGridSize
+        ))
+        : [];
 
       // Add new empty plots if expanding
       const updatedPlots = existingPlots.length < newTotalPlots
@@ -374,7 +408,13 @@ function gameReducer(state, action) {
         ]
         : existingPlots.slice(0, newTotalPlots);
 
-      return { ...state, gridSize: newGridSize, plots: updatedPlots, decorations: nextDecorations };
+      return {
+        ...state,
+        gridSize: newGridSize,
+        plots: updatedPlots,
+        decorations: nextDecorations,
+        buildingPlacements: nextBuildingPlacements,
+      };
 
     case GAME_ACTIONS.UPDATE_INVENTORY:
       const newInventory = typeof action.payload === 'function' ? action.payload(state) : action.payload;
@@ -388,6 +428,9 @@ function gameReducer(state, action) {
 
     case GAME_ACTIONS.UPDATE_BUILDINGS:
       return { ...state, buildings: action.payload };
+
+    case GAME_ACTIONS.UPDATE_BUILDING_PLACEMENTS:
+      return { ...state, buildingPlacements: action.payload };
 
     case GAME_ACTIONS.UPDATE_LIVESTOCK:
       return { ...state, livestock: action.payload };
@@ -475,6 +518,12 @@ function gameReducer(state, action) {
     case GAME_ACTIONS.SET_SELECTED_CROP:
       return { ...state, selectedCrop: action.payload };
 
+    case GAME_ACTIONS.SET_PLACE_BUILDING_MODE:
+      return { ...state, placeBuildingMode: Boolean(action.payload) };
+
+    case GAME_ACTIONS.SET_SELECTED_BUILDING_PLACEMENT:
+      return { ...state, selectedBuildingPlacement: action.payload };
+
     case GAME_ACTIONS.SET_DECORATE_MODE:
       return { ...state, decorateMode: Boolean(action.payload) };
 
@@ -513,6 +562,9 @@ function gameReducer(state, action) {
 
     case GAME_ACTIONS.UPDATE_MARKET:
       return { ...state, market: action.payload };
+
+    case GAME_ACTIONS.UPDATE_DAILY_PLAN:
+      return { ...state, dailyPlan: action.payload };
 
     case GAME_ACTIONS.LOAD_GAME:
       // Merge loaded state with current state, preserving game loop and clearing notifications
@@ -562,6 +614,18 @@ export function GameProvider({ children }) {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+  const buildingCoverageRef = useRef(buildBuildingCoverageMap(state.buildingPlacements, state.gridSize));
+  useEffect(() => {
+    buildingCoverageRef.current = buildBuildingCoverageMap(state.buildingPlacements, state.gridSize);
+  }, [state.buildingPlacements, state.gridSize]);
+  useEffect(() => {
+    if (!state.season?.dayCount) return;
+    if (state.dailyPlan?.dayCount === state.season.dayCount) return;
+    dispatch({
+      type: GAME_ACTIONS.UPDATE_DAILY_PLAN,
+      payload: buildDailyPlan(state),
+    });
+  }, [state.season?.dayCount, state.dailyPlan?.dayCount, state.weather, state.market, state.social]);
   useEffect(() => {
     runDebugInvariants(state);
   }, [state]);
@@ -876,6 +940,15 @@ export function GameProvider({ children }) {
         },
       });
     };
+    const getBuildingPlacementAtIndex = (index) => {
+      const gridSize = stateRef.current?.gridSize || 0;
+      const x = index % gridSize;
+      const y = Math.floor(index / gridSize);
+      const placements = Array.isArray(stateRef.current?.buildingPlacements)
+        ? stateRef.current.buildingPlacements
+        : [];
+      return placements.find((placement) => placement.x === x && placement.y === y) || null;
+    };
     const applyCollectionProgress = (currentCollections, cropId, cropLabel, amount) => {
       const wasDiscovered = Boolean(currentCollections?.crops?.[cropId]?.discovered);
       const { collections: nextCollections, newlyUnlocked } = updateCropCollectionProgress(
@@ -907,6 +980,23 @@ export function GameProvider({ children }) {
         });
       });
       return nextCollections;
+    };
+    const grantCompostFromHarvest = (amount = 1) => {
+      const safeAmount = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
+      if (safeAmount <= 0) return 0;
+      const hasCompostBin = (stateRef.current?.inventory?.compost_bin || 0) > 0;
+      const bonus = hasCompostBin ? Math.floor(safeAmount * 0.5) : 0;
+      const total = safeAmount + bonus;
+      if (total <= 0) return 0;
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_INVENTORY,
+        payload: (currentState) => ({
+          ...currentState.inventory,
+          compost: (currentState.inventory?.compost || 0) + total,
+        }),
+      });
+      trace('compost_grant', { amount: total, hasCompostBin });
+      return total;
     };
     const grantReputation = (amount = 0, source = 'general') => {
       const safeAmount = Number.isFinite(amount) ? Math.max(0, amount) : 0;
@@ -981,11 +1071,85 @@ export function GameProvider({ children }) {
       trace('town_reward_claimed', { tierId, reward: reward?.label });
       return true;
     };
+    const getBuildingCoverage = () => buildingCoverageRef.current || {};
+    const applyDayAdvanceBuildingEffects = () => {
+      const currentState = stateRef.current;
+      const plots = Array.isArray(currentState?.plots) ? currentState.plots : [];
+      if (!plots.length) return;
+
+      const coverage = getBuildingCoverage();
+      let updatedPlots = null;
+
+      const greenhouseCoverage = coverage.greenhouse;
+      if (greenhouseCoverage && greenhouseCoverage.size > 0) {
+        greenhouseCoverage.forEach((index) => {
+          const plot = plots[index];
+          if (!plot || plot.state === 'empty') return;
+          if (plot.greenhouseBoost) return;
+          if (!updatedPlots) {
+            updatedPlots = plots.slice();
+          }
+          updatedPlots[index] = {
+            ...plot,
+            greenhouseBoost: true,
+          };
+        });
+      }
+      if (greenhouseCoverage) {
+        for (let i = 0; i < plots.length; i += 1) {
+          const plot = plots[i];
+          if (!plot?.greenhouseBoost) continue;
+          if (greenhouseCoverage.has(i)) continue;
+          if (!updatedPlots) {
+            updatedPlots = plots.slice();
+          }
+          updatedPlots[i] = {
+            ...plot,
+            greenhouseBoost: false,
+          };
+        }
+      }
+
+      const wellCoverage = coverage.well;
+      if (wellCoverage && wellCoverage.size > 0) {
+        const candidates = [];
+        wellCoverage.forEach((index) => {
+          const plot = plots[index];
+          if (!plot || (plot.state !== 'planted' && plot.state !== 'growing')) return;
+          const waterLevel = plot.waterLevel || 0;
+          if (waterLevel >= 100) return;
+          candidates.push({ index, waterLevel });
+        });
+        if (candidates.length > 0) {
+          candidates.sort((a, b) => a.waterLevel - b.waterLevel);
+          const wellMeta = PLACEABLE_BUILDING_LOOKUP.well;
+          const maxPlots = Math.min(candidates.length, wellMeta?.effects?.maxPlots || 3);
+          const waterAmount = wellMeta?.effects?.waterAmount || 35;
+          for (let i = 0; i < maxPlots; i += 1) {
+            const target = candidates[i];
+            const plot = plots[target.index];
+            if (!updatedPlots) {
+              updatedPlots = plots.slice();
+            }
+            updatedPlots[target.index] = {
+              ...plot,
+              waterLevel: Math.min(100, (plot.waterLevel || 0) + waterAmount),
+            };
+          }
+        }
+      }
+
+      if (updatedPlots) {
+        dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
+      }
+    };
+
     const handleDayAdvance = (dayInfo) => {
       const currentSystems = systemsRef.current;
       const currentState = stateRef.current;
       currentSystems.weatherSystem?.onDayAdvance?.(dayInfo, currentState);
       currentSystems.economicSystem?.onDayAdvance?.(dayInfo, currentState);
+      applyDayAdvanceBuildingEffects();
       trace('day_advance', {
         dayCount: dayInfo?.dayCount,
         dayInSeason: dayInfo?.dayInSeason,
@@ -1082,6 +1246,7 @@ export function GameProvider({ children }) {
     updateProcessingQueue: (queue) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSING_QUEUE, payload: queue }),
     updateProcessedInventory: (inventory) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSED_INVENTORY, payload: inventory }),
     updateMarket: (market) => dispatch({ type: GAME_ACTIONS.UPDATE_MARKET, payload: market }),
+    updateDailyPlan: (dailyPlan) => dispatch({ type: GAME_ACTIONS.UPDATE_DAILY_PLAN, payload: dailyPlan }),
     recordHarvest: (cropId, cropLabel, harvestValue, amount = 1) => {
       const currentCollections = stateRef.current?.collections || createDefaultCropCollections();
       applyCollectionProgress(currentCollections, cropId, cropLabel, amount);
@@ -1089,6 +1254,39 @@ export function GameProvider({ children }) {
       if (repGain > 0) {
         grantReputation(repGain, 'harvest');
       }
+      grantCompostFromHarvest(amount);
+    },
+    awardCompost: (amount = 1) => grantCompostFromHarvest(amount),
+    convertCompostToFertilizer: (amount = 3) => {
+      const currentState = stateRef.current;
+      const compostCount = currentState?.inventory?.compost || 0;
+      const required = Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 3;
+      if (compostCount < required) {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: { message: `Need ${required} compost to craft fertilizer.`, type: 'info' },
+        });
+        return false;
+      }
+      const hasCompostBin = (currentState.inventory?.compost_bin || 0) > 0;
+      const fertilizerYield = hasCompostBin ? 2 : 1;
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_INVENTORY,
+        payload: (currentState) => ({
+          ...currentState.inventory,
+          compost: Math.max(0, (currentState.inventory?.compost || 0) - required),
+          fertilizer: (currentState.inventory?.fertilizer || 0) + fertilizerYield,
+        }),
+      });
+      dispatch({
+        type: GAME_ACTIONS.ADD_NOTIFICATION,
+        payload: {
+          message: `🧺 Compost turned into ${fertilizerYield} fertilizer.`,
+          type: 'success',
+        },
+      });
+      trace('compost_convert', { required, fertilizerYield, hasCompostBin });
+      return true;
     },
     claimTownReward,
     onDayAdvance: handleDayAdvance,
@@ -1108,6 +1306,9 @@ export function GameProvider({ children }) {
     setSelectedDecoration: (decorationId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_DECORATION, payload: decorationId }),
     setMovingDecorationId: (decorationId) => dispatch({ type: GAME_ACTIONS.SET_MOVING_DECORATION, payload: decorationId }),
     updateDecorations: (decorations) => dispatch({ type: GAME_ACTIONS.UPDATE_DECORATIONS, payload: decorations }),
+    setPlaceBuildingMode: (enabled) => dispatch({ type: GAME_ACTIONS.SET_PLACE_BUILDING_MODE, payload: enabled }),
+    setSelectedBuildingPlacement: (buildingId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_BUILDING_PLACEMENT, payload: buildingId }),
+    updateBuildingPlacements: (placements) => dispatch({ type: GAME_ACTIONS.UPDATE_BUILDING_PLACEMENTS, payload: placements }),
     updateSettings: (settings) => dispatch({ type: GAME_ACTIONS.UPDATE_SETTINGS, payload: settings }),
     updateAutomation: (automation) => dispatch({ type: GAME_ACTIONS.UPDATE_AUTOMATION, payload: automation }),
     updateGameLoop: (data) => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: data }),
@@ -1170,16 +1371,31 @@ export function GameProvider({ children }) {
         trace('plant_crop_invalid', { plotIndex, cropType });
         return false;
       }
+      if (getBuildingPlacementAtIndex(plotIndex)) {
+        trace('plant_crop_blocked', { plotIndex, cropType });
+        return false;
+      }
+      const buildingCoverage = getBuildingCoverage();
+      const hasGreenhouseBoost = buildingCoverage.greenhouse?.has?.(plotIndex);
       const currentSystems = systemsRef.current;
       if (currentSystems.farmingSystem?.plantCrop) {
         currentSystems.farmingSystem.update(stateRef.current);
         trace('plant_crop', { plotIndex, cropType });
-        return currentSystems.farmingSystem.plantCrop(plotIndex, cropData);
+        return currentSystems.farmingSystem.plantCrop(plotIndex, cropData, {
+          greenhouseBoost: hasGreenhouseBoost,
+        });
       }
       // Fallback
       const updatedPlots = [...stateRef.current.plots];
       updatedPlots[plotIndex] = {
-        id: plotIndex, state: 'planted', crop: cropData, plantedAt: Date.now(), growthStage: 1, waterLevel: 85, progress: 0
+        id: plotIndex,
+        state: 'planted',
+        crop: cropData,
+        plantedAt: Date.now(),
+        growthStage: 1,
+        waterLevel: 85,
+        progress: 0,
+        greenhouseBoost: hasGreenhouseBoost,
       };
 
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
@@ -1206,10 +1422,16 @@ export function GameProvider({ children }) {
         trace('harvest_crop_missing', { plotIndex });
         return false;
       }
+      const buildingCoverage = getBuildingCoverage();
+      const barnReducedLoss = buildingCoverage.barn?.has?.(plotIndex);
+      const barnMultiplier = PLACEABLE_BUILDING_LOOKUP.barn?.effects?.fertilityLossMultiplier || 1;
+      const fertilityLoss = 0.1 * (barnReducedLoss ? barnMultiplier : 1);
 
       updatedPlots[plotIndex] = {
         ...plot, state: 'empty', crop: null, plantedAt: null, growthStage: 0, waterLevel: 50, progress: 0,
-        soilFertility: Math.max(0.5, (plot?.soilFertility || 1.0) - 0.1)
+        soilFertility: Math.max(0.5, (plot?.soilFertility || 1.0) - fertilityLoss),
+        fertilizer: 0,
+        greenhouseBoost: false,
       };
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
       trace('harvest_crop', { plotIndex, earnings });
@@ -1314,19 +1536,37 @@ export function GameProvider({ children }) {
       const currentState = stateRef.current;
       if (!currentState?.plots?.length) return;
 
-      const hasFertilizer = (currentState.inventory?.fertilizer || 0) > 0;
+      const fertilizerCount = currentState.inventory?.fertilizer || 0;
       const cost = 15;
-      trace('fertilize_all_plots', { hasFertilizer, cost });
-      if (!hasFertilizer && currentState.coins < cost) {
+      const emptyPlots = currentState.plots
+        .map((plot, index) => (plot.state === 'empty' ? index : null))
+        .filter((index) => Number.isInteger(index));
+      if (emptyPlots.length === 0) {
         dispatch({
           type: GAME_ACTIONS.ADD_NOTIFICATION,
-          payload: { message: 'Not enough coins (15) to fertilize all plots.', type: 'error' },
+          payload: { message: 'No empty plots to prep with fertilizer.', type: 'info' },
         });
         return;
       }
 
-      const updatedPlots = currentState.plots.map(plot => {
-        if (plot.state === 'empty') return plot;
+      const affordableByCoins = Math.floor((currentState.coins || 0) / cost);
+      const maxApplications = fertilizerCount + affordableByCoins;
+      if (maxApplications <= 0) {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: { message: 'Not enough fertilizer or coins (15 each) to prep soil.', type: 'error' },
+        });
+        return;
+      }
+
+      const targets = emptyPlots.slice(0, Math.min(emptyPlots.length, maxApplications));
+      const targetSet = new Set(targets);
+      const fertilizedCount = targets.length;
+      const fertilizerUsed = Math.min(fertilizerCount, fertilizedCount);
+      const coinUsed = (fertilizedCount - fertilizerUsed) * cost;
+
+      const updatedPlots = currentState.plots.map((plot, index) => {
+        if (!targetSet.has(index)) return plot;
         return {
           ...plot,
           soilFertility: Math.min(1.5, (plot.soilFertility || 1.0) + 0.3),
@@ -1337,20 +1577,21 @@ export function GameProvider({ children }) {
 
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
 
-      if (hasFertilizer) {
+      if (fertilizerUsed > 0 || coinUsed > 0) {
         dispatch({
           type: GAME_ACTIONS.UPDATE_INVENTORY,
           payload: (currentState) => ({
             ...currentState.inventory,
-            fertilizer: Math.max(0, (currentState.inventory?.fertilizer || 0) - 1),
+            fertilizer: Math.max(0, (currentState.inventory?.fertilizer || 0) - fertilizerUsed),
           }),
         });
+        if (coinUsed > 0) {
+          dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (currentState.coins || 0) - coinUsed });
+        }
         dispatch({
           type: GAME_ACTIONS.ADD_NOTIFICATION,
-          payload: { message: '🌱 Fertilizer applied to all plots.', type: 'success' },
+          payload: { message: `🌱 Fertilized ${fertilizedCount} empty plot${fertilizedCount === 1 ? '' : 's'}.`, type: 'success' },
         });
-      } else {
-        dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentState.coins - cost });
       }
     },
     treatAllDiseases: () => {
@@ -1406,6 +1647,7 @@ export function GameProvider({ children }) {
       if (!currentState?.plots?.length) return;
 
       const townBonus = getTownRepBonus(currentState.social?.reputation);
+      const buildingCoverage = getBuildingCoverage();
       const inventoryUpdates = {};
       let totalEarnings = 0;
       let totalXp = 0;
@@ -1451,12 +1693,16 @@ export function GameProvider({ children }) {
       if (totalRepGain > 0) {
         grantReputation(totalRepGain, 'bulk_harvest');
       }
+      grantCompostFromHarvest(harvestedCount);
 
       // Delegate to harvestAllReadyCrops logic (similar to 45febc0 but preserving earnings calculation)
       dispatch({
         type: GAME_ACTIONS.UPDATE_PLOTS, payload: (currentState) => {
-          const updatedPlots = currentState.plots.map(plot => {
+          const updatedPlots = currentState.plots.map((plot, index) => {
             if (plot.state === 'ready' && plot.crop) {
+              const barnReducedLoss = buildingCoverage.barn?.has?.(index);
+              const barnMultiplier = PLACEABLE_BUILDING_LOOKUP.barn?.effects?.fertilityLossMultiplier || 1;
+              const fertilityLoss = 0.1 * (barnReducedLoss ? barnMultiplier : 1);
               // Reset plot
               return {
                 ...plot,
@@ -1466,8 +1712,10 @@ export function GameProvider({ children }) {
                 readyAt: null,
                 growthStage: 0,
                 progress: 0,
-                soilFertility: Math.max(0.5, (plot.soilFertility || 1.0) - 0.1),
+                soilFertility: Math.max(0.5, (plot.soilFertility || 1.0) - fertilityLoss),
                 waterLevel: 50,
+                fertilizer: 0,
+                greenhouseBoost: false,
               };
             }
             return plot;

@@ -46,6 +46,8 @@ const TownBoard = memo(() => {
   const dailyMood = state.market?.dailyMood || { emoji: '🪴', label: 'Steady Market' };
 
   const hint = useMemo(() => buildDailyHint({ season, cozyWeather }), [season, cozyWeather]);
+  const dailyPlan = state.dailyPlan?.items || [];
+  const dailyPlanDay = state.dailyPlan?.dayCount;
 
   useEffect(() => {
     if (repBarRef.current) {
@@ -120,6 +122,26 @@ const TownBoard = memo(() => {
         <div className="town-board-footer">
           <span className="town-board-label">What’s happening today</span>
           <p>{hint}</p>
+        </div>
+
+        <div className="town-board-plan">
+          <div className="town-board-plan-header">
+            <span className="town-board-label">Today’s Plan</span>
+            {dailyPlanDay && (
+              <span className="town-board-plan-day">Day {dailyPlanDay}</span>
+            )}
+          </div>
+          {dailyPlan.length > 0 ? (
+            <ul className="town-board-plan-list">
+              {dailyPlan.map((item, index) => (
+                <li key={`${item}-${index}`} className="town-board-plan-item">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="town-board-hint">Check back tomorrow for fresh guidance.</p>
+          )}
         </div>
       </div>
     </Card>

@@ -9,6 +9,7 @@ const InventoryTab = memo(() => {
 
   const itemMeta = {
     fertilizer: { name: 'Fertilizer', emoji: '🌱', unitValue: 8 },
+    compost: { name: 'Compost', emoji: '🧺', unitValue: 2 },
     pesticide: { name: 'Pesticide', emoji: '🐛', unitValue: 6 },
     water_boost: { name: 'Water Boost', emoji: '💧', unitValue: 5 },
     watering_can: { name: 'Watering Can', emoji: '🚿', unitValue: 40 },

@@ -54,6 +54,17 @@
 | Livestock system | Implemented | `LivestockSystem.js`, `LivestockTab.jsx` | Production loops. |
 | Fishing system | Implemented | `FishingSystem.js`, `FishingTab.jsx` | Minigame + upgrades. |
 
+## Cozy Farm Expansion v1 Feature Inventory
+| Feature | Status | Location | Notes / Gaps |
+| --- | --- | --- | --- |
+| Placeable buildings | Implemented | `FarmGrid.jsx`, `BuildingsTab.jsx`, `placeableBuildingData.js`, `GameContext.jsx` | Grid placements with greenhouse/well/barn effects. |
+| Decoration system | Implemented | `FarmGrid.jsx`, `decorationData.js`, `GameContext.jsx` | Decorate mode with persistence and grid snapping. |
+| Town Board / daily info | Implemented | `TownBoard.jsx`, `townPlan.js`, `GameContext.jsx` | Daily plan derived on day rollover. |
+| Fertilizer / compost | Implemented | `FarmingTab.jsx`, `FarmingSystem.js`, `GameContext.jsx` | Compost craft + fertilizer pre-plant boost. |
+| Storage capacity | Missing | — | No inventory cap or storage overflow handling yet. |
+| Day rollover backbone | Implemented | `SeasonSystem.js`, `GameContext.jsx` | Single day advance event drives weather/market. |
+| Performance guardrails | Implemented | `GameContext.jsx`, `FarmGrid.jsx`, `PERF_NOTES.md` | Precomputed coverage + event-driven effects. |
+
 ## Cozy World v1 Feature Inventory
 | Feature | Status | Location | Notes / Gaps |
 | --- | --- | --- | --- |

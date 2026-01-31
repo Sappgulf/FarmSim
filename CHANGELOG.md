@@ -34,6 +34,20 @@
   - **Why:** provide Cozy World v1 atmosphere while keeping rendering event-driven and low-cost.
   - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
 
+## 2026-02-14
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** audit cozy sim systems + docs, add placeable buildings, a compost/fertilizer loop, and a Town Board daily plan with a performance pass.
+  - **Why:** deliver Cozy Farm Expansion v1 without duplicating systems or adding per-tick grid scans.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** added grid-based building placements with greenhouse/well/barn effects, compost-to-fertilizer crafting, and a daily plan on the Town Board; updated guides and performance notes.
+  - **Why:** provide cozy, event-driven daily guidance and farm infrastructure while keeping saves stable and UI mobile-friendly.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## 2026-02-12
 
 - **Planned**

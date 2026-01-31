@@ -3,9 +3,14 @@ import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
+import { PLACEABLE_BUILDINGS } from '../../constants/placeableBuildingData';
 
 const BuildingsTab = memo(() => {
   const { state, actions } = useGame();
+  const placeableBuildings = PLACEABLE_BUILDINGS;
+  const placeBuildingMode = state.placeBuildingMode;
+  const selectedPlacement = state.selectedBuildingPlacement;
+  const buildingPlacements = Array.isArray(state.buildingPlacements) ? state.buildingPlacements : [];
 
   const buildings = [
     {
@@ -127,6 +132,29 @@ const BuildingsTab = memo(() => {
     }
   };
 
+  const handlePlacementToggle = () => {
+    const nextMode = !placeBuildingMode;
+    actions.setPlaceBuildingMode(nextMode);
+    if (nextMode) {
+      actions.setDecorateMode(false);
+    }
+  };
+
+  const handleSelectPlacement = (buildingId) => {
+    actions.setSelectedBuildingPlacement(buildingId);
+    actions.setPlaceBuildingMode(true);
+    actions.setDecorateMode(false);
+  };
+
+  const handleClearPlacement = (buildingId) => {
+    const nextPlacements = buildingPlacements.filter((placement) => placement.id !== buildingId);
+    actions.updateBuildingPlacements(nextPlacements);
+    actions.addNotification({
+      message: '🏗️ Building placement cleared.',
+      type: 'info',
+    });
+  };
+
   const builtCount = Object.keys(state.buildings).filter(id => state.buildings[id]?.built).length;
 
   const getCategoryColor = (category) => {
@@ -153,6 +181,89 @@ const BuildingsTab = memo(() => {
             <div className="text-xs text-gray-600">Constructed</div>
           </div>
         </div>
+      </Card>
+
+      <Card className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-100">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h4 className="font-semibold text-indigo-900">🏗️ Place Buildings</h4>
+            <p className="text-xs text-indigo-700 mt-1">
+              Place up to three cozy buildings on the farm grid for local bonuses.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant={placeBuildingMode ? 'default' : 'outline'}
+            onClick={handlePlacementToggle}
+            className="min-h-[44px]"
+          >
+            {placeBuildingMode ? 'Placing' : 'Start Placing'}
+          </Button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {placeableBuildings.map((building) => {
+            const isBuilt = Boolean(state.buildings?.[building.id]?.built);
+            const placement = buildingPlacements.find((item) => item.id === building.id);
+            return (
+              <div
+                key={building.id}
+                className={`rounded-xl border p-3 text-sm ${isBuilt ? 'bg-white/80 border-indigo-200' : 'bg-gray-100 border-gray-200 opacity-70'}`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{building.emoji}</span>
+                    <div>
+                      <div className="font-semibold text-gray-900">{building.name}</div>
+                      <div className="text-[10px] text-gray-500">{building.description}</div>
+                    </div>
+                  </div>
+                  {placement ? (
+                    <Badge className="bg-indigo-600">Placed</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px]">Not placed</Badge>
+                  )}
+                </div>
+
+                {isBuilt ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant={selectedPlacement === building.id && placeBuildingMode ? 'default' : 'outline'}
+                      onClick={() => handleSelectPlacement(building.id)}
+                      className="text-xs"
+                    >
+                      {placement ? 'Move' : 'Place'}
+                    </Button>
+                    {placement && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleClearPlacement(building.id)}
+                        className="text-xs"
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-3 text-[10px] text-gray-500">Build this first to place it.</div>
+                )}
+
+                {placement && (
+                  <div className="mt-2 text-[10px] text-gray-500">
+                    Placed at ({placement.x + 1}, {placement.y + 1})
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {placeBuildingMode && (
+          <div className="mt-3 text-xs text-indigo-700">
+            Tap an empty plot to place the selected building. Buildings cannot overlap crops or decorations.
+          </div>
+        )}
       </Card>
 
       {/* Available Buildings */}
