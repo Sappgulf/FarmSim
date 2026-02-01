@@ -101,17 +101,21 @@ const BuildingsTab = memo(() => {
       if (typeof window.triggerParticleEffect === 'function') {
         // Find the button that was clicked and get its position
         setTimeout(() => {
+          // Use safe action for particles
           const buildingCard = document.querySelector(`[data-building-id="${building.id}"]`);
           if (buildingCard) {
             const rect = buildingCard.getBoundingClientRect();
-            window.triggerParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, 'plant', { shake: false });
+            actions.triggerParticles(
+              rect.left + rect.width / 2,
+              rect.top + rect.height / 2,
+              'plant',
+              { shake: false }
+            );
           }
         }, 50);
-      }
 
-      // Play construction sound (using plant sound as proxy)
-      if (typeof window.soundSystem !== 'undefined') {
-        window.soundSystem.playPlantSound();
+        // Use safe action for sound
+        actions.playSound('playPlantSound');
       }
 
       actions.addNotification({

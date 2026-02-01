@@ -97,19 +97,21 @@ const EventsTab = memo(() => {
 
   // Get current season
   const getCurrentSeason = () => {
-    const month = new Date().getMonth();
-    if (month >= 2 && month <= 4) return 'spring';
-    if (month >= 5 && month <= 7) return 'summer';
-    if (month >= 8 && month <= 10) return 'autumn';
-    return 'winter';
+    // Use the in-game season from state
+    if (state.season && state.season.current) {
+      return state.season.current;
+    }
+    return 'spring'; // Fallback
   };
 
   const currentSeason = getCurrentSeason();
-  const seasonEvents = SEASONAL_EVENTS[currentSeason] || [];
+
+  // Filter events for current season
+  const currentSeasonEvents = SEASONAL_EVENTS[currentSeason] || [];
 
   // Trigger random seasonal event
   const triggerSeasonalEvent = () => {
-    if (seasonEvents.length === 0) return;
+    if (currentSeasonEvents.length === 0) return;
 
     // Check if there's already an active event
     if (state.activeSeasonalEvents && state.activeSeasonalEvents.length > 0) {
@@ -192,9 +194,9 @@ const EventsTab = memo(() => {
     <div className="space-y-4">
       {/* Season Header */}
       <Card className={`p-6 bg-gradient-to-r ${currentSeason === 'spring' ? 'from-green-400 to-emerald-600' :
-          currentSeason === 'summer' ? 'from-yellow-400 to-orange-500' :
-            currentSeason === 'autumn' ? 'from-orange-500 to-red-600' :
-              'from-blue-400 to-indigo-600'
+        currentSeason === 'summer' ? 'from-yellow-400 to-orange-500' :
+          currentSeason === 'autumn' ? 'from-orange-500 to-red-600' :
+            'from-blue-400 to-indigo-600'
         } text-white shadow-lg overflow-hidden relative`}>
         <div className="absolute top-0 right-0 p-8 opacity-20 text-9xl pointer-events-none animate-spin-slow">
           {currentSeason === 'spring' ? '🌸' :

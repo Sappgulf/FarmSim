@@ -123,9 +123,7 @@ const DiseaseManagementTab = memo(() => {
     actions.setXp(state.xp + 50);
 
     // Particle effect
-    if (typeof window.triggerParticleEffect === 'function') {
-      window.triggerParticleEffect(window.innerWidth / 2, window.innerHeight / 2, 'levelup');
-    }
+    actions.triggerParticles(window.innerWidth / 2, window.innerHeight / 2, 'levelup');
 
     actions.addNotification({
       message: `✨ Cured ALL diseases! +24h protection!`,
@@ -240,10 +238,10 @@ const DiseaseManagementTab = memo(() => {
               <Card
                 key={cureItem.id}
                 className={`p-4 border transition-all hover:shadow-md ${hasMatchingDisease && canAfford
-                    ? 'border-green-400 bg-green-50/50 ring-1 ring-green-200'
-                    : isUniversal
-                      ? 'border-purple-200 bg-purple-50/30'
-                      : 'border-gray-200'
+                  ? 'border-green-400 bg-green-50/50 ring-1 ring-green-200'
+                  : isUniversal
+                    ? 'border-purple-200 bg-purple-50/30'
+                    : 'border-gray-200'
                   }`}
               >
                 <div className="flex justify-between items-start mb-2">

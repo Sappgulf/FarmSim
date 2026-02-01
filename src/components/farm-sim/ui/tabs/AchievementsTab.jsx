@@ -111,19 +111,29 @@ const AchievementsTab = memo(() => {
     : ACHIEVEMENTS.filter(a => a.category === selectedCategory);
 
   const getAchievementProgress = (achievement) => {
-    // This would be calculated based on actual game statistics
-    // For now, we'll simulate progress based on simple checks
     switch (achievement.requirement.type) {
       case 'xp':
         return Math.min(100, (state.xp / achievement.requirement.value) * 100);
       case 'total_coins':
+        // Note: Using current coins as lifetime coins aren't tracked yet
         return Math.min(100, (state.coins / achievement.requirement.value) * 100);
       case 'harvests':
-        // Simulate harvest count (would be tracked in real game)
-        return Math.min(100, ((state.level * 10) / achievement.requirement.value) * 100);
+        const totalHarvested = state.collections?.totals?.harvested || 0;
+        return Math.min(100, (totalHarvested / achievement.requirement.value) * 100);
       case 'max_field':
-        return state.gridSize >= 5 ? 100 : (state.gridSize / 5) * 100;
+        return Math.min(100, (state.gridSize / 5) * 100); // 5 is max size
+      case 'research_completed':
+        const researchCount = Object.values(state.research || {}).filter(r => r.completed).length;
+        return Math.min(100, (researchCount / achievement.requirement.value) * 100);
+      case 'skills_unlocked':
+        // Approximate with level for now, assuming 1 skill per 2 levels
+        return Math.min(100, (Math.floor(state.level / 2) / achievement.requirement.value) * 100);
+      case 'workers_hired':
+        // Approximate with buildings for now
+        const buildingCount = Object.keys(state.buildings || {}).length;
+        return Math.min(100, (buildingCount / achievement.requirement.value) * 100);
       default:
+        // Fallback for manual or untracked achievements
         return state.achievements.find(a => a.id === achievement.id)?.unlocked ? 100 : 0;
     }
   };

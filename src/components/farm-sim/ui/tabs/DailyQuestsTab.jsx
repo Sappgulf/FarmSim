@@ -110,12 +110,15 @@ const DailyQuestsTab = memo(() => {
     }
 
     // Particle effect
-    if (typeof window.triggerParticleEffect === 'function') {
-      const button = document.querySelector(`[data-quest-id="${questId}"]`);
-      if (button) {
-        const rect = button.getBoundingClientRect();
-        window.triggerParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, 'harvest');
-      }
+    // Trigger particle effect
+    if (typeof actions.triggerParticles === 'function') {
+      setTimeout(() => {
+        const button = document.querySelector(`[data-quest-id="${questId}"]`);
+        if (button) {
+          const rect = button.getBoundingClientRect();
+          actions.triggerParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, 'harvest');
+        }
+      }, 50);
     }
 
     actions.addNotification({

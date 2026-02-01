@@ -15,7 +15,7 @@ import { SAVE_BACKUP_KEY, SAVE_KEY } from '../../context/GamePersistence';
 import { addTrackedEventListener } from '../../services/EventListenerService';
 
 const SettingsTab = memo(() => {
-  const { state, actions } = useGame();
+  const { state, actions, systems } = useGame();
   const [soundVolume, setSoundVolume] = React.useState(0.3);
   const [musicVolume, setMusicVolume] = React.useState(0.15);
 
@@ -26,11 +26,11 @@ const SettingsTab = memo(() => {
     });
 
     // Update sound system
-    if (typeof window !== 'undefined' && window.soundSystem) {
-      window.soundSystem.setEnabled(newState);
+    if (systems?.soundSystem) {
+      systems.soundSystem.setEnabled(newState);
       if (newState) {
-        window.soundSystem.resume();
-        window.soundSystem.playClickSound();
+        systems.soundSystem.resume();
+        systems.soundSystem.playClickSound();
       }
     }
 
@@ -47,13 +47,13 @@ const SettingsTab = memo(() => {
     });
 
     // Update music system
-    if (typeof window !== 'undefined' && window.musicSystem) {
-      window.musicSystem.setEnabled(newState);
+    if (systems?.musicSystem) {
+      systems.musicSystem.setEnabled(newState);
       if (newState) {
-        window.musicSystem.resume();
-        window.musicSystem.play();
+        systems.musicSystem.resume();
+        systems.musicSystem.play();
       } else {
-        window.musicSystem.stop();
+        systems.musicSystem.stop();
       }
     }
 
@@ -66,17 +66,19 @@ const SettingsTab = memo(() => {
   const handleSoundVolumeChange = (e) => {
     const volume = parseFloat(e.target.value);
     setSoundVolume(volume);
-    if (typeof window !== 'undefined' && window.soundSystem) {
-      window.soundSystem.setVolume(volume);
-      window.soundSystem.playClickSound();
+    setSoundVolume(volume);
+    if (systems?.soundSystem) {
+      systems.soundSystem.setVolume(volume);
+      systems.soundSystem.playClickSound();
     }
   };
 
   const handleMusicVolumeChange = (e) => {
     const volume = parseFloat(e.target.value);
     setMusicVolume(volume);
-    if (typeof window !== 'undefined' && window.musicSystem) {
-      window.musicSystem.setVolume(volume);
+    setMusicVolume(volume);
+    if (systems?.musicSystem) {
+      systems.musicSystem.setVolume(volume);
     }
   };
 

@@ -40,9 +40,7 @@ const MysteryShopTab = memo(() => {
     setRevealAnimation(result);
 
     // Play sound
-    if (typeof window.soundSystem !== 'undefined') {
-      window.soundSystem.playPlantSound();
-    }
+    actions.playSound('playPlantSound');
 
     setTimeout(() => {
       // Add to inventory
@@ -72,11 +70,8 @@ const MysteryShopTab = memo(() => {
       setRevealAnimation(null);
 
       // Level up for legendary drops
-      if (result.rarity === 'legendary') {
-        if (typeof window.triggerParticleEffect === 'function') {
-          window.triggerParticleEffect(window.innerWidth / 2, window.innerHeight / 2, 'levelup');
-        }
-      }
+      if (result.rarity === 'legendary') actions.triggerParticles(window.innerWidth / 2, window.innerHeight / 2, 'levelup');
+
     }, 1500);
   };
 

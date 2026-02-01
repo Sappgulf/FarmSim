@@ -69,12 +69,12 @@ const LivestockTab = memo(() => {
     try {
       const result = livestockSystem.buyAnimal(typeId);
       if (result.success) {
-        soundSystem?.playBuildSound();
+        actions.playSound('playBuildSound');
         if (import.meta.env.MODE === 'development') {
           console.debug('[farm]', 'Animal bought successfully');
         }
       } else {
-        soundSystem?.playErrorSound();
+        actions.playSound('playErrorSound');
         actions.addNotification({
           message: result.message,
           type: 'error'
@@ -95,9 +95,9 @@ const LivestockTab = memo(() => {
 
     const result = livestockSystem.feedAnimal(animalId);
     if (result.success) {
-      soundSystem?.playWaterSound();
+      actions.playSound('playWaterSound');
     } else {
-      soundSystem?.playErrorSound();
+      actions.playSound('playErrorSound');
     }
   };
 
@@ -105,7 +105,7 @@ const LivestockTab = memo(() => {
     if (!livestockSystem) return;
 
     livestockSystem.petAnimal(animalId);
-    soundSystem?.playClickSound();
+    actions.playSound('playClickSound');
   };
 
   const handleCollectProduct = (animalId) => {
@@ -113,16 +113,14 @@ const LivestockTab = memo(() => {
 
     const result = livestockSystem.collectProduct(animalId);
     if (result.success) {
-      soundSystem?.playMoneySound();
+      actions.playSound('playMoneySound');
 
       // Trigger particle effect
-      if (typeof window.triggerParticleEffect === 'function') {
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 3;
-        window.triggerParticleEffect(centerX, centerY, 'harvest', {
-          value: result.value
-        });
-      }
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 3;
+      actions.triggerParticles(centerX, centerY, 'harvest', {
+        value: result.value
+      });
     }
   };
 
@@ -131,7 +129,7 @@ const LivestockTab = memo(() => {
 
     const result = livestockSystem.sellAnimal(animalId);
     if (result.success) {
-      soundSystem?.playMoneySound();
+      actions.playSound('playMoneySound');
     }
   };
 
@@ -140,9 +138,9 @@ const LivestockTab = memo(() => {
 
     const result = livestockSystem.upgradeBarn();
     if (result.success) {
-      soundSystem?.playBuildSound();
+      actions.playSound('playBuildSound');
     } else {
-      soundSystem?.playErrorSound();
+      actions.playSound('playErrorSound');
     }
   };
 

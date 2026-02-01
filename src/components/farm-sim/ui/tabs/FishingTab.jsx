@@ -112,15 +112,16 @@ const FishingTab = memo(() => {
       if (result.success) {
         setIsPlaying(true);
         setGameState(result.catch);
-        soundSystem?.playWaterSound(); // Cast sound
+        actions.playSound('playWaterSound'); // Cast sound
 
         // Add excitement notification
         actions.addNotification({
           message: `🎣 Hooked a ${result.catch.fish.name}! Keep it in the safe zone!`,
           type: 'info'
         });
+
       } else {
-        soundSystem?.playErrorSound();
+        actions.playSound('playErrorSound');
         actions.addNotification({
           message: result.message,
           type: 'warning'
@@ -129,7 +130,7 @@ const FishingTab = memo(() => {
       }
     } catch (error) {
       console.error('[farm]', 'FishingTab: Error casting line', error);
-      soundSystem?.playErrorSound();
+      actions.playSound('playErrorSound');
       actions.addNotification({
         message: 'Error casting line',
         type: 'error'
@@ -141,24 +142,22 @@ const FishingTab = memo(() => {
     if (!fishingSystem || !isPlaying) return;
 
     // Play reel sound
-    soundSystem?.playReelSound();
+    actions.playSound('playReelSound');
 
     const result = fishingSystem.updateReelPosition(direction);
 
     if (result.caught) {
       setIsPlaying(false);
       setGameState(null);
-      soundSystem?.playHarvestSound();
+      actions.playSound('playHarvestSound');
 
       // Trigger particle effect for success
-      if (typeof window.triggerParticleEffect === 'function') {
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 3;
-        window.triggerParticleEffect(centerX, centerY, 'harvest', {
-          text: `🎣 Caught ${result.fish.name}! +$${result.value}`,
-          value: result.value
-        });
-      }
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 3;
+      actions.triggerParticles(centerX, centerY, 'harvest', {
+        text: `🎣 Caught ${result.fish.name}! +$${result.value}`,
+        value: result.value
+      });
 
       // Success notification
       actions.addNotification({
@@ -168,7 +167,7 @@ const FishingTab = memo(() => {
     } else if (result.escaped) {
       setIsPlaying(false);
       setGameState(null);
-      soundSystem?.playFishEscapeSound();
+      actions.playSound('playFishEscapeSound');
 
       // Failure notification
       actions.addNotification({
@@ -183,9 +182,9 @@ const FishingTab = memo(() => {
 
     const result = fishingSystem.upgradePond();
     if (result.success) {
-      soundSystem?.playBuildSound();
+      actions.playSound('playBuildSound');
     } else {
-      soundSystem?.playErrorSound();
+      actions.playSound('playErrorSound');
     }
   };
 
