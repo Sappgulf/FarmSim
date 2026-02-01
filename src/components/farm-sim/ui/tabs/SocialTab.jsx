@@ -6,6 +6,8 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { getNextTownTier, getTownTierByRep, TOWN_REP_TIERS } from '../../constants/townData';
 
+import { MOCK_FRIENDS, SOCIAL_TIPS } from '../../constants/socialData';
+
 const SocialTab = memo(() => {
   const { state, actions } = useGame();
 
@@ -18,12 +20,8 @@ const SocialTab = memo(() => {
     : 100;
   const claimedRewards = new Set(social.claimedRewards || []);
 
-  // Mock friends data (in real game, this would come from state)
-  const mockFriends = [
-    { id: 1, name: 'Farmer Joe', level: 5, reputation: 120, status: 'online', lastActive: 'now' },
-    { id: 2, name: 'Green Thumb', level: 8, reputation: 250, status: 'offline', lastActive: '2h ago' },
-    { id: 3, name: 'Crop Master', level: 12, reputation: 450, status: 'online', lastActive: 'now' }
-  ];
+  // Use mock friends if state friends are empty (for demo)
+  const displayFriends = social.friends.length > 0 ? social.friends : MOCK_FRIENDS;
 
   const handleSendGift = (friendId) => {
     if (state.coins >= 10) {
@@ -78,7 +76,7 @@ const SocialTab = memo(() => {
             <div className="h-10 w-px bg-blue-200"></div>
             <div className="text-right">
               <div className="text-sm text-blue-600 font-medium">Friends</div>
-              <div className="text-2xl font-bold text-blue-800">{social.friends.length}</div>
+              <div className="text-2xl font-bold text-blue-800">{displayFriends.length}</div>
             </div>
           </div>
         </div>
@@ -137,11 +135,10 @@ const SocialTab = memo(() => {
               <Badge
                 key={tier.id}
                 variant="outline"
-                className={`text-[10px] ${
-                  social.reputation >= tier.minRep
-                    ? 'border-amber-400 text-amber-800 bg-white/70'
-                    : 'border-amber-100 text-amber-500'
-                } ${currentTier.id === tier.id ? 'ring-2 ring-amber-300' : ''}`}
+                className={`text-[10px] ${social.reputation >= tier.minRep
+                  ? 'border-amber-400 text-amber-800 bg-white/70'
+                  : 'border-amber-100 text-amber-500'
+                  } ${currentTier.id === tier.id ? 'ring-2 ring-amber-300' : ''}`}
               >
                 {tier.name}
               </Badge>
@@ -229,7 +226,7 @@ const SocialTab = memo(() => {
           </Button>
         </div>
 
-        {mockFriends.length === 0 ? (
+        {displayFriends.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
             <div className="text-4xl mb-3 opacity-50">👥</div>
             <p className="text-gray-500 font-medium">No friends yet</p>
@@ -238,7 +235,7 @@ const SocialTab = memo(() => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {mockFriends.map(friend => (
+            {displayFriends.map(friend => (
               <Card key={friend.id} className="p-4 hover:shadow-md transition-shadow border-gray-100">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
@@ -293,7 +290,7 @@ const SocialTab = memo(() => {
         </h4>
 
         <div className="space-y-2 relative z-10">
-          {[...mockFriends]
+          {[...displayFriends]
             .sort((a, b) => b.reputation - a.reputation)
             .map((friend, index) => {
               let rankStyle = "bg-gray-50 border-gray-100";
@@ -366,10 +363,9 @@ const SocialTab = memo(() => {
       <Card className="p-4 bg-gray-50">
         <h4 className="font-semibold mb-2">💡 Social Tips</h4>
         <ul className="text-sm text-gray-700 space-y-1">
-          <li>• Send gifts to friends to increase reputation</li>
-          <li>• Visit friend farms to get inspiration</li>
-          <li>• Participate in events to climb the leaderboard</li>
-          <li>• Higher reputation unlocks exclusive items</li>
+          {SOCIAL_TIPS.map((tip, idx) => (
+            <li key={idx}>• {tip}</li>
+          ))}
         </ul>
       </Card>
     </div>

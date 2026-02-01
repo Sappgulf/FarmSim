@@ -146,7 +146,7 @@ const AnalyticsTab = memo(() => {
   }, [analytics, state]);
 
   // Stat card component
-  const colorStyles = {
+  const COLOR_STYLES = {
     green: { border: 'border-green-500', bg: 'bg-green-100', icon: 'text-green-600' },
     yellow: { border: 'border-yellow-500', bg: 'bg-yellow-100', icon: 'text-yellow-600' },
     blue: { border: 'border-blue-500', bg: 'bg-blue-100', icon: 'text-blue-600' },
@@ -154,33 +154,33 @@ const AnalyticsTab = memo(() => {
   };
 
   const StatCard = ({ icon: Icon, label, value, change, trend, color = 'blue' }) => {
-    const styles = colorStyles[color] || colorStyles.blue;
+    const styles = COLOR_STYLES[color] || COLOR_STYLES.blue;
     return (
       <Card className={`p-4 border-l-4 ${styles.border}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 ${styles.bg} rounded-lg`}>
-            <Icon className={`w-5 h-5 ${styles.icon}`} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">{label}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-            {change !== undefined && (
-              <div className="flex items-center gap-1 mt-1">
-                {trend === 'up' ? (
-                  <TrendingUp className="w-3 h-3 text-green-600" />
-                ) : (
-                  <TrendingDown className="w-3 h-3 text-red-600" />
-                )}
-                <span className={`text-xs ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                  {change}
-                </span>
-              </div>
-            )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 ${styles.bg} rounded-lg`}>
+              <Icon className={`w-5 h-5 ${styles.icon}`} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">{label}</p>
+              <p className="text-2xl font-bold text-gray-900">{value}</p>
+              {change !== undefined && (
+                <div className="flex items-center gap-1 mt-1">
+                  {trend === 'up' ? (
+                    <TrendingUp className="w-3 h-3 text-green-600" />
+                  ) : (
+                    <TrendingDown className="w-3 h-3 text-red-600" />
+                  )}
+                  <span className={`text-xs ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                    {change}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
     );
   };
 
