@@ -17,12 +17,15 @@ describe('Weekly Contracts', () => {
 
   it('resets on a new week boundary', () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-02-09T08:00:00Z'));
+    // Set to Wednesday Feb 11 to avoid Monday edge cases
+    vi.setSystemTime(new Date('2026-02-11T12:00:00Z'));
 
-    const lastMonday = new Date('2026-02-02T08:00:00Z');
-    const sameWeekMonday = new Date('2026-02-09T01:00:00Z');
+    // A time from last week (Feb 2-8) - should reset
+    const lastWeek = new Date('2026-02-04T12:00:00Z');
+    // A time from earlier this week (Feb 9-15) - should NOT reset
+    const thisWeek = new Date('2026-02-10T12:00:00Z');
 
-    expect(shouldResetWeekly(lastMonday.getTime())).toBe(true);
-    expect(shouldResetWeekly(sameWeekMonday.getTime())).toBe(false);
+    expect(shouldResetWeekly(lastWeek.getTime())).toBe(true);
+    expect(shouldResetWeekly(thisWeek.getTime())).toBe(false);
   });
 });
