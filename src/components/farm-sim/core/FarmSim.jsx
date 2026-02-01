@@ -84,10 +84,6 @@ function FarmSimCore() {
   // Handle tab change
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    // Also switch sidebar tab via global method (for legacy compat)
-    if (typeof window.switchToTab === 'function') {
-      window.switchToTab(tabId);
-    }
   };
 
   // Initialize systems ONCE - don't recreate on state changes!
