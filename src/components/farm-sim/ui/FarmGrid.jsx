@@ -97,7 +97,7 @@ const FarmPlot = memo(({
   selectedCrop,
   seasonBonus = 1.0,
   tick,
-  plotRef,
+  allPlotRefs, // Renamed from plotRef
   decorateMode,
   placeBuildingMode,
   onHover,
@@ -105,6 +105,13 @@ const FarmPlot = memo(({
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const hideTooltipTimeoutRef = useRef(null);
+
+  // Stable ref callback
+  const setRef = useCallback((el) => {
+    if (allPlotRefs && allPlotRefs.current) {
+      allPlotRefs.current[index] = el;
+    }
+  }, [allPlotRefs, index]);
 
   useEffect(() => {
     return () => {
@@ -114,6 +121,7 @@ const FarmPlot = memo(({
       }
     };
   }, []);
+
 
   const now = useMemo(() => Date.now(), [tick]);
 
@@ -237,10 +245,11 @@ const FarmPlot = memo(({
   }, [decorateMode, placeBuildingMode, plot, index, onPlotClick, onPlant, onHarvest, onToggleSelect]);
 
   return (
-    <div ref={plotRef} className="relative group" data-plot-index={index}>
+    <div ref={setRef} className="relative group" data-plot-index={index}>
       <Card
         className={`
-          w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 cursor-pointer relative overflow-hidden
+          w-full aspect-square cursor-pointer relative overflow-hidden
+          min-w-[3.5rem] min-h-[3.5rem]
           transition-all duration-300 ease-out farm-plot rounded-3xl
           backdrop-blur-md bg-gradient-to-br
           ${plot?.state === 'empty'
@@ -1261,9 +1270,7 @@ const FarmGrid = memo(() => {
             decorateMode={decorateMode}
             placeBuildingMode={placeBuildingMode}
             onHover={placeBuildingMode ? setHoveredBuildingCell : null}
-            plotRef={(element) => {
-              plotRefs.current[index] = element;
-            }}
+            allPlotRefs={plotRefs}
           />
         ))}
       </div>

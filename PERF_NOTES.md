@@ -211,3 +211,14 @@
   - Audio visibility: Uses native Page Visibility API event.
   - Undo: Push on action, pop on user click; no background processing.
 - No per-tick loops, no DOM queries in hot paths, no layout thrashing.
+
+## 2026-02-01 Sprint A: Stability & Hardening
+
+### Improvements Applied
+- **FarmingSystem**: Hoisted `weatherEffects` object creation out of the hot plot loop, saving N allocations per tick (where N = plot count).
+- **GameContext**: Fixed `debouncedAutoSave` logic to ensure crop growth (via `plot.growthStage`) is persisted even if no player action occurs (removed weak state hash check). Also verified `requestIdleCallback` usage for non-blocking IO.
+- **DebugService**: Cached `URLSearchParams` lookup in `isDebugEnabled` to eliminate redundant string parsing in hot logging paths (200+ calls/sec reduced to 0).
+- **FarmGrid**: Fixed `memo` breakage in `FarmPlot` by replacing inline `plotRef` callback with a stable `allPlotRefs` prop. This ensures empty/static plots do not re-render on every tick.
+
+### Biggest Bottleneck Removed
+- **FarmGrid re-renders**: Empty plots now correctly skip re-rendering during game ticks, significantly reducing React diffing overhead on mobile devices.

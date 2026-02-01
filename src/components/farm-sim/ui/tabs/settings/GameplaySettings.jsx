@@ -136,28 +136,29 @@ export const GameplaySettings = memo(({
                         </button>
                     </div>
 
-                    {/* Fast Mode */}
+                    {/* Day Speed */}
                     <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
                         <div>
-                            <div className="font-medium">Fast Mode</div>
-                            <div className="text-sm text-gray-600">2x growth speed (for testing)</div>
+                            <div className="font-medium">Day Speed</div>
+                            <div className="text-sm text-gray-600">How fast time passes</div>
                         </div>
-                        <button
-                            onClick={() => actions.updateSettings({
-                                fastMode: !state.settings.fastMode
-                            })}
-                            className={`
-                relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${state.settings.fastMode ? 'bg-green-600' : 'bg-gray-300'}
-              `}
-                        >
-                            <span
-                                className={`
-                  inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${state.settings.fastMode ? 'translate-x-6' : 'translate-x-1'}
-                `}
-                            />
-                        </button>
+                        <div className="flex gap-1">
+                            {['slow', 'normal', 'fast'].map((speed) => (
+                                <button
+                                    key={speed}
+                                    onClick={() => actions.updateSettings({ daySpeed: speed })}
+                                    className={`
+                                        px-3 py-1.5 text-xs font-medium rounded-lg transition-all
+                                        ${state.settings.daySpeed === speed
+                                            ? 'bg-green-600 text-white shadow-sm'
+                                            : 'bg-white text-gray-600 border border-gray-200 hover:border-green-300'
+                                        }
+                                    `}
+                                >
+                                    {speed === 'slow' ? '🐢 Relaxed' : speed === 'normal' ? '⏱️ Normal' : '🚀 Quick'}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Particle Effects */}

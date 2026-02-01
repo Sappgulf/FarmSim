@@ -283,6 +283,7 @@ const initialState = {
     musicEnabled: true,
     animationsEnabled: true,
     reducedMotion: false,
+    daySpeed: 'normal', // 'slow' | 'normal' | 'fast'
   },
   automation: {
     lastAutoWaterAt: 0,
@@ -737,23 +738,12 @@ export function GameProvider({ children }) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    const stateString = JSON.stringify({
-      coins: stateToSave.coins,
-      xp: stateToSave.xp,
-      level: stateToSave.level,
-      plotsCount: stateToSave.plots?.length || 0,
-      gridSize: stateToSave.gridSize
-    });
-
-    if (stateString === lastSaveStateRef.current) return;
-
     autoSaveTimeoutRef.current = setTimeout(() => {
       try {
         const saveTimestamp = Date.now();
         const saveToStorage = () => {
           try {
             persistSaveData(stateToSave, { saveTimestamp });
-            lastSaveStateRef.current = stateString;
             if (dispatchRef.current) {
               dispatchRef.current({
                 type: GAME_ACTIONS.UPDATE_GAME_LOOP,

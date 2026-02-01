@@ -48,6 +48,12 @@ Grow a thriving farm by planting crops, harvesting for profit, and investing in 
 - **Season day** is shown in the Cozy Status Bar so you can plan harvest timing.
 - The farm view now shifts color with each season (spring blossoms, summer greens, fall warmth, winter frost).
 
+## Day Speed
+- Control how fast time passes in **Settings → Gameplay → Day Speed**.
+- **Relaxed (🐢)**: 8 minutes per in-game day. Take your time.
+- **Normal (⏱️)**: 5 minutes per day. Balanced pacing.
+- **Quick (🚀)**: 2 minutes per day. Fast sessions.
+
 ## Contracts & Quests
 - **Daily Quests**: Refresh every midnight. Completing all daily quests increases your streak, boosting rewards.
 - **Weekly Contracts**: Refresh every Monday. Larger goals and bigger rewards.

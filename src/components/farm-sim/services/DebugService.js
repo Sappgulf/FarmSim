@@ -14,13 +14,24 @@ const pruneSamples = (samples, cutoff) => {
   }
 };
 
+let debugParamCached = null;
+
 const getDebugParamEnabled = () => {
   if (typeof window === 'undefined') return false;
+  if (debugParamCached !== null) return debugParamCached;
+
   const params = new URLSearchParams(window.location.search);
-  if (!params.has('debug')) return false;
+  if (!params.has('debug')) {
+    debugParamCached = false;
+    return false;
+  }
   const value = params.get('debug');
-  if (value === null || value === '') return true;
-  return value === '1' || value.toLowerCase() === 'true';
+  if (value === null || value === '') {
+    debugParamCached = true;
+    return true;
+  }
+  debugParamCached = value === '1' || value.toLowerCase() === 'true';
+  return debugParamCached;
 };
 
 /**

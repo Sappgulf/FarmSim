@@ -6,6 +6,19 @@
 
 ---
 
+## 2026-01-31 Sprint C: Balance + Liveliness
+
+- **Implemented**
+  - **Scope:** frontend (balance/tuning)
+  - **What:**
+    - **Day Speed Control**: Added `daySpeed` setting (slow/normal/fast) with presets (8/5/2 min per day). UI selector in Settings → Gameplay. SeasonSystem now reads `settings.daySpeed` dynamically.
+    - **Economy Tune-Up**: Adjusted rep gain formula from `harvestValue/50` to `harvestValue/40` (+25% faster progression).
+    - **Balance Documentation**: Created `BALANCE_NOTES.md` with baseline measurements and target pacing goals.
+  - **Why:** Make pacing player-adjustable for relaxed or quick sessions, improve progression feel, and document balance decisions.
+  - **Verification:** `npm run build` (1759 modules, 10.73s, no errors).
+
+---
+
 ## 2026-01-31 Cozy Identity v1
 
 - **Planned**

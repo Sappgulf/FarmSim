@@ -1,107 +1,63 @@
 # FarmSim Developer Notes
 
-## Architecture Overview
-- **Entry point**: `index.html` loads the React app via `src/main.jsx`.
-- **Core game shell**: `src/components/farm-sim/core/FarmSim.jsx` composes the UI and wires systems.
-- **State management**: `src/components/farm-sim/context/GameContext.jsx` owns the reducer, game loop, save/load, and action dispatchers.
-- **Systems layer**: `src/components/farm-sim/systems/` contains isolated gameplay systems (farming, weather, quests, etc.).
-- **Data/config**: `src/components/farm-sim/constants/` holds game configuration for crops, buildings, achievements, progression, and quests.
-- **UI**: `src/components/farm-sim/ui/` is split into reusable components and tab content.
+## Feature/Systems Inventory
+**Sprint A: Stability + Performance Lock**
 
-## Game Loop & Update Flow
-- **Authoritative loop**: The fixed-step loop lives in `GameContext.jsx` and ticks systems on a 10 FPS cadence.
-- **Systems updates**: Each system implements `update(state)` and is invoked by the central loop in `FarmSim.jsx`/`GameContext.jsx`.
-- **Dirty updates**: Plot updates are batched and only written when changes are detected (e.g., growth, withering, automation).
+### Core Systems (src/components/farm-sim/systems)
 
-## State Shape (High-Level)
-- **Core**: `coins`, `xp`, `level`, `gridSize`.
-- **Farm**: `plots`, `inventory`, `buildings`, `processing` queues.
-- **Progression**: `achievements`, `research`, `genetics`, `dailyQuests`, `weeklyContracts`.
-- **Automation**: `automation.lastAutoWaterAt` tracks the auto-watering cadence.
-- **Systems**: `weather`, `season`, `livestock`, `fishing`, `pets`.
+| System | Status | Key Responsibilities | Notes / Duplicates |
+| :--- | :--- | :--- | :--- |
+| **FarmingSystem** | Implemented | Crop growth, planting, harvesting, water, fertility, automation. | Core loop. Handled in `update()`. |
+| **SeasonSystem** | **ACTIVE** | Season cycle (Spring/Summer/Fall/Winter), Day Advancement (Legacy 30s/2m). | **ACTIVE TIME SOURCE**: Configured in `FarmSim.jsx`. |
+| **CalendarSystem** | **INACTIVE** | Day/Week tracking, Festivals, Configurable day length (8m). | **ORPHAN**: File exists but is NOT instantiated in `GameContext`. Safe to update/refactor later. |
+| **WeatherSystem** | Implemented | Daily weather events, forecasts, modifiers (growth/yield). | Driven by `onDayAdvance`. |
+| **EconomicSystem** | Implemented | Market prices, daily crop trends, shop transaction logic. | Driven by `onDayAdvance`. |
+| **QuestSystem** | Implemented | Daily Quests, Weekly Contracts, Streaks. | Driven by `onDayAdvance`. |
+| **AchievementSystem**| Implemented | Tracking stats, unlocking achievements. | Checks every 5s (interval). |
+| **LivestockSystem** | Implemented | Animal production (milk/wool), hunger, feeding. | Ticks every update (10FPS). |
+| **FishingSystem** | Implemented | Fishing minigame mechanics, fish catching. | Independent state. |
+| **DiseaseSystem** | Implemented | Crop diseases spread/cure. | Ticks every update. |
+| **DisasterSystem** | Implemented | Random events (storm, drought, pests). | Low probability checks. |
+| **RotationEngine** | **INACTIVE** | Deterministic shop rotation RNG (Cosmetics). | **ORPHAN**: Unused. |
+| **Sound/Music** | Implemented | Audio management. | Event-driven + state changes. |
 
-## Key Files
-- `src/components/farm-sim/core/FarmSim.jsx` — top-level UI composition and system initialization.
-- `src/components/farm-sim/context/GameContext.jsx` — reducer, loop, save/load, actions.
-- `src/components/farm-sim/context/GamePersistence.js` — save versioning, migration, backup handling.
-- `src/components/farm-sim/systems/FarmingSystem.js` — crop growth, harvesting, and automation logic.
-- `src/components/farm-sim/systems/QuestSystem.js` — daily/weekly quest generation + progress.
-- `src/components/farm-sim/constants/questData.js` — data-driven quest/contract templates.
+### UI Components (src/components/farm-sim/ui)
 
-## Feature Inventory
-| Feature | Status | Location | Notes / Gaps |
-| --- | --- | --- | --- |
-| Day rollover backbone | Implemented | `SeasonSystem.js`, `GameContext.jsx` | Single day advance event triggers weather + market refreshes. |
-| Seasons | ALREADY IMPLEMENTED (polished) | `SeasonSystem.js`, `GameHeader.jsx`, `CozyStatusBar.jsx` | Day-in-season shown in cozy status bar. |
-| Weather | ALREADY IMPLEMENTED (polished) | `WeatherSystem.js`, `WeatherTab.jsx`, `CozyStatusBar.jsx` | Changes only on day rollover + daily outlook forecast. |
-| Town reputation | Implemented | `SocialTab.jsx`, `GameContext.jsx`, `constants/townData.js` | 3 tiers with claimable rewards and vendor perk. |
-| Collections / encyclopedia | Implemented | `CollectionsTab.jsx`, `constants/collectionData.js`, `GameContext.jsx` | Milestones + subtle sell bonuses per crop. |
-| Market daily changes | Implemented | `EconomicSystem.js`, `constants/marketData.js`, `ShopTab.jsx` | Daily featured crop + market mood. |
-| HUD/top bar | Implemented | `GameHeader.jsx`, `CozyStatusBar.jsx` | Compact status bar with season/weather/rep/collections. |
-| Tab system rendering | ALREADY IMPLEMENTED | `GameSidebar.jsx`, `NavBar.jsx`, `TabWrapper.jsx` | Tab cache + keyboard/focus handling. |
-| Performance instrumentation | ALREADY IMPLEMENTED | `DebugService.js`, `PerformanceOverlay.jsx`, `FPSCounter.jsx` | Debug-gated overlay + metrics counters. |
-| Save versioning/migrations | ALREADY IMPLEMENTED (updated) | `GamePersistence.js` | v5 migration with market + town rewards. |
-| Core farming loop | Implemented | `FarmingSystem.js`, `FarmGrid.jsx` | Stable growth/harvest loop with water + fertility. |
-| Daily quests | Implemented | `QuestSystem.js`, `DailyQuestsTab.jsx` | Streak bonus and claim flow. |
-| Weekly contracts | Implemented | `QuestSystem.js`, `DailyQuestsTab.jsx` | Weekly cadence (Mon reset). |
-| Upgrade system | Partial | `ShopTab.jsx`, `ResearchTab.jsx`, `buildingData.js` | Shop + research upgrades exist; building upgrade UI is limited. |
-| Automation (earned) | Implemented | `FarmingSystem.js`, `ShopTab.jsx`, `buildingData.js` | Sprinkler tool + well auto-watering. |
-| Data-driven crops | Implemented | `constants/cropData.js` | New crops via config. |
-| Data-driven buildings | Implemented | `constants/buildingData.js` | Levels and effects in config. |
-| Data-driven quests | Implemented | `constants/questData.js` | Daily/weekly templates in config. |
-| Save validation + backup | Implemented | `GamePersistence.js` | Backup slot + fallback on load. |
-| Notifications/toasts | Implemented | `NotificationSystem.jsx` | Capped, auto-dismiss, close guards. |
-| Livestock system | Implemented | `LivestockSystem.js`, `LivestockTab.jsx` | Production loops. |
-| Fishing system | Implemented | `FishingSystem.js`, `FishingTab.jsx` | Minigame + upgrades. |
+| Component | Status | Key Features |
+| :--- | :--- | :--- |
+| **FarmGrid** | Polished | Main gameplay area. Canvas/DOM hybrid (implied). Handles plots, placement. |
+| **GameHeader** | Polished | HUD, XP/Coins, Level, Save/Pause controls. |
+| **GameSidebar** | Polished | Tab navigation. |
+| **NavBar** | Polished | Mobile bottom nav. |
+| **CozyStatusBar** | Polished | Season, Day, Weather, Rep display. Connects to `SeasonSystem`. |
+| **NotificationSystem**| Polished | Toasts management. |
+| **Tabs** | Polished | `Inventory`, `Buildings`, `Social`, `Analytics`, `Settings`, etc. |
 
-## Cozy Farm Expansion v1 Feature Inventory
-| Feature | Status | Location | Notes / Gaps |
-| --- | --- | --- | --- |
-| Placeable buildings | Implemented | `FarmGrid.jsx`, `BuildingsTab.jsx`, `placeableBuildingData.js`, `GameContext.jsx` | Grid placements with greenhouse/well/barn effects. |
-| Decoration system | Implemented | `FarmGrid.jsx`, `decorationData.js`, `GameContext.jsx` | Decorate mode with persistence and grid snapping. |
-| Town Board / daily info | Implemented | `TownBoard.jsx`, `townPlan.js`, `GameContext.jsx` | Daily plan derived on day rollover. |
-| Fertilizer / compost | Implemented | `FarmingTab.jsx`, `FarmingSystem.js`, `GameContext.jsx` | Compost craft + fertilizer pre-plant boost. |
-| Storage capacity | Missing | — | No inventory cap or storage overflow handling yet. |
-| Day rollover backbone | Implemented | `SeasonSystem.js`, `GameContext.jsx` | Single day advance event drives weather/market. |
-| Performance guardrails | Implemented | `GameContext.jsx`, `FarmGrid.jsx`, `PERF_NOTES.md` | Precomputed coverage + event-driven effects. |
+### Debug & Dev Tools (src/components/farm-sim/ui)
 
-## Cozy World v1 Feature Inventory
-| Feature | Status | Location | Notes / Gaps |
-| --- | --- | --- | --- |
-| Seasons logic | ALREADY IMPLEMENTED | `src/components/farm-sim/systems/SeasonSystem.js` | Season cadence and bonuses already day-driven. |
-| Weather logic | ALREADY IMPLEMENTED | `src/components/farm-sim/systems/WeatherSystem.js` | Cozy weather runs on day rollover and forecast. |
-| Day/night lighting | Implemented | `src/components/farm-sim/ui/FarmGrid.jsx`, `src/index.css` | Phase-based lighting overlay with gentle tints. |
-| Visual overlays | Implemented | `src/components/farm-sim/ui/CozyWorldOverlays.jsx`, `src/index.css` | Season/weather overlays, wet sheen, lighting. |
-| Ambient effects/actors | Implemented | `src/components/farm-sim/ui/CozyWorldOverlays.jsx`, `src/index.css` | Low-count butterflies/leaves/snowflakes, visibility-paused. |
-| Settings (reduced motion/effects) | Implemented | `src/components/farm-sim/ui/tabs/settings/GameplaySettings.jsx`, `src/components/farm-sim/context/GamePersistence.js` | Toggle persists and disables ambient + transitions. |
-| Town Board UI | Implemented | `src/components/farm-sim/ui/TownBoard.jsx`, `src/components/farm-sim/core/FarmSim.jsx` | Cozy board with season/weather/rep/market hints. |
-| Performance instrumentation | ALREADY IMPLEMENTED | `src/components/farm-sim/services/DebugService.js`, `src/components/farm-sim/ui/PerformanceOverlay.jsx` | Debug-gated metrics overlays. |
+| Tool | Status | Features | Phase 1/2 Gap |
+| :--- | :--- | :--- | :--- |
+| **DevDebugOverlay** | Partial | XP/Perf stats. Copy Report. | Missing live "Action Trace" feed. |
+| **DevErrorOverlay** | Implemented| Captures global errors + recent actions log. | **COVERS "CRASH CAPTURE" & "ACTION TRACE"**. |
+| **DevStressPanel** | Partial | Fill/Harvest/Notify/Stress Loop. | Missing "Rapid Tab Switch" & "Advance 30 Days". |
+| **FPSCounter** | Basic | Simple FPS number. | - |
+| **PerformanceOverlay**| Advanced | FPS, Timer/Listener counts, worst frame. | Good for Phase 1. |
 
-## Farm Scene v1 Inventory
-| Feature | Status | Location | Notes / Gaps |
-| --- | --- | --- | --- |
-| Plot grid rendering | Implemented | `FarmGrid.jsx` | Responsive grid with plot interactions. |
-| Background / scene layer | Implemented | `FarmGrid.jsx`, `index.css` | Static grass/edge framing layer behind plots. |
-| Decorations / placeables | Implemented | `FarmGrid.jsx`, `decorationData.js`, `GameContext.jsx`, `GamePersistence.js` | Grid-snapped decor with decorate mode + save validation. |
-| Buildings / anchors | Implemented | `FarmGrid.jsx` | Farmhouse + shipping crate anchor to existing tabs. |
-| Plot visuals (growth, wet/dry, borders) | Implemented | `FarmGrid.jsx`, `index.css` | Rounded plots, soil + moisture overlays, staged growth. |
-| Save persistence for layout | Implemented | `GamePersistence.js` | Decorations normalized and validated on load. |
+### Architecture & Data
 
-## Cozy Identity v1 Feature Inventory
-| Feature | Status | Location | Notes / Gaps |
-| --- | --- | --- | --- |
-| Farm name/identity | Implemented | `GameContext.jsx`, `GamePersistence.js`, `SettingsTab.jsx`, `TownBoard.jsx` | Player-editable farm name displayed on Town Board and save header. |
-| Theme palettes | Implemented | `index.css`, `SettingsTab.jsx`, `GameContext.jsx`, `GamePersistence.js` | CSS-variable themes (Spring, Autumn, Pastel, Midnight) selectable in Settings. |
-| Photo mode | Implemented | `FarmSim.jsx`, `index.css` | Toggle hides HUD/panels, centers farm view for screenshots. |
-| Cozy achievements | Implemented | `achievementData.js`, `AchievementSystem.js` | Milestones for collections, town rep tiers, seasonal harvests. |
-| Audio system | ALREADY IMPLEMENTED | `SoundSystem.js`, `MusicSystem.js`, `AudioSettings.jsx` | 15+ SFX + procedural seasonal music with volume controls. |
-| Audio page visibility | Implemented | `FarmSim.jsx` | Music/ambient paused when tab hidden via Page Visibility API. |
-| QoL multi-place | Implemented | `FarmGrid.jsx`, `GameContext.jsx` | Drag-to-place paths/fences in decorate mode. |
-| QoL undo placement | Implemented | `GameContext.jsx`, `FarmingTab.jsx` | Single-step undo for last decoration/building placement. |
-| Settings toggles | ALREADY IMPLEMENTED | `SettingsTab.jsx`, `GameplaySettings.jsx` | Sound, music, animations, reduced motion, auto-save. |
-| Save/load persistence | ALREADY IMPLEMENTED (v8) | `GamePersistence.js` | New fields (farmName, theme) validated and migrated. |
+- **GameContext**: Central Loop (10FPS), State Reducer, Action Dispatcher.
+- **Persistence**: `GamePersistence.js` handles Save/Load/Backup/Migration.
+- **Constants**: `cropData`, `buildingData`, `questData`, `socialData`, `inventoryData`, `buildingDisplayData` (Centralized).
 
-## Notes
-- Avoid duplicating features: check `constants/` and `systems/` before adding new mechanics.
-- Save/load flows should go through `GamePersistence.js` to keep validation consistent.
-- Any new system should provide: UI surface, persistence hooks, and tests.
+## Roadmap: Sprint A (Stability + Performance)
+1.  **Audit**: Complete. Identified overlaps (`Season` vs `Calendar`).
+2.  **Safety Net**:
+    - Ensure `DevErrorOverlay` catches ALL crashes (React Error Boundary + window.onerror).
+    - Enhance `DevStressPanel` with missing stress tests.
+3.  **Crash Fixes**: Fix potential double-advancement from dual time systems. Fix hot-loop allocations.
+4.  **Perf Lock**: Optimize `FarmGrid` rendering (cache DOM). Optimize `GameContext` reducer.
+
+## "No Duplicates" Strategy
+- **Time System**: `SeasonSystem` is dominant (UI dependency). `CalendarSystem` will be effectively muted (update loop disabled) to prevent conflicts, while preserving its helper utility methods if needed.
+- **Debug Tools**: Use existing `Dev*` components. Do not create new files. Enhance `DevStressPanel`.
+

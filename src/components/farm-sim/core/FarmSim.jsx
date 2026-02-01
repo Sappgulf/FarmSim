@@ -82,9 +82,21 @@ function FarmSimCore() {
   };
 
   // Handle tab change
-  const handleTabChange = (tabId) => {
+  const handleTabChange = React.useCallback((tabId) => {
     setActiveTab(tabId);
-  };
+  }, []);
+
+  // Expose tab switching to window for debug/stress testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.switchToTab = handleTabChange;
+    }
+    return () => {
+      if (typeof window !== 'undefined' && window.switchToTab === handleTabChange) {
+        delete window.switchToTab;
+      }
+    };
+  }, [handleTabChange]);
 
   // Initialize systems ONCE - don't recreate on state changes!
   // We pass current state to update() method, so no need to recreate

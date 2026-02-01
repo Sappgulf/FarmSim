@@ -13,6 +13,23 @@ export const SEASONS = {
 export const DEFAULT_DAY_LENGTH_MS = 30000;
 export const DEFAULT_DAYS_PER_SEASON = 4;
 
+// Day speed presets (user-facing setting)
+export const DAY_SPEED_CONFIG = {
+  slow: { label: 'Relaxed', dayLengthMs: 480000, daysPerSeason: 7 },    // 8 min/day, 7 days/season
+  normal: { label: 'Normal', dayLengthMs: 300000, daysPerSeason: 7 },  // 5 min/day, 7 days/season
+  fast: { label: 'Quick', dayLengthMs: 120000, daysPerSeason: 7 },     // 2 min/day, 7 days/season
+};
+
+export const getDayLengthFromSpeed = (speed) => {
+  const config = DAY_SPEED_CONFIG[speed] || DAY_SPEED_CONFIG.normal;
+  return config.dayLengthMs;
+};
+
+export const getDaysPerSeasonFromSpeed = (speed) => {
+  const config = DAY_SPEED_CONFIG[speed] || DAY_SPEED_CONFIG.normal;
+  return config.daysPerSeason;
+};
+
 export const SEASON_CONFIG = {
   [SEASONS.SPRING]: {
     name: 'Spring',
@@ -174,8 +191,10 @@ export class SeasonSystem {
     const now = Date.now();
     const currentSeason = this.gameState.season?.current || SEASONS.SPRING;
     const currentConfig = SEASON_CONFIG[currentSeason];
-    const dayLengthMs = this.gameState.season?.dayLengthMs || DEFAULT_DAY_LENGTH_MS;
-    const daysPerSeason = this.gameState.season?.daysPerSeason || DEFAULT_DAYS_PER_SEASON;
+    // Use daySpeed from settings to determine timing (allows live updates)
+    const daySpeed = this.gameState.settings?.daySpeed || 'normal';
+    const dayLengthMs = getDayLengthFromSpeed(daySpeed);
+    const daysPerSeason = getDaysPerSeasonFromSpeed(daySpeed);
     const dayStartTime = this.gameState.season?.dayStartTime || this.gameState.season?.lastChangeTime || now;
     const dayInSeason = Number.isFinite(this.gameState.season?.dayInSeason)
       ? this.gameState.season.dayInSeason

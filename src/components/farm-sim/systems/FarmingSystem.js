@@ -136,6 +136,20 @@ export class FarmingSystem {
 
     const now = Date.now();
     let updatedPlots = null;
+
+    const weather = this.gameState.weather || 'sunny';
+    const weatherEffects = {
+      sunny: { growthModifier: 1.2 },
+      rainy: { growthModifier: 1.1 },
+      cloudy: { growthModifier: 1.0 },
+      stormy: { growthModifier: 0.8 },
+      drought: { growthModifier: 0.6 },
+      snow: { growthModifier: 0.3 },
+      windy: { growthModifier: 0.9 }
+    };
+    const currentWeatherEffects = weatherEffects[weather] || weatherEffects.sunny;
+    const weatherModifier = currentWeatherEffects.growthModifier;
+
     for (let i = 0; i < plots.length; i += 1) {
       const plot = plots[i];
       // Safety check for invalid plot
@@ -155,18 +169,6 @@ export class FarmingSystem {
 
       // Calculate progress from timestamp (NO deltaTime issues!)
       // Get weather effects directly from current weather (same logic as WeatherSystem)
-      const weather = this.gameState.weather || 'sunny';
-      const weatherEffects = {
-        sunny: { growthModifier: 1.2 },
-        rainy: { growthModifier: 1.1 },
-        cloudy: { growthModifier: 1.0 },
-        stormy: { growthModifier: 0.8 },
-        drought: { growthModifier: 0.6 },
-        snow: { growthModifier: 0.3 },
-        windy: { growthModifier: 0.9 }
-      };
-      const currentWeatherEffects = weatherEffects[weather] || weatherEffects.sunny;
-      const weatherModifier = currentWeatherEffects.growthModifier;
 
       const seasonBonus = this.gameState.season?.config?.bonuses?.growthSpeed || 1.0;
       const fertilizerBoost = plot.fertilizer

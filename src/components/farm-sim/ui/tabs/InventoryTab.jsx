@@ -80,7 +80,7 @@ const InventoryTab = memo(() => {
             <p className="text-sm text-slate-400 mt-1">Harvest crops or visit the shop!</p>
           </div>
         ) : (
-          <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+          <div className="space-y-2 pr-1">
             {inventoryItems.map(([itemId, quantity]) => {
               const { name, emoji, unitValue } = getItemDetails(itemId);
               return (

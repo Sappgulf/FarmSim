@@ -72,5 +72,6 @@ export const getTownRepBonus = (reputation = 0) => {
 
 export const getHarvestReputationGain = (harvestValue = 0) => {
   if (!Number.isFinite(harvestValue) || harvestValue <= 0) return 0;
-  return Math.max(1, Math.floor(harvestValue / 50));
+  // Slightly faster rep gain for better progression feel (was /50, now /40)
+  return Math.max(1, Math.floor(harvestValue / 40));
 };

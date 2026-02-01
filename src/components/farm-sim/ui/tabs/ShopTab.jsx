@@ -168,7 +168,7 @@ const ShopTab = memo(() => {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Player Balance - Premium AAA Card */}
-      <Card className="p-8 bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 border-none shadow-[0_20px_50px_rgba(245,158,11,0.3)] relative overflow-hidden group">
+      <Card className="p-6 sm:p-8 bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 border-none shadow-[0_20px_50px_rgba(245,158,11,0.3)] relative overflow-hidden group">
         {/* Animated particles background */}
         <div className="absolute inset-0 opacity-20 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.4)_0%,transparent_50%)]" />
