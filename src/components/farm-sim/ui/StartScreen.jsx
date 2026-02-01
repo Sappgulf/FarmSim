@@ -113,6 +113,7 @@ const StartScreen = ({ onStartGame, hasSaveData }) => {
                         <button
                             onClick={() => handleStart(false)}
                             disabled={isLoading}
+                            aria-label="Continue your saved farm"
                             className="group relative w-full py-5 px-8 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-black text-xl rounded-2xl shadow-[0_10px_20px_rgba(16,185,129,0.3)] transform transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_30px_rgba(16,185,129,0.4)] active:scale-95 disabled:opacity-50 overflow-hidden"
                         >
                             <div className="relative z-10 flex items-center justify-center gap-3">
@@ -127,9 +128,10 @@ const StartScreen = ({ onStartGame, hasSaveData }) => {
                     <button
                         onClick={() => handleStart(true)}
                         disabled={isLoading}
+                        aria-label={hasSaveData ? 'Start a new farm from scratch' : 'Start playing'}
                         className={`group relative w-full py-5 px-8 font-black text-xl rounded-2xl transform transition-all duration-300 hover:-translate-y-1 active:scale-95 disabled:opacity-50 overflow-hidden ${hasSaveData
-                                ? 'bg-white/10 border-2 border-white/30 text-white hover:bg-white/20 shadow-lg'
-                                : 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-amber-950 shadow-[0_10px_20px_rgba(245,158,11,0.3)] hover:shadow-[0_20px_30px_rgba(245,158,11,0.4)]'
+                            ? 'bg-white/10 border-2 border-white/30 text-white hover:bg-white/20 shadow-lg'
+                            : 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-amber-950 shadow-[0_10px_20px_rgba(245,158,11,0.3)] hover:shadow-[0_20px_30px_rgba(245,158,11,0.4)]'
                             }`}
                     >
                         <div className="relative z-10 flex items-center justify-center gap-3">
@@ -152,7 +154,7 @@ const StartScreen = ({ onStartGame, hasSaveData }) => {
                 {/* Footer: Social / Version */}
                 <div className="mt-12 flex gap-8">
                     <div className="flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors cursor-pointer text-sm font-bold tracking-widest uppercase">
-                        <span>v2.5.0 Gold Edition</span>
+                        <span>v4.4.0</span>
                     </div>
                 </div>
             </div>

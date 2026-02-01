@@ -1,7 +1,7 @@
 # Codebase Cleanup & Optimization Changelog
 
 **Date:** January 2026
-**Project:** FarmLife v4.8.0
+**Project:** FarmLife v4.4.0
 **Status:** Cozy Identity v1 + Architecture, Accessibility & Systems Refinement Update
 
 ---

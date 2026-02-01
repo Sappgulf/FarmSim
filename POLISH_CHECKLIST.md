@@ -10,6 +10,7 @@
 | CalendarSystem + Day Length | ✅ DONE | `CalendarSystem.js` |
 | NotificationSystem cleanup | ✅ DONE | `NotificationSystem.jsx` |
 | NavBar tap targets ≥56px | ✅ DONE | `NavBar.jsx` |
+| StartScreen a11y + version | ✅ DONE | `StartScreen.jsx` |
 | Production build | ✅ DONE | No errors |
 
 ---
