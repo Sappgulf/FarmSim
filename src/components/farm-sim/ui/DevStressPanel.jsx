@@ -1,4 +1,25 @@
+import React, { useState, useRef, useMemo, useCallback } from 'react';
+import { useGame } from '../context/GameContext';
+import { CROP_DATA } from '../constants/cropData';
+import { isDebugEnabled } from '../services/DebugService';
+import { traceAction } from '../services/DebugTraceService';
+
 const TABS_TO_STRESS = ['farming', 'inventory', 'shop', 'livestock', 'fishing', 'social', 'analytics', 'buildings', 'settings'];
+
+/**
+ * Helper to create a filled plot state for stress testing
+ */
+const createFilledPlot = (plot, index, selectedCrop, options = {}) => ({
+  ...plot,
+  id: plot?.id ?? index,
+  state: options.ready ? 'ready' : 'growing',
+  crop: selectedCrop?.id || 'carrot',
+  plantedAt: Date.now() - (options.ready ? 100000 : 0),
+  growthStage: options.ready ? 3 : 1,
+  progress: options.ready ? 100 : 25,
+  waterLevel: 100,
+  fertilizer: 0,
+});
 
 const DevStressPanel = () => {
   const { state, actions } = useGame();
