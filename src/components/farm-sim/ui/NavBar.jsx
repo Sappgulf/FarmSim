@@ -138,7 +138,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
             )}
 
             {/* Main section buttons */}
-            <div className="flex justify-around items-center px-1 py-2 safe-area-pb">
+            <div className="flex justify-around items-center px-2 py-3 gap-2 safe-area-pb">
                 {sections.map(section => {
                     const isActive = activeSection === section.id;
                     const notifCount = getNotificationCount(section.id);
@@ -160,7 +160,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                             aria-current={isActive ? 'page' : undefined}
                             className={`
                 relative flex flex-col items-center justify-center
-                min-w-[60px] min-h-[56px] px-2 py-1.5 rounded-xl
+                flex-1 min-w-[50px] min-h-[56px] px-2 py-1.5 rounded-xl
                 transition-all touch-manipulation
                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2
                 ${isActive

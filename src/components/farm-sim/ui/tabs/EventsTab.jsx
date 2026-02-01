@@ -123,7 +123,7 @@ const EventsTab = memo(() => {
     }
 
     // Select random event
-    const randomEvent = seasonEvents[Math.floor(Math.random() * seasonEvents.length)];
+    const randomEvent = currentSeasonEvents[Math.floor(Math.random() * currentSeasonEvents.length)];
     const eventWithTimer = {
       ...randomEvent,
       startedAt: Date.now(),
@@ -214,7 +214,7 @@ const EventsTab = memo(() => {
             </p>
           </div>
           <div className="text-right bg-black/20 p-3 rounded-xl backdrop-blur-sm border border-white/10">
-            <div className="text-2xl font-bold">{seasonEvents.length}</div>
+            <div className="text-2xl font-bold">{currentSeasonEvents.length}</div>
             <div className="text-xs text-white/80 uppercase tracking-widest">Available</div>
           </div>
         </div>
@@ -283,13 +283,13 @@ const EventsTab = memo(() => {
             onClick={triggerSeasonalEvent}
             className={`
                  font-bold text-lg px-8 py-6 shadow-lg transition-all hover:-translate-y-1 rounded-xl gap-2
-                 ${seasonEvents.length > 0
+                 ${currentSeasonEvents.length > 0
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
               `}
-            disabled={seasonEvents.length === 0}
+            disabled={currentSeasonEvents.length === 0}
           >
-            {seasonEvents.length > 0 ? (
+            {currentSeasonEvents.length > 0 ? (
               <>🎲 Trigger {currentSeason} Event</>
             ) : (
               'No Events Available'
@@ -305,7 +305,7 @@ const EventsTab = memo(() => {
         </h4>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {seasonEvents.map(event => (
+          {currentSeasonEvents.map(event => (
             <div key={event.id} className="p-4 border border-gray-100 rounded-xl hover:shadow-md transition-all hover:border-blue-200 bg-white group">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-3">

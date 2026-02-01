@@ -215,7 +215,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
               key={tab.id}
               value={tab.id}
               forceMount={mountedTabs.includes(tab.id)}
-              className={`mt-4 motion-reduce:transition-none motion-reduce:animate-none ${isActive ? 'animate-in fade-in slide-in-from-bottom-2 duration-300' : ''}`}
+              className={`mt-4 px-4 pb-4 motion-reduce:transition-none motion-reduce:animate-none ${isActive ? 'animate-in fade-in slide-in-from-bottom-2 duration-300' : ''}`}
             >
               <Suspense fallback={<TabLoader />}>
                 <TabWrapper>
