@@ -1,8 +1,9 @@
 # 🌾 FarmLife - Advanced Farm Simulation Game
 
-**Version: 4.2.0** - *Major Content Update: Livestock, Fishing, Sound & Music*
+**Version: 4.4.0** - *Cozy Identity Update: Farm Naming, Themes, Photo Mode & Polish*
 
 A comprehensive React-based farm simulation game featuring a clean modular architecture, advanced genetic breeding systems, dynamic weather mechanics with real-time visual effects, sophisticated agricultural management tools, processing plants, research systems, pet management, daily quests, seasonal cycles, livestock management, fishing mini-games, procedural sound effects, dynamic background music, and premium visual polish with particle effects and animations.
+
 
 [![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-4.0.0-646CFF.svg)](https://vitejs.dev/)
@@ -670,17 +671,21 @@ npm run qa:full          # Complete QA suite
 
 ## 📈 Version History
 
-### v4.2.0 - Major Content Update: Livestock, Fishing, Sound & Music (Current)
+### v4.4.0 - Cozy Identity Update: Farm Naming, Themes, Photo Mode & Polish (Current)
+- 🏡 **Farm Identity** - Name your farm and display it on the Town Board
+- 🎨 **Theme Palettes** - 5 cozy color themes (Classic, Spring, Autumn, Pastel, Midnight)
+- 📸 **Photo Mode** - Hide UI for clean screenshots of your farm
+- 🏆 **Cozy Achievements** - 18 new achievements for collections, rep, seasons, and more
+- 📱 **PWA Support** - Install as app with offline support
+- ♿ **Accessibility** - Reduced motion toggle and preferences support
+- 🔧 **Architecture** - Modularized GameContext into focused files
+- 🐛 **Bug Fixes** - Notification crash hardening, plot stress tests, XP rate limiting
+
+### v4.2.0 - Major Content Update: Livestock, Fishing, Sound & Music
 - 🎵 **Sound Effects System** - Procedural audio feedback for all game actions
 - 🎶 **Background Music** - Dynamic seasonal themes with seamless transitions
 - 🐄 **Livestock Management** - Raise animals for passive income and products
 - 🎣 **Fishing Mini-Game** - Interactive fishing with keyboard controls and rarity system
-- 🏗️ **New Game Systems** - LivestockSystem, FishingSystem, MusicSystem
-- 🎮 **New UI Tabs** - Livestock and Fishing tabs with full functionality
-- 🔧 **State Management** - Added livestock and fishing state to GameContext
-- 🎯 **Settings Integration** - Sound and music toggles in settings
-- 📊 **Analytics Updates** - Track livestock and fishing statistics
-- ⚡ **Performance Optimized** - Zero impact on existing performance
 
 ### v4.1.0 - Polish & Visual Effects Update
 - ✨ **Particle Effects System** - Enhanced physics with coins, sparkles, and floating text
@@ -793,4 +798,4 @@ For questions or issues:
 
 **Made with 💚 by passionate game developers**
 
-*Version 4.2.0 - October 2025*
+*Version 4.4.0 - January 2026*

@@ -90,6 +90,7 @@
 
 ## Summary
 - **Total Items**: 65
-- **Done**: 6
+- **Done**: 15
 - **In Progress**: 0
-- **TODO**: 59
+- **TODO**: 50
+

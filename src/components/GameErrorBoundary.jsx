@@ -83,7 +83,7 @@ class GameErrorBoundary extends React.Component {
             )}
 
             <div className="mt-6 text-center text-sm text-gray-500">
-              FarmLife v4.2.1 - If this persists, try refreshing your browser
+              FarmLife v4.4.0 - If this persists, try refreshing your browser
             </div>
           </div>
         </div>
