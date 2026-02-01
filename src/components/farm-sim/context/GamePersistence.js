@@ -296,6 +296,7 @@ export function migrateSaveData(savedData) {
             musicEnabled: true,
             animationsEnabled: true,
             reducedMotion: false,
+            daySpeed: 'normal', // Sprint C: Day Speed Control
             ...(migratedData.settings || {}),
         };
 
