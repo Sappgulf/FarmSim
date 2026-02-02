@@ -1,14 +1,17 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { CROP_DATA } from '../../constants/cropData';
 import { CROP_COLLECTION_MILESTONES, getCollectionRewardLabel, getCropLore } from '../../constants/collectionData';
+import { MEMORY_TYPES } from '../../constants/identityData';
 
 const CollectionsTab = memo(() => {
   const { state } = useGame();
   const collections = state.collections || { crops: {}, totals: { harvested: 0 } };
+  const memories = Array.isArray(state.identity?.memories) ? state.identity.memories : [];
+  const [memoryFilter, setMemoryFilter] = useState('all');
 
   const crops = useMemo(() => (
     Object.values(CROP_DATA).sort((a, b) => {
@@ -47,6 +50,14 @@ const CollectionsTab = memo(() => {
 
     return best;
   }, [collections, crops]);
+
+  const filteredMemories = useMemo(() => {
+    if (memoryFilter === 'all') return memories;
+    if (['spring', 'summer', 'fall', 'winter'].includes(memoryFilter)) {
+      return memories.filter((memory) => memory.season === memoryFilter);
+    }
+    return memories.filter((memory) => memory.type === memoryFilter);
+  }, [memories, memoryFilter]);
 
   return (
     <div className="space-y-4">
@@ -105,6 +116,75 @@ const CollectionsTab = memo(() => {
           )}
         </Card>
       </div>
+
+      <Card className="p-5 border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h4 className="text-lg font-bold text-indigo-900 flex items-center gap-2">
+              <span className="text-2xl">📖</span> Farm Scrapbook
+            </h4>
+            <p className="text-sm text-indigo-700">
+              Cozy moments captured as your farm grows.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'all', label: 'All' },
+              { id: 'spring', label: 'Spring' },
+              { id: 'summer', label: 'Summer' },
+              { id: 'fall', label: 'Fall' },
+              { id: 'winter', label: 'Winter' },
+              { id: MEMORY_TYPES.DECOR, label: 'Decor' },
+              { id: MEMORY_TYPES.FESTIVAL, label: 'Festival' },
+              { id: MEMORY_TYPES.REPUTATION, label: 'Rep' },
+              { id: MEMORY_TYPES.COLLECTION, label: 'Collections' },
+            ].map((filter) => (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => setMemoryFilter(filter.id)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                  memoryFilter === filter.id
+                    ? 'border-indigo-500 bg-indigo-100 text-indigo-900'
+                    : 'border-white/60 bg-white/70 text-indigo-700 hover:bg-white'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {filteredMemories.length === 0 ? (
+            <div className="text-sm text-indigo-600 italic">
+              No scrapbook pages yet. Cozy moments will appear as you play.
+            </div>
+          ) : (
+            filteredMemories.map((memory) => (
+              <div
+                key={memory.id}
+                className="p-4 bg-white/80 border border-indigo-100 rounded-xl shadow-sm"
+              >
+                <div className="flex flex-wrap items-center gap-2 justify-between">
+                  <div className="font-semibold text-indigo-900">{memory.title}</div>
+                  <Badge variant="outline" className="border-indigo-200 text-indigo-700">
+                    {memory.season ? `${memory.season} • Day ${memory.dayCount || 1}` : 'Milestone'}
+                  </Badge>
+                </div>
+                <p className="text-sm text-indigo-700 mt-2">{memory.text}</p>
+                {memory.stats && (
+                  <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-indigo-600">
+                    <span>🪙 {memory.stats.coins}</span>
+                    <span>⭐ {memory.stats.reputation} rep</span>
+                    <span>🌾 {memory.stats.totalHarvested} harvested</span>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {crops.map((crop) => {

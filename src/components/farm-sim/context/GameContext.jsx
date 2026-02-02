@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { getSoundSystem } from '../systems/SoundSystem';
 import { createXPGranter, recordLevelUp, recordPlayerInteraction } from '../services/XPService';
-import { calculateHarvestValue } from '../constants/cropData';
+import { calculateHarvestValue, CROP_DATA } from '../constants/cropData';
 import { createDefaultCropCollections, getCollectionBonusMultiplier, updateCropCollectionProgress } from '../constants/collectionData';
 import { createDefaultMarketState, getMarketBonusMultiplier } from '../constants/marketData';
 import { getHarvestReputationGain, getTownRepBonus, getTownTierById, getTownTierByRep, getTownTierIndex, TOWN_REP_TIERS } from '../constants/townData';
@@ -10,6 +10,7 @@ import { updateQuestProgress } from '../systems/QuestSystem';
 import { SAVE_VERSION, loadSavedState, persistSaveData } from './GamePersistence';
 import { PLACEABLE_BUILDING_LOOKUP, buildBuildingCoverageMap } from '../constants/placeableBuildingData';
 import { buildDailyPlan } from '../constants/townPlan';
+import { DEFAULT_PHILOSOPHY, getMoodIntensity, getMoodTier, MEMORY_CAP, MEMORY_TYPES, SEASONAL_CROP_TOTALS } from '../constants/identityData';
 import { addTrackedEventListener } from '../services/EventListenerService';
 import { getPerfMetrics, isDebugEnabled, profileEnd, profileStart, recordFrameTime } from '../services/DebugService';
 import { initializeDebugTracing, runDebugInvariants, traceAction } from '../services/DebugTraceService';
@@ -123,6 +124,10 @@ const GAME_ACTIONS = {
 
   // Save/Load
   LOAD_GAME: 'LOAD_GAME',
+
+  // Identity layer
+  UPDATE_IDENTITY: 'UPDATE_IDENTITY',
+  SET_PHILOSOPHY: 'SET_PHILOSOPHY',
 
   // Cozy Identity v1
   SET_FARM_NAME: 'SET_FARM_NAME',
@@ -267,6 +272,22 @@ const initialState = {
   photoMode: false,
   undoStack: [],
 
+  identity: {
+    moodScore: 45,
+    moodTier: getMoodTier(45).id,
+    moodContributors: [],
+    philosophy: DEFAULT_PHILOSOPHY,
+    memories: [],
+    counters: {
+      decorationsPlacedTotal: 0,
+      festivalDays: 0,
+      seasonalHarvests: { spring: 0, summer: 0, fall: 0, winter: 0 },
+      seasonCropDiscoveries: { spring: 0, summer: 0, fall: 0, winter: 0 },
+      repTierUnlocks: [],
+      lastPlanCompletionDay: null,
+    },
+  },
+
   dailyPlan: buildDailyPlan({
     season: {
       current: 'spring',
@@ -276,6 +297,7 @@ const initialState = {
     weather: 'sunny',
     market: createDefaultMarketState(),
     social: { reputation: 0 },
+    identity: { philosophy: DEFAULT_PHILOSOPHY },
   }),
   settings: {
     autoSave: true,
@@ -596,6 +618,23 @@ function gameReducer(state, action) {
         notifications: [], // Clear old notifications
       };
 
+    case GAME_ACTIONS.UPDATE_IDENTITY:
+      return {
+        ...state,
+        identity: typeof action.payload === 'function'
+          ? action.payload(state.identity)
+          : { ...state.identity, ...action.payload },
+      };
+
+    case GAME_ACTIONS.SET_PHILOSOPHY:
+      return {
+        ...state,
+        identity: {
+          ...state.identity,
+          philosophy: action.payload || DEFAULT_PHILOSOPHY,
+        },
+      };
+
     // Cozy Identity v1 actions
     case GAME_ACTIONS.SET_FARM_NAME:
       const farmName = typeof action.payload === 'string' ? action.payload.slice(0, 30) : 'My Farm';
@@ -676,7 +715,7 @@ export function GameProvider({ children }) {
       type: GAME_ACTIONS.UPDATE_DAILY_PLAN,
       payload: buildDailyPlan(state),
     });
-  }, [state.season?.dayCount, state.dailyPlan?.dayCount, state.weather, state.market, state.social]);
+  }, [state.season?.dayCount, state.dailyPlan?.dayCount, state.weather, state.market, state.social, state.identity?.philosophy]);
   useEffect(() => {
     runDebugInvariants(state);
   }, [state]);
@@ -970,6 +1009,90 @@ export function GameProvider({ children }) {
       vendorDiscount: 0,
       ...(stateRef.current?.social || {}),
     });
+    const identityDefaults = {
+      moodScore: 45,
+      moodTier: getMoodTier(45).id,
+      moodContributors: [],
+      philosophy: DEFAULT_PHILOSOPHY,
+      memories: [],
+      counters: {
+        decorationsPlacedTotal: 0,
+        festivalDays: 0,
+        seasonalHarvests: { spring: 0, summer: 0, fall: 0, winter: 0 },
+        seasonCropDiscoveries: { spring: 0, summer: 0, fall: 0, winter: 0 },
+        repTierUnlocks: [],
+        lastPlanCompletionDay: null,
+      },
+    };
+    const getIdentityState = () => {
+      const currentIdentity = stateRef.current?.identity || {};
+      const counters = {
+        ...identityDefaults.counters,
+        ...(currentIdentity.counters || {}),
+      };
+      return {
+        ...identityDefaults,
+        ...currentIdentity,
+        counters,
+      };
+    };
+    const updateIdentity = (payload) => {
+      dispatch({ type: GAME_ACTIONS.UPDATE_IDENTITY, payload });
+    };
+    const addMemoryEntry = (entry) => {
+      if (!entry?.id) return false;
+      const currentIdentity = getIdentityState();
+      const existing = currentIdentity.memories || [];
+      if (existing.some((memory) => memory.id === entry.id)) {
+        return false;
+      }
+      const nextMemories = [
+        {
+          createdAt: Date.now(),
+          ...entry,
+        },
+        ...existing,
+      ].slice(0, MEMORY_CAP);
+      updateIdentity({ memories: nextMemories });
+      dispatch({
+        type: GAME_ACTIONS.ADD_NOTIFICATION,
+        payload: {
+          message: '📖 A new page in your scrapbook...',
+          type: 'success',
+        },
+      });
+      return true;
+    };
+    const applyMoodDelta = (delta, reason) => {
+      const safeDelta = Number.isFinite(delta) ? Math.max(0, delta) : 0;
+      if (safeDelta <= 0) return null;
+      const currentIdentity = getIdentityState();
+      const nextScore = Math.min(100, Math.max(0, (currentIdentity.moodScore || 0) + safeDelta));
+      const nextTier = getMoodTier(nextScore);
+      const nextContributors = Array.isArray(currentIdentity.moodContributors)
+        ? currentIdentity.moodContributors
+        : [];
+      const contributor = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        delta: safeDelta,
+        reason,
+        score: nextScore,
+        tier: nextTier.id,
+        at: Date.now(),
+      };
+      const moodContributors = [...nextContributors, contributor].slice(-20);
+      updateIdentity({
+        moodScore: nextScore,
+        moodTier: nextTier.id,
+        moodContributors,
+      });
+      return { score: nextScore, tier: nextTier };
+    };
+    const buildMemorySnapshot = () => ({
+      coins: stateRef.current?.coins || 0,
+      reputation: stateRef.current?.social?.reputation || 0,
+      totalHarvested: stateRef.current?.collections?.totals?.harvested || 0,
+    });
     const notifyTownTierUnlock = (tier) => {
       if (!tier) return;
       dispatch({
@@ -979,6 +1102,25 @@ export function GameProvider({ children }) {
           type: 'success',
         },
       });
+      const currentIdentity = getIdentityState();
+      if (!currentIdentity.counters?.repTierUnlocks?.includes(tier.id)) {
+        updateIdentity({
+          counters: {
+            ...currentIdentity.counters,
+            repTierUnlocks: [...(currentIdentity.counters?.repTierUnlocks || []), tier.id],
+          },
+        });
+        addMemoryEntry({
+          id: `rep-tier-${tier.id}`,
+          type: MEMORY_TYPES.REPUTATION,
+          title: `Town celebrates ${tier.name}`,
+          season: stateRef.current?.season?.current || 'spring',
+          dayCount: stateRef.current?.season?.dayCount || 1,
+          text: `The town recognizes your steady care. ${tier.name} unlocked.`,
+          stats: buildMemorySnapshot(),
+        });
+        applyMoodDelta(2, 'Town rep tier');
+      }
     };
     const getBuildingPlacementAtIndex = (index) => {
       const gridSize = stateRef.current?.gridSize || 0;
@@ -1001,6 +1143,18 @@ export function GameProvider({ children }) {
       }
       const isDiscovered = Boolean(nextCollections?.crops?.[cropId]?.discovered);
       if (!wasDiscovered && isDiscovered) {
+        const cropSeason = CROP_DATA[cropId]?.season || 'spring';
+        const currentIdentity = getIdentityState();
+        const nextSeasonDiscoveries = {
+          ...currentIdentity.counters?.seasonCropDiscoveries,
+          [cropSeason]: (currentIdentity.counters?.seasonCropDiscoveries?.[cropSeason] || 0) + 1,
+        };
+        updateIdentity({
+          counters: {
+            ...currentIdentity.counters,
+            seasonCropDiscoveries: nextSeasonDiscoveries,
+          },
+        });
         dispatch({
           type: GAME_ACTIONS.ADD_NOTIFICATION,
           payload: {
@@ -1008,6 +1162,18 @@ export function GameProvider({ children }) {
             type: 'success',
           },
         });
+        if (nextSeasonDiscoveries[cropSeason] === SEASONAL_CROP_TOTALS[cropSeason]) {
+          addMemoryEntry({
+            id: `season-complete-${cropSeason}`,
+            type: MEMORY_TYPES.COLLECTION,
+            title: `Seasonal harvest journal: ${cropSeason}`,
+            season: cropSeason,
+            dayCount: stateRef.current?.season?.dayCount || 1,
+            text: `Every ${cropSeason} crop has been discovered. The scrapbook is glowing with color.`,
+            stats: buildMemorySnapshot(),
+          });
+          applyMoodDelta(2, 'Season discovery complete');
+        }
       }
       newlyUnlocked.forEach((milestone) => {
         const rewardLabel = milestone.reward?.description ? ` ${milestone.reward.description}` : '';
@@ -1037,6 +1203,44 @@ export function GameProvider({ children }) {
       });
       trace('compost_grant', { amount: total, hasCompostBin });
       return total;
+    };
+    const recordIdentityHarvest = (cropId, amount = 1) => {
+      const safeAmount = Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 1;
+      const crop = CROP_DATA[cropId];
+      if (!crop) return;
+      const season = crop.season || stateRef.current?.season?.current || 'spring';
+      const currentIdentity = getIdentityState();
+      const nextSeasonalHarvests = {
+        ...currentIdentity.counters?.seasonalHarvests,
+        [season]: (currentIdentity.counters?.seasonalHarvests?.[season] || 0) + safeAmount,
+      };
+      updateIdentity({
+        counters: {
+          ...currentIdentity.counters,
+          seasonalHarvests: nextSeasonalHarvests,
+        },
+      });
+
+      if (season === 'winter' && nextSeasonalHarvests.winter === safeAmount) {
+        addMemoryEntry({
+          id: 'first-winter-harvest',
+          type: MEMORY_TYPES.SEASON,
+          title: 'First winter harvest',
+          season: 'winter',
+          dayCount: stateRef.current?.season?.dayCount || 1,
+          text: 'A frosty harvest brought a gentle warmth to the farmhouse.',
+          stats: buildMemorySnapshot(),
+        });
+        applyMoodDelta(2, 'Winter harvest');
+      }
+
+      if (stateRef.current?.market?.dailyMood?.id === 'festival') {
+        applyMoodDelta(1, 'Festival harvest');
+      }
+
+      if (stateRef.current?.weather === 'rainy') {
+        applyMoodDelta(1, 'Rainy harvest');
+      }
     };
     const grantReputation = (amount = 0, source = 'general') => {
       const safeAmount = Number.isFinite(amount) ? Math.max(0, amount) : 0;
@@ -1190,6 +1394,28 @@ export function GameProvider({ children }) {
       currentSystems.weatherSystem?.onDayAdvance?.(dayInfo, currentState);
       currentSystems.economicSystem?.onDayAdvance?.(dayInfo, currentState);
       applyDayAdvanceBuildingEffects();
+      if (currentState?.market?.dailyMood?.id === 'festival') {
+        const currentIdentity = getIdentityState();
+        const nextFestivalDays = (currentIdentity.counters?.festivalDays || 0) + 1;
+        updateIdentity({
+          counters: {
+            ...currentIdentity.counters,
+            festivalDays: nextFestivalDays,
+          },
+        });
+        if (nextFestivalDays === 1) {
+          addMemoryEntry({
+            id: 'first-festival-day',
+            type: MEMORY_TYPES.FESTIVAL,
+            title: 'First festival day',
+            season: currentState?.season?.current || 'spring',
+            dayCount: currentState?.season?.dayCount || 1,
+            text: 'A gentle festival buzzed through town, and the farm felt the glow.',
+            stats: buildMemorySnapshot(),
+          });
+        }
+        applyMoodDelta(1, 'Festival day');
+      }
       trace('day_advance', {
         dayCount: dayInfo?.dayCount,
         dayInSeason: dayInfo?.dayInSeason,
@@ -1270,7 +1496,22 @@ export function GameProvider({ children }) {
       updateActiveEvents: (events) => dispatch({ type: GAME_ACTIONS.UPDATE_ACTIVE_EVENTS, payload: events }),
       setDailyChallenges: (challenges) => dispatch({ type: GAME_ACTIONS.SET_DAILY_CHALLENGES, payload: challenges }),
       updateChallengeProgress: (progress) => dispatch({ type: GAME_ACTIONS.UPDATE_CHALLENGE_PROGRESS, payload: progress }),
-      updateDailyQuests: (dailyQuests) => dispatch({ type: GAME_ACTIONS.UPDATE_DAILY_QUESTS, payload: dailyQuests }),
+      updateDailyQuests: (dailyQuests) => {
+        dispatch({ type: GAME_ACTIONS.UPDATE_DAILY_QUESTS, payload: dailyQuests });
+        const quests = dailyQuests?.quests || [];
+        const allClaimed = quests.length > 0 && quests.every((quest) => quest.claimed);
+        if (!allClaimed) return;
+        const currentIdentity = getIdentityState();
+        const currentDay = stateRef.current?.season?.dayCount || 1;
+        if (currentIdentity.counters?.lastPlanCompletionDay === currentDay) return;
+        updateIdentity({
+          counters: {
+            ...currentIdentity.counters,
+            lastPlanCompletionDay: currentDay,
+          },
+        });
+        applyMoodDelta(2, 'Completed today’s plan');
+      },
       updateWeeklyContracts: (weeklyContracts) => dispatch({ type: GAME_ACTIONS.UPDATE_WEEKLY_CONTRACTS, payload: weeklyContracts }),
       updateDailyQuestProgress: updateContractProgress,
       updateContractProgress,
@@ -1295,7 +1536,9 @@ export function GameProvider({ children }) {
           grantReputation(repGain, 'harvest');
         }
         grantCompostFromHarvest(amount);
+        recordIdentityHarvest(cropId, amount);
       },
+      recordIdentityHarvest: (cropId, amount = 1) => recordIdentityHarvest(cropId, amount),
       awardCompost: (amount = 1) => grantCompostFromHarvest(amount),
       convertCompostToFertilizer: (amount = 3) => {
         const currentState = stateRef.current;
@@ -1357,7 +1600,47 @@ export function GameProvider({ children }) {
       setDecorateTool: (tool) => dispatch({ type: GAME_ACTIONS.SET_DECORATE_TOOL, payload: tool }),
       setSelectedDecoration: (decorationId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_DECORATION, payload: decorationId }),
       setMovingDecorationId: (decorationId) => dispatch({ type: GAME_ACTIONS.SET_MOVING_DECORATION, payload: decorationId }),
-      updateDecorations: (decorations) => dispatch({ type: GAME_ACTIONS.UPDATE_DECORATIONS, payload: decorations }),
+      updateDecorations: (decorations) => {
+        const currentDecorations = Array.isArray(stateRef.current?.decorations)
+          ? stateRef.current.decorations
+          : [];
+        const nextDecorations = Array.isArray(decorations) ? decorations : [];
+        const added = Math.max(0, nextDecorations.length - currentDecorations.length);
+        if (added > 0) {
+          const currentIdentity = getIdentityState();
+          const totalPlaced = (currentIdentity.counters?.decorationsPlacedTotal || 0) + added;
+          updateIdentity({
+            counters: {
+              ...currentIdentity.counters,
+              decorationsPlacedTotal: totalPlaced,
+            },
+          });
+          applyMoodDelta(Math.min(3, added), 'Decoration placed');
+          if (totalPlaced === 10) {
+            addMemoryEntry({
+              id: 'decorations-10',
+              type: MEMORY_TYPES.DECOR,
+              title: 'Cozy corners take shape',
+              season: stateRef.current?.season?.current || 'spring',
+              dayCount: stateRef.current?.season?.dayCount || 1,
+              text: 'Ten decorations now dot the farm — each one a little story.',
+              stats: buildMemorySnapshot(),
+            });
+          }
+          if (totalPlaced === 25) {
+            addMemoryEntry({
+              id: 'decorations-25',
+              type: MEMORY_TYPES.DECOR,
+              title: 'A farm with personality',
+              season: stateRef.current?.season?.current || 'spring',
+              dayCount: stateRef.current?.season?.dayCount || 1,
+              text: 'Your cozy details are everywhere, and visitors notice.',
+              stats: buildMemorySnapshot(),
+            });
+          }
+        }
+        dispatch({ type: GAME_ACTIONS.UPDATE_DECORATIONS, payload: nextDecorations });
+      },
       setPlaceBuildingMode: (enabled) => dispatch({ type: GAME_ACTIONS.SET_PLACE_BUILDING_MODE, payload: enabled }),
       setSelectedBuildingPlacement: (buildingId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_BUILDING_PLACEMENT, payload: buildingId }),
       updateBuildingPlacements: (placements) => dispatch({ type: GAME_ACTIONS.UPDATE_BUILDING_PLACEMENTS, payload: placements }),
@@ -1366,6 +1649,8 @@ export function GameProvider({ children }) {
       setFarmName: (name) => dispatch({ type: GAME_ACTIONS.SET_FARM_NAME, payload: name }),
       setTheme: (theme) => dispatch({ type: GAME_ACTIONS.SET_THEME, payload: theme }),
       setPhotoMode: (enabled) => dispatch({ type: GAME_ACTIONS.SET_PHOTO_MODE, payload: enabled }),
+      updateIdentity: (identity) => dispatch({ type: GAME_ACTIONS.UPDATE_IDENTITY, payload: identity }),
+      setPhilosophy: (philosophyId) => dispatch({ type: GAME_ACTIONS.SET_PHILOSOPHY, payload: philosophyId }),
       pushUndo: (undoEntry) => dispatch({ type: GAME_ACTIONS.PUSH_UNDO, payload: undoEntry }),
       popUndo: () => dispatch({ type: GAME_ACTIONS.POP_UNDO }),
 
@@ -1441,9 +1726,13 @@ export function GameProvider({ children }) {
         if (currentSystems.farmingSystem?.plantCrop) {
           currentSystems.farmingSystem.update(stateRef.current);
           trace('plant_crop', { plotIndex, cropType });
-          return currentSystems.farmingSystem.plantCrop(plotIndex, cropData, {
+          const planted = currentSystems.farmingSystem.plantCrop(plotIndex, cropData, {
             greenhouseBoost: hasGreenhouseBoost,
           });
+          if (planted && cropData?.season === stateRef.current?.season?.current) {
+            applyMoodDelta(1, 'Seasonal planting');
+          }
+          return planted;
         }
         // Fallback
         const updatedPlots = [...stateRef.current.plots];
@@ -1460,6 +1749,9 @@ export function GameProvider({ children }) {
 
         dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
         trace('plant_crop_fallback', { plotIndex, cropType });
+        if (cropData?.season === stateRef.current?.season?.current) {
+          applyMoodDelta(1, 'Seasonal planting');
+        }
         return true;
       },
 
@@ -1733,6 +2025,9 @@ export function GameProvider({ children }) {
         Object.entries(inventoryUpdates).forEach(([cropId, amount]) => {
           const cropName = currentState.plots.find(plot => plot?.crop?.id === cropId)?.crop?.name;
           updatedCollections = applyCollectionProgress(updatedCollections, cropId, cropName, amount);
+        });
+        Object.entries(inventoryUpdates).forEach(([cropId, amount]) => {
+          recordIdentityHarvest(cropId, amount);
         });
 
         const harvestedCount = Object.values(inventoryUpdates).reduce((sum, count) => sum + count, 0);

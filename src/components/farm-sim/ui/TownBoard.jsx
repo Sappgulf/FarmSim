@@ -8,6 +8,7 @@ import {
   COZY_WEATHER_LABELS,
   getCozyWeatherType
 } from '../constants/cozyWeather';
+import { getMoodTier } from '../constants/identityData';
 
 const buildDailyHint = ({ season, cozyWeather }) => {
   if (cozyWeather === 'rain') return 'Rain keeps plots watered — a relaxing planting day.';
@@ -48,6 +49,9 @@ const TownBoard = memo(() => {
   const hint = useMemo(() => buildDailyHint({ season, cozyWeather }), [season, cozyWeather]);
   const dailyPlan = state.dailyPlan?.items || [];
   const dailyPlanDay = state.dailyPlan?.dayCount;
+  const moodScore = state.identity?.moodScore ?? 45;
+  const moodTier = getMoodTier(moodScore);
+  const moodProgress = Math.min(100, Math.max(0, Math.round(moodScore)));
 
   useEffect(() => {
     if (repBarRef.current) {
@@ -87,6 +91,9 @@ const TownBoard = memo(() => {
               <h2 className="text-lg font-bold text-indigo-900 mb-1">Today's Focus</h2>
               <p className="text-sm text-indigo-700 leading-relaxed max-w-md">
                 {hint}
+              </p>
+              <p className="text-xs text-indigo-600 mt-2">
+                The farm feels {moodTier.label.toLowerCase()} — {moodTier.description}
               </p>
             </div>
             <div className="hidden sm:block text-4xl opacity-80">
@@ -143,7 +150,7 @@ const TownBoard = memo(() => {
       </Card>
 
       {/* Town Status Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Town Rep Card */}
         <Card className="p-4 border-l-4 border-l-emerald-500">
           <div className="flex justify-between items-start mb-2">
@@ -194,6 +201,38 @@ const TownBoard = memo(() => {
               <span className="font-medium text-gray-900">{featuredCrop.emoji} {featuredCrop.name}</span>
             </div>
           )}
+        </Card>
+
+        {/* Farm Mood Card */}
+        <Card
+          className="p-4 border-l-4"
+          style={{ borderLeftColor: 'var(--mood-accent)' }}
+          title="Mood rises from decorations, seasonal planting, rain/festival harvests, and completing today’s plan."
+        >
+          <div className="flex justify-between items-start mb-2">
+            <div className="text-sm font-bold text-gray-500 uppercase tracking-wide">Farm Mood</div>
+            <div
+              className="text-xs font-medium px-2 py-0.5 rounded"
+              style={{ color: 'var(--mood-accent)', backgroundColor: 'var(--mood-glow)' }}
+            >
+              {moodTier.label}
+            </div>
+          </div>
+
+          <div className="flex items-baseline gap-2 mb-2">
+            <span className="text-2xl font-bold text-gray-900">{moodProgress}</span>
+            <span className="text-sm text-gray-600 font-medium">Mood Score</span>
+          </div>
+
+          <div className="w-full bg-gray-100 rounded-full h-2 mb-1 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${moodProgress}%`, backgroundColor: 'var(--mood-accent)' }}
+            />
+          </div>
+          <div className="text-xs text-gray-500">
+            Cozy actions lift the mood. No penalties, just vibes.
+          </div>
         </Card>
       </div>
 

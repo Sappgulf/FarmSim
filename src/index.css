@@ -12,6 +12,9 @@
   --theme-accent: #3b82f6;
   --theme-bg-from: #f0fdf4;
   --theme-bg-to: #eff6ff;
+  --mood-accent: #93c5fd;
+  --mood-glow: rgba(147, 197, 253, 0.25);
+  --mood-intensity: 0.8;
 }
 
 [data-theme="spring"] {
@@ -57,6 +60,14 @@
 
 .theme-border {
   border-color: var(--theme-primary);
+}
+
+.mood-accent {
+  color: var(--mood-accent);
+}
+
+.mood-glow {
+  box-shadow: 0 0 0 2px var(--mood-glow);
 }
 
 /* ========================================

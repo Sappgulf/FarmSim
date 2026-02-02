@@ -12,6 +12,7 @@ import { getDiseaseById } from '../constants/diseaseData';
 import { DECORATION_LOOKUP } from '../constants/decorationData';
 import { PLACEABLE_BUILDING_LOOKUP, getPlacementKey } from '../constants/placeableBuildingData';
 import { getCozyWeatherType } from '../constants/cozyWeather';
+import { getMoodIntensity } from '../constants/identityData';
 import { traceAction } from '../services/DebugTraceService';
 import CozyWorldOverlays from './CozyWorldOverlays';
 
@@ -491,6 +492,10 @@ const FarmGrid = memo(() => {
   const cozyWeather = getCozyWeatherType(state.weather);
   const timeOfDay = useTimeOfDay(state.season?.dayStartTime, state.season?.dayLengthMs);
   const reducedEffects = Boolean(state.settings?.reducedMotion);
+  const moodIntensity = useMemo(
+    () => getMoodIntensity(state.identity?.moodScore ?? 45),
+    [state.identity?.moodScore]
+  );
 
   const stateRef = useRef(state);
   const actionsRef = useRef(actions);
@@ -997,6 +1002,7 @@ const FarmGrid = memo(() => {
       [crop.id]: (currentState.inventory[crop.id] || 0) + 1
     };
     currentActions.updateInventory(updatedInventory);
+    currentActions.recordIdentityHarvest?.(crop.id, 1);
     currentActions.awardCompost?.(1);
 
     // Reset plot
@@ -1082,6 +1088,7 @@ const FarmGrid = memo(() => {
         weather={state.weather}
         timeOfDay={timeOfDay}
         reducedEffects={reducedEffects}
+        moodIntensity={moodIntensity}
       />
       <div className="mb-4 text-center relative z-20">
         <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-2">

@@ -13,7 +13,7 @@ const buildAmbientItems = (count, label) => (
   }))
 );
 
-const CozyWorldOverlays = memo(({ season, weather, timeOfDay, reducedEffects }) => {
+const CozyWorldOverlays = memo(({ season, weather, timeOfDay, reducedEffects, moodIntensity = 1 }) => {
   const cozyWeather = getCozyWeatherType(weather);
   const [isVisible, setIsVisible] = useState(() => {
     if (typeof document === 'undefined') return true;
@@ -50,7 +50,10 @@ const CozyWorldOverlays = memo(({ season, weather, timeOfDay, reducedEffects }) 
       />
 
       {!reducedEffects && ambientItems.length > 0 && (
-        <div className={`cozy-ambient-life ${isVisible ? '' : 'is-paused'} season-${season}`}>
+        <div
+          className={`cozy-ambient-life ${isVisible ? '' : 'is-paused'} season-${season}`}
+          style={{ opacity: Math.min(1, Math.max(0.35, moodIntensity)) }}
+        >
           {ambientItems.map((item) => (
             <div
               key={item.id}
@@ -71,7 +74,7 @@ const CozyWorldOverlays = memo(({ season, weather, timeOfDay, reducedEffects }) 
         </div>
       )}
 
-      <WeatherEffects weather={weather} intensity={reducedEffects ? 0.35 : 0.8} />
+      <WeatherEffects weather={weather} intensity={(reducedEffects ? 0.35 : 0.8) * (Number.isFinite(moodIntensity) ? moodIntensity : 1)} />
     </div>
   );
 });

@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-02-16
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** audit identity-related systems/docs and add Farm Mood, Scrapbook Memories, and Farm Philosophy without per-tick logic.
+  - **Why:** establish the cozy identity layer while keeping event-driven performance guarantees.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** added identity state (mood, memories, philosophy), event-driven mood/memory hooks, Town Board + Status Bar mood UI, Scrapbook section in Collections, and Philosophy selection in Settings; updated docs and save migration to v9.
+  - **Why:** deliver the foundational cozy identity layer without duplicating existing systems.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## 2026-02-15
 
 - **Planned**

@@ -95,6 +95,10 @@ export const GAME_ACTIONS = {
     // Save/Load
     LOAD_GAME: 'LOAD_GAME',
 
+    // Identity layer
+    UPDATE_IDENTITY: 'UPDATE_IDENTITY',
+    SET_PHILOSOPHY: 'SET_PHILOSOPHY',
+
     // Calendar & Cozy Cadence
     UPDATE_CALENDAR: 'UPDATE_CALENDAR',
     UPDATE_FESTIVAL: 'UPDATE_FESTIVAL',

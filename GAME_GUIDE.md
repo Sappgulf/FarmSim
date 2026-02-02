@@ -134,6 +134,25 @@ Grow a thriving farm by planting crops, harvesting for profit, and investing in 
   - **Cozy Midnight** (indigo/slate)
 - Themes change UI colors instantly and persist across sessions.
 
+## Farm Mood (Cozy Identity v2)
+- **Farm Mood** is a gentle vibe meter (0–100) that reflects cozy actions.
+- **Positive-only**: Mood never punishes you and only shifts on events (harvests, decorations, day rollovers).
+- **Mood tiers**: Calm → Cozy → Thriving.
+- **Effects**: Subtle UI accents and ambient intensity; purely cosmetic.
+- Check your current mood on the Town Board and Cozy Status Bar.
+
+## Farm Scrapbook (Memories)
+- The **Scrapbook** captures milestone moments like seasonal firsts, décor milestones, and reputation tiers.
+- Each memory stores the season/day and a tiny snapshot of your farm stats.
+- Find the scrapbook in **Collections** with filters for season and memory type.
+
+## Farm Philosophy
+- Choose a guiding style in **Settings → Farm Philosophy**:
+  - **Nature First**: Highlights seasonal/weather guidance.
+  - **Market Maven**: Emphasizes market tips and town standing.
+  - **Slow Living**: Adds cozy, reflective flavor to plans and memories.
+- Philosophy affects Town Board suggestions and flavor text, not power.
+
 ## Photo Mode
 - Click the **Photo** button (bottom-right) to enter Photo Mode.
 - All UI hides, leaving only your farm centered on screen.
