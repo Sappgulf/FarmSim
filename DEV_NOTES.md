@@ -18,6 +18,7 @@
 | **FishingSystem** | Implemented | Fishing minigame mechanics, fish catching. | Independent state. |
 | **DiseaseSystem** | Implemented | Crop diseases spread/cure. | Ticks every update. |
 | **DisasterSystem** | Implemented | Random events (storm, drought, pests). | Low probability checks. |
+| **Identity Layer** | Implemented | Farm Mood, Scrapbook Memories, Philosophy. | Event-driven only; no per-tick checks. |
 | **RotationEngine** | **INACTIVE** | Deterministic shop rotation RNG (Cosmetics). | **ORPHAN**: Unused. |
 | **Sound/Music** | Implemented | Audio management. | Event-driven + state changes. |
 
@@ -61,3 +62,10 @@
 - **Time System**: `SeasonSystem` is dominant (UI dependency). `CalendarSystem` will be effectively muted (update loop disabled) to prevent conflicts, while preserving its helper utility methods if needed.
 - **Debug Tools**: Use existing `Dev*` components. Do not create new files. Enhance `DevStressPanel`.
 
+## Identity Layer
+- **State Location**: `state.identity` in `GameContext` + save schema via `GamePersistence`.
+- **Mood**: `moodScore` (0–100), derived `moodTier`, `moodContributors` log. Event-driven deltas only.
+- **Memories**: `memories[]` capped to 100 entries; idempotent insertions; stored with season/day + stat snapshot.
+- **Philosophy**: `identity.philosophy` (Nature First, Market Maven, Slow Living) influences Town Board plan wording + ordering.
+- **Counters**: `identity.counters` tracks decoration totals, seasonal harvests, festival days, and seasonal crop discovery totals.
+- **Key Files**: `src/components/farm-sim/constants/identityData.js`, `src/components/farm-sim/context/GameContext.jsx`, `src/components/farm-sim/context/GamePersistence.js`, `src/components/farm-sim/ui/TownBoard.jsx`, `src/components/farm-sim/ui/CozyStatusBar.jsx`, `src/components/farm-sim/ui/tabs/CollectionsTab.jsx`, `src/components/farm-sim/ui/tabs/settings/FarmIdentitySettings.jsx`.

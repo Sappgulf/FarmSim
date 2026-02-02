@@ -9,8 +9,9 @@ import { createDefaultMarketState } from '../constants/marketData';
 import { DECORATION_LOOKUP } from '../constants/decorationData';
 import { PLACEABLE_BUILDING_LOOKUP } from '../constants/placeableBuildingData';
 import { buildDailyPlan } from '../constants/townPlan';
+import { DEFAULT_PHILOSOPHY, getMoodTier, MEMORY_CAP } from '../constants/identityData';
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 // Available theme palettes
 export const THEME_PALETTES = {
@@ -284,6 +285,28 @@ export function migrateSaveData(savedData) {
             migratedData.undoStack = [];
         }
 
+        // Version 8 → 9: Add identity layer (mood, memories, philosophy)
+        if (saveVersion < 9) {
+            if (import.meta.env.MODE === 'development') {
+                console.debug('[farm]', 'Migrating save from version 8 to 9 (identity layer)');
+            }
+            migratedData.identity = {
+                moodScore: 45,
+                moodTier: getMoodTier(45).id,
+                moodContributors: [],
+                philosophy: DEFAULT_PHILOSOPHY,
+                memories: [],
+                counters: {
+                    decorationsPlacedTotal: 0,
+                    festivalDays: 0,
+                    seasonalHarvests: { spring: 0, summer: 0, fall: 0, winter: 0 },
+                    seasonCropDiscoveries: { spring: 0, summer: 0, fall: 0, winter: 0 },
+                    repTierUnlocks: [],
+                    lastPlanCompletionDay: null,
+                },
+            };
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, 0);
         migratedData.xp = clampNumber(migratedData.xp, 0, 0);
@@ -431,6 +454,64 @@ export function migrateSaveData(savedData) {
         migratedData.undoStack = Array.isArray(migratedData.undoStack)
             ? migratedData.undoStack.slice(-10)
             : [];
+
+        const defaultIdentity = {
+            moodScore: 45,
+            moodTier: getMoodTier(45).id,
+            moodContributors: [],
+            philosophy: DEFAULT_PHILOSOPHY,
+            memories: [],
+            counters: {
+                decorationsPlacedTotal: 0,
+                festivalDays: 0,
+                seasonalHarvests: { spring: 0, summer: 0, fall: 0, winter: 0 },
+                seasonCropDiscoveries: { spring: 0, summer: 0, fall: 0, winter: 0 },
+                repTierUnlocks: [],
+                lastPlanCompletionDay: null,
+            },
+        };
+        const identity = migratedData.identity && typeof migratedData.identity === 'object'
+            ? migratedData.identity
+            : {};
+        const counters = identity.counters && typeof identity.counters === 'object'
+            ? identity.counters
+            : {};
+        const moodScore = clampNumber(identity.moodScore, defaultIdentity.moodScore, 0, 100);
+        migratedData.identity = {
+            ...defaultIdentity,
+            ...identity,
+            moodScore,
+            moodTier: getMoodTier(moodScore).id,
+            philosophy: typeof identity.philosophy === 'string' ? identity.philosophy : DEFAULT_PHILOSOPHY,
+            moodContributors: Array.isArray(identity.moodContributors)
+                ? identity.moodContributors.slice(-20)
+                : [],
+            memories: Array.isArray(identity.memories)
+                ? identity.memories.slice(0, MEMORY_CAP)
+                : [],
+            counters: {
+                ...defaultIdentity.counters,
+                ...counters,
+                decorationsPlacedTotal: clampNumber(counters.decorationsPlacedTotal, 0, 0),
+                festivalDays: clampNumber(counters.festivalDays, 0, 0),
+                seasonalHarvests: {
+                    spring: clampNumber(counters.seasonalHarvests?.spring, 0, 0),
+                    summer: clampNumber(counters.seasonalHarvests?.summer, 0, 0),
+                    fall: clampNumber(counters.seasonalHarvests?.fall, 0, 0),
+                    winter: clampNumber(counters.seasonalHarvests?.winter, 0, 0),
+                },
+                seasonCropDiscoveries: {
+                    spring: clampNumber(counters.seasonCropDiscoveries?.spring, 0, 0),
+                    summer: clampNumber(counters.seasonCropDiscoveries?.summer, 0, 0),
+                    fall: clampNumber(counters.seasonCropDiscoveries?.fall, 0, 0),
+                    winter: clampNumber(counters.seasonCropDiscoveries?.winter, 0, 0),
+                },
+                repTierUnlocks: Array.isArray(counters.repTierUnlocks) ? counters.repTierUnlocks : [],
+                lastPlanCompletionDay: Number.isFinite(counters.lastPlanCompletionDay)
+                    ? counters.lastPlanCompletionDay
+                    : null,
+            },
+        };
 
         migratedData.saveVersion = SAVE_VERSION;
         return migratedData;

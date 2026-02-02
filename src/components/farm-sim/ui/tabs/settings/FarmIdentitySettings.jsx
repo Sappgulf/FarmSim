@@ -2,6 +2,7 @@ import React, { memo, useState, useCallback } from 'react';
 import { Card } from '../../../../ui/card';
 import { Button } from '../../../../ui/button';
 import { THEME_PALETTES } from '../../../context/GamePersistence';
+import { DEFAULT_PHILOSOPHY, getPhilosophyById, PHILOSOPHIES } from '../../../constants/identityData';
 
 export const FarmIdentitySettings = memo(({
     state,
@@ -39,7 +40,17 @@ export const FarmIdentitySettings = memo(({
         });
     }, [actions]);
 
+    const handlePhilosophyChange = useCallback((philosophyId) => {
+        actions.setPhilosophy(philosophyId);
+        const philosophy = getPhilosophyById(philosophyId);
+        actions.addNotification({
+            message: `Philosophy set to ${philosophy.name}`,
+            type: 'success',
+        });
+    }, [actions]);
+
     const currentTheme = THEME_PALETTES[state.theme] || THEME_PALETTES.default;
+    const currentPhilosophy = getPhilosophyById(state.identity?.philosophy || DEFAULT_PHILOSOPHY);
 
     return (
         <>
@@ -123,6 +134,36 @@ export const FarmIdentitySettings = memo(({
                             </div>
                             {state.theme === theme.id && (
                                 <div className="text-xs text-purple-600 mt-1">Active</div>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </Card>
+
+            <Card className="p-4 bg-gradient-to-r from-sky-50 to-indigo-50">
+                <h4 className="font-semibold mb-3">🧭 Farm Philosophy</h4>
+                <p className="text-sm text-gray-600 mb-3">
+                    Pick a guiding style for today’s plan and scrapbook tone. You can change this anytime.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {PHILOSOPHIES.map((philosophy) => (
+                        <button
+                            key={philosophy.id}
+                            type="button"
+                            onClick={() => handlePhilosophyChange(philosophy.id)}
+                            className={`p-3 rounded-lg border-2 text-left transition-all ${
+                                currentPhilosophy.id === philosophy.id
+                                    ? 'border-indigo-500 bg-indigo-50 shadow-md'
+                                    : 'border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-25'
+                            }`}
+                        >
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-lg">{philosophy.emoji}</span>
+                                <span className="font-medium text-sm">{philosophy.name}</span>
+                            </div>
+                            <div className="text-xs text-gray-600">{philosophy.description}</div>
+                            {currentPhilosophy.id === philosophy.id && (
+                                <div className="text-xs text-indigo-600 mt-2">Active</div>
                             )}
                         </button>
                     ))}

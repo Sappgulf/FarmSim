@@ -2,6 +2,7 @@ import React, { memo, useEffect, useMemo, useRef } from 'react';
 import { useGame } from '../context/GameContext';
 import { CROP_DATA } from '../constants/cropData';
 import { getNextTownTier, getTownTierByRep } from '../constants/townData';
+import { getMoodTier } from '../constants/identityData';
 
 const CozyStatusBar = memo(() => {
   const { state } = useGame();
@@ -34,6 +35,8 @@ const CozyStatusBar = memo(() => {
   const repProgress = nextTier
     ? Math.min(100, ((state.social?.reputation - currentTier.minRep) / (nextTier.minRep - currentTier.minRep)) * 100)
     : 100;
+  const moodScore = state.identity?.moodScore ?? 45;
+  const moodTier = getMoodTier(moodScore);
 
   const collectionSummary = useMemo(() => {
     const crops = Object.values(CROP_DATA);
@@ -48,6 +51,7 @@ const CozyStatusBar = memo(() => {
     rep: useRef(null),
     repBar: useRef(null),
     collection: useRef(null),
+    mood: useRef(null),
   };
   const lastValues = useRef({});
 
@@ -58,6 +62,7 @@ const CozyStatusBar = memo(() => {
       ['weather', `${cozyWeather.emoji} ${cozyWeather.label}`],
       ['rep', `${state.social?.reputation || 0} Rep`],
       ['collection', `${collectionSummary.discovered}/${collectionSummary.total}`],
+      ['mood', `${moodTier.label} ${Math.round(moodScore)}`],
     ];
 
     updates.forEach(([key, value]) => {
@@ -82,6 +87,8 @@ const CozyStatusBar = memo(() => {
     state.social?.reputation,
     repProgress,
     collectionSummary,
+    moodScore,
+    moodTier.label,
   ]);
 
   return (
@@ -117,6 +124,16 @@ const CozyStatusBar = memo(() => {
             <span ref={refs.repBar} className="block h-full rounded-full bg-amber-400" style={{ width: `${repProgress}%` }} />
           </div>
           <span className="text-[10px] text-amber-700">{currentTier.name}</span>
+        </div>
+
+        <div className="flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-2 py-1">
+          <span className="text-sm">💛</span>
+          <div className="flex flex-col">
+            <span className="text-[10px] text-sky-700">Farm Mood</span>
+            <span ref={refs.mood} className="font-semibold text-sky-900">
+              {moodTier.label} {Math.round(moodScore)}
+            </span>
+          </div>
         </div>
 
         <button

@@ -1,6 +1,7 @@
 import { GAME_ACTIONS } from './GameActions';
 import { SAVE_VERSION, initializePlots } from './GamePersistence';
 import { createDefaultCropCollections } from '../constants/collectionData';
+import { DEFAULT_PHILOSOPHY, getMoodTier } from '../constants/identityData';
 import { DEFAULT_DAY_LENGTH_MS, DEFAULT_DAYS_PER_SEASON } from '../systems/SeasonSystem';
 import { getLevelFromXp, getXpForLevel, MAX_LEVEL_GAIN_PER_GRANT } from '../constants/progression';
 
@@ -133,6 +134,22 @@ export const initialState = {
     },
     activeFestival: null,
     ownedCosmetics: [],
+
+    identity: {
+        moodScore: 45,
+        moodTier: getMoodTier(45).id,
+        moodContributors: [],
+        philosophy: DEFAULT_PHILOSOPHY,
+        memories: [],
+        counters: {
+            decorationsPlacedTotal: 0,
+            festivalDays: 0,
+            seasonalHarvests: { spring: 0, summer: 0, fall: 0, winter: 0 },
+            seasonCropDiscoveries: { spring: 0, summer: 0, fall: 0, winter: 0 },
+            repTierUnlocks: [],
+            lastPlanCompletionDay: null,
+        },
+    },
 
     // Performance state
     gameLoop: {
@@ -387,6 +404,23 @@ export function gameReducer(state, action) {
                         ?? Date.now(),
                 },
                 notifications: [],
+            };
+
+        case GAME_ACTIONS.UPDATE_IDENTITY:
+            return {
+                ...state,
+                identity: typeof action.payload === 'function'
+                    ? action.payload(state.identity)
+                    : { ...state.identity, ...action.payload },
+            };
+
+        case GAME_ACTIONS.SET_PHILOSOPHY:
+            return {
+                ...state,
+                identity: {
+                    ...state.identity,
+                    philosophy: action.payload || DEFAULT_PHILOSOPHY,
+                },
             };
 
         // Calendar & Cozy Cadence

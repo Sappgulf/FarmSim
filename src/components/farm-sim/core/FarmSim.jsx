@@ -9,6 +9,7 @@ import GameSidebar from '../ui/GameSidebar';
 import NavBar, { NAV_SECTIONS } from '../ui/NavBar';
 import NotificationSystem from '../ui/NotificationSystem';
 import TownBoard from '../ui/TownBoard';
+import { getMoodIntensity, getMoodTier } from '../constants/identityData';
 
 import DevDebugOverlay from '../ui/DevDebugOverlay';
 import { ParticleEffectsManager } from '../ui/ParticleEffect';
@@ -357,11 +358,17 @@ function FarmSimCore() {
     }
   }, [actions, state.photoMode]);
 
-  // Apply theme to document root
+  // Apply theme + mood to document root
   useEffect(() => {
     const theme = state.theme || 'default';
     document.documentElement.setAttribute('data-theme', theme);
-  }, [state.theme]);
+    const moodScore = state.identity?.moodScore ?? 45;
+    const moodTier = getMoodTier(moodScore);
+    const moodIntensity = getMoodIntensity(moodScore);
+    document.documentElement.style.setProperty('--mood-accent', moodTier.accent);
+    document.documentElement.style.setProperty('--mood-glow', moodTier.glow);
+    document.documentElement.style.setProperty('--mood-intensity', moodIntensity.toFixed(2));
+  }, [state.theme, state.identity?.moodScore]);
 
   // Get season colors for theming
   const seasonColors = state.season?.config?.colors || {
