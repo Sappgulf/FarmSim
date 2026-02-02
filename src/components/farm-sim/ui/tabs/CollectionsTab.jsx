@@ -20,6 +20,33 @@ const CollectionsTab = memo(() => {
   const discoveredCount = crops.filter(crop => collections.crops?.[crop.id]?.discovered).length;
   const completionPercent = Math.round((discoveredCount / crops.length) * 100);
   const totalHarvested = collections.totals?.harvested || 0;
+  const nextMilestone = useMemo(() => {
+    let best = null;
+
+    crops.forEach((crop) => {
+      const entry = collections.crops?.[crop.id];
+      if (!entry) return;
+
+      const next = CROP_COLLECTION_MILESTONES.find((milestone) => !entry.milestones?.[milestone.id]);
+      if (!next) return;
+
+      const harvested = entry.harvested || 0;
+      const remaining = next.target - harvested;
+      if (remaining <= 0) return;
+
+      if (!best || remaining < best.remaining || (remaining === best.remaining && crop.level < best.crop.level)) {
+        best = {
+          crop,
+          milestone: next,
+          harvested,
+          remaining,
+          discovered: entry.discovered,
+        };
+      }
+    });
+
+    return best;
+  }, [collections, crops]);
 
   return (
     <div className="space-y-4">
@@ -53,9 +80,29 @@ const CollectionsTab = memo(() => {
         </Card>
         <Card className="p-4 border-emerald-100">
           <div className="text-xs uppercase font-semibold text-emerald-700">Next Milestone</div>
-          <div className="text-sm text-emerald-900 mt-1">
-            Keep harvesting to unlock more cozy notes and town praise!
-          </div>
+          {nextMilestone ? (
+            <div className="mt-2 space-y-2">
+              <div>
+                <div className="text-sm font-semibold text-emerald-900">
+                  {(nextMilestone.discovered && nextMilestone.crop.name) || 'Unknown Crop'} · {nextMilestone.milestone.label}
+                </div>
+                <div className="text-xs text-emerald-600">
+                  {Math.min(nextMilestone.harvested, nextMilestone.milestone.target)}/{nextMilestone.milestone.target} harvested
+                </div>
+              </div>
+              <Progress
+                value={Math.min(100, (nextMilestone.harvested / nextMilestone.milestone.target) * 100)}
+                className="h-2 bg-emerald-100"
+              />
+              <div className="text-[11px] text-emerald-600">
+                {getCollectionRewardLabel(nextMilestone.milestone.id)}
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-emerald-900 mt-1">
+              All crop milestones completed. Enjoy the town’s admiration!
+            </div>
+          )}
         </Card>
       </div>
 
