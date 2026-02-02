@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-02-15
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** polish the Collections tab milestone callout to surface the next harvest goal and reward.
+  - **Why:** keep collection progress readable and reduce guesswork about what to chase next.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** added a dynamic next-milestone callout in the Collections tab with crop-aware progress and reward details.
+  - **Why:** give players a clear next goal and reward without opening each crop card.
+  - **Verification:** `npm run lint` (warned: Unknown env config "http-proxy").
+
 ## 2026-01-31 Sprint C: Balance + Liveliness
 
 - **Implemented**
