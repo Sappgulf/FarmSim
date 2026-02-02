@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-02-02
+
+- **Planned**
+  - **Scope:** frontend
+  - **What:** run a full polish and bug-check pass across core gameplay systems and UI tabs; fix any issues found.
+  - **Why:** user requested a completeness and stability sweep to ensure all features feel finished.
+  - **Verification:** `npm run smoke-test` (warned: Unknown env config "http-proxy"; ReactDOMTestUtils.act deprecation warning).
+
+- **Implemented**
+  - **Scope:** frontend
+  - **What:** fixed Processing tab handling for “any crop” facilities by selecting valid crop inventory, improved input messaging, and corrected processing progress display.
+  - **Why:** ensure preservation facilities actually accept crops and progress bars reflect elapsed processing time.
+  - **Verification:** `npm run smoke-test -- --run` (warned: Unknown env config "http-proxy"; ReactDOMTestUtils.act deprecation warning).
+
 ## 2026-02-16
 
 - **Planned**

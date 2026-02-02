@@ -8,6 +8,7 @@ import { Progress } from '../../../ui/progress';
 
 // Processing facilities from original system
 import { PROCESSING_FACILITIES } from '../../constants/processingData';
+import { CROP_DATA } from '../../constants/cropData';
 
 const ProcessingTab = memo(() => {
   const { state, actions } = useGame();
@@ -17,6 +18,16 @@ const ProcessingTab = memo(() => {
   const processingQueue = state.processingQueue || [];
   const processingFacilities = state.processingFacilities || [];
   const processedInventory = state.processedInventory || {};
+
+  const getAvailableAnyCrop = (ratio) => {
+    const candidates = Object.keys(CROP_DATA)
+      .map(id => ({ id, quantity: state.inventory[id] || 0 }))
+      .filter(item => item.quantity >= ratio);
+
+    if (candidates.length === 0) return null;
+
+    return candidates.sort((a, b) => b.quantity - a.quantity)[0].id;
+  };
 
   // Process completed items (centralized tick)
   useEffect(() => {
@@ -117,31 +128,34 @@ const ProcessingTab = memo(() => {
       return;
     }
 
-    // Check if we have enough input materials
-    const inputCount = state.inventory[facility.input] || 0;
-    if (inputCount < facility.ratio) {
+    const inputId = facility.input === 'any'
+      ? getAvailableAnyCrop(facility.ratio)
+      : facility.input;
+
+    if (!inputId) {
       actions.addNotification({
-        message: `Not enough ${facility.input}! Need ${facility.ratio}`,
+        message: `Not enough crops! Need ${facility.ratio} of any crop.`,
         type: 'error'
       });
       return;
     }
 
     // Consume input materials
+    const inputCount = state.inventory[inputId] || 0;
     actions.updateInventory({
       ...state.inventory,
-      [facility.input]: inputCount - facility.ratio
+      [inputId]: inputCount - facility.ratio
     });
 
     // Calculate output quantity
-    const outputQuantity = Math.floor(facility.ratio / (facility.input === 'any' ? 1 : facility.ratio));
+    const outputQuantity = 1;
 
     // Start processing
     const finishTime = Date.now() + (facility.time * 1000);
     const processingItem = {
       id: Date.now(),
       facilityId: facilityId,
-      input: facility.input,
+      input: inputId,
       output: facility.output,
       quantity: outputQuantity,
       startTime: Date.now(),
@@ -163,7 +177,7 @@ const ProcessingTab = memo(() => {
     actions.updateProcessingQueue([...processingQueue, processingItem]);
 
     actions.addNotification({
-      message: `Started processing ${facility.output.replace('_', ' ')} in ${facility.name}`,
+      message: `Started processing ${facility.output.replace('_', ' ')} (using ${inputId.replace('_', ' ')}) in ${facility.name}`,
       type: 'info'
     });
   };
@@ -265,6 +279,7 @@ const ProcessingTab = memo(() => {
         <div className="grid grid-cols-1 gap-3">
           {Object.entries(PROCESSING_FACILITIES).map(([id, facility]) => {
             const owned = state.processingFacilities.some(f => f.id === id);
+            const inputLabel = facility.input === 'any' ? 'Any crop' : facility.input;
 
             return (
               <Card key={id} className={`p-3 ${owned ? 'bg-green-50 border-green-200' : 'bg-white'}`}>
@@ -280,7 +295,7 @@ const ProcessingTab = memo(() => {
                 <p className="text-sm text-gray-600 mb-2">{facility.description}</p>
 
                 <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
-                  <span>Input: {facility.input}</span>
+                  <span>Input: {inputLabel}</span>
                   <span>Output: {facility.output.replace('_', ' ')}</span>
                   <span>Ratio: {facility.ratio}:1</span>
                 </div>
@@ -314,6 +329,12 @@ const ProcessingTab = memo(() => {
             {state.processingFacilities.map(facility => {
               const status = getFacilityStatus(facility);
               const facilityData = PROCESSING_FACILITIES[facility.id];
+              const hasAnyInput = facilityData.input === 'any'
+                ? Boolean(getAvailableAnyCrop(facilityData.ratio))
+                : (state.inventory[facilityData.input] || 0) >= facilityData.ratio;
+              const inputLabel = facilityData.input === 'any'
+                ? 'any crop'
+                : facilityData.input;
 
               return (
                 <Card key={facility.id} className={`p-3 ${status.bgColor}`}>
@@ -335,7 +356,13 @@ const ProcessingTab = memo(() => {
                         <span>{getTimeLeft(facility.finishTime)}</span>
                       </div>
                       <Progress
-                        value={((facility.finishTime - Date.now()) / (facilityData.time * 1000)) * 100}
+                        value={Math.min(
+                          100,
+                          Math.max(
+                            0,
+                            ((facilityData.time * 1000 - Math.max(0, facility.finishTime - Date.now())) / (facilityData.time * 1000)) * 100
+                          )
+                        )}
                         className="h-2"
                       />
                     </div>
@@ -345,11 +372,11 @@ const ProcessingTab = memo(() => {
                     <Button
                       onClick={() => startProcessing(facility.id)}
                       size="sm"
-                      disabled={!state.inventory[facilityData.input] || (state.inventory[facilityData.input] || 0) < facilityData.ratio}
+                      disabled={!hasAnyInput}
                       className="w-full"
                     >
-                      {(!state.inventory[facilityData.input] || (state.inventory[facilityData.input] || 0) < facilityData.ratio)
-                        ? `Need ${facilityData.ratio} ${facilityData.input}`
+                      {!hasAnyInput
+                        ? `Need ${facilityData.ratio} ${inputLabel}`
                         : 'Start Processing'
                       }
                     </Button>
