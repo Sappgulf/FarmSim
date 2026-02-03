@@ -4,6 +4,12 @@
 **Project:** FarmLife v5.0.0  
 **Status:** Triple-A Polish Release ✅
 
+## [2.1.1] - 2026-02-03
+
+### Added
+- Mode selector to access both Cozy Sim (Path B) and Full FarmSim
+- Lazy-loaded game modes to keep initial load lean
+
 ## [2.1.0] - 2026-02-03
 
 ### Identity Loop v1
