@@ -172,7 +172,7 @@ export class FarmingSystem {
     const HARVEST_WINDOW = 45000; // 45 seconds to harvest after ready
 
     const updatedPlots = this.gameState.plots.map(plot => {
-      if (plot.state === 'empty' || plot.state === 'withered') return plot;
+      if (plot.state === 'empty' || plot.state === 'withered' || plot.state === 'decor') return plot;
 
       // Check water level - growing crops wither if no water
       if ((plot.waterLevel || 0) <= 0 && (plot.state === 'growing' || plot.state === 'planted')) {

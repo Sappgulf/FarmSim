@@ -5,6 +5,7 @@
 ## Method
 - Static/code inspection of all FarmSim tabs and core screens.
 - Debug-only tooling audited (`?debug=1`) for crash capture and stress actions.
+- Cozy Expansion Pack v1 checks: decor placement/undo wiring, scrapbook panel rendering, and festival additions reviewed in code.
 - No browser runtime validation executed in this environment.
 
 ## Tab-by-Tab Sweep
@@ -46,4 +47,6 @@
 - Hardened save/load normalization and added plot index guards to prevent off-by-one crashes.
 
 ## Manual/Automated Tests
-- Not run (no runtime/browser access in this pass). Use the stress panel to run the suite twice when a browser session is available.
+- ✅ `npm run smoke-test -- --run`
+- ✅ `npm run build` (warned about outdated browserslist data)
+- Manual follow-up recommended in browser: decor placement + undo, scrapbook open, and festival completion flows.

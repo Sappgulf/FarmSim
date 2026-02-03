@@ -72,3 +72,19 @@
 
 ## Duplicates / Legacy Notes
 - Legacy non-FarmSim UI (e.g. `src/components/FarmGame.jsx`, `src/components/game/*`, `src/components/panels/*`) appears unused by current entry point (`src/main.jsx`). Keep for now to avoid save/schema breakage.
+
+## Cozy Expansion Pack v1 — Additions vs Extensions
+
+### Added (New, Data-Only Content)
+- New crops added to crop catalog (parsnip, okra, cranberry). (`src/components/farm-sim/constants/cropData.js`)
+- New decoration catalog + helpers for seasonal, lighting, and path/fence variants. (`src/components/farm-sim/constants/decorData.js`)
+
+### Extended (Existing Systems)
+- Shop: added daily rotating decor picks with owned counts. (`src/components/farm-sim/ui/tabs/ShopTab.jsx`)
+- Events: added two seasonal festivals and memory triggers on completion. (`src/components/farm-sim/ui/tabs/EventsTab.jsx`)
+- Achievements tab: now hosts Scrapbook panel from legacy identity UI for unified access. (`src/components/farm-sim/ui/tabs/AchievementsTab.jsx`, `src/components/panels/ScrapbookPanel.jsx`)
+- Game state: memory flags/counters and decor placement state persisted safely. (`src/components/farm-sim/context/GameReducer.js`, `src/components/farm-sim/context/GamePersistence.js`)
+- Farm grid: decor placement mode, repeat placement toggle, and 5-step undo. (`src/components/farm-sim/ui/FarmGrid.jsx`)
+
+### Polished (Feedback / Audio / Accessibility)
+- Added audio ducking for music during sound effects. (`src/components/farm-sim/systems/SoundSystem.js`, `src/components/farm-sim/systems/MusicSystem.js`)

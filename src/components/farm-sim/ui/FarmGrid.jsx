@@ -1,10 +1,11 @@
-import React, { memo, useCallback, useState } from 'react';
+import React, { memo, useCallback, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { useTick } from '../context/TickContext';
 import { Card } from '../../ui/card';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { CROP_DATA } from '../constants/cropData';
+import { DECORATION_DATA } from '../constants/decorData';
 
 const ReadyCountdown = memo(({ readyAt, harvestWindowMs = 45000 }) => {
   useTick();
@@ -29,7 +30,20 @@ const ReadyCountdown = memo(({ readyAt, harvestWindowMs = 45000 }) => {
 ReadyCountdown.displayName = 'ReadyCountdown';
 
 // Enhanced plot component with tooltips and animations
-const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0 }) => {
+const FarmPlot = memo(({
+  plot,
+  index,
+  onPlotClick,
+  onPlant,
+  onHarvest,
+  onDecorate,
+  isSelected,
+  onToggleSelect,
+  selectedCrop,
+  selectedDecoration,
+  isDecorMode,
+  seasonBonus = 1.0
+}) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -41,6 +55,18 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
         borderColor: 'border-amber-300',
         text: 'Empty',
         hoverEffect: 'hover:bg-amber-100 hover:border-amber-400 hover:scale-105'
+      };
+    }
+
+    if (plot.state === 'decor') {
+      const decoration = DECORATION_DATA[plot.decorationId];
+      return {
+        emoji: decoration?.emoji || '🪴',
+        bgColor: 'bg-rose-50',
+        borderColor: 'border-rose-300',
+        text: decoration?.name || 'Decoration',
+        subText: 'Click to remove',
+        hoverEffect: 'hover:bg-rose-100 hover:scale-105'
       };
     }
 
@@ -115,7 +141,15 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
   const handleClick = useCallback((e) => {
     if (e.shiftKey) {
       onToggleSelect(index);
-    } else if (plot?.state === 'ready') {
+      return;
+    }
+
+    if (isDecorMode && (plot?.state === 'empty' || plot?.state === 'decor')) {
+      onDecorate(index);
+      return;
+    }
+
+    if (plot?.state === 'ready') {
       onHarvest(index);
     } else if (plot?.state === 'withered') {
       // Clear withered crop
@@ -127,7 +161,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
     } else {
       onPlotClick(index);
     }
-  }, [plot, index, onPlotClick, onPlant, onHarvest, onToggleSelect]);
+  }, [plot, index, onPlotClick, onPlant, onHarvest, onToggleSelect, onDecorate, isDecorMode]);
 
   return (
     <div className="relative">
@@ -142,12 +176,13 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
           ${plot?.fertilizer > 0 ? 'ring-2 ring-green-400 ring-opacity-50' : ''}
           ${isSelected ? 'ring-4 ring-blue-500 ring-opacity-70 scale-105' : ''}
           ${showPreview && plot?.state === 'empty' ? 'ring-4 ring-emerald-400 ring-opacity-70' : ''}
+          ${plot?.state === 'decor' ? 'shadow-inner' : ''}
           touch-manipulation select-none
         `}
         onClick={handleClick}
         onMouseEnter={() => {
           setShowTooltip(true);
-          if (plot?.state === 'empty' && selectedCrop) {
+          if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
             setShowPreview(true);
           }
         }}
@@ -157,7 +192,7 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
         }}
         onTouchStart={() => {
           setShowTooltip(true);
-          if (plot?.state === 'empty' && selectedCrop) {
+          if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
             setShowPreview(true);
           }
         }}
@@ -189,14 +224,14 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
             {display.emoji}
           </div>
 
-          {/* Planting preview */}
-          {showPreview && plot?.state === 'empty' && selectedCrop && (
+          {/* Planting/Decor preview */}
+          {showPreview && plot?.state === 'empty' && (selectedCrop || selectedDecoration) && (
             <div className="absolute inset-0 flex items-center justify-center animate-pulse z-20">
               <div className="text-3xl sm:text-4xl opacity-70">
-                {selectedCrop.emoji}
+                {selectedDecoration?.emoji || selectedCrop?.emoji}
               </div>
               <div className="absolute bottom-1 left-0 right-0 text-center text-[8px] sm:text-[10px] font-bold text-emerald-700">
-                Click to plant
+                {isDecorMode ? 'Click to decorate' : 'Click to plant'}
               </div>
             </div>
           )}
@@ -296,10 +331,16 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
                 </div>
               </>
             )}
+            {plot.state === 'decor' && plot.decorationId && (
+              <div className="text-rose-200">
+                <div className="font-semibold">Decor</div>
+                <div className="mt-1 text-xs">Tap to remove or swap.</div>
+              </div>
+            )}
             {plot.state === 'empty' && (
               <div className="text-gray-400">
                 <div>🌱 Fertility: {Math.round((plot.soilFertility || 1.0) * 100)}%</div>
-                <div className="mt-1 text-xs">Click to plant!</div>
+                <div className="mt-1 text-xs">Click to plant or decorate.</div>
               </div>
             )}
             {plot.state === 'withered' && (
@@ -324,6 +365,47 @@ const FarmGrid = memo(() => {
   const { state, actions } = useGame();
   const seasonBonus = state.season?.config?.bonuses?.growthSpeed || 1.0;
   const [selectedPlots, setSelectedPlots] = useState(new Set());
+  const [decorUndoCount, setDecorUndoCount] = useState(0);
+  const [repeatDecorPlacement, setRepeatDecorPlacement] = useState(true);
+  const decorUndoStack = useRef([]);
+  const animationsEnabled = state.settings?.animationsEnabled !== false;
+  const decorMode = state.decorateMode;
+  const selectedDecoration = state.selectedDecoration ? DECORATION_DATA[state.selectedDecoration] : null;
+
+  const pushDecorUndo = useCallback((entry) => {
+    decorUndoStack.current = [entry, ...decorUndoStack.current].slice(0, 5);
+    setDecorUndoCount(decorUndoStack.current.length);
+  }, []);
+
+  const handleDecorUndo = useCallback(() => {
+    const [last, ...rest] = decorUndoStack.current;
+    if (!last) return;
+    decorUndoStack.current = rest;
+    setDecorUndoCount(rest.length);
+
+    actions.updatePlots((currentState) => {
+      const plotsArray = Array.isArray(currentState.plots) ? currentState.plots : [];
+      const updatedPlots = [...plotsArray];
+      updatedPlots[last.index] = last.previousPlot;
+      return updatedPlots;
+    });
+
+    actions.updateInventory((inventory) => {
+      const nextInventory = { ...(inventory || {}) };
+      if (last.type === 'place') {
+        nextInventory[last.decorationId] = (nextInventory[last.decorationId] || 0) + 1;
+      }
+      if (last.type === 'remove') {
+        nextInventory[last.decorationId] = Math.max(0, (nextInventory[last.decorationId] || 0) - 1);
+      }
+      return nextInventory;
+    });
+
+    actions.addNotification({
+      message: '↩️ Undid last decoration change.',
+      type: 'info'
+    });
+  }, [actions]);
 
   const handlePlotClick = useCallback((index, action) => {
     // Handle clearing withered crops
@@ -384,6 +466,14 @@ const FarmGrid = memo(() => {
       actions.spendMoney(selectedCrop.cost);
       actions.plantCrop(index, selectedCrop.id, selectedCrop);
 
+      if (animationsEnabled && typeof window.triggerParticleEffect === 'function') {
+        const plotElement = document.querySelector(`.farm-grid > div:nth-child(${index + 1})`);
+        if (plotElement) {
+          const rect = plotElement.getBoundingClientRect();
+          window.triggerParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, 'plant');
+        }
+      }
+
       // Play plant sound
       if (typeof window.soundSystem !== 'undefined') {
         window.soundSystem.playPlantSound();
@@ -399,7 +489,83 @@ const FarmGrid = memo(() => {
         type: 'error'
       });
     }
-  }, [actions, state.coins, state.selectedCrop]);
+  }, [actions, animationsEnabled, state.coins, state.selectedCrop]);
+
+  const handleDecorate = useCallback((index) => {
+    const plotsArray = Array.isArray(state.plots) ? state.plots : [];
+    const plot = plotsArray[index];
+    if (!plot) return;
+
+    if (plot.state === 'decor') {
+      const decorationId = plot.decorationId;
+      const removed = actions.removeDecoration(index);
+      if (removed) {
+        pushDecorUndo({
+          type: 'remove',
+          index,
+          decorationId,
+          previousPlot: plot,
+        });
+
+        actions.addNotification({
+          message: '🧹 Decoration removed.',
+          type: 'info'
+        });
+      }
+      return;
+    }
+
+    if (!selectedDecoration) {
+      actions.addNotification({
+        message: 'Select a decoration from your inventory first.',
+        type: 'warning'
+      });
+      return;
+    }
+
+    if (plot.state !== 'empty') {
+      actions.addNotification({
+        message: 'Only empty plots can be decorated.',
+        type: 'warning'
+      });
+      return;
+    }
+
+    const placed = actions.placeDecoration(index, selectedDecoration.id);
+    if (!placed) {
+      actions.addNotification({
+        message: 'Not enough decor items. Visit the shop to restock!',
+        type: 'error'
+      });
+      return;
+    }
+
+    pushDecorUndo({
+      type: 'place',
+      index,
+      decorationId: selectedDecoration.id,
+      previousPlot: plot,
+    });
+
+    if (animationsEnabled && typeof window.triggerParticleEffect === 'function') {
+      const plotElement = document.querySelector(`.farm-grid > div:nth-child(${index + 1})`);
+      if (plotElement) {
+        const rect = plotElement.getBoundingClientRect();
+        window.triggerParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, 'plant', {
+          text: selectedDecoration.emoji,
+        });
+      }
+    }
+
+    actions.addNotification({
+      message: `Placed ${selectedDecoration.emoji} ${selectedDecoration.name}!`,
+      type: 'success'
+    });
+
+    if (!repeatDecorPlacement) {
+      actions.setSelectedDecoration(null);
+    }
+  }, [actions, animationsEnabled, pushDecorUndo, repeatDecorPlacement, selectedDecoration, state.plots]);
 
   const handleHarvest = useCallback((index) => {
     const plotsArray = Array.isArray(state.plots) ? state.plots : [];
@@ -413,7 +579,7 @@ const FarmGrid = memo(() => {
     const earnings = Math.floor(baseValue * 1.2);
 
     // Trigger particle effect with earnings text
-    if (typeof window.triggerParticleEffect === 'function') {
+    if (animationsEnabled && typeof window.triggerParticleEffect === 'function') {
       // Get plot position
       const plotElement = document.querySelector(`.farm-grid > div:nth-child(${index + 1})`);
       if (plotElement) {
@@ -450,12 +616,13 @@ const FarmGrid = memo(() => {
 
     // Reset plot
     actions.harvestCrop(index, earnings);
+    actions.recordMemoryEvent('crop_harvested', { cropId: crop.id });
 
     actions.addNotification({
       message: `Harvested ${crop.emoji} ${crop.name}! +${earnings}🪙`,
       type: 'success'
     });
-  }, [actions, state.plots]);
+  }, [actions, animationsEnabled, state.plots]);
 
   // Bulk actions
   const handleBulkHarvest = useCallback(() => {
@@ -499,6 +666,13 @@ const FarmGrid = memo(() => {
         });
         return nextInventory;
       });
+
+      if (inventoryUpdates.parsnip) {
+        actions.recordMemoryEvent('crop_harvested', { cropId: 'parsnip' });
+      }
+      if (inventoryUpdates.cranberry) {
+        actions.recordMemoryEvent('crop_harvested', { cropId: 'cranberry' });
+      }
 
       if (typeof window.soundSystem !== 'undefined') {
         window.soundSystem.playHarvestSound();
@@ -547,6 +721,44 @@ const FarmGrid = memo(() => {
         <p className="text-gray-500 text-sm font-medium">
           {gridSize}×{gridSize} grid • <span className="text-emerald-600">{plots.filter(p => p.state !== 'empty').length}</span> plots in use
         </p>
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+          <Button
+            size="sm"
+            variant={decorMode ? 'default' : 'outline'}
+            onClick={() => actions.setDecorationMode(!decorMode)}
+            className="min-h-[40px]"
+          >
+            {decorMode ? '🪴 Decor Mode On' : '🪴 Decor Mode'}
+          </Button>
+          {decorMode && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDecorUndo}
+                disabled={decorUndoCount === 0}
+                className="min-h-[40px]"
+              >
+                ↩️ Undo {decorUndoCount > 0 ? `(${decorUndoCount})` : ''}
+              </Button>
+              <Button
+                size="sm"
+                variant={repeatDecorPlacement ? 'default' : 'outline'}
+                onClick={() => setRepeatDecorPlacement((prev) => !prev)}
+                className="min-h-[40px]"
+              >
+                {repeatDecorPlacement ? '🔁 Repeat On' : '🔁 Repeat Off'}
+              </Button>
+            </>
+          )}
+        </div>
+        {decorMode && (
+          <p className="mt-2 text-xs text-rose-600 font-semibold">
+            {selectedDecoration
+              ? `Selected decor: ${selectedDecoration.emoji} ${selectedDecoration.name}`
+              : 'Select a decoration from Inventory to place.'}
+          </p>
+        )}
       </div>
 
       {/* Bulk Action Controls - Mobile optimized */}
@@ -604,9 +816,12 @@ const FarmGrid = memo(() => {
             onPlotClick={handlePlotClick}
             onPlant={handlePlant}
             onHarvest={handleHarvest}
+            onDecorate={handleDecorate}
             isSelected={selectedPlots.has(index)}
             onToggleSelect={handleToggleSelect}
             selectedCrop={CROP_DATA[state.selectedCrop]}
+            selectedDecoration={selectedDecoration}
+            isDecorMode={decorMode}
             seasonBonus={seasonBonus}
           />
         ))}

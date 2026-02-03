@@ -17,6 +17,8 @@ export const initializePlots = (gridSize) => {
         id: index,
         state: 'empty',
         crop: null,
+        decorationId: null,
+        decorationPlacedAt: null,
         growthStage: 0,
         plantedAt: null,
         waterLevel: 100,
@@ -45,17 +47,20 @@ const ensureObject = (value, fallback = {}) => (
 const normalizePlots = (plots, gridSize) => {
     const defaults = initializePlots(gridSize);
     if (!Array.isArray(plots)) return defaults;
-    const allowedStates = new Set(['empty', 'planted', 'growing', 'ready', 'withered']);
+    const allowedStates = new Set(['empty', 'planted', 'growing', 'ready', 'withered', 'decor']);
     return defaults.map((fallbackPlot, index) => {
         const plot = plots[index];
         if (!plot || typeof plot !== 'object') return fallbackPlot;
         const state = allowedStates.has(plot.state) ? plot.state : fallbackPlot.state;
+        const decorationId = typeof plot.decorationId === 'string' ? plot.decorationId : null;
         return {
             ...fallbackPlot,
             ...plot,
             id: index,
             state,
             crop: plot.crop && typeof plot.crop === 'object' ? plot.crop : null,
+            decorationId: state === 'decor' ? decorationId : null,
+            decorationPlacedAt: clampNumber(plot.decorationPlacedAt, null, { min: 0 }),
             growthStage: clampNumber(plot.growthStage, fallbackPlot.growthStage, { min: 0 }),
             waterLevel: clampNumber(plot.waterLevel, fallbackPlot.waterLevel, { min: 0, max: 100 }),
             fertilizer: clampNumber(plot.fertilizer, fallbackPlot.fertilizer, { min: 0 }),
@@ -129,6 +134,11 @@ export function migrateSaveData(savedData) {
         migratedData.inventory = ensureObject(migratedData.inventory, {});
         migratedData.buildings = ensureObject(migratedData.buildings, {});
         migratedData.achievements = Array.isArray(migratedData.achievements) ? migratedData.achievements : [];
+        migratedData.memoryFlags = ensureObject(migratedData.memoryFlags, {});
+        migratedData.memoryCounters = ensureObject(migratedData.memoryCounters, {
+            decorationsPlaced: 0,
+            festivalsAttended: 0,
+        });
         migratedData.seasonalEvents = Array.isArray(migratedData.seasonalEvents) ? migratedData.seasonalEvents : [];
         migratedData.activeSeasonalEvents = Array.isArray(migratedData.activeSeasonalEvents) ? migratedData.activeSeasonalEvents : [];
         migratedData.dailyChallenges = Array.isArray(migratedData.dailyChallenges) ? migratedData.dailyChallenges : [];
@@ -158,6 +168,11 @@ export function migrateSaveData(savedData) {
             animationsEnabled: ensureBoolean(migratedData.settings?.animationsEnabled, true),
             showFPS: ensureBoolean(migratedData.settings?.showFPS, false),
         };
+
+        migratedData.selectedDecoration = typeof migratedData.selectedDecoration === 'string'
+            ? migratedData.selectedDecoration
+            : null;
+        migratedData.decorateMode = ensureBoolean(migratedData.decorateMode, false);
 
         migratedData.gameLoop = {
             lastUpdate: clampNumber(migratedData.gameLoop?.lastUpdate, Date.now(), { min: 0 }),

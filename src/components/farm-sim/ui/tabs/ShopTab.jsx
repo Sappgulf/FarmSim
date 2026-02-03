@@ -1,10 +1,25 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
+import { Badge } from '../../../ui/badge';
+import { DECORATION_DATA } from '../../constants/decorData';
 
 const ShopTab = memo(() => {
   const { state, actions } = useGame();
+  const decorationList = useMemo(() => Object.values(DECORATION_DATA), []);
+
+  const decorRotation = useMemo(() => {
+    if (decorationList.length === 0) return [];
+    const rotationKey = new Date().toDateString();
+    const seed = rotationKey.split('').reduce((total, char) => total + char.charCodeAt(0), 0);
+    const startIndex = seed % decorationList.length;
+    const rotated = [
+      ...decorationList.slice(startIndex),
+      ...decorationList.slice(0, startIndex),
+    ];
+    return rotated.slice(0, 4);
+  }, [decorationList]);
 
   const shopItems = {
     supplies: [
@@ -21,7 +36,8 @@ const ShopTab = memo(() => {
       { id: 'soil_analyzer', name: 'Soil Analyzer', emoji: '🔬', cost: 150, description: 'Shows soil fertility levels', effect: 'Visibility' },
       { id: 'greenhouse', name: 'Mini Greenhouse', emoji: '🏡', cost: 300, description: 'Weather-proof single plot', effect: 'Weather immunity' },
       { id: 'compost_bin', name: 'Compost Bin', emoji: '🗑️', cost: 75, description: 'Restore soil fertility faster', effect: '+50% fertility' },
-    ]
+    ],
+    decor: decorRotation,
   };
 
   const handlePurchase = (item) => {
@@ -35,6 +51,10 @@ const ShopTab = memo(() => {
         message: `Purchased ${item.emoji} ${item.name}!`,
         type: 'success'
       });
+
+      if (DECORATION_DATA[item.id]) {
+        actions.recordMemoryEvent('shop_decor_purchase');
+      }
     } else {
       actions.addNotification({
         message: `Not enough coins! Need ${item.cost}🪙`,
@@ -83,6 +103,46 @@ const ShopTab = memo(() => {
               </Button>
             </div>
           ))}
+        </div>
+      </Card>
+
+      {/* Decor Rotation */}
+      <Card className="p-4 bg-rose-50 border-rose-100">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-semibold text-rose-700">🪴 Daily Decor Picks</h4>
+          <span className="text-xs text-rose-600">Refreshes daily</span>
+        </div>
+        <div className="space-y-2">
+          {shopItems.decor.map(item => {
+            const ownedCount = state.inventory[item.id] || 0;
+            return (
+              <div key={item.id} className="flex justify-between items-center p-3 bg-white/80 hover:bg-white rounded-lg transition-all">
+                <div className="flex items-center gap-3 flex-1">
+                  <span className="text-2xl">{item.emoji}</span>
+                  <div className="flex-1">
+                    <div className="font-medium">{item.name}</div>
+                    <div className="text-xs text-gray-600">{item.description}</div>
+                    <div className="text-xs text-rose-600 font-medium mt-0.5">
+                      {item.category} • {item.rarity}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <Badge variant="outline" className="text-[10px]">
+                    Owned: {ownedCount}
+                  </Badge>
+                  <Button
+                    onClick={() => handlePurchase(item)}
+                    size="sm"
+                    disabled={state.coins < item.cost}
+                    className="ml-2"
+                  >
+                    {item.cost}🪙
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Card>
 

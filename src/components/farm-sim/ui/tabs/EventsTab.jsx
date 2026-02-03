@@ -27,6 +27,16 @@ const SEASONAL_EVENTS = {
       effects: { flower_bonus: 1.5 },
       rewards: { coins: 75, items: { "decorative_seeds": 2 } },
       rarity: "uncommon"
+    },
+    {
+      id: "seed_swap_social",
+      name: "Seed Swap Social",
+      emoji: "🧺",
+      description: "Neighbors trade tips! Planting XP +50% and growth +10%.",
+      duration: 240,
+      effects: { planting_xp: 1.5, growth_speed: 1.1 },
+      rewards: { coins: 90, items: { "spring_seeds": 2 } },
+      rarity: "common"
     }
   ],
   summer: [
@@ -83,6 +93,16 @@ const SEASONAL_EVENTS = {
       effects: { greenhouse_boost: 2.0, frost_immunity: true },
       rewards: { coins: 175, items: { "winter_seeds": 3 } },
       rarity: "uncommon"
+    },
+    {
+      id: "snow_lantern_market",
+      name: "Snow Lantern Market",
+      emoji: "🏮",
+      description: "Lanterns glow across the farm. Harvests gain a small bonus.",
+      duration: 240,
+      effects: { harvest_bonus: 1.2 },
+      rewards: { coins: 140, items: { "winter_seeds": 2 } },
+      rarity: "rare"
     }
   ]
 };
@@ -160,6 +180,7 @@ const EventsTab = memo(() => {
     };
 
     setEventHistory(prev => [completedEvent, ...prev.slice(0, 9)]); // Keep last 10
+    actions.recordMemoryEvent('festival_attended', { eventId: activeEvent.id });
 
     // Clear active event
     actions.updateActiveEvents([]);

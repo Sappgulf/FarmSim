@@ -5,6 +5,8 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs';
+import { ScrapbookPanel } from '../../../panels/ScrapbookPanel';
+import { MEMORIES, MEMORY_CHAPTERS } from '../../../../data/identity';
 
 // Achievement data from original system
 const ACHIEVEMENTS = [
@@ -333,6 +335,13 @@ const AchievementsTab = memo(() => {
           </div>
         </Card>
       )}
+
+      <ScrapbookPanel
+        chapters={MEMORY_CHAPTERS}
+        memories={MEMORIES}
+        memoryFlags={state.memoryFlags || {}}
+        onOpen={() => actions.recordMemoryEvent('scrapbook_opened')}
+      />
     </div>
   );
 });
