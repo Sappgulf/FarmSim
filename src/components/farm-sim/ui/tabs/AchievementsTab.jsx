@@ -6,7 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs';
 import { ScrapbookPanel } from '../../../panels/ScrapbookPanel';
-import { MEMORIES, MEMORY_CHAPTERS } from '../../../data/identity';
+import { MEMORIES, MEMORY_CHAPTERS } from '../../../../data/identity';
 
 // Achievement data from original system
 const ACHIEVEMENTS = [

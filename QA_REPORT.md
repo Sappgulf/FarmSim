@@ -48,4 +48,5 @@
 
 ## Manual/Automated Tests
 - ✅ `npm run smoke-test -- --run`
+- ✅ `npm run build` (warned about outdated browserslist data)
 - Manual follow-up recommended in browser: decor placement + undo, scrapbook open, and festival completion flows.
