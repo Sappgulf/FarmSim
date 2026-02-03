@@ -61,6 +61,8 @@ const TAB_CONFIGS = [
   { id: 'settings', label: '⚙️ Settings', component: SettingsTab },
 ];
 
+export const TAB_IDS = TAB_CONFIGS.map((tab) => tab.id);
+
 // Game Sidebar Component - Now accepts controlled props
 const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   const { state } = useGame();

@@ -57,7 +57,13 @@ export class FarmingSystem {
     }
 
     // PERF: Early exit if no crops are growing (big win for idle farms)
-    const growingCount = this.gameState.plots.filter(p => p.state === 'planted' || p.state === 'growing').length;
+    let growingCount = 0;
+    for (let i = 0; i < this.gameState.plots.length; i++) {
+      const state = this.gameState.plots[i]?.state;
+      if (state === 'planted' || state === 'growing') {
+        growingCount += 1;
+      }
+    }
     if (growingCount === 0) {
       return; // Nothing to update - skip expensive iteration
     }

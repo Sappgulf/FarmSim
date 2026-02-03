@@ -11,6 +11,7 @@ import NotificationSystem from '../ui/NotificationSystem';
 import { ParticleEffectsManager } from '../ui/ParticleEffect';
 import FPSCounter from '../ui/FPSCounter';
 import PerformanceOverlay from '../ui/PerformanceOverlay';
+import DebugStressPanel from '../ui/DebugStressPanel';
 import Tutorial from '../ui/Tutorial';
 import { logDebugAction } from '../../../utils/debugTools';
 
@@ -451,6 +452,9 @@ function FarmSimCore() {
 
       {/* Performance Overlay (dev, toggle with `) */}
       <PerformanceOverlay />
+
+      {/* Debug Stress Panel (?debug=1) */}
+      <DebugStressPanel />
 
       {/* Onboarding Tutorial (auto-shows for new players) */}
       <Tutorial />

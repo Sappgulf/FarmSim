@@ -7,10 +7,12 @@
 ## [Unreleased] - 2026-02-03
 
 ### Planned
+- Planned: audit repo docs and systems inventory, enforce Quality Lock QA/stability/perf gates, add debug-only crash/stress tooling, and harden save/load validation. Baseline: `npm run smoke-test` (passes with ReactDOMTestUtils act deprecation warning; vitest watch exited manually).
 - Planned: wire Menu Drawer help actions to the in-game help guide and add a lightweight About section; baseline `npm run test` (passes with vitest watch warnings about deprecated ReactDOMTestUtils act and a farm save warning). 
 - Planned: audit FarmSim tabs and core loops, add debug-mode crash capture/perf overlay, fix missing action wiring and daily reset tracking; baseline checks pending. 
 
 ### Implemented
+- Implemented: added debug-only stress panel controls, expanded crash capture overlay with copyable reports and action history, strengthened save/load validation and plot normalization, and added defensive index guards for plot actions. Verification: `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
 - Implemented: wired Menu Drawer help actions to open the Help Guide with targeted categories and added an About category to the guide. Verification: `npm run test -- --run` (passes with ReactDOMTestUtils act warnings and a farm save warning), `npm run build` (passes with browserslist data warning). 
 - Implemented: added debug-mode crash capture/perf overlay, wired missing FarmSim action creators, fixed daily challenge reset bookkeeping, added save backup slot, and paused loops on page hide. Verification: `npm run test -- --run` (passes with ReactDOMTestUtils act warnings and an expected corrupted-save warning). 
 

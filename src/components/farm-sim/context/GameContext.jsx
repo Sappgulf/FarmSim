@@ -259,6 +259,11 @@ export function GameProvider({ children }) {
 
     // Complex Game Logic (Delegated to Systems)
     plantCrop: (plotIndex, cropType, cropData) => {
+      const plots = stateRef.current.plots || [];
+      if (typeof plotIndex !== 'number' || plotIndex < 0 || plotIndex >= plots.length) {
+        logDebugAction('plant_crop_invalid', { plotIndex, cropId: cropData?.id });
+        return false;
+      }
       const currentSystems = systemsRef.current;
       if (currentSystems.farmingSystem?.plantCrop) {
         currentSystems.farmingSystem.update(stateRef.current);
@@ -279,7 +284,11 @@ export function GameProvider({ children }) {
     },
 
     harvestCrop: (plotIndex) => {
-      const plots = [...stateRef.current.plots];
+      const plots = [...(stateRef.current.plots || [])];
+      if (typeof plotIndex !== 'number' || plotIndex < 0 || plotIndex >= plots.length) {
+        logDebugAction('harvest_crop_invalid', { plotIndex });
+        return;
+      }
       const plot = plots[plotIndex];
       logDebugAction('harvest_crop', { plotIndex, cropId: plot?.crop?.id, cropName: plot?.crop?.name });
       plots[plotIndex] = {
@@ -296,6 +305,9 @@ export function GameProvider({ children }) {
     // Bulk actions
     harvestAllReadyCrops: () => {
       const currentState = stateRef.current;
+      if (!Array.isArray(currentState.plots)) {
+        return;
+      }
       const readyPlotsIndexes = currentState.plots
         .map((p, i) => p.state === 'ready' && p.crop ? i : -1)
         .filter(i => i !== -1);
