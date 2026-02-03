@@ -48,6 +48,11 @@ export const initialState = {
 
     // Progression systems
     achievements: [],
+    memoryFlags: {},
+    memoryCounters: {
+        decorationsPlaced: 0,
+        festivalsAttended: 0,
+    },
     seasonalEvents: [],
     activeSeasonalEvents: [],
     dailyChallenges: [],
@@ -84,6 +89,8 @@ export const initialState = {
     // UI state
     notifications: [],
     selectedCrop: 'carrot',
+    selectedDecoration: null,
+    decorateMode: false,
     settings: {
         autoSave: true,
         soundEnabled: true,
@@ -170,6 +177,8 @@ export function gameReducer(state, action) {
                         id: existingPlots.length + index,
                         state: 'empty',
                         crop: null,
+                        decorationId: null,
+                        decorationPlacedAt: null,
                         growthStage: 0,
                         plantedAt: null,
                         waterLevel: 100,
@@ -204,6 +213,18 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_ACHIEVEMENTS:
             return { ...state, achievements: action.payload };
+        
+        case GAME_ACTIONS.UPDATE_MEMORY_FLAGS:
+            const updatedMemoryFlags = typeof action.payload === 'function'
+                ? action.payload(state.memoryFlags)
+                : action.payload;
+            return { ...state, memoryFlags: updatedMemoryFlags };
+
+        case GAME_ACTIONS.UPDATE_MEMORY_COUNTERS:
+            const updatedMemoryCounters = typeof action.payload === 'function'
+                ? action.payload(state.memoryCounters)
+                : action.payload;
+            return { ...state, memoryCounters: updatedMemoryCounters };
 
         case GAME_ACTIONS.SET_SEASONAL_EVENTS:
             return { ...state, seasonalEvents: action.payload };
@@ -269,6 +290,12 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.SET_SELECTED_CROP:
             return { ...state, selectedCrop: action.payload };
+
+        case GAME_ACTIONS.SET_SELECTED_DECORATION:
+            return { ...state, selectedDecoration: action.payload };
+
+        case GAME_ACTIONS.SET_DECORATION_MODE:
+            return { ...state, decorateMode: action.payload };
 
         case GAME_ACTIONS.UPDATE_SETTINGS:
             return { ...state, settings: { ...state.settings, ...action.payload } };

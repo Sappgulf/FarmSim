@@ -47,11 +47,13 @@ export const CROP_RARITY_MAP = {
   lettuce: 'common',
   carrot: 'common',
   potato: 'common',
+  parsnip: 'common',
   wheat: 'common',
   
   // Uncommon (25%) - Level 2 crops
   cabbage: 'uncommon',
   corn: 'uncommon',
+  okra: 'uncommon',
   sunflower: 'uncommon',
   herb: 'uncommon',
   tomato: 'uncommon',
@@ -62,6 +64,7 @@ export const CROP_RARITY_MAP = {
   strawberry: 'rare',
   tulip: 'rare',
   chili: 'rare',
+  cranberry: 'rare',
   pumpkin: 'rare',
   
   // Epic (4%) - Level 4 crops
@@ -210,4 +213,3 @@ export default {
   getRarityDisplay,
   getRarityColor,
 };
-

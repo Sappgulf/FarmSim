@@ -3,6 +3,13 @@ import { GAME_ACTIONS } from './GameActions';
 import { SAVE_VERSION, SAVE_KEY, BACKUP_SAVE_KEY, loadSavedState } from './GamePersistence';
 import { initialState, gameReducer } from './GameReducer';
 import { initDebugTools, logDebugAction } from '../../../utils/debugTools';
+import {
+  DECORATION_DATA,
+  isLightingDecoration,
+  isPathOrFenceDecoration,
+  isSeasonalDecoration,
+} from '../constants/decorData';
+import { MEMORIES } from '../../../data/identity';
 
 /**
  * GameContext - Centralized state management for FarmSim
@@ -40,6 +47,7 @@ export function GameProvider({ children }) {
   useEffect(() => {
     dispatchRef.current = dispatch;
   }, [dispatch]);
+  const actionsRef = useRef(null);
 
   // Debounced auto-save management
   const autoSaveTimeoutRef = useRef(null);
@@ -216,6 +224,10 @@ export function GameProvider({ children }) {
     addNotification: (notification) => dispatch({ type: GAME_ACTIONS.ADD_NOTIFICATION, payload: notification }),
     clearNotification: (id) => dispatch({ type: GAME_ACTIONS.CLEAR_NOTIFICATION, payload: id }),
     setSelectedCrop: (cropId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_CROP, payload: cropId }),
+    setSelectedDecoration: (decorId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_DECORATION, payload: decorId }),
+    setDecorationMode: (enabled) => dispatch({ type: GAME_ACTIONS.SET_DECORATION_MODE, payload: enabled }),
+    updateMemoryFlags: (memoryFlags) => dispatch({ type: GAME_ACTIONS.UPDATE_MEMORY_FLAGS, payload: memoryFlags }),
+    updateMemoryCounters: (memoryCounters) => dispatch({ type: GAME_ACTIONS.UPDATE_MEMORY_COUNTERS, payload: memoryCounters }),
     updateSettings: (settings) => dispatch({ type: GAME_ACTIONS.UPDATE_SETTINGS, payload: settings }),
     updateGameLoop: (data) => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: data }),
     pauseGame: () => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { paused: true } }),
@@ -255,6 +267,164 @@ export function GameProvider({ children }) {
         console.error('[farm] Manual save failed', error);
         return false;
       }
+    },
+
+    unlockMemory: (memoryId) => {
+      const currentFlags = stateRef.current.memoryFlags || {};
+      if (currentFlags[memoryId]) return false;
+
+      const memory = MEMORIES.find((entry) => entry.id === memoryId);
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_MEMORY_FLAGS,
+        payload: {
+          ...currentFlags,
+          [memoryId]: true,
+        },
+      });
+
+      if (memory) {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: {
+            message: `📖 Memory saved: ${memory.title}`,
+            type: 'info',
+          },
+        });
+      }
+
+      logDebugAction('memory_unlocked', { memoryId });
+      return true;
+    },
+
+    recordMemoryEvent: (eventType, eventData = {}) => {
+      const currentState = stateRef.current;
+      const counters = currentState.memoryCounters || {};
+      if (!actionsRef.current) return;
+
+      if (eventType === 'decoration_placed') {
+        const nextCount = (counters.decorationsPlaced || 0) + 1;
+        dispatch({
+          type: GAME_ACTIONS.UPDATE_MEMORY_COUNTERS,
+          payload: { ...counters, decorationsPlaced: nextCount },
+        });
+
+        if (nextCount >= 3) {
+          actionsRef.current.unlockMemory('cozy_cornerstone');
+        }
+
+        const decoration = DECORATION_DATA[eventData.decorationId];
+        if (decoration) {
+          if (isLightingDecoration(decoration)) {
+            actionsRef.current.unlockMemory('lantern_glow');
+          }
+          if (isPathOrFenceDecoration(decoration)) {
+            actionsRef.current.unlockMemory('garden_path');
+          }
+          if (isSeasonalDecoration(decoration)) {
+            actionsRef.current.unlockMemory('seasonal_welcome');
+          }
+        }
+      }
+
+      if (eventType === 'festival_attended') {
+        const nextCount = (counters.festivalsAttended || 0) + 1;
+        dispatch({
+          type: GAME_ACTIONS.UPDATE_MEMORY_COUNTERS,
+          payload: { ...counters, festivalsAttended: nextCount },
+        });
+
+        if (nextCount >= 1) {
+          actionsRef.current.unlockMemory('festival_first');
+        }
+        if (nextCount >= 3) {
+          actionsRef.current.unlockMemory('festival_regular');
+        }
+      }
+
+      if (eventType === 'shop_decor_purchase') {
+        actionsRef.current.unlockMemory('market_trinket');
+      }
+
+      if (eventType === 'scrapbook_opened') {
+        actionsRef.current.unlockMemory('quiet_pages');
+      }
+
+      if (eventType === 'crop_harvested') {
+        if (eventData.cropId === 'parsnip') {
+          actionsRef.current.unlockMemory('parsnip_patch');
+        }
+        if (eventData.cropId === 'cranberry') {
+          actionsRef.current.unlockMemory('cranberry_crate');
+        }
+      }
+    },
+
+    placeDecoration: (plotIndex, decorationId) => {
+      const currentState = stateRef.current;
+      const plots = Array.isArray(currentState.plots) ? currentState.plots : [];
+      const plot = plots[plotIndex];
+      const decoration = DECORATION_DATA[decorationId];
+      if (!plot || !decoration || plot.state !== 'empty') return false;
+
+      const inventoryCount = currentState.inventory?.[decorationId] || 0;
+      if (inventoryCount <= 0) return false;
+
+      const updatedPlots = [...plots];
+      updatedPlots[plotIndex] = {
+        ...plot,
+        state: 'decor',
+        crop: null,
+        decorationId,
+        decorationPlacedAt: Date.now(),
+        plantedAt: null,
+        growthStage: 0,
+        progress: 0,
+      };
+
+      dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_INVENTORY,
+        payload: (inventory) => ({
+          ...inventory,
+          [decorationId]: Math.max(0, (inventory?.[decorationId] || 0) - 1),
+        }),
+      });
+
+      actionsRef.current.recordMemoryEvent('decoration_placed', { decorationId });
+      logDebugAction('decoration_place', { plotIndex, decorationId });
+      return true;
+    },
+
+    removeDecoration: (plotIndex) => {
+      const currentState = stateRef.current;
+      const plots = Array.isArray(currentState.plots) ? currentState.plots : [];
+      const plot = plots[plotIndex];
+      if (!plot || plot.state !== 'decor' || !plot.decorationId) return false;
+
+      const decorationId = plot.decorationId;
+      const updatedPlots = [...plots];
+      updatedPlots[plotIndex] = {
+        ...plot,
+        state: 'empty',
+        decorationId: null,
+        decorationPlacedAt: null,
+        crop: null,
+        plantedAt: null,
+        growthStage: 0,
+        progress: 0,
+      };
+
+      dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_INVENTORY,
+        payload: (inventory) => ({
+          ...inventory,
+          [decorationId]: (inventory?.[decorationId] || 0) + 1,
+        }),
+      });
+
+      logDebugAction('decoration_remove', { plotIndex, decorationId });
+      return true;
     },
 
     // Complex Game Logic (Delegated to Systems)
@@ -342,6 +512,12 @@ export function GameProvider({ children }) {
             return newInv;
           }
         });
+        if (inventoryUpdates.parsnip) {
+          actionsRef.current?.recordMemoryEvent('crop_harvested', { cropId: 'parsnip' });
+        }
+        if (inventoryUpdates.cranberry) {
+          actionsRef.current?.recordMemoryEvent('crop_harvested', { cropId: 'cranberry' });
+        }
       }, 0);
     },
 
@@ -407,6 +583,8 @@ export function GameProvider({ children }) {
       logDebugAction('treat_all_diseases', { count: maxTreatments });
     },
   }), []); // dispatch is stable
+
+  actionsRef.current = actions;
 
   return (
     <GameContext.Provider value={{ state, actions, systems }}>

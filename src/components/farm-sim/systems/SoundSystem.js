@@ -45,9 +45,18 @@ export class SoundSystem {
     this.volume = Math.max(0, Math.min(1, volume));
   }
 
+  duckMusic() {
+    if (typeof window === 'undefined') return;
+    if (window.musicSystem && typeof window.musicSystem.duckForSfx === 'function') {
+      window.musicSystem.duckForSfx();
+    }
+  }
+
   // Create oscillator and gain nodes
   createSound(frequency, type = 'sine', duration = 0.1) {
     if (!this.enabled || !this.audioContext) return;
+
+    this.duckMusic();
     
     // Check if AudioContext is running - don't access currentTime if suspended
     // This prevents browser warnings about AudioContext not being allowed to start
@@ -379,4 +388,3 @@ export const getSoundSystem = () => {
 };
 
 export default SoundSystem;
-

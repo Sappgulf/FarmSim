@@ -7,7 +7,8 @@ export class MusicSystem {
   constructor() {
     this.audioContext = null;
     this.enabled = true;
-    this.volume = 0.15; // Lower volume for background music
+    this.baseVolume = 0.15; // Lower volume for background music
+    this.volume = 0.15;
     this.currentSeason = 'spring';
     this.isPlaying = false;
     this.scheduledNotes = [];
@@ -15,6 +16,8 @@ export class MusicSystem {
     this.scheduleAheadTime = 0.1;
     this.tempo = 120; // BPM
     this.currentNote = 0;
+    this.duckMultiplier = 1;
+    this.duckTimeout = null;
     
     this.initializeAudioContext();
   }
@@ -55,7 +58,21 @@ export class MusicSystem {
   }
 
   setVolume(volume) {
-    this.volume = Math.max(0, Math.min(1, volume));
+    this.baseVolume = Math.max(0, Math.min(1, volume));
+    this.volume = this.baseVolume * this.duckMultiplier;
+  }
+
+  duckForSfx(durationMs = 600, multiplier = 0.5) {
+    this.duckMultiplier = Math.min(this.duckMultiplier, multiplier);
+    this.volume = this.baseVolume * this.duckMultiplier;
+    if (this.duckTimeout) {
+      clearTimeout(this.duckTimeout);
+    }
+    this.duckTimeout = setTimeout(() => {
+      this.duckMultiplier = 1;
+      this.volume = this.baseVolume;
+      this.duckTimeout = null;
+    }, durationMs);
   }
 
   setSeason(season) {
@@ -281,4 +298,3 @@ export const getMusicSystem = () => {
 };
 
 export default MusicSystem;
-
