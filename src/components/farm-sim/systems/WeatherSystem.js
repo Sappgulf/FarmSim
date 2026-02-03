@@ -60,6 +60,9 @@ export class WeatherSystem {
     }
 
     this.actions.setWeather(newWeather);
+    if (this.actions?.recordAlmanacEvent) {
+      this.actions.recordAlmanacEvent('weather_observed', { weather: newWeather });
+    }
 
     // Update weather forecast
     this.updateForecast();

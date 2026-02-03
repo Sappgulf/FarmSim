@@ -29,6 +29,7 @@
 - Events: **PASS** (active events update wired).
 - Processing: **PASS** (queues/facilities/inventory updates wired).
 - Achievements: **PASS** (achievement updates wired).
+- Almanac: **PASS** (sections render, philosophy picker, locked/unlocked states).
 - Social: **PASS** (actions wired; notifications).
 - Analytics: **PASS** (read-only analytics UI).
 - Mystery Shop: **PASS** (inventory updates wired).
@@ -47,6 +48,8 @@
 - Hardened save/load normalization and added plot index guards to prevent off-by-one crashes.
 
 ## Manual/Automated Tests
-- ✅ `npm run smoke-test -- --run`
-- ✅ `npm run build` (warned about outdated browserslist data)
-- Manual follow-up recommended in browser: decor placement + undo, scrapbook open, and festival completion flows.
+- ✅ `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning)
+- Manual follow-up recommended in browser:
+  - Almanac unlocks: season start, rainy harvest, winter harvest, and festival attendance.
+  - Almanac hints toggle in Settings.
+  - Town Board insight rotation.

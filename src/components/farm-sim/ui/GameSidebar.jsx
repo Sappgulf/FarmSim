@@ -21,6 +21,7 @@ const ChallengesTab = lazy(() => import('./tabs/ChallengesTab'));
 const EventsTab = lazy(() => import('./tabs/EventsTab'));
 const ProcessingTab = lazy(() => import('./tabs/ProcessingTab'));
 const AchievementsTab = lazy(() => import('./tabs/AchievementsTab'));
+const AlmanacTab = lazy(() => import('./tabs/AlmanacTab'));
 const SocialTab = lazy(() => import('./tabs/SocialTab'));
 const AnalyticsTab = lazy(() => import('./tabs/AnalyticsTab'));
 const MysteryShopTab = lazy(() => import('./tabs/MysteryShopTab'));
@@ -52,6 +53,7 @@ const TAB_CONFIGS = [
   { id: 'events', label: '🎉 Events', component: EventsTab },
   { id: 'processing', label: '🏭 Processing', component: ProcessingTab },
   { id: 'achievements', label: '🏆 Achievements', component: AchievementsTab },
+  { id: 'almanac', label: '📖 Almanac', component: AlmanacTab },
   { id: 'social', label: '👥 Social', component: SocialTab },
   { id: 'analytics', label: '📊 Analytics', component: AnalyticsTab },
   { id: 'mystery', label: '🎰 Mystery', component: MysteryShopTab },

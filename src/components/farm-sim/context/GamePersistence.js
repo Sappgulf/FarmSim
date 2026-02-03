@@ -2,7 +2,7 @@
  * GamePersistence - Save/Load, Migration, and Initialization logic for FarmSim
  */
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 
@@ -110,6 +110,24 @@ export function migrateSaveData(savedData) {
             }
         }
 
+        // Version 1 → 2: Almanac + philosophy support
+        if (saveVersion < 2) {
+            migratedData.philosophy = typeof migratedData.philosophy === 'string'
+                ? migratedData.philosophy
+                : null;
+            migratedData.almanac = migratedData.almanac || {
+                unlocked: {},
+                dates: {},
+                counters: {
+                    weatherSeen: {},
+                    cropSeasonMask: {},
+                    seasonsSeen: {},
+                    dayCount: 0,
+                },
+                lastDayKey: null,
+            };
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
         migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
@@ -139,6 +157,48 @@ export function migrateSaveData(savedData) {
             decorationsPlaced: 0,
             festivalsAttended: 0,
         });
+        migratedData.philosophy = typeof migratedData.philosophy === 'string'
+            ? migratedData.philosophy
+            : null;
+        migratedData.almanac = ensureObject(migratedData.almanac, {
+            unlocked: {},
+            dates: {},
+            counters: {
+                weatherSeen: {},
+                cropSeasonMask: {},
+                seasonsSeen: {},
+                dayCount: 0,
+            },
+            lastDayKey: null,
+        });
+        migratedData.almanac.unlocked = ensureObject(migratedData.almanac.unlocked, {});
+        migratedData.almanac.dates = ensureObject(migratedData.almanac.dates, {});
+        migratedData.almanac.counters = ensureObject(migratedData.almanac.counters, {
+            weatherSeen: {},
+            cropSeasonMask: {},
+            seasonsSeen: {},
+            dayCount: 0,
+        });
+        migratedData.almanac.counters.weatherSeen = ensureObject(
+            migratedData.almanac.counters.weatherSeen,
+            {}
+        );
+        migratedData.almanac.counters.cropSeasonMask = ensureObject(
+            migratedData.almanac.counters.cropSeasonMask,
+            {}
+        );
+        migratedData.almanac.counters.seasonsSeen = ensureObject(
+            migratedData.almanac.counters.seasonsSeen,
+            {}
+        );
+        migratedData.almanac.counters.dayCount = clampNumber(
+            migratedData.almanac.counters.dayCount,
+            0,
+            { min: 0 }
+        );
+        migratedData.almanac.lastDayKey = typeof migratedData.almanac.lastDayKey === 'string'
+            ? migratedData.almanac.lastDayKey
+            : null;
         migratedData.seasonalEvents = Array.isArray(migratedData.seasonalEvents) ? migratedData.seasonalEvents : [];
         migratedData.activeSeasonalEvents = Array.isArray(migratedData.activeSeasonalEvents) ? migratedData.activeSeasonalEvents : [];
         migratedData.dailyChallenges = Array.isArray(migratedData.dailyChallenges) ? migratedData.dailyChallenges : [];
@@ -167,6 +227,7 @@ export function migrateSaveData(savedData) {
             musicEnabled: ensureBoolean(migratedData.settings?.musicEnabled, true),
             animationsEnabled: ensureBoolean(migratedData.settings?.animationsEnabled, true),
             showFPS: ensureBoolean(migratedData.settings?.showFPS, false),
+            showAlmanacHints: ensureBoolean(migratedData.settings?.showAlmanacHints, true),
         };
 
         migratedData.selectedDecoration = typeof migratedData.selectedDecoration === 'string'

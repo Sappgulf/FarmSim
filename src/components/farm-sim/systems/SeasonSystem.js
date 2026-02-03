@@ -139,6 +139,9 @@ export class SeasonSystem {
     if (!this.gameState.season?.config) {
       const currentSeason = this.gameState.season?.current || SEASONS.SPRING;
       const config = SEASON_CONFIG[currentSeason];
+      if (this.actions?.recordAlmanacEvent) {
+        this.actions.recordAlmanacEvent('season_start', { season: currentSeason });
+      }
       this.actions.updateSeason({
         current: currentSeason,
         lastChangeTime: this.gameState.season?.lastChangeTime || Date.now(),
@@ -169,6 +172,11 @@ export class SeasonSystem {
 
     if (import.meta.env.MODE === 'development') {
       console.debug('[farm]', `Season changed: ${currentSeason} → ${nextSeason}`);
+    }
+
+    if (this.actions?.recordAlmanacEvent) {
+      this.actions.recordAlmanacEvent('season_end', { season: currentSeason, nextSeason });
+      this.actions.recordAlmanacEvent('season_start', { season: nextSeason, previousSeason: currentSeason });
     }
 
     // Trigger visual season transition effect first
@@ -253,4 +261,3 @@ export class SeasonSystem {
 }
 
 export default SeasonSystem;
-

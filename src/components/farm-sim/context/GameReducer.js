@@ -53,6 +53,18 @@ export const initialState = {
         decorationsPlaced: 0,
         festivalsAttended: 0,
     },
+    philosophy: null,
+    almanac: {
+        unlocked: {},
+        dates: {},
+        counters: {
+            weatherSeen: {},
+            cropSeasonMask: {},
+            seasonsSeen: {},
+            dayCount: 0,
+        },
+        lastDayKey: null,
+    },
     seasonalEvents: [],
     activeSeasonalEvents: [],
     dailyChallenges: [],
@@ -96,6 +108,7 @@ export const initialState = {
         soundEnabled: true,
         musicEnabled: true,
         animationsEnabled: true,
+        showAlmanacHints: true,
     },
 
     // Performance state
@@ -225,6 +238,12 @@ export function gameReducer(state, action) {
                 ? action.payload(state.memoryCounters)
                 : action.payload;
             return { ...state, memoryCounters: updatedMemoryCounters };
+
+        case GAME_ACTIONS.UPDATE_ALMANAC:
+            return { ...state, almanac: action.payload };
+
+        case GAME_ACTIONS.SET_PHILOSOPHY:
+            return { ...state, philosophy: action.payload };
 
         case GAME_ACTIONS.SET_SEASONAL_EVENTS:
             return { ...state, seasonalEvents: action.payload };

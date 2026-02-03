@@ -21,6 +21,7 @@
   - Events (`EventsTab.jsx`)
   - Processing (`ProcessingTab.jsx`)
   - Achievements (`AchievementsTab.jsx`)
+  - Almanac (`AlmanacTab.jsx`)
   - Social (`SocialTab.jsx`)
   - Analytics (`AnalyticsTab.jsx`)
   - Mystery Shop (`MysteryShopTab.jsx`)
@@ -43,13 +44,16 @@
 - **Seasons**: `SeasonSystem` handles 4-season loop + transitions. (`src/components/farm-sim/systems/SeasonSystem.js`)
 - **Weather**: dynamic weather + forecast in `WeatherSystem`. (`src/components/farm-sim/systems/WeatherSystem.js`)
 - **Events**: seasonal event list + rewards in `EventsTab`. (`src/components/farm-sim/ui/tabs/EventsTab.jsx`)
+- **Day rollover**: Almanac day count + daily insight uses date key checks in GameContext autosave loop. (`src/components/farm-sim/context/GameContext.jsx`)
 - **Daily Quests**: daily reset logic + streak bonuses. (`src/components/farm-sim/ui/tabs/DailyQuestsTab.jsx`, `src/components/farm-sim/systems/QuestSystem.js`)
 - **Daily Challenges**: daily reset + streaks. (`src/components/farm-sim/ui/tabs/ChallengesTab.jsx`)
 - **Mystery Shop**: rotating pack offerings. (`src/components/farm-sim/ui/tabs/MysteryShopTab.jsx`)
 
-### Collections / Achievements / Scrapbook / Mood / Philosophy
+### Collections / Achievements / Scrapbook / Almanac / Philosophy
 - **Achievements**: achievements data + tab UI. (`src/components/farm-sim/constants/achievementData.js`, `src/components/farm-sim/ui/tabs/AchievementsTab.jsx`)
-- **Scrapbook / Mood / Philosophy**: legacy identity loop lives outside active FarmSim. (`src/components/game/StoryDashboard.jsx`, `src/components/panels/ScrapbookPanel.jsx`)
+- **Scrapbook**: legacy memory panel used inside Achievements tab with memory flags. (`src/components/panels/ScrapbookPanel.jsx`, `src/components/farm-sim/context/GameContext.jsx`)
+- **Almanac**: event-driven knowledge journal with philosophy-flavored copy. (`src/components/farm-sim/ui/tabs/AlmanacTab.jsx`, `src/data/almanac.js`, `src/components/farm-sim/context/GameContext.jsx`)
+- **Philosophy**: stored in FarmSim state for Almanac flavor. (`src/components/farm-sim/context/GameReducer.js`)
 
 ### Notifications / Toasts
 - **NotificationSystem**: top-right stack with auto-dismiss + manual close. (`src/components/farm-sim/ui/NotificationSystem.jsx`)
@@ -63,6 +67,7 @@
 
 ### Save / Load / Versioning
 - **Save/Migrate**: `GamePersistence` handles versioned saves + fallback backup. (`src/components/farm-sim/context/GamePersistence.js`)
+- **Almanac state**: stored under `state.almanac` (unlocked pages, dates, counters, last day key). (`src/components/farm-sim/context/GameReducer.js`)
 - **Save UI**: Settings tab manual save/load. (`src/components/farm-sim/ui/tabs/SettingsTab.jsx`)
 
 ## Key Systems (Where They Live)

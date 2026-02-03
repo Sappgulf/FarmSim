@@ -7,6 +7,7 @@ import { Progress } from '../../../ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs';
 import { ScrapbookPanel } from '../../../panels/ScrapbookPanel';
 import { MEMORIES, MEMORY_CHAPTERS } from '../../../../data/identity';
+import { ALMANAC_MEMORY_LINKS } from '../../../../data/almanac';
 
 // Achievement data from original system
 const ACHIEVEMENTS = [
@@ -340,6 +341,13 @@ const AchievementsTab = memo(() => {
         chapters={MEMORY_CHAPTERS}
         memories={MEMORIES}
         memoryFlags={state.memoryFlags || {}}
+        almanacLinks={ALMANAC_MEMORY_LINKS}
+        almanacUnlocked={state.almanac?.unlocked || {}}
+        onOpenAlmanac={() => {
+          if (typeof window !== 'undefined' && typeof window.switchToTab === 'function') {
+            window.switchToTab('almanac');
+          }
+        }}
         onOpen={() => actions.recordMemoryEvent('scrapbook_opened')}
       />
     </div>

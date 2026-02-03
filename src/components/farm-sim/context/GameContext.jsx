@@ -10,6 +10,14 @@ import {
   isSeasonalDecoration,
 } from '../constants/decorData';
 import { MEMORIES } from '../../../data/identity';
+import { ALMANAC_PAGES, ALMANAC_WEATHER_TYPES } from '../../../data/almanac';
+import {
+  countBits,
+  getAlmanacPage,
+  getDayKey,
+  getSeasonBit,
+  isKnownWeatherType,
+} from '../../../systems/almanac';
 
 /**
  * GameContext - Centralized state management for FarmSim
@@ -160,6 +168,10 @@ export function GameProvider({ children }) {
 
       const now = Date.now();
       if (currentState.settings.autoSave && (now - lastAutoSaveCheck >= 30000)) {
+        const dayKey = getDayKey();
+        if (dayKey !== currentState.almanac?.lastDayKey) {
+          actionsRef.current?.recordAlmanacEvent('day_rollover', { dayKey });
+        }
         debouncedAutoSave(currentState);
         lastAutoSaveCheck = now;
       }
@@ -228,6 +240,13 @@ export function GameProvider({ children }) {
     setDecorationMode: (enabled) => dispatch({ type: GAME_ACTIONS.SET_DECORATION_MODE, payload: enabled }),
     updateMemoryFlags: (memoryFlags) => dispatch({ type: GAME_ACTIONS.UPDATE_MEMORY_FLAGS, payload: memoryFlags }),
     updateMemoryCounters: (memoryCounters) => dispatch({ type: GAME_ACTIONS.UPDATE_MEMORY_COUNTERS, payload: memoryCounters }),
+    updateAlmanac: (almanac) => dispatch({ type: GAME_ACTIONS.UPDATE_ALMANAC, payload: almanac }),
+    setPhilosophy: (philosophyId) => {
+      const current = stateRef.current.philosophy;
+      if (current === philosophyId) return;
+      dispatch({ type: GAME_ACTIONS.SET_PHILOSOPHY, payload: philosophyId });
+      logDebugAction('philosophy_selected', { philosophyId });
+    },
     updateSettings: (settings) => dispatch({ type: GAME_ACTIONS.UPDATE_SETTINGS, payload: settings }),
     updateGameLoop: (data) => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: data }),
     pauseGame: () => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { paused: true } }),
@@ -296,6 +315,41 @@ export function GameProvider({ children }) {
       return true;
     },
 
+    unlockAlmanacPage: (pageId) => {
+      const currentAlmanac = stateRef.current.almanac || {};
+      const unlocked = currentAlmanac.unlocked || {};
+      if (unlocked[pageId]) return false;
+
+      const page = getAlmanacPage(pageId) || ALMANAC_PAGES.find((entry) => entry.id === pageId);
+      const timestamp = Date.now();
+      const nextAlmanac = {
+        ...currentAlmanac,
+        unlocked: {
+          ...unlocked,
+          [pageId]: true,
+        },
+        dates: {
+          ...(currentAlmanac.dates || {}),
+          [pageId]: timestamp,
+        },
+      };
+
+      dispatch({ type: GAME_ACTIONS.UPDATE_ALMANAC, payload: nextAlmanac });
+
+      if (page) {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: {
+            message: `📖 New Almanac Page: ${page.title}`,
+            type: 'info',
+          },
+        });
+      }
+
+      logDebugAction('almanac_unlocked', { pageId });
+      return true;
+    },
+
     recordMemoryEvent: (eventType, eventData = {}) => {
       const currentState = stateRef.current;
       const counters = currentState.memoryCounters || {};
@@ -356,6 +410,127 @@ export function GameProvider({ children }) {
         if (eventData.cropId === 'cranberry') {
           actionsRef.current.unlockMemory('cranberry_crate');
         }
+      }
+    },
+
+    recordAlmanacEvent: (eventType, eventData = {}) => {
+      const currentState = stateRef.current;
+      const currentAlmanac = currentState.almanac || {};
+      const counters = currentAlmanac.counters || {};
+      let nextCounters = { ...counters };
+      let hasCounterUpdate = false;
+      let nextDayKey = currentAlmanac.lastDayKey;
+
+      const updateCounters = (patch) => {
+        nextCounters = { ...nextCounters, ...patch };
+        hasCounterUpdate = true;
+      };
+
+      const unlockPage = (pageId) => actionsRef.current?.unlockAlmanacPage(pageId);
+
+      if (eventType === 'season_start') {
+        const season = eventData.season;
+        const seasonPages = {
+          spring: 'spring_turning',
+          summer: 'summer_glow',
+          fall: 'autumn_gold',
+          winter: 'winter_quiet',
+        };
+        if (seasonPages[season]) {
+          unlockPage(seasonPages[season]);
+        }
+
+        if (season) {
+          const seasonsSeen = { ...(counters.seasonsSeen || {}) };
+          if (!seasonsSeen[season]) {
+            seasonsSeen[season] = true;
+            updateCounters({ seasonsSeen });
+          }
+          if (Object.keys(seasonsSeen).length >= 4) {
+            unlockPage('full_circle');
+          }
+        }
+      }
+
+      if (eventType === 'weather_observed') {
+        const weather = eventData.weather;
+        if (isKnownWeatherType(weather)) {
+          const weatherSeen = { ...(counters.weatherSeen || {}) };
+          if (!weatherSeen[weather]) {
+            weatherSeen[weather] = true;
+            updateCounters({ weatherSeen });
+          }
+          if (Object.keys(weatherSeen).length >= ALMANAC_WEATHER_TYPES.length) {
+            unlockPage('reading_the_sky');
+          }
+          if (weather === 'stormy') {
+            unlockPage('stormwatch');
+          }
+        }
+      }
+
+      if (eventType === 'crop_harvested') {
+        const cropId = eventData.cropId;
+        const season = eventData.season || currentState.season?.current;
+        const weather = eventData.weather || currentState.weather;
+
+        if (weather === 'rainy') {
+          unlockPage('rainsoft_fields');
+        }
+        if (season === 'winter') {
+          unlockPage('cold_roots');
+        }
+
+        if (cropId && season) {
+          const cropSeasonMask = { ...(counters.cropSeasonMask || {}) };
+          const prevMask = cropSeasonMask[cropId] || 0;
+          const seasonBit = getSeasonBit(season);
+          const nextMask = prevMask | seasonBit;
+          if (nextMask !== prevMask) {
+            cropSeasonMask[cropId] = nextMask;
+            updateCounters({ cropSeasonMask });
+          }
+          if (countBits(nextMask) >= 3) {
+            unlockPage('reliable_favorite');
+          }
+        }
+      }
+
+      if (eventType === 'festival_attended') {
+        const festivalCount = (currentState.memoryCounters?.festivalsAttended || 0) + 1;
+        if (festivalCount >= 1) {
+          unlockPage('gathering_light');
+        }
+        if (festivalCount >= 3) {
+          unlockPage('festival_regular');
+        }
+      }
+
+      if (eventType === 'day_rollover') {
+        const dayCount = (counters.dayCount || 0) + 1;
+        updateCounters({ dayCount });
+        nextDayKey = eventData.dayKey || getDayKey();
+        if (dayCount >= 1) {
+          unlockPage('morning_notes');
+        }
+        if (dayCount >= 3) {
+          unlockPage('steadied_habits');
+        }
+      }
+
+      if (eventType === 'philosophy_selected') {
+        unlockPage('philosophy_compass');
+      }
+
+      if (hasCounterUpdate || nextDayKey !== currentAlmanac.lastDayKey) {
+        dispatch({
+          type: GAME_ACTIONS.UPDATE_ALMANAC,
+          payload: {
+            ...currentAlmanac,
+            counters: nextCounters,
+            lastDayKey: nextDayKey,
+          },
+        });
       }
     },
 
