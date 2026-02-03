@@ -617,6 +617,11 @@ const FarmGrid = memo(() => {
     // Reset plot
     actions.harvestCrop(index, earnings);
     actions.recordMemoryEvent('crop_harvested', { cropId: crop.id });
+    actions.recordAlmanacEvent('crop_harvested', {
+      cropId: crop.id,
+      season: state.season?.current,
+      weather: state.weather,
+    });
 
     actions.addNotification({
       message: `Harvested ${crop.emoji} ${crop.name}! +${earnings}🪙`,
@@ -665,6 +670,14 @@ const FarmGrid = memo(() => {
           nextInventory[id] = (nextInventory[id] || 0) + amt;
         });
         return nextInventory;
+      });
+
+      Object.keys(inventoryUpdates).forEach((cropId) => {
+        actions.recordAlmanacEvent('crop_harvested', {
+          cropId,
+          season: state.season?.current,
+          weather: state.weather,
+        });
       });
 
       if (inventoryUpdates.parsnip) {

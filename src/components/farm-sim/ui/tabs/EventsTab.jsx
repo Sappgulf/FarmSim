@@ -4,6 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
+import { getDailyAlmanacInsight } from '../../../../systems/almanac';
 
 // Seasonal events from original system
 const SEASONAL_EVENTS = {
@@ -156,6 +157,7 @@ const EventsTab = memo(() => {
       message: `${randomEvent.emoji} ${randomEvent.name} has begun!`,
       type: 'success'
     });
+    actions.recordAlmanacEvent('festival_start', { eventId: randomEvent.id, season: currentSeason });
 
     // Auto-end event after duration
     setTimeout(() => {
@@ -181,6 +183,7 @@ const EventsTab = memo(() => {
 
     setEventHistory(prev => [completedEvent, ...prev.slice(0, 9)]); // Keep last 10
     actions.recordMemoryEvent('festival_attended', { eventId: activeEvent.id });
+    actions.recordAlmanacEvent('festival_attended', { eventId: activeEvent.id, season: activeEvent.season });
 
     // Clear active event
     actions.updateActiveEvents([]);
@@ -208,9 +211,33 @@ const EventsTab = memo(() => {
   };
 
   const activeEvent = state.activeSeasonalEvents?.[0];
+  const almanacInsight = getDailyAlmanacInsight(state.almanac, state.philosophy);
 
   return (
     <div className="space-y-4">
+      {/* Town Board Insight */}
+      <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-semibold text-amber-800">📌 Town Board</h3>
+            <p className="text-sm text-amber-700">Almanac insight of the day</p>
+          </div>
+          <Badge variant="outline" className="bg-amber-100 text-amber-700">
+            Almanac
+          </Badge>
+        </div>
+        <div className="mt-3 text-sm text-gray-700">
+          {almanacInsight
+            ? (
+              <>
+                <span className="font-semibold">{almanacInsight.page.title}:</span> {almanacInsight.text}
+              </>
+            )
+            : 'No Almanac pages yet. Keep farming to uncover gentle insights.'
+          }
+        </div>
+      </Card>
+
       {/* Season Header */}
       <Card className="p-4 bg-gradient-to-r from-green-50 to-blue-50">
         <div className="flex justify-between items-center">

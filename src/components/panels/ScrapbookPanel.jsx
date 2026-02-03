@@ -9,6 +9,9 @@ function ScrapbookPanelComponent({
   chapters = [],
   memories = [],
   memoryFlags = {},
+  almanacLinks = {},
+  almanacUnlocked = {},
+  onOpenAlmanac,
   onOpen,
 }) {
   const [activeChapter, setActiveChapter] = useState('all');
@@ -99,6 +102,8 @@ function ScrapbookPanelComponent({
         <div className="space-y-2">
           {filteredMemories.map((memory) => {
             const unlocked = !!memoryFlags[memory.id];
+            const relatedAlmanacId = almanacLinks[memory.id];
+            const relatedAlmanacUnlocked = relatedAlmanacId && almanacUnlocked[relatedAlmanacId];
             return (
               <div
                 key={memory.id}
@@ -118,6 +123,15 @@ function ScrapbookPanelComponent({
                     <div className="text-xs text-gray-600">
                       {unlocked ? memory.description : memory.hint}
                     </div>
+                    {relatedAlmanacId && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenAlmanac?.(relatedAlmanacId)}
+                        className="mt-2 text-[10px] font-semibold text-emerald-600 hover:text-emerald-700"
+                      >
+                        {relatedAlmanacUnlocked ? 'Open related Almanac page' : 'Related Almanac page (locked)'}
+                      </button>
+                    )}
                   </div>
                   {unlocked && (
                     <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">

@@ -136,6 +136,30 @@ export const GameplaySettings = memo(({
                         </button>
                     </div>
 
+                    {/* Almanac Hints */}
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                        <div>
+                            <div className="font-medium">Almanac Hints</div>
+                            <div className="text-sm text-gray-600">Show locked page hints</div>
+                        </div>
+                        <button
+                            onClick={() => actions.updateSettings({
+                                showAlmanacHints: !state.settings.showAlmanacHints
+                            })}
+                            className={`
+                relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                ${state.settings.showAlmanacHints ? 'bg-green-600' : 'bg-gray-300'}
+              `}
+                        >
+                            <span
+                                className={`
+                  inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                  ${state.settings.showAlmanacHints ? 'translate-x-6' : 'translate-x-1'}
+                `}
+                            />
+                        </button>
+                    </div>
+
                     {/* Fast Mode */}
                     <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
                         <div>

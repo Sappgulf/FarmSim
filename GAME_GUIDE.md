@@ -25,6 +25,14 @@ Choose one philosophy to guide the Story Dashboard suggestions:
 - Open the Scrapbook to view pages and progress by chapter.
 - Scrapbook lives inside the Achievements tab for quick access.
 
+### Farm Almanac (Signature Feature v1)
+- The Almanac is a cozy, living journal of what your farm has **learned**.
+- Pages unlock automatically from events (seasons, weather, harvests, festivals, day changes).
+- Find it under **More → Almanac** in the sidebar.
+- Choose a Farm Philosophy to shift the Almanac’s voice.
+- Toggle locked-page hints in **Settings → Gameplay**.
+- The Town Board shares one Almanac insight each day.
+
 ### Wishing Well
 - Once per in-game day, pay a small fee to make a wish.
 - Grants one Cozy Blessing until the next day rollover.
