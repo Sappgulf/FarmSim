@@ -1,15 +1,16 @@
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, it, expect } from 'vitest';
 import { applyMultiplierRound, clamp } from '../src/utils/gameMath.mjs';
 
-test('applyMultiplierRound applies pricing math with rounding', () => {
-  assert.equal(applyMultiplierRound(10, 1.25), 13);
-  assert.equal(applyMultiplierRound(10, 0.5), 5);
-  assert.equal(applyMultiplierRound(0.4, 1.1), 1);
-});
+describe('gameMath', () => {
+  it('applyMultiplierRound applies pricing math with rounding', () => {
+    expect(applyMultiplierRound(10, 1.25)).toBe(13);
+    expect(applyMultiplierRound(10, 0.5)).toBe(5);
+    expect(applyMultiplierRound(0.4, 1.1)).toBe(1);
+  });
 
-test('clamp enforces bounds', () => {
-  assert.equal(clamp(5, 1, 10), 5);
-  assert.equal(clamp(-1, 0, 3), 0);
-  assert.equal(clamp(9, 0, 3), 3);
+  it('clamp enforces bounds', () => {
+    expect(clamp(5, 1, 10)).toBe(5);
+    expect(clamp(-1, 0, 3)).toBe(0);
+    expect(clamp(9, 0, 3)).toBe(3);
+  });
 });
