@@ -4,6 +4,14 @@
 **Project:** FarmLife v5.0.0  
 **Status:** Triple-A Polish Release ✅
 
+## [Unreleased] - 2026-02-03
+
+### Planned
+- Planned: wire Menu Drawer help actions to the in-game help guide and add a lightweight About section; baseline `npm run test` (passes with vitest watch warnings about deprecated ReactDOMTestUtils act and a farm save warning). 
+
+### Implemented
+- Implemented: wired Menu Drawer help actions to open the Help Guide with targeted categories and added an About category to the guide. Verification: `npm run test -- --run` (passes with ReactDOMTestUtils act warnings and a farm save warning), `npm run build` (passes with browserslist data warning). 
+
 ## [2.1.0] - 2026-02-03
 
 ### Identity Loop v1

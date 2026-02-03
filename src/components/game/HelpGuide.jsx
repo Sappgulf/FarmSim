@@ -2,11 +2,11 @@
  * Help Guide Component
  * In-game encyclopedia and help system
  */
-import React, { memo, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   X, Search, Book, Leaf, Droplet, Sun, Cloud, Building2, Coins,
-  Trophy, Dna, Zap, HelpCircle, ChevronRight, ExternalLink, Sparkles
+  Trophy, Dna, Zap, HelpCircle, ChevronRight, ExternalLink, Sparkles, Info
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { CROPS, CROP_FAMILIES, QUALITY_TIERS, RARITY_COLORS } from '../../data/crops';
@@ -22,6 +22,7 @@ const CATEGORIES = [
   { id: 'animals', label: 'Animals', icon: () => <span>🐄</span>, color: 'text-orange-500' },
   { id: 'economy', label: 'Economy & Tips', icon: Coins, color: 'text-yellow-500' },
   { id: 'advanced', label: 'Advanced', icon: Sparkles, color: 'text-purple-500' },
+  { id: 'about', label: 'About', icon: Info, color: 'text-slate-500' },
 ];
 
 // Guide content
@@ -278,11 +279,36 @@ Mix strategies based on your current goals and level requirements!`,
       },
     ],
   },
+  about: {
+    title: 'About FarmSim',
+    sections: [
+      {
+        title: 'Version',
+        content: `**FarmSim v5.0.0** — Triple-A Polish Release
+
+This build focuses on premium visuals, responsive UX, and modular systems across farming, animals, fishing, and weather.`,
+      },
+      {
+        title: 'Built With',
+        content: `- React 18 + Vite 4
+- Tailwind CSS 3
+- Modular game systems (farming, weather, livestock, processing)
+- Accessibility-aware settings (reduced motion, touch targets)`,
+      },
+    ],
+  },
 };
 
-function HelpGuideComponent({ isOpen, onClose }) {
-  const [selectedCategory, setSelectedCategory] = useState('basics');
+function HelpGuideComponent({ isOpen, onClose, initialCategory = 'basics' }) {
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const nextCategory = GUIDE_CONTENT[initialCategory] ? initialCategory : 'basics';
+    setSelectedCategory(nextCategory);
+    setSearchQuery('');
+  }, [initialCategory, isOpen]);
 
   if (!isOpen) return null;
 

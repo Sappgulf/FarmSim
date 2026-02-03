@@ -200,6 +200,7 @@ export default function FarmGame() {
   // New systems
   const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('farmSim_welcomed'));
   const [showHelp, setShowHelp] = useState(false);
+  const [helpCategory, setHelpCategory] = useState('basics');
   const [currentMilestone, setCurrentMilestone] = useState(null);
   const [claimedMilestones, setClaimedMilestones] = useState([]);
 
@@ -511,12 +512,22 @@ export default function FarmGame() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
-        setShowHelp(prev => !prev);
+        setShowHelp(prev => {
+          if (!prev) {
+            setHelpCategory('basics');
+          }
+          return !prev;
+        });
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleShowHelp = useCallback((category = 'basics') => {
+    setHelpCategory(category);
+    setShowHelp(true);
   }, []);
 
   // Day rollover handling (used for wishes + memories)
@@ -1074,7 +1085,11 @@ export default function FarmGame() {
       />
 
       {/* Help Guide Modal */}
-      <HelpGuide isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      <HelpGuide
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
+        initialCategory={helpCategory}
+      />
 
       {/* Milestone Popup */}
       <MilestonePopup
@@ -1124,7 +1139,7 @@ export default function FarmGame() {
           currentPeriod={currentPeriod}
           moodTier={moodTier}
           activeBlessing={activeBlessing}
-          onShowHelp={() => setShowHelp(true)}
+          onShowHelp={() => handleShowHelp('basics')}
         />
 
         {/* Desktop Layout */}
@@ -1487,6 +1502,7 @@ export default function FarmGame() {
         onShowAchievements={() => { setActiveTab('achievements'); setMenuOpen(false); }}
         onShowBreeding={() => { setActiveTab('breeding'); setMenuOpen(false); }}
         onShowScrapbook={() => { setActiveTab('scrapbook'); setMenuOpen(false); }}
+        onShowHelp={handleShowHelp}
       />
 
       {/* Debug Overlay (toggle with ` key) */}

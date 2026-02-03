@@ -29,6 +29,7 @@ function MenuDrawerComponent({
   onShowBreeding,
   onShowScrapbook,
   onShowStats,
+  onShowHelp,
 }) {
   // Close on escape key
   useEffect(() => {
@@ -170,14 +171,14 @@ function MenuDrawerComponent({
               icon={HelpCircle}
               label="How to Play"
               sublabel="Tutorial & tips"
-              onClick={() => {}}
+              onClick={() => { onShowHelp?.('basics'); onClose(); }}
             />
 
             <MenuButton
               icon={Info}
               label="About"
-              sublabel="Version 2.0"
-              onClick={() => {}}
+              sublabel="Version 5.0.0"
+              onClick={() => { onShowHelp?.('about'); onClose(); }}
             />
           </div>
 
