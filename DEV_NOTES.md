@@ -55,6 +55,10 @@
 - **Almanac**: event-driven knowledge journal with philosophy-flavored copy. (`src/components/farm-sim/ui/tabs/AlmanacTab.jsx`, `src/data/almanac.js`, `src/components/farm-sim/context/GameContext.jsx`)
 - **Philosophy**: stored in FarmSim state for Almanac flavor. (`src/components/farm-sim/context/GameReducer.js`)
 
+### Mini-Games
+- **Fishing mini-game**: `FishingSystem` + `FishingTab`. (`src/components/farm-sim/systems/FishingSystem.js`, `src/components/farm-sim/ui/tabs/FishingTab.jsx`)
+- **Perfect Harvest (festival/board timing game)**: engine + modal UI, launched from Events tab. (`src/components/farm-sim/minigames/PerfectHarvestEngine.js`, `src/components/farm-sim/ui/minigames/PerfectHarvestModal.jsx`, `src/components/farm-sim/ui/tabs/EventsTab.jsx`)
+
 ### Notifications / Toasts
 - **NotificationSystem**: top-right stack with auto-dismiss + manual close. (`src/components/farm-sim/ui/NotificationSystem.jsx`)
 

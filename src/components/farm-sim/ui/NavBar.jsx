@@ -1,4 +1,29 @@
 import React, { memo, useState } from 'react';
+import {
+    BarChart3,
+    BookOpen,
+    CalendarDays,
+    Circle,
+    ClipboardList,
+    CloudSun,
+    Dna,
+    Factory,
+    Fish,
+    FlaskRound,
+    Leaf,
+    Maximize2,
+    Package,
+    PawPrint,
+    ShoppingCart,
+    Sparkles,
+    Settings,
+    ShieldAlert,
+    Target,
+    Trophy,
+    Users,
+    Building2,
+    Home,
+} from 'lucide-react';
 import { useGame } from '../context/GameContext';
 
 /**
@@ -18,6 +43,7 @@ export const NAV_SECTIONS = {
     farm: {
         id: 'farm',
         label: 'Farm',
+        icon: Home,
         emoji: '🏠',
         tabs: ['farming'],
         description: 'Manage crops and farming'
@@ -25,6 +51,7 @@ export const NAV_SECTIONS = {
     inventory: {
         id: 'inventory',
         label: 'Items',
+        icon: Package,
         emoji: '📦',
         tabs: ['inventory', 'shop', 'processing'],
         description: 'Items, shop, and processing'
@@ -32,6 +59,7 @@ export const NAV_SECTIONS = {
     build: {
         id: 'build',
         label: 'Build',
+        icon: Building2,
         emoji: '🏗️',
         tabs: ['buildings', 'expand', 'research', 'genetics'],
         description: 'Buildings and upgrades'
@@ -39,6 +67,7 @@ export const NAV_SECTIONS = {
     animals: {
         id: 'animals',
         label: 'Animals',
+        icon: PawPrint,
         emoji: '🐾',
         tabs: ['livestock', 'pets', 'fishing'],
         description: 'Animals and fishing'
@@ -46,6 +75,7 @@ export const NAV_SECTIONS = {
     more: {
         id: 'more',
         label: 'More',
+        icon: Settings,
         emoji: '⚙️',
         tabs: ['settings', 'achievements', 'almanac', 'quests', 'analytics', 'weather', 'events', 'challenges', 'social', 'mystery', 'diseases'],
         description: 'Settings and extras'
@@ -54,28 +84,28 @@ export const NAV_SECTIONS = {
 
 // Map tab IDs to their display info
 export const TAB_INFO = {
-    farming: { label: 'Farming', emoji: '🌾' },
-    inventory: { label: 'Inventory', emoji: '🎒' },
-    shop: { label: 'Shop', emoji: '🛒' },
-    processing: { label: 'Processing', emoji: '🏭' },
-    buildings: { label: 'Buildings', emoji: '🏗️' },
-    expand: { label: 'Expand', emoji: '📈' },
-    research: { label: 'Research', emoji: '🔬' },
-    genetics: { label: 'Genetics', emoji: '🧬' },
-    livestock: { label: 'Livestock', emoji: '🐄' },
-    pets: { label: 'Pets', emoji: '🐕' },
-    fishing: { label: 'Fishing', emoji: '🎣' },
-    settings: { label: 'Settings', emoji: '⚙️' },
-    achievements: { label: 'Achievements', emoji: '🏆' },
-    almanac: { label: 'Almanac', emoji: '📖' },
-    quests: { label: 'Quests', emoji: '📋' },
-    analytics: { label: 'Analytics', emoji: '📊' },
-    weather: { label: 'Weather', emoji: '🌤️' },
-    events: { label: 'Events', emoji: '🎉' },
-    challenges: { label: 'Challenges', emoji: '🎯' },
-    social: { label: 'Social', emoji: '👥' },
-    mystery: { label: 'Mystery', emoji: '🎰' },
-    diseases: { label: 'Diseases', emoji: '🐛' },
+    farming: { label: 'Farming', icon: Leaf, emoji: '🌾' },
+    inventory: { label: 'Inventory', icon: Package, emoji: '🎒' },
+    shop: { label: 'Shop', icon: ShoppingCart, emoji: '🛒' },
+    processing: { label: 'Processing', icon: Factory, emoji: '🏭' },
+    buildings: { label: 'Buildings', icon: Building2, emoji: '🏗️' },
+    expand: { label: 'Expand', icon: Maximize2, emoji: '📈' },
+    research: { label: 'Research', icon: FlaskRound, emoji: '🔬' },
+    genetics: { label: 'Genetics', icon: Dna, emoji: '🧬' },
+    livestock: { label: 'Livestock', icon: PawPrint, emoji: '🐄' },
+    pets: { label: 'Pets', icon: PawPrint, emoji: '🐕' },
+    fishing: { label: 'Fishing', icon: Fish, emoji: '🎣' },
+    settings: { label: 'Settings', icon: Settings, emoji: '⚙️' },
+    achievements: { label: 'Achievements', icon: Trophy, emoji: '🏆' },
+    almanac: { label: 'Almanac', icon: BookOpen, emoji: '📖' },
+    quests: { label: 'Quests', icon: ClipboardList, emoji: '📋' },
+    analytics: { label: 'Analytics', icon: BarChart3, emoji: '📊' },
+    weather: { label: 'Weather', icon: CloudSun, emoji: '🌤️' },
+    events: { label: 'Events', icon: CalendarDays, emoji: '🎉' },
+    challenges: { label: 'Challenges', icon: Target, emoji: '🎯' },
+    social: { label: 'Social', icon: Users, emoji: '👥' },
+    mystery: { label: 'Mystery', icon: Sparkles, emoji: '🎰' },
+    diseases: { label: 'Diseases', icon: ShieldAlert, emoji: '🐛' },
 };
 
 const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange }) => {
@@ -83,6 +113,15 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
     const [showSubTabs, setShowSubTabs] = useState(false);
 
     const sections = Object.values(NAV_SECTIONS);
+    const renderIcon = (IconComponent, fallbackEmoji, className) => {
+        if (IconComponent) {
+            return <IconComponent className={className} aria-hidden="true" />;
+        }
+        if (fallbackEmoji) {
+            return <span className={`text-base ${className}`} aria-hidden="true">{fallbackEmoji}</span>;
+        }
+        return <Circle className={className} aria-hidden="true" />;
+    };
 
     // Get notification counts for badges
     const getNotificationCount = (sectionId) => {
@@ -113,6 +152,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                         {NAV_SECTIONS[activeSection].tabs.map(tabId => {
                             const tabInfo = TAB_INFO[tabId];
                             const isActive = activeTab === tabId;
+                            const TabIcon = tabInfo?.icon;
                             return (
                                 <button
                                     key={tabId}
@@ -126,8 +166,8 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                         }
                   `}
                                 >
-                                    <span className="text-base">{tabInfo.emoji}</span>
-                                    <span>{tabInfo.label}</span>
+                                    {renderIcon(TabIcon, tabInfo?.emoji, 'icon-16')}
+                                    <span>{tabInfo?.label || tabId}</span>
                                 </button>
                             );
                         })}
@@ -140,6 +180,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                 {sections.map(section => {
                     const isActive = activeSection === section.id;
                     const notifCount = getNotificationCount(section.id);
+                    const SectionIcon = section.icon;
 
                     return (
                         <button
@@ -164,7 +205,9 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                 }
               `}
                         >
-                            <span className={`text-2xl filter ${isActive ? 'drop-shadow-sm' : ''}`}>{section.emoji}</span>
+                            <span className={`flex items-center justify-center ${isActive ? 'drop-shadow-sm' : ''}`}>
+                                {renderIcon(SectionIcon, section.emoji, 'icon-24')}
+                            </span>
                             <span className={`text-[11px] mt-0.5 font-semibold ${isActive ? 'text-emerald-700' : 'text-gray-500'}`}>
                                 {section.label}
                             </span>

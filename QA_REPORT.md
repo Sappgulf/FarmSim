@@ -2,6 +2,11 @@
 
 **Date:** 2026-02-03
 
+## UI + Tabs + Mini-Games v1 Pass (2026-02-03)
+- **Static inspection:** Perfect Harvest mini-game UI + engine wiring (Events tab), save/load fields, and icon standardization reviewed.
+- **Automated check:** `npm run test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
+- **Manual runtime checks:** Not executed in this environment.
+
 ## Season Pack Pipeline v1 Verification (2026-02-03)
 - **Static inspection:** ContentManager load/merge paths, pack metadata, and validation logic reviewed.
 - **Events tab:** Seasonal events now sourced from content pipeline; ensured timers are cleared on unmount and after event completion.
@@ -35,7 +40,7 @@
 - Livestock: **PASS** (notifications + particles).
 - Fishing: **PASS** (notifications + particles).
 - Challenges: **PASS (fixed)** — daily reset timestamp + streak now update correctly.
-- Events: **PASS** (active events update wired).
+- Events: **PASS (updated)** — active events update wired; Perfect Harvest timing mini-game available once per event/day; rewards and save gating reviewed.
 - Processing: **PASS** (queues/facilities/inventory updates wired).
 - Achievements: **PASS** (achievement updates wired).
 - Almanac: **PASS** (sections render, philosophy picker, locked/unlocked states).

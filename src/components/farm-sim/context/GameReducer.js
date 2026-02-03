@@ -72,6 +72,14 @@ export const initialState = {
     lastChallengeReset: Date.now(),
     challengeStreak: 0,
     dailyQuests: null,
+    minigames: {
+        perfectHarvest: {
+            lastPlayedDayKey: null,
+            lastFestivalId: null,
+            lastResult: null,
+            lastPlayedAt: null,
+        },
+    },
     disasterProtections: {},
     prestige: {
         tier: 0,
@@ -268,6 +276,9 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_DISASTER_PROTECTIONS:
             return { ...state, disasterProtections: action.payload };
+
+        case GAME_ACTIONS.UPDATE_MINIGAMES:
+            return { ...state, minigames: action.payload };
 
         case GAME_ACTIONS.UPDATE_PRESTIGE:
             return { ...state, prestige: action.payload };

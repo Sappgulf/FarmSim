@@ -43,6 +43,15 @@ Choose one philosophy to guide the Story Dashboard suggestions:
 - Grants one Cozy Blessing until the next day rollover.
 - Blessings are positive-only and lightweight (small bonuses).
 
+### Perfect Harvest (Mini-Game v1)
+- Found on the **Town Board** inside the Events tab.
+- Stop the moving marker inside the sweet spot for bonus rewards.
+- Festival weeks grant a slightly bigger reward.
+- Rewards are small, positive-only, and capped:
+  - Coins: 8–60 🪙 depending on timing and festival bonus.
+  - Reputation: +0–3 (tiny, positive-only).
+- You can play once per festival (or once per day when no festival is active).
+
 ## Quick Tips
 - Early memories unlock within the first 10 minutes.
 - Check the Town Board Story Dashboard for today’s vibe and suggestion.

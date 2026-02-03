@@ -129,6 +129,14 @@ const validateItems = (type, items, report, context) => {
         context,
       });
     }
+    if (!item.icon && !item.emoji) {
+      report.warnings.push({
+        type,
+        issue: 'missing_icon',
+        message: `${type} ${item.id} missing icon/emoji (fallback applied)`,
+        context,
+      });
+    }
 
     if (type === 'crops') {
       if (!Array.isArray(item.seasonTags) || item.seasonTags.length === 0) {

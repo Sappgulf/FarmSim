@@ -7,6 +7,7 @@
 ## [Unreleased] - 2026-02-03
 
 ### Planned
+- Planned: audit repo docs + tab inventory, standardize UI tokens/icon rules, implement festival timing mini-game, polish tabs/copy, and run QA/perf gate checks. Baseline: `npm run test -- --run` (passes with ReactDOMTestUtils act deprecation warnings).
 - Planned: audit repo content definitions, add Season Pack Pipeline v1 (content schemas, packs, loader/validator), integrate ContentManager with crops/decor/festivals/almanac/strings, and run QA/perf/polish pass. Baseline: no automated checks run yet (audit + doc review only).
 - Planned: fix build resolution for scrapbook data import and re-run production build. Baseline: `npm run build` (failed: could not resolve "../../../data/identity" in AchievementsTab; browserslist data warning).
 - Planned: audit markdown docs and FarmSim systems, expand Cozy Expansion Pack v1 content (crops/decor), add scrapbook memories + chapters, extend festivals/shop cosmetics, add decoration QoL tools and micro-polish. Baseline: `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
@@ -16,6 +17,7 @@
 - Planned: implement Signature Feature v1 (Farm Almanac) with design doc, event-driven unlocks, UI tab, Town Board insight, settings toggle, and save/load persistence. Baseline: `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
 
 ### Implemented
+- Implemented: standardized UI icon usage for navigation/tabs, added Perfect Harvest timing mini-game (festival/board), added debug content warnings for missing icons, and documented design system + QA/perf notes. Verification: `npm run test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
 - Implemented: Season Pack Pipeline v1 (content schemas, pack format, loader/validator), integrated content manager across crops/decor/festivals/almanac/strings, added debug-only content validation/report actions, and added Town Board “What’s New” highlights. Verification: `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
 - Implemented: corrected scrapbook data import path for Achievements tab and re-built successfully. Verification: `npm run build` (passes with browserslist data warning).
 - Implemented: Cozy Expansion Pack v1 content additions (new crops, decor catalog, festivals), scrapbook memories/chapters, decor placement QoL (repeat + undo), and audio ducking polish. Verification: `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning).

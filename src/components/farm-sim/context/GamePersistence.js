@@ -2,7 +2,7 @@
  * GamePersistence - Save/Load, Migration, and Initialization logic for FarmSim
  */
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 
@@ -128,6 +128,18 @@ export function migrateSaveData(savedData) {
             };
         }
 
+        // Version 2 → 3: Mini-games state
+        if (saveVersion < 3) {
+            migratedData.minigames = migratedData.minigames || {
+                perfectHarvest: {
+                    lastPlayedDayKey: null,
+                    lastFestivalId: null,
+                    lastResult: null,
+                    lastPlayedAt: null,
+                },
+            };
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
         migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
@@ -204,6 +216,34 @@ export function migrateSaveData(savedData) {
         migratedData.dailyChallenges = Array.isArray(migratedData.dailyChallenges) ? migratedData.dailyChallenges : [];
         migratedData.dailyChallengeProgress = ensureObject(migratedData.dailyChallengeProgress, {});
         migratedData.notifications = Array.isArray(migratedData.notifications) ? migratedData.notifications : [];
+        migratedData.minigames = ensureObject(migratedData.minigames, {
+            perfectHarvest: {
+                lastPlayedDayKey: null,
+                lastFestivalId: null,
+                lastResult: null,
+                lastPlayedAt: null,
+            },
+        });
+        migratedData.minigames.perfectHarvest = ensureObject(migratedData.minigames.perfectHarvest, {
+            lastPlayedDayKey: null,
+            lastFestivalId: null,
+            lastResult: null,
+            lastPlayedAt: null,
+        });
+        migratedData.minigames.perfectHarvest.lastPlayedDayKey = typeof migratedData.minigames.perfectHarvest.lastPlayedDayKey === 'string'
+            ? migratedData.minigames.perfectHarvest.lastPlayedDayKey
+            : null;
+        migratedData.minigames.perfectHarvest.lastFestivalId = typeof migratedData.minigames.perfectHarvest.lastFestivalId === 'string'
+            ? migratedData.minigames.perfectHarvest.lastFestivalId
+            : null;
+        migratedData.minigames.perfectHarvest.lastResult = typeof migratedData.minigames.perfectHarvest.lastResult === 'string'
+            ? migratedData.minigames.perfectHarvest.lastResult
+            : null;
+        migratedData.minigames.perfectHarvest.lastPlayedAt = clampNumber(
+            migratedData.minigames.perfectHarvest.lastPlayedAt,
+            null,
+            { min: 0 }
+        );
         migratedData.weather = typeof migratedData.weather === 'string' ? migratedData.weather : 'sunny';
         migratedData.weatherForecast = Array.isArray(migratedData.weatherForecast) ? migratedData.weatherForecast : [];
         migratedData.processingFacilities = Array.isArray(migratedData.processingFacilities) ? migratedData.processingFacilities : [];
