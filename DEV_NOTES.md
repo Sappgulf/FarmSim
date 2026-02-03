@@ -54,6 +54,10 @@
 ### Notifications / Toasts
 - **NotificationSystem**: top-right stack with auto-dismiss + manual close. (`src/components/farm-sim/ui/NotificationSystem.jsx`)
 
+### Debug / QA Tooling (Debug-only via `?debug=1`)
+- **Performance + Crash Overlay**: rolling FPS + frame metrics, entity counts, crash capture. (`src/components/farm-sim/ui/PerformanceOverlay.jsx`, `src/utils/debugTools.js`)
+- **Stress Panel**: plot fill/harvest, notification spawn/clear, tab stress, buildings toggle, day advance. (`src/components/farm-sim/ui/DebugStressPanel.jsx`)
+
 ### Audio / Settings
 - **Sound + Music systems**: `SoundSystem` + `MusicSystem` with settings toggles. (`src/components/farm-sim/systems/SoundSystem.js`, `src/components/farm-sim/systems/MusicSystem.js`, `src/components/farm-sim/ui/tabs/settings/AudioSettings.jsx`)
 

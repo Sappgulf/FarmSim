@@ -9,9 +9,9 @@
   - FPS/auto-save loop in `GameContext` (rAF).
 
 ## Changes Applied
-- Added Page Visibility pause to stop nonessential loop work when the tab is hidden.
-- Added debug-only performance overlay with rolling 5s frame metrics and hot counts (timers/listeners).
-- Added save backup slot for last-good state to reduce recovery risk.
+- Reduced allocations in crop growth scanning by removing per-tick filter calls in `FarmingSystem.updateCropGrowth`.
+- Expanded debug-only performance overlay to surface action trace depth + debug report copy for faster profiling/triage.
+- Added debug-only stress panel controls to exercise hot paths without manual setup.
 
 ## After
 - Runtime metrics not captured in this environment.
@@ -20,3 +20,4 @@
 - FPS avg + worst frame (5s) with full plots + notifications spam.
 - Update/render time comparison with/without overlays.
 - Listener/timer counts after rapid tab switching.
+- Memory usage before/after running the stress suite twice.

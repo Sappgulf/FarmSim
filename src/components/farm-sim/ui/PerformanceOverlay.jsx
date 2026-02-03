@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { clearDebugError, getDebugMetrics, isDebugMode } from '../../../utils/debugTools';
 
@@ -20,15 +20,89 @@ const PerformanceOverlay = memo(() => {
         memory: 0,
         plots: 0,
         buildings: 0,
+        decorations: 0,
         notifications: 0,
         particleCount: 0,
         timers: 0,
         listeners: 0,
     });
     const [debugInfo, setDebugInfo] = useState(getDebugMetrics());
+    const [copyStatus, setCopyStatus] = useState(null);
 
     const frameTimesRef = useRef([]);
     const lastFrameTimeRef = useRef(performance.now());
+
+    const lastActions = useMemo(() => {
+        const trace = debugInfo?.lastError?.trace || debugInfo?.actionTrace || [];
+        return trace.slice(-100);
+    }, [debugInfo]);
+
+    const buildDebugReport = () => {
+        const now = new Date().toISOString();
+        const error = debugInfo?.lastError;
+        const report = {
+            timestamp: now,
+            url: typeof window !== 'undefined' ? window.location.href : 'unknown',
+            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+            metrics: {
+                fpsAvg: Math.round(metrics.avgFps || 0),
+                frameAvgMs: metrics.avgFrameTime,
+                frameWorstMs: metrics.worstFrameTime,
+                updateMs: metrics.updateTime,
+                renderMs: metrics.renderTime,
+                memoryMb: metrics.memory,
+            },
+            counts: {
+                plots: metrics.plots,
+                buildings: metrics.buildings,
+                decorations: metrics.decorations,
+                notifications: metrics.notifications,
+                timers: metrics.timers,
+                listeners: metrics.listeners,
+                particles: metrics.particleCount,
+            },
+            state: {
+                coins: state.coins,
+                level: state.level,
+                gridSize: state.gridSize,
+                weather: state.weather,
+                season: state.season?.current,
+                paused: state.gameLoop?.paused,
+            },
+            error: error ? {
+                source: error.source,
+                message: error.message,
+                stack: error.stack,
+                time: error.time,
+            } : null,
+            recentActions: lastActions,
+        };
+        return JSON.stringify(report, null, 2);
+    };
+
+    const handleCopyReport = async () => {
+        try {
+            const report = buildDebugReport();
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(report);
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = report;
+                textarea.setAttribute('readonly', '');
+                textarea.style.position = 'absolute';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                textarea.remove();
+            }
+            setCopyStatus('copied');
+        } catch (error) {
+            setCopyStatus('failed');
+        } finally {
+            setTimeout(() => setCopyStatus(null), 2000);
+        }
+    };
 
     // Toggle visibility with backtick key
     useEffect(() => {
@@ -85,6 +159,9 @@ const PerformanceOverlay = memo(() => {
 
             const plots = state.plots?.length || 0;
             const buildings = Object.keys(state.buildings || {}).length;
+            const decorations = Array.isArray(state.decorations)
+                ? state.decorations.length
+                : Object.keys(state.decorations || {}).length;
             const notifications = state.notifications?.length || 0;
 
             // Particle count (from global)
@@ -105,6 +182,7 @@ const PerformanceOverlay = memo(() => {
                 memory,
                 plots,
                 buildings,
+                decorations,
                 notifications,
                 particleCount,
                 timers: debugMetrics?.timerCount || 0,
@@ -150,12 +228,20 @@ const PerformanceOverlay = memo(() => {
                 <div className="fixed inset-4 sm:inset-8 z-[10000] overflow-auto rounded-2xl border border-red-500/70 bg-black/90 p-4 text-white shadow-2xl">
                     <div className="flex items-center justify-between mb-3">
                         <h2 className="text-lg font-semibold text-red-300">⚠️ Debug Crash Capture</h2>
-                        <button
-                            onClick={clearDebugError}
-                            className="text-xs text-gray-300 hover:text-white"
-                        >
-                            Dismiss
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleCopyReport}
+                                className="text-xs text-gray-200 hover:text-white border border-gray-600/60 rounded-md px-2 py-1"
+                            >
+                                {copyStatus === 'copied' ? 'Copied!' : copyStatus === 'failed' ? 'Copy failed' : 'Copy Debug Report'}
+                            </button>
+                            <button
+                                onClick={clearDebugError}
+                                className="text-xs text-gray-300 hover:text-white"
+                            >
+                                Dismiss
+                            </button>
+                        </div>
                     </div>
                     <div className="space-y-2 text-xs">
                         <div><span className="text-gray-400">Source:</span> {debugInfo.lastError.source}</div>
@@ -166,9 +252,9 @@ const PerformanceOverlay = memo(() => {
                         </div>
                     </div>
                     <div className="mt-4">
-                        <div className="text-xs text-gray-400 mb-2">Recent Actions</div>
-                        <div className="space-y-1 text-[11px]">
-                            {debugInfo.lastError.trace.slice(-12).map((entry) => (
+                        <div className="text-xs text-gray-400 mb-2">Recent Actions (last 100)</div>
+                        <div className="space-y-1 text-[11px] max-h-48 overflow-auto pr-2">
+                            {lastActions.map((entry) => (
                                 <div key={entry.id} className="text-gray-200">
                                     {entry.time} • {entry.type}
                                 </div>
@@ -251,6 +337,13 @@ const PerformanceOverlay = memo(() => {
                     <span>Buildings:</span>
                     <span className="text-gray-300">
                         {metrics.buildings}
+                    </span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span>Decor:</span>
+                    <span className="text-gray-300">
+                        {metrics.decorations}
                     </span>
                 </div>
 

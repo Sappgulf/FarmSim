@@ -27,6 +27,44 @@ export const initializePlots = (gridSize) => {
     }));
 };
 
+const clampNumber = (value, fallback, { min, max } = {}) => {
+    if (value === null || value === undefined) return fallback;
+    const numberValue = Number(value);
+    if (!Number.isFinite(numberValue)) return fallback;
+    if (typeof min === 'number' && numberValue < min) return min;
+    if (typeof max === 'number' && numberValue > max) return max;
+    return numberValue;
+};
+
+const ensureBoolean = (value, fallback) => (typeof value === 'boolean' ? value : fallback);
+
+const ensureObject = (value, fallback = {}) => (
+    value && typeof value === 'object' && !Array.isArray(value) ? value : fallback
+);
+
+const normalizePlots = (plots, gridSize) => {
+    const defaults = initializePlots(gridSize);
+    if (!Array.isArray(plots)) return defaults;
+    const allowedStates = new Set(['empty', 'planted', 'growing', 'ready', 'withered']);
+    return defaults.map((fallbackPlot, index) => {
+        const plot = plots[index];
+        if (!plot || typeof plot !== 'object') return fallbackPlot;
+        const state = allowedStates.has(plot.state) ? plot.state : fallbackPlot.state;
+        return {
+            ...fallbackPlot,
+            ...plot,
+            id: index,
+            state,
+            crop: plot.crop && typeof plot.crop === 'object' ? plot.crop : null,
+            growthStage: clampNumber(plot.growthStage, fallbackPlot.growthStage, { min: 0 }),
+            waterLevel: clampNumber(plot.waterLevel, fallbackPlot.waterLevel, { min: 0, max: 100 }),
+            fertilizer: clampNumber(plot.fertilizer, fallbackPlot.fertilizer, { min: 0 }),
+            soilFertility: clampNumber(plot.soilFertility, fallbackPlot.soilFertility, { min: 0, max: 2 }),
+            progress: clampNumber(plot.progress, fallbackPlot.progress, { min: 0, max: 1 }),
+        };
+    });
+};
+
 /**
  * Validates and migrates save data to current version
  * @param {Object} savedData - Raw save data from localStorage
@@ -68,20 +106,12 @@ export function migrateSaveData(savedData) {
         }
 
         // Validate critical fields
-        if (typeof migratedData.coins !== 'number' || !Number.isFinite(migratedData.coins) || migratedData.coins < 0) {
-            migratedData.coins = 100; // Reset to default if corrupted
-        }
-        if (typeof migratedData.xp !== 'number' || !Number.isFinite(migratedData.xp) || migratedData.xp < 0) {
-            migratedData.xp = 0;
-        }
-        if (typeof migratedData.level !== 'number' || !Number.isFinite(migratedData.level) || migratedData.level < 1) {
-            migratedData.level = 1;
-        }
+        migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
+        migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
+        migratedData.level = clampNumber(migratedData.level, 1, { min: 1 });
+        migratedData.gridSize = Math.round(clampNumber(migratedData.gridSize, 3, { min: 3, max: 5 }));
 
-        if (!Array.isArray(migratedData.plots)) {
-            console.warn('[farm]', 'Invalid plots data, will reinitialize');
-            migratedData.plots = initializePlots(migratedData.gridSize || 3);
-        }
+        migratedData.plots = normalizePlots(migratedData.plots, migratedData.gridSize);
 
         // Ensure livestock structure exists
         if (!migratedData.livestock || typeof migratedData.livestock !== 'object') {
@@ -96,9 +126,58 @@ export function migrateSaveData(savedData) {
             };
         }
 
-        // Ensure gridSize matches plots length
-        if (migratedData.plots.length !== migratedData.gridSize * migratedData.gridSize) {
-            migratedData.plots = initializePlots(migratedData.gridSize || 3);
+        migratedData.inventory = ensureObject(migratedData.inventory, {});
+        migratedData.buildings = ensureObject(migratedData.buildings, {});
+        migratedData.achievements = Array.isArray(migratedData.achievements) ? migratedData.achievements : [];
+        migratedData.seasonalEvents = Array.isArray(migratedData.seasonalEvents) ? migratedData.seasonalEvents : [];
+        migratedData.activeSeasonalEvents = Array.isArray(migratedData.activeSeasonalEvents) ? migratedData.activeSeasonalEvents : [];
+        migratedData.dailyChallenges = Array.isArray(migratedData.dailyChallenges) ? migratedData.dailyChallenges : [];
+        migratedData.dailyChallengeProgress = ensureObject(migratedData.dailyChallengeProgress, {});
+        migratedData.notifications = Array.isArray(migratedData.notifications) ? migratedData.notifications : [];
+        migratedData.weather = typeof migratedData.weather === 'string' ? migratedData.weather : 'sunny';
+        migratedData.weatherForecast = Array.isArray(migratedData.weatherForecast) ? migratedData.weatherForecast : [];
+        migratedData.processingFacilities = Array.isArray(migratedData.processingFacilities) ? migratedData.processingFacilities : [];
+        migratedData.processingQueue = Array.isArray(migratedData.processingQueue) ? migratedData.processingQueue : [];
+        migratedData.processedInventory = ensureObject(migratedData.processedInventory, {});
+        migratedData.pets = Array.isArray(migratedData.pets) ? migratedData.pets : [];
+        migratedData.social = ensureObject(migratedData.social, { friends: [], reputation: 0, marketListings: [] });
+        migratedData.genetics = ensureObject(migratedData.genetics, {});
+        migratedData.research = ensureObject(migratedData.research, {});
+        migratedData.prestige = ensureObject(migratedData.prestige, {
+            tier: 0,
+            totalRebirtths: 0,
+            legacyPoints: 0,
+            legacyBonuses: {},
+            heirloomSeeds: [],
+        });
+
+        migratedData.settings = {
+            autoSave: ensureBoolean(migratedData.settings?.autoSave, true),
+            soundEnabled: ensureBoolean(migratedData.settings?.soundEnabled, true),
+            musicEnabled: ensureBoolean(migratedData.settings?.musicEnabled, true),
+            animationsEnabled: ensureBoolean(migratedData.settings?.animationsEnabled, true),
+            showFPS: ensureBoolean(migratedData.settings?.showFPS, false),
+        };
+
+        migratedData.gameLoop = {
+            lastUpdate: clampNumber(migratedData.gameLoop?.lastUpdate, Date.now(), { min: 0 }),
+            fps: clampNumber(migratedData.gameLoop?.fps, 60, { min: 0 }),
+            paused: ensureBoolean(migratedData.gameLoop?.paused, false),
+            lastSaveTime: clampNumber(migratedData.gameLoop?.lastSaveTime, Date.now(), { min: 0 }),
+            pauseReason: typeof migratedData.gameLoop?.pauseReason === 'string' ? migratedData.gameLoop.pauseReason : null,
+            pausedAt: clampNumber(migratedData.gameLoop?.pausedAt, null, { min: 0 }),
+        };
+
+        migratedData.season = ensureObject(migratedData.season, {
+            current: 'spring',
+            lastChangeTime: Date.now(),
+            config: null,
+        });
+        if (typeof migratedData.season.current !== 'string') {
+            migratedData.season.current = 'spring';
+        }
+        if (!Number.isFinite(migratedData.season.lastChangeTime)) {
+            migratedData.season.lastChangeTime = Date.now();
         }
 
         if (typeof migratedData.lastChallengeReset !== 'number') {

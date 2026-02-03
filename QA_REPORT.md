@@ -4,6 +4,7 @@
 
 ## Method
 - Static/code inspection of all FarmSim tabs and core screens.
+- Debug-only tooling audited (`?debug=1`) for crash capture and stress actions.
 - No browser runtime validation executed in this environment.
 
 ## Tab-by-Tab Sweep
@@ -35,10 +36,14 @@
 - Expand: **PASS** (grid + coins update wired).
 - Settings: **PASS** (save/load and settings updates wired).
 
+**Debug-Only Panels**
+- Performance/Crash Overlay: **PASS** (action trace + copyable debug report; debug-only toggle). (`src/components/farm-sim/ui/PerformanceOverlay.jsx`)
+- Stress Panel: **PASS** (buttons wired for plot fill/harvest, notification stress, tab cycling, building toggles, day advance). (`src/components/farm-sim/ui/DebugStressPanel.jsx`)
+
 ## Fixes Applied During QA
-- Added missing action creators for multiple tabs (daily challenges, research/genetics, processing, pets, etc.).
-- Fixed daily challenge reset timestamp/streak updates.
-- Added debug-only crash capture + action tracing to help reproduce issues.
+- Added debug-only stress panel with scripted stress actions.
+- Expanded crash capture overlay to include copyable debug reports and up to 100 recent actions.
+- Hardened save/load normalization and added plot index guards to prevent off-by-one crashes.
 
 ## Manual/Automated Tests
-- Not run (no runtime/browser access in this pass).
+- Not run (no runtime/browser access in this pass). Use the stress panel to run the suite twice when a browser session is available.
