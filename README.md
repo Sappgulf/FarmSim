@@ -31,16 +31,6 @@ Open [http://localhost:5173](http://localhost:5173) to start farming!
 
 ---
 
-## 🧭 Mode Selection
-
-This repo includes two playable modes:
-- **Cozy Sim (Path B)** — Story Dashboard, scrapbook chapters, mood & wishes.
-- **Full FarmSim** — Expanded systems, tabs, and deep progression.
-
-To switch modes, append `?mode=select` to the URL. Your last choice is saved locally.
-
----
-
 ## 🎮 Game Overview
 
 **FarmLife** is an immersive farming simulation where you manage your own virtual farm with realistic agriculture mechanics. Plant crops, breed hybrid varieties, research new technologies, manage pets, battle diseases and disasters, complete daily quests, raise livestock, go fishing, enjoy procedural sound effects and dynamic music, and build advanced agricultural infrastructure.
