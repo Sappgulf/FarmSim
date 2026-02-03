@@ -4,6 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
+import { logDebugAction } from '../../../../utils/debugTools';
 
 // Daily challenge types from original system
 const DAILY_CHALLENGE_TYPES = [
@@ -71,21 +72,23 @@ const ChallengesTab = memo(() => {
     // Generate new challenges if none exist or if it's been more than a day
     if (dailyChallenges.length === 0 || timeSinceReset > oneDay) {
       generateNewChallenges();
-      if (actions.updateSettings) {
-        actions.updateSettings({ lastChallengeReset: now });
-      }
+      actions.updateLastChallengeReset(now);
+      logDebugAction('daily_challenge_reset', { timestamp: now });
     }
   }, [lastChallengeReset, dailyChallenges.length]);
 
   const generateNewChallenges = () => {
     // Select 3 random challenges
     const shuffled = [...DAILY_CHALLENGE_TYPES].sort(() => 0.5 - Math.random());
-    const selectedChallenges = shuffled.slice(0, 3).map(challenge => ({
-      ...challenge,
-      target: challenge.generateTarget(),
-      description: challenge.description.replace('{target}', challenge.generateTarget()),
-      completed: false
-    }));
+    const selectedChallenges = shuffled.slice(0, 3).map(challenge => {
+      const target = challenge.generateTarget();
+      return {
+        ...challenge,
+        target,
+        description: challenge.description.replace('{target}', target),
+        completed: false
+      };
+    });
 
     actions.setDailyChallenges(selectedChallenges);
     actions.updateChallengeProgress({});
@@ -106,7 +109,7 @@ const ChallengesTab = memo(() => {
     actions.setDailyChallenges(updatedChallenges);
 
     // Update streak
-    actions.updateSettings({ challengeStreak: state.challengeStreak + 1 });
+    actions.updateChallengeStreak(state.challengeStreak + 1);
 
     actions.addNotification({
       message: `Challenge completed! +${challenge.reward.coins}🪙 +${challenge.reward.xp} XP`,

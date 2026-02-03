@@ -1,5 +1,6 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
+import { clearDebugError, getDebugMetrics, isDebugMode } from '../../../utils/debugTools';
 
 /**
  * Performance Overlay Component
@@ -8,24 +9,30 @@ import { useGame } from '../context/GameContext';
  */
 const PerformanceOverlay = memo(() => {
     const { state } = useGame();
-    const [isVisible, setIsVisible] = useState(false);
+    const debugEnabled = isDebugMode();
+    const [isVisible, setIsVisible] = useState(debugEnabled);
     const [metrics, setMetrics] = useState({
-        fps: 0,
-        frameTime: 0,
+        avgFps: 0,
+        avgFrameTime: 0,
+        worstFrameTime: 0,
         updateTime: 0,
         renderTime: 0,
         memory: 0,
-        entityCount: 0,
+        plots: 0,
+        buildings: 0,
+        notifications: 0,
         particleCount: 0,
-        listenerCount: 0,
+        timers: 0,
+        listeners: 0,
     });
+    const [debugInfo, setDebugInfo] = useState(getDebugMetrics());
 
     const frameTimesRef = useRef([]);
     const lastFrameTimeRef = useRef(performance.now());
-    const updateStartRef = useRef(0);
 
     // Toggle visibility with backtick key
     useEffect(() => {
+        if (!debugEnabled) return;
         const handleKeyPress = (e) => {
             if (e.key === '`' || e.key === '~') {
                 setIsVisible(prev => !prev);
@@ -33,40 +40,75 @@ const PerformanceOverlay = memo(() => {
         };
         window.addEventListener('keydown', handleKeyPress);
         return () => window.removeEventListener('keydown', handleKeyPress);
-    }, []);
+    }, [debugEnabled]);
+
+    useEffect(() => {
+        if (!debugEnabled) return;
+        setIsVisible(true);
+    }, [debugEnabled]);
+
+    useEffect(() => {
+        if (!debugEnabled) return;
+        let rafId = null;
+
+        const trackFrame = (now) => {
+            const delta = now - lastFrameTimeRef.current;
+            lastFrameTimeRef.current = now;
+            frameTimesRef.current.push({ time: now, delta });
+            const cutoff = now - 5000;
+            frameTimesRef.current = frameTimesRef.current.filter(sample => sample.time >= cutoff);
+            rafId = requestAnimationFrame(trackFrame);
+        };
+
+        rafId = requestAnimationFrame(trackFrame);
+
+        return () => {
+            if (rafId) cancelAnimationFrame(rafId);
+        };
+    }, [debugEnabled]);
 
     // Collect metrics at lower frequency (2Hz instead of 60Hz)
     useEffect(() => {
-        if (!isVisible) return;
+        if (!debugEnabled || !isVisible) return;
 
         const collectMetrics = () => {
-            // PERF FIX: Use window globals for FPS
-            const fps = window.__currentFPS || 60;
-            const avgFrameTime = fps > 0 ? (1000 / fps) : 16.67;
+            const samples = frameTimesRef.current;
+            const frameSum = samples.reduce((sum, sample) => sum + sample.delta, 0);
+            const avgFrameTime = samples.length ? frameSum / samples.length : 0;
+            const worstFrameTime = samples.reduce((max, sample) => Math.max(max, sample.delta), 0);
+            const avgFps = avgFrameTime > 0 ? (1000 / avgFrameTime) : 0;
 
             // Memory (Chrome only)
             const memory = performance.memory
                 ? Math.round(performance.memory.usedJSHeapSize / (1024 * 1024))
                 : 0;
 
-            // Entity counts - read from stateRef to avoid subscription
             const plots = state.plots?.length || 0;
-            const animals = state.livestock?.animals?.length || 0;
+            const buildings = Object.keys(state.buildings || {}).length;
             const notifications = state.notifications?.length || 0;
-            const entityCount = plots + animals + notifications;
 
             // Particle count (from global)
             const particleCount = window.__particleCount || 0;
 
+            const debugMetrics = getDebugMetrics();
+            setDebugInfo(debugMetrics);
+
+            const updateTime = window.__lastUpdateTime || 0;
+            const renderTime = Math.max(0, avgFrameTime - updateTime);
+
             setMetrics({
-                fps,
-                frameTime: avgFrameTime.toFixed(1),
-                updateTime: (window.__lastUpdateTime || 0).toFixed(1),
-                renderTime: 0,
+                avgFps,
+                avgFrameTime: avgFrameTime.toFixed(1),
+                worstFrameTime: worstFrameTime.toFixed(1),
+                updateTime: updateTime.toFixed(1),
+                renderTime: renderTime.toFixed(1),
                 memory,
-                entityCount,
+                plots,
+                buildings,
+                notifications,
                 particleCount,
-                listenerCount: 0,
+                timers: debugMetrics?.timerCount || 0,
+                listeners: debugMetrics?.listenerCount || 0,
             });
         };
 
@@ -75,17 +117,16 @@ const PerformanceOverlay = memo(() => {
         collectMetrics(); // Initial call
 
         return () => clearInterval(intervalId);
-    }, [isVisible, state.plots?.length, state.livestock?.animals?.length, state.notifications?.length]);
+    }, [debugEnabled, isVisible, state.plots?.length, state.notifications?.length, state.buildings]);
 
-    // Don't render in production unless explicitly enabled
-    if (import.meta.env.PROD && !window.__PERF_OVERLAY_ENABLED) {
+    if (!debugEnabled) {
         return null;
     }
 
     if (!isVisible) {
         return (
             <div className="fixed bottom-2 right-2 text-xs text-gray-400 pointer-events-none z-50">
-                Press ` for perf overlay
+                Debug overlay hidden (` to toggle)
             </div>
         );
     }
@@ -104,9 +145,42 @@ const PerformanceOverlay = memo(() => {
     };
 
     return (
-        <div className="fixed top-2 left-2 bg-black/90 backdrop-blur-sm text-white font-mono text-xs p-3 rounded-lg z-[9999] min-w-[200px] shadow-xl border border-gray-700">
+        <>
+            {debugInfo?.lastError && (
+                <div className="fixed inset-4 sm:inset-8 z-[10000] overflow-auto rounded-2xl border border-red-500/70 bg-black/90 p-4 text-white shadow-2xl">
+                    <div className="flex items-center justify-between mb-3">
+                        <h2 className="text-lg font-semibold text-red-300">⚠️ Debug Crash Capture</h2>
+                        <button
+                            onClick={clearDebugError}
+                            className="text-xs text-gray-300 hover:text-white"
+                        >
+                            Dismiss
+                        </button>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                        <div><span className="text-gray-400">Source:</span> {debugInfo.lastError.source}</div>
+                        <div><span className="text-gray-400">Time:</span> {debugInfo.lastError.time}</div>
+                        <div className="rounded-lg bg-black/60 p-3 text-[11px] whitespace-pre-wrap">
+                            {debugInfo.lastError.message}
+                            {debugInfo.lastError.stack ? `\n\n${debugInfo.lastError.stack}` : ''}
+                        </div>
+                    </div>
+                    <div className="mt-4">
+                        <div className="text-xs text-gray-400 mb-2">Recent Actions</div>
+                        <div className="space-y-1 text-[11px]">
+                            {debugInfo.lastError.trace.slice(-12).map((entry) => (
+                                <div key={entry.id} className="text-gray-200">
+                                    {entry.time} • {entry.type}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="fixed top-2 left-2 bg-black/90 backdrop-blur-sm text-white font-mono text-xs p-3 rounded-lg z-[9999] min-w-[240px] shadow-xl border border-gray-700">
             <div className="text-gray-400 mb-2 flex justify-between items-center">
-                <span>⚙️ PERF OVERLAY</span>
+                <span>⚙️ DEBUG PERF</span>
                 <button
                     onClick={() => setIsVisible(false)}
                     className="text-gray-500 hover:text-white"
@@ -118,15 +192,22 @@ const PerformanceOverlay = memo(() => {
             <div className="space-y-1">
                 {/* FPS */}
                 <div className="flex justify-between">
-                    <span>FPS:</span>
-                    <span className={getFPSColor(metrics.fps)}>{metrics.fps}</span>
+                    <span>FPS (avg):</span>
+                    <span className={getFPSColor(metrics.avgFps)}>{Math.round(metrics.avgFps)}</span>
                 </div>
 
                 {/* Frame Time */}
                 <div className="flex justify-between">
-                    <span>Frame:</span>
-                    <span className={getFrameTimeColor(parseFloat(metrics.frameTime))}>
-                        {metrics.frameTime}ms
+                    <span>Frame (avg):</span>
+                    <span className={getFrameTimeColor(parseFloat(metrics.avgFrameTime))}>
+                        {metrics.avgFrameTime}ms
+                    </span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span>Frame (worst):</span>
+                    <span className={getFrameTimeColor(parseFloat(metrics.worstFrameTime))}>
+                        {metrics.worstFrameTime}ms
                     </span>
                 </div>
 
@@ -135,6 +216,14 @@ const PerformanceOverlay = memo(() => {
                     <span>Update:</span>
                     <span className={getFrameTimeColor(parseFloat(metrics.updateTime))}>
                         {metrics.updateTime}ms
+                    </span>
+                </div>
+
+                {/* Render Time */}
+                <div className="flex justify-between">
+                    <span>Render:</span>
+                    <span className={getFrameTimeColor(parseFloat(metrics.renderTime))}>
+                        {metrics.renderTime}ms
                     </span>
                 </div>
 
@@ -152,9 +241,37 @@ const PerformanceOverlay = memo(() => {
 
                 {/* Entity Counts */}
                 <div className="flex justify-between">
-                    <span>Entities:</span>
-                    <span className={metrics.entityCount > 100 ? 'text-yellow-400' : 'text-gray-300'}>
-                        {metrics.entityCount}
+                    <span>Plots:</span>
+                    <span className={metrics.plots > 100 ? 'text-yellow-400' : 'text-gray-300'}>
+                        {metrics.plots}
+                    </span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span>Buildings:</span>
+                    <span className="text-gray-300">
+                        {metrics.buildings}
+                    </span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span>Notifs:</span>
+                    <span className="text-gray-300">
+                        {metrics.notifications}
+                    </span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span>Timers:</span>
+                    <span className="text-gray-300">
+                        {metrics.timers}
+                    </span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span>Listeners:</span>
+                    <span className="text-gray-300">
+                        {metrics.listeners}
                     </span>
                 </div>
 
@@ -179,10 +296,22 @@ const PerformanceOverlay = memo(() => {
                 </div>
             </div>
 
+            <div className="mt-2 border-t border-gray-700 pt-2">
+                <div className="text-gray-400 text-[10px] mb-1">Recent actions</div>
+                <div className="space-y-1 text-[10px] text-gray-300 max-h-20 overflow-auto">
+                    {debugInfo?.actionTrace?.slice(-6).map((entry) => (
+                        <div key={entry.id}>
+                            {entry.time.split('T')[1]?.replace('Z', '')} • {entry.type}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
             <div className="text-gray-500 text-[10px] mt-2 border-t border-gray-700 pt-2">
-                Press ` to toggle
+                Press ` to toggle. Debug actions: {debugInfo?.actionTrace?.length || 0}
             </div>
         </div>
+        </>
     );
 });
 

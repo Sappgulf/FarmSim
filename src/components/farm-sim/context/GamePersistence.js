@@ -4,6 +4,7 @@
 
 export const SAVE_VERSION = 1;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
+export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 
 /**
  * Helper function to initialize plots
@@ -100,6 +101,13 @@ export function migrateSaveData(savedData) {
             migratedData.plots = initializePlots(migratedData.gridSize || 3);
         }
 
+        if (typeof migratedData.lastChallengeReset !== 'number') {
+            migratedData.lastChallengeReset = Date.now();
+        }
+        if (typeof migratedData.challengeStreak !== 'number') {
+            migratedData.challengeStreak = 0;
+        }
+
         migratedData.saveVersion = SAVE_VERSION;
         return migratedData;
     } catch (error) {
@@ -114,17 +122,20 @@ export function migrateSaveData(savedData) {
  */
 export function loadSavedState() {
     try {
-        const savedDataString = localStorage.getItem(SAVE_KEY);
-        if (!savedDataString) return null;
+        const loadFromKey = (key) => {
+            const savedDataString = localStorage.getItem(key);
+            if (!savedDataString) return null;
+            const savedData = JSON.parse(savedDataString);
+            const migratedData = migrateSaveData(savedData);
+            if (!migratedData) return null;
+            migratedData.notifications = [];
+            return migratedData;
+        };
 
-        const savedData = JSON.parse(savedDataString);
-        const migratedData = migrateSaveData(savedData);
+        const primary = loadFromKey(SAVE_KEY);
+        if (primary) return primary;
 
-        if (!migratedData) return null;
-
-        // Clear notifications on load
-        migratedData.notifications = [];
-        return migratedData;
+        return loadFromKey(BACKUP_SAVE_KEY);
     } catch (error) {
         console.error('[farm]', 'Failed to load saved game', error);
         return null;
