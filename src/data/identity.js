@@ -3,7 +3,11 @@
  * Mood tiers, philosophies, memories, chapters, and blessings.
  */
 
-export const PHILOSOPHIES = [
+import { getContentManager } from '../content/ContentManager';
+
+const content = getContentManager();
+
+export const PHILOSOPHIES = content.strings.philosophies || [
   {
     id: 'nature',
     name: 'Nature First',

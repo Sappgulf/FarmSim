@@ -33,6 +33,11 @@ Choose one philosophy to guide the Story Dashboard suggestions:
 - Toggle locked-page hints in **Settings → Gameplay**.
 - The Town Board shares one Almanac insight each day.
 
+### Season Packs (Content Packs)
+- Season Packs are optional bundles that add crops, decor, festivals, or Almanac pages.
+- Packs load automatically at startup; no restart needed unless you change files.
+- Each pack includes a **What’s New** highlight list shown on the Town Board when available.
+
 ### Wishing Well
 - Once per in-game day, pay a small fee to make a wish.
 - Grants one Cozy Blessing until the next day rollover.

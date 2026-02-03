@@ -2,6 +2,15 @@
 
 **Date:** 2026-02-03
 
+## Season Pack Pipeline v1 Verification (2026-02-03)
+- **Static inspection:** ContentManager load/merge paths, pack metadata, and validation logic reviewed.
+- **Events tab:** Seasonal events now sourced from content pipeline; ensured timers are cleared on unmount and after event completion.
+- **Farm grid:** Safe fallback for missing crop selection to prevent crashes when content IDs change.
+- **Debug tooling:** Added dev-only content validation + report buttons (disabled outside `?debug=1`).
+- **Automated check:** `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
+
+**Manual runtime checks:** Not executed in this environment.
+
 ## Method
 - Static/code inspection of all FarmSim tabs and core screens.
 - Debug-only tooling audited (`?debug=1`) for crash capture and stress actions.

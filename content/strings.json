@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "philosophies": [
+    {
+      "id": "nature",
+      "name": "Nature First",
+      "description": "Follow seasons and weather rhythms."
+    },
+    {
+      "id": "market",
+      "name": "Market Maven",
+      "description": "Focus on featured crops and smart sales."
+    },
+    {
+      "id": "slow",
+      "name": "Slow Living",
+      "description": "Cozy pace, decorate, and reflect often."
+    }
+  ],
+  "ui": {
+    "whatsNewTitle": "What's New",
+    "noPacks": "No new packs loaded."
+  }
+}

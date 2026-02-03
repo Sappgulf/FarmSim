@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "id": "snowdrop",
+      "name": "Snowdrop",
+      "emoji": "❄️",
+      "icon": "❄️",
+      "cost": 22,
+      "baseValue": 46,
+      "growthTime": 96,
+      "stages": 3,
+      "description": "A hardy winter bloom with gentle returns.",
+      "category": "specialty",
+      "season": "winter",
+      "seasonTags": ["winter"],
+      "level": 2
+    }
+  ]
+}

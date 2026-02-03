@@ -1,0 +1,18 @@
+{
+  "pages": [
+    {
+      "id": "winter_rituals",
+      "section": "farm_notes",
+      "title": "Winter Rituals",
+      "icon": "🧣",
+      "hint": "Welcome the first winter evening.",
+      "unlock": { "type": "season_start", "season": "winter" },
+      "text": {
+        "default": "Warm hands, warm heart. Small rituals keep the farm bright in winter.",
+        "nature": "The quiet season asks for gentle tending and soft routines.",
+        "market": "Winter favors careful planning. Small rituals keep stocks steady.",
+        "slow": "Settle in with warm rituals and the farm will feel like home."
+      }
+    }
+  ]
+}

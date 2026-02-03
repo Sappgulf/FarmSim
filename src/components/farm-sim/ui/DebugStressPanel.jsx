@@ -5,6 +5,7 @@ import { Button } from '../../ui/button';
 import { CROP_DATA } from '../constants/cropData';
 import { BUILDINGS } from '../constants/buildingData';
 import { isDebugMode, logDebugAction } from '../../../utils/debugTools';
+import { printContentReport, revalidateContent } from '../../../content/ContentManager';
 import { TAB_IDS } from './GameSidebar';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -114,6 +115,24 @@ const DebugStressPanel = memo(() => {
     logDebugAction('stress_advance_days', { days: 30 });
   };
 
+  const revalidateContentNow = () => {
+    revalidateContent();
+    actions.addNotification({
+      message: '✅ Content revalidated. Check debug logs for details.',
+      type: 'success',
+    });
+    logDebugAction('content_revalidate');
+  };
+
+  const reportContentNow = () => {
+    printContentReport();
+    actions.addNotification({
+      message: '🧾 Content report printed to console.',
+      type: 'info',
+    });
+    logDebugAction('content_report');
+  };
+
   return (
     <div className="fixed bottom-24 left-2 right-2 sm:right-auto sm:w-80 z-[9998]">
       <Card className="bg-black/85 text-white border border-gray-700 shadow-xl p-3 space-y-2">
@@ -145,6 +164,12 @@ const DebugStressPanel = memo(() => {
           </Button>
           <Button size="sm" className="h-10 col-span-2" onClick={advanceThirtyDays}>
             Advance 30 Days
+          </Button>
+          <Button size="sm" className="h-10" onClick={revalidateContentNow}>
+            Re-validate
+          </Button>
+          <Button size="sm" className="h-10" onClick={reportContentNow}>
+            Content Report
           </Button>
         </div>
         <div className="text-[10px] text-gray-400">

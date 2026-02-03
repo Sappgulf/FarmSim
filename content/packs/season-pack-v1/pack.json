@@ -1,0 +1,18 @@
+{
+  "id": "season-pack-v1",
+  "name": "Season Pack v1: Cozy Starters",
+  "version": "1.0.0",
+  "description": "A starter seasonal pack with one crop, one decor piece, and a cozy almanac note.",
+  "author": "FarmSim Core",
+  "createdAt": "2026-02-03",
+  "contentCounts": {
+    "crops": 1,
+    "decor": 1,
+    "almanac": 1
+  },
+  "highlights": [
+    "❄️ Snowdrop crop for winter planting",
+    "🧺 Knitted blanket decor",
+    "📖 New almanac page about winter rituals"
+  ]
+}

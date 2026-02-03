@@ -1,121 +1,33 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { getDailyAlmanacInsight } from '../../../../systems/almanac';
-
-// Seasonal events from original system
-const SEASONAL_EVENTS = {
-  spring: [
-    {
-      id: "spring_festival",
-      name: "Spring Planting Festival",
-      emoji: "🌸",
-      description: "Celebrate new growth! Double XP for planting and 25% faster growth.",
-      duration: 300, // 5 minutes
-      effects: { growth_speed: 1.25, planting_xp: 2.0 },
-      rewards: { coins: 100, items: { "spring_seeds": 3 } },
-      rarity: "common"
-    },
-    {
-      id: "flower_bloom",
-      name: "Flower Bloom Event",
-      emoji: "🌺",
-      description: "Flowers are in bloom! Decorative crops give bonus coins.",
-      duration: 240,
-      effects: { flower_bonus: 1.5 },
-      rewards: { coins: 75, items: { "decorative_seeds": 2 } },
-      rarity: "uncommon"
-    },
-    {
-      id: "seed_swap_social",
-      name: "Seed Swap Social",
-      emoji: "🧺",
-      description: "Neighbors trade tips! Planting XP +50% and growth +10%.",
-      duration: 240,
-      effects: { planting_xp: 1.5, growth_speed: 1.1 },
-      rewards: { coins: 90, items: { "spring_seeds": 2 } },
-      rarity: "common"
-    }
-  ],
-  summer: [
-    {
-      id: "harvest_moon",
-      name: "Harvest Moon Festival",
-      emoji: "🌕",
-      description: "Under the harvest moon, all crops give 50% more coins!",
-      duration: 180,
-      effects: { harvest_bonus: 1.5 },
-      rewards: { coins: 200, items: { "moon_fertilizer": 1 } },
-      rarity: "rare"
-    },
-    {
-      id: "summer_solstice",
-      name: "Summer Solstice",
-      emoji: "☀️",
-      description: "Longest day of the year! No watering needed and faster growth.",
-      duration: 360,
-      effects: { no_watering: true, growth_speed: 1.3 },
-      rewards: { coins: 150, items: { "solar_seeds": 2 } },
-      rarity: "uncommon"
-    }
-  ],
-  autumn: [
-    {
-      id: "pumpkin_fest",
-      name: "Pumpkin Festival",
-      emoji: "🎃",
-      description: "Pumpkins and gourds sell for triple value!",
-      duration: 420,
-      effects: { pumpkin_bonus: 3.0 },
-      rewards: { coins: 300, items: { "giant_pumpkin_seeds": 1 } },
-      rarity: "epic"
-    },
-    {
-      id: "thanksgiving",
-      name: "Thanksgiving Feast",
-      emoji: "🦃",
-      description: "Share the harvest! Bonus coins for every crop type in inventory.",
-      duration: 240,
-      effects: { diversity_bonus: 50 },
-      rewards: { coins: 250, items: { "feast_crops": 5 } },
-      rarity: "rare"
-    }
-  ],
-  winter: [
-    {
-      id: "winter_wonder",
-      name: "Winter Wonderland",
-      emoji: "❄️",
-      description: "Greenhouse crops immune to frost and grow 2x faster!",
-      duration: 300,
-      effects: { greenhouse_boost: 2.0, frost_immunity: true },
-      rewards: { coins: 175, items: { "winter_seeds": 3 } },
-      rarity: "uncommon"
-    },
-    {
-      id: "snow_lantern_market",
-      name: "Snow Lantern Market",
-      emoji: "🏮",
-      description: "Lanterns glow across the farm. Harvests gain a small bonus.",
-      duration: 240,
-      effects: { harvest_bonus: 1.2 },
-      rewards: { coins: 140, items: { "winter_seeds": 2 } },
-      rarity: "rare"
-    }
-  ]
-};
+import { getContentManager } from '../../../../content/ContentManager';
 
 const EventsTab = memo(() => {
   const { state, actions } = useGame();
+  const content = getContentManager();
   const [eventHistory, setEventHistory] = useState([]);
-  
-  // Ensure event-related state exists
-  const activeSeasonalEvents = state.activeSeasonalEvents || [];
-  const seasonalEvents = state.seasonalEvents || [];
+  const stateRef = useRef(state);
+  const eventTimersRef = useRef(new Map());
+  const packHighlights = (content.report?.packs || [])
+    .filter((pack) => pack.highlights?.length)
+    .map((pack) => ({ packName: pack.name, items: pack.highlights }));
 
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    return () => {
+      eventTimersRef.current.forEach((timeoutId) => clearTimeout(timeoutId));
+      eventTimersRef.current.clear();
+    };
+  }, []);
+  
   // Get current season
   const getCurrentSeason = () => {
     const month = new Date().getMonth();
@@ -126,7 +38,9 @@ const EventsTab = memo(() => {
   };
 
   const currentSeason = getCurrentSeason();
-  const seasonEvents = SEASONAL_EVENTS[currentSeason] || [];
+  const seasonEvents = content.festivals.filter((event) =>
+    event.season === currentSeason || event.seasonTags?.includes(currentSeason)
+  );
 
   // Trigger random seasonal event
   const triggerSeasonalEvent = () => {
@@ -146,8 +60,8 @@ const EventsTab = memo(() => {
     const eventWithTimer = {
       ...randomEvent,
       startedAt: Date.now(),
-      endsAt: Date.now() + (randomEvent.duration * 1000),
-      season: currentSeason
+      endsAt: Date.now() + (randomEvent.durationSeconds * 1000),
+      season: currentSeason,
     };
 
     // Start the event
@@ -160,19 +74,21 @@ const EventsTab = memo(() => {
     actions.recordAlmanacEvent('festival_start', { eventId: randomEvent.id, season: currentSeason });
 
     // Auto-end event after duration
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       endSeasonalEvent(eventWithTimer.id);
-    }, randomEvent.duration * 1000);
+    }, randomEvent.durationSeconds * 1000);
+    eventTimersRef.current.set(eventWithTimer.id, timeoutId);
   };
 
   // End seasonal event and grant rewards
   const endSeasonalEvent = (eventId) => {
-    const activeEvent = state.activeSeasonalEvents?.find(e => e.id === eventId);
+    const currentState = stateRef.current;
+    const activeEvent = currentState.activeSeasonalEvents?.find((event) => event.id === eventId);
     if (!activeEvent) return;
 
     // Grant rewards
-    actions.setCoins(state.coins + activeEvent.rewards.coins);
-    actions.setXp(state.xp + Math.floor(activeEvent.rewards.coins * 0.5));
+    actions.setCoins(currentState.coins + activeEvent.rewards.coins);
+    actions.setXp(currentState.xp + Math.floor(activeEvent.rewards.coins * 0.5));
 
     // Add to event history
     const completedEvent = {
@@ -187,6 +103,11 @@ const EventsTab = memo(() => {
 
     // Clear active event
     actions.updateActiveEvents([]);
+    const timeoutId = eventTimersRef.current.get(eventId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      eventTimersRef.current.delete(eventId);
+    }
 
     actions.addNotification({
       message: `${activeEvent.emoji} ${activeEvent.name} ended! +${activeEvent.rewards.coins}🪙`,
@@ -212,6 +133,7 @@ const EventsTab = memo(() => {
 
   const activeEvent = state.activeSeasonalEvents?.[0];
   const almanacInsight = getDailyAlmanacInsight(state.almanac, state.philosophy);
+  const whatsNewTitle = content.strings?.ui?.whatsNewTitle || "What's New";
 
   return (
     <div className="space-y-4">
@@ -237,6 +159,32 @@ const EventsTab = memo(() => {
           }
         </div>
       </Card>
+
+      {packHighlights.length > 0 && (
+        <Card className="p-4 bg-gradient-to-r from-rose-50 to-amber-50 border-rose-200">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-semibold text-rose-800">✨ {whatsNewTitle}</h3>
+              <p className="text-sm text-rose-700">Season packs just landed on the Town Board.</p>
+            </div>
+            <Badge variant="outline" className="bg-rose-100 text-rose-700">
+              {content.report?.packs?.length || 0} Packs
+            </Badge>
+          </div>
+          <div className="mt-3 space-y-3 text-sm text-gray-700">
+            {packHighlights.map((highlight, index) => (
+              <div key={`${highlight.packName}-${index}`}>
+                <div className="font-semibold text-rose-700">{highlight.packName}</div>
+                <ul className="list-disc list-inside space-y-1">
+                  {highlight.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Season Header */}
       <Card className="p-4 bg-gradient-to-r from-green-50 to-blue-50">
@@ -277,7 +225,7 @@ const EventsTab = memo(() => {
               <span className="font-mono">{getEventTimeLeft(activeEvent)}</span>
             </div>
             <Progress
-              value={((activeEvent.endsAt - Date.now()) / (activeEvent.duration * 1000)) * 100}
+              value={((activeEvent.endsAt - Date.now()) / (activeEvent.durationSeconds * 1000)) * 100}
               className="h-2"
             />
           </div>
@@ -343,7 +291,7 @@ const EventsTab = memo(() => {
               <p className="text-sm text-gray-600 mb-2">{event.description}</p>
 
               <div className="flex justify-between text-xs text-gray-500">
-                <span>Duration: {Math.round(event.duration / 60)}m</span>
+                <span>Duration: {Math.round(event.durationSeconds / 60)}m</span>
                 <span>Reward: {event.rewards.coins}🪙</span>
               </div>
             </div>

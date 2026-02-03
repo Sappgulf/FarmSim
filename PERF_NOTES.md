@@ -12,6 +12,7 @@
 - Reduced allocations in crop growth scanning by removing per-tick filter calls in `FarmingSystem.updateCropGrowth`.
 - Expanded debug-only performance overlay to surface action trace depth + debug report copy for faster profiling/triage.
 - Added debug-only stress panel controls to exercise hot paths without manual setup.
+- Added ContentManager to load/validate content once at boot; no per-tick content scanning.
 
 ## After
 - Runtime metrics not captured in this environment.

@@ -4,7 +4,7 @@ import { useTick } from '../context/TickContext';
 import { Card } from '../../ui/card';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
-import { CROP_DATA } from '../constants/cropData';
+import { CROP_DATA, CROP_LIST } from '../constants/cropData';
 import { DECORATION_DATA } from '../constants/decorData';
 
 const ReadyCountdown = memo(({ readyAt, harvestWindowMs = 45000 }) => {
@@ -459,7 +459,9 @@ const FarmGrid = memo(() => {
 
   const handlePlant = useCallback((index) => {
     // Use consolidated crop data
-    const selectedCrop = CROP_DATA[state.selectedCrop] || CROP_DATA.carrot;
+    const fallbackCrop = CROP_LIST[0];
+    const selectedCrop = CROP_DATA[state.selectedCrop] || fallbackCrop;
+    if (!selectedCrop) return;
 
     // Check if player has enough coins
     if (state.coins >= selectedCrop.cost) {
@@ -832,7 +834,7 @@ const FarmGrid = memo(() => {
             onDecorate={handleDecorate}
             isSelected={selectedPlots.has(index)}
             onToggleSelect={handleToggleSelect}
-            selectedCrop={CROP_DATA[state.selectedCrop]}
+            selectedCrop={CROP_DATA[state.selectedCrop] || CROP_LIST[0]}
             selectedDecoration={selectedDecoration}
             isDecorMode={decorMode}
             seasonBonus={seasonBonus}
