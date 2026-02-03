@@ -184,7 +184,7 @@ export function gameReducer(state, action) {
             return { ...state, gridSize: newGridSize, plots: updatedPlots };
 
         case GAME_ACTIONS.UPDATE_INVENTORY:
-            const newInventory = typeof action.payload === 'function' ? action.payload(state) : action.payload;
+            const newInventory = typeof action.payload === 'function' ? action.payload(state.inventory) : action.payload;
             return { ...state, inventory: newInventory };
 
         case GAME_ACTIONS.SET_WEATHER:

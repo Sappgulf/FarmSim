@@ -9,6 +9,7 @@ export class WeatherSystem {
     this.actions = gameActions;
     this.lastWeatherChange = Date.now();
     this.weatherCycleDuration = 25000; // 25 seconds per weather type
+    this.lastWeatherEffectUpdate = 0;
   }
 
   update(currentState) {
@@ -29,7 +30,7 @@ export class WeatherSystem {
     }
 
     // Update weather effects on crops
-    this.applyWeatherEffects();
+    this.applyWeatherEffects(now);
   }
 
   changeWeather() {
@@ -164,12 +165,24 @@ export class WeatherSystem {
     }
   }
 
-  applyWeatherEffects() {
+  applyWeatherEffects(now = Date.now()) {
     // Safety check
     if (!this.gameState || !Array.isArray(this.gameState.plots)) {
       console.warn('[farm] WeatherSystem: No valid plots array for weather effects');
       return;
     }
+
+    const EFFECT_UPDATE_INTERVAL_MS = 1000;
+    if (!this.lastWeatherEffectUpdate) {
+      this.lastWeatherEffectUpdate = now;
+      return;
+    }
+    const elapsedMs = now - this.lastWeatherEffectUpdate;
+    if (elapsedMs < EFFECT_UPDATE_INTERVAL_MS) {
+      return;
+    }
+    this.lastWeatherEffectUpdate = now;
+    const elapsedSeconds = elapsedMs / 1000;
     
     // Continuous weather effects - called periodically
     const effects = this.getWeatherEffects(this.gameState.weather || 'sunny');
@@ -180,26 +193,36 @@ export class WeatherSystem {
     const updatedPlots = this.gameState.plots.map(plot => {
       if (plot.state === 'empty') return plot;
 
-      let updatedPlot = { ...plot };
+      let updatedPlot = plot;
+
+      const ensureClone = () => {
+        if (updatedPlot === plot) {
+          updatedPlot = { ...plot };
+        }
+      };
 
       // Apply gradual water drain (if any), reduced by well
       if (effects.waterDrainRate) {
         const drainReduction = hasWell ? 0.5 : 0;
-        const actualDrain = effects.waterDrainRate * (1 - drainReduction);
-        updatedPlot.waterLevel = Math.max(0,
-          updatedPlot.waterLevel - actualDrain * 0.02 // Very gentle drain
-        );
+        const baseDrain = effects.waterDrainRate * (1 - drainReduction);
+        const actualDrain = baseDrain * 0.2 * elapsedSeconds;
+        const nextWater = Math.max(0, (plot.waterLevel || 0) - actualDrain);
+        if (nextWater !== plot.waterLevel) {
+          ensureClone();
+          updatedPlot.waterLevel = nextWater;
+        }
       }
 
       // DROUGHT WITHERING: Only during actual drought weather, much less aggressive
       if ((plot.state === 'growing' || plot.state === 'planted') && !hasGreenhouse) {
         const isActualDrought = this.gameState.weather === 'drought';
-        const isVeryLowWater = updatedPlot.waterLevel < 10; // Much lower threshold
+        const isVeryLowWater = (updatedPlot.waterLevel || 0) < 10; // Much lower threshold
 
         if (isActualDrought && isVeryLowWater) {
           // Very low chance of withering during drought with critically low water
           const witherChance = 0.005; // 0.5% per tick (much less aggressive)
           if (Math.random() < witherChance) {
+            ensureClone();
             updatedPlot.state = 'withered';
             updatedPlot.witheredAt = Date.now();
             updatedPlot.droughtDamage = true; // Mark as drought-damaged
@@ -215,22 +238,22 @@ export class WeatherSystem {
         }
       }
 
-      // Ensure weather modifier is set
-      updatedPlot.weatherModifier = effects.growthModifier || 1.0;
-      updatedPlot.currentWeather = this.gameState.weather;
+      // Ensure weather modifier and marker are set if needed
+      const nextWeatherModifier = effects.growthModifier || 1.0;
+      if (plot.weatherModifier !== nextWeatherModifier) {
+        ensureClone();
+        updatedPlot.weatherModifier = nextWeatherModifier;
+      }
+      if (plot.currentWeather !== this.gameState.weather) {
+        ensureClone();
+        updatedPlot.currentWeather = this.gameState.weather;
+      }
 
       return updatedPlot;
     });
 
     // Only update if something actually changed
-    const hasChanges = updatedPlots.some((plot, index) => {
-      const originalPlot = this.gameState.plots?.[index];
-      if (!originalPlot) return false;
-      
-      return plot.waterLevel !== originalPlot.waterLevel ||
-        plot.weatherModifier !== originalPlot.weatherModifier ||
-        plot.state !== originalPlot.state;
-    });
+    const hasChanges = updatedPlots.some((plot, index) => plot !== this.gameState.plots[index]);
 
     if (hasChanges) {
       this.actions.updatePlots(updatedPlots);

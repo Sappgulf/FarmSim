@@ -47,6 +47,25 @@ const AnimatedNumber = memo(({ value, duration = 500 }) => {
 
 AnimatedNumber.displayName = 'AnimatedNumber';
 
+const LastSaveTime = memo(({ lastSavedAt, autoSave }) => {
+  useTick();
+  const currentTime = Date.now();
+
+  const getTimeSinceLastSave = () => {
+    if (!lastSavedAt) {
+      return autoSave ? 'Waiting...' : 'Not saved yet';
+    }
+    const seconds = Math.max(0, Math.floor((currentTime - lastSavedAt) / 1000));
+    if (seconds < 10) return 'Just now';
+    if (seconds < 60) return `${seconds}s ago`;
+    return `${Math.floor(seconds / 60)}m ago`;
+  };
+
+  return <span>Auto-saved {getTimeSinceLastSave()}</span>;
+});
+
+LastSaveTime.displayName = 'LastSaveTime';
+
 // Game Header Component - Memoized for performance
 const GameHeader = memo(() => {
   const { state, actions } = useGame();
@@ -92,26 +111,10 @@ const GameHeader = memo(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.level]);
 
-  // PERF: Use centralized tick instead of setInterval
-  const tick = useTick();
-  // Recompute currentTime on each tick for save time display
-  const currentTime = Date.now();
-
   const formatNumber = (num) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num.toString();
-  };
-
-  const getTimeSinceLastSave = () => {
-    const lastSavedAt = state.gameLoop?.lastSaveTime;
-    if (!lastSavedAt) {
-      return state.settings.autoSave ? 'Waiting...' : 'Not saved yet';
-    }
-    const seconds = Math.max(0, Math.floor((currentTime - lastSavedAt) / 1000));
-    if (seconds < 10) return 'Just now';
-    if (seconds < 60) return `${seconds}s ago`;
-    return `${Math.floor(seconds / 60)}m ago`;
   };
 
   // Calculate XP progress to next level (60 XP per level)
@@ -346,7 +349,7 @@ const GameHeader = memo(() => {
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
           <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            <span>Auto-saved {getTimeSinceLastSave()}</span>
+            <LastSaveTime lastSavedAt={state.gameLoop?.lastSaveTime} autoSave={state.settings?.autoSave} />
           </div>
         </div>
       )}

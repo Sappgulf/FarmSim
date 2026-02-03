@@ -6,14 +6,32 @@ import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { CROP_DATA } from '../constants/cropData';
 
+const ReadyCountdown = memo(({ readyAt, harvestWindowMs = 45000 }) => {
+  useTick();
+  const now = Date.now();
+  const timeRemaining = Math.max(0, harvestWindowMs - (now - (readyAt || now)));
+  const minutesLeft = Math.floor(timeRemaining / 60000);
+  const secondsLeft = Math.floor((timeRemaining % 60000) / 1000);
+  const isNearExpiry = timeRemaining < 10000;
+
+  return (
+    <>
+      <div className={`text-[9px] text-center font-semibold mt-0.5 ${isNearExpiry ? 'text-orange-600 animate-pulse' : 'text-gray-600'}`}>
+        {timeRemaining > 0 ? `${minutesLeft}:${secondsLeft.toString().padStart(2, '0')}` : 'Harvest now!'}
+      </div>
+      {isNearExpiry && (
+        <div className="absolute inset-0 rounded-lg ring-2 ring-orange-400/80 animate-pulse pointer-events-none" />
+      )}
+    </>
+  );
+});
+
+ReadyCountdown.displayName = 'ReadyCountdown';
+
 // Enhanced plot component with tooltips and animations
 const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelected, onToggleSelect, selectedCrop, seasonBonus = 1.0 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-
-  // PERF: Use centralized tick instead of per-plot setInterval
-  // This reduces N intervals to 1 for the entire grid
-  const tick = useTick();
 
   const getPlotDisplay = () => {
     if (!plot || plot.state === 'empty') {
@@ -51,20 +69,11 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
     }
 
     if (plot.state === 'ready') {
-      // Calculate harvest window countdown (45 seconds)
-      const HARVEST_WINDOW = 45000;
-      const timeSinceReady = Date.now() - (plot.readyAt || Date.now());
-      const timeRemaining = Math.max(0, HARVEST_WINDOW - timeSinceReady);
-      const minutesLeft = Math.floor(timeRemaining / 60000);
-      const secondsLeft = Math.floor((timeRemaining % 60000) / 1000);
-      const isNearExpiry = timeRemaining < 10000; // Warning if < 10 seconds
-
       return {
         emoji: plot.crop.emoji || '🌾',
-        bgColor: isNearExpiry ? 'bg-orange-100' : 'bg-yellow-100',
-        borderColor: isNearExpiry ? 'border-orange-500' : 'border-yellow-400',
-        text: timeRemaining > 0 ? `Ready! 🎉` : '⚠️ Overripe!',
-        subText: timeRemaining > 0 ? `${minutesLeft}:${secondsLeft.toString().padStart(2, '0')}` : 'Harvest now!',
+        bgColor: 'bg-yellow-100',
+        borderColor: 'border-yellow-400',
+        text: 'Ready! 🎉',
         animation: 'animate-pulse',
         hoverEffect: 'hover:bg-yellow-200 hover:shadow-xl hover:scale-110'
       };
@@ -194,10 +203,14 @@ const FarmPlot = memo(({ plot, index, onPlotClick, onPlant, onHarvest, isSelecte
           <div className="text-[10px] sm:text-xs text-center font-medium text-gray-700 leading-tight">
             {display.text}
           </div>
-          {display.subText && (
-            <div className="text-[9px] text-center font-semibold text-gray-600 mt-0.5">
-              {display.subText}
-            </div>
+          {plot?.state === 'ready' ? (
+            <ReadyCountdown readyAt={plot.readyAt} />
+          ) : (
+            display.subText && (
+              <div className="text-[9px] text-center font-semibold text-gray-600 mt-0.5">
+                {display.subText}
+              </div>
+            )
           )}
 
           {/* Enhanced progress bar with percentage */}
@@ -311,7 +324,6 @@ const FarmGrid = memo(() => {
   const { state, actions } = useGame();
   const seasonBonus = state.season?.config?.bonuses?.growthSpeed || 1.0;
   const [selectedPlots, setSelectedPlots] = useState(new Set());
-  const [bulkMode, setBulkMode] = useState(false);
 
   const handlePlotClick = useCallback((index, action) => {
     // Handle clearing withered crops
@@ -349,7 +361,7 @@ const FarmGrid = memo(() => {
       message: `Plot ${index + 1} info displayed`,
       type: 'info'
     });
-  }, [actions, Array.isArray(state.plots) ? state.plots : []]);
+  }, [actions, state.plots]);
 
   const handleToggleSelect = useCallback((index) => {
     setSelectedPlots(prev => {
@@ -369,7 +381,7 @@ const FarmGrid = memo(() => {
 
     // Check if player has enough coins
     if (state.coins >= selectedCrop.cost) {
-      actions.setCoins(state.coins - selectedCrop.cost);
+      actions.spendMoney(selectedCrop.cost);
       actions.plantCrop(index, selectedCrop.id, selectedCrop);
 
       // Play plant sound
@@ -426,16 +438,15 @@ const FarmGrid = memo(() => {
     }, 300);
 
     // Update coins and inventory
-    actions.setCoins(state.coins + earnings);
+    actions.earnMoney(earnings);
     // REBALANCED: Consistent 15% XP rate across all harvest methods
-    actions.setXp(state.xp + Math.floor(earnings * 0.15));
+    actions.addXP(Math.floor(earnings * 0.15));
 
     // Update inventory
-    const updatedInventory = {
-      ...state.inventory,
-      [crop.id]: (state.inventory[crop.id] || 0) + 1
-    };
-    actions.updateInventory(updatedInventory);
+    actions.updateInventory((inventory) => ({
+      ...inventory,
+      [crop.id]: (inventory?.[crop.id] || 0) + 1
+    }));
 
     // Reset plot
     actions.harvestCrop(index, earnings);
@@ -444,25 +455,60 @@ const FarmGrid = memo(() => {
       message: `Harvested ${crop.emoji} ${crop.name}! +${earnings}🪙`,
       type: 'success'
     });
-  }, [actions, Array.isArray(state.plots) ? state.plots : [], state.coins, state.xp, state.inventory]);
+  }, [actions, state.plots]);
 
   // Bulk actions
   const handleBulkHarvest = useCallback(() => {
     let totalEarnings = 0;
+    let totalXp = 0;
     let harvestedCount = 0;
+    const inventoryUpdates = {};
     const plotsArray = Array.isArray(state.plots) ? state.plots : [];
 
-    selectedPlots.forEach(index => {
-      const plot = plotsArray[index];
-      if (plot?.state === 'ready') {
-        const earnings = Math.floor((plot.crop?.baseValue || 10) * 1.2);
-        totalEarnings += earnings;
-        harvestedCount++;
-        handleHarvest(index);
+    const updatedPlots = plotsArray.map((plot, index) => {
+      if (!selectedPlots.has(index) || plot?.state !== 'ready' || !plot.crop) {
+        return plot;
       }
+
+      const earnings = Math.floor((plot.crop?.baseValue || 10) * 1.2);
+      totalEarnings += earnings;
+      totalXp += Math.floor(earnings * 0.15);
+      harvestedCount++;
+      inventoryUpdates[plot.crop.id] = (inventoryUpdates[plot.crop.id] || 0) + 1;
+
+      return {
+        ...plot,
+        state: 'empty',
+        crop: null,
+        plantedAt: null,
+        growthStage: 0,
+        waterLevel: 50,
+        progress: 0,
+        soilFertility: Math.max(0.5, (plot?.soilFertility || 1.0) - 0.1)
+      };
     });
 
     if (harvestedCount > 0) {
+      actions.updatePlots(updatedPlots);
+      actions.earnMoney(totalEarnings);
+      actions.addXP(totalXp);
+      actions.updateInventory((inventory) => {
+        const nextInventory = { ...(inventory || {}) };
+        Object.entries(inventoryUpdates).forEach(([id, amt]) => {
+          nextInventory[id] = (nextInventory[id] || 0) + amt;
+        });
+        return nextInventory;
+      });
+
+      if (typeof window.soundSystem !== 'undefined') {
+        window.soundSystem.playHarvestSound();
+        setTimeout(() => {
+          if (typeof window.soundSystem !== 'undefined') {
+            window.soundSystem.playMoneySound();
+          }
+        }, 300);
+      }
+
       actions.addNotification({
         message: `Bulk harvested ${harvestedCount} crops! +${totalEarnings}🪙`,
         type: 'success'
@@ -470,7 +516,7 @@ const FarmGrid = memo(() => {
     }
 
     setSelectedPlots(new Set());
-  }, [selectedPlots, Array.isArray(state.plots) ? state.plots : [], handleHarvest, actions]);
+  }, [selectedPlots, state.plots, actions]);
 
   const handleSelectAll = useCallback(() => {
     const plotsArray = Array.isArray(state.plots) ? state.plots : [];

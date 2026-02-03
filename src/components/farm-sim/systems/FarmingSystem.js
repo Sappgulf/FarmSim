@@ -13,6 +13,7 @@ export class FarmingSystem {
   constructor(gameState, gameActions) {
     this.gameState = gameState; // Can be null initially
     this.actions = gameActions;
+    this.lastFertilityUpdate = 0;
   }
 
   /**
@@ -67,6 +68,19 @@ export class FarmingSystem {
 
     let hasChanges = false;
     const now = Date.now();
+    const weather = this.gameState.weather || 'sunny';
+    const weatherEffects = {
+      sunny: { growthModifier: 1.2 },
+      rainy: { growthModifier: 1.1 },
+      cloudy: { growthModifier: 1.0 },
+      stormy: { growthModifier: 0.8 },
+      drought: { growthModifier: 0.6 },
+      snow: { growthModifier: 0.3 },
+      windy: { growthModifier: 0.9 }
+    };
+    const currentWeatherEffects = weatherEffects[weather] || weatherEffects.sunny;
+    const weatherModifier = currentWeatherEffects.growthModifier;
+    const seasonBonus = this.gameState.season?.config?.bonuses?.growthSpeed || 1.0;
 
     const updatedPlots = this.gameState.plots.map(plot => {
       // Safety check for invalid plot
@@ -85,21 +99,6 @@ export class FarmingSystem {
       }
 
       // Calculate progress from timestamp (NO deltaTime issues!)
-      // Get weather effects directly from current weather (same logic as WeatherSystem)
-      const weather = this.gameState.weather || 'sunny';
-      const weatherEffects = {
-        sunny: { growthModifier: 1.2 },
-        rainy: { growthModifier: 1.1 },
-        cloudy: { growthModifier: 1.0 },
-        stormy: { growthModifier: 0.8 },
-        drought: { growthModifier: 0.6 },
-        snow: { growthModifier: 0.3 },
-        windy: { growthModifier: 0.9 }
-      };
-      const currentWeatherEffects = weatherEffects[weather] || weatherEffects.sunny;
-      const weatherModifier = currentWeatherEffects.growthModifier;
-
-      const seasonBonus = this.gameState.season?.config?.bonuses?.growthSpeed || 1.0;
       const timeSincePlanted = (now - plot.plantedAt) / 1000; // seconds
       const baseGrowthTime = plot.crop.growthTime || 10;
       const effectiveGrowthTime = baseGrowthTime / (weatherModifier * seasonBonus);
@@ -125,19 +124,29 @@ export class FarmingSystem {
         };
       }
 
-      // Still growing - update progress
-      if (Math.random() < 0.01) { // Log 1% of the time
-        if (import.meta.env.MODE === 'development') {
-          console.debug('[farm]', `🌱 ${plot.crop.name} growing: ${(progress * 100).toFixed(1)}%, stage ${currentStage}/${totalStages}, water=${plot.waterLevel}`);
+      const prevProgress = plot.progress || 0;
+      const prevStage = plot.growthStage || 1;
+      const stageChanged = currentStage !== prevStage;
+      const progressDelta = Math.abs(progress - prevProgress);
+      const shouldUpdate = stageChanged || progressDelta >= 0.01 || plot.state !== 'growing';
+
+      // Still growing - update progress only when something meaningful changed
+      if (shouldUpdate) {
+        if (Math.random() < 0.01) { // Log 1% of the time
+          if (import.meta.env.MODE === 'development') {
+            console.debug('[farm]', `🌱 ${plot.crop.name} growing: ${(progress * 100).toFixed(1)}%, stage ${currentStage}/${totalStages}, water=${plot.waterLevel}`);
+          }
         }
+        hasChanges = true;
+        return {
+          ...plot,
+          state: 'growing',
+          growthStage: currentStage,
+          progress: progress
+        };
       }
-      hasChanges = true;
-      return {
-        ...plot,
-        state: 'growing',
-        growthStage: currentStage,
-        progress: progress
-      };
+
+      return plot;
     });
 
     // Update if any crops are growing
@@ -197,12 +206,26 @@ export class FarmingSystem {
       return;
     }
 
+    const now = Date.now();
+    const FERTILITY_UPDATE_INTERVAL_MS = 5000;
+    if (!this.lastFertilityUpdate) {
+      this.lastFertilityUpdate = now;
+      return;
+    }
+    const elapsedMs = now - this.lastFertilityUpdate;
+    if (elapsedMs < FERTILITY_UPDATE_INTERVAL_MS) {
+      return;
+    }
+    this.lastFertilityUpdate = now;
+
+    const regenAmount = 0.0005 * (elapsedMs / 100);
+
     // Slowly regenerate soil fertility
     const updatedPlots = this.gameState.plots.map(plot => {
       if (plot.soilFertility < 1.0) {
         return {
           ...plot,
-          soilFertility: Math.min(1.0, (plot.soilFertility || 1.0) + 0.0005)
+          soilFertility: Math.min(1.0, (plot.soilFertility || 1.0) + regenAmount)
         };
       }
       return plot;

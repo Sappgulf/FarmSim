@@ -1,4 +1,4 @@
-import React, { memo, useState, lazy, Suspense } from 'react';
+import React, { memo, useState, lazy, Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useGame } from '../context/GameContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs';
 import { Card } from '../../ui/card';
@@ -37,6 +37,30 @@ const TabLoader = () => (
   </div>
 );
 
+const TAB_CONFIGS = [
+  { id: 'farming', label: '🌾 Farming', component: FarmingTab },
+  { id: 'inventory', label: '🎒 Inventory', component: InventoryTab },
+  { id: 'shop', label: '🛒 Shop', component: ShopTab },
+  { id: 'buildings', label: '🏗️ Buildings', component: BuildingsTab },
+  { id: 'research', label: '🔬 Research', component: ResearchTab },
+  { id: 'genetics', label: '🧬 Genetics', component: GeneticsTab },
+  { id: 'weather', label: '🌤️ Weather', component: WeatherTab },
+  { id: 'pets', label: '🐕 Pets', component: PetsTab },
+  { id: 'livestock', label: '🐄 Livestock', component: LivestockTab },
+  { id: 'fishing', label: '🎣 Fishing', component: FishingTab },
+  { id: 'challenges', label: '🎯 Challenges', component: ChallengesTab },
+  { id: 'events', label: '🎉 Events', component: EventsTab },
+  { id: 'processing', label: '🏭 Processing', component: ProcessingTab },
+  { id: 'achievements', label: '🏆 Achievements', component: AchievementsTab },
+  { id: 'social', label: '👥 Social', component: SocialTab },
+  { id: 'analytics', label: '📊 Analytics', component: AnalyticsTab },
+  { id: 'mystery', label: '🎰 Mystery', component: MysteryShopTab },
+  { id: 'quests', label: '📋 Quests', component: DailyQuestsTab },
+  { id: 'diseases', label: '🐛 Diseases', component: DiseaseManagementTab },
+  { id: 'expand', label: '📈 Expand', component: ExpandTab },
+  { id: 'settings', label: '⚙️ Settings', component: SettingsTab },
+];
+
 // Game Sidebar Component - Now accepts controlled props
 const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   const { state } = useGame();
@@ -44,50 +68,25 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   const [internalTab, setInternalTab] = useState('farming');
   const activeTab = controlledTab ?? internalTab;
 
-  const handleTabChange = (tabId) => {
+  const handleTabChange = useCallback((tabId) => {
     if (onTabChange) {
       onTabChange(tabId);
     } else {
       setInternalTab(tabId);
     }
-  };
-
-  const tabConfigs = [
-    { id: 'farming', label: '🌾 Farming', component: FarmingTab },
-    { id: 'inventory', label: '🎒 Inventory', component: InventoryTab },
-    { id: 'shop', label: '🛒 Shop', component: ShopTab },
-    { id: 'buildings', label: '🏗️ Buildings', component: BuildingsTab },
-    { id: 'research', label: '🔬 Research', component: ResearchTab },
-    { id: 'genetics', label: '🧬 Genetics', component: GeneticsTab },
-    { id: 'weather', label: '🌤️ Weather', component: WeatherTab },
-    { id: 'pets', label: '🐕 Pets', component: PetsTab },
-    { id: 'livestock', label: '🐄 Livestock', component: LivestockTab },
-    { id: 'fishing', label: '🎣 Fishing', component: FishingTab },
-    { id: 'challenges', label: '🎯 Challenges', component: ChallengesTab },
-    { id: 'events', label: '🎉 Events', component: EventsTab },
-    { id: 'processing', label: '🏭 Processing', component: ProcessingTab },
-    { id: 'achievements', label: '🏆 Achievements', component: AchievementsTab },
-    { id: 'social', label: '👥 Social', component: SocialTab },
-    { id: 'analytics', label: '📊 Analytics', component: AnalyticsTab },
-    { id: 'mystery', label: '🎰 Mystery', component: MysteryShopTab },
-    { id: 'quests', label: '📋 Quests', component: DailyQuestsTab },
-    { id: 'diseases', label: '🐛 Diseases', component: DiseaseManagementTab },
-    { id: 'expand', label: '📈 Expand', component: ExpandTab },
-    { id: 'settings', label: '⚙️ Settings', component: SettingsTab },
-  ];
+  }, [onTabChange]);
 
   // Expose tab switching globally so header buttons can use it
-  // FIXED: tabConfigs is recreated every render, use stable ref instead
-  const tabConfigsRef = React.useRef(tabConfigs);
-  React.useEffect(() => {
-    tabConfigsRef.current = tabConfigs;
-  });
+  const handleTabChangeRef = useRef(handleTabChange);
+  useEffect(() => {
+    handleTabChangeRef.current = handleTabChange;
+  }, [handleTabChange]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       window.switchToTab = (tabId) => {
-        if (tabConfigsRef.current.find(t => t.id === tabId)) {
-          handleTabChange(tabId);
+        if (TAB_CONFIGS.find(t => t.id === tabId)) {
+          handleTabChangeRef.current(tabId);
         }
       };
     }
@@ -98,13 +97,24 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
     };
   }, []); // Empty deps - only run once on mount
 
+  const inventoryCount = useMemo(() => {
+    return Object.values(state.inventory || {}).reduce((sum, qty) => {
+      const count = typeof qty === 'number' ? qty : (typeof qty === 'object' && qty !== null ? (qty.count || qty.quantity || 0) : 0);
+      return sum + (Number(count) || 0);
+    }, 0);
+  }, [state.inventory]);
+
+  const builtCount = useMemo(() => {
+    return Object.keys(state.buildings || {}).filter(k => state.buildings[k]?.built).length;
+  }, [state.buildings]);
+
   return (
     <Card className="h-fit rounded-2xl shadow-lg border border-gray-100/50 overflow-hidden">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         {/* Tab Navigation - Premium styled scrollable grid */}
         <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 p-2.5">
           <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-hide">
-            {tabConfigs.map(tab => (
+            {TAB_CONFIGS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
@@ -123,7 +133,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         </div>
 
         {/* Tab Content with Suspense for lazy loading */}
-        {tabConfigs.map(tab => {
+        {TAB_CONFIGS.map(tab => {
           const TabComponent = tab.component;
           return (
             <TabsContent key={tab.id} value={tab.id} className="mt-4">
@@ -142,16 +152,13 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         <div className="grid grid-cols-4 gap-2 text-xs">
           <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
             <div className="font-bold text-emerald-700 text-sm">
-              {Object.values(state.inventory || {}).reduce((sum, qty) => {
-                const count = typeof qty === 'number' ? qty : (typeof qty === 'object' && qty !== null ? (qty.count || qty.quantity || 0) : 0);
-                return sum + (Number(count) || 0);
-              }, 0)}
+              {inventoryCount}
             </div>
             <div className="text-gray-500 text-[10px] font-medium">Items</div>
           </div>
           <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
             <div className="font-bold text-amber-600 text-sm">
-              {Object.keys(state.buildings).filter(k => state.buildings[k]?.built).length}
+              {builtCount}
             </div>
             <div className="text-gray-500 text-[10px] font-medium">Built</div>
           </div>
