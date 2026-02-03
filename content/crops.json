@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "carrot",
+      "name": "Carrot",
+      "emoji": "🥕",
+      "cost": 12,
+      "baseValue": 24,
+      "growthTime": 60,
+      "stages": 3,
+      "description": "A crunchy orange vegetable",
+      "category": "vegetable",
+      "season": "spring",
+      "level": 1,
+      "seasonTags": [
+        "spring"
+      ],
+      "icon": "🥕"
+    },
+    {
+      "id": "potato",
+      "name": "Potato",
+      "emoji": "🥔",
+      "cost": 16,
+      "baseValue": 32,
+      "growthTime": 80,
+      "stages": 3,
+      "description": "A versatile root vegetable",
+      "category": "vegetable",
+      "season": "fall",
+      "level": 1,
+      "seasonTags": [
+        "fall"
+      ],
+      "icon": "🥔"
+    },
+    {
+      "id": "lettuce",
+      "name": "Lettuce",
+      "emoji": "🥬",
+      "cost": 10,
+      "baseValue": 19,
+      "growthTime": 48,
+      "stages": 3,
+      "description": "Crispy green lettuce - fast growing!",
+      "category": "vegetable",
+      "season": "spring",
+      "level": 1,
+      "seasonTags": [
+        "spring"
+      ],
+      "icon": "🥬"
+    },
+    {
+      "id": "parsnip",
+      "name": "Parsnip",
+      "emoji": "🥕",
+      "cost": 14,
+      "baseValue": 30,
+      "growthTime": 68,
+      "stages": 3,
+      "description": "Sweet, earthy root with cozy value.",
+      "category": "vegetable",
+      "season": "spring",
+      "level": 1,
+      "seasonTags": [
+        "spring"
+      ],
+      "icon": "🥕"
+    },
+    {
+      "id": "cabbage",
+      "name": "Cabbage",
+      "emoji": "🥬",
+      "cost": 24,
+      "baseValue": 48,
+      "growthTime": 100,
+      "stages": 3,
+      "description": "Hearty green cabbage",
+      "category": "vegetable",
+      "season": "fall",
+      "level": 2,
+      "seasonTags": [
+        "fall"
+      ],
+      "icon": "🥬"
+    },
+    {
+      "id": "eggplant",
+      "name": "Eggplant",
+      "emoji": "🍆",
+      "cost": 32,
+      "baseValue": 70,
+      "growthTime": 120,
+      "stages": 4,
+      "description": "Purple eggplant - premium value!",
+      "category": "vegetable",
+      "season": "summer",
+      "level": 3,
+      "seasonTags": [
+        "summer"
+      ],
+      "icon": "🍆"
+    },
+    {
+      "id": "okra",
+      "name": "Okra",
+      "emoji": "🫛",
+      "cost": 26,
+      "baseValue": 58,
+      "growthTime": 96,
+      "stages": 4,
+      "description": "Tender summer pods with steady returns.",
+      "category": "vegetable",
+      "season": "summer",
+      "level": 2,
+      "seasonTags": [
+        "summer"
+      ],
+      "icon": "🫛"
+    },
+    {
+      "id": "corn",
+      "name": "Corn",
+      "emoji": "🌽",
+      "cost": 28,
+      "baseValue": 60,
+      "growthTime": 100,
+      "stages": 4,
+      "description": "Golden ears of sweet corn",
+      "category": "grain",
+      "season": "summer",
+      "level": 2,
+      "seasonTags": [
+        "summer"
+      ],
+      "icon": "🌽"
+    },
+    {
+      "id": "wheat",
+      "name": "Wheat",
+      "emoji": "🌾",
+      "cost": 14,
+      "baseValue": 28,
+      "growthTime": 72,
+      "stages": 3,
+      "description": "Golden wheat for bread",
+      "category": "grain",
+      "season": "summer",
+      "level": 1,
+      "seasonTags": [
+        "summer"
+      ],
+      "icon": "🌾"
+    },
+    {
+      "id": "rice",
+      "name": "Rice",
+      "emoji": "🍚",
+      "cost": 30,
+      "baseValue": 66,
+      "growthTime": 112,
+      "stages": 4,
+      "description": "Staple grain crop - high value!",
+      "category": "grain",
+      "season": "summer",
+      "level": 3,
+      "seasonTags": [
+        "summer"
+      ],
+      "icon": "🍚"
+    },
+    {
+      "id": "tomato",
+      "name": "Tomato",
+      "emoji": "🍅",
+      "cost": 32,
+      "baseValue": 64,
+      "growthTime": 88,
+      "stages": 4,
+      "description": "Juicy red tomatoes",
+      "category": "fruit",
+      "season": "summer",
+      "level": 2,
+      "seasonTags": [
+        "summer"
+      ],
+      "icon": "🍅"
+    },
+    {
+      "id": "strawberry",
+      "name": "Strawberry",
+      "emoji": "🍓",
+      "cost": 40,
+      "baseValue": 88,
+      "growthTime": 96,
+      "stages": 4,
+      "description": "Sweet red strawberries - premium!",
+      "category": "fruit",
+      "season": "spring",
+      "level": 3,
+      "seasonTags": [
+        "spring"
+      ],
+      "icon": "🍓"
+    },
+    {
+      "id": "watermelon",
+      "name": "Watermelon",
+      "emoji": "🍉",
+      "cost": 60,
+      "baseValue": 130,
+      "growthTime": 180,
+      "stages": 5,
+      "description": "Massive juicy watermelon - luxury crop!",
+      "category": "fruit",
+      "season": "summer",
+      "level": 4,
+      "seasonTags": [
+        "summer"
+      ],
+      "icon": "🍉"
+    },
+    {
+      "id": "blueberry",
+      "name": "Blueberry",
+      "emoji": "🫐",
+      "cost": 36,
+      "baseValue": 78,
+      "growthTime": 104,
+      "stages": 4,
+      "description": "Antioxidant-rich blueberries",
+      "category": "fruit",
+      "season": "summer",
+      "level": 3,
+      "seasonTags": [
+        "summer"
+      ],
+      "icon": "🫐"
+    },
+    {
+      "id": "cranberry",
+      "name": "Cranberry",
+      "emoji": "🫐",
+      "cost": 44,
+      "baseValue": 98,
+      "growthTime": 132,
+      "stages": 4,
+      "description": "Bright tart berries for autumn cheer.",
+      "category": "fruit",
+      "season": "fall",
+      "level": 3,
+      "seasonTags": [
+        "fall"
+      ],
+      "icon": "🫐"
+    },
+    {
+      "id": "pumpkin",
+      "name": "Pumpkin",
+      "emoji": "🎃",
+      "cost": 48,
+      "baseValue": 110,
+      "growthTime": 140,
+      "stages": 5,
+      "description": "Large orange pumpkin - fall favorite!",
+      "category": "specialty",
+      "season": "fall",
+      "level": 4,
+      "seasonTags": [
+        "fall"
+      ],
+      "icon": "🎃"
+    },
+    {
+      "id": "chili",
+      "name": "Chili Pepper",
+      "emoji": "🌶️",
+      "cost": 20,
+      "baseValue": 42,
+      "growthTime": 64,
+      "stages": 3,
+      "description": "Spicy red peppers",
+      "category": "specialty",
+      "season": "summer",
+      "level": 2,
+      "seasonTags": [
+        "summer"
+      ],
+      "icon": "🌶️"
+    },
+    {
+      "id": "garlic",
+      "name": "Garlic",
+      "emoji": "🧄",
+      "cost": 18,
+      "baseValue": 35,
+      "growthTime": 80,
+      "stages": 3,
+      "description": "Pungent cooking essential",
+      "category": "specialty",
+      "season": "spring",
+      "level": 2,
+      "seasonTags": [
+        "spring"
+      ],
+      "icon": "🧄"
+    },
+    {
+      "id": "onion",
+      "name": "Onion",
+      "emoji": "🧅",
+      "cost": 14,
+      "baseValue": 28,
+      "growthTime": 72,
+      "stages": 3,
+      "description": "Versatile cooking base",
+      "category": "specialty",
+      "season": "spring",
+      "level": 1,
+      "seasonTags": [
+        "spring"
+      ],
+      "icon": "🧅"
+    },
+    {
+      "id": "broccoli",
+      "name": "Broccoli",
+      "emoji": "🥦",
+      "cost": 26,
+      "baseValue": 55,
+      "growthTime": 88,
+      "stages": 4,
+      "description": "Nutritious green vegetable",
+      "category": "vegetable",
+      "season": "spring",
+      "level": 2,
+      "seasonTags": [
+        "spring"
+      ],
+      "icon": "🥦"
+    }
+  ]
+}

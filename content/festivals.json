@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "spring_festival",
+      "name": "Spring Planting Festival",
+      "icon": "🌸",
+      "season": "spring",
+      "seasonTags": ["spring"],
+      "cadence": "weekly",
+      "description": "Celebrate new growth! Double XP for planting and 25% faster growth.",
+      "durationSeconds": 300,
+      "effects": { "growth_speed": 1.25, "planting_xp": 2.0 },
+      "rewards": { "coins": 100, "items": { "spring_seeds": 3 } },
+      "rarity": "common"
+    },
+    {
+      "id": "flower_bloom",
+      "name": "Flower Bloom Event",
+      "icon": "🌺",
+      "season": "spring",
+      "seasonTags": ["spring"],
+      "cadence": "weekly",
+      "description": "Flowers are in bloom! Decorative crops give bonus coins.",
+      "durationSeconds": 240,
+      "effects": { "flower_bonus": 1.5 },
+      "rewards": { "coins": 75, "items": { "decorative_seeds": 2 } },
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_swap_social",
+      "name": "Seed Swap Social",
+      "icon": "🧺",
+      "season": "spring",
+      "seasonTags": ["spring"],
+      "cadence": "weekly",
+      "description": "Neighbors trade tips! Planting XP +50% and growth +10%.",
+      "durationSeconds": 240,
+      "effects": { "planting_xp": 1.5, "growth_speed": 1.1 },
+      "rewards": { "coins": 90, "items": { "spring_seeds": 2 } },
+      "rarity": "common"
+    },
+    {
+      "id": "harvest_moon",
+      "name": "Harvest Moon Festival",
+      "icon": "🌕",
+      "season": "summer",
+      "seasonTags": ["summer"],
+      "cadence": "weekly",
+      "description": "Under the harvest moon, all crops give 50% more coins!",
+      "durationSeconds": 180,
+      "effects": { "harvest_bonus": 1.5 },
+      "rewards": { "coins": 200, "items": { "moon_fertilizer": 1 } },
+      "rarity": "rare"
+    },
+    {
+      "id": "summer_solstice",
+      "name": "Summer Solstice",
+      "icon": "☀️",
+      "season": "summer",
+      "seasonTags": ["summer"],
+      "cadence": "weekly",
+      "description": "Longest day of the year! No watering needed and faster growth.",
+      "durationSeconds": 360,
+      "effects": { "no_watering": true, "growth_speed": 1.3 },
+      "rewards": { "coins": 150, "items": { "solar_seeds": 2 } },
+      "rarity": "uncommon"
+    },
+    {
+      "id": "pumpkin_fest",
+      "name": "Pumpkin Festival",
+      "icon": "🎃",
+      "season": "autumn",
+      "seasonTags": ["autumn"],
+      "cadence": "weekly",
+      "description": "Pumpkins and gourds sell for triple value!",
+      "durationSeconds": 420,
+      "effects": { "pumpkin_bonus": 3.0 },
+      "rewards": { "coins": 300, "items": { "giant_pumpkin_seeds": 1 } },
+      "rarity": "epic"
+    },
+    {
+      "id": "thanksgiving",
+      "name": "Thanksgiving Feast",
+      "icon": "🦃",
+      "season": "autumn",
+      "seasonTags": ["autumn"],
+      "cadence": "weekly",
+      "description": "Share the harvest! Bonus coins for every crop type in inventory.",
+      "durationSeconds": 240,
+      "effects": { "diversity_bonus": 50 },
+      "rewards": { "coins": 250, "items": { "feast_crops": 5 } },
+      "rarity": "rare"
+    },
+    {
+      "id": "winter_wonder",
+      "name": "Winter Wonderland",
+      "icon": "❄️",
+      "season": "winter",
+      "seasonTags": ["winter"],
+      "cadence": "weekly",
+      "description": "Greenhouse crops immune to frost and grow 2x faster!",
+      "durationSeconds": 300,
+      "effects": { "greenhouse_boost": 2.0, "frost_immunity": true },
+      "rewards": { "coins": 175, "items": { "winter_seeds": 3 } },
+      "rarity": "uncommon"
+    },
+    {
+      "id": "snow_lantern_market",
+      "name": "Snow Lantern Market",
+      "icon": "🏮",
+      "season": "winter",
+      "seasonTags": ["winter"],
+      "cadence": "weekly",
+      "description": "Lanterns glow across the farm. Harvests gain a small bonus.",
+      "durationSeconds": 240,
+      "effects": { "harvest_bonus": 1.2 },
+      "rewards": { "coins": 140, "items": { "winter_seeds": 2 } },
+      "rarity": "rare"
+    }
+  ]
+}

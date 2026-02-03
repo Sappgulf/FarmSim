@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "id": "knitted_blanket",
+      "name": "Knitted Blanket",
+      "emoji": "🧣",
+      "icon": "🧣",
+      "cost": 45,
+      "description": "A warm throw for chilly mornings.",
+      "category": "cozy",
+      "tags": ["cozy", "winter"],
+      "rarity": "common",
+      "season": "winter",
+      "seasonTags": ["winter"],
+      "placementRules": { "gridSnap": true }
+    }
+  ]
+}

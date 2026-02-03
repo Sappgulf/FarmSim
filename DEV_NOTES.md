@@ -38,12 +38,12 @@
 
 ### Buildings / Anchors / Decorations
 - **Buildings**: data + effects defined in `buildingData`, owned in `state.buildings`. (`src/components/farm-sim/constants/buildingData.js`, `src/components/farm-sim/context/GameReducer.js`)
-- **Decorations/Anchors**: no dedicated decorations system found in active FarmSim path.
+- **Decorations/Anchors**: decor catalog + placement mode backed by content pipeline and `decorateMode`. (`content/decor.json`, `src/components/farm-sim/constants/decorData.js`, `src/components/farm-sim/ui/FarmGrid.jsx`)
 
 ### Calendar / Day / Seasons / Weather / Events / Shop Rotation
 - **Seasons**: `SeasonSystem` handles 4-season loop + transitions. (`src/components/farm-sim/systems/SeasonSystem.js`)
 - **Weather**: dynamic weather + forecast in `WeatherSystem`. (`src/components/farm-sim/systems/WeatherSystem.js`)
-- **Events**: seasonal event list + rewards in `EventsTab`. (`src/components/farm-sim/ui/tabs/EventsTab.jsx`)
+- **Events**: seasonal event list + rewards loaded from content pipeline. (`content/festivals.json`, `src/components/farm-sim/ui/tabs/EventsTab.jsx`)
 - **Day rollover**: Almanac day count + daily insight uses date key checks in GameContext autosave loop. (`src/components/farm-sim/context/GameContext.jsx`)
 - **Daily Quests**: daily reset logic + streak bonuses. (`src/components/farm-sim/ui/tabs/DailyQuestsTab.jsx`, `src/components/farm-sim/systems/QuestSystem.js`)
 - **Daily Challenges**: daily reset + streaks. (`src/components/farm-sim/ui/tabs/ChallengesTab.jsx`)
@@ -69,6 +69,21 @@
 - **Save/Migrate**: `GamePersistence` handles versioned saves + fallback backup. (`src/components/farm-sim/context/GamePersistence.js`)
 - **Almanac state**: stored under `state.almanac` (unlocked pages, dates, counters, last day key). (`src/components/farm-sim/context/GameReducer.js`)
 - **Save UI**: Settings tab manual save/load. (`src/components/farm-sim/ui/tabs/SettingsTab.jsx`)
+
+## Content Pipeline (Season Pack Pipeline v1)
+
+### File Map
+- **Content manager + validator**: `src/content/ContentManager.js` (loads base content, merges packs, validates, exposes maps). 
+- **Base content schemas**: `content/` (JSON files for crops, decor, festivals, almanac, strings).
+- **Season packs**: `content/packs/<pack_id>/` with `pack.json` + optional content files.
+- **Adapters**:
+  - Crops: `src/components/farm-sim/constants/cropData.js`
+  - Decor: `src/components/farm-sim/constants/decorData.js`
+  - Almanac: `src/data/almanac.js`
+  - Philosophy strings: `src/data/identity.js`
+
+### Debug Hooks (Dev-only)
+- **Re-validate content** + **Print content report** buttons in Debug Stress Panel (`?debug=1`). (`src/components/farm-sim/ui/DebugStressPanel.jsx`)
 
 ## Key Systems (Where They Live)
 - **State + Actions**: `GameContext` + `GameReducer`. (`src/components/farm-sim/context/GameContext.jsx`, `src/components/farm-sim/context/GameReducer.js`)
