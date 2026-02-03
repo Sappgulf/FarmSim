@@ -22,3 +22,18 @@
 - Update/render time comparison with/without overlays.
 - Listener/timer counts after rapid tab switching.
 - Memory usage before/after running the stress suite twice.
+
+---
+
+## 2026-02-03 — UI Polish + Perfect Harvest Mini-Game
+
+### Baseline
+- Automated tests only (`npm run test -- --run`); no browser profiling.
+
+### Changes Applied
+- Added Perfect Harvest timing mini-game (event/board gated, rAF-driven when open only).
+- Standardized tab icon rendering to lucide icons; added icon validation warnings in debug content preflight.
+
+### After
+- No regressions observed in automated tests.
+- Runtime metrics not captured in this environment.

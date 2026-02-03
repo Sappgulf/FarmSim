@@ -1,10 +1,12 @@
 import React, { memo, useState, lazy, Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useGame } from '../context/GameContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs';
+import { Tabs, TabsContent } from '../../ui/tabs';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import TabWrapper from './tabs/TabWrapper';
+import { TAB_INFO } from './NavBar';
+import { Circle } from 'lucide-react';
 
 // Lazy load tab components for better performance
 const FarmingTab = lazy(() => import('./tabs/FarmingTab'));
@@ -39,28 +41,28 @@ const TabLoader = () => (
 );
 
 const TAB_CONFIGS = [
-  { id: 'farming', label: '🌾 Farming', component: FarmingTab },
-  { id: 'inventory', label: '🎒 Inventory', component: InventoryTab },
-  { id: 'shop', label: '🛒 Shop', component: ShopTab },
-  { id: 'buildings', label: '🏗️ Buildings', component: BuildingsTab },
-  { id: 'research', label: '🔬 Research', component: ResearchTab },
-  { id: 'genetics', label: '🧬 Genetics', component: GeneticsTab },
-  { id: 'weather', label: '🌤️ Weather', component: WeatherTab },
-  { id: 'pets', label: '🐕 Pets', component: PetsTab },
-  { id: 'livestock', label: '🐄 Livestock', component: LivestockTab },
-  { id: 'fishing', label: '🎣 Fishing', component: FishingTab },
-  { id: 'challenges', label: '🎯 Challenges', component: ChallengesTab },
-  { id: 'events', label: '🎉 Events', component: EventsTab },
-  { id: 'processing', label: '🏭 Processing', component: ProcessingTab },
-  { id: 'achievements', label: '🏆 Achievements', component: AchievementsTab },
-  { id: 'almanac', label: '📖 Almanac', component: AlmanacTab },
-  { id: 'social', label: '👥 Social', component: SocialTab },
-  { id: 'analytics', label: '📊 Analytics', component: AnalyticsTab },
-  { id: 'mystery', label: '🎰 Mystery', component: MysteryShopTab },
-  { id: 'quests', label: '📋 Quests', component: DailyQuestsTab },
-  { id: 'diseases', label: '🐛 Diseases', component: DiseaseManagementTab },
-  { id: 'expand', label: '📈 Expand', component: ExpandTab },
-  { id: 'settings', label: '⚙️ Settings', component: SettingsTab },
+  { id: 'farming', label: 'Farming', component: FarmingTab },
+  { id: 'inventory', label: 'Inventory', component: InventoryTab },
+  { id: 'shop', label: 'Shop', component: ShopTab },
+  { id: 'buildings', label: 'Buildings', component: BuildingsTab },
+  { id: 'research', label: 'Research', component: ResearchTab },
+  { id: 'genetics', label: 'Genetics', component: GeneticsTab },
+  { id: 'weather', label: 'Weather', component: WeatherTab },
+  { id: 'pets', label: 'Pets', component: PetsTab },
+  { id: 'livestock', label: 'Livestock', component: LivestockTab },
+  { id: 'fishing', label: 'Fishing', component: FishingTab },
+  { id: 'challenges', label: 'Challenges', component: ChallengesTab },
+  { id: 'events', label: 'Events', component: EventsTab },
+  { id: 'processing', label: 'Processing', component: ProcessingTab },
+  { id: 'achievements', label: 'Achievements', component: AchievementsTab },
+  { id: 'almanac', label: 'Almanac', component: AlmanacTab },
+  { id: 'social', label: 'Social', component: SocialTab },
+  { id: 'analytics', label: 'Analytics', component: AnalyticsTab },
+  { id: 'mystery', label: 'Mystery', component: MysteryShopTab },
+  { id: 'quests', label: 'Quests', component: DailyQuestsTab },
+  { id: 'diseases', label: 'Diseases', component: DiseaseManagementTab },
+  { id: 'expand', label: 'Expand', component: ExpandTab },
+  { id: 'settings', label: 'Settings', component: SettingsTab },
 ];
 
 export const TAB_IDS = TAB_CONFIGS.map((tab) => tab.id);
@@ -112,6 +114,16 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
     return Object.keys(state.buildings || {}).filter(k => state.buildings[k]?.built).length;
   }, [state.buildings]);
 
+  const renderIcon = (IconComponent, fallbackEmoji) => {
+    if (IconComponent) {
+      return <IconComponent className="icon-16" aria-hidden="true" />;
+    }
+    if (fallbackEmoji) {
+      return <span className="text-base" aria-hidden="true">{fallbackEmoji}</span>;
+    }
+    return <Circle className="icon-16" aria-hidden="true" />;
+  };
+
   return (
     <Card className="h-fit rounded-2xl shadow-lg border border-gray-100/50 overflow-hidden">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -130,7 +142,10 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
                   }
                 `}
               >
-                {tab.label}
+                <span className="flex items-center gap-2">
+                  {renderIcon(TAB_INFO[tab.id]?.icon, TAB_INFO[tab.id]?.emoji)}
+                  <span>{TAB_INFO[tab.id]?.label || tab.label}</span>
+                </span>
               </button>
             ))}
           </div>

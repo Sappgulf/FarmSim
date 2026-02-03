@@ -220,6 +220,7 @@ export function GameProvider({ children }) {
     updateChallengeProgress: (progress) => dispatch({ type: GAME_ACTIONS.UPDATE_CHALLENGE_PROGRESS, payload: progress }),
     updateDailyQuests: (quests) => dispatch({ type: GAME_ACTIONS.UPDATE_DAILY_QUESTS, payload: quests }),
     updateDisasterProtections: (protections) => dispatch({ type: GAME_ACTIONS.UPDATE_DISASTER_PROTECTIONS, payload: protections }),
+    updateMinigames: (minigames) => dispatch({ type: GAME_ACTIONS.UPDATE_MINIGAMES, payload: minigames }),
     updatePrestige: (prestige) => dispatch({ type: GAME_ACTIONS.UPDATE_PRESTIGE, payload: prestige }),
     prestigeReset: () => dispatch({ type: GAME_ACTIONS.PRESTIGE_RESET }),
     updateResearch: (research) => dispatch({ type: GAME_ACTIONS.UPDATE_RESEARCH, payload: research }),
