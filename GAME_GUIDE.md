@@ -32,3 +32,6 @@ Choose one philosophy to guide the Story Dashboard suggestions:
 - Check the Town Board Story Dashboard for today’s vibe and suggestion.
 - The mood chip in the stats bar shows your current mood tier.
 
+## Farming Quick Actions
+- Use the Farming tab’s quick actions to water, harvest, fertilize, or treat crops in bulk.
+- Bulk actions respect available coins and only apply to eligible plots.

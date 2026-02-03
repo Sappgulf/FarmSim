@@ -3,6 +3,7 @@ import { useGame } from '../context/GameContext';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import { logDebugAction } from '../../../utils/debugTools';
 
 // Individual Notification Component
 const NotificationItem = memo(({ notification, onClose }) => {
@@ -95,6 +96,7 @@ const NotificationSystem = memo(() => {
   const { state, actions } = useGame();
 
   const handleCloseNotification = (id) => {
+    logDebugAction('notification_close', { id });
     actions.clearNotification(id);
   };
 

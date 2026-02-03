@@ -6,6 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { Target, Gift, Flame, Calendar, Trophy } from 'lucide-react';
 import { generateDailyQuests, shouldResetDaily, getStreakBonus } from '../../systems/QuestSystem';
+import { logDebugAction } from '../../../../utils/debugTools';
 
 /**
  * Daily Quests Tab - Provides daily goals and rewards
@@ -19,13 +20,15 @@ const DailyQuestsTab = memo(() => {
     if (!state.dailyQuests || shouldResetDaily(state.dailyQuests?.lastResetTime)) {
       const newQuests = generateDailyQuests(state.level, Date.now());
       const streakReset = !state.dailyQuests?.lastResetTime || shouldResetDaily(state.dailyQuests?.lastResetTime);
-      
+      const resetTime = Date.now();
+
       actions.updateDailyQuests({
         quests: newQuests,
-        lastResetTime: Date.now(),
+        lastResetTime: resetTime,
         streak: streakReset ? (state.dailyQuests?.streak || 0) : 0,
         totalCompleted: state.dailyQuests?.totalCompleted || 0,
       });
+      logDebugAction('daily_quests_reset', { timestamp: resetTime });
     }
   }, [state.level, state.dailyQuests, actions]);
 
@@ -69,6 +72,7 @@ const DailyQuestsTab = memo(() => {
       totalCompleted: totalCompleted + 1,
       streak: streak + (updatedQuests.every(q => q.claimed) ? 1 : 0), // Increment streak if all claimed
     });
+    logDebugAction('daily_quest_claim', { questId });
     
     // Particle effect
     if (typeof window.triggerParticleEffect === 'function') {
@@ -299,4 +303,3 @@ const DailyQuestsTab = memo(() => {
 
 DailyQuestsTab.displayName = 'DailyQuestsTab';
 export default DailyQuestsTab;
-

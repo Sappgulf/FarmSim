@@ -12,6 +12,7 @@ import { ParticleEffectsManager } from '../ui/ParticleEffect';
 import FPSCounter from '../ui/FPSCounter';
 import PerformanceOverlay from '../ui/PerformanceOverlay';
 import Tutorial from '../ui/Tutorial';
+import { logDebugAction } from '../../../utils/debugTools';
 
 // Import systems
 import { FarmingSystem } from '../systems/FarmingSystem';
@@ -41,6 +42,7 @@ function FarmSimCore() {
   // Handle section change
   const handleSectionChange = (sectionId) => {
     setActiveSection(sectionId);
+    logDebugAction('nav_section_change', { sectionId });
     // Auto-select first tab of section if not already in that section
     const section = NAV_SECTIONS[sectionId];
     if (section && !section.tabs.includes(activeTab)) {
@@ -51,6 +53,7 @@ function FarmSimCore() {
   // Handle tab change
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
+    logDebugAction('tab_change', { tabId });
     // Also switch sidebar tab via global method (for legacy compat)
     if (typeof window.switchToTab === 'function') {
       window.switchToTab(tabId);

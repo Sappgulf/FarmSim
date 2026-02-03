@@ -217,6 +217,12 @@ export function gameReducer(state, action) {
         case GAME_ACTIONS.UPDATE_CHALLENGE_PROGRESS:
             return { ...state, dailyChallengeProgress: action.payload };
 
+        case GAME_ACTIONS.UPDATE_CHALLENGE_STREAK:
+            return { ...state, challengeStreak: action.payload };
+
+        case GAME_ACTIONS.UPDATE_LAST_CHALLENGE_RESET:
+            return { ...state, lastChallengeReset: action.payload };
+
         case GAME_ACTIONS.UPDATE_DAILY_QUESTS:
             return { ...state, dailyQuests: action.payload };
 
