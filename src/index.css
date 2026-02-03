@@ -70,6 +70,11 @@
 
   /* Safe area for mobile */
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Mood-driven accents */
+  --mood-accent: var(--color-primary-500);
+  --mood-accent-soft: rgba(16, 185, 129, 0.14);
+  --mood-overlay: rgba(16, 185, 129, 0.06);
 }
 
 /* --------------------------------------------
@@ -96,12 +101,41 @@
     overscroll-behavior: none;
   }
 
+  [data-mood-tier="calm"] {
+    --mood-accent: #16a34a;
+    --mood-accent-soft: rgba(22, 163, 74, 0.12);
+    --mood-overlay: rgba(22, 163, 74, 0.06);
+  }
+
+  [data-mood-tier="cozy"] {
+    --mood-accent: #f59e0b;
+    --mood-accent-soft: rgba(245, 158, 11, 0.15);
+    --mood-overlay: rgba(245, 158, 11, 0.08);
+  }
+
+  [data-mood-tier="blooming"] {
+    --mood-accent: #ec4899;
+    --mood-accent-soft: rgba(236, 72, 153, 0.14);
+    --mood-overlay: rgba(236, 72, 153, 0.08);
+  }
+
+  [data-mood-tier="radiant"] {
+    --mood-accent: #6366f1;
+    --mood-accent-soft: rgba(99, 102, 241, 0.14);
+    --mood-overlay: rgba(99, 102, 241, 0.08);
+  }
+
   /* Improve touch targets */
   button,
   [role="button"],
   input,
   select,
   textarea {
+    min-height: 44px;
+  }
+
+  /* Utility class for touch-friendly buttons */
+  .touch-manipulation {
     touch-action: manipulation;
   }
 
@@ -213,6 +247,27 @@
   .status-dot.success { background-color: var(--color-success); }
   .status-dot.warning { background-color: var(--color-warning); }
   .status-dot.error { background-color: var(--color-error); }
+
+  .mood-overlay {
+    background-color: var(--mood-overlay);
+    transition: background-color var(--duration-slow) ease;
+  }
+
+  .mood-accent-text {
+    color: var(--mood-accent);
+  }
+
+  .mood-accent-bg {
+    background-color: var(--mood-accent-soft);
+  }
+
+  .mood-accent-border {
+    border-color: var(--mood-accent);
+  }
+
+  [data-reduced-motion="true"] .mood-overlay {
+    opacity: 0;
+  }
 }
 
 /* Touch-friendly utilities */

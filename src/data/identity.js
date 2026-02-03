@@ -1,0 +1,251 @@
+/**
+ * Identity System Data
+ * Mood tiers, philosophies, memories, chapters, and blessings.
+ */
+
+export const PHILOSOPHIES = [
+  {
+    id: 'nature',
+    name: 'Nature First',
+    description: 'Follow seasons and weather rhythms.',
+  },
+  {
+    id: 'market',
+    name: 'Market Maven',
+    description: 'Focus on featured crops and smart sales.',
+  },
+  {
+    id: 'slow',
+    name: 'Slow Living',
+    description: 'Cozy pace, decorate, and reflect often.',
+  },
+];
+
+export const MOOD_TIERS = [
+  {
+    id: 'calm',
+    name: 'Calm',
+    emoji: '🌿',
+    min: 0,
+    accent: '#16a34a',
+    accentSoft: 'rgba(22, 163, 74, 0.12)',
+    overlay: 'rgba(22, 163, 74, 0.06)',
+    vibes: [
+      'Soft breezes and gentle growth.',
+      'The farm hums with easy warmth.',
+      'A quiet rhythm settles in.',
+    ],
+  },
+  {
+    id: 'cozy',
+    name: 'Cozy',
+    emoji: '🧺',
+    min: 15,
+    accent: '#f59e0b',
+    accentSoft: 'rgba(245, 158, 11, 0.15)',
+    overlay: 'rgba(245, 158, 11, 0.08)',
+    vibes: [
+      'Golden light lingers on the fields.',
+      'Everything feels softly in place.',
+      'Warm corners and grateful harvests.',
+    ],
+  },
+  {
+    id: 'blooming',
+    name: 'Blooming',
+    emoji: '🌸',
+    min: 35,
+    accent: '#ec4899',
+    accentSoft: 'rgba(236, 72, 153, 0.14)',
+    overlay: 'rgba(236, 72, 153, 0.08)',
+    vibes: [
+      'Petals and sunlight dance together.',
+      'The farm feels bright and lively.',
+      'A gentle glow follows your steps.',
+    ],
+  },
+  {
+    id: 'radiant',
+    name: 'Radiant',
+    emoji: '✨',
+    min: 65,
+    accent: '#6366f1',
+    accentSoft: 'rgba(99, 102, 241, 0.14)',
+    overlay: 'rgba(99, 102, 241, 0.08)',
+    vibes: [
+      'Everything shimmers with cozy magic.',
+      'The farm feels like a little legend.',
+      'A bright, tender energy fills the air.',
+    ],
+  },
+];
+
+export const MEMORY_CHAPTERS = [
+  {
+    id: 'spring_beginnings',
+    name: 'Spring Beginnings',
+    description: 'First steps, first sprouts.',
+    order: 1,
+  },
+  {
+    id: 'market_days',
+    name: 'Market Days',
+    description: 'Trade, build, and bustle.',
+    order: 2,
+  },
+  {
+    id: 'lantern_nights',
+    name: 'Lantern Nights',
+    description: 'Soft rain and warm lights.',
+    order: 3,
+  },
+  {
+    id: 'winter_quiet',
+    name: 'Winter Quiet',
+    description: 'Hushed moments and wishes.',
+    order: 4,
+  },
+];
+
+export const MEMORIES = [
+  {
+    id: 'first_seed',
+    title: 'First Seeds',
+    description: 'Planted your very first seed.',
+    hint: 'Plant a seed to begin your story.',
+    chapterId: 'spring_beginnings',
+    icon: '🌱',
+    order: 1,
+    isMicro: true,
+  },
+  {
+    id: 'first_watering',
+    title: 'First Watering',
+    description: 'Gave a crop its first drink.',
+    hint: 'Water a growing crop.',
+    chapterId: 'spring_beginnings',
+    icon: '💧',
+    order: 2,
+    isMicro: true,
+  },
+  {
+    id: 'first_harvest',
+    title: 'First Harvest',
+    description: 'Picked your first ripe crop.',
+    hint: 'Harvest a fully grown crop.',
+    chapterId: 'spring_beginnings',
+    icon: '🧺',
+    order: 3,
+    isMicro: true,
+  },
+  {
+    id: 'first_shop_purchase',
+    title: 'Market Stroll',
+    description: 'Made your first purchase at the shop.',
+    hint: 'Buy any seeds or tools from the shop.',
+    chapterId: 'market_days',
+    icon: '🛒',
+    order: 4,
+    isMicro: true,
+  },
+  {
+    id: 'first_building',
+    title: 'First Structure',
+    description: 'Built your first farm building.',
+    hint: 'Construct a building for the farm.',
+    chapterId: 'market_days',
+    icon: '🏡',
+    order: 5,
+    isMicro: true,
+  },
+  {
+    id: 'first_harvest_all',
+    title: 'Harvest Festival',
+    description: 'Harvested several crops at once.',
+    hint: 'Use Harvest All on a busy field.',
+    chapterId: 'market_days',
+    icon: '✨',
+    order: 6,
+    isMicro: true,
+  },
+  {
+    id: 'first_rainy_harvest',
+    title: 'Rain-Kissed Harvest',
+    description: 'Gathered crops during a rainy spell.',
+    hint: 'Harvest while it is raining.',
+    chapterId: 'lantern_nights',
+    icon: '🌧️',
+    order: 7,
+    isMicro: true,
+  },
+  {
+    id: 'first_cozy_mood',
+    title: 'Cozy at Last',
+    description: 'Your farm mood reached the Cozy tier.',
+    hint: 'Fill the farm with small, kind actions.',
+    chapterId: 'lantern_nights',
+    icon: '🧸',
+    order: 8,
+    isMicro: true,
+  },
+  {
+    id: 'first_day_complete',
+    title: 'A Day Well Lived',
+    description: 'Completed your first full day.',
+    hint: 'Let time pass into a new day.',
+    chapterId: 'winter_quiet',
+    icon: '🌙',
+    order: 9,
+    isMicro: true,
+  },
+  {
+    id: 'first_wish',
+    title: 'Wishing Well',
+    description: 'Made a wish at the well.',
+    hint: 'Make a wish to receive a blessing.',
+    chapterId: 'winter_quiet',
+    icon: '🪙',
+    order: 10,
+    isMicro: true,
+  },
+];
+
+export const BLESSINGS = [
+  {
+    id: 'featured_bonus',
+    name: 'Market Smile',
+    description: 'Featured crop sells for a little more today.',
+    type: 'sell_bonus',
+    value: 0.06,
+    emoji: '🪙',
+  },
+  {
+    id: 'gentle_growth',
+    name: 'Gentle Growth',
+    description: 'Crops grow a little faster today.',
+    type: 'growth_bonus',
+    value: 0.12,
+    emoji: '🌿',
+  },
+  {
+    id: 'warm_glow',
+    name: 'Warm Glow',
+    description: 'A small mood boost washes over the farm.',
+    type: 'mood_bonus',
+    value: 6,
+    emoji: '✨',
+  },
+  {
+    id: 'friendly_faces',
+    name: 'Friendly Faces',
+    description: 'Your next harvest gets a small bonus tip.',
+    type: 'next_harvest_bonus',
+    value: 8,
+    emoji: '😊',
+  },
+];
+
+export const WISHING_WELL = {
+  cost: 20,
+  cooldownDays: 1,
+};

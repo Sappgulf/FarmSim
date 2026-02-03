@@ -4,6 +4,22 @@
 **Project:** FarmLife v5.0.0  
 **Status:** Triple-A Polish Release ✅
 
+## [2.1.0] - 2026-02-03
+
+### Identity Loop v1
+
+### Added
+- Town Board “Story Dashboard” with vibe, suggestion, memory teaser, and Wishing Well
+- Identity systems: Farm Mood (positive-only), Farm Memories, Farm Philosophy
+- Scrapbook Chapters UI with chapter progress and filters
+- Wishing Well daily blessing mechanic (small, positive-only bonuses)
+- Early micro-memories to trigger within first 10 minutes
+- Mood-based visual accent and overlay
+
+### Changed
+- Save data extended to persist identity states and active blessing
+- Stats bar now shows mood tier and active blessing chip
+
 ---
 
 ## v5.0.0 - Triple-A Polish Release (January 2026)
@@ -432,4 +448,3 @@ React.useEffect(() => {
 ---
 
 **Status:** ✅ Phase 1 & 2 Complete - Ready for Phase 3 & 4
-

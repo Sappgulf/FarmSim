@@ -25,7 +25,7 @@ const createEmptyGrid = (size) => {
   return Array(size * size).fill(null).map(() => createEmptyPlot());
 };
 
-export function useFarm(addNotification, addCoins, updateStats, prestigeData, buildingBonuses = {}) {
+export function useFarm(addNotification, addCoins, updateStats, prestigeData, buildingBonuses = {}, growthMultiplier = 1) {
   const [gridSize, setGridSize] = useState(3);
   const [plots, setPlots] = useState(() => createEmptyGrid(3));
   const [selectedSeed, setSelectedSeed] = useState('carrot');
@@ -247,7 +247,7 @@ export function useFarm(addNotification, addCoins, updateStats, prestigeData, bu
 
     const now = nowSec();
     const elapsed = now - plot.plantedAt;
-    const totalGrowthTime = cropData.stages * cropData.secondsPerStage;
+    const totalGrowthTime = cropData.stages * cropData.secondsPerStage / Math.max(0.1, growthMultiplier);
 
     // Check if fully grown
     const growthPercent = elapsed / totalGrowthTime;
@@ -329,7 +329,7 @@ export function useFarm(addNotification, addCoins, updateStats, prestigeData, bu
       mutation,
       comboCount,
     };
-  }, [plots, getCropData, determineQuality, checkForMutation, lastHarvestTime, comboMultiplier, prestigeData, addCoins, addNotification, updateStats, comboCount, buildingBonuses]);
+  }, [plots, getCropData, determineQuality, checkForMutation, lastHarvestTime, comboMultiplier, prestigeData, addCoins, addNotification, updateStats, comboCount, buildingBonuses, growthMultiplier]);
 
   // Expand farm
   const expandFarm = useCallback((cost) => {
@@ -375,9 +375,10 @@ export function useFarm(addNotification, addCoins, updateStats, prestigeData, bu
 
     const now = nowSec();
     const elapsed = now - plot.plantedAt;
-    const totalGrowthTime = cropData.stages * cropData.secondsPerStage;
+    const effectiveSecondsPerStage = cropData.secondsPerStage / Math.max(0.1, growthMultiplier);
+    const totalGrowthTime = cropData.stages * effectiveSecondsPerStage;
     const progress = Math.min(elapsed / totalGrowthTime, 1);
-    const stage = getGrowthStage(elapsed, cropData.stages, cropData.secondsPerStage);
+    const stage = getGrowthStage(elapsed, cropData.stages, effectiveSecondsPerStage);
 
     let status = 'growing';
     if (progress >= 1) status = 'ready';
@@ -391,7 +392,7 @@ export function useFarm(addNotification, addCoins, updateStats, prestigeData, bu
       cropData,
       plot,
     };
-  }, [plots, getCropData]);
+  }, [plots, getCropData, growthMultiplier]);
 
   // Save data
   const getSaveData = useCallback(() => ({

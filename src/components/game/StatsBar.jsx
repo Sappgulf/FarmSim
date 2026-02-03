@@ -80,6 +80,8 @@ function StatsBarComponent({
   prestigeData,
   timeDisplay,
   currentPeriod,
+  moodTier,
+  activeBlessing,
   onShowHelp,
 }) {
   const now = nowSec();
@@ -156,6 +158,25 @@ function StatsBarComponent({
             {currentPeriod.id === 'evening' && <Sunset size={14} />}
             {currentPeriod.id === 'night' && <Moon size={14} />}
             <span className="text-xs font-mono font-medium">{timeDisplay}</span>
+          </div>
+        )}
+
+        {/* Mood */}
+        {moodTier && (
+          <div
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl shadow-sm border bg-white/80"
+            style={{ borderColor: 'var(--mood-accent)' }}
+          >
+            <span className="text-base">{moodTier.emoji}</span>
+            <span className="text-xs font-semibold mood-accent-text">{moodTier.name}</span>
+          </div>
+        )}
+
+        {/* Active Blessing */}
+        {activeBlessing && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl shadow-sm border bg-sky-50 border-sky-200 text-sky-700">
+            <span className="text-base">{activeBlessing.emoji}</span>
+            <span className="text-xs font-semibold">{activeBlessing.name}</span>
           </div>
         )}
 

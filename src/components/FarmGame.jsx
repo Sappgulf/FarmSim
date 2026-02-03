@@ -37,6 +37,7 @@ import { WelcomeScreen } from './game/WelcomeScreen';
 import { MilestonePopup, MILESTONES } from './game/MilestonePopup';
 import { HelpGuide } from './game/HelpGuide';
 import { TimeDisplay } from './game/TimeDisplay';
+import { StoryDashboard } from './game/StoryDashboard';
 
 // Panels
 import { ShopPanel } from './panels/ShopPanel';
@@ -46,15 +47,36 @@ import { BreedingPanel } from './panels/BreedingPanel';
 import { ProcessingPanel } from './panels/ProcessingPanel';
 import { LivestockPanel } from './panels/LivestockPanel';
 import { PrestigePanel } from './panels/PrestigePanel';
+import { ScrapbookPanel } from './panels/ScrapbookPanel';
 
 // Data
 import { GRID_CONFIG, GAME_SETTINGS, LEVELS } from '../data/constants';
 import { BUILDINGS, LIVESTOCK, PROCESSING_RECIPES } from '../data/buildings';
 import { CROPS, QUALITY_TIERS } from '../data/crops';
+import { BLESSINGS, MEMORIES, MEMORY_CHAPTERS, MOOD_TIERS, WISHING_WELL } from '../data/identity';
 
 // Utils
 import { nowSec } from '../utils/time.mjs';
 import { loadGameSave, saveGameState, saveGameStateImmediate } from '../utils/save.mjs';
+
+const getMoodTierForPoints = (points) => {
+  let tier = MOOD_TIERS[0];
+  for (const candidate of MOOD_TIERS) {
+    if (points >= candidate.min) tier = candidate;
+  }
+  return tier;
+};
+
+const FEATURED_CROP_BY_SEASON = {
+  spring: 'carrot',
+  summer: 'corn',
+  fall: 'pumpkin',
+  winter: 'garlic',
+};
+
+const getFeaturedCropId = (season) => {
+  return FEATURED_CROP_BY_SEASON[season] || 'carrot';
+};
 
 export default function FarmGame() {
   // ------------ STATE MANAGEMENT ------------
@@ -94,8 +116,27 @@ export default function FarmGame() {
     return bonuses;
   }, [buildings]);
 
+  // ============ IDENTITY SYSTEM (Mood / Memory / Philosophy) ============
+  const [philosophy, setPhilosophy] = useState(null);
+  const [moodPoints, setMoodPoints] = useState(0);
+  const [memoryFlags, setMemoryFlags] = useState({});
+  const memoryFlagsRef = useRef({});
+  const [farmDay, setFarmDay] = useState(1);
+  const [lastWishDay, setLastWishDay] = useState(null);
+  const [activeBlessing, setActiveBlessing] = useState(null);
+  const [storyPulse, setStoryPulse] = useState(false);
+
+  const moodTier = useMemo(() => getMoodTierForPoints(moodPoints), [moodPoints]);
+
+  const growthMultiplier = useMemo(() => {
+    if (activeBlessing?.type === 'growth_bonus') {
+      return Math.min(1 + activeBlessing.value, 1.2);
+    }
+    return 1;
+  }, [activeBlessing]);
+
   // Farm state
-  const farm = useFarm(addNotification, addCoins, updateStats, prestigeData, buildingBonuses);
+  const farm = useFarm(addNotification, addCoins, updateStats, prestigeData, buildingBonuses, growthMultiplier);
   const {
     gridSize, plots, selectedSeed, inventory, comboCount, comboMultiplier,
     setSelectedSeed, setInventory,
@@ -113,6 +154,9 @@ export default function FarmGame() {
     getGrowthModifier, doesWeatherWater, getDamageRisk,
     getSaveData: getWeatherSaveData, loadSaveData: loadWeatherSaveData,
   } = weather;
+
+  const featuredCropId = useMemo(() => getFeaturedCropId(currentSeason), [currentSeason]);
+  const featuredCropData = CROPS[featuredCropId];
 
   // Tutorial state
   const tutorial = useTutorial(tutorialComplete, tutorialStep, advanceTutorial, completeTutorial);
@@ -139,6 +183,7 @@ export default function FarmGame() {
 
   // Local UI state
   const [activeTab, setActiveTab] = useState('farm');
+  const [rightTab, setRightTab] = useState('shop');
   const [menuOpen, setMenuOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
@@ -168,7 +213,7 @@ export default function FarmGame() {
 
   // Day/night cycle
   const dayNight = useDayNight(false);
-  const { currentPeriod, timeDisplay, getEffects, getVisuals } = dayNight;
+  const { currentPeriod, timeDisplay, getEffects, getVisuals, gameHour } = dayNight;
 
   // Achievement tracking
   const achievementSystem = useAchievements(
@@ -178,7 +223,109 @@ export default function FarmGame() {
   );
   const { unlockedAchievements, checkAchievements } = achievementSystem;
 
-  // ------------ GAME LOOP ------------
+  // Keep memory flags ref in sync for idempotent unlocks
+  useEffect(() => {
+    memoryFlagsRef.current = memoryFlags;
+  }, [memoryFlags]);
+
+  // Story pulse helper
+  const storyPulseTimeoutRef = useRef(null);
+  const triggerStoryPulse = useCallback(() => {
+    setStoryPulse(true);
+    if (storyPulseTimeoutRef.current) {
+      clearTimeout(storyPulseTimeoutRef.current);
+    }
+    storyPulseTimeoutRef.current = setTimeout(() => {
+      setStoryPulse(false);
+    }, 2400);
+  }, []);
+  useEffect(() => () => {
+    if (storyPulseTimeoutRef.current) {
+      clearTimeout(storyPulseTimeoutRef.current);
+    }
+  }, []);
+
+  // Mood helper (positive-only)
+  const bumpMood = useCallback((amount = 1) => {
+    if (amount <= 0) return;
+    setMoodPoints(prev => Math.min(prev + amount, 100));
+  }, []);
+
+  // Memory unlock helper (idempotent)
+  const unlockMemory = useCallback((memoryId) => {
+    if (memoryFlagsRef.current[memoryId]) return false;
+    const memory = MEMORIES.find(m => m.id === memoryId);
+    setMemoryFlags(prev => ({ ...prev, [memoryId]: true }));
+    if (memory) {
+      addNotification(`📖 Memory saved: ${memory.title}`, 'info');
+    }
+    triggerStoryPulse();
+    return true;
+  }, [addNotification, triggerStoryPulse]);
+
+  // React to mood tier changes
+  const prevMoodTierRef = useRef(moodTier.id);
+  useEffect(() => {
+    if (prevMoodTierRef.current !== moodTier.id) {
+      if (['cozy', 'blooming', 'radiant'].includes(moodTier.id)) {
+        unlockMemory('first_cozy_mood');
+      }
+      triggerStoryPulse();
+      prevMoodTierRef.current = moodTier.id;
+    }
+  }, [moodTier.id, unlockMemory, triggerStoryPulse]);
+
+  const vibeLine = useMemo(() => {
+    const vibes = moodTier?.vibes || [];
+    if (vibes.length === 0) return '';
+    const index = farmDay % vibes.length;
+    return vibes[index];
+  }, [moodTier, farmDay]);
+
+  const cozySuggestion = useMemo(() => {
+    if (!philosophy) return '';
+    const cropLabel = featuredCropData ? `${featuredCropData.emoji} ${featuredCropId}` : 'a seasonal crop';
+    if (philosophy === 'nature') {
+      if (['rainy', 'stormy'].includes(currentWeather)) {
+        return `Let the rain handle watering—plant ${cropLabel}.`;
+      }
+      return `Lean into ${seasonData?.name || currentSeason}: try ${cropLabel}.`;
+    }
+    if (philosophy === 'market') {
+      return `Featured today: ${cropLabel}. Stock a few seeds or sell the next batch.`;
+    }
+    return 'Place a new building or open the scrapbook for a quiet moment.';
+  }, [philosophy, currentWeather, currentSeason, featuredCropId, featuredCropData, seasonData]);
+
+  const memoryTeaserData = useMemo(() => {
+    const unlockedCount = MEMORIES.reduce((count, memory) => count + (memoryFlags[memory.id] ? 1 : 0), 0);
+    const nextMemory = MEMORIES.find(memory => !memoryFlags[memory.id]);
+    if (!nextMemory) {
+      return {
+        memoryTeaser: 'All pages are complete. Your story feels whole.',
+        memoryProgress: `${unlockedCount}/${MEMORIES.length} complete`,
+      };
+    }
+
+    const chapter = MEMORY_CHAPTERS.find(c => c.id === nextMemory.chapterId);
+    const chapterMemories = MEMORIES.filter(m => m.chapterId === nextMemory.chapterId);
+    const chapterUnlocked = chapterMemories.reduce((count, m) => count + (memoryFlags[m.id] ? 1 : 0), 0);
+    const chapterLabel = chapter ? `${chapterUnlocked}/${chapterMemories.length} ${chapter.name}` : '';
+
+    return {
+      memoryTeaser: nextMemory.hint,
+      memoryProgress: chapterLabel,
+    };
+  }, [memoryFlags]);
+
+  const canWishToday = lastWishDay === null || farmDay !== lastWishDay;
+  const canAffordWish = coins >= WISHING_WELL.cost;
+  const canWish = canWishToday && canAffordWish;
+  const wishDisabledReason = !canWishToday
+    ? 'The well is resting until tomorrow.'
+    : (!canAffordWish ? `Need ${WISHING_WELL.cost}🪙 to wish.` : '');
+
+  // ============ GAME LOOP ============
 
   useEffect(() => {
     const tickInterval = setInterval(() => {
@@ -372,7 +519,33 @@ export default function FarmGame() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // ------------ SAVE/LOAD ------------
+  // Day rollover handling (used for wishes + memories)
+  const handleDayRollover = useCallback(() => {
+    setFarmDay(prev => prev + 1);
+    if (activeBlessing) {
+      setActiveBlessing(null);
+      addNotification('🌅 The blessing fades with the new day.', 'info');
+    } else {
+      addNotification('🌅 A new day begins on the farm.', 'info');
+    }
+    unlockMemory('first_day_complete');
+  }, [activeBlessing, addNotification, unlockMemory]);
+
+  const prevHourRef = useRef(null);
+  useEffect(() => {
+    if (gameHour === undefined || gameHour === null) return;
+    const prevHour = prevHourRef.current;
+    if (prevHour === null) {
+      prevHourRef.current = gameHour;
+      return;
+    }
+    if (gameHour < prevHour) {
+      handleDayRollover();
+    }
+    prevHourRef.current = gameHour;
+  }, [gameHour, handleDayRollover]);
+
+  // ============ SAVE/LOAD ============
 
   // Load save on mount
   useEffect(() => {
@@ -387,6 +560,18 @@ export default function FarmGame() {
       if (savedData.dayNight) dayNight.loadSaveData(savedData.dayNight);
       if (savedData.ownedAnimals) setOwnedAnimals(savedData.ownedAnimals);
       if (savedData.claimedMilestones) setClaimedMilestones(savedData.claimedMilestones);
+      if (savedData.identity) {
+        const identity = savedData.identity;
+        if (identity.philosophy) setPhilosophy(identity.philosophy);
+        if (Number.isFinite(identity.moodPoints)) setMoodPoints(identity.moodPoints);
+        if (identity.memoryFlags) setMemoryFlags(identity.memoryFlags);
+        if (Number.isFinite(identity.farmDay)) setFarmDay(Math.max(1, identity.farmDay));
+        if (Number.isFinite(identity.lastWishDay)) setLastWishDay(identity.lastWishDay);
+        if (identity.activeBlessing) {
+          const blessing = BLESSINGS.find(b => b.id === identity.activeBlessing.id);
+          setActiveBlessing(blessing ? { ...blessing, ...identity.activeBlessing } : identity.activeBlessing);
+        }
+      }
     } else {
       // New game - initialize
       generateForecast();
@@ -405,6 +590,14 @@ export default function FarmGame() {
       dayNight: dayNight.getSaveData(),
       ownedAnimals,
       claimedMilestones,
+      identity: {
+        philosophy,
+        moodPoints,
+        memoryFlags,
+        farmDay,
+        lastWishDay,
+        activeBlessing,
+      },
       savedAt: nowSec(),
     });
 
@@ -422,9 +615,76 @@ export default function FarmGame() {
       clearInterval(saveInterval);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [getGameSaveData, getFarmSaveData, getWeatherSaveData, buildings, discoveredHybrids, ownedAnimals, claimedMilestones, achievementSystem, dayNight]);
+  }, [
+    getGameSaveData,
+    getFarmSaveData,
+    getWeatherSaveData,
+    buildings,
+    discoveredHybrids,
+    ownedAnimals,
+    claimedMilestones,
+    achievementSystem,
+    dayNight,
+    philosophy,
+    moodPoints,
+    memoryFlags,
+    farmDay,
+    lastWishDay,
+    activeBlessing,
+  ]);
 
   // ------------ HANDLERS ------------
+
+  const handleSelectPhilosophy = useCallback((philosophyId) => {
+    if (philosophyId === philosophy) return;
+    setPhilosophy(philosophyId);
+    addNotification('📌 Philosophy selected. Your story has a new direction.', 'info');
+    bumpMood(1);
+    triggerStoryPulse();
+  }, [addNotification, bumpMood, triggerStoryPulse, philosophy]);
+
+  const handleScrapbookOpen = useCallback(() => {
+    setStoryPulse(false);
+  }, []);
+
+  const harvestBonusAppliedRef = useRef(false);
+  const blessingNoticeRef = useRef(false);
+  useEffect(() => {
+    harvestBonusAppliedRef.current = false;
+    blessingNoticeRef.current = false;
+  }, [activeBlessing?.id]);
+
+  const applyHarvestIdentity = useCallback((result) => {
+    if (!result) return;
+
+    bumpMood(1);
+    unlockMemory('first_harvest');
+
+    if (currentWeather === 'rainy') {
+      unlockMemory('first_rainy_harvest');
+    }
+
+    if (result.quality?.id >= QUALITY_TIERS.EXCELLENT.id) {
+      bumpMood(1);
+    }
+
+    if (activeBlessing?.type === 'sell_bonus' && result.crop === featuredCropId) {
+      const bonus = Math.max(1, Math.round(result.value * activeBlessing.value));
+      addCoins(bonus, 'blessing');
+      if (!blessingNoticeRef.current) {
+        addNotification(`✨ Blessing bonus +${bonus}🪙`, 'success');
+        blessingNoticeRef.current = true;
+      }
+    }
+
+    if (activeBlessing?.type === 'next_harvest_bonus' && !harvestBonusAppliedRef.current) {
+      const bonus = Math.max(1, Math.round(activeBlessing.value));
+      addCoins(bonus, 'blessing');
+      addNotification(`😊 Friendly faces tipped +${bonus}🪙`, 'success');
+      harvestBonusAppliedRef.current = true;
+      setActiveBlessing(null);
+    }
+  }, [activeBlessing, addCoins, addNotification, bumpMood, currentWeather, featuredCropId, unlockMemory]);
 
   // Shop handlers
   const handleBuySeeds = useCallback((seedId, qty) => {
@@ -436,10 +696,12 @@ export default function FarmGame() {
       addToInventory({ [seedId]: qty });
       addNotification(`Bought ${qty} ${crop.emoji} ${seedId} seeds!`, 'success');
       sound.playSuccess();
+      bumpMood(1);
+      unlockMemory('first_shop_purchase');
     } else {
       sound.playError();
     }
-  }, [spendCoins, addToInventory, addNotification, sound]);
+  }, [spendCoins, addToInventory, addNotification, sound, bumpMood, unlockMemory]);
 
   const handleBuyTool = useCallback((toolId) => {
     const tool = { fertilizer: 8, pesticide: 6, fungicide: 12 }[toolId];
@@ -449,10 +711,12 @@ export default function FarmGame() {
       addToInventory({ [toolId]: 1 });
       addNotification(`Bought ${toolId}!`, 'success');
       sound.playSuccess();
+      bumpMood(1);
+      unlockMemory('first_shop_purchase');
     } else {
       sound.playError();
     }
-  }, [spendCoins, addToInventory, addNotification, sound]);
+  }, [spendCoins, addToInventory, addNotification, sound, bumpMood, unlockMemory]);
 
   const handleExpandFarm = useCallback(() => {
     const cost = GRID_CONFIG.EXPANSION_COSTS[gridSize + 1];
@@ -482,10 +746,13 @@ export default function FarmGame() {
       if (!reducedMotion) {
         fireConfetti('medium');
       }
+      bumpMood(2);
+      unlockMemory('first_shop_purchase');
+      unlockMemory('first_building');
     } else {
       sound.playError();
     }
-  }, [buildings, spendCoins, addNotification, reducedMotion, fireConfetti, sound, flashPurple]);
+  }, [buildings, spendCoins, addNotification, reducedMotion, fireConfetti, sound, flashPurple, bumpMood, unlockMemory]);
 
   // Reset game
   const handleResetGame = useCallback(() => {
@@ -631,6 +898,29 @@ export default function FarmGame() {
     }
   }, [doPrestige, sound, flashPurple, reducedMotion, fireConfetti, claimedMilestones, prestige]);
 
+  // Wishing Well
+  const handleMakeWish = useCallback(() => {
+    if (!canWishToday) {
+      addNotification('The well is resting until tomorrow.', 'info');
+      return;
+    }
+    if (!spendCoins(WISHING_WELL.cost)) return;
+
+    const blessing = BLESSINGS[Math.floor(Math.random() * BLESSINGS.length)];
+    setActiveBlessing({ ...blessing, startedDay: farmDay });
+    setLastWishDay(farmDay);
+    addNotification(`💧 Wish granted: ${blessing.name}`, 'success');
+    sound.playSuccess();
+
+    bumpMood(2);
+    if (blessing.type === 'mood_bonus') {
+      bumpMood(blessing.value);
+    }
+
+    unlockMemory('first_wish');
+    triggerStoryPulse();
+  }, [canWishToday, spendCoins, farmDay, addNotification, sound, bumpMood, unlockMemory, triggerStoryPulse]);
+
   // Handle bottom nav tab change
   const handleTabChange = useCallback((tabId) => {
     if (tabId === 'menu') {
@@ -646,18 +936,22 @@ export default function FarmGame() {
     const result = plant(plotIndex);
     if (result) {
       sound.playPlant();
+      bumpMood(1);
+      unlockMemory('first_seed');
     }
     return result;
-  }, [plant, sound]);
+  }, [plant, sound, bumpMood, unlockMemory]);
 
   // Sound-enabled water handler
   const handleWater = useCallback((plotIndex) => {
     const result = water(plotIndex);
     if (result) {
       sound.playWater();
+      bumpMood(1);
+      unlockMemory('first_watering');
     }
     return result;
-  }, [water, sound]);
+  }, [water, sound, bumpMood, unlockMemory]);
 
   // Sound-enabled fertilize handler
   const handleFertilize = useCallback((plotIndex) => {
@@ -671,6 +965,8 @@ export default function FarmGame() {
   const handleHarvest = useCallback((plotIndex) => {
     const result = harvest(plotIndex);
     if (!result) return result;
+
+    applyHarvestIdentity(result);
 
     // Play harvest sound
     sound.playHarvest();
@@ -695,7 +991,7 @@ export default function FarmGame() {
     }
 
     return result;
-  }, [harvest, reducedMotion, fireConfetti, sound, flashGold, comboCount]);
+  }, [harvest, applyHarvestIdentity, reducedMotion, fireConfetti, sound, flashGold, comboCount]);
 
   // Harvest all ready crops
   const handleHarvestAll = useCallback(() => {
@@ -709,6 +1005,7 @@ export default function FarmGame() {
         if (result) {
           harvestedCount++;
           totalValue += result.value;
+          applyHarvestIdentity(result);
         }
       }
     });
@@ -716,6 +1013,10 @@ export default function FarmGame() {
     if (harvestedCount > 0) {
       addNotification(`🎉 Harvested ${harvestedCount} crops for ${totalValue}🪙!`, 'success');
       sound.playHarvest();
+
+      if (harvestedCount >= Math.min(3, gridSize * gridSize)) {
+        unlockMemory('first_harvest_all');
+      }
 
       // Multiple coin sounds for big harvests
       for (let i = 0; i < Math.min(harvestedCount, 5); i++) {
@@ -730,7 +1031,7 @@ export default function FarmGame() {
         }
       }
     }
-  }, [plots, getPlotStatus, harvest, addNotification, reducedMotion, fireConfetti, sound, flashGold]);
+  }, [plots, getPlotStatus, harvest, applyHarvestIdentity, addNotification, reducedMotion, fireConfetti, sound, flashGold, gridSize, unlockMemory]);
 
   // ------------ RENDER ------------
 
@@ -751,12 +1052,20 @@ export default function FarmGame() {
     <div
       className={`min-h-screen bg-gradient-to-br ${dayNightVisuals.bgGradient || 'from-green-50 via-emerald-50 to-teal-50'} transition-colors duration-1000`}
       data-reduced-motion={reducedMotion ? 'true' : 'false'}
+      data-mood-tier={moodTier?.id || 'calm'}
+      style={{
+        '--mood-accent': moodTier?.accent || '#16a34a',
+        '--mood-accent-soft': moodTier?.accentSoft || 'rgba(22, 163, 74, 0.12)',
+        '--mood-overlay': moodTier?.overlay || 'rgba(22, 163, 74, 0.06)',
+      }}
     >
       {/* Day/night overlay */}
       <div
         className="fixed inset-0 pointer-events-none transition-colors duration-1000 z-0"
         style={{ backgroundColor: dayNightVisuals.overlayColor }}
       />
+      {/* Mood overlay */}
+      <div className="fixed inset-0 pointer-events-none mood-overlay z-0" />
 
       {/* Notifications */}
       <NotificationStack
@@ -813,6 +1122,8 @@ export default function FarmGame() {
           prestigeData={prestigeData}
           timeDisplay={timeDisplay}
           currentPeriod={currentPeriod}
+          moodTier={moodTier}
+          activeBlessing={activeBlessing}
           onShowHelp={() => setShowHelp(true)}
         />
 
@@ -865,8 +1176,25 @@ export default function FarmGame() {
 
           {/* Right Column - Tabs */}
           <div className="space-y-4">
-            <Tabs defaultValue="shop" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+            <StoryDashboard
+              moodTier={moodTier}
+              vibeLine={vibeLine}
+              suggestion={cozySuggestion}
+              memoryTeaser={memoryTeaserData.memoryTeaser}
+              memoryProgress={memoryTeaserData.memoryProgress}
+              philosophy={philosophy}
+              onSelectPhilosophy={handleSelectPhilosophy}
+              onOpenScrapbook={() => setRightTab('scrapbook')}
+              storyPulse={storyPulse}
+              activeBlessing={activeBlessing}
+              canWish={canWish}
+              wishCost={WISHING_WELL.cost}
+              wishDisabledReason={wishDisabledReason}
+              onWish={handleMakeWish}
+            />
+
+            <Tabs value={rightTab} onValueChange={setRightTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="shop" title="Shop">
                   <ShoppingCart size={16} />
                 </TabsTrigger>
@@ -878,6 +1206,9 @@ export default function FarmGame() {
                 </TabsTrigger>
                 <TabsTrigger value="prestige" title="Prestige">
                   <Crown size={16} />
+                </TabsTrigger>
+                <TabsTrigger value="scrapbook" title="Scrapbook">
+                  📖
                 </TabsTrigger>
                 <TabsTrigger value="settings" title="Settings">
                   <Settings size={16} />
@@ -924,6 +1255,15 @@ export default function FarmGame() {
                   coins={coins}
                   onPrestige={handlePrestige}
                   stats={stats}
+                />
+              </TabsContent>
+
+              <TabsContent value="scrapbook" className="mt-4">
+                <ScrapbookPanel
+                  chapters={MEMORY_CHAPTERS}
+                  memories={MEMORIES}
+                  memoryFlags={memoryFlags}
+                  onOpen={handleScrapbookOpen}
                 />
               </TabsContent>
 
@@ -989,6 +1329,22 @@ export default function FarmGame() {
         <div className="sm:hidden mt-4 space-y-4">
           {activeTab === 'farm' && (
             <>
+              <StoryDashboard
+                moodTier={moodTier}
+                vibeLine={vibeLine}
+                suggestion={cozySuggestion}
+                memoryTeaser={memoryTeaserData.memoryTeaser}
+                memoryProgress={memoryTeaserData.memoryProgress}
+                philosophy={philosophy}
+                onSelectPhilosophy={handleSelectPhilosophy}
+                onOpenScrapbook={() => setActiveTab('scrapbook')}
+                storyPulse={storyPulse}
+                activeBlessing={activeBlessing}
+                canWish={canWish}
+                wishCost={WISHING_WELL.cost}
+                wishDisabledReason={wishDisabledReason}
+                onWish={handleMakeWish}
+              />
               <WeatherDisplay
                 currentWeather={currentWeather}
                 weatherData={weatherData}
@@ -1049,6 +1405,15 @@ export default function FarmGame() {
               inventory={inventory}
               discoveredHybrids={discoveredHybrids}
               prestige={prestige}
+            />
+          )}
+
+          {activeTab === 'scrapbook' && (
+            <ScrapbookPanel
+              chapters={MEMORY_CHAPTERS}
+              memories={MEMORIES}
+              memoryFlags={memoryFlags}
+              onOpen={handleScrapbookOpen}
             />
           )}
 
@@ -1121,6 +1486,7 @@ export default function FarmGame() {
         onResetGame={handleResetGame}
         onShowAchievements={() => { setActiveTab('achievements'); setMenuOpen(false); }}
         onShowBreeding={() => { setActiveTab('breeding'); setMenuOpen(false); }}
+        onShowScrapbook={() => { setActiveTab('scrapbook'); setMenuOpen(false); }}
       />
 
       {/* Debug Overlay (toggle with ` key) */}

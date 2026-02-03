@@ -6,7 +6,7 @@ export const SAVE_CONFIG = {
   key: 'farmSim_save_v3',
   minSize: 3,
   maxSize: 5,
-  version: 3,
+  version: 4,
 };
 
 function normalizeNumber(value, fallback = 0) {
@@ -16,7 +16,8 @@ function normalizeNumber(value, fallback = 0) {
 export function normalizeSaveData(raw, { minSize, maxSize, version }) {
   if (!raw || typeof raw !== "object") return null;
   const saveVersion = raw.version ?? 1;
-  if (saveVersion !== 1 && saveVersion !== version) return null;
+  const acceptedVersions = new Set([1, 3, version]);
+  if (!acceptedVersions.has(saveVersion)) return null;
 
   const normalized = { ...raw, version: saveVersion };
   normalized.coins = Math.max(0, normalizeNumber(raw.coins, 0));

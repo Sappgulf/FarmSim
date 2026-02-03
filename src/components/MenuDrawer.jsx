@@ -5,7 +5,7 @@
 import React, { memo, useEffect, useCallback } from 'react';
 import {
   X, Settings, Trophy, Dna, RotateCcw, Volume2, VolumeX,
-  HelpCircle, Info, Moon, Sun, Accessibility
+  HelpCircle, Info, Moon, Sun, Accessibility, BookOpen
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { LEVELS } from '../data/constants';
@@ -27,6 +27,7 @@ function MenuDrawerComponent({
   onResetGame,
   onShowAchievements,
   onShowBreeding,
+  onShowScrapbook,
   onShowStats,
 }) {
   // Close on escape key
@@ -104,6 +105,13 @@ function MenuDrawerComponent({
               label="Breeding Lab"
               sublabel="Create hybrid crops"
               onClick={() => { onShowBreeding?.(); onClose(); }}
+            />
+
+            <MenuButton
+              icon={BookOpen}
+              label="Scrapbook"
+              sublabel="Memories & chapters"
+              onClick={() => { onShowScrapbook?.(); onClose(); }}
             />
           </div>
 
