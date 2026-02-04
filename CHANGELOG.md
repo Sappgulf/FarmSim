@@ -9,6 +9,18 @@ Guiding rules:
 - Every entry should be auditable (what changed, where, why).
 
 ## [Unreleased]
+### Planned (2026-02-04) — Genetics UI Polish + Breeding Reliability
+- **Scope:** frontend
+- **What:** remove underscore-heavy labels in Genetics UI, polish genetics sub-tabs, and ensure breeding inventory checks consume the correct parents.
+- **Why:** deliver a more AAA presentation while keeping breeding mechanics reliable.
+- **Verification:** `npm run build` (passes with Browserslist data out-of-date warning).
+
+### Implemented (2026-02-04) — Genetics UI Polish + Breeding Reliability
+- **Scope:** frontend
+- **What:** formatted Genetics crop labels for display, polished breeding selection and preview copy, and fixed breeding inventory consumption for two-parent recipes.
+- **Why:** keep genetics gameplay readable and consistent without breaking breeding rules.
+- **Verification:** `npm run build` (passes with Browserslist data out-of-date warning).
+
 ### Planned (2026-02-04) — Sprint F2: Shareability + Identity Lock
 - **Scope:** frontend, docs
 - **What:** audit identity/almanac/town board systems, add Farm Card export, add Farm Theme selector + spotlight selection, and extend QA harness for shareability coverage.
