@@ -4,6 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
+import { formatDisplayLabel } from '../../../../utils/textFormat';
 
 // Pet types from original system
 const PET_TYPES = {
@@ -188,7 +189,7 @@ const PetsTab = memo(() => {
       });
     } else {
       actions.addNotification({
-        message: `Not enough ${need.type} supplies!`,
+        message: `Not enough ${formatDisplayLabel(need.type)} supplies!`,
         type: 'warning'
       });
     }
@@ -212,7 +213,7 @@ const PetsTab = memo(() => {
       actions.updateInventory(updatedInventory);
 
       actions.addNotification({
-        message: `Bought ${quantity} ${supplyType.replace('_', ' ')}!`,
+        message: `Bought ${quantity} ${formatDisplayLabel(supplyType)}!`,
         type: 'success'
       });
     } else {
@@ -239,27 +240,54 @@ const PetsTab = memo(() => {
 
   return (
     <div className="space-y-4">
+      <Card className="p-4 bg-white/80 border border-gray-100 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">🐾 Farm Companions</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Adopt loyal helpers, keep them happy, and earn cozy farm bonuses.
+            </p>
+          </div>
+          <Badge variant="secondary" className="shrink-0">Pets</Badge>
+        </div>
+      </Card>
+
       {/* Pet Adoption */}
       {state.pets.length === 0 && (
-        <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50">
-          <h3 className="font-semibold mb-3 text-orange-800">🏠 Adopt Your First Pet</h3>
-          <p className="text-sm text-orange-700 mb-4">
-            Pets provide various bonuses and help protect your farm!
-          </p>
+        <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-orange-100">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="text-3xl">✨</div>
+            <div>
+              <h3 className="font-semibold text-orange-800">Adopt Your First Pet</h3>
+              <p className="text-sm text-orange-700">
+                Pets provide bonuses, protect your crops, and add personality to your farm.
+              </p>
+              <p className="text-xs text-orange-600 mt-2">
+                How to get a pet: earn coins → choose a companion → stock up on supplies.
+              </p>
+            </div>
+          </div>
           <div className="grid grid-cols-1 gap-3">
             {Object.entries(PET_TYPES).map(([petType, pet]) => (
-              <div key={petType} className="flex justify-between items-center p-3 border rounded">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{pet.emoji}</span>
+              <div key={petType} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg bg-white/70">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{pet.emoji || '🐾'}</span>
                   <div>
-                    <div className="font-medium">{pet.name}</div>
-                    <div className="text-xs text-gray-600">{pet.traits.join(', ')}</div>
+                    <div className="font-medium text-gray-900">{pet.name}</div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {pet.traits.map((trait) => (
+                        <Badge key={trait} variant="outline" className="text-[10px]">
+                          {formatDisplayLabel(trait)}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <Button
                   onClick={() => handleAdoptPet(petType)}
                   size="sm"
                   disabled={state.coins < pet.cost}
+                  className="sm:self-center"
                 >
                   Adopt ({pet.cost}🪙)
                 </Button>
@@ -279,16 +307,20 @@ const PetsTab = memo(() => {
               {state.pets.map(pet => {
                 const petData = PET_TYPES[pet.type];
                 const healthStatus = getHealthStatus(pet.health);
+                const petIcon = petData?.emoji || '🐾';
 
                 return (
                   <Card key={pet.id} className="p-3">
-                    <div className="flex justify-between items-start mb-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-3xl">{petData.emoji}</span>
+                        <span className="text-3xl">{petIcon}</span>
                         <div>
-                          <div className="font-semibold">{pet.name}</div>
+                          <div className="font-semibold text-gray-900">{pet.name}</div>
                           <div className="text-sm text-gray-600">
-                            Level {pet.level} • {getHappinessEmoji(pet.happiness)} {Math.round(pet.happiness)}% Happy
+                            {petData?.name || 'Pet'} • Level {pet.level}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Mood: {getHappinessEmoji(pet.happiness)} {Math.round(pet.happiness)}% happy
                           </div>
                         </div>
                       </div>
@@ -322,13 +354,23 @@ const PetsTab = memo(() => {
                       </div>
                     </div>
 
+                    {petData?.traits?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {petData.traits.map((trait) => (
+                          <Badge key={trait} variant="secondary" className="text-[10px]">
+                            {formatDisplayLabel(trait)}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Care Actions */}
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         onClick={() => handleCarePet(pet.id, 'food')}
                         size="sm"
                         variant="outline"
-                        className="text-xs flex-1"
+                        className="text-xs flex-1 min-w-[110px]"
                         disabled={petSupplies.pet_food < 1}
                       >
                         🍖 Feed
@@ -337,7 +379,7 @@ const PetsTab = memo(() => {
                         onClick={() => handleCarePet(pet.id, 'play')}
                         size="sm"
                         variant="outline"
-                        className="text-xs flex-1"
+                        className="text-xs flex-1 min-w-[110px]"
                         disabled={petSupplies.attention < 1}
                       >
                         🎾 Play
@@ -346,10 +388,10 @@ const PetsTab = memo(() => {
                         onClick={() => handleCarePet(pet.id, 'health')}
                         size="sm"
                         variant="outline"
-                        className="text-xs flex-1"
+                        className="text-xs flex-1 min-w-[110px]"
                         disabled={petSupplies.vet_care < 1}
                       >
-                        🏥 Vet
+                        🏥 Checkup
                       </Button>
                     </div>
                   </Card>

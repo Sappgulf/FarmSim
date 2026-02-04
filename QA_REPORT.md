@@ -2,6 +2,11 @@
 
 **Date:** 2026-02-03
 
+## Expansion + Polish Pass (2026-02-03)
+- **Static inspection:** Pets tab layout/copy, notification auto-dismiss logic, and snake_case formatter applied across tabs reviewed in code.
+- **Automated check:** `npm run build` (passes; npm http-proxy warning + browserslist data warning).
+- **Manual runtime checks:** Attempted Playwright debug run (tab stress, +50 notifications, pets actions, save/reload), but Chromium crashed (SIGSEGV) in this environment.
+
 ## UI + Tabs + Mini-Games v1 Pass (2026-02-03)
 - **Static inspection:** Perfect Harvest mini-game UI + engine wiring (Events tab), save/load fields, and icon standardization reviewed.
 - **Automated check:** `npm run test -- --run` (passes with ReactDOMTestUtils act deprecation warning).

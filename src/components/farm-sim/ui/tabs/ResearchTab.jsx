@@ -4,6 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
+import { formatDisplayLabel } from '../../../../utils/textFormat';
 
 // Mapping for unlock IDs to user-friendly names
 const UNLOCK_NAMES = {
@@ -30,12 +31,12 @@ const RESEARCH_NAMES = {
 
 // Helper function to format unlock names
 const formatUnlocks = (unlocks) => {
-  return unlocks.map(id => UNLOCK_NAMES[id] || id).join(', ');
+  return unlocks.map(id => UNLOCK_NAMES[id] || formatDisplayLabel(id)).join(', ');
 };
 
 // Helper function to format research names (for prerequisites)
 const formatResearchNames = (ids) => {
-  return ids.map(id => RESEARCH_NAMES[id] || id).join(', ');
+  return ids.map(id => RESEARCH_NAMES[id] || formatDisplayLabel(id)).join(', ');
 };
 
 // Research projects from original system
