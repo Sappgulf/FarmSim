@@ -30,6 +30,15 @@ import { ensureWeeklyVisits, getWeekKey } from '../../../utils/retention';
 import { calculateHarvestValue } from '../../../utils/farmUpgrades';
 import { getContentManager } from '../../../content/ContentManager';
 import {
+  applyCosmeticFallbacks,
+  getItemEntitlementInfo,
+  grantEntitlement,
+  isItemUnlocked,
+  normalizeEntitlements,
+  revokeEntitlement,
+  setEntitlementMode as buildEntitlementMode,
+} from '../entitlements/EntitlementManager';
+import {
   buildCozyGoals,
   getCozyGoalRewardLabel,
   isCozyGoalSatisfied,
@@ -55,7 +64,22 @@ export function GameProvider({ children }) {
         if (isDevelopmentMode()) {
           console.debug('[farm]', 'Loaded saved game successfully');
         }
-        return savedState;
+        const { nextState, fallbackCount } = applyCosmeticFallbacks(savedState);
+        if (fallbackCount > 0) {
+          const notifications = Array.isArray(nextState.notifications) ? nextState.notifications : [];
+          return {
+            ...nextState,
+            notifications: [
+              ...notifications,
+              {
+                id: `premium-fallback-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                message: 'A premium cosmetic isn’t owned; reverted to default.',
+                type: 'info',
+              },
+            ],
+          };
+        }
+        return nextState;
       }
       return initial;
     }
@@ -72,6 +96,16 @@ export function GameProvider({ children }) {
     dispatchRef.current = dispatch;
   }, [dispatch]);
   const actionsRef = useRef(null);
+
+  const createPremiumFallbackNotification = () => ({
+    id: `premium-fallback-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    message: 'A premium cosmetic isn’t owned; reverted to default.',
+    type: 'info',
+  });
+
+  const applyFallbacksWithNotification = (stateToCheck) => (
+    applyCosmeticFallbacks(stateToCheck)
+  );
 
   // Debounced auto-save management
   const autoSaveTimeoutRef = useRef(null);
@@ -255,6 +289,18 @@ export function GameProvider({ children }) {
     setSelectedCrop: (cropId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_CROP, payload: cropId }),
     setSelectedDecoration: (decorId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_DECORATION, payload: decorId }),
     setDecorationMode: (enabled) => dispatch({ type: GAME_ACTIONS.SET_DECORATION_MODE, payload: enabled }),
+    updateEntitlements: (entitlements) => dispatch({
+      type: GAME_ACTIONS.UPDATE_ENTITLEMENTS,
+      payload: normalizeEntitlements(entitlements),
+    }),
+    showPremiumLockPrompt: (payload) => dispatch({
+      type: GAME_ACTIONS.SET_PREMIUM_LOCK_PROMPT,
+      payload,
+    }),
+    clearPremiumLockPrompt: () => dispatch({
+      type: GAME_ACTIONS.SET_PREMIUM_LOCK_PROMPT,
+      payload: null,
+    }),
     updateMemoryFlags: (memoryFlags) => dispatch({ type: GAME_ACTIONS.UPDATE_MEMORY_FLAGS, payload: memoryFlags }),
     updateMemoryCounters: (memoryCounters) => dispatch({ type: GAME_ACTIONS.UPDATE_MEMORY_COUNTERS, payload: memoryCounters }),
     updateAlmanac: (almanac) => dispatch({ type: GAME_ACTIONS.UPDATE_ALMANAC, payload: almanac }),
@@ -276,13 +322,76 @@ export function GameProvider({ children }) {
     setFarmTheme: (themeId) => dispatch({ type: GAME_ACTIONS.SET_FARM_THEME, payload: themeId }),
     setSpotlight: (spotlight) => dispatch({ type: GAME_ACTIONS.SET_SPOTLIGHT, payload: spotlight }),
     updateSettings: (settings) => dispatch({ type: GAME_ACTIONS.UPDATE_SETTINGS, payload: settings }),
+    setEntitlementMode: (mode) => {
+      const currentState = stateRef.current;
+      const nextEntitlements = buildEntitlementMode(currentState.entitlements, mode);
+      const { nextState, fallbackCount } = applyFallbacksWithNotification({
+        ...currentState,
+        entitlements: nextEntitlements,
+      });
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_ENTITLEMENTS,
+        payload: nextState.entitlements,
+      });
+      if (nextState.plots !== currentState.plots) {
+        dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: nextState.plots });
+      }
+      if (nextState.farmTheme !== currentState.farmTheme) {
+        dispatch({ type: GAME_ACTIONS.SET_FARM_THEME, payload: nextState.farmTheme });
+      }
+      if (fallbackCount > 0) {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: createPremiumFallbackNotification(),
+        });
+      }
+    },
+    grantPackEntitlement: (packId) => {
+      const currentState = stateRef.current;
+      const nextEntitlements = grantEntitlement(currentState.entitlements, packId);
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_ENTITLEMENTS,
+        payload: nextEntitlements,
+      });
+    },
+    revokePackEntitlement: (packId) => {
+      const currentState = stateRef.current;
+      const nextEntitlements = revokeEntitlement(currentState.entitlements, packId);
+      const { nextState, fallbackCount } = applyFallbacksWithNotification({
+        ...currentState,
+        entitlements: nextEntitlements,
+      });
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_ENTITLEMENTS,
+        payload: nextState.entitlements,
+      });
+      if (nextState.plots !== currentState.plots) {
+        dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: nextState.plots });
+      }
+      if (nextState.farmTheme !== currentState.farmTheme) {
+        dispatch({ type: GAME_ACTIONS.SET_FARM_THEME, payload: nextState.farmTheme });
+      }
+      if (fallbackCount > 0) {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: createPremiumFallbackNotification(),
+        });
+      }
+    },
     updateGameLoop: (data) => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: data }),
     pauseGame: () => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { paused: true } }),
     resumeGame: () => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { paused: false } }),
     debugLoadState: (nextState) => {
       if (!isDebugMode()) return false;
       if (!nextState || typeof nextState !== 'object') return false;
-      dispatch({ type: GAME_ACTIONS.LOAD_GAME, payload: nextState });
+      const { nextState: hydrated, fallbackCount } = applyFallbacksWithNotification(nextState);
+      dispatch({ type: GAME_ACTIONS.LOAD_GAME, payload: hydrated });
+      if (fallbackCount > 0) {
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: createPremiumFallbackNotification(),
+        });
+      }
       logDebugAction('debug_load_state');
       return true;
     },
@@ -309,7 +418,14 @@ export function GameProvider({ children }) {
     loadGame: () => {
       const savedState = loadSavedState();
       if (savedState) {
-        dispatch({ type: GAME_ACTIONS.LOAD_GAME, payload: savedState });
+        const { nextState: hydrated, fallbackCount } = applyFallbacksWithNotification(savedState);
+        dispatch({ type: GAME_ACTIONS.LOAD_GAME, payload: hydrated });
+        if (fallbackCount > 0) {
+          dispatch({
+            type: GAME_ACTIONS.ADD_NOTIFICATION,
+            payload: createPremiumFallbackNotification(),
+          });
+        }
         logDebugAction('load_game', { saveVersion: savedState.saveVersion });
         return true;
       }
@@ -791,6 +907,20 @@ export function GameProvider({ children }) {
       const plot = plots[plotIndex];
       const decoration = DECORATION_DATA[decorationId];
       if (!plot || !decoration || plot.state !== 'empty') return false;
+
+      if (!isItemUnlocked(currentState, decorationId, 'decor')) {
+        const entitlementInfo = getItemEntitlementInfo(decorationId, 'decor');
+        dispatch({
+          type: GAME_ACTIONS.SET_PREMIUM_LOCK_PROMPT,
+          payload: {
+            itemId: decorationId,
+            packId: entitlementInfo?.packId || null,
+            badgeLabel: entitlementInfo?.badgeLabel || null,
+          },
+        });
+        logDebugAction('premium_locked_cosmetic', { decorationId, packId: entitlementInfo?.packId });
+        return 'locked';
+      }
 
       const inventoryCount = currentState.inventory?.[decorationId] || 0;
       if (inventoryCount <= 0) return false;

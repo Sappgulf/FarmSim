@@ -4,10 +4,16 @@ import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Button } from '../../../ui/button';
 import { DECORATION_DATA } from '../../constants/decorData';
+import {
+  getItemEntitlementInfo,
+  isItemUnlocked,
+  isPremiumModeEnabled,
+} from '../../entitlements/EntitlementManager';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 
 const InventoryTab = memo(() => {
   const { state, actions } = useGame();
+  const premiumModeEnabled = isPremiumModeEnabled(state);
 
   // Item emoji mapping
   const itemEmojis = {
@@ -120,6 +126,9 @@ const InventoryTab = memo(() => {
           <div className="space-y-2">
             {decorationItems.map(([itemId, quantity]) => {
               const decor = DECORATION_DATA[itemId];
+              const entitlementInfo = getItemEntitlementInfo(itemId, 'decor');
+              const isPremium = premiumModeEnabled && entitlementInfo?.access === 'premium';
+              const isUnlocked = isItemUnlocked(state, itemId, 'decor');
               return (
                 <div key={itemId} className="flex flex-wrap items-center justify-between gap-2 p-3 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors">
                   <div className="flex items-center gap-2">
@@ -130,12 +139,29 @@ const InventoryTab = memo(() => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {isPremium && (
+                      <Badge
+                        variant="warning"
+                        className="text-[10px]"
+                        data-qa={`premium-badge-${itemId}`}
+                      >
+                        {entitlementInfo?.badgeLabel || 'Premium'}
+                      </Badge>
+                    )}
                     <Badge variant="outline" className="text-sm">
                       x{quantity}
                     </Badge>
                     <Button
                       size="sm"
                       onClick={() => {
+                        if (isPremium && !isUnlocked) {
+                          actions.showPremiumLockPrompt({
+                            itemId,
+                            packId: entitlementInfo?.packId || null,
+                            badgeLabel: entitlementInfo?.badgeLabel || null,
+                          });
+                          return;
+                        }
                         actions.setSelectedDecoration(itemId);
                         actions.setDecorationMode(true);
                         actions.addNotification({

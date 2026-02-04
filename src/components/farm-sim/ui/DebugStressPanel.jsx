@@ -3,8 +3,9 @@ import { useGame } from '../context/GameContext';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { isDebugMode, logDebugAction } from '../../../utils/debugTools';
-import { printContentReport, revalidateContent } from '../../../content/ContentManager';
+import { getContentManager, printContentReport, revalidateContent } from '../../../content/ContentManager';
 import { TAB_IDS } from './GameSidebar';
+import { ENTITLEMENT_MODES, getEntitlementsState, isPremiumModeEnabled } from '../entitlements/EntitlementManager';
 import {
   advanceChallengeDays,
   clearBuildings,
@@ -19,6 +20,10 @@ const DebugStressPanel = memo(() => {
   const debugEnabled = isDebugMode();
   const [tabStressRunning, setTabStressRunning] = useState(false);
   const tabStressRef = useRef(null);
+  const content = getContentManager();
+  const entitlements = getEntitlementsState(state);
+  const premiumModeEnabled = isPremiumModeEnabled(state);
+  const packs = content?.packs || [];
 
   useEffect(() => {
     return () => {
@@ -115,6 +120,52 @@ const DebugStressPanel = memo(() => {
           <Button size="sm" className="h-10" onClick={reportContentNow}>
             Content Report
           </Button>
+        </div>
+        <div className="border-t border-white/10 pt-2 space-y-2">
+          <div className="text-[10px] uppercase tracking-wide text-gray-300">Entitlements</div>
+          <div className="flex items-center justify-between text-[11px] text-gray-200">
+            <span>Mode: {premiumModeEnabled ? 'PREMIUM' : 'FREE'}</span>
+            <Button
+              size="sm"
+              className="h-7 px-2 text-[10px]"
+              onClick={() => actions.setEntitlementMode(
+                premiumModeEnabled ? ENTITLEMENT_MODES.FREE_MODE : ENTITLEMENT_MODES.PREMIUM_MODE
+              )}
+            >
+              {premiumModeEnabled ? 'Disable' : 'Enable'}
+            </Button>
+          </div>
+          <div className="space-y-1 text-[11px] text-gray-300">
+            {packs.map((pack) => {
+              const isPremium = pack.access === 'premium';
+              const isUnlocked = entitlements.packs.includes(pack.id);
+              return (
+                <div key={pack.id} className="flex items-center justify-between gap-2">
+                  <div className="flex flex-col">
+                    <span>{pack.name || pack.id}</span>
+                    <span className="text-[10px] text-gray-400">
+                      {pack.access} {pack.skuId ? `• ${pack.skuId}` : ''}
+                    </span>
+                  </div>
+                  {isPremium ? (
+                    <Button
+                      size="sm"
+                      className="h-7 px-2 text-[10px]"
+                      onClick={() => (
+                        isUnlocked
+                          ? actions.revokePackEntitlement(pack.id)
+                          : actions.grantPackEntitlement(pack.id)
+                      )}
+                    >
+                      {isUnlocked ? 'Revoke' : 'Grant'}
+                    </Button>
+                  ) : (
+                    <span className="text-[10px] text-gray-500">Free</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
         <div className="text-[10px] text-gray-400">
           Debug only. Runs stress actions without saving extra data.

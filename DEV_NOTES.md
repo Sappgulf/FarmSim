@@ -99,6 +99,12 @@
 ### Debug Hooks (Dev-only)
 - **Re-validate content** + **Print content report** buttons in Debug Stress Panel (`?debug=1`). (`src/components/farm-sim/ui/DebugStressPanel.jsx`)
 
+### Entitlements (Sprint G3 — Monetization-Ready Cosmetics)
+- **Entitlement manager**: central gating + persistence helpers live in `src/components/farm-sim/entitlements/EntitlementManager.js`.
+- **Save location**: entitlements stored in save data under `state.entitlements` (mode + unlocked pack IDs).
+- **Premium mode**: dev-only toggle in Debug Stress Panel (`?debug=1`); release mode forces free access.
+- **Cosmetic fallback**: locked premium decor reverts to default in premium mode with a notification.
+
 ## Key Systems (Where They Live)
 - **State + Actions**: `GameContext` + `GameReducer`. (`src/components/farm-sim/context/GameContext.jsx`, `src/components/farm-sim/context/GameReducer.js`)
 - **Core loops**: systems update loop in `FarmSim`; FPS/auto-save loop in `GameContext`. (`src/components/farm-sim/core/FarmSim.jsx`, `src/components/farm-sim/context/GameContext.jsx`)

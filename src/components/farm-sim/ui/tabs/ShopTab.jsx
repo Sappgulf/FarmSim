@@ -4,12 +4,18 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { DECORATION_DATA } from '../../constants/decorData';
+import {
+  getItemEntitlementInfo,
+  isItemUnlocked,
+  isPremiumModeEnabled,
+} from '../../entitlements/EntitlementManager';
 
 const ShopTab = memo(() => {
   const { state, actions } = useGame();
   const [highlightedItemId, setHighlightedItemId] = useState(null);
   const highlightTimerRef = useRef(null);
   const decorationList = useMemo(() => Object.values(DECORATION_DATA), []);
+  const premiumModeEnabled = isPremiumModeEnabled(state);
 
   useEffect(() => {
     return () => {
@@ -63,6 +69,17 @@ const ShopTab = memo(() => {
   };
 
   const handlePurchase = (item) => {
+    if (DECORATION_DATA[item.id]) {
+      const entitlementInfo = getItemEntitlementInfo(item.id, 'decor');
+      if (premiumModeEnabled && entitlementInfo?.access === 'premium' && !isItemUnlocked(state, item.id, 'decor')) {
+        actions.showPremiumLockPrompt({
+          itemId: item.id,
+          packId: entitlementInfo?.packId || null,
+          badgeLabel: entitlementInfo?.badgeLabel || null,
+        });
+        return;
+      }
+    }
     const ownedCount = getOwnedCount(item.id);
     if (item.unique && ownedCount > 0) {
       actions.addNotification({
@@ -158,12 +175,25 @@ const ShopTab = memo(() => {
           {shopItems.decor.map(item => {
             const ownedCount = state.inventory[item.id] || 0;
             const isHighlighted = highlightedItemId === item.id;
+            const entitlementInfo = getItemEntitlementInfo(item.id, 'decor');
+            const isPremium = premiumModeEnabled && entitlementInfo?.access === 'premium';
             return (
               <div key={item.id} className={`flex justify-between items-center p-3 bg-white/80 hover:bg-white rounded-lg transition-all ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}>
                 <div className="flex items-center gap-3 flex-1">
                   <span className="text-2xl">{item.emoji}</span>
                   <div className="flex-1">
-                    <div className="font-medium">{item.name}</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">{item.name}</span>
+                      {isPremium && (
+                        <Badge
+                          variant="warning"
+                          className="text-[10px]"
+                          data-qa={`premium-badge-${item.id}`}
+                        >
+                          {entitlementInfo?.badgeLabel || 'Premium'}
+                        </Badge>
+                      )}
+                    </div>
                     <div className="text-xs text-gray-600">{item.description}</div>
                     <div className="text-xs text-rose-600 font-medium mt-0.5 capitalize">
                       {item.category} • {item.rarity}

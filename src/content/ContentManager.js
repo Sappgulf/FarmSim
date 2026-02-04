@@ -15,6 +15,8 @@ const PACK_MINIGAME_MODULES = import.meta.glob('../../content/packs/**/minigames
 const PACK_STRING_MODULES = import.meta.glob('../../content/packs/**/strings.json', { eager: true });
 
 const CONTENT_TYPES = ['crops', 'decor', 'festivals', 'minigames', 'almanac', 'strings'];
+const PACK_ACCESS_VALUES = new Set(['free', 'premium']);
+const SKU_ID_PATTERN = /^[a-z0-9._-]+$/i;
 
 const clampNumber = (value, fallback, { min, max } = {}) => {
   if (value === null || value === undefined) return fallback;
@@ -107,6 +109,60 @@ const getPackPayload = (modules, basePath, filename) => {
   const match = modules[`${basePath}/${filename}`];
   if (!match) return null;
   return match.default || match;
+};
+
+const normalizePackMeta = (pack) => {
+  const access = PACK_ACCESS_VALUES.has(pack?.access) ? pack.access : 'free';
+  const skuId = typeof pack?.skuId === 'string' ? pack.skuId : null;
+  const badgeLabel = typeof pack?.badgeLabel === 'string'
+    ? pack.badgeLabel
+    : access === 'premium'
+      ? 'Premium'
+      : null;
+  return {
+    ...pack,
+    access,
+    skuId,
+    badgeLabel,
+  };
+};
+
+const validatePackMeta = (pack, report, seenIds) => {
+  if (!pack?.id || typeof pack.id !== 'string') {
+    report.errors.push({
+      type: 'pack',
+      issue: 'missing_id',
+      message: 'pack.json missing id',
+      context: 'packs',
+    });
+    return;
+  }
+  if (seenIds.has(pack.id)) {
+    report.errors.push({
+      type: 'pack',
+      issue: 'duplicate_pack_id',
+      message: `pack id ${pack.id} duplicated`,
+      context: 'packs',
+    });
+  } else {
+    seenIds.add(pack.id);
+  }
+  if (pack.access && !PACK_ACCESS_VALUES.has(pack.access)) {
+    report.errors.push({
+      type: 'pack',
+      issue: 'invalid_access',
+      message: `pack ${pack.id} has invalid access "${pack.access}"`,
+      context: 'packs',
+    });
+  }
+  if (pack.skuId && !SKU_ID_PATTERN.test(pack.skuId)) {
+    report.warnings.push({
+      type: 'pack',
+      issue: 'invalid_sku_id',
+      message: `pack ${pack.id} skuId "${pack.skuId}" should be alphanumeric/._-`,
+      context: 'packs',
+    });
+  }
 };
 
 const collectPacks = () => {
@@ -259,7 +315,7 @@ const validateAlmanac = (sections, pages, report, context) => {
   });
 };
 
-const mergeItems = (baseItems, packItems, report, context) => {
+const mergeItems = (baseItems, packItems, report, context, packId) => {
   const merged = [...baseItems];
   const byId = new Map(baseItems.map((item) => [item.id, item]));
   packItems.forEach((item) => {
@@ -273,8 +329,9 @@ const mergeItems = (baseItems, packItems, report, context) => {
       });
       return;
     }
-    byId.set(item.id, item);
-    merged.push(item);
+    const withPack = packId ? { ...item, packId } : item;
+    byId.set(item.id, withPack);
+    merged.push(withPack);
   });
   return merged;
 };
@@ -287,10 +344,16 @@ const buildContent = () => {
   };
 
   const packs = collectPacks();
-  report.packs = packs.map((pack) => ({
+  const packIdSet = new Set();
+  packs.forEach((pack) => validatePackMeta(pack, report, packIdSet));
+  const normalizedPacks = packs.map((pack) => normalizePackMeta(pack));
+  report.packs = normalizedPacks.map((pack) => ({
     id: pack.id,
     name: pack.name,
     version: pack.version,
+    access: pack.access,
+    skuId: pack.skuId,
+    badgeLabel: pack.badgeLabel,
     contentCounts: pack.contentCounts || {},
     highlights: pack.highlights || [],
   }));
@@ -318,7 +381,8 @@ const buildContent = () => {
         base.crops,
         cropPayload.items.map(normalizeCrop),
         report,
-        'crops'
+        'crops',
+        pack.id
       );
     }
 
@@ -328,7 +392,8 @@ const buildContent = () => {
         base.decor,
         decorPayload.items.map(normalizeDecor),
         report,
-        'decor'
+        'decor',
+        pack.id
       );
     }
 
@@ -338,7 +403,8 @@ const buildContent = () => {
         base.festivals,
         festivalPayload.items.map(normalizeFestival),
         report,
-        'festivals'
+        'festivals',
+        pack.id
       );
     }
 
@@ -348,7 +414,8 @@ const buildContent = () => {
         base.almanac.pages,
         almanacPayload.pages.map(normalizeAlmanac),
         report,
-        'almanac'
+        'almanac',
+        pack.id
       );
     }
 
@@ -358,7 +425,8 @@ const buildContent = () => {
         base.minigames,
         minigamePayload.items.map(normalizeMinigame),
         report,
-        'minigames'
+        'minigames',
+        pack.id
       );
     }
 
@@ -379,6 +447,8 @@ const buildContent = () => {
 
   const content = {
     ...base,
+    packs: report.packs,
+    packsById: buildMapById(report.packs),
     cropsById: buildMapById(base.crops),
     decorById: buildMapById(base.decor),
     festivalsById: buildMapById(base.festivals),

@@ -15,6 +15,7 @@ import DebugStressPanel from '../ui/DebugStressPanel';
 import QAModePanel from '../ui/QAModePanel';
 import Tutorial from '../ui/Tutorial';
 import WhatsNewModal from '../ui/WhatsNewModal';
+import PremiumLockModal from '../ui/PremiumLockModal';
 import { logDebugAction } from '../../../utils/debugTools';
 import { getFarmTheme, getFarmThemeVars } from '../../../data/farmThemes';
 import { isDevelopmentMode } from '../../../config/release';
@@ -478,6 +479,9 @@ function FarmSimCore() {
 
       {/* What's New modal (once per app version) */}
       <WhatsNewModal />
+
+      {/* Premium lock modal (premium mode only) */}
+      <PremiumLockModal />
     </div>
   );
 }
