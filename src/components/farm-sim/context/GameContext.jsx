@@ -26,6 +26,7 @@ import {
   getSeasonBit,
   isKnownWeatherType,
 } from '../../../systems/almanac';
+import { ensureWeeklyVisits, getWeekKey } from '../../../utils/retention';
 import { calculateHarvestValue } from '../../../utils/farmUpgrades';
 import { getContentManager } from '../../../content/ContentManager';
 import {
@@ -185,6 +186,7 @@ export function GameProvider({ children }) {
         const dayKey = getDayKey();
         if (dayKey !== currentState.almanac?.lastDayKey) {
           actionsRef.current?.recordAlmanacEvent('day_rollover', { dayKey });
+          actionsRef.current?.recordRetentionVisit(dayKey, now);
         }
         debouncedAutoSave(currentState);
         lastAutoSaveCheck = now;
@@ -259,6 +261,7 @@ export function GameProvider({ children }) {
     updateCozyGoals: (cozyGoals) => dispatch({ type: GAME_ACTIONS.UPDATE_COZY_GOALS, payload: cozyGoals }),
     updateWhatsNew: (whatsNew) => dispatch({ type: GAME_ACTIONS.UPDATE_WHATS_NEW, payload: whatsNew }),
     updateOnboarding: (onboarding) => dispatch({ type: GAME_ACTIONS.UPDATE_ONBOARDING, payload: onboarding }),
+    updateRetention: (retention) => dispatch({ type: GAME_ACTIONS.UPDATE_RETENTION, payload: retention }),
     resetOnboarding: () => dispatch({
       type: GAME_ACTIONS.UPDATE_ONBOARDING,
       payload: { onboardingSeen: false, onboardingStep: 0, onboardingSkipped: false },
@@ -282,6 +285,21 @@ export function GameProvider({ children }) {
       dispatch({ type: GAME_ACTIONS.LOAD_GAME, payload: nextState });
       logDebugAction('debug_load_state');
       return true;
+    },
+    recordRetentionVisit: (dayKey = getDayKey(), timestamp = Date.now()) => {
+      const current = stateRef.current.retention || {};
+      const weekKey = getWeekKey(timestamp);
+      const nextWeekly = ensureWeeklyVisits(current.weeklyVisits, dayKey, weekKey);
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_RETENTION,
+        payload: {
+          lastSessionAt: timestamp,
+          lastSeenDayKey: dayKey,
+          lastSeenGameDay: stateRef.current.almanac?.counters?.dayCount || 0,
+          lastSeenSeason: stateRef.current.season?.current || 'spring',
+          weeklyVisits: nextWeekly,
+        },
+      });
     },
 
     // Systems Bridge
@@ -999,6 +1017,10 @@ export function GameProvider({ children }) {
   }), []); // dispatch is stable
 
   actionsRef.current = actions;
+
+  useEffect(() => {
+    actionsRef.current?.recordRetentionVisit(getDayKey(), Date.now());
+  }, []);
 
   return (
     <GameContext.Provider value={{ state, actions, systems }}>

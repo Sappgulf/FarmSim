@@ -160,6 +160,30 @@ export const GameplaySettings = memo(({
                         </button>
                     </div>
 
+                    {/* Welcome Back Summary */}
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                        <div>
+                            <div className="font-medium">Welcome Back Summary</div>
+                            <div className="text-sm text-gray-600">Show return recap on the Town Board</div>
+                        </div>
+                        <button
+                            onClick={() => actions.updateSettings({
+                                showWelcomeBackSummary: !state.settings.showWelcomeBackSummary
+                            })}
+                            className={`
+                relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                ${state.settings.showWelcomeBackSummary ? 'bg-green-600' : 'bg-gray-300'}
+              `}
+                        >
+                            <span
+                                className={`
+                  inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                  ${state.settings.showWelcomeBackSummary ? 'translate-x-6' : 'translate-x-1'}
+                `}
+                            />
+                        </button>
+                    </div>
+
                     {/* Fast Mode */}
                     <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
                         <div>

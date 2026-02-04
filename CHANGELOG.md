@@ -8,6 +8,19 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
+## [5.0.2] - 2026-02-05
+### Planned (2026-02-05) — Sprint G2: Day 2–7 Retention
+- **Scope:** frontend, docs, QA
+- **What:** audit existing Town Board/What’s New/save systems, add Welcome Back summary, Daily Delight, Weekly Visits, and QA harness coverage.
+- **Why:** deliver lightweight, positive-only retention cues without new core systems.
+- **Verification:** `npm run smoke-test` (passes with ReactDOMTestUtils act deprecation warning + npm http-proxy warning).
+
+### Implemented (2026-02-05) — Sprint G2: Day 2–7 Retention
+- **Scope:** frontend, docs, QA
+- **What:** added Welcome Back summary, Daily Delight claim, and Weekly Visits tiers to the Town Board, plus retention save fields and QA harness coverage.
+- **Why:** encourage gentle return loops with positive-only, capped rewards and clear context.
+- **Verification:** `npm run test -- --run` (passes with ReactDOMTestUtils act deprecation warning + npm http-proxy warning).
+
 ## [5.0.1] - 2026-02-04
 ### Planned (2026-02-04) — Sprint G1: Release Discipline & Versioning
 - **Scope:** frontend, docs, QA

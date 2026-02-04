@@ -148,6 +148,24 @@ export const initialState = {
         musicEnabled: true,
         animationsEnabled: true,
         showAlmanacHints: true,
+        showWelcomeBackSummary: true,
+    },
+
+    // Retention
+    retention: {
+        lastSessionAt: null,
+        lastSeenDayKey: null,
+        lastSeenGameDay: 0,
+        lastSeenSeason: 'spring',
+        lastWelcomeBackShownAt: null,
+        lastWelcomeBackDayKey: null,
+        lastDailyDelightClaimDate: null,
+        dailyDelightClaimCount: 0,
+        weeklyVisits: {
+            weekKey: null,
+            days: [],
+            claimedTiers: [],
+        },
     },
 
     // Performance state
@@ -381,6 +399,9 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_SETTINGS:
             return { ...state, settings: { ...state.settings, ...action.payload } };
+
+        case GAME_ACTIONS.UPDATE_RETENTION:
+            return { ...state, retention: { ...state.retention, ...action.payload } };
 
         case GAME_ACTIONS.UPDATE_GAME_LOOP:
             return { ...state, gameLoop: { ...state.gameLoop, ...action.payload } };

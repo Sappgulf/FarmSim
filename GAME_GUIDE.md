@@ -55,6 +55,11 @@ Choose one philosophy to guide the Story Dashboard suggestions:
 - Completion is automatic and rewards are small: a decor token, a scrapbook memory, an Almanac page, or a tiny reputation bump.
 - Cozy Goals are optional — no timers, no penalties, no blocking.
 
+### Daily Delight + Weekly Visits
+- **Welcome Back**: When you return after a meaningful break, the Town Board shares a short recap and a cozy suggestion.
+- **Daily Delight**: Claim a tiny reward once per real-world day on the Town Board.
+- **Weekly Visits**: Track unique visit days within the current week; cosmetic-only rewards unlock at gentle milestones.
+
 ### Wishing Well
 - Once per in-game day, pay a small fee to make a wish.
 - Grants one Cozy Blessing until the next day rollover.

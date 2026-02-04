@@ -95,6 +95,9 @@ export const GAME_ACTIONS = {
     // Onboarding
     UPDATE_ONBOARDING: 'UPDATE_ONBOARDING',
 
+    // Retention
+    UPDATE_RETENTION: 'UPDATE_RETENTION',
+
     // Pets
     UPDATE_PETS: 'UPDATE_PETS',
 

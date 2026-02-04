@@ -4,7 +4,7 @@
 import { isDevelopmentMode } from '../../../config/release';
 
 // Save schema version (separate from APP_VERSION in src/config/release.js).
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -200,6 +200,25 @@ export function migrateSaveData(savedData) {
         if (saveVersion < 8) {
             migratedData.whatsNew = migratedData.whatsNew || {};
             migratedData.whatsNew.lastSeenVersion = null;
+        }
+
+        // Version 8 → 9: Retention (welcome back + daily/weekly visits)
+        if (saveVersion < 9) {
+            migratedData.retention = {
+                lastSessionAt: null,
+                lastSeenDayKey: null,
+                lastSeenGameDay: 0,
+                lastSeenSeason: 'spring',
+                lastWelcomeBackShownAt: null,
+                lastWelcomeBackDayKey: null,
+                lastDailyDelightClaimDate: null,
+                dailyDelightClaimCount: 0,
+                weeklyVisits: {
+                    weekKey: null,
+                    days: [],
+                    claimedTiers: [],
+                },
+            };
         }
 
         // Validate critical fields
@@ -404,6 +423,7 @@ export function migrateSaveData(savedData) {
             animationsEnabled: ensureBoolean(migratedData.settings?.animationsEnabled, true),
             showFPS: ensureBoolean(migratedData.settings?.showFPS, false),
             showAlmanacHints: ensureBoolean(migratedData.settings?.showAlmanacHints, true),
+            showWelcomeBackSummary: ensureBoolean(migratedData.settings?.showWelcomeBackSummary, true),
         };
 
         migratedData.selectedDecoration = typeof migratedData.selectedDecoration === 'string'
@@ -451,6 +471,68 @@ export function migrateSaveData(savedData) {
         if (typeof migratedData.challengeStreak !== 'number') {
             migratedData.challengeStreak = 0;
         }
+
+        migratedData.retention = ensureObject(migratedData.retention, {
+            lastSessionAt: null,
+            lastSeenDayKey: null,
+            lastSeenGameDay: 0,
+            lastSeenSeason: 'spring',
+            lastWelcomeBackShownAt: null,
+            lastWelcomeBackDayKey: null,
+            lastDailyDelightClaimDate: null,
+            dailyDelightClaimCount: 0,
+            weeklyVisits: {
+                weekKey: null,
+                days: [],
+                claimedTiers: [],
+            },
+        });
+        migratedData.retention.lastSessionAt = clampNumber(
+            migratedData.retention.lastSessionAt,
+            null,
+            { min: 0 }
+        );
+        migratedData.retention.lastSeenDayKey = typeof migratedData.retention.lastSeenDayKey === 'string'
+            ? migratedData.retention.lastSeenDayKey
+            : null;
+        migratedData.retention.lastSeenGameDay = clampNumber(
+            migratedData.retention.lastSeenGameDay,
+            0,
+            { min: 0 }
+        );
+        migratedData.retention.lastSeenSeason = typeof migratedData.retention.lastSeenSeason === 'string'
+            ? migratedData.retention.lastSeenSeason
+            : 'spring';
+        migratedData.retention.lastWelcomeBackShownAt = clampNumber(
+            migratedData.retention.lastWelcomeBackShownAt,
+            null,
+            { min: 0 }
+        );
+        migratedData.retention.lastWelcomeBackDayKey = typeof migratedData.retention.lastWelcomeBackDayKey === 'string'
+            ? migratedData.retention.lastWelcomeBackDayKey
+            : null;
+        migratedData.retention.lastDailyDelightClaimDate = typeof migratedData.retention.lastDailyDelightClaimDate === 'string'
+            ? migratedData.retention.lastDailyDelightClaimDate
+            : null;
+        migratedData.retention.dailyDelightClaimCount = clampNumber(
+            migratedData.retention.dailyDelightClaimCount,
+            0,
+            { min: 0 }
+        );
+        migratedData.retention.weeklyVisits = ensureObject(migratedData.retention.weeklyVisits, {
+            weekKey: null,
+            days: [],
+            claimedTiers: [],
+        });
+        migratedData.retention.weeklyVisits.weekKey = typeof migratedData.retention.weeklyVisits.weekKey === 'string'
+            ? migratedData.retention.weeklyVisits.weekKey
+            : null;
+        migratedData.retention.weeklyVisits.days = Array.isArray(migratedData.retention.weeklyVisits.days)
+            ? migratedData.retention.weeklyVisits.days.filter((day) => typeof day === 'string')
+            : [];
+        migratedData.retention.weeklyVisits.claimedTiers = Array.isArray(migratedData.retention.weeklyVisits.claimedTiers)
+            ? migratedData.retention.weeklyVisits.claimedTiers.filter((tier) => Number.isFinite(tier))
+            : [];
 
         migratedData.saveVersion = SAVE_VERSION;
         return migratedData;
