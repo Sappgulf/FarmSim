@@ -8,7 +8,18 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
-## [Unreleased]
+## [5.0.1] - 2026-02-04
+### Planned (2026-02-04) — Sprint G1: Release Discipline & Versioning
+- **Scope:** frontend, docs, QA
+- **What:** add a single APP_VERSION source, release mode flag, release gates, and “What’s New” changelog modal with version gating.
+- **Why:** formalize shipping discipline so releases are deterministic and auditable.
+- **Verification:** `npm run smoke-test` (passes with ReactDOMTestUtils act deprecation warning + npm http-proxy warning).
+
+### Implemented (2026-02-04) — Sprint G1: Release Discipline & Versioning
+- **Scope:** frontend, docs, QA
+- **What:** added APP_VERSION config + release mode flag, release gate summary tooling, changelog → “What’s New” modal, and updated release docs/checklists.
+- **Why:** provide a repeatable release process with clear gates and in-game release notes.
+- **Verification:** `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning + npm http-proxy warning).
 ### Planned (2026-02-04) — Genetics UI Polish + Breeding Reliability
 - **Scope:** frontend
 - **What:** remove underscore-heavy labels in Genetics UI, polish genetics sub-tabs, and ensure breeding inventory checks consume the correct parents.
@@ -49,9 +60,13 @@ Guiding rules:
 - Farm Card export (1080×1080 PNG) with Town Board + Almanac entry points.
 - Farm Theme selector, farm name field, and spotlight selection for shareable identity.
 - QA harness tests for Farm Card export, theme swap, and identity persistence.
+- Release config module with APP_VERSION, release mode flag, and QA-facing release gate summary.
+- Changelog-driven “What’s New” modal with per-version dismissal.
 
 ### Changed
 - FarmSim save schema now persists farm theme, name, and spotlight selection.
+- Save schema bumped to v8 with “What’s New” lastSeenVersion tracking.
+- Debug/QA tooling now hides in release mode and Settings shows app version + release mode.
 
 ### Fixed
 - Allowed the Preservation Facility to accept any available crop input instead of staying disabled when inventory contains crops.
@@ -60,10 +75,11 @@ Guiding rules:
 - (placeholder)
 
 ### UI/UX
-- (placeholder)
+- Added a “What’s New” release notes modal sourced from CHANGELOG.md.
 
 ### Engineering Notes
 - Save version bumped to include farm theme/name/spotlight fields; defaults applied for older saves.
+- Save version bumped to v8 to persist “What’s New” lastSeenVersion.
 
 ---
 

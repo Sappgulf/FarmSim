@@ -9,6 +9,8 @@ import {
 } from './GamePersistence';
 import { initialState, gameReducer } from './GameReducer';
 import { initDebugTools, isDebugMode, logDebugAction } from '../../../utils/debugTools';
+import { attachReleaseTools, detachReleaseTools } from '../../../utils/releaseTools';
+import { isDevelopmentMode } from '../../../config/release';
 import {
   DECORATION_DATA,
   isLightingDecoration,
@@ -49,7 +51,7 @@ export function GameProvider({ children }) {
     (initial) => {
       const savedState = loadSavedState();
       if (savedState) {
-        if (import.meta.env.MODE === 'development') {
+        if (isDevelopmentMode()) {
           console.debug('[farm]', 'Loaded saved game successfully');
         }
         return savedState;
@@ -76,6 +78,12 @@ export function GameProvider({ children }) {
 
   useEffect(() => {
     initDebugTools();
+  }, []);
+
+  useEffect(() => {
+    if (!isDebugMode()) return undefined;
+    attachReleaseTools({ getState: () => stateRef.current });
+    return () => detachReleaseTools();
   }, []);
 
   useEffect(() => {

@@ -2,6 +2,7 @@
  * Music System - Background music with seasonal themes
  * Uses Web Audio API to generate procedural music
  */
+import { isDevelopmentMode } from '../../../config/release';
 
 export class MusicSystem {
   constructor() {
@@ -40,7 +41,7 @@ export class MusicSystem {
       }
     } catch (error) {
       // Silent fail - user might not have interacted yet
-      if (import.meta.env.MODE === 'development') {
+      if (isDevelopmentMode()) {
         console.debug('[farm] MusicSystem resume failed:', error);
       }
     }
@@ -257,7 +258,7 @@ export class MusicSystem {
       this.currentNote = 0;
       this.nextNoteTime = this.audioContext.currentTime;
       this.scheduler();
-      if (import.meta.env.MODE === 'development') {
+      if (isDevelopmentMode()) {
         console.debug('[farm]', `Music started: ${this.currentSeason} theme`);
       }
     }

@@ -14,8 +14,10 @@ import PerformanceOverlay from '../ui/PerformanceOverlay';
 import DebugStressPanel from '../ui/DebugStressPanel';
 import QAModePanel from '../ui/QAModePanel';
 import Tutorial from '../ui/Tutorial';
+import WhatsNewModal from '../ui/WhatsNewModal';
 import { logDebugAction } from '../../../utils/debugTools';
 import { getFarmTheme, getFarmThemeVars } from '../../../data/farmThemes';
+import { isDevelopmentMode } from '../../../config/release';
 
 // Import systems
 import { FarmingSystem } from '../systems/FarmingSystem';
@@ -70,7 +72,7 @@ function FarmSimCore() {
   // We pass current state to update() method, so no need to recreate
   const farmingSystem = useMemo(() => {
     const system = new FarmingSystem(null, actions);
-    if (import.meta.env.MODE === 'development') {
+    if (isDevelopmentMode()) {
       console.debug('[farm]', 'FarmingSystem initialized');
     }
     return system;
@@ -90,7 +92,7 @@ function FarmSimCore() {
 
   const livestockSystem = useMemo(() => {
     const system = new LivestockSystem(null, actions);
-    if (import.meta.env.MODE === 'development') {
+    if (isDevelopmentMode()) {
       console.debug('[farm]', 'LivestockSystem initialized');
     }
     return system;
@@ -98,7 +100,7 @@ function FarmSimCore() {
 
   const fishingSystem = useMemo(() => {
     const system = new FishingSystem(null, actions);
-    if (import.meta.env.MODE === 'development') {
+    if (isDevelopmentMode()) {
       console.debug('[farm]', 'FishingSystem initialized');
     }
     return system;
@@ -240,7 +242,7 @@ function FarmSimCore() {
         document.removeEventListener('touchstart', handleUserInteraction);
       } catch (error) {
         // Silent fail - audio might not be available
-        if (import.meta.env.MODE === 'development') {
+        if (isDevelopmentMode()) {
           console.debug('[farm] Audio resume failed:', error);
         }
       }
@@ -281,7 +283,7 @@ function FarmSimCore() {
     if (currentSeason && currentSeason !== prevSeasonRef.current && state.settings?.musicEnabled !== false) {
       musicSystem.setSeason(currentSeason);
       prevSeasonRef.current = currentSeason;
-      if (import.meta.env.MODE === 'development') {
+      if (isDevelopmentMode()) {
         console.debug('[farm]', `Music changed to ${currentSeason} theme`);
       }
     }
@@ -421,7 +423,7 @@ function FarmSimCore() {
       style={themeVars}
     >
       {/* Performance monitoring (dev only) */}
-      {import.meta.env.MODE === 'development' && (
+      {isDevelopmentMode() && (
         <div className="fixed top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded z-50">
           FPS: {state.gameLoop.fps}
         </div>
@@ -473,6 +475,9 @@ function FarmSimCore() {
 
       {/* Onboarding Tutorial (auto-shows for new players) */}
       <Tutorial />
+
+      {/* What's New modal (once per app version) */}
+      <WhatsNewModal />
     </div>
   );
 }

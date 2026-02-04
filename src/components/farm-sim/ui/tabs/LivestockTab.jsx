@@ -5,6 +5,7 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { LIVESTOCK_TYPES } from '../../systems/LivestockSystem';
+import { isDevelopmentMode } from '../../../../config/release';
 
 const LivestockTab = memo(() => {
   const { state, actions, systems } = useGame();
@@ -70,7 +71,7 @@ const LivestockTab = memo(() => {
       const result = livestockSystem.buyAnimal(typeId);
       if (result.success) {
         soundSystem?.playBuildSound();
-        if (import.meta.env.MODE === 'development') {
+        if (isDevelopmentMode()) {
           console.debug('[farm]', 'Animal bought successfully');
         }
       } else {
@@ -427,4 +428,3 @@ const LivestockTab = memo(() => {
 LivestockTab.displayName = 'LivestockTab';
 
 export default LivestockTab;
-

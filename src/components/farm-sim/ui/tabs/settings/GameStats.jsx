@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { Card } from '../../../../ui/card';
+import { APP_VERSION, getReleaseModeLabel } from '../../../../../config/release';
 
 export const GameStats = memo(({ state }) => {
     return (
@@ -38,6 +39,14 @@ export const GameStats = memo(({ state }) => {
                 <div className="text-center p-2 bg-white rounded">
                     <div className="font-bold text-gray-600">{state.weather || 'sunny'}</div>
                     <div className="text-gray-600 capitalize">Weather</div>
+                </div>
+                <div className="text-center p-2 bg-white rounded">
+                    <div className="font-bold text-emerald-600">{APP_VERSION}</div>
+                    <div className="text-gray-600">App Version</div>
+                </div>
+                <div className="text-center p-2 bg-white rounded">
+                    <div className="font-bold text-slate-600">{getReleaseModeLabel()}</div>
+                    <div className="text-gray-600 capitalize">Release Mode</div>
                 </div>
             </div>
         </Card>

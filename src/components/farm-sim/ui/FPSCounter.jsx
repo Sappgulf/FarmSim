@@ -1,4 +1,5 @@
 import React, { memo, useState, useEffect } from 'react';
+import { isReleaseMode } from '../../../config/release';
 
 const FPSCounter = memo(() => {
     const [fps, setFps] = useState(60);
@@ -25,7 +26,7 @@ const FPSCounter = memo(() => {
         return () => clearInterval(interval);
     }, [showFPS]);
 
-    if (!showFPS) return null;
+    if (isReleaseMode() || !showFPS) return null;
 
     const getColor = (fps) => {
         if (fps >= 50) return 'text-green-400';

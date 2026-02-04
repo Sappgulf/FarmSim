@@ -2,6 +2,7 @@
  * Sound System - Web Audio API based sound effects
  * Provides procedurally generated sound effects for game actions
  */
+import { isDevelopmentMode } from '../../../config/release';
 
 export class SoundSystem {
   constructor() {
@@ -31,7 +32,7 @@ export class SoundSystem {
       }
     } catch (error) {
       // Silent fail - user might not have interacted yet
-      if (import.meta.env.MODE === 'development') {
+      if (isDevelopmentMode()) {
         console.debug('[farm] SoundSystem resume failed:', error);
       }
     }
