@@ -233,6 +233,22 @@
       }
     },
     {
+      "id": "first_steps",
+      "section": "farm_notes",
+      "title": "First Steps",
+      "icon": "🧺",
+      "hint": "Harvest your first crop or visit the Town Board.",
+      "unlock": {
+        "type": "first_steps"
+      },
+      "text": {
+        "default": "Every farm begins with a small, steady rhythm. You found yours.",
+        "nature": "The first harvest is a quiet promise. Let the land guide the next.",
+        "market": "A first win on the ledger sets the pace. Keep it gentle and smart.",
+        "slow": "Small wins feel big here. Let the farm unfold softly."
+      }
+    },
+    {
       "id": "philosophy_compass",
       "section": "farm_notes",
       "title": "Philosophy Compass",
@@ -281,6 +297,22 @@
         "market": "Consistency keeps the farm strong. The routine is paying off.",
         "slow": "A calm routine is a quiet treasure. You’re finding it."
       }
+    },
+    {
+      "id": "festival_rhythm",
+      "section": "farm_notes",
+      "title": "Festival Rhythm",
+      "icon": "🥁",
+      "hint": "Find your timing at a festival.",
+      "unlock": {
+        "type": "festival_game"
+      },
+      "text": {
+        "default": "You found the rhythm the town keeps in its harvest songs.",
+        "nature": "Timing comes from listening. The fields kept the beat with you.",
+        "market": "Good timing turns small chances into steady wins.",
+        "slow": "You matched the festival’s gentle tempo. Cozy and bright."
+      }
     }
   ],
   "seasons": [
@@ -300,6 +332,8 @@
   ],
   "memoryLinks": {
     "first_rainy_harvest": "rainsoft_fields",
+    "first_harvest": "first_steps",
+    "first_board_visit": "first_steps",
     "festival_first": "gathering_light",
     "festival_regular": "festival_regular"
   }

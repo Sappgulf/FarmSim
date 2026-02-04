@@ -1,158 +1,231 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { Button } from '../../ui/button';
 import { Card } from '../../ui/card';
 
 /**
- * Tutorial - Simple onboarding overlay for first-time users
- * Shows 4 quick steps, skippable, remembers completion in localStorage
+ * Tutorial - Soft onboarding overlay for first-time users
+ * Event-driven steps, non-blocking, and skippable
  */
 
-const TUTORIAL_STEPS = [
-    {
-        id: 1,
-        title: 'Welcome to FarmSim! 🌾',
-        description: 'Build your dream farm by planting crops, raising animals, and expanding your land.',
-        emoji: '🚜',
-        tip: 'Tap anywhere to continue'
-    },
-    {
-        id: 2,
-        title: 'Plant Your First Crop',
-        description: 'Select a crop from the Farming tab, then tap an empty plot to plant it. Watch it grow!',
-        emoji: '🌱',
-        tip: 'Crops need time to grow'
-    },
-    {
-        id: 3,
-        title: 'Harvest for Coins',
-        description: 'When crops are ready (glowing green), tap them to harvest and earn coins. Use coins to buy more seeds!',
-        emoji: '🪙',
-        tip: 'Don\'t let crops wither!'
-    },
-    {
-        id: 4,
-        title: 'Explore & Expand',
-        description: 'Unlock animals, fishing, buildings, and more as you level up. Complete daily quests for bonus rewards.',
-        emoji: '🏆',
-        tip: 'Use the bottom nav to explore'
-    }
+const ONBOARDING_STEPS = [
+  {
+    id: 'plant',
+    title: 'Plant something',
+    description: 'Pick a crop and tap an empty plot to get growing.',
+    emoji: '🌱',
+    target: '[data-onboard="farm-grid"]',
+    placement: 'right',
+  },
+  {
+    id: 'harvest',
+    title: 'Harvest it',
+    description: 'Tap a glowing crop to harvest and earn coins.',
+    emoji: '🧺',
+    target: '[data-onboard="farm-grid"]',
+    placement: 'right',
+  },
+  {
+    id: 'board',
+    title: 'Visit the Town Board',
+    description: 'Open More → Events to see today’s plan.',
+    emoji: '📌',
+    target: '[data-onboard="events-tab"]',
+    placement: 'top',
+  },
 ];
 
-const STORAGE_KEY = 'farm_tutorial_complete';
+const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
 const Tutorial = memo(() => {
-    const { state } = useGame();
-    const [currentStep, setCurrentStep] = useState(0);
-    const [isVisible, setIsVisible] = useState(false);
-    const [isExiting, setIsExiting] = useState(false);
+  const { state, actions } = useGame();
+  const [targetRect, setTargetRect] = useState(null);
+  const [manualPosition, setManualPosition] = useState(null);
+  const dragStateRef = useRef(null);
 
-    // Check if tutorial should show
-    useEffect(() => {
-        // Don't show if already completed
-        const completed = localStorage.getItem(STORAGE_KEY);
-        if (completed === 'true') {
-            setIsVisible(false);
-            return;
-        }
+  const stepIndex = state.onboardingStep || 0;
+  const currentStep = ONBOARDING_STEPS[stepIndex];
+  const totalSteps = ONBOARDING_STEPS.length;
 
-        // Show tutorial for new players (level 1, few coins)
-        if (state.level === 1 && state.coins < 200) {
-            // Small delay for smoother appearance after game loads
-            const timer = setTimeout(() => setIsVisible(true), 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [state.level, state.coins]);
+  const shouldShow = !state.onboardingSkipped && stepIndex < totalSteps;
 
-    const handleNext = () => {
-        if (currentStep < TUTORIAL_STEPS.length - 1) {
-            setCurrentStep(prev => prev + 1);
-        } else {
-            handleComplete();
+  useEffect(() => {
+    if (shouldShow && !state.onboardingSeen) {
+      actions.updateOnboarding({ onboardingSeen: true });
+    }
+  }, [shouldShow, state.onboardingSeen, actions]);
+
+  useEffect(() => {
+    if (!shouldShow || !currentStep?.target) {
+      setTargetRect(null);
+      return;
+    }
+
+    let frame = null;
+    const updateRect = () => {
+      if (frame) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const target = document.querySelector(currentStep.target);
+        if (!target) {
+          setTargetRect(null);
+          return;
         }
+        const rect = target.getBoundingClientRect();
+        setTargetRect({
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        });
+      });
     };
 
-    const handleSkip = () => {
-        handleComplete();
+    updateRect();
+    window.addEventListener('resize', updateRect);
+    window.addEventListener('scroll', updateRect, true);
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener('resize', updateRect);
+      window.removeEventListener('scroll', updateRect, true);
+    };
+  }, [shouldShow, currentStep]);
+
+  useEffect(() => {
+    setManualPosition(null);
+  }, [stepIndex]);
+
+  const defaultPosition = useMemo(() => {
+    if (!shouldShow) return null;
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 360;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 640;
+    const margin = 12;
+    const cardWidth = Math.min(320, viewportWidth - margin * 2);
+    const cardHeight = 190;
+
+    if (!targetRect) {
+      return {
+        top: clamp(viewportHeight - cardHeight - 120, margin, viewportHeight - cardHeight - margin),
+        left: clamp((viewportWidth - cardWidth) / 2, margin, viewportWidth - cardWidth - margin),
+        width: cardWidth,
+      };
+    }
+
+    const placements = {
+      right: {
+        top: targetRect.top + targetRect.height / 2 - cardHeight / 2,
+        left: targetRect.left + targetRect.width + margin,
+      },
+      left: {
+        top: targetRect.top + targetRect.height / 2 - cardHeight / 2,
+        left: targetRect.left - cardWidth - margin,
+      },
+      top: {
+        top: targetRect.top - cardHeight - margin,
+        left: targetRect.left + targetRect.width / 2 - cardWidth / 2,
+      },
+      bottom: {
+        top: targetRect.top + targetRect.height + margin,
+        left: targetRect.left + targetRect.width / 2 - cardWidth / 2,
+      },
     };
 
-    const handleComplete = () => {
-        setIsExiting(true);
-        localStorage.setItem(STORAGE_KEY, 'true');
-        setTimeout(() => setIsVisible(false), 300);
+    const placement = placements[currentStep?.placement] || placements.bottom;
+    return {
+      top: clamp(placement.top, margin, viewportHeight - cardHeight - margin),
+      left: clamp(placement.left, margin, viewportWidth - cardWidth - margin),
+      width: cardWidth,
     };
+  }, [shouldShow, targetRect, currentStep]);
 
-    if (!isVisible) return null;
+  const position = manualPosition || defaultPosition;
 
-    const step = TUTORIAL_STEPS[currentStep];
-    const isLastStep = currentStep === TUTORIAL_STEPS.length - 1;
+  const handlePointerDown = (event) => {
+    if (!position) return;
+    dragStateRef.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      originLeft: position.left,
+      originTop: position.top,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
 
-    return (
+  const handlePointerMove = (event) => {
+    if (!dragStateRef.current) return;
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 360;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 640;
+    const margin = 12;
+    const cardWidth = position?.width || 280;
+    const cardHeight = 190;
+
+    const dx = event.clientX - dragStateRef.current.startX;
+    const dy = event.clientY - dragStateRef.current.startY;
+
+    const nextLeft = clamp(dragStateRef.current.originLeft + dx, margin, viewportWidth - cardWidth - margin);
+    const nextTop = clamp(dragStateRef.current.originTop + dy, margin, viewportHeight - cardHeight - margin);
+
+    setManualPosition({ left: nextLeft, top: nextTop, width: cardWidth });
+  };
+
+  const handlePointerUp = () => {
+    dragStateRef.current = null;
+  };
+
+  const handleSkip = () => {
+    actions.updateOnboarding({ onboardingSkipped: true, onboardingStep: totalSteps, onboardingSeen: true });
+  };
+
+  if (!shouldShow || !currentStep || !position) return null;
+
+  return (
+    <div className="fixed inset-0 z-[95] pointer-events-none">
+      {targetRect && (
         <div
-            className={`fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isExiting ? 'opacity-0' : 'opacity-100'}`}
-            onClick={handleNext}
+          className="absolute rounded-2xl border-2 border-emerald-300/80 ring-2 ring-emerald-200/60 shadow-lg pointer-events-none"
+          style={{
+            top: targetRect.top - 6,
+            left: targetRect.left - 6,
+            width: targetRect.width + 12,
+            height: targetRect.height + 12,
+          }}
+        />
+      )}
+
+      <div
+        className="absolute"
+        style={{ top: position.top, left: position.left, width: position.width }}
+      >
+        <Card
+          className="pointer-events-auto p-4 bg-white/95 shadow-xl border border-emerald-100"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
         >
-            <Card
-                className={`max-w-sm w-full p-6 bg-white shadow-2xl transform transition-all duration-300 ${isExiting ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Progress dots */}
-                <div className="flex justify-center gap-2 mb-4">
-                    {TUTORIAL_STEPS.map((_, idx) => (
-                        <div
-                            key={idx}
-                            className={`w-2 h-2 rounded-full transition-all ${idx === currentStep
-                                    ? 'w-6 bg-green-500'
-                                    : idx < currentStep
-                                        ? 'bg-green-300'
-                                        : 'bg-gray-200'
-                                }`}
-                        />
-                    ))}
-                </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{currentStep.emoji}</span>
+              <div className="text-sm font-semibold text-gray-900">{currentStep.title}</div>
+            </div>
+            <span className="text-[10px] uppercase tracking-wide text-gray-400">
+              Step {stepIndex + 1} / {totalSteps}
+            </span>
+          </div>
 
-                {/* Step content */}
-                <div className="text-center">
-                    <div className="text-6xl mb-4 animate-bounce-slow">{step.emoji}</div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h2>
-                    <p className="text-gray-600 mb-4">{step.description}</p>
-                    <p className="text-sm text-green-600 font-medium">💡 {step.tip}</p>
-                </div>
+          <p className="mt-2 text-xs text-gray-600">{currentStep.description}</p>
 
-                {/* Actions */}
-                <div className="flex gap-3 mt-6">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSkip}
-                        className="flex-1"
-                    >
-                        Skip Tutorial
-                    </Button>
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleNext}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    >
-                        {isLastStep ? 'Start Farming! 🌾' : 'Next →'}
-                    </Button>
-                </div>
-
-                {/* Step counter */}
-                <div className="text-center text-xs text-gray-400 mt-4">
-                    Step {currentStep + 1} of {TUTORIAL_STEPS.length}
-                </div>
-            </Card>
-        </div>
-    );
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-[10px] text-gray-400">Drag to move</span>
+            <Button variant="outline" size="sm" onClick={handleSkip}>
+              Skip
+            </Button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
 });
 
 Tutorial.displayName = 'Tutorial';
-
-// Export function to reset tutorial (for testing/settings)
-export const resetTutorial = () => {
-    localStorage.removeItem(STORAGE_KEY);
-};
 
 export default Tutorial;

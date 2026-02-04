@@ -122,7 +122,8 @@ export class FarmingSystem {
       const timeSincePlanted = (now - plot.plantedAt) / 1000; // seconds
       const baseGrowthTime = plot.crop.growthTime || 10;
       const plotWeatherModifier = plot.weatherModifier || weatherModifier;
-      const effectiveGrowthTime = baseGrowthTime / (plotWeatherModifier * seasonBonus * greenhouseGrowthBonus);
+      const growthBoost = plot.growthBoost || 1;
+      const effectiveGrowthTime = baseGrowthTime / (plotWeatherModifier * seasonBonus * greenhouseGrowthBonus * growthBoost);
       const progress = Math.min(1.0, timeSincePlanted / effectiveGrowthTime);
 
 
@@ -289,6 +290,7 @@ export class FarmingSystem {
 
     // Plant crop
     const plantedAt = Date.now();
+    const shouldBoostFirstCrop = !this.gameState.memoryFlags?.first_seed && !this.gameState.onboardingSkipped;
     const updatedPlots = [...this.gameState.plots];
     updatedPlots[plotIndex] = {
       ...plot,
@@ -300,6 +302,7 @@ export class FarmingSystem {
       waterLevel: 85, // Start with ample water for growth
       soilFertility: plot.soilFertility || 1.0,
       weatherModifier: 1.0,
+      ...(shouldBoostFirstCrop ? { growthBoost: 1.5 } : {}),
     };
 
     if (import.meta.env.MODE === 'development') {

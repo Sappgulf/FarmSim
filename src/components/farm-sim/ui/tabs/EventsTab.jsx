@@ -5,9 +5,56 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
+import { MEMORIES } from '../../../../data/identity';
+import { ALMANAC_PAGES } from '../../../../data/almanac';
+import { getPlanSuggestions } from '../../../../utils/goalHints';
 import { getDailyAlmanacInsight, getDayKey } from '../../../../systems/almanac';
 import { getContentManager } from '../../../../content/ContentManager';
 import PerfectHarvestModal from '../minigames/PerfectHarvestModal';
+
+const FALLBACK_RULE_SET = {
+  id: 'fallback_rule',
+  title: 'Festival Timing',
+  instructions: 'Stop the marker in the sweet spot.',
+  rounds: 2,
+  speedCurve: [0.5, 0.65],
+  targetWindows: { gold: 0.05, silver: 0.08, bronze: 0.1 },
+  playLimit: 'daily',
+  theme: { icon: '🏮', panel: 'from-amber-50 to-orange-50' },
+  rewards: {
+    gold: { coins: 15, reputation: 1 },
+    silver: { coins: 10, reputation: 1 },
+    bronze: { coins: 6 },
+    miss: { coins: 4 },
+  },
+};
+
+const selectFestivalRuleSet = (rules = [], activeEvent, season) => {
+  const list = Array.isArray(rules) ? rules : [];
+  const defaultRule = list.find((rule) => rule.isDefault) || list[0] || FALLBACK_RULE_SET;
+
+  if (activeEvent) {
+    const matchById = list.find((rule) => rule.festivalIds?.includes(activeEvent.id));
+    if (matchById) return matchById;
+
+    const tags = new Set([
+      activeEvent.season,
+      ...(activeEvent.seasonTags || []),
+      season,
+    ].filter(Boolean));
+    const matchByTag = list.find((rule) => rule.seasonTags?.some((tag) => tags.has(tag)));
+    if (matchByTag) return matchByTag;
+  }
+
+  return defaultRule || FALLBACK_RULE_SET;
+};
+
+const getPlayLimitLabel = (ruleSet, activeEvent) => {
+  const limit = ruleSet?.playLimit || (activeEvent ? 'festival_day' : 'daily');
+  if (limit === 'festival_day') return '1 play per festival day';
+  if (limit === 'festival') return '1 play per festival';
+  return '1 play per day';
+};
 
 const EventsTab = memo(() => {
   const { state, actions } = useGame();
@@ -15,6 +62,7 @@ const EventsTab = memo(() => {
   const [eventHistory, setEventHistory] = useState([]);
   const [showPerfectHarvest, setShowPerfectHarvest] = useState(false);
   const [lastReward, setLastReward] = useState(null);
+  const [gameSummary, setGameSummary] = useState(null);
   const stateRef = useRef(state);
   const eventTimersRef = useRef(new Map());
   const packHighlights = (content.report?.packs || [])
@@ -139,60 +187,128 @@ const EventsTab = memo(() => {
   const almanacInsight = getDailyAlmanacInsight(state.almanac, state.philosophy);
   const whatsNewTitle = content.strings?.ui?.whatsNewTitle || "What's New";
   const dayKey = getDayKey();
-  const minigameState = state.minigames?.perfectHarvest || {};
-  const reducedMotion = state.settings?.animationsEnabled === false;
-  const canPlayFestival = activeEvent && minigameState.lastFestivalId !== activeEvent.id;
-  const canPlayBoard = !activeEvent && minigameState.lastPlayedDayKey !== dayKey;
+  const minigameState = state.minigames?.festivalGame || state.minigames?.perfectHarvest || {};
+  const reducedMotion = state.settings?.reducedMotion === true || state.settings?.animationsEnabled === false;
+  const activeRuleSet = selectFestivalRuleSet(content.minigames, activeEvent, currentSeason);
+  const playLimitLabel = getPlayLimitLabel(activeRuleSet, activeEvent);
+  const playLimit = activeRuleSet?.playLimit || (activeEvent ? 'festival_day' : 'daily');
+  const playedFestival = activeEvent ? minigameState.lastFestivalId === activeEvent.id : false;
+  const playedToday = minigameState.lastPlayedDayKey === dayKey;
+  const playedSameFestivalDay = playedFestival && playedToday;
+  const canPlayFestivalGame = activeEvent
+    ? (playLimit === 'festival' ? !playedFestival : !playedSameFestivalDay)
+    : (playLimit === 'daily' ? !playedToday : !playedToday);
+  const onboardingActive = !state.onboardingSkipped && (state.onboardingStep || 0) < 3;
+  const isFirstDay = (state.almanac?.counters?.dayCount || 0) <= 0;
 
-  const rewardTable = {
-    festival: {
-      perfect: { coins: 60, reputation: 3 },
-      good: { coins: 40, reputation: 2 },
-      okay: { coins: 25, reputation: 1 },
-      miss: { coins: 10, reputation: 0 },
-    },
-    board: {
-      perfect: { coins: 35, reputation: 2 },
-      good: { coins: 25, reputation: 1 },
-      okay: { coins: 15, reputation: 1 },
-      miss: { coins: 8, reputation: 0 },
-    },
-  };
+  const planSuggestions = getPlanSuggestions(state, 2);
+  const nextMemory = MEMORIES.find((memory) => !state.memoryFlags?.[memory.id]);
+  const nextAlmanac = ALMANAC_PAGES.find((page) => !state.almanac?.unlocked?.[page.id]);
+  const closeToTeaser = nextMemory?.hint || nextAlmanac?.hint || 'All pages are complete. Your story feels whole.';
+  const shopSnippet = state.coins >= 5
+    ? 'Boosts and daily decor picks are ready in the Shop.'
+    : 'Shop boosts unlock once you have a few more coins.';
+  const vibeLine = state.season?.config?.description || 'The farm feels calm and ready for small wins.';
 
-  const handleMiniGameComplete = (tier) => {
-    const mode = activeEvent ? 'festival' : 'board';
-    const reward = rewardTable[mode][tier];
-    const newCoins = Math.max(0, (stateRef.current.coins || 0) + reward.coins);
-    const currentSocial = stateRef.current.social || { friends: [], reputation: 0, marketListings: [] };
-    actions.setCoins(newCoins);
-    actions.updateSocial({
-      ...currentSocial,
-      reputation: (currentSocial.reputation || 0) + reward.reputation,
-    });
-    actions.updateMinigames({
-      ...stateRef.current.minigames,
-      perfectHarvest: {
+  const handleFestivalGameComplete = (tier, detail) => {
+    const rewardTable = activeRuleSet?.rewards || {};
+    const reward = rewardTable[tier] || rewardTable.miss || null;
+    if (!reward) return;
+
+    const summaryParts = [];
+    if (reward.coins) {
+      actions.earnMoney(reward.coins);
+      summaryParts.push(`+${reward.coins}🪙`);
+    }
+    if (reward.reputation) {
+      const currentSocial = stateRef.current.social || { friends: [], reputation: 0, marketListings: [] };
+      actions.updateSocial({
+        ...currentSocial,
+        reputation: (currentSocial.reputation || 0) + reward.reputation,
+      });
+      summaryParts.push(`+${reward.reputation} rep`);
+    }
+    if (reward.decor) {
+      actions.updateInventory((inventory) => ({
+        ...inventory,
+        [reward.decor]: (inventory?.[reward.decor] || 0) + 1,
+      }));
+      const decorName = content.decorById?.[reward.decor]?.name || reward.decor;
+      summaryParts.push(`+${decorName}`);
+    }
+    if (reward.almanacPageId) {
+      actions.unlockAlmanacPage(reward.almanacPageId);
+      summaryParts.push('Almanac page');
+    }
+
+    const nextMinigames = {
+      ...(stateRef.current.minigames || {}),
+      festivalGame: {
         lastPlayedDayKey: dayKey,
-        lastFestivalId: activeEvent ? activeEvent.id : minigameState.lastFestivalId || null,
+        lastFestivalId: activeEvent ? activeEvent.id : null,
+        lastRuleId: activeRuleSet?.id || null,
         lastResult: tier,
         lastPlayedAt: Date.now(),
       },
-    });
-    setLastReward({ tier, reward, mode });
+    };
+    actions.updateMinigames(nextMinigames);
+
+    const summaryText = summaryParts.length ? summaryParts.join(' · ') : 'Reward applied';
+    const summary = { tier, reward, text: summaryText, detail };
+    setLastReward({ tier, reward, mode: activeEvent ? 'festival' : 'board', text: summaryText });
+    setGameSummary(summary);
+
     actions.addNotification({
-      message: `🌾 ${reward.coins}🪙 earned${reward.reputation ? ` +${reward.reputation} rep` : ''}!`,
+      message: `🏮 Festival reward: ${summaryText}`,
       type: 'success',
     });
   };
 
   return (
     <div className="space-y-4">
+      {(onboardingActive || isFirstDay) && (
+        <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-amber-800">📌 Town Board</h3>
+              <p className="text-sm text-amber-700">Today’s Plan</p>
+            </div>
+            <Badge variant="outline" className="bg-amber-100 text-amber-700">
+              First Session
+            </Badge>
+          </div>
+
+          <div className="mt-3 space-y-2 text-sm text-gray-700">
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-amber-600">Today’s Plan</div>
+              <ul className="mt-1 space-y-1">
+                {planSuggestions.map((item) => (
+                  <li key={item.id} className="flex items-start gap-2">
+                    <span className="text-base">{item.emoji}</span>
+                    <span>{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="text-xs text-amber-700">
+              <span className="font-semibold">You’re close to:</span> {closeToTeaser}
+            </div>
+            <div className="text-xs text-amber-700">
+              <span className="font-semibold">Shop Today:</span> {shopSnippet}
+            </div>
+            <div className="text-xs text-amber-700">
+              <span className="font-semibold">Vibe:</span> {vibeLine}
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Town Board Insight */}
       <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold text-amber-800">📌 Town Board</h3>
-            <p className="text-sm text-amber-700">Almanac insight of the day</p>
+            <h3 className="text-lg font-semibold text-amber-800">📖 Almanac Insight</h3>
+            <p className="text-sm text-amber-700">Shared from the Town Board</p>
           </div>
           <Badge variant="outline" className="bg-amber-100 text-amber-700">
             Almanac
@@ -210,38 +326,41 @@ const EventsTab = memo(() => {
         </div>
       </Card>
 
-      <Card className="p-4 bg-gradient-to-r from-emerald-50 to-lime-50 border-emerald-200">
+      <Card className="p-4 bg-gradient-to-r from-emerald-50 to-lime-50 border-emerald-200" data-qa="festival-game-card">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold text-emerald-800">🌾 Perfect Harvest</h3>
+            <h3 className="text-lg font-semibold text-emerald-800">
+              {activeRuleSet?.theme?.icon || '🏮'} {activeEvent ? 'Festival Game Live' : 'Town Board Challenge'}
+            </h3>
             <p className="text-sm text-emerald-700">
-              Stop the marker in the sweet spot for a cozy reward.
+              {activeRuleSet?.instructions || 'Stop the marker in the sweet spot for a cozy reward.'}
             </p>
           </div>
           <Badge variant="outline" className="bg-emerald-100 text-emerald-700">
-            {activeEvent ? 'Festival Bonus' : 'Town Board'}
+            {activeEvent ? activeEvent.name : 'Daily'}
           </Badge>
         </div>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-xs text-emerald-700">
-            {activeEvent
-              ? `Available once during ${activeEvent.name}.`
-              : 'Available once per day.'}
+            {playLimitLabel} • {activeRuleSet?.rounds || 2} rounds
           </div>
           <Button
             size="sm"
-            onClick={() => setShowPerfectHarvest(true)}
-            disabled={!(canPlayFestival || canPlayBoard)}
+            onClick={() => {
+              setGameSummary(null);
+              setShowPerfectHarvest(true);
+            }}
+            disabled={!canPlayFestivalGame}
+            data-qa="festival-game-play"
           >
-            {canPlayFestival || canPlayBoard ? 'Play Challenge' : 'Already Played'}
+            {canPlayFestivalGame ? 'Play Challenge' : 'Already Played'}
           </Button>
         </div>
         {lastReward && (
           <div className="mt-3 rounded-lg border border-emerald-100 bg-white/70 p-2 text-xs text-emerald-800">
             Last result: <span className="font-semibold capitalize">{lastReward.tier}</span> •
-            {' '}+{lastReward.reward.coins}🪙
-            {lastReward.reward.reputation ? ` +${lastReward.reward.reputation} rep` : ''}
-            {' '}({lastReward.mode === 'festival' ? 'Festival' : 'Board'})
+            {' '}{lastReward.mode === 'festival' ? 'Festival' : 'Board'}
+            {lastReward.text ? ` • ${lastReward.text}` : ''}
           </div>
         )}
       </Card>
@@ -292,11 +411,12 @@ const EventsTab = memo(() => {
       <PerfectHarvestModal
         isOpen={showPerfectHarvest}
         onClose={() => setShowPerfectHarvest(false)}
-        onComplete={(tier) => {
-          handleMiniGameComplete(tier);
-          setShowPerfectHarvest(false);
+        onComplete={(tier, detail) => {
+          handleFestivalGameComplete(tier, detail);
         }}
         reducedMotion={reducedMotion}
+        ruleSet={activeRuleSet}
+        rewardSummary={gameSummary}
       />
 
       {/* Active Event */}

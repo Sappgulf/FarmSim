@@ -7,14 +7,18 @@ export const initialState = {
     saveVersion: SAVE_VERSION,
 
     // Core game state
-    coins: 100,
+    coins: 140,
     xp: 0,
     level: 1,
     gridSize: 3,
 
     // Game objects
     plots: initializePlots(3),
-    inventory: {},
+    inventory: {
+        fertilizer: 1,
+        water_boost: 1,
+        starter_flag: 1,
+    },
     buildings: {},
     livestock: {
         animals: [],
@@ -79,6 +83,13 @@ export const initialState = {
             lastResult: null,
             lastPlayedAt: null,
         },
+        festivalGame: {
+            lastPlayedDayKey: null,
+            lastFestivalId: null,
+            lastRuleId: null,
+            lastResult: null,
+            lastPlayedAt: null,
+        },
     },
     disasterProtections: {},
     prestige: {
@@ -108,9 +119,12 @@ export const initialState = {
 
     // UI state
     notifications: [],
-    selectedCrop: 'carrot',
+    selectedCrop: 'lettuce',
     selectedDecoration: null,
     decorateMode: false,
+    onboardingSeen: false,
+    onboardingStep: 0,
+    onboardingSkipped: false,
     settings: {
         autoSave: true,
         soundEnabled: true,
@@ -332,6 +346,14 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_GAME_LOOP:
             return { ...state, gameLoop: { ...state.gameLoop, ...action.payload } };
+
+        case GAME_ACTIONS.UPDATE_ONBOARDING:
+            return {
+                ...state,
+                onboardingSeen: action.payload?.onboardingSeen ?? state.onboardingSeen,
+                onboardingStep: action.payload?.onboardingStep ?? state.onboardingStep,
+                onboardingSkipped: action.payload?.onboardingSkipped ?? state.onboardingSkipped,
+            };
 
         case GAME_ACTIONS.UPDATE_PETS:
             return { ...state, pets: action.payload };

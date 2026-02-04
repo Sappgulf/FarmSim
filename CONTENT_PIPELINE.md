@@ -1,9 +1,9 @@
 # Content Pipeline — Season Pack Pipeline v1
 
-**Date:** 2026-02-03
+**Date:** 2026-02-04
 
 ## Goals
-- Establish a single, data-driven source of truth for FarmSim content (crops, decor, festivals, almanac, strings).
+- Establish a single, data-driven source of truth for FarmSim content (crops, decor, festivals, minigames, almanac, strings).
 - Support drop-in Season Packs with deterministic merging and defensive validation.
 - Keep save/load stable by preserving IDs and handling missing content safely.
 - Avoid per-tick content scanning; load and validate at boot or on demand only.
@@ -14,6 +14,7 @@ content/
   crops.json
   decor.json
   festivals.json
+  minigames.json
   almanac.json
   strings.json
   packs/
@@ -22,6 +23,7 @@ content/
       crops.json (optional)
       decor.json (optional)
       festivals.json (optional)
+      minigames.json (optional)
       almanac.json (optional)
       strings.json (optional)
 ```
@@ -58,6 +60,17 @@ Required fields per item:
 
 Additional fields used by the game:
 - `icon`, `season`, `rarity`
+
+### Minigames (`content/minigames.json`)
+Required fields per item:
+- `id`, `title`, `instructions`
+- `rounds` (number)
+- `speedCurve` (number[])
+- `targetWindows` (object)
+- `rewards` (object)
+
+Additional fields used by the game:
+- `festivalIds`, `seasonTags`, `playLimit`, `theme`, `sfx`, `qaSeed`
 
 ### Almanac (`content/almanac.json`)
 - `sections[]`: `{ id, title, description, icon }`

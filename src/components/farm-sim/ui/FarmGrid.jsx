@@ -476,7 +476,7 @@ const FarmGrid = memo(() => {
     // Check if player has enough coins
     if (state.coins >= selectedCrop.cost) {
       actions.spendMoney(selectedCrop.cost);
-      actions.plantCrop(index, selectedCrop.id, selectedCrop);
+      const planted = actions.plantCrop(index, selectedCrop.id, selectedCrop);
 
       if (animationsEnabled && typeof window.triggerParticleEffect === 'function') {
         const plotElement = document.querySelector(`.farm-grid > div:nth-child(${index + 1})`);
@@ -495,6 +495,10 @@ const FarmGrid = memo(() => {
         message: `Planted ${selectedCrop.emoji} ${selectedCrop.name} on plot ${index + 1}`,
         type: 'success'
       });
+
+      if (planted) {
+        actions.recordOnboardingEvent('plant');
+      }
     } else {
       actions.addNotification({
         message: `Not enough coins! Need ${selectedCrop.cost}🪙`,
@@ -632,6 +636,7 @@ const FarmGrid = memo(() => {
       season: state.season?.current,
       weather: state.weather,
     });
+    actions.recordOnboardingEvent('harvest');
 
     actions.addNotification({
       message: `Harvested ${crop.emoji} ${crop.name}! +${earnings}🪙`,
@@ -710,6 +715,8 @@ const FarmGrid = memo(() => {
         message: `Bulk harvested ${harvestedCount} crops! +${totalEarnings}🪙`,
         type: 'success'
       });
+
+      actions.recordOnboardingEvent('harvest');
     }
 
     setSelectedPlots(new Set());
@@ -730,7 +737,10 @@ const FarmGrid = memo(() => {
   const plots = Array.isArray(state.plots) ? state.plots : [];
 
   return (
-    <Card className="p-4 sm:p-6 bg-gradient-to-br from-green-50/90 via-emerald-50/80 to-lime-50/70 relative overflow-hidden rounded-2xl shadow-lg border border-green-100/50 backdrop-blur-sm">
+    <Card
+      data-onboard="farm-grid"
+      className="p-4 sm:p-6 bg-gradient-to-br from-green-50/90 via-emerald-50/80 to-lime-50/70 relative overflow-hidden rounded-2xl shadow-lg border border-green-100/50 backdrop-blur-sm"
+    >
       <div className="mb-4 text-center relative z-20">
         <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-600 bg-clip-text text-transparent mb-1.5 flex items-center justify-center gap-2">
           <span className="text-2xl sm:text-3xl filter drop-shadow-sm">🌾</span>

@@ -13,6 +13,7 @@
 - Expanded debug-only performance overlay to surface action trace depth + debug report copy for faster profiling/triage.
 - Added debug-only stress panel controls to exercise hot paths without manual setup.
 - Added ContentManager to load/validate content once at boot; no per-tick content scanning.
+- Festival mini-game v2 runs rAF only while the modal is open; no global timers or per-tick work outside the mini-game.
 
 ## After
 - Runtime metrics not captured in this environment.

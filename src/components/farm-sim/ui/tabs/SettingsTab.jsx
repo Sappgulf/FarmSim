@@ -9,7 +9,6 @@ import { AudioSettings } from './settings/AudioSettings';
 import { SaveLoadSettings } from './settings/SaveLoadSettings';
 import { GameplaySettings } from './settings/GameplaySettings';
 import { GameStats } from './settings/GameStats';
-import { resetTutorial } from '../../ui/Tutorial';
 
 const SettingsTab = memo(() => {
   const { state, actions } = useGame();
@@ -340,9 +339,9 @@ const SettingsTab = memo(() => {
           </div>
           <Button
             onClick={() => {
-              resetTutorial();
+              actions.resetOnboarding();
               actions.addNotification({
-                message: '🎓 Tutorial reset! Refresh to see it again.',
+                message: '🎓 Tutorial reset! It will show again shortly.',
                 type: 'success'
               });
             }}

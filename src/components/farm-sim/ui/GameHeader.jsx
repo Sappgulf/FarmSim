@@ -5,6 +5,7 @@ import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Progress } from '../../ui/progress';
 import { Coins, Star, Trophy, Settings, Save, Play, Pause, ChevronDown, TrendingUp, Calendar } from 'lucide-react';
+import { getNextGoal } from '../../../utils/goalHints';
 
 // Animated number counter component
 const AnimatedNumber = memo(({ value, duration = 500 }) => {
@@ -126,23 +127,7 @@ const GameHeader = memo(() => {
   const xpNeededForNext = xpForNextLevel - xpForCurrentLevel;
   const xpProgress = (currentLevelXp / xpNeededForNext) * 100;
 
-  // Dynamic goal hint based on game state
-  const getNextGoal = () => {
-    const activePlots = state.plots?.filter(p => p.state !== 'empty').length || 0;
-    const readyPlots = state.plots?.filter(p => p.state === 'ready').length || 0;
-    const emptyPlots = (state.plots?.length || 0) - activePlots;
-
-    if (readyPlots > 0) return { text: `Harvest ${readyPlots} crop${readyPlots > 1 ? 's' : ''}`, emoji: '🌾', priority: 1 };
-    if (emptyPlots > 0 && state.coins >= 10) return { text: `Plant ${Math.min(emptyPlots, 3)} seeds`, emoji: '🌱', priority: 2 };
-    if (activePlots > 0) return { text: 'Wait for crops to grow', emoji: '⏳', priority: 3 };
-    if (state.level >= 2 && !Object.values(state.buildings || {}).some(b => b?.built)) {
-      return { text: 'Build your first structure', emoji: '🏠', priority: 2 };
-    }
-    if (state.coins < 10) return { text: 'Earn coins to buy seeds', emoji: '💰', priority: 2 };
-    return { text: 'Explore your farm!', emoji: '🚜', priority: 3 };
-  };
-
-  const nextGoal = getNextGoal();
+  const nextGoal = getNextGoal(state);
 
   return (
     <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 px-3 sm:px-4 py-2 sm:py-3 relative sticky top-0 z-50">

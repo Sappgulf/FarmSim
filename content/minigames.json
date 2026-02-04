@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "town_board_daily",
+      "isDefault": true,
+      "title": "Town Board Timing",
+      "instructions": "Stop the marker in the sweet spot. Best of 2 rounds.",
+      "rounds": 2,
+      "speedCurve": [0.5, 0.65],
+      "targetWindows": { "gold": 0.05, "silver": 0.08, "bronze": 0.1 },
+      "playLimit": "daily",
+      "theme": { "icon": "📌", "panel": "from-amber-50 to-orange-50" },
+      "sfx": { "hit": "harvest", "reward": "money" },
+      "qaSeed": 1127,
+      "rewards": {
+        "gold": { "coins": 18, "reputation": 1, "almanacPageId": "festival_rhythm" },
+        "silver": { "coins": 12, "reputation": 1 },
+        "bronze": { "coins": 8, "reputation": 0 },
+        "miss": { "coins": 5 }
+      }
+    },
+    {
+      "id": "spring_festival_hit",
+      "festivalIds": ["spring_festival", "flower_bloom", "seed_swap_social"],
+      "seasonTags": ["spring"],
+      "title": "Spring Festival Hit",
+      "instructions": "Three rounds. Land a perfect hit to impress the town.",
+      "rounds": 3,
+      "speedCurve": [0.55, 0.75, 0.9],
+      "targetWindows": { "gold": 0.05, "silver": 0.08, "bronze": 0.11 },
+      "playLimit": "festival_day",
+      "theme": { "icon": "🌸", "panel": "from-rose-50 to-amber-50" },
+      "sfx": { "hit": "harvest", "reward": "money" },
+      "qaSeed": 2201,
+      "rewards": {
+        "gold": { "coins": 30, "reputation": 2, "decor": "spring_blossoms", "almanacPageId": "festival_rhythm" },
+        "silver": { "coins": 22, "reputation": 1 },
+        "bronze": { "coins": 14, "reputation": 1 },
+        "miss": { "coins": 8 }
+      }
+    },
+    {
+      "id": "summer_festival_hit",
+      "festivalIds": ["harvest_moon", "summer_solstice"],
+      "seasonTags": ["summer"],
+      "title": "Summer Festival Hit",
+      "instructions": "Keep pace with the sun. Best of 3 rounds.",
+      "rounds": 3,
+      "speedCurve": [0.6, 0.8, 1.0],
+      "targetWindows": { "gold": 0.045, "silver": 0.075, "bronze": 0.105 },
+      "playLimit": "festival_day",
+      "theme": { "icon": "☀️", "panel": "from-yellow-50 to-orange-50" },
+      "sfx": { "hit": "harvest", "reward": "money" },
+      "qaSeed": 3309,
+      "rewards": {
+        "gold": { "coins": 32, "reputation": 2, "decor": "summer_streamers", "almanacPageId": "festival_rhythm" },
+        "silver": { "coins": 22, "reputation": 1 },
+        "bronze": { "coins": 15, "reputation": 1 },
+        "miss": { "coins": 9 }
+      }
+    },
+    {
+      "id": "autumn_festival_hit",
+      "festivalIds": ["pumpkin_fest", "thanksgiving"],
+      "seasonTags": ["autumn"],
+      "title": "Autumn Festival Hit",
+      "instructions": "Three rounds. Time it just right for the harvest glow.",
+      "rounds": 3,
+      "speedCurve": [0.55, 0.78, 0.98],
+      "targetWindows": { "gold": 0.045, "silver": 0.075, "bronze": 0.105 },
+      "playLimit": "festival_day",
+      "theme": { "icon": "🍂", "panel": "from-orange-50 to-amber-50" },
+      "sfx": { "hit": "harvest", "reward": "money" },
+      "qaSeed": 4418,
+      "rewards": {
+        "gold": { "coins": 34, "reputation": 2, "decor": "autumn_wreath", "almanacPageId": "festival_rhythm" },
+        "silver": { "coins": 24, "reputation": 1 },
+        "bronze": { "coins": 16, "reputation": 1 },
+        "miss": { "coins": 9 }
+      }
+    },
+    {
+      "id": "winter_festival_hit",
+      "festivalIds": ["winter_wonder", "snow_lantern_market"],
+      "seasonTags": ["winter"],
+      "title": "Winter Festival Hit",
+      "instructions": "Stay steady in the cold. Best of 3 rounds.",
+      "rounds": 3,
+      "speedCurve": [0.5, 0.7, 0.9],
+      "targetWindows": { "gold": 0.05, "silver": 0.08, "bronze": 0.11 },
+      "playLimit": "festival_day",
+      "theme": { "icon": "❄️", "panel": "from-blue-50 to-slate-50" },
+      "sfx": { "hit": "harvest", "reward": "money" },
+      "qaSeed": 5526,
+      "rewards": {
+        "gold": { "coins": 30, "reputation": 2, "decor": "winter_star_lantern", "almanacPageId": "festival_rhythm" },
+        "silver": { "coins": 22, "reputation": 1 },
+        "bronze": { "coins": 14, "reputation": 1 },
+        "miss": { "coins": 8 }
+      }
+    }
+  ]
+}

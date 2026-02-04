@@ -104,7 +104,10 @@ export function GameProvider({ children }) {
       xp: stateToSave.xp,
       level: stateToSave.level,
       plotsCount: stateToSave.plots?.length || 0,
-      gridSize: stateToSave.gridSize
+      gridSize: stateToSave.gridSize,
+      onboardingStep: stateToSave.onboardingStep,
+      onboardingSkipped: stateToSave.onboardingSkipped,
+      onboardingSeen: stateToSave.onboardingSeen,
     });
 
     if (stateString === lastSaveStateRef.current) return;
@@ -239,6 +242,11 @@ export function GameProvider({ children }) {
     updateMemoryFlags: (memoryFlags) => dispatch({ type: GAME_ACTIONS.UPDATE_MEMORY_FLAGS, payload: memoryFlags }),
     updateMemoryCounters: (memoryCounters) => dispatch({ type: GAME_ACTIONS.UPDATE_MEMORY_COUNTERS, payload: memoryCounters }),
     updateAlmanac: (almanac) => dispatch({ type: GAME_ACTIONS.UPDATE_ALMANAC, payload: almanac }),
+    updateOnboarding: (onboarding) => dispatch({ type: GAME_ACTIONS.UPDATE_ONBOARDING, payload: onboarding }),
+    resetOnboarding: () => dispatch({
+      type: GAME_ACTIONS.UPDATE_ONBOARDING,
+      payload: { onboardingSeen: false, onboardingStep: 0, onboardingSkipped: false },
+    }),
     setPhilosophy: (philosophyId) => {
       const current = stateRef.current.philosophy;
       if (current === philosophyId) return;
@@ -344,6 +352,73 @@ export function GameProvider({ children }) {
       }
 
       logDebugAction('almanac_unlocked', { pageId });
+      return true;
+    },
+
+    recordOnboardingEvent: (eventType) => {
+      const currentState = stateRef.current;
+      if (!currentState) return false;
+
+      const onboardingStepMap = {
+        plant: 0,
+        harvest: 1,
+        board_open: 2,
+      };
+
+      const totalSteps = 3;
+      const eventStep = onboardingStepMap[eventType];
+
+      const hasFirstSeed = !!currentState.memoryFlags?.first_seed;
+      const hasFirstHarvest = !!currentState.memoryFlags?.first_harvest;
+      const hasBoardVisit = !!currentState.memoryFlags?.first_board_visit;
+
+      if (eventType === 'plant' && !hasFirstSeed) {
+        actionsRef.current?.unlockMemory('first_seed');
+      }
+
+      if ((eventType === 'harvest' || eventType === 'board_open') && !currentState.almanac?.unlocked?.first_steps) {
+        actionsRef.current?.unlockAlmanacPage('first_steps');
+      }
+
+      if (eventType === 'board_open' && !hasBoardVisit) {
+        actionsRef.current?.unlockMemory('first_board_visit');
+      }
+
+      if (eventType === 'harvest' && !hasFirstHarvest) {
+        actionsRef.current?.unlockMemory('first_harvest');
+
+        const bonusCoins = 20;
+        const bonusRep = 1;
+        const currentSocial = currentState.social || { friends: [], reputation: 0, marketListings: [] };
+
+        actionsRef.current?.earnMoney(bonusCoins);
+        actionsRef.current?.updateSocial({
+          ...currentSocial,
+          reputation: (currentSocial.reputation || 0) + bonusRep,
+        });
+
+        actionsRef.current?.addNotification({
+          message: `🎉 First Harvest Bonus: +${bonusCoins}🪙 +${bonusRep} rep`,
+          type: 'success',
+        });
+      }
+
+      if (!currentState.onboardingSeen) {
+        dispatch({
+          type: GAME_ACTIONS.UPDATE_ONBOARDING,
+          payload: { onboardingSeen: true },
+        });
+      }
+
+      if (currentState.onboardingSkipped) return false;
+      if (typeof eventStep !== 'number') return false;
+      if (currentState.onboardingStep !== eventStep) return false;
+
+      const nextStep = Math.min(totalSteps, eventStep + 1);
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_ONBOARDING,
+        payload: { onboardingStep: nextStep, onboardingSeen: true },
+      });
       return true;
     },
 

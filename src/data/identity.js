@@ -155,6 +155,16 @@ export const MEMORIES = [
     isMicro: true,
   },
   {
+    id: 'first_board_visit',
+    title: 'Town Board Welcome',
+    description: 'Checked the Town Board for today’s plan.',
+    hint: 'Visit the Town Board.',
+    chapterId: 'market_days',
+    icon: '📌',
+    order: 4.5,
+    isMicro: true,
+  },
+  {
     id: 'first_shop_purchase',
     title: 'Market Stroll',
     description: 'Made your first purchase at the shop.',

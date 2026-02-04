@@ -31,6 +31,42 @@
 <paste QA report here>
 ```
 
+## Sprint D2 — Onboarding + First 10 Minutes (2026-02-04)
+
+### Manual Checklist
+- [ ] New game: overlay appears and is non-blocking.
+- [ ] Step 1 completes on plant (onPlant event).
+- [ ] Step 2 completes on harvest (onHarvest event).
+- [ ] Step 3 completes on Town Board open (onOpenBoard event).
+- [ ] Skip tutorial persists and does not reappear.
+- [ ] Save/reload preserves onboardingSeen/onboardingStep/onboardingSkipped.
+- [ ] Early wins: first memory, first almanac page, first harvest bonus trigger once.
+- [ ] Mobile 375px: overlay readable, draggable, no overflow.
+- [ ] Town Board cards fit on 375px with no horizontal scroll.
+- [ ] No console errors during onboarding flow.
+
+### Automated Checks
+- [ ] `npm run test -- --run` (fails in this env: `vitest: command not found`)
+- [ ] `npm run build` (fails in this env: `vite: command not found`)
+
+## Sprint D3 — Festival Mini-Game v2 (2026-02-04)
+
+### Manual Checklist
+- [ ] Town Board shows Festival Game Live card when festival active.
+- [ ] Play button opens mini-game modal; close button exits cleanly.
+- [ ] Rounds complete and reward summary appears.
+- [ ] Play limit enforces: 1 per festival day / daily when no festival.
+- [ ] Save/reload preserves play limits and last result.
+- [ ] Mobile 375px: modal fits, buttons accessible, no overflow.
+- [ ] Reduced motion simplifies pacing when enabled.
+
+### Automated Checks
+- [ ] `qa: festival_game_smoke`
+- [ ] `qa: festival_game_integration`
+- [ ] `qa: festival_game_leak`
+- [ ] `npm run test -- --run` (fails in this env: `vitest: command not found`)
+- [ ] `npm run build` (fails in this env: `vite: command not found`)
+
 ## Expansion + Polish Pass (2026-02-03)
 - **Static inspection:** Pets tab layout/copy, notification auto-dismiss logic, and snake_case formatter applied across tabs reviewed in code.
 - **Automated check:** `npm run build` (passes; npm http-proxy warning + browserslist data warning).

@@ -1,6 +1,6 @@
 # Dev Notes — AAA Polish Audit
 
-**Date:** 2026-02-03
+**Date:** 2026-02-04
 
 ## Inventory (Feature + UI)
 
@@ -57,10 +57,16 @@
 
 ### Mini-Games
 - **Fishing mini-game**: `FishingSystem` + `FishingTab`. (`src/components/farm-sim/systems/FishingSystem.js`, `src/components/farm-sim/ui/tabs/FishingTab.jsx`)
-- **Perfect Harvest (festival/board timing game)**: engine + modal UI, launched from Events tab. (`src/components/farm-sim/minigames/PerfectHarvestEngine.js`, `src/components/farm-sim/ui/minigames/PerfectHarvestModal.jsx`, `src/components/farm-sim/ui/tabs/EventsTab.jsx`)
+- **Festival Timing (Perfect Harvest v2)**: data-driven rule sets + engine + modal UI, launched from Events tab. (`content/minigames.json`, `src/components/farm-sim/minigames/PerfectHarvestEngine.js`, `src/components/farm-sim/ui/minigames/PerfectHarvestModal.jsx`, `src/components/farm-sim/ui/tabs/EventsTab.jsx`)
 
 ### Notifications / Toasts
 - **NotificationSystem**: top-right stack with auto-dismiss + manual close. (`src/components/farm-sim/ui/NotificationSystem.jsx`)
+
+### Onboarding (Soft Tutorial)
+- **Overlay UI**: `src/components/farm-sim/ui/Tutorial.jsx` (3-step, non-blocking, event-driven).
+- **State + persistence**: `onboardingSeen`, `onboardingStep`, `onboardingSkipped` in `GameReducer` + `GamePersistence`.
+- **Triggers**: plant/harvest in `FarmGrid`, Town Board open in `FarmSim` tab change.
+- **Early wins**: memory + almanac unlocks + first harvest bonus in `GameContext.recordOnboardingEvent`.
 
 ### Debug / QA Tooling (Debug-only via `?debug=1`)
 - **Performance + Crash Overlay**: rolling FPS + frame metrics, entity counts, crash capture. (`src/components/farm-sim/ui/PerformanceOverlay.jsx`, `src/utils/debugTools.js`)
@@ -80,6 +86,7 @@
 - **Content manager + validator**: `src/content/ContentManager.js` (loads base content, merges packs, validates, exposes maps). 
 - **Base content schemas**: `content/` (JSON files for crops, decor, festivals, almanac, strings).
 - **Season packs**: `content/packs/<pack_id>/` with `pack.json` + optional content files.
+- **Starter pack (data-only)**: `content/packs/starter-pack-v1/` (welcome decor).
 - **Adapters**:
   - Crops: `src/components/farm-sim/constants/cropData.js`
   - Decor: `src/components/farm-sim/constants/decorData.js`

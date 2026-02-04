@@ -157,6 +157,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                 <button
                                     key={tabId}
                                     onClick={() => onTabChange(tabId)}
+                                    data-onboard={tabId === 'events' ? 'events-tab' : undefined}
                                     className={`
                     flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold
                     whitespace-nowrap transition-all duration-200 touch-manipulation

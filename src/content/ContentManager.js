@@ -2,6 +2,7 @@ import baseCrops from '../../content/crops.json';
 import baseDecor from '../../content/decor.json';
 import baseFestivals from '../../content/festivals.json';
 import baseAlmanac from '../../content/almanac.json';
+import baseMinigames from '../../content/minigames.json';
 import baseStrings from '../../content/strings.json';
 import { isDebugMode } from '../utils/debugTools';
 
@@ -10,9 +11,10 @@ const PACK_CROP_MODULES = import.meta.glob('../../content/packs/**/crops.json', 
 const PACK_DECOR_MODULES = import.meta.glob('../../content/packs/**/decor.json', { eager: true });
 const PACK_FESTIVAL_MODULES = import.meta.glob('../../content/packs/**/festivals.json', { eager: true });
 const PACK_ALMANAC_MODULES = import.meta.glob('../../content/packs/**/almanac.json', { eager: true });
+const PACK_MINIGAME_MODULES = import.meta.glob('../../content/packs/**/minigames.json', { eager: true });
 const PACK_STRING_MODULES = import.meta.glob('../../content/packs/**/strings.json', { eager: true });
 
-const CONTENT_TYPES = ['crops', 'decor', 'festivals', 'almanac', 'strings'];
+const CONTENT_TYPES = ['crops', 'decor', 'festivals', 'minigames', 'almanac', 'strings'];
 
 const clampNumber = (value, fallback, { min, max } = {}) => {
   if (value === null || value === undefined) return fallback;
@@ -79,6 +81,16 @@ const normalizeAlmanac = (page) => ({
   ...page,
   icon: page.icon || '📖',
   text: page.text || {},
+});
+
+const normalizeMinigame = (entry) => ({
+  ...entry,
+  rounds: clampNumber(entry.rounds, 1, { min: 1, max: 3 }),
+  speedCurve: Array.isArray(entry.speedCurve) ? entry.speedCurve : [],
+  targetWindows: entry.targetWindows || {},
+  rewards: entry.rewards || {},
+  theme: entry.theme || {},
+  sfx: entry.sfx || {},
 });
 
 const buildMapById = (items = []) => {
@@ -186,6 +198,50 @@ const validateItems = (type, items, report, context) => {
         });
       }
     }
+
+    if (type === 'minigames') {
+      if (!item.title) {
+        report.warnings.push({
+          type,
+          issue: 'missing_title',
+          message: `minigame ${item.id} missing title`,
+          context,
+        });
+      }
+      if (!Number.isFinite(item.rounds)) {
+        report.warnings.push({
+          type,
+          issue: 'missing_rounds',
+          message: `minigame ${item.id} missing rounds`,
+          context,
+        });
+      }
+      if (!Array.isArray(item.speedCurve) || item.speedCurve.length === 0) {
+        report.warnings.push({
+          type,
+          issue: 'missing_speed_curve',
+          message: `minigame ${item.id} missing speedCurve`,
+          context,
+        });
+      }
+      const windows = item.targetWindows || {};
+      if (!Number.isFinite(windows.gold) || !Number.isFinite(windows.silver) || !Number.isFinite(windows.bronze)) {
+        report.warnings.push({
+          type,
+          issue: 'missing_target_windows',
+          message: `minigame ${item.id} missing targetWindows`,
+          context,
+        });
+      }
+      if (!item.rewards || typeof item.rewards !== 'object') {
+        report.warnings.push({
+          type,
+          issue: 'missing_rewards',
+          message: `minigame ${item.id} missing rewards table`,
+          context,
+        });
+      }
+    }
   });
 };
 
@@ -243,6 +299,7 @@ const buildContent = () => {
     crops: (baseCrops.items || []).map(normalizeCrop),
     decor: (baseDecor.items || []).map(normalizeDecor),
     festivals: (baseFestivals.items || []).map(normalizeFestival),
+    minigames: (baseMinigames.items || []).map(normalizeMinigame),
     almanac: {
       sections: baseAlmanac.sections || [],
       pages: (baseAlmanac.pages || []).map(normalizeAlmanac),
@@ -295,6 +352,16 @@ const buildContent = () => {
       );
     }
 
+    const minigamePayload = getPackPayload(PACK_MINIGAME_MODULES, basePath, 'minigames.json');
+    if (minigamePayload?.items?.length) {
+      base.minigames = mergeItems(
+        base.minigames,
+        minigamePayload.items.map(normalizeMinigame),
+        report,
+        'minigames'
+      );
+    }
+
     const stringPayload = getPackPayload(PACK_STRING_MODULES, basePath, 'strings.json');
     if (stringPayload) {
       base.strings = {
@@ -315,6 +382,7 @@ const buildContent = () => {
     cropsById: buildMapById(base.crops),
     decorById: buildMapById(base.decor),
     festivalsById: buildMapById(base.festivals),
+    minigamesById: buildMapById(base.minigames),
     almanacPageById: buildMapById(base.almanac.pages),
     almanacSectionById: buildMapById(base.almanac.sections),
     philosophyById: buildMapById(base.strings.philosophies || []),

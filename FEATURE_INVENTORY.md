@@ -55,6 +55,7 @@
 
 ## Mini-Games (Existing)
 - **Fishing mini-game**: `FishingSystem` + `FishingTab`. (`src/components/farm-sim/systems/FishingSystem.js`, `src/components/farm-sim/ui/tabs/FishingTab.jsx`)
+- **Festival timing mini-game**: Perfect Harvest v2 engine + modal + Events tab. (`content/minigames.json`, `src/components/farm-sim/minigames/PerfectHarvestEngine.js`, `src/components/farm-sim/ui/minigames/PerfectHarvestModal.jsx`, `src/components/farm-sim/ui/tabs/EventsTab.jsx`)
 
 ## Notifications / Toasts
 - **Notification stack**: `NotificationSystem`. (`src/components/farm-sim/ui/NotificationSystem.jsx`)

@@ -4,7 +4,7 @@
 **Project:** FarmLife v5.0.0  
 **Status:** Triple-A Polish Release ✅
 
-## [Unreleased] - 2026-02-03
+## [Unreleased] - 2026-02-04
 
 ### Planned
 - Planned: audit repo docs + tab inventory, standardize UI tokens/icon rules, implement festival timing mini-game, polish tabs/copy, and run QA/perf gate checks. Baseline: `npm run test -- --run` (passes with ReactDOMTestUtils act deprecation warnings).
@@ -18,6 +18,8 @@
 - Planned: audit all markdown docs + FarmSim tabs, polish Pets UI/copy, upgrade toast auto-dismiss/close, fix underscore labels, and run QA/perf checks. Baseline: `npm run build` (passes with npm http-proxy warning and browserslist data warning).
 
 ### Implemented
+- Implemented: Sprint D2 onboarding + first-session polish (soft tutorial overlay, Town Board Today’s Plan, early memory/almanac/reward wins, starter pack defaults + content pack, first-crop growth boost, save-backed onboarding state). Verification: pending QA run.
+- Implemented: Sprint D3 festival mini-game v2 (data-driven rule sets, upgraded timing engine, Town Board + festival integration, rewards/cooldowns, save migration, QA hooks). Verification: pending QA run.
 - Implemented: dev-only QA Mode panel + deterministic QA harness (tabs smoke, plot stress, notifications stress, mini-game smoke, 30-day sim, save/load integrity, content validation), performance snapshots, console error capture, and QA-only save isolation. Verification: manual run required via `?debug=1`.
 - Implemented: standardized UI icon usage for navigation/tabs, added Perfect Harvest timing mini-game (festival/board), added debug content warnings for missing icons, and documented design system + QA/perf notes. Verification: `npm run test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
 - Implemented: Season Pack Pipeline v1 (content schemas, pack format, loader/validator), integrated content manager across crops/decor/festivals/almanac/strings, added debug-only content validation/report actions, and added Town Board “What’s New” highlights. Verification: `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning).

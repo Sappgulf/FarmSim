@@ -60,6 +60,9 @@ function FarmSimCore() {
     if (typeof window.switchToTab === 'function') {
       window.switchToTab(tabId);
     }
+    if (tabId === 'events') {
+      actions.recordOnboardingEvent('board_open');
+    }
   };
 
   // Initialize systems ONCE - don't recreate on state changes!

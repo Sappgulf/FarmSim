@@ -154,6 +154,128 @@ export const QA_TESTS = [
     },
   },
   {
+    id: 'festival_game_smoke',
+    name: 'Festival Game Smoke',
+    timeoutMs: 8000,
+    run: async (ctx) => {
+      await ctx.switchToTab('events');
+      const playButton = document.querySelector('[data-qa="festival-game-play"]');
+      if (!playButton) {
+        throw new Error('Festival game play button not found.');
+      }
+      playButton.click();
+      await ctx.sleep(150);
+      const modal = document.querySelector('[data-qa="festival-game-modal"]');
+      if (!modal) {
+        throw new Error('Festival game modal did not open.');
+      }
+      const auto = modal.querySelector('[data-qa="festival-game-auto"]');
+      const start = modal.querySelector('[data-qa="festival-game-start"]');
+      const stop = modal.querySelector('[data-qa="festival-game-stop"]');
+      if (auto) {
+        auto.click();
+      } else if (start && stop) {
+        start.click();
+        await ctx.sleep(120);
+        stop.click();
+      }
+      await ctx.sleep(120);
+      const close = modal.querySelector('[data-qa="festival-game-close"]');
+      close?.click();
+      await ctx.sleep(120);
+      if (document.querySelector('[data-qa="festival-game-modal"]')) {
+        throw new Error('Festival game modal did not close.');
+      }
+      return { detail: 'Festival game opened, played, and closed.' };
+    },
+  },
+  {
+    id: 'festival_game_integration',
+    name: 'Festival Game Integration',
+    timeoutMs: 8000,
+    run: async (ctx) => {
+      const content = revalidateContent();
+      const festival = content?.festivals?.[0];
+      if (!festival) {
+        return { status: 'skip', reason: 'No festival data found.' };
+      }
+      ctx.actions.updateActiveEvents([{
+        ...festival,
+        startedAt: Date.now(),
+        endsAt: Date.now() + 60000,
+        season: festival.season || 'spring',
+      }]);
+      await ctx.switchToTab('events');
+      const card = document.querySelector('[data-qa="festival-game-card"]');
+      if (!card) {
+        throw new Error('Festival game card missing.');
+      }
+      if (!card.textContent?.includes(festival.name)) {
+        throw new Error('Festival game card did not reflect active festival.');
+      }
+      const playButton = document.querySelector('[data-qa="festival-game-play"]');
+      if (!playButton) {
+        throw new Error('Festival game play button not found.');
+      }
+      if (playButton.disabled) {
+        throw new Error('Play button unexpectedly disabled before play.');
+      }
+      playButton.click();
+      await ctx.sleep(120);
+      const modal = document.querySelector('[data-qa="festival-game-modal"]');
+      const auto = modal?.querySelector('[data-qa="festival-game-auto"]');
+      const start = modal?.querySelector('[data-qa="festival-game-start"]');
+      const stop = modal?.querySelector('[data-qa="festival-game-stop"]');
+      if (auto) {
+        auto.click();
+      } else if (start && stop) {
+        start.click();
+        await ctx.sleep(120);
+        stop.click();
+      }
+      await ctx.sleep(120);
+      modal?.querySelector('[data-qa="festival-game-close"]')?.click();
+      await ctx.sleep(150);
+      const playButtonAfter = document.querySelector('[data-qa="festival-game-play"]');
+      if (playButtonAfter && !playButtonAfter.disabled) {
+        throw new Error('Play limit did not lock after festival play.');
+      }
+      ctx.actions.updateActiveEvents([]);
+      return { detail: 'Festival game card + play limit verified.' };
+    },
+  },
+  {
+    id: 'festival_game_leak',
+    name: 'Festival Game Leak Test',
+    timeoutMs: 8000,
+    run: async (ctx) => {
+      await ctx.switchToTab('events');
+      const playButton = document.querySelector('[data-qa="festival-game-play"]');
+      if (!playButton) {
+        throw new Error('Festival game play button not found.');
+      }
+      const startMetrics = ctx.getDebugMetrics();
+      for (let i = 0; i < 10; i += 1) {
+        playButton.click();
+        await ctx.sleep(80);
+        const modal = document.querySelector('[data-qa="festival-game-modal"]');
+        if (!modal) {
+          throw new Error(`Modal failed to open on iteration ${i + 1}`);
+        }
+        modal.querySelector('[data-qa="festival-game-close"]')?.click();
+        await ctx.sleep(80);
+      }
+      const endMetrics = ctx.getDebugMetrics();
+      if (endMetrics.listenerCount > startMetrics.listenerCount + 2) {
+        throw new Error(`Listener count leak: ${startMetrics.listenerCount} → ${endMetrics.listenerCount}`);
+      }
+      if (endMetrics.timerCount > startMetrics.timerCount + 2) {
+        throw new Error(`Timer count leak: ${startMetrics.timerCount} → ${endMetrics.timerCount}`);
+      }
+      return { detail: 'No listener/timer leak after 10 open/close cycles.' };
+    },
+  },
+  {
     id: 'save_load_integrity',
     name: 'Save/Load Integrity',
     timeoutMs: 8000,

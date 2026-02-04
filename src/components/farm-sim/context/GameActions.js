@@ -85,6 +85,9 @@ export const GAME_ACTIONS = {
     // Performance
     UPDATE_GAME_LOOP: 'UPDATE_GAME_LOOP',
 
+    // Onboarding
+    UPDATE_ONBOARDING: 'UPDATE_ONBOARDING',
+
     // Pets
     UPDATE_PETS: 'UPDATE_PETS',
 

@@ -134,6 +134,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
+                data-onboard={tab.id === 'events' ? 'events-tab' : undefined}
                 className={`
                   text-xs px-2.5 py-2 rounded-lg transition-all duration-200 text-left touch-manipulation
                   ${activeTab === tab.id

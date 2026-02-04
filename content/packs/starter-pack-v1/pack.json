@@ -1,0 +1,10 @@
+{
+  "id": "starter-pack-v1",
+  "name": "Starter Pack",
+  "version": "1.0.0",
+  "description": "A tiny welcome pack for new farms.",
+  "contentCounts": {
+    "decor": 1
+  },
+  "highlights": []
+}

@@ -2,7 +2,7 @@
  * GamePersistence - Save/Load, Migration, and Initialization logic for FarmSim
  */
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 5;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -142,6 +142,26 @@ export function migrateSaveData(savedData) {
             };
         }
 
+        // Version 3 → 4: Onboarding state
+        if (saveVersion < 4) {
+            migratedData.onboardingSeen = true;
+            migratedData.onboardingStep = 3;
+            migratedData.onboardingSkipped = true;
+        }
+
+        // Version 4 → 5: Festival mini-game state
+        if (saveVersion < 5) {
+            const legacy = migratedData.minigames?.perfectHarvest || {};
+            migratedData.minigames = migratedData.minigames || {};
+            migratedData.minigames.festivalGame = {
+                lastPlayedDayKey: legacy.lastPlayedDayKey || null,
+                lastFestivalId: legacy.lastFestivalId || null,
+                lastRuleId: legacy.lastRuleId || null,
+                lastResult: legacy.lastResult || null,
+                lastPlayedAt: legacy.lastPlayedAt || null,
+            };
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
         migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
@@ -232,6 +252,13 @@ export function migrateSaveData(savedData) {
             lastResult: null,
             lastPlayedAt: null,
         });
+        migratedData.minigames.festivalGame = ensureObject(migratedData.minigames.festivalGame, {
+            lastPlayedDayKey: null,
+            lastFestivalId: null,
+            lastRuleId: null,
+            lastResult: null,
+            lastPlayedAt: null,
+        });
         migratedData.minigames.perfectHarvest.lastPlayedDayKey = typeof migratedData.minigames.perfectHarvest.lastPlayedDayKey === 'string'
             ? migratedData.minigames.perfectHarvest.lastPlayedDayKey
             : null;
@@ -243,6 +270,23 @@ export function migrateSaveData(savedData) {
             : null;
         migratedData.minigames.perfectHarvest.lastPlayedAt = clampNumber(
             migratedData.minigames.perfectHarvest.lastPlayedAt,
+            null,
+            { min: 0 }
+        );
+        migratedData.minigames.festivalGame.lastPlayedDayKey = typeof migratedData.minigames.festivalGame.lastPlayedDayKey === 'string'
+            ? migratedData.minigames.festivalGame.lastPlayedDayKey
+            : null;
+        migratedData.minigames.festivalGame.lastFestivalId = typeof migratedData.minigames.festivalGame.lastFestivalId === 'string'
+            ? migratedData.minigames.festivalGame.lastFestivalId
+            : null;
+        migratedData.minigames.festivalGame.lastRuleId = typeof migratedData.minigames.festivalGame.lastRuleId === 'string'
+            ? migratedData.minigames.festivalGame.lastRuleId
+            : null;
+        migratedData.minigames.festivalGame.lastResult = typeof migratedData.minigames.festivalGame.lastResult === 'string'
+            ? migratedData.minigames.festivalGame.lastResult
+            : null;
+        migratedData.minigames.festivalGame.lastPlayedAt = clampNumber(
+            migratedData.minigames.festivalGame.lastPlayedAt,
             null,
             { min: 0 }
         );
@@ -276,6 +320,19 @@ export function migrateSaveData(savedData) {
             ? migratedData.selectedDecoration
             : null;
         migratedData.decorateMode = ensureBoolean(migratedData.decorateMode, false);
+        migratedData.onboardingSeen = ensureBoolean(
+            migratedData.onboardingSeen,
+            saveVersion < 4 ? true : false
+        );
+        migratedData.onboardingStep = clampNumber(
+            migratedData.onboardingStep,
+            saveVersion < 4 ? 3 : 0,
+            { min: 0, max: 3 }
+        );
+        migratedData.onboardingSkipped = ensureBoolean(
+            migratedData.onboardingSkipped,
+            saveVersion < 4 ? true : false
+        );
 
         migratedData.gameLoop = {
             lastUpdate: clampNumber(migratedData.gameLoop?.lastUpdate, Date.now(), { min: 0 }),

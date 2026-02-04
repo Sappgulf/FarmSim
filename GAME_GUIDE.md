@@ -1,5 +1,12 @@
 # FarmSim Game Guide
 
+## Getting Started (First 10 Minutes)
+- The soft tutorial appears for new farms and can be skipped any time.
+- Pick a crop in **Farming**, then tap an empty plot to plant.
+- Harvest your first glowing crop for coins and a small first-harvest bonus.
+- Open **More → Events** to view the Town Board plan + Almanac insight.
+- Starter pack defaults include a small coin boost, a couple of supplies, and a welcome decor item.
+
 ## Identity Systems (Cozy Loop)
 
 ### Farm Mood
@@ -56,6 +63,12 @@ Choose one philosophy to guide the Story Dashboard suggestions:
 - Early memories unlock within the first 10 minutes.
 - Check the Town Board Story Dashboard for today’s vibe and suggestion.
 - The mood chip in the stats bar shows your current mood tier.
+
+## Festival Mini-Game (v2)
+- Open **More → Events** to play the Town Board / Festival timing game.
+- Each play is **best of 2–3 rounds**, depending on the active festival rule set.
+- Rewards are small and cozy: coins, reputation, and occasional decor.
+- Play limits: **one play per festival day** (or **one per day** when no festival is active).
 
 ## Farming Quick Actions
 - Use the Farming tab’s quick actions to water, harvest, fertilize, or treat crops in bulk.
