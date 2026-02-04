@@ -9,6 +9,18 @@ Guiding rules:
 - Every entry should be auditable (what changed, where, why).
 
 ## [Unreleased]
+### Planned (2026-02-04) — Sprint F1: Season Pack + Cozy Goals
+- **Scope:** frontend, content, docs
+- **What:** expand Season Pack v1 content, add Cozy Goals prompts on the Town Board, extend Almanac/Scrapbook ties, and add a “What’s New” card with pack highlights.
+- **Why:** deliver Sprint F1’s content expansion and optional guidance layer without new systems.
+- **Verification:** `npm run smoke-test` (passes with ReactDOMTestUtils act deprecation warning).
+
+### Implemented (2026-02-04) — Sprint F1: Season Pack + Cozy Goals
+- **Scope:** frontend, content, docs
+- **What:** expanded Season Pack v1 crops/decor/festival/almanac content, added Cozy Goals with event-driven completion + rewards, and surfaced “What’s New” pack highlights with dismissal tracking.
+- **Why:** provide content expansion and gentle direction while staying data-driven and event-based.
+- **Verification:** `npm run smoke-test` (passes with ReactDOMTestUtils act deprecation warning).
+
 ### Added
 - (placeholder)
 

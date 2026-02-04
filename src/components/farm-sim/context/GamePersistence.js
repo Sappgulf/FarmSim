@@ -2,7 +2,7 @@
  * GamePersistence - Save/Load, Migration, and Initialization logic for FarmSim
  */
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -162,6 +162,17 @@ export function migrateSaveData(savedData) {
             };
         }
 
+        // Version 5 → 6: Cozy goals + What's New tracking
+        if (saveVersion < 6) {
+            migratedData.cozyGoals = {
+                lastGeneratedGoals: null,
+                completedGoalIds: [],
+            };
+            migratedData.whatsNew = {
+                dismissed: {},
+            };
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
         migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
@@ -233,6 +244,27 @@ export function migrateSaveData(savedData) {
         migratedData.almanac.lastDayKey = typeof migratedData.almanac.lastDayKey === 'string'
             ? migratedData.almanac.lastDayKey
             : null;
+        migratedData.cozyGoals = ensureObject(migratedData.cozyGoals, {
+            lastGeneratedGoals: null,
+            completedGoalIds: [],
+        });
+        if (
+            migratedData.cozyGoals.lastGeneratedGoals &&
+            typeof migratedData.cozyGoals.lastGeneratedGoals === 'object'
+        ) {
+            const lastGenerated = migratedData.cozyGoals.lastGeneratedGoals;
+            migratedData.cozyGoals.lastGeneratedGoals = {
+                dayKey: typeof lastGenerated.dayKey === 'string' ? lastGenerated.dayKey : null,
+                goals: Array.isArray(lastGenerated.goals) ? lastGenerated.goals : [],
+            };
+        } else {
+            migratedData.cozyGoals.lastGeneratedGoals = null;
+        }
+        migratedData.cozyGoals.completedGoalIds = Array.isArray(migratedData.cozyGoals.completedGoalIds)
+            ? migratedData.cozyGoals.completedGoalIds
+            : [];
+        migratedData.whatsNew = ensureObject(migratedData.whatsNew, { dismissed: {} });
+        migratedData.whatsNew.dismissed = ensureObject(migratedData.whatsNew.dismissed, {});
         migratedData.seasonalEvents = Array.isArray(migratedData.seasonalEvents) ? migratedData.seasonalEvents : [];
         migratedData.activeSeasonalEvents = Array.isArray(migratedData.activeSeasonalEvents) ? migratedData.activeSeasonalEvents : [];
         migratedData.dailyChallenges = Array.isArray(migratedData.dailyChallenges) ? migratedData.dailyChallenges : [];

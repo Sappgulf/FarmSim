@@ -183,6 +183,9 @@ const PetsTab = memo(() => {
       };
       actions.updateInventory(updatedInventory);
 
+      actions.recordCozyGoalEvent('pet_cared', { petId, careType });
+      actions.recordAlmanacEvent('pet_cared', { petId, careType });
+
       actions.addNotification({
         message: `Cared for ${pet.name}!`,
         type: 'success'

@@ -636,6 +636,10 @@ const FarmGrid = memo(() => {
       season: state.season?.current,
       weather: state.weather,
     });
+    actions.recordCozyGoalEvent('crop_harvested', {
+      cropId: crop.id,
+      season: state.season?.current,
+    });
     actions.recordOnboardingEvent('harvest');
 
     actions.addNotification({
@@ -693,6 +697,10 @@ const FarmGrid = memo(() => {
           season: state.season?.current,
           weather: state.weather,
         });
+        actions.recordCozyGoalEvent('crop_harvested', {
+          cropId,
+          season: state.season?.current,
+        });
       });
 
       if (inventoryUpdates.parsnip) {
@@ -700,6 +708,15 @@ const FarmGrid = memo(() => {
       }
       if (inventoryUpdates.cranberry) {
         actions.recordMemoryEvent('crop_harvested', { cropId: 'cranberry' });
+      }
+      if (inventoryUpdates.snowdrop) {
+        actions.recordMemoryEvent('crop_harvested', { cropId: 'snowdrop' });
+      }
+      if (inventoryUpdates.turnip) {
+        actions.recordMemoryEvent('crop_harvested', { cropId: 'turnip' });
+      }
+      if (inventoryUpdates.ginger_root) {
+        actions.recordMemoryEvent('crop_harvested', { cropId: 'ginger_root' });
       }
 
       if (typeof window.soundSystem !== 'undefined') {

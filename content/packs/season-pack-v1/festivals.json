@@ -1,0 +1,17 @@
+{
+  "items": [
+    {
+      "id": "winter_hearth_market",
+      "name": "Winter Hearth Market",
+      "icon": "🔥",
+      "season": "winter",
+      "seasonTags": ["winter"],
+      "cadence": "weekly",
+      "description": "Warm lights and shared stories. Harvests gain a gentle bonus.",
+      "durationSeconds": 240,
+      "effects": { "harvest_bonus": 1.15, "mood_boost": true },
+      "rewards": { "coins": 155, "items": { "winter_seeds": 2 } },
+      "rarity": "uncommon"
+    }
+  ]
+}

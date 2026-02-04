@@ -67,7 +67,12 @@ const EventsTab = memo(() => {
   const eventTimersRef = useRef(new Map());
   const packHighlights = (content.report?.packs || [])
     .filter((pack) => pack.highlights?.length)
-    .map((pack) => ({ packName: pack.name, items: pack.highlights }));
+    .map((pack) => ({
+      id: pack.id,
+      version: pack.version,
+      packName: pack.name,
+      items: pack.highlights,
+    }));
 
   useEffect(() => {
     stateRef.current = state;
@@ -187,6 +192,12 @@ const EventsTab = memo(() => {
   const almanacInsight = getDailyAlmanacInsight(state.almanac, state.philosophy);
   const whatsNewTitle = content.strings?.ui?.whatsNewTitle || "What's New";
   const dayKey = getDayKey();
+  const whatsNewDismissed = state.whatsNew?.dismissed || {};
+  const newPackHighlights = packHighlights.filter(
+    (pack) => whatsNewDismissed[pack.id] !== pack.version
+  );
+  const cozyGoals = state.cozyGoals?.lastGeneratedGoals?.goals || [];
+  const completedCozyGoals = new Set(state.cozyGoals?.completedGoalIds || []);
   const minigameState = state.minigames?.festivalGame || state.minigames?.perfectHarvest || {};
   const reducedMotion = state.settings?.reducedMotion === true || state.settings?.animationsEnabled === false;
   const activeRuleSet = selectFestivalRuleSet(content.minigames, activeEvent, currentSeason);
@@ -200,6 +211,10 @@ const EventsTab = memo(() => {
     : (playLimit === 'daily' ? !playedToday : !playedToday);
   const onboardingActive = !state.onboardingSkipped && (state.onboardingStep || 0) < 3;
   const isFirstDay = (state.almanac?.counters?.dayCount || 0) <= 0;
+
+  useEffect(() => {
+    actions.generateCozyGoals(dayKey);
+  }, [actions, dayKey]);
 
   const planSuggestions = getPlanSuggestions(state, 2);
   const nextMemory = MEMORIES.find((memory) => !state.memoryFlags?.[memory.id]);
@@ -252,6 +267,14 @@ const EventsTab = memo(() => {
       },
     };
     actions.updateMinigames(nextMinigames);
+    actions.recordCozyGoalEvent('festival_game_played', {
+      season: currentSeason,
+      eventId: activeEvent?.id || null,
+    });
+    actions.recordAlmanacEvent('festival_game', {
+      eventId: activeEvent?.id || null,
+      season: currentSeason,
+    });
 
     const summaryText = summaryParts.length ? summaryParts.join(' · ') : 'Reward applied';
     const summary = { tier, reward, text: summaryText, detail };
@@ -299,6 +322,38 @@ const EventsTab = memo(() => {
             <div className="text-xs text-amber-700">
               <span className="font-semibold">Vibe:</span> {vibeLine}
             </div>
+          </div>
+        </Card>
+      )}
+
+      {cozyGoals.length > 0 && (
+        <Card className="p-4 bg-gradient-to-r from-amber-50 to-rose-50 border-amber-200">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-amber-800">🧺 Cozy Goals</h3>
+              <p className="text-sm text-amber-700">Optional prompts for a gentle direction.</p>
+            </div>
+            <Badge variant="outline" className="bg-amber-100 text-amber-700">
+              Optional
+            </Badge>
+          </div>
+          <div className="mt-3 space-y-2 text-sm text-gray-700">
+            {cozyGoals.map((goal) => {
+              const isCompleted = completedCozyGoals.has(goal.id);
+              return (
+                <div key={goal.id} className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2">
+                    <span className="text-base">{goal.emoji}</span>
+                    <span>{goal.text}</span>
+                  </div>
+                  {isCompleted && (
+                    <Badge variant="outline" className="bg-emerald-100 text-emerald-700 text-[10px]">
+                      Complete
+                    </Badge>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </Card>
       )}
@@ -365,19 +420,29 @@ const EventsTab = memo(() => {
         )}
       </Card>
 
-      {packHighlights.length > 0 && (
+      {newPackHighlights.length > 0 && (
         <Card className="p-4 bg-gradient-to-r from-rose-50 to-amber-50 border-rose-200">
-          <div className="flex justify-between items-center">
+          <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-rose-800">✨ {whatsNewTitle}</h3>
               <p className="text-sm text-rose-700">Season packs just landed on the Town Board.</p>
             </div>
-            <Badge variant="outline" className="bg-rose-100 text-rose-700">
-              {content.report?.packs?.length || 0} Packs
-            </Badge>
+            <div className="flex flex-col items-end gap-2">
+              <Badge variant="outline" className="bg-rose-100 text-rose-700">
+                {newPackHighlights.length} Pack{newPackHighlights.length > 1 ? 's' : ''}
+              </Badge>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => actions.dismissWhatsNew(newPackHighlights)}
+                className="h-8 px-2 text-[11px]"
+              >
+                Dismiss
+              </Button>
+            </div>
           </div>
           <div className="mt-3 space-y-3 text-sm text-gray-700">
-            {packHighlights.map((highlight, index) => (
+            {newPackHighlights.map((highlight, index) => (
               <div key={`${highlight.packName}-${index}`}>
                 <div className="font-semibold text-rose-700">{highlight.packName}</div>
                 <ul className="list-disc list-inside space-y-1">

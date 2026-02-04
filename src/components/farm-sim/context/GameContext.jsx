@@ -25,6 +25,12 @@ import {
   isKnownWeatherType,
 } from '../../../systems/almanac';
 import { calculateHarvestValue } from '../../../utils/farmUpgrades';
+import { getContentManager } from '../../../content/ContentManager';
+import {
+  buildCozyGoals,
+  getCozyGoalRewardLabel,
+  isCozyGoalSatisfied,
+} from '../../../utils/cozyGoals';
 
 /**
  * GameContext - Centralized state management for FarmSim
@@ -242,6 +248,8 @@ export function GameProvider({ children }) {
     updateMemoryFlags: (memoryFlags) => dispatch({ type: GAME_ACTIONS.UPDATE_MEMORY_FLAGS, payload: memoryFlags }),
     updateMemoryCounters: (memoryCounters) => dispatch({ type: GAME_ACTIONS.UPDATE_MEMORY_COUNTERS, payload: memoryCounters }),
     updateAlmanac: (almanac) => dispatch({ type: GAME_ACTIONS.UPDATE_ALMANAC, payload: almanac }),
+    updateCozyGoals: (cozyGoals) => dispatch({ type: GAME_ACTIONS.UPDATE_COZY_GOALS, payload: cozyGoals }),
+    updateWhatsNew: (whatsNew) => dispatch({ type: GAME_ACTIONS.UPDATE_WHATS_NEW, payload: whatsNew }),
     updateOnboarding: (onboarding) => dispatch({ type: GAME_ACTIONS.UPDATE_ONBOARDING, payload: onboarding }),
     resetOnboarding: () => dispatch({
       type: GAME_ACTIONS.UPDATE_ONBOARDING,
@@ -355,6 +363,103 @@ export function GameProvider({ children }) {
       return true;
     },
 
+    generateCozyGoals: (dayKey = getDayKey()) => {
+      const currentGoals = stateRef.current.cozyGoals?.lastGeneratedGoals;
+      if (currentGoals?.dayKey === dayKey && Array.isArray(currentGoals.goals) && currentGoals.goals.length) {
+        return currentGoals.goals;
+      }
+
+      const content = getContentManager();
+      const goals = buildCozyGoals(stateRef.current, content, dayKey, { maxGoals: 3 });
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_COZY_GOALS,
+        payload: {
+          lastGeneratedGoals: { dayKey, goals },
+          completedGoalIds: [],
+        },
+      });
+      return goals;
+    },
+
+    recordCozyGoalEvent: (eventType, eventData = {}) => {
+      const dayKey = getDayKey();
+      const content = getContentManager();
+      let cozyState = stateRef.current.cozyGoals || { lastGeneratedGoals: null, completedGoalIds: [] };
+      const lastGenerated = cozyState.lastGeneratedGoals;
+      let shouldRefresh = false;
+
+      if (lastGenerated?.dayKey !== dayKey || !Array.isArray(lastGenerated?.goals)) {
+        const goals = buildCozyGoals(stateRef.current, content, dayKey, { maxGoals: 3 });
+        cozyState = {
+          lastGeneratedGoals: { dayKey, goals },
+          completedGoalIds: [],
+        };
+        shouldRefresh = true;
+      }
+
+      const goals = cozyState.lastGeneratedGoals?.goals || [];
+      if (!goals.length) return;
+
+      const completedSet = new Set(cozyState.completedGoalIds || []);
+      let didUpdate = false;
+
+      goals.forEach((goal) => {
+        if (completedSet.has(goal.id)) return;
+        if (!isCozyGoalSatisfied(goal, eventType, eventData, content, stateRef.current)) return;
+
+        completedSet.add(goal.id);
+        didUpdate = true;
+
+        const reward = goal.reward || {};
+        if (reward.type === 'reputation') {
+          const currentSocial = stateRef.current.social || { friends: [], reputation: 0, marketListings: [] };
+          actionsRef.current?.updateSocial({
+            ...currentSocial,
+            reputation: (currentSocial.reputation || 0) + (reward.amount || 0),
+          });
+        }
+        if (reward.type === 'decor') {
+          actionsRef.current?.updateInventory((inventory) => ({
+            ...inventory,
+            [reward.id]: (inventory?.[reward.id] || 0) + 1,
+          }));
+        }
+        if (reward.type === 'memory' && reward.id) {
+          actionsRef.current?.unlockMemory(reward.id);
+        }
+        if (reward.type === 'almanac' && reward.id) {
+          actionsRef.current?.unlockAlmanacPage(reward.id);
+        }
+
+        actionsRef.current?.addNotification({
+          message: `🧺 Cozy Goal complete: ${goal.text} · ${getCozyGoalRewardLabel(goal, content)}`,
+          type: 'success',
+        });
+      });
+
+      if (didUpdate || shouldRefresh) {
+        dispatch({
+          type: GAME_ACTIONS.UPDATE_COZY_GOALS,
+          payload: {
+            ...cozyState,
+            completedGoalIds: Array.from(completedSet),
+          },
+        });
+      }
+    },
+
+    dismissWhatsNew: (packs = []) => {
+      const current = stateRef.current.whatsNew || { dismissed: {} };
+      const dismissed = { ...(current.dismissed || {}) };
+      packs.forEach((pack) => {
+        if (pack?.id) dismissed[pack.id] = pack.version;
+      });
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_WHATS_NEW,
+        payload: { ...current, dismissed },
+      });
+    },
+
     recordOnboardingEvent: (eventType) => {
       const currentState = stateRef.current;
       if (!currentState) return false;
@@ -449,6 +554,9 @@ export function GameProvider({ children }) {
           if (isSeasonalDecoration(decoration)) {
             actionsRef.current.unlockMemory('seasonal_welcome');
           }
+          if (decoration?.tags?.includes('season_pack_v1')) {
+            actionsRef.current.unlockMemory('winter_showcase');
+          }
         }
       }
 
@@ -464,6 +572,9 @@ export function GameProvider({ children }) {
         }
         if (nextCount >= 3) {
           actionsRef.current.unlockMemory('festival_regular');
+        }
+        if (eventData.eventId === 'winter_hearth_market') {
+          actionsRef.current.unlockMemory('winter_market');
         }
       }
 
@@ -481,6 +592,15 @@ export function GameProvider({ children }) {
         }
         if (eventData.cropId === 'cranberry') {
           actionsRef.current.unlockMemory('cranberry_crate');
+        }
+        if (eventData.cropId === 'snowdrop') {
+          actionsRef.current.unlockMemory('snowdrop_harvest');
+        }
+        if (eventData.cropId === 'turnip') {
+          actionsRef.current.unlockMemory('turnip_treat');
+        }
+        if (eventData.cropId === 'ginger_root') {
+          actionsRef.current.unlockMemory('ginger_harvest');
         }
       }
     },
@@ -566,6 +686,16 @@ export function GameProvider({ children }) {
             unlockPage('reliable_favorite');
           }
         }
+
+        if (cropId === 'snowdrop') {
+          unlockPage('snowdrop_bloom');
+        }
+        if (cropId === 'turnip') {
+          unlockPage('turnip_treasures');
+        }
+        if (cropId === 'ginger_root') {
+          unlockPage('ginger_warmth');
+        }
       }
 
       if (eventType === 'festival_attended') {
@@ -576,6 +706,24 @@ export function GameProvider({ children }) {
         if (festivalCount >= 3) {
           unlockPage('festival_regular');
         }
+        if (eventData.eventId === 'winter_hearth_market') {
+          unlockPage('hearth_market');
+        }
+      }
+
+      if (eventType === 'festival_game') {
+        unlockPage('festival_rhythm');
+      }
+
+      if (eventType === 'decoration_placed') {
+        const decoration = DECORATION_DATA[eventData.decorationId];
+        if (isSeasonalDecoration(decoration)) {
+          unlockPage('seasonal_trimmings');
+        }
+      }
+
+      if (eventType === 'pet_cared') {
+        unlockPage('pet_companions');
       }
 
       if (eventType === 'day_rollover') {
@@ -638,6 +786,8 @@ export function GameProvider({ children }) {
       });
 
       actionsRef.current.recordMemoryEvent('decoration_placed', { decorationId });
+      actionsRef.current.recordAlmanacEvent('decoration_placed', { decorationId });
+      actionsRef.current.recordCozyGoalEvent('decoration_placed', { decorationId });
       logDebugAction('decoration_place', { plotIndex, decorationId });
       return true;
     },

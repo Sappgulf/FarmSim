@@ -2,6 +2,18 @@
 
 **Date:** 2026-02-04
 
+## Sprint F1 — Season Pack + Cozy Goals (2026-02-04)
+
+### Automated Checks
+- ✅ `npm run smoke-test` (passes; ReactDOMTestUtils act deprecation warning emitted by test harness)
+
+### Manual Sanity Checklist (Recommended)
+- [ ] Load Season Pack v1 content; confirm crops/decor/festival appear.
+- [ ] Town Board shows Cozy Goals and “What’s New” card once per pack version.
+- [ ] Complete a Cozy Goal → reward granted once, no duplicates.
+- [ ] Unlock Almanac pages for pack crops, decor placements, pet care, and festival attendance.
+- [ ] Trigger pack festival; complete minigame; verify save/reload of play limits.
+
 ## Sprint D1 — QA Harness Runs (Template)
 
 **Environment:**  
