@@ -1,3 +1,11 @@
+import {
+  calculateHarvestValue,
+  getCompostRegenMultiplier,
+  getMiniGreenhouseGrowthBonus,
+  getSprinklerConfig,
+  getWateringBonus,
+} from '../../../utils/farmUpgrades';
+
 /**
  * Farming System - Handles crop growth, planting, harvesting
  * SIMPLIFIED AND FIXED - Growth calculated from timestamp, no complex timing
@@ -14,6 +22,7 @@ export class FarmingSystem {
     this.gameState = gameState; // Can be null initially
     this.actions = gameActions;
     this.lastFertilityUpdate = 0;
+    this.lastSprinklerWater = 0;
   }
 
   /**
@@ -43,6 +52,9 @@ export class FarmingSystem {
 
     // Update soil fertility slowly
     this.updateSoilFertility();
+
+    // Apply sprinkler automation (if owned)
+    this.applySprinklerAutoWater();
   }
 
   /**
@@ -87,6 +99,8 @@ export class FarmingSystem {
     const currentWeatherEffects = weatherEffects[weather] || weatherEffects.sunny;
     const weatherModifier = currentWeatherEffects.growthModifier;
     const seasonBonus = this.gameState.season?.config?.bonuses?.growthSpeed || 1.0;
+    const inventory = this.gameState.inventory || {};
+    const greenhouseGrowthBonus = getMiniGreenhouseGrowthBonus(inventory);
 
     const updatedPlots = this.gameState.plots.map(plot => {
       // Safety check for invalid plot
@@ -107,7 +121,8 @@ export class FarmingSystem {
       // Calculate progress from timestamp (NO deltaTime issues!)
       const timeSincePlanted = (now - plot.plantedAt) / 1000; // seconds
       const baseGrowthTime = plot.crop.growthTime || 10;
-      const effectiveGrowthTime = baseGrowthTime / (weatherModifier * seasonBonus);
+      const plotWeatherModifier = plot.weatherModifier || weatherModifier;
+      const effectiveGrowthTime = baseGrowthTime / (plotWeatherModifier * seasonBonus * greenhouseGrowthBonus);
       const progress = Math.min(1.0, timeSincePlanted / effectiveGrowthTime);
 
 
@@ -224,7 +239,9 @@ export class FarmingSystem {
     }
     this.lastFertilityUpdate = now;
 
-    const regenAmount = 0.0005 * (elapsedMs / 100);
+    const inventory = this.gameState.inventory || {};
+    const regenMultiplier = getCompostRegenMultiplier(inventory);
+    const regenAmount = 0.0005 * (elapsedMs / 100) * regenMultiplier;
 
     // Slowly regenerate soil fertility
     const updatedPlots = this.gameState.plots.map(plot => {
@@ -319,7 +336,7 @@ export class FarmingSystem {
     // Calculate harvest value with soil fertility bonus
     const baseValue = crop.baseValue || 10;
     const soilMultiplier = plot.soilFertility || 1.0;
-    const harvestValue = Math.floor(baseValue * soilMultiplier);
+    const harvestValue = calculateHarvestValue(baseValue, soilMultiplier, this.gameState.inventory);
 
     // Update coins and XP
     // Add coins and XP for harvest
@@ -364,7 +381,7 @@ export class FarmingSystem {
     const updatedPlots = [...this.gameState.plots];
     updatedPlots[plotIndex] = {
       ...updatedPlots[plotIndex],
-      waterLevel: Math.min(100, (updatedPlots[plotIndex].waterLevel || 0) + 25)
+      waterLevel: Math.min(100, (updatedPlots[plotIndex].waterLevel || 0) + 25 + getWateringBonus(this.gameState.inventory))
     };
 
     this.actions.updatePlots(updatedPlots);
@@ -377,9 +394,10 @@ export class FarmingSystem {
       return;
     }
 
+    const waterBonus = getWateringBonus(this.gameState.inventory);
     const updatedPlots = this.gameState.plots.map(plot => ({
       ...plot,
-      waterLevel: Math.min(100, (plot.waterLevel || 0) + 25)
+      waterLevel: Math.min(100, (plot.waterLevel || 0) + 25 + waterBonus)
     }));
 
     this.actions.updatePlots(updatedPlots);
@@ -408,5 +426,44 @@ export class FarmingSystem {
     };
 
     this.actions.updatePlots(updatedPlots);
+  }
+
+  applySprinklerAutoWater() {
+    if (!this.gameState || !Array.isArray(this.gameState.plots)) {
+      return;
+    }
+    const config = getSprinklerConfig(this.gameState.inventory);
+    if (!config) {
+      return;
+    }
+    const now = Date.now();
+    if (!this.lastSprinklerWater) {
+      this.lastSprinklerWater = now;
+      return;
+    }
+    if (now - this.lastSprinklerWater < config.intervalMs) {
+      return;
+    }
+    this.lastSprinklerWater = now;
+
+    let hasChanges = false;
+    const updatedPlots = this.gameState.plots.map((plot) => {
+      if (!plot || (plot.state !== 'planted' && plot.state !== 'growing')) {
+        return plot;
+      }
+      const nextWater = Math.min(100, (plot.waterLevel || 0) + config.waterAmount);
+      if (nextWater === plot.waterLevel) {
+        return plot;
+      }
+      hasChanges = true;
+      return {
+        ...plot,
+        waterLevel: nextWater,
+      };
+    });
+
+    if (hasChanges) {
+      this.actions.updatePlots(updatedPlots);
+    }
   }
 }

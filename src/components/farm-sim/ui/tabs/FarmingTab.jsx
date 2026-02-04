@@ -5,11 +5,14 @@ import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { getCropsByLevel, CROP_CATEGORIES } from '../../constants/cropData';
+import { formatDisplayLabel } from '../../../../utils/textFormat';
+import { getSoilAnalyzerEnabled } from '../../../../utils/farmUpgrades';
 
 // Farming Tab Component
 const FarmingTab = memo(() => {
   const { state, actions } = useGame();
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const hasSoilAnalyzer = getSoilAnalyzerEnabled(state.inventory);
 
   // Get crops available at player's level
   const availableCrops = getCropsByLevel(state.level);
@@ -121,18 +124,18 @@ const FarmingTab = memo(() => {
           >
             All ({availableCrops.length})
           </Button>
-          {Object.entries(CROP_CATEGORIES).map(([key, label]) => {
-            const count = availableCrops.filter(c => c.category === key).length;
+          {Object.values(CROP_CATEGORIES).map((category) => {
+            const count = availableCrops.filter(c => c.category === category).length;
             if (count === 0) return null;
             return (
               <Button
-                key={key}
+                key={category}
                 size="sm"
-                variant={selectedCategory === key ? 'default' : 'outline'}
-                onClick={() => setSelectedCategory(key)}
+                variant={selectedCategory === category ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory(category)}
                 className="text-xs"
               >
-                {label} ({count})
+                {formatDisplayLabel(category)} ({count})
               </Button>
             );
           })}
@@ -146,7 +149,7 @@ const FarmingTab = memo(() => {
             onClick={() => handleBulkAction('Water All')}
             variant="outline"
             size="sm"
-            className="text-xs"
+            className="text-xs min-h-[44px]"
           >
             💧 Water All
           </Button>
@@ -154,7 +157,7 @@ const FarmingTab = memo(() => {
             onClick={() => handleBulkAction('Harvest All')}
             variant="outline"
             size="sm"
-            className="text-xs"
+            className="text-xs min-h-[44px]"
           >
             🌾 Harvest All
           </Button>
@@ -162,7 +165,7 @@ const FarmingTab = memo(() => {
             onClick={() => handleBulkAction('Fertilize All')}
             variant="outline"
             size="sm"
-            className="text-xs"
+            className="text-xs min-h-[44px]"
           >
             🌱 Fertilize All
           </Button>
@@ -170,7 +173,7 @@ const FarmingTab = memo(() => {
             onClick={() => handleBulkAction('Pesticide All')}
             variant="outline"
             size="sm"
-            className="text-xs"
+            className="text-xs min-h-[44px]"
           >
             🐛 Pesticide All
           </Button>
@@ -185,45 +188,53 @@ const FarmingTab = memo(() => {
         </div>
         <p className="text-xs text-gray-600 mb-3">Click a crop, then click empty plots on your farm</p>
         <div className="space-y-2 max-h-96 overflow-y-auto">
-          {cropList.map(crop => {
-            const isSelected = state.selectedCrop === crop.id;
-            return (
-              <div 
-                key={crop.id} 
-                className={`
-                  flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
-                  ${isSelected 
-                    ? 'bg-green-100 border-2 border-green-500 shadow-md' 
-                    : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
-                  }
-                `}
-                onClick={() => handleSelectCrop(crop.id)}
-              >
-                <div className="flex items-center gap-2 flex-1">
-                  <span className="text-2xl">{crop.emoji}</span>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{crop.name}</span>
-                      {crop.level > 1 && (
-                        <Badge variant="outline" className="text-[10px] px-1 py-0">
-                          Lvl {crop.level}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      Cost: {crop.cost}🪙 • Time: {crop.time}s • Sell: {crop.value}🪙
-                    </div>
-                    <div className="text-[10px] text-gray-500 italic mt-0.5">
-                      {crop.description}
+          {cropList.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="text-4xl mb-2">🌱</div>
+              <p className="text-sm text-gray-600">No crops unlocked for this category yet.</p>
+              <p className="text-xs text-gray-500 mt-1">Level up to discover new seeds.</p>
+            </div>
+          ) : (
+            cropList.map(crop => {
+              const isSelected = state.selectedCrop === crop.id;
+              return (
+                <div 
+                  key={crop.id} 
+                  className={`
+                    flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
+                    ${isSelected 
+                      ? 'bg-green-100 border-2 border-green-500 shadow-md' 
+                      : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                    }
+                  `}
+                  onClick={() => handleSelectCrop(crop.id)}
+                >
+                  <div className="flex items-center gap-2 flex-1">
+                    <span className="text-2xl">{crop.emoji}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{crop.name}</span>
+                        {crop.level > 1 && (
+                          <Badge variant="outline" className="text-[10px] px-1 py-0">
+                            Lvl {crop.level}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Cost: {crop.cost}🪙 • Time: {crop.time}s • Sell: {crop.value}🪙
+                      </div>
+                      <div className="text-[10px] text-gray-500 italic mt-0.5">
+                        {crop.description}
+                      </div>
                     </div>
                   </div>
+                  {isSelected && (
+                    <Badge className="bg-green-600">✓ Selected</Badge>
+                  )}
                 </div>
-                {isSelected && (
-                  <Badge className="bg-green-600">✓ Selected</Badge>
-                )}
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </Card>
 
@@ -250,6 +261,19 @@ const FarmingTab = memo(() => {
               })()}
             </Badge>
           </div>
+          {hasSoilAnalyzer && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Avg Soil Fertility</span>
+              <Badge variant="outline">
+                {(() => {
+                  const plotsArray = Array.isArray(state.plots) ? state.plots : [];
+                  if (plotsArray.length === 0) return '100%';
+                  const total = plotsArray.reduce((sum, plot) => sum + (plot?.soilFertility || 1.0), 0);
+                  return `${Math.round((total / plotsArray.length) * 100)}%`;
+                })()}
+              </Badge>
+            </div>
+          )}
 
           <div>
             <div className="flex justify-between items-center mb-1">

@@ -18,12 +18,18 @@ const InventoryTab = memo(() => {
     fertilizer: '🌱',
     pesticide: '🐛',
     watering_can: '💧',
+    water_boost: '💧',
     wheat: '🌾',
     apple: '🍎',
     sunflower: '🌻',
     parsnip: '🥕',
     okra: '🫛',
     cranberry: '🫐',
+    quality_seeds: '🌰',
+    sprinkler: '💦',
+    soil_analyzer: '🔬',
+    greenhouse: '🏡',
+    compost_bin: '🗑️',
   };
 
   const inventoryItems = Object.entries(state.inventory).filter(([_, qty]) => qty > 0);

@@ -12,6 +12,21 @@ export class WeatherSystem {
     this.lastWeatherEffectUpdate = 0;
   }
 
+  getWeatherProtection() {
+    const hasGreenhouse = this.gameState.buildings?.greenhouse?.built;
+    const hasWell = this.gameState.buildings?.well?.built;
+    const hasMiniGreenhouse = (this.gameState.inventory?.greenhouse || 0) > 0;
+    const protection = (hasGreenhouse ? 0.7 : 0) + (hasWell ? 0.3 : 0) + (hasMiniGreenhouse ? 0.25 : 0);
+    return Math.min(1, protection);
+  }
+
+  getAdjustedGrowthModifier(baseModifier, protection) {
+    if (baseModifier < 1.0) {
+      return 1.0 - ((1.0 - baseModifier) * (1 - protection));
+    }
+    return baseModifier;
+  }
+
   update(currentState) {
     // FIXED: Update our reference to current state with validation
     if (!currentState) {
@@ -100,6 +115,7 @@ export class WeatherSystem {
     const hasGreenhouse = this.gameState.buildings?.greenhouse?.built;
     const hasWell = this.gameState.buildings?.well?.built;
     const hasBarn = this.gameState.buildings?.barn?.built;
+    const weatherProtection = this.getWeatherProtection();
 
     // Apply to all plots - only modify weather-related properties, not growth state
     const updatedPlots = this.gameState.plots.map(plot => {
@@ -107,9 +123,6 @@ export class WeatherSystem {
 
       let updatedPlot = { ...plot };
       
-      // Calculate protection level (0.0 = no protection, 1.0 = full protection)
-      const weatherProtection = (hasGreenhouse ? 0.7 : 0) + (hasWell ? 0.3 : 0);
-
       // Water level changes (well reduces water drain/adds water)
       if (effects.waterChange) {
         const waterBonus = hasWell ? 5 : 0;
@@ -120,10 +133,7 @@ export class WeatherSystem {
 
       // Set weather modifier (greenhouse reduces negative effects)
       let growthMod = effects.growthModifier || 1.0;
-      if (hasGreenhouse && growthMod < 1.0) {
-        // Greenhouse reduces negative growth modifiers
-        growthMod = 1.0 - ((1.0 - growthMod) * (1 - weatherProtection));
-      }
+      growthMod = this.getAdjustedGrowthModifier(growthMod, weatherProtection);
       updatedPlot.weatherModifier = growthMod;
 
       // Disease risk (barn reduces disease risk)
@@ -191,6 +201,8 @@ export class WeatherSystem {
     const effects = this.getWeatherEffects(this.gameState.weather || 'sunny');
     const hasWell = this.gameState.buildings?.well?.built;
     const hasGreenhouse = this.gameState.buildings?.greenhouse?.built;
+    const hasMiniGreenhouse = (this.gameState.inventory?.greenhouse || 0) > 0;
+    const weatherProtection = this.getWeatherProtection();
 
     // Only apply gradual changes, not state-changing effects
     const updatedPlots = this.gameState.plots.map(plot => {
@@ -223,7 +235,8 @@ export class WeatherSystem {
 
         if (isActualDrought && isVeryLowWater) {
           // Very low chance of withering during drought with critically low water
-          const witherChance = 0.005; // 0.5% per tick (much less aggressive)
+          const protectionFactor = hasMiniGreenhouse ? 0.25 : 0;
+          const witherChance = 0.005 * (1 - protectionFactor); // 0.5% per tick (much less aggressive)
           if (Math.random() < witherChance) {
             ensureClone();
             updatedPlot.state = 'withered';
@@ -242,7 +255,7 @@ export class WeatherSystem {
       }
 
       // Ensure weather modifier and marker are set if needed
-      const nextWeatherModifier = effects.growthModifier || 1.0;
+      const nextWeatherModifier = this.getAdjustedGrowthModifier(effects.growthModifier || 1.0, weatherProtection);
       if (plot.weatherModifier !== nextWeatherModifier) {
         ensureClone();
         updatedPlot.weatherModifier = nextWeatherModifier;

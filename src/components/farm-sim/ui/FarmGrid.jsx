@@ -6,6 +6,7 @@ import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { CROP_DATA, CROP_LIST } from '../constants/cropData';
 import { DECORATION_DATA } from '../constants/decorData';
+import { calculateHarvestValue, getHarvestMultiplier, getSoilAnalyzerEnabled } from '../../../utils/farmUpgrades';
 
 const ReadyCountdown = memo(({ readyAt, harvestWindowMs = 45000 }) => {
   useTick();
@@ -42,7 +43,9 @@ const FarmPlot = memo(({
   selectedCrop,
   selectedDecoration,
   isDecorMode,
-  seasonBonus = 1.0
+  seasonBonus = 1.0,
+  hasSoilAnalyzer = false,
+  harvestMultiplier = 1.0
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -326,6 +329,11 @@ const FarmPlot = memo(({
                       🌤️ Weather: {plot.weatherModifier > 1.0 ? '+' : ''}{Math.round((plot.weatherModifier - 1.0) * 100)}%
                     </div>
                   )}
+                  {hasSoilAnalyzer && plot.crop && (
+                    <div className="text-emerald-300">
+                      🧪 Est. Value: {Math.floor((plot.crop.baseValue || 10) * (plot.soilFertility || 1.0) * harvestMultiplier)}🪙
+                    </div>
+                  )}
                   {plot.weatherDamage && <div className="text-red-400">⚡ Storm Damage</div>}
                   {plot.droughtDamage && <div className="text-orange-400">☀️ Drought Damage</div>}
                 </div>
@@ -364,6 +372,8 @@ FarmPlot.displayName = 'FarmPlot';
 const FarmGrid = memo(() => {
   const { state, actions } = useGame();
   const seasonBonus = state.season?.config?.bonuses?.growthSpeed || 1.0;
+  const hasSoilAnalyzer = getSoilAnalyzerEnabled(state.inventory);
+  const harvestMultiplier = getHarvestMultiplier(state.inventory);
   const [selectedPlots, setSelectedPlots] = useState(new Set());
   const [decorUndoCount, setDecorUndoCount] = useState(0);
   const [repeatDecorPlacement, setRepeatDecorPlacement] = useState(true);
@@ -576,9 +586,7 @@ const FarmGrid = memo(() => {
 
     const crop = plot.crop;
     const baseValue = crop?.baseValue || 10;
-
-    // Calculate earnings (simplified)
-    const earnings = Math.floor(baseValue * 1.2);
+    const earnings = calculateHarvestValue(baseValue, plot.soilFertility || 1.0, state.inventory);
 
     // Trigger particle effect with earnings text
     if (animationsEnabled && typeof window.triggerParticleEffect === 'function') {
@@ -644,7 +652,7 @@ const FarmGrid = memo(() => {
         return plot;
       }
 
-      const earnings = Math.floor((plot.crop?.baseValue || 10) * 1.2);
+      const earnings = calculateHarvestValue(plot.crop?.baseValue || 10, plot.soilFertility || 1.0, state.inventory);
       totalEarnings += earnings;
       totalXp += Math.floor(earnings * 0.15);
       harvestedCount++;
@@ -838,6 +846,8 @@ const FarmGrid = memo(() => {
             selectedDecoration={selectedDecoration}
             isDecorMode={decorMode}
             seasonBonus={seasonBonus}
+            hasSoilAnalyzer={hasSoilAnalyzer}
+            harvestMultiplier={harvestMultiplier}
           />
         ))}
       </div>

@@ -18,6 +18,7 @@ import {
   getSeasonBit,
   isKnownWeatherType,
 } from '../../../systems/almanac';
+import { calculateHarvestValue } from '../../../utils/farmUpgrades';
 
 /**
  * GameContext - Centralized state management for FarmSim
@@ -667,7 +668,11 @@ export function GameProvider({ children }) {
 
       const updatedPlots = currentState.plots.map(plot => {
         if (plot.state === 'ready' && plot.crop) {
-          const earnings = Math.floor((plot.crop.baseValue || 10) * (plot.soilFertility || 1.0));
+          const earnings = calculateHarvestValue(
+            plot.crop.baseValue || 10,
+            plot.soilFertility || 1.0,
+            currentState.inventory
+          );
           totalEarnings += earnings;
           totalXp += Math.floor(earnings * 0.15);
           inventoryUpdates[plot.crop.id] = (inventoryUpdates[plot.crop.id] || 0) + 1;

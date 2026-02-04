@@ -2,8 +2,8 @@ const ACRONYMS = new Set(['ai', 'fps', 'gps', 'pwa', 'ui', 'ux', 'xp']);
 
 export const formatDisplayLabel = (value) => {
   if (value === null || value === undefined) return '';
-  const raw = String(value);
-  if (!raw.includes('_') && !raw.includes('-')) return raw;
+  const raw = String(value).trim();
+  if (!raw) return '';
 
   return raw
     .replace(/[_-]+/g, ' ')
