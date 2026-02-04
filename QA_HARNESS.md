@@ -28,6 +28,14 @@
    - Runs ContentManager validation (errors fail, warnings reported).
 7. **30-Day Simulation**
    - Advances 30 Almanac day rollovers and verifies counters.
+8. **Farm Card Export Smoke**
+   - Renders a Farm Card PNG and validates blob output.
+9. **Farm Card Export Repeat**
+   - Renders Farm Card 5× to smoke-check repeat export stability.
+10. **Farm Card Theme Swap**
+   - Switches themes and verifies exported card colors change.
+11. **Farm Card Identity Persist**
+   - Saves + reloads farm name/theme/spotlight selections.
 
 ## How QA Mode Works
 - **Deterministic:** QA runs with the game loop paused and auto-save disabled.

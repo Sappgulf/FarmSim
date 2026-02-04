@@ -1,6 +1,8 @@
 import { TAB_IDS } from '../ui/GameSidebar';
 import { getDayKey } from '../../../systems/almanac';
 import { revalidateContent } from '../../../content/ContentManager';
+import { buildFarmCardData, renderFarmCard } from '../../../utils/farmCard';
+import { MEMORIES } from '../../../data/identity';
 import {
   QA_SAVE_KEY,
   QA_BACKUP_SAVE_KEY,
@@ -305,6 +307,89 @@ export const QA_TESTS = [
         throw new Error(`Loaded state invalid: ${restoredErrors.join(' ')}`);
       }
       return { detail: 'QA save loaded and validated.' };
+    },
+  },
+  {
+    id: 'farm_card_export_smoke',
+    name: 'Farm Card Export Smoke',
+    timeoutMs: 6000,
+    run: async (ctx) => {
+      const data = buildFarmCardData(ctx.state());
+      const { blob } = await renderFarmCard(data);
+      if (!blob || blob.size <= 0) {
+        throw new Error('Farm Card render returned an empty blob.');
+      }
+      return { detail: `Farm Card rendered (${Math.round(blob.size / 1024)} KB).` };
+    },
+  },
+  {
+    id: 'farm_card_export_repeat',
+    name: 'Farm Card Export Repeat x5',
+    timeoutMs: 8000,
+    run: async (ctx) => {
+      for (let i = 0; i < 5; i += 1) {
+        const data = buildFarmCardData(ctx.state());
+        const { blob } = await renderFarmCard(data);
+        if (!blob || blob.size <= 0) {
+          throw new Error(`Farm Card render failed on iteration ${i + 1}.`);
+        }
+      }
+      return { detail: 'Rendered 5 Farm Cards without failures.' };
+    },
+  },
+  {
+    id: 'farm_card_theme_swap',
+    name: 'Farm Card Theme Swap',
+    timeoutMs: 8000,
+    run: async (ctx) => {
+      const initialTheme = ctx.state().farmTheme;
+      ctx.actions.setFarmTheme('meadow');
+      const first = await renderFarmCard(buildFarmCardData(ctx.state()), { returnCanvas: true });
+      if (!first.canvas) throw new Error('Missing canvas for meadow render.');
+      const firstPixel = first.canvas.getContext('2d')?.getImageData(40, 40, 1, 1)?.data?.join(',');
+      ctx.actions.setFarmTheme('dusk');
+      const second = await renderFarmCard(buildFarmCardData(ctx.state()), { returnCanvas: true });
+      if (!second.canvas) throw new Error('Missing canvas for dusk render.');
+      const secondPixel = second.canvas.getContext('2d')?.getImageData(40, 40, 1, 1)?.data?.join(',');
+      if (firstPixel === secondPixel) {
+        throw new Error('Theme swap did not change Farm Card colors.');
+      }
+      ctx.actions.setFarmTheme(initialTheme || 'meadow');
+      return { detail: 'Theme swap updated Farm Card colors.' };
+    },
+  },
+  {
+    id: 'farm_card_identity_persist',
+    name: 'Farm Card Identity Persist',
+    timeoutMs: 8000,
+    run: async (ctx) => {
+      const memoryId = MEMORIES[0]?.id || null;
+      ctx.actions.setFarmName('Cedar Glade Farm');
+      ctx.actions.setFarmTheme('harvest');
+      if (memoryId) {
+        ctx.actions.setSpotlight({ mode: 'favorite', type: 'memory', id: memoryId });
+      }
+      const saveResult = saveStateToStorage(ctx.state(), {
+        key: QA_SAVE_KEY,
+        backupKey: QA_BACKUP_SAVE_KEY,
+      });
+      if (!saveResult.success) {
+        throw new Error('Failed to save QA state for identity check.');
+      }
+      const loaded = loadSavedStateFromKey(QA_SAVE_KEY);
+      if (!loaded) {
+        throw new Error('Failed to load QA save for identity check.');
+      }
+      if (loaded.farmTheme !== 'harvest') {
+        throw new Error(`Theme mismatch after load (${loaded.farmTheme}).`);
+      }
+      if (loaded.farmName !== 'Cedar Glade Farm') {
+        throw new Error(`Farm name mismatch after load (${loaded.farmName}).`);
+      }
+      if (memoryId && loaded.spotlight?.id !== memoryId) {
+        throw new Error('Spotlight selection did not persist.');
+      }
+      return { detail: 'Theme, name, and spotlight persisted through save/load.' };
     },
   },
   {

@@ -2,6 +2,21 @@
 
 **Date:** 2026-02-04
 
+## Sprint F2 — Shareability + Identity Lock (2026-02-04)
+
+### Automated Checks
+- [ ] `qa: farm_card_export_smoke`
+- [ ] `qa: farm_card_export_repeat`
+- [ ] `qa: farm_card_theme_swap`
+- [ ] `qa: farm_card_identity_persist`
+- [ ] `qa: save_load_integrity`
+
+### Manual Sanity Checklist (Recommended)
+- [ ] Farm Card export on mobile (iOS Safari safe).
+- [ ] Theme switch updates Farm Card palette.
+- [ ] Spotlight selection persists after save/reload.
+- [ ] Share Farm button available on Town Board and Almanac tab.
+
 ## Sprint F1 — Season Pack + Cozy Goals (2026-02-04)
 
 ### Automated Checks

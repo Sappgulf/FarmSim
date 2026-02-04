@@ -9,6 +9,18 @@ Guiding rules:
 - Every entry should be auditable (what changed, where, why).
 
 ## [Unreleased]
+### Planned (2026-02-04) — Sprint F2: Shareability + Identity Lock
+- **Scope:** frontend, docs
+- **What:** audit identity/almanac/town board systems, add Farm Card export, add Farm Theme selector + spotlight selection, and extend QA harness for shareability coverage.
+- **Why:** deliver Sprint F2’s shareability and identity lock without new core systems or servers.
+- **Verification:** Not run (baseline checks pending).
+
+### Implemented (2026-02-04) — Sprint F2: Shareability + Identity Lock
+- **Scope:** frontend, docs, QA
+- **What:** added Farm Card canvas export with Town Board + Almanac entry points, added Farm Theme + farm name selection, and added spotlight selection for Almanac/Scrapbook with QA harness coverage.
+- **Why:** enable shareable farm snapshots and cosmetic identity lock using existing Almanac/Scrapbook systems.
+- **Verification:** Not run (QA harness and build checks not executed in this environment).
+
 ### Planned (2026-02-04) — Sprint F1: Season Pack + Cozy Goals
 - **Scope:** frontend, content, docs
 - **What:** expand Season Pack v1 content, add Cozy Goals prompts on the Town Board, extend Almanac/Scrapbook ties, and add a “What’s New” card with pack highlights.
@@ -22,10 +34,12 @@ Guiding rules:
 - **Verification:** `npm run smoke-test` (passes with ReactDOMTestUtils act deprecation warning).
 
 ### Added
-- (placeholder)
+- Farm Card export (1080×1080 PNG) with Town Board + Almanac entry points.
+- Farm Theme selector, farm name field, and spotlight selection for shareable identity.
+- QA harness tests for Farm Card export, theme swap, and identity persistence.
 
 ### Changed
-- (placeholder)
+- FarmSim save schema now persists farm theme, name, and spotlight selection.
 
 ### Fixed
 - Allowed the Preservation Facility to accept any available crop input instead of staying disabled when inventory contains crops.
@@ -37,7 +51,7 @@ Guiding rules:
 - (placeholder)
 
 ### Engineering Notes
-- (placeholder: save migration, validation, cleanup changes, QA tooling changes)
+- Save version bumped to include farm theme/name/spotlight fields; defaults applied for older saves.
 
 ---
 

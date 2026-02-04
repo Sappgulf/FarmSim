@@ -15,6 +15,7 @@ import DebugStressPanel from '../ui/DebugStressPanel';
 import QAModePanel from '../ui/QAModePanel';
 import Tutorial from '../ui/Tutorial';
 import { logDebugAction } from '../../../utils/debugTools';
+import { getFarmTheme, getFarmThemeVars } from '../../../data/farmThemes';
 
 // Import systems
 import { FarmingSystem } from '../systems/FarmingSystem';
@@ -410,8 +411,15 @@ function FarmSimCore() {
     }
   }, []);
 
+  const activeTheme = getFarmTheme(state.farmTheme);
+  const themeVars = getFarmThemeVars(activeTheme);
+
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000 flex flex-col`}>
+    <div
+      className={`min-h-screen bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000 flex flex-col`}
+      data-farm-theme={activeTheme.id}
+      style={themeVars}
+    >
       {/* Performance monitoring (dev only) */}
       {import.meta.env.MODE === 'development' && (
         <div className="fixed top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded z-50">

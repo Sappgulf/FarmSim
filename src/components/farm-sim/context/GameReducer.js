@@ -58,6 +58,15 @@ export const initialState = {
         festivalsAttended: 0,
     },
     philosophy: null,
+    farmName: 'Willowbrook Farm',
+    farmTheme: 'meadow',
+    spotlight: {
+        mode: 'latest',
+        type: 'memory',
+        id: null,
+    },
+    lastUnlockedMemoryId: null,
+    lastUnlockedAlmanacId: null,
     almanac: {
         unlocked: {},
         dates: {},
@@ -273,6 +282,21 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.SET_PHILOSOPHY:
             return { ...state, philosophy: action.payload };
+
+        case GAME_ACTIONS.SET_FARM_NAME:
+            return { ...state, farmName: action.payload };
+
+        case GAME_ACTIONS.SET_FARM_THEME:
+            return { ...state, farmTheme: action.payload };
+
+        case GAME_ACTIONS.SET_SPOTLIGHT:
+            return { ...state, spotlight: action.payload };
+
+        case GAME_ACTIONS.SET_LAST_UNLOCKED_MEMORY:
+            return { ...state, lastUnlockedMemoryId: action.payload };
+
+        case GAME_ACTIONS.SET_LAST_UNLOCKED_ALMANAC:
+            return { ...state, lastUnlockedAlmanacId: action.payload };
 
         case GAME_ACTIONS.UPDATE_COZY_GOALS:
             return { ...state, cozyGoals: action.payload };

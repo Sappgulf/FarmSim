@@ -12,6 +12,8 @@ function ScrapbookPanelComponent({
   almanacLinks = {},
   almanacUnlocked = {},
   onOpenAlmanac,
+  spotlight,
+  onSetSpotlight,
   onOpen,
 }) {
   const [activeChapter, setActiveChapter] = useState('all');
@@ -47,6 +49,11 @@ function ScrapbookPanelComponent({
     return progress;
   }, [sortedChapters, memories, memoryFlags]);
 
+  const spotlightMemory = useMemo(() => {
+    if (spotlight?.type !== 'memory' || !spotlight?.id) return null;
+    return memories.find((memory) => memory.id === spotlight.id) || null;
+  }, [memories, spotlight]);
+
   return (
     <Card className="border-2 border-emerald-100 bg-white/95 backdrop-blur">
       <CardHeader className="pb-2">
@@ -61,6 +68,33 @@ function ScrapbookPanelComponent({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {onSetSpotlight && (
+          <div className="rounded-lg border border-emerald-100 bg-emerald-50/40 p-3 text-sm text-gray-700">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-xs uppercase tracking-wide text-gray-500">Farm Card Spotlight</div>
+                <div className="mt-1 font-semibold">
+                  {spotlight?.mode === 'latest'
+                    ? 'Latest Memory (auto)'
+                    : (spotlightMemory?.title || 'Select a memory')}
+                </div>
+                <div className="text-xs text-gray-600">
+                  {spotlight?.mode === 'latest'
+                    ? 'Automatically highlights the newest unlocked memory.'
+                    : 'This memory will appear on your Farm Card.'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onSetSpotlight({ mode: 'latest', type: 'memory', id: null })}
+                className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800"
+              >
+                Use Latest
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Chapter Filters */}
         <div className="flex flex-wrap gap-2">
           <button
@@ -134,9 +168,26 @@ function ScrapbookPanelComponent({
                     )}
                   </div>
                   {unlocked && (
-                    <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-                      Saved
-                    </span>
+                    <div className="flex flex-col items-end gap-2">
+                      {onSetSpotlight && (
+                        <button
+                          type="button"
+                          onClick={() => onSetSpotlight({ mode: 'favorite', type: 'memory', id: memory.id })}
+                          className={`text-[10px] px-2 py-1 rounded-full border ${
+                            spotlight?.mode === 'favorite' && spotlight?.type === 'memory' && spotlight?.id === memory.id
+                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                              : 'bg-white text-emerald-600 border-emerald-100 hover:bg-emerald-50'
+                          }`}
+                        >
+                          {spotlight?.mode === 'favorite' && spotlight?.type === 'memory' && spotlight?.id === memory.id
+                            ? 'Spotlighted'
+                            : 'Set Spotlight'}
+                        </button>
+                      )}
+                      <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                        Saved
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>

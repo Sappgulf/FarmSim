@@ -3,9 +3,13 @@ import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
+import { Input } from '../../../ui/input';
 import { PHILOSOPHIES } from '../../../../data/identity';
 import { ALMANAC_PAGES, ALMANAC_SECTIONS } from '../../../../data/almanac';
 import { getAlmanacText } from '../../../../systems/almanac';
+import { FARM_THEMES, getFarmTheme } from '../../../../data/farmThemes';
+import { buildFarmCardData, getSpotlightSelection } from '../../../../utils/farmCard';
+import FarmCardShareButton from '../FarmCardShareButton';
 
 const AlmanacTab = memo(() => {
   const { state, actions } = useGame();
@@ -30,6 +34,10 @@ const AlmanacTab = memo(() => {
     (count, page) => count + (state.almanac?.unlocked?.[page.id] ? 1 : 0),
     0
   );
+  const spotlight = getSpotlightSelection(state);
+  const farmCardSpotlight = buildFarmCardData(state).spotlight;
+  const unlockedPages = ALMANAC_PAGES.filter((page) => state.almanac?.unlocked?.[page.id]);
+  const activeTheme = getFarmTheme(state.farmTheme);
 
   const toggleSection = (sectionId) => {
     setOpenSections((prev) => (
@@ -87,6 +95,96 @@ const AlmanacTab = memo(() => {
               {philosophy.name}
             </Button>
           ))}
+        </div>
+      </Card>
+
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h4 className="font-semibold text-gray-800">Farm Identity</h4>
+            <p className="text-sm text-gray-600">Set a name and theme for your Farm Card.</p>
+          </div>
+          <Badge variant="outline" className="bg-emerald-50 text-emerald-700">
+            {activeTheme.name}
+          </Badge>
+        </div>
+        <div className="mt-3 space-y-3">
+          <div>
+            <label className="text-xs font-semibold text-gray-500">Farm Name</label>
+            <Input
+              value={state.farmName || ''}
+              onChange={(event) => actions.setFarmName(event.target.value)}
+              placeholder="Name your farm"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-gray-500">Farm Theme</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {FARM_THEMES.map((theme) => (
+                <Button
+                  key={theme.id}
+                  size="sm"
+                  variant={state.farmTheme === theme.id ? 'default' : 'outline'}
+                  onClick={() => actions.setFarmTheme(theme.id)}
+                >
+                  {theme.name}
+                </Button>
+              ))}
+            </div>
+            <div className="mt-2 text-xs text-gray-500">{activeTheme.description}</div>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h4 className="font-semibold text-gray-800">Farm Card Spotlight</h4>
+            <p className="text-sm text-gray-600">Choose what the Farm Card highlights.</p>
+          </div>
+          <FarmCardShareButton size="sm" variant="outline" />
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant={spotlight.mode === 'latest' ? 'default' : 'outline'}
+            onClick={() => actions.setSpotlight({ mode: 'latest', type: 'memory', id: null })}
+          >
+            Latest Memory
+          </Button>
+          <Button
+            size="sm"
+            variant={spotlight.mode === 'favorite' && spotlight.type === 'almanac' ? 'default' : 'outline'}
+            onClick={() => {
+              const firstPage = unlockedPages[0]?.id || null;
+              actions.setSpotlight({ mode: 'favorite', type: 'almanac', id: firstPage });
+            }}
+            disabled={unlockedPages.length === 0}
+          >
+            Favorite Almanac Page
+          </Button>
+        </div>
+        {spotlight.mode === 'favorite' && spotlight.type === 'almanac' && (
+          <div className="mt-3">
+            <label className="text-xs font-semibold text-gray-500">Select Page</label>
+            <select
+              className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+              value={spotlight.id || ''}
+              onChange={(event) => actions.setSpotlight({ mode: 'favorite', type: 'almanac', id: event.target.value })}
+            >
+              {unlockedPages.map((page) => (
+                <option key={page.id} value={page.id}>
+                  {page.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div className="mt-3 rounded-lg border border-emerald-100 bg-emerald-50/40 p-3 text-sm text-gray-700">
+          <div className="text-xs uppercase tracking-wide text-gray-500">Current Spotlight</div>
+          <div className="mt-1 font-semibold">{farmCardSpotlight.title}</div>
+          <div className="text-sm text-gray-600">{farmCardSpotlight.text}</div>
         </div>
       </Card>
 

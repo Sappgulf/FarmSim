@@ -55,6 +55,7 @@
 - **Scrapbook**: legacy memory panel used inside Achievements tab with memory flags. (`src/components/panels/ScrapbookPanel.jsx`, `src/components/farm-sim/context/GameContext.jsx`)
 - **Almanac**: event-driven knowledge journal with philosophy-flavored copy. (`src/components/farm-sim/ui/tabs/AlmanacTab.jsx`, `src/data/almanac.js`, `src/components/farm-sim/context/GameContext.jsx`)
 - **Philosophy**: stored in FarmSim state for Almanac flavor. (`src/components/farm-sim/context/GameReducer.js`)
+- **Farm Themes + Farm Card**: theme selection + Farm Card export, spotlight selection, and farm name stored in save. (`src/data/farmThemes.js`, `src/utils/farmCard.js`, `src/components/farm-sim/ui/tabs/AlmanacTab.jsx`)
 
 ### Mini-Games
 - **Fishing mini-game**: `FishingSystem` + `FishingTab`. (`src/components/farm-sim/systems/FishingSystem.js`, `src/components/farm-sim/ui/tabs/FishingTab.jsx`)
