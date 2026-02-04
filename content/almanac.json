@@ -335,6 +335,12 @@
     "first_harvest": "first_steps",
     "first_board_visit": "first_steps",
     "festival_first": "gathering_light",
-    "festival_regular": "festival_regular"
+    "festival_regular": "festival_regular",
+    "turnip_treat": "turnip_treasures",
+    "snowdrop_harvest": "snowdrop_bloom",
+    "ginger_harvest": "ginger_warmth",
+    "winter_market": "hearth_market",
+    "cozy_goal_complete": "cozy_goals",
+    "winter_showcase": "seasonal_trimmings"
   }
 }

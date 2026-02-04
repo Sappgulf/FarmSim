@@ -85,6 +85,7 @@ const ShopTab = memo(() => {
 
       if (DECORATION_DATA[item.id]) {
         actions.recordMemoryEvent('shop_decor_purchase');
+        actions.recordCozyGoalEvent('shop_decor_purchase', { itemId: item.id });
       }
     } else {
       actions.addNotification({

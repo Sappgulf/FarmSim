@@ -48,6 +48,7 @@
 - **Daily Quests**: daily reset logic + streak bonuses. (`src/components/farm-sim/ui/tabs/DailyQuestsTab.jsx`, `src/components/farm-sim/systems/QuestSystem.js`)
 - **Daily Challenges**: daily reset + streaks. (`src/components/farm-sim/ui/tabs/ChallengesTab.jsx`)
 - **Mystery Shop**: rotating pack offerings. (`src/components/farm-sim/ui/tabs/MysteryShopTab.jsx`)
+- **Town Board**: Cozy Goals prompts + “What’s New” pack highlights with dismiss tracking. (`src/components/farm-sim/ui/tabs/EventsTab.jsx`, `src/utils/cozyGoals.js`)
 
 ### Collections / Achievements / Scrapbook / Almanac / Philosophy
 - **Achievements**: achievements data + tab UI. (`src/components/farm-sim/constants/achievementData.js`, `src/components/farm-sim/ui/tabs/AchievementsTab.jsx`)
@@ -104,18 +105,16 @@
 ## Duplicates / Legacy Notes
 - Legacy non-FarmSim UI (e.g. `src/components/FarmGame.jsx`, `src/components/game/*`, `src/components/panels/*`) appears unused by current entry point (`src/main.jsx`). Keep for now to avoid save/schema breakage.
 
-## Cozy Expansion Pack v1 — Additions vs Extensions
+## Season Pack v1 (Sprint F1) — Additions vs Extensions
 
 ### Added (New, Data-Only Content)
-- New crops added to crop catalog (parsnip, okra, cranberry). (`src/components/farm-sim/constants/cropData.js`)
-- New decoration catalog + helpers for seasonal, lighting, and path/fence variants. (`src/components/farm-sim/constants/decorData.js`)
+- Season Pack v1 expansion: Snowdrop, Turnip, Ginger Root crops; Winter Hearth decor set; Winter Hearth Market festival. (`content/packs/season-pack-v1/*`)
+- Almanac pages for pack crops, festival, decor moments, pets, and Cozy Goals. (`content/packs/season-pack-v1/almanac.json`)
 
 ### Extended (Existing Systems)
-- Shop: added daily rotating decor picks with owned counts. (`src/components/farm-sim/ui/tabs/ShopTab.jsx`)
-- Events: added two seasonal festivals and memory triggers on completion. (`src/components/farm-sim/ui/tabs/EventsTab.jsx`)
-- Achievements tab: now hosts Scrapbook panel from legacy identity UI for unified access. (`src/components/farm-sim/ui/tabs/AchievementsTab.jsx`, `src/components/panels/ScrapbookPanel.jsx`)
-- Game state: memory flags/counters and decor placement state persisted safely. (`src/components/farm-sim/context/GameReducer.js`, `src/components/farm-sim/context/GamePersistence.js`)
-- Farm grid: decor placement mode, repeat placement toggle, and 5-step undo. (`src/components/farm-sim/ui/FarmGrid.jsx`)
+- Town Board: Cozy Goals generation, completion rewards, and “What’s New” pack highlights with dismiss tracking. (`src/components/farm-sim/ui/tabs/EventsTab.jsx`, `src/utils/cozyGoals.js`)
+- Almanac + Scrapbook: new pack memories, crop triggers, decor triggers, and festival-specific unlocks. (`src/data/identity.js`, `src/components/farm-sim/context/GameContext.jsx`)
+- Save/load: Cozy Goals + “What’s New” state persisted safely. (`src/components/farm-sim/context/GameReducer.js`, `src/components/farm-sim/context/GamePersistence.js`)
 
 ### Polished (Feedback / Audio / Accessibility)
 - Added audio ducking for music during sound effects. (`src/components/farm-sim/systems/SoundSystem.js`, `src/components/farm-sim/systems/MusicSystem.js`)

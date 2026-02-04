@@ -13,6 +13,104 @@
         "market": "Winter favors careful planning. Small rituals keep stocks steady.",
         "slow": "Settle in with warm rituals and the farm will feel like home."
       }
+    },
+    {
+      "id": "snowdrop_bloom",
+      "section": "crops",
+      "title": "Snowdrop Bloom",
+      "icon": "❄️",
+      "hint": "Harvest snowdrops for the first time.",
+      "unlock": { "type": "crop_harvested", "cropId": "snowdrop" },
+      "text": {
+        "default": "Snowdrops bloom even when the air bites. The farm learned resilience.",
+        "nature": "Winter flowers remind the soil to keep breathing.",
+        "market": "Even a small winter crop draws interest at market.",
+        "slow": "Snowdrops are proof that gentle care still glows in winter."
+      }
+    },
+    {
+      "id": "turnip_treasures",
+      "section": "crops",
+      "title": "Turnip Treasures",
+      "icon": "🌱",
+      "hint": "Harvest a spring turnip.",
+      "unlock": { "type": "crop_harvested", "cropId": "turnip" },
+      "text": {
+        "default": "Turnips keep the pantry kind. Simple crops, steady comfort.",
+        "nature": "Spring roots settle in fast and quietly thrive.",
+        "market": "Reliable spring roots keep sales smooth and calm.",
+        "slow": "A turnip harvest is humble, and that’s the charm."
+      }
+    },
+    {
+      "id": "ginger_warmth",
+      "section": "crops",
+      "title": "Ginger Warmth",
+      "icon": "🫚",
+      "hint": "Harvest ginger root in winter.",
+      "unlock": { "type": "crop_harvested", "cropId": "ginger_root" },
+      "text": {
+        "default": "Ginger warms the hands and the ledger. Winter feels brighter.",
+        "nature": "A warming root brings balance to the cold season.",
+        "market": "Spice brings sparkle to winter baskets.",
+        "slow": "Ginger’s warmth lingers. The farm feels cozy and alive."
+      }
+    },
+    {
+      "id": "hearth_market",
+      "section": "festivals",
+      "title": "Hearth Market",
+      "icon": "🔥",
+      "hint": "Attend the Winter Hearth Market festival.",
+      "unlock": { "type": "festival_attended", "eventId": "winter_hearth_market" },
+      "text": {
+        "default": "The hearth market glowed with warm light and shared stories.",
+        "nature": "Even winter markets carry the rhythm of the land.",
+        "market": "Warm gatherings make for thoughtful trades.",
+        "slow": "You lingered by the hearth, letting the town’s warmth settle in."
+      }
+    },
+    {
+      "id": "seasonal_trimmings",
+      "section": "farm_notes",
+      "title": "Seasonal Trimmings",
+      "icon": "🪴",
+      "hint": "Place a seasonal decoration on the farm.",
+      "unlock": { "type": "decoration_placed" },
+      "text": {
+        "default": "Seasonal decor turns fields into cozy corners. The farm feels cared for.",
+        "nature": "Decor echoes the season’s voice without a word.",
+        "market": "A well-dressed farm always draws a friendly glance.",
+        "slow": "Small touches make the whole farm feel like home."
+      }
+    },
+    {
+      "id": "pet_companions",
+      "section": "farm_notes",
+      "title": "Pet Companions",
+      "icon": "🐾",
+      "hint": "Spend time caring for a pet.",
+      "unlock": { "type": "pet_cared" },
+      "text": {
+        "default": "A gentle companion keeps the days lighter and brighter.",
+        "nature": "Companions share the quiet rhythm of the farm.",
+        "market": "Happy pets keep the farm’s reputation warm.",
+        "slow": "A few calm moments with a pet can reset the whole day."
+      }
+    },
+    {
+      "id": "cozy_goals",
+      "section": "farm_notes",
+      "title": "Cozy Goals",
+      "icon": "🧺",
+      "hint": "Complete a Cozy Goal from the Town Board.",
+      "unlock": { "type": "cozy_goal_completed" },
+      "text": {
+        "default": "Small goals keep the farm’s story moving without pressure.",
+        "nature": "Gentle prompts keep you in step with the season.",
+        "market": "Light goals keep the work steady and the mood bright.",
+        "slow": "Cozy goals are reminders, not chores. Move at your own pace."
+      }
     }
   ]
 }

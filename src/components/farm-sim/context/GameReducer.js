@@ -69,6 +69,13 @@ export const initialState = {
         },
         lastDayKey: null,
     },
+    cozyGoals: {
+        lastGeneratedGoals: null,
+        completedGoalIds: [],
+    },
+    whatsNew: {
+        dismissed: {},
+    },
     seasonalEvents: [],
     activeSeasonalEvents: [],
     dailyChallenges: [],
@@ -266,6 +273,12 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.SET_PHILOSOPHY:
             return { ...state, philosophy: action.payload };
+
+        case GAME_ACTIONS.UPDATE_COZY_GOALS:
+            return { ...state, cozyGoals: action.payload };
+
+        case GAME_ACTIONS.UPDATE_WHATS_NEW:
+            return { ...state, whatsNew: action.payload };
 
         case GAME_ACTIONS.SET_SEASONAL_EVENTS:
             return { ...state, seasonalEvents: action.payload };

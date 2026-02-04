@@ -25,6 +25,9 @@ const InventoryTab = memo(() => {
     parsnip: '🥕',
     okra: '🫛',
     cranberry: '🫐',
+    snowdrop: '❄️',
+    turnip: '🌱',
+    ginger_root: '🫚',
     quality_seeds: '🌰',
     sprinkler: '💦',
     soil_analyzer: '🔬',
@@ -46,6 +49,9 @@ const InventoryTab = memo(() => {
       : itemId === 'parsnip' ? 15
       : itemId === 'okra' ? 26
       : itemId === 'cranberry' ? 44
+      : itemId === 'snowdrop' ? 46
+      : itemId === 'turnip' ? 26
+      : itemId === 'ginger_root' ? 66
       : 5;
     return sum + (baseValue * (qty || 0));
   }, 0);

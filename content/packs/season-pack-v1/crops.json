@@ -14,6 +14,36 @@
       "season": "winter",
       "seasonTags": ["winter"],
       "level": 2
+    },
+    {
+      "id": "turnip",
+      "name": "Turnip",
+      "emoji": "🌱",
+      "icon": "🌱",
+      "cost": 13,
+      "baseValue": 26,
+      "growthTime": 64,
+      "stages": 3,
+      "description": "A crisp spring root that grows with steady calm.",
+      "category": "vegetable",
+      "season": "spring",
+      "seasonTags": ["spring"],
+      "level": 1
+    },
+    {
+      "id": "ginger_root",
+      "name": "Ginger Root",
+      "emoji": "🫚",
+      "icon": "🫚",
+      "cost": 30,
+      "baseValue": 66,
+      "growthTime": 112,
+      "stages": 4,
+      "description": "A warming winter root with a bright finish.",
+      "category": "specialty",
+      "season": "winter",
+      "seasonTags": ["winter"],
+      "level": 3
     }
   ]
 }
