@@ -261,6 +261,9 @@ export function GameProvider({ children }) {
       dispatch({ type: GAME_ACTIONS.SET_PHILOSOPHY, payload: philosophyId });
       logDebugAction('philosophy_selected', { philosophyId });
     },
+    setFarmName: (farmName) => dispatch({ type: GAME_ACTIONS.SET_FARM_NAME, payload: farmName }),
+    setFarmTheme: (themeId) => dispatch({ type: GAME_ACTIONS.SET_FARM_THEME, payload: themeId }),
+    setSpotlight: (spotlight) => dispatch({ type: GAME_ACTIONS.SET_SPOTLIGHT, payload: spotlight }),
     updateSettings: (settings) => dispatch({ type: GAME_ACTIONS.UPDATE_SETTINGS, payload: settings }),
     updateGameLoop: (data) => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: data }),
     pauseGame: () => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { paused: true } }),
@@ -313,6 +316,7 @@ export function GameProvider({ children }) {
           [memoryId]: true,
         },
       });
+      dispatch({ type: GAME_ACTIONS.SET_LAST_UNLOCKED_MEMORY, payload: memoryId });
 
       if (memory) {
         dispatch({
@@ -348,6 +352,7 @@ export function GameProvider({ children }) {
       };
 
       dispatch({ type: GAME_ACTIONS.UPDATE_ALMANAC, payload: nextAlmanac });
+      dispatch({ type: GAME_ACTIONS.SET_LAST_UNLOCKED_ALMANAC, payload: pageId });
 
       if (page) {
         dispatch({

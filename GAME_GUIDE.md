@@ -32,6 +32,11 @@ Choose one philosophy to guide the Story Dashboard suggestions:
 - Open the Scrapbook to view pages and progress by chapter.
 - Scrapbook lives inside the Achievements tab for quick access.
 
+### Farm Themes + Farm Card
+- Choose a **Farm Theme** in the Almanac tab to set cozy accent colors.
+- Set a **Farm Name** and a **Spotlight** (latest memory or favorite page).
+- Use **Share Farm** on the Town Board or Almanac tab to export a 1080×1080 Farm Card PNG.
+
 ### Farm Almanac (Signature Feature v1)
 - The Almanac is a cozy, living journal of what your farm has **learned**.
 - Pages unlock automatically from events (seasons, weather, harvests, festivals, day changes).

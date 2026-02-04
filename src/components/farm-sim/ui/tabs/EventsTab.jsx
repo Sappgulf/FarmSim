@@ -7,10 +7,12 @@ import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { MEMORIES } from '../../../../data/identity';
 import { ALMANAC_PAGES } from '../../../../data/almanac';
+import { buildFarmCardData } from '../../../../utils/farmCard';
 import { getPlanSuggestions } from '../../../../utils/goalHints';
 import { getDailyAlmanacInsight, getDayKey } from '../../../../systems/almanac';
 import { getContentManager } from '../../../../content/ContentManager';
 import PerfectHarvestModal from '../minigames/PerfectHarvestModal';
+import FarmCardShareButton from '../FarmCardShareButton';
 
 const FALLBACK_RULE_SET = {
   id: 'fallback_rule',
@@ -211,6 +213,7 @@ const EventsTab = memo(() => {
     : (playLimit === 'daily' ? !playedToday : !playedToday);
   const onboardingActive = !state.onboardingSkipped && (state.onboardingStep || 0) < 3;
   const isFirstDay = (state.almanac?.counters?.dayCount || 0) <= 0;
+  const farmCardSpotlight = buildFarmCardData(state).spotlight;
 
   useEffect(() => {
     actions.generateCozyGoals(dayKey);
@@ -378,6 +381,23 @@ const EventsTab = memo(() => {
             )
             : 'No Almanac pages yet. Keep farming to uncover gentle insights.'
           }
+        </div>
+      </Card>
+
+      <Card className="p-4 border border-emerald-200 theme-card-surface">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold">📸 Share Farm</h3>
+            <p className="text-sm text-gray-600">
+              Export a Farm Card with today&apos;s spotlight and theme.
+            </p>
+          </div>
+          <FarmCardShareButton size="sm" className="theme-accent-bg theme-accent-border border" />
+        </div>
+        <div className="mt-3 rounded-lg border border-emerald-100 bg-white/80 p-3 text-sm text-gray-700">
+          <div className="text-xs uppercase tracking-wide text-gray-500">Spotlight</div>
+          <div className="mt-1 font-semibold">{farmCardSpotlight.title}</div>
+          <div className="text-sm text-gray-600">{farmCardSpotlight.text}</div>
         </div>
       </Card>
 

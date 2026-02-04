@@ -90,6 +90,15 @@
   --mood-accent: var(--color-primary-500);
   --mood-accent-soft: rgba(16, 185, 129, 0.14);
   --mood-overlay: rgba(16, 185, 129, 0.06);
+
+  /* Farm theme accents */
+  --farm-theme-accent: #16a34a;
+  --farm-theme-accent-soft: rgba(22, 163, 74, 0.16);
+  --farm-theme-card: #ffffff;
+  --farm-theme-card-alt: #dcfce7;
+  --farm-theme-ink: #064e3b;
+  --farm-theme-border: #bbf7d0;
+  --farm-theme-muted: #4b5563;
 }
 
 /* --------------------------------------------
@@ -138,6 +147,10 @@
     --mood-accent: #6366f1;
     --mood-accent-soft: rgba(99, 102, 241, 0.14);
     --mood-overlay: rgba(99, 102, 241, 0.08);
+  }
+
+  [data-farm-theme] {
+    color: var(--farm-theme-ink);
   }
 
   /* Improve touch targets */
@@ -294,6 +307,23 @@
 
   .mood-accent-border {
     border-color: var(--mood-accent);
+  }
+
+  .theme-accent-text {
+    color: var(--farm-theme-accent);
+  }
+
+  .theme-accent-bg {
+    background-color: var(--farm-theme-accent-soft);
+  }
+
+  .theme-accent-border {
+    border-color: var(--farm-theme-accent);
+  }
+
+  .theme-card-surface {
+    background-color: var(--farm-theme-card);
+    color: var(--farm-theme-ink);
   }
 
   [data-reduced-motion="true"] .mood-overlay {

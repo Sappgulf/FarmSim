@@ -2,7 +2,7 @@
  * GamePersistence - Save/Load, Migration, and Initialization logic for FarmSim
  */
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -173,6 +173,27 @@ export function migrateSaveData(savedData) {
             };
         }
 
+        // Version 6 → 7: Farm identity (name, theme, spotlight)
+        if (saveVersion < 7) {
+            migratedData.farmName = typeof migratedData.farmName === 'string'
+                ? migratedData.farmName
+                : 'Willowbrook Farm';
+            migratedData.farmTheme = typeof migratedData.farmTheme === 'string'
+                ? migratedData.farmTheme
+                : 'meadow';
+            migratedData.spotlight = migratedData.spotlight || {
+                mode: 'latest',
+                type: 'memory',
+                id: null,
+            };
+            migratedData.lastUnlockedMemoryId = typeof migratedData.lastUnlockedMemoryId === 'string'
+                ? migratedData.lastUnlockedMemoryId
+                : null;
+            migratedData.lastUnlockedAlmanacId = typeof migratedData.lastUnlockedAlmanacId === 'string'
+                ? migratedData.lastUnlockedAlmanacId
+                : null;
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
         migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
@@ -202,6 +223,32 @@ export function migrateSaveData(savedData) {
             decorationsPlaced: 0,
             festivalsAttended: 0,
         });
+        migratedData.farmName = typeof migratedData.farmName === 'string'
+            ? migratedData.farmName
+            : 'Willowbrook Farm';
+        migratedData.farmTheme = typeof migratedData.farmTheme === 'string'
+            ? migratedData.farmTheme
+            : 'meadow';
+        migratedData.spotlight = ensureObject(migratedData.spotlight, {
+            mode: 'latest',
+            type: 'memory',
+            id: null,
+        });
+        migratedData.lastUnlockedMemoryId = typeof migratedData.lastUnlockedMemoryId === 'string'
+            ? migratedData.lastUnlockedMemoryId
+            : null;
+        migratedData.lastUnlockedAlmanacId = typeof migratedData.lastUnlockedAlmanacId === 'string'
+            ? migratedData.lastUnlockedAlmanacId
+            : null;
+        if (!['latest', 'favorite'].includes(migratedData.spotlight.mode)) {
+            migratedData.spotlight.mode = 'latest';
+        }
+        if (!['memory', 'almanac'].includes(migratedData.spotlight.type)) {
+            migratedData.spotlight.type = 'memory';
+        }
+        if (migratedData.spotlight.id !== null && typeof migratedData.spotlight.id !== 'string') {
+            migratedData.spotlight.id = null;
+        }
         migratedData.philosophy = typeof migratedData.philosophy === 'string'
             ? migratedData.philosophy
             : null;

@@ -349,6 +349,8 @@ const AchievementsTab = memo(() => {
             window.switchToTab('almanac');
           }
         }}
+        spotlight={state.spotlight}
+        onSetSpotlight={(spotlight) => actions.setSpotlight(spotlight)}
         onOpen={() => actions.recordMemoryEvent('scrapbook_opened')}
       />
     </div>
