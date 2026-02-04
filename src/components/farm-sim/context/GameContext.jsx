@@ -1,8 +1,14 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { GAME_ACTIONS } from './GameActions';
-import { SAVE_VERSION, SAVE_KEY, BACKUP_SAVE_KEY, loadSavedState } from './GamePersistence';
+import {
+  SAVE_VERSION,
+  SAVE_KEY,
+  BACKUP_SAVE_KEY,
+  loadSavedState,
+  saveStateToStorage,
+} from './GamePersistence';
 import { initialState, gameReducer } from './GameReducer';
-import { initDebugTools, logDebugAction } from '../../../utils/debugTools';
+import { initDebugTools, isDebugMode, logDebugAction } from '../../../utils/debugTools';
 import {
   DECORATION_DATA,
   isLightingDecoration,
@@ -105,28 +111,18 @@ export function GameProvider({ children }) {
 
     autoSaveTimeoutRef.current = setTimeout(() => {
       try {
-        const saveTimestamp = Date.now();
-        const saveData = {
-          ...stateToSave,
-          saveVersion: SAVE_VERSION,
-          notifications: [],
-          gameLoop: { ...stateToSave.gameLoop, lastSaveTime: saveTimestamp },
-        };
-        const serialized = JSON.stringify(saveData);
-
         const saveToStorage = () => {
           try {
-            const existing = localStorage.getItem(SAVE_KEY);
-            if (existing) {
-              localStorage.setItem(BACKUP_SAVE_KEY, existing);
-            }
-            localStorage.setItem(SAVE_KEY, serialized);
-            lastSaveStateRef.current = stateString;
-            if (dispatchRef.current) {
-              dispatchRef.current({
-                type: GAME_ACTIONS.UPDATE_GAME_LOOP,
-                payload: { lastSaveTime: saveTimestamp },
-              });
+            if (!stateRef.current?.settings?.autoSave) return;
+            const saveResult = saveStateToStorage(stateToSave, { key: SAVE_KEY, backupKey: BACKUP_SAVE_KEY });
+            if (saveResult.success) {
+              lastSaveStateRef.current = stateString;
+              if (dispatchRef.current) {
+                dispatchRef.current({
+                  type: GAME_ACTIONS.UPDATE_GAME_LOOP,
+                  payload: { lastSaveTime: saveResult.timestamp },
+                });
+              }
             }
           } catch (error) {
             console.error('[farm] Auto-save failed:', error);
@@ -253,6 +249,13 @@ export function GameProvider({ children }) {
     updateGameLoop: (data) => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: data }),
     pauseGame: () => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { paused: true } }),
     resumeGame: () => dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { paused: false } }),
+    debugLoadState: (nextState) => {
+      if (!isDebugMode()) return false;
+      if (!nextState || typeof nextState !== 'object') return false;
+      dispatch({ type: GAME_ACTIONS.LOAD_GAME, payload: nextState });
+      logDebugAction('debug_load_state');
+      return true;
+    },
 
     // Systems Bridge
     setSystems: (newSystems) => setSystemsState(newSystems),
@@ -269,21 +272,13 @@ export function GameProvider({ children }) {
     },
     saveGame: () => {
       try {
-        const saveTimestamp = Date.now();
-        const stateToSave = {
-          ...stateRef.current,
-          saveVersion: SAVE_VERSION,
-          notifications: [],
-          gameLoop: { ...stateRef.current.gameLoop, lastSaveTime: saveTimestamp },
-        };
-        const existing = localStorage.getItem(SAVE_KEY);
-        if (existing) {
-          localStorage.setItem(BACKUP_SAVE_KEY, existing);
+        const saveResult = saveStateToStorage(stateRef.current, { key: SAVE_KEY, backupKey: BACKUP_SAVE_KEY });
+        if (saveResult.success) {
+          dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { lastSaveTime: saveResult.timestamp } });
+          logDebugAction('save_game', { saveVersion: SAVE_VERSION });
+          return true;
         }
-        localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
-        dispatch({ type: GAME_ACTIONS.UPDATE_GAME_LOOP, payload: { lastSaveTime: saveTimestamp } });
-        logDebugAction('save_game', { saveVersion: SAVE_VERSION });
-        return true;
+        return false;
       } catch (error) {
         console.error('[farm] Manual save failed', error);
         return false;

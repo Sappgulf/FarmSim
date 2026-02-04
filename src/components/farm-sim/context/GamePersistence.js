@@ -5,6 +5,8 @@
 export const SAVE_VERSION = 3;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
+export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
+export const QA_BACKUP_SAVE_KEY = `${QA_SAVE_KEY}_backup`;
 
 /**
  * Helper function to initialize plots
@@ -311,26 +313,62 @@ export function migrateSaveData(savedData) {
     }
 }
 
+export const createSavePayload = (state, saveTimestamp = Date.now()) => ({
+    ...state,
+    saveVersion: SAVE_VERSION,
+    notifications: [],
+    gameLoop: { ...state.gameLoop, lastSaveTime: saveTimestamp },
+});
+
+export const saveStateToStorage = (state, { key = SAVE_KEY, backupKey = BACKUP_SAVE_KEY } = {}) => {
+    try {
+        const saveTimestamp = Date.now();
+        const payload = createSavePayload(state, saveTimestamp);
+        const existing = localStorage.getItem(key);
+        if (existing && backupKey) {
+            localStorage.setItem(backupKey, existing);
+        }
+        localStorage.setItem(key, JSON.stringify(payload));
+        return { success: true, timestamp: saveTimestamp };
+    } catch (error) {
+        console.error('[farm]', 'Failed to save state', error);
+        return { success: false, error };
+    }
+};
+
+export const loadSavedStateFromKey = (key) => {
+    try {
+        const savedDataString = localStorage.getItem(key);
+        if (!savedDataString) return null;
+        const savedData = JSON.parse(savedDataString);
+        const migratedData = migrateSaveData(savedData);
+        if (!migratedData) return null;
+        migratedData.notifications = [];
+        return migratedData;
+    } catch (error) {
+        console.error('[farm]', 'Failed to load saved game', error);
+        return null;
+    }
+};
+
+export const clearSaveKey = (key) => {
+    try {
+        localStorage.removeItem(key);
+    } catch (error) {
+        console.error('[farm]', 'Failed to clear save key', error);
+    }
+};
+
 /**
  * Loads and validates saved game state from localStorage
  * @returns {Object|null} - Loaded state or null if no valid save exists
  */
 export function loadSavedState() {
     try {
-        const loadFromKey = (key) => {
-            const savedDataString = localStorage.getItem(key);
-            if (!savedDataString) return null;
-            const savedData = JSON.parse(savedDataString);
-            const migratedData = migrateSaveData(savedData);
-            if (!migratedData) return null;
-            migratedData.notifications = [];
-            return migratedData;
-        };
-
-        const primary = loadFromKey(SAVE_KEY);
+        const primary = loadSavedStateFromKey(SAVE_KEY);
         if (primary) return primary;
 
-        return loadFromKey(BACKUP_SAVE_KEY);
+        return loadSavedStateFromKey(BACKUP_SAVE_KEY);
     } catch (error) {
         console.error('[farm]', 'Failed to load saved game', error);
         return null;

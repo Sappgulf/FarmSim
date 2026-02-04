@@ -12,6 +12,7 @@ import { ParticleEffectsManager } from '../ui/ParticleEffect';
 import FPSCounter from '../ui/FPSCounter';
 import PerformanceOverlay from '../ui/PerformanceOverlay';
 import DebugStressPanel from '../ui/DebugStressPanel';
+import QAModePanel from '../ui/QAModePanel';
 import Tutorial from '../ui/Tutorial';
 import { logDebugAction } from '../../../utils/debugTools';
 
@@ -455,6 +456,9 @@ function FarmSimCore() {
 
       {/* Debug Stress Panel (?debug=1) */}
       <DebugStressPanel />
+
+      {/* QA Mode Panel (?debug=1) */}
+      <QAModePanel />
 
       {/* Onboarding Tutorial (auto-shows for new players) */}
       <Tutorial />

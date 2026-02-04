@@ -143,7 +143,7 @@ const PerformanceOverlay = memo(() => {
 
     // Collect metrics at lower frequency (2Hz instead of 60Hz)
     useEffect(() => {
-        if (!debugEnabled || !isVisible) return;
+        if (!debugEnabled) return;
 
         const collectMetrics = () => {
             const samples = frameTimesRef.current;
@@ -167,18 +167,16 @@ const PerformanceOverlay = memo(() => {
             // Particle count (from global)
             const particleCount = window.__particleCount || 0;
 
-            const debugMetrics = getDebugMetrics();
-            setDebugInfo(debugMetrics);
-
             const updateTime = window.__lastUpdateTime || 0;
             const renderTime = Math.max(0, avgFrameTime - updateTime);
+            const debugMetrics = getDebugMetrics();
 
-            setMetrics({
+            const snapshot = {
                 avgFps,
-                avgFrameTime: avgFrameTime.toFixed(1),
-                worstFrameTime: worstFrameTime.toFixed(1),
-                updateTime: updateTime.toFixed(1),
-                renderTime: renderTime.toFixed(1),
+                avgFrameTime,
+                worstFrameTime,
+                updateTime,
+                renderTime,
                 memory,
                 plots,
                 buildings,
@@ -187,7 +185,31 @@ const PerformanceOverlay = memo(() => {
                 particleCount,
                 timers: debugMetrics?.timerCount || 0,
                 listeners: debugMetrics?.listenerCount || 0,
-            });
+                timestamp: Date.now(),
+            };
+
+            if (typeof window !== 'undefined') {
+                window.__farmPerfMetrics = snapshot;
+            }
+
+            if (isVisible) {
+                setDebugInfo(debugMetrics);
+                setMetrics({
+                    avgFps,
+                    avgFrameTime: avgFrameTime.toFixed(1),
+                    worstFrameTime: worstFrameTime.toFixed(1),
+                    updateTime: updateTime.toFixed(1),
+                    renderTime: renderTime.toFixed(1),
+                    memory,
+                    plots,
+                    buildings,
+                    decorations,
+                    notifications,
+                    particleCount,
+                    timers: debugMetrics?.timerCount || 0,
+                    listeners: debugMetrics?.listenerCount || 0,
+                });
+            }
         };
 
         // Update at 2Hz instead of 60Hz

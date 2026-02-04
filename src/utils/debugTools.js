@@ -10,6 +10,10 @@ const createDebugState = () => ({
   enabled: false,
   actionTrace: [],
   lastError: null,
+  console: {
+    errors: [],
+    warnings: [],
+  },
   timers: {
     timeouts: new Set(),
     intervals: new Set(),
@@ -32,6 +36,12 @@ const storeError = (error, source = 'error') => {
   const debugState = getDebugState();
   if (!debugState) return;
   const normalized = error instanceof Error ? error : new Error(String(error));
+  debugState.console.errors.push({
+    time: new Date().toISOString(),
+    source,
+    message: normalized.message,
+    stack: normalized.stack || '',
+  });
   debugState.lastError = {
     message: normalized.message,
     stack: normalized.stack || '',
@@ -40,6 +50,35 @@ const storeError = (error, source = 'error') => {
     trace: debugState.actionTrace.slice(),
   };
   window.dispatchEvent(new CustomEvent('farm-debug-error', { detail: debugState.lastError }));
+};
+
+const formatConsoleArgs = (args = []) =>
+  args
+    .map((arg) => {
+      if (arg instanceof Error) {
+        return `${arg.message}${arg.stack ? `\n${arg.stack}` : ''}`;
+      }
+      if (typeof arg === 'string') return arg;
+      try {
+        return JSON.stringify(arg);
+      } catch (error) {
+        return String(arg);
+      }
+    })
+    .join(' ');
+
+const recordConsoleEvent = (level, args) => {
+  const debugState = getDebugState();
+  if (!debugState) return;
+  const entry = {
+    time: new Date().toISOString(),
+    message: formatConsoleArgs(args),
+  };
+  if (level === 'error') {
+    debugState.console.errors.push(entry);
+  } else if (level === 'warn') {
+    debugState.console.warnings.push(entry);
+  }
 };
 
 const recordListener = (target, type, listener) => {
@@ -95,6 +134,8 @@ export const initDebugTools = () => {
       clearInterval: window.clearInterval,
       addEventListener: EventTarget.prototype.addEventListener,
       removeEventListener: EventTarget.prototype.removeEventListener,
+      consoleError: console.error,
+      consoleWarn: console.warn,
     };
 
     window.setTimeout = (...args) => {
@@ -127,6 +168,16 @@ export const initDebugTools = () => {
     EventTarget.prototype.removeEventListener = function removeEventListener(...args) {
       removeListenerRecord(this, args[0], args[1]);
       return window.__farmDebugOriginals.removeEventListener.apply(this, args);
+    };
+
+    console.error = (...args) => {
+      recordConsoleEvent('error', args);
+      return window.__farmDebugOriginals.consoleError(...args);
+    };
+
+    console.warn = (...args) => {
+      recordConsoleEvent('warn', args);
+      return window.__farmDebugOriginals.consoleWarn(...args);
     };
   }
 
@@ -161,6 +212,10 @@ export const getDebugMetrics = () => {
   return {
     actionTrace: debugState.actionTrace.slice(),
     lastError: debugState.lastError,
+    consoleErrors: debugState.console.errors.slice(),
+    consoleWarnings: debugState.console.warnings.slice(),
+    consoleErrorCount: debugState.console.errors.length,
+    consoleWarnCount: debugState.console.warnings.length,
     timerCount: debugState.timers.timeouts.size + debugState.timers.intervals.size,
     timeoutCount: debugState.timers.timeouts.size,
     intervalCount: debugState.timers.intervals.size,
@@ -172,5 +227,23 @@ export const clearDebugError = () => {
   const debugState = getDebugState();
   if (!debugState) return;
   debugState.lastError = null;
+  debugState.console.errors = [];
+  debugState.console.warnings = [];
   window.dispatchEvent(new CustomEvent('farm-debug-error', { detail: null }));
+};
+
+export const clearConsoleEvents = () => {
+  const debugState = getDebugState();
+  if (!debugState) return;
+  debugState.console.errors = [];
+  debugState.console.warnings = [];
+};
+
+export const getConsoleEvents = () => {
+  const debugState = getDebugState();
+  if (!debugState) return { errors: [], warnings: [] };
+  return {
+    errors: debugState.console.errors.slice(),
+    warnings: debugState.console.warnings.slice(),
+  };
 };

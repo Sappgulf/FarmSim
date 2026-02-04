@@ -1,6 +1,35 @@
-# QA Report — AAA Polish Pass
+# QA Report — QA Harness
 
-**Date:** 2026-02-03
+**Date:** 2026-02-04
+
+## Sprint D1 — QA Harness Runs (Template)
+
+**Environment:**  
+- Build: dev (`npm run dev`)  
+- Debug: `?debug=1`  
+
+### Run 1 Summary
+- Suite status: ⬜ PASS / ⬜ FAIL  
+- Tests passed: __  
+- Tests failed: __  
+- Tests skipped: __  
+- Console errors: __  
+- Content validation errors: __  
+- Content validation warnings: __  
+
+### Run 2 Summary
+- Suite status: ⬜ PASS / ⬜ FAIL  
+- Tests passed: __  
+- Tests failed: __  
+- Tests skipped: __  
+- Console errors: __  
+- Content validation errors: __  
+- Content validation warnings: __  
+
+### QA Suite Report (Paste from **Copy Report**)
+```text
+<paste QA report here>
+```
 
 ## Expansion + Polish Pass (2026-02-03)
 - **Static inspection:** Pets tab layout/copy, notification auto-dismiss logic, and snake_case formatter applied across tabs reviewed in code.

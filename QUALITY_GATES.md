@@ -1,16 +1,18 @@
 # Quality Gates — FarmSim Quality Lock
 
-**Date:** 2026-02-03  
-**Scope:** FarmSim runtime + UI (HTML/JS)
+**Date:** 2026-02-04  
+**Scope:** FarmSim runtime + UI (HTML/JS) + QA Harness
+**Reference:** `QA_HARNESS.md`
 
 ## Acceptance Criteria (Flawless = All Pass)
 1. **Zero console errors** in normal play (new game, load game, tab navigation).
-2. **Zero crashes under stress** (run stress suite twice; no unhandled errors).
-3. **No progressive slowdown** after repeated stress cycles.
-4. **Instant-feeling tab switching** (no stacked listeners/timers).
-5. **Animation quality**: transforms/opacity where possible, no layout thrash.
-6. **Save/load integrity**: saves never corrupt state; older saves migrate cleanly.
-7. **Debug/profiling tools OFF by default** (only via `?debug=1`).
+2. **QA Suite passes twice** in a row with identical results.
+3. **Zero unhandled errors** during QA suite (errors > 0 = fail).
+4. **Content validation errors = 0** (warnings allowed, listed).
+5. **No progressive slowdown** after repeated stress cycles (review perf snapshot).
+6. **Instant-feeling tab switching** (no stacked listeners/timers).
+7. **Save/load integrity**: saves never corrupt state; older saves migrate cleanly.
+8. **Debug/profiling tools OFF by default** (only via `?debug=1`).
 
 ## How to Test (Required)
 ### 1) Baseline Smoke
@@ -23,26 +25,24 @@
    - rolling FPS avg + worst frame (last 5s)
    - update vs render time
    - counts: plots, notifications, buildings, decorations (if any), timers, listeners.
-3. Trigger a test error (optional) and confirm crash overlay shows stack + action trace + Copy Debug Report.
+3. Confirm **QA Mode** panel appears (bottom-right).
+4. Trigger a test error (optional) and confirm crash overlay shows stack + action trace + Copy Debug Report.
 
-### 3) Stress Suite (Run Twice)
-Use the Debug Stress Panel (`?debug=1`):
-1. **Fill Plots** → **Ready Plots** → **Harvest All**.
-2. **+50 Notifs** then **Clear Notifs** rapidly.
-3. **Stress Tabs** (30+ switches).
-4. **Place Builds** → **Clear Builds**.
-5. **Advance 30 Days**.
-6. Repeat steps 1–5 a second time.
-7. Confirm:
-   - No crashes
+### 3) QA Suite (Run Twice)
+Use the QA Mode panel (`?debug=1`):
+1. Click **Run QA Suite**.
+2. Copy the report and verify all tests pass.
+3. Run the suite a second time and confirm identical pass/fail results.
+4. Confirm:
    - No console errors
+   - No unhandled errors
+   - Content validation errors = 0
    - Timers/listeners stable (no upward creep)
 
 ### 4) Save/Load Integrity
-1. Save game after stress suite.
-2. Reload the page and load save.
-3. Confirm:
-   - State loads with no console errors
+1. Run **Save/Load Integrity** in QA Mode.
+2. Confirm:
+   - QA save slot loads with no console errors
    - Grid size + plots intact
    - Settings retained
    - No NaN/negative values

@@ -18,6 +18,7 @@
 - Planned: audit all markdown docs + FarmSim tabs, polish Pets UI/copy, upgrade toast auto-dismiss/close, fix underscore labels, and run QA/perf checks. Baseline: `npm run build` (passes with npm http-proxy warning and browserslist data warning).
 
 ### Implemented
+- Implemented: dev-only QA Mode panel + deterministic QA harness (tabs smoke, plot stress, notifications stress, mini-game smoke, 30-day sim, save/load integrity, content validation), performance snapshots, console error capture, and QA-only save isolation. Verification: manual run required via `?debug=1`.
 - Implemented: standardized UI icon usage for navigation/tabs, added Perfect Harvest timing mini-game (festival/board), added debug content warnings for missing icons, and documented design system + QA/perf notes. Verification: `npm run test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
 - Implemented: Season Pack Pipeline v1 (content schemas, pack format, loader/validator), integrated content manager across crops/decor/festivals/almanac/strings, added debug-only content validation/report actions, and added Town Board “What’s New” highlights. Verification: `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
 - Implemented: corrected scrapbook data import path for Achievements tab and re-built successfully. Verification: `npm run build` (passes with browserslist data warning).
