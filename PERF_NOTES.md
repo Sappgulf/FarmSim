@@ -25,6 +25,19 @@
 
 ---
 
+## 2026-02-03 — Pets/Notifications Polish
+
+### Baseline
+- `npm run build` (passes with npm http-proxy warning + browserslist data warning).
+
+### Changes Applied
+- Added `formatDisplayLabel` helper for snake_case → title-case labels and reused across tabs.
+- Notification timers now pause on hover/press and clean up timers on close/unmount (no per-tick updates).
+- Pets tab layout uses event-driven updates (render-on-open/data change only).
+
+### After
+- Runtime metrics not captured in this environment (Playwright browser crashed).
+
 ## 2026-02-03 — UI Polish + Perfect Harvest Mini-Game
 
 ### Baseline

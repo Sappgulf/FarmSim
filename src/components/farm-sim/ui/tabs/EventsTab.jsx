@@ -4,6 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
+import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { getDailyAlmanacInsight, getDayKey } from '../../../../systems/almanac';
 import { getContentManager } from '../../../../content/ContentManager';
 import PerfectHarvestModal from '../minigames/PerfectHarvestModal';
@@ -329,7 +330,7 @@ const EventsTab = memo(() => {
           <div className="grid grid-cols-2 gap-2 text-sm">
             {Object.entries(activeEvent.effects).map(([effect, value]) => (
               <div key={effect} className="flex justify-between p-2 bg-white rounded">
-                <span className="capitalize">{effect.replace('_', ' ')}:</span>
+                <span className="capitalize">{formatDisplayLabel(effect)}:</span>
                 <span className="font-semibold">
                   {typeof value === 'boolean' ? (value ? '✓' : '✗') :
                    typeof value === 'number' && value > 1 ? `+${Math.round((value - 1) * 100)}%` :

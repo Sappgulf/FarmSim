@@ -74,3 +74,14 @@ All buttons are built on `src/components/ui/button.jsx`.
 - Prefer transform/opacity transitions.
 - Respect `prefers-reduced-motion` and in-game `animationsEnabled` setting.
 - Avoid per-tick UI updates; only update on open/data change.
+
+## Display Label Formatting
+- Use `formatDisplayLabel` (`src/utils/textFormat.js`) to convert `snake_case`/`kebab-case` IDs into user-facing labels.
+- The formatter title-cases words and preserves common acronyms (e.g., XP, UI).
+- Apply only to display strings—never mutate internal IDs.
+
+## Notifications (Toasts)
+- Default auto-dismiss: **3500ms** (3–4s target range).
+- Pause auto-dismiss on hover (desktop) or press (mobile).
+- Close button uses a visible “×” with ≥32px tap target and `aria-label="Close notification"`.
+- Keep visible stack to **~5** with “+N more” summary for overflow.

@@ -4,6 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
+import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs';
 import { ScrapbookPanel } from '../../../panels/ScrapbookPanel';
 import { MEMORIES, MEMORY_CHAPTERS } from '../../../../data/identity';
@@ -253,7 +254,7 @@ const AchievementsTab = memo(() => {
                     <Progress value={progress} className="mb-2" />
 
                     <div className="text-xs text-gray-500 mb-2">
-                      Requirement: {achievement.requirement.type.replace('_', ' ')} ({achievement.requirement.value})
+                      Requirement: {formatDisplayLabel(achievement.requirement.type)} ({achievement.requirement.value})
                     </div>
                   </>
                 )}

@@ -3,6 +3,7 @@ import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
+import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { Progress } from '../../../ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs';
 
@@ -244,7 +245,7 @@ const GeneticsTab = memo(() => {
                           <div className="flex justify-center gap-2 mb-3">
                             {recipe.traits.map(trait => (
                               <Badge key={trait} variant="outline" className="text-xs">
-                                {trait.replace('_', ' ')}
+                                {formatDisplayLabel(trait)}
                               </Badge>
                             ))}
                           </div>
@@ -290,7 +291,7 @@ const GeneticsTab = memo(() => {
                           <div className="flex gap-1 mt-1">
                             {recipe.traits.map(trait => (
                               <Badge key={trait} variant="outline" className="text-xs">
-                                {trait.replace('_', ' ')}
+                                {formatDisplayLabel(trait)}
                               </Badge>
                             ))}
                           </div>

@@ -15,6 +15,7 @@
 - Planned: wire Menu Drawer help actions to the in-game help guide and add a lightweight About section; baseline `npm run test` (passes with vitest watch warnings about deprecated ReactDOMTestUtils act and a farm save warning). 
 - Planned: audit FarmSim tabs and core loops, add debug-mode crash capture/perf overlay, fix missing action wiring and daily reset tracking; baseline checks pending. 
 - Planned: implement Signature Feature v1 (Farm Almanac) with design doc, event-driven unlocks, UI tab, Town Board insight, settings toggle, and save/load persistence. Baseline: `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
+- Planned: audit all markdown docs + FarmSim tabs, polish Pets UI/copy, upgrade toast auto-dismiss/close, fix underscore labels, and run QA/perf checks. Baseline: `npm run build` (passes with npm http-proxy warning and browserslist data warning).
 
 ### Implemented
 - Implemented: standardized UI icon usage for navigation/tabs, added Perfect Harvest timing mini-game (festival/board), added debug content warnings for missing icons, and documented design system + QA/perf notes. Verification: `npm run test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
@@ -25,6 +26,7 @@
 - Implemented: wired Menu Drawer help actions to open the Help Guide with targeted categories and added an About category to the guide. Verification: `npm run test -- --run` (passes with ReactDOMTestUtils act warnings and a farm save warning), `npm run build` (passes with browserslist data warning). 
 - Implemented: added debug-mode crash capture/perf overlay, wired missing FarmSim action creators, fixed daily challenge reset bookkeeping, added save backup slot, and paused loops on page hide. Verification: `npm run test -- --run` (passes with ReactDOMTestUtils act warnings and an expected corrupted-save warning). 
 - Implemented: added Farm Almanac v1 (design doc, data schema, event-driven unlocks, Almanac tab, Town Board insight, Scrapbook cross-links, settings toggle, and save/load fields). Verification: `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning).
+- Implemented: polished Pets tab layout + copy, added display label formatter for snake_case strings across tabs, and upgraded notifications with auto-dismiss/hover pause + visible close button. Verification: `npm run build` (passes with npm http-proxy warning and browserslist data warning).
 
 ## [2.1.0] - 2026-02-03
 
