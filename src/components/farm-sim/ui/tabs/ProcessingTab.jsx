@@ -5,6 +5,7 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
+import { CROP_DATA } from '../../constants/cropData';
 
 // Processing facilities from original system
 const PROCESSING_FACILITIES = {
@@ -57,6 +58,17 @@ const PROCESSING_FACILITIES = {
     time: 90,
     storage_bonus: 15
   }
+};
+
+const getAnyCropInput = (inventory, ratio, preferredCrop) => {
+  const preferredAmount = preferredCrop ? (inventory[preferredCrop] || 0) : 0;
+  if (preferredCrop && CROP_DATA[preferredCrop] && preferredAmount >= ratio) {
+    return preferredCrop;
+  }
+
+  return Object.keys(inventory).find(
+    (cropId) => CROP_DATA[cropId] && (inventory[cropId] || 0) >= ratio
+  );
 };
 
 const ProcessingTab = memo(() => {
@@ -171,11 +183,17 @@ const ProcessingTab = memo(() => {
       return;
     }
 
+    const inputCropId = facility.input === 'any'
+      ? getAnyCropInput(state.inventory, facility.ratio, state.selectedCrop)
+      : facility.input;
+
     // Check if we have enough input materials
-    const inputCount = state.inventory[facility.input] || 0;
-    if (inputCount < facility.ratio) {
+    const inputCount = inputCropId ? (state.inventory[inputCropId] || 0) : 0;
+    if (!inputCropId || inputCount < facility.ratio) {
       actions.addNotification({
-        message: `Not enough ${facility.input}! Need ${facility.ratio}`,
+        message: facility.input === 'any'
+          ? `Not enough crops! Need ${facility.ratio} of any crop`
+          : `Not enough ${facility.input}! Need ${facility.ratio}`,
         type: 'error'
       });
       return;
@@ -184,7 +202,7 @@ const ProcessingTab = memo(() => {
     // Consume input materials
     actions.updateInventory({
       ...state.inventory,
-      [facility.input]: inputCount - facility.ratio
+      [inputCropId]: inputCount - facility.ratio
     });
 
     // Calculate output quantity
@@ -195,7 +213,7 @@ const ProcessingTab = memo(() => {
     const processingItem = {
       id: Date.now(),
       facilityId: facilityId,
-      input: facility.input,
+      input: inputCropId,
       output: facility.output,
       quantity: outputQuantity,
       startTime: Date.now(),
@@ -328,7 +346,7 @@ const ProcessingTab = memo(() => {
                 <p className="text-sm text-gray-600 mb-2">{facility.description}</p>
 
                 <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
-                  <span>Input: {facility.input}</span>
+                  <span>Input: {facility.input === 'any' ? 'Any crop' : facility.input}</span>
                   <span>Output: {formatDisplayLabel(facility.output)}</span>
                   <span>Ratio: {facility.ratio}:1</span>
                 </div>
@@ -362,6 +380,11 @@ const ProcessingTab = memo(() => {
             {state.processingFacilities.map(facility => {
               const status = getFacilityStatus(facility);
               const facilityData = PROCESSING_FACILITIES[facility.id];
+              const hasAnyInput = facilityData.input === 'any'
+                ? Boolean(getAnyCropInput(state.inventory, facilityData.ratio, state.selectedCrop))
+                : true;
+              const hasSpecificInput = (state.inventory[facilityData.input] || 0) >= facilityData.ratio;
+              const canStartProcessing = facilityData.input === 'any' ? hasAnyInput : hasSpecificInput;
 
               return (
                 <Card key={facility.id} className={`p-3 ${status.bgColor}`}>
@@ -393,11 +416,11 @@ const ProcessingTab = memo(() => {
                     <Button
                       onClick={() => startProcessing(facility.id)}
                       size="sm"
-                      disabled={!state.inventory[facilityData.input] || (state.inventory[facilityData.input] || 0) < facilityData.ratio}
+                      disabled={!canStartProcessing}
                       className="w-full"
                     >
-                      {(!state.inventory[facilityData.input] || (state.inventory[facilityData.input] || 0) < facilityData.ratio)
-                        ? `Need ${facilityData.ratio} ${facilityData.input}`
+                      {!canStartProcessing
+                        ? `Need ${facilityData.ratio} ${facilityData.input === 'any' ? 'crop' : facilityData.input}`
                         : 'Start Processing'
                       }
                     </Button>
