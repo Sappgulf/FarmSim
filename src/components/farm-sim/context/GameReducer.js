@@ -150,6 +150,15 @@ export const initialState = {
         showAlmanacHints: true,
         showWelcomeBackSummary: true,
     },
+    entitlements: {
+        mode: 'free',
+        packs: [],
+        lockedCosmetics: {
+            decor: {},
+            farmTheme: null,
+        },
+    },
+    premiumLockPrompt: null,
 
     // Retention
     retention: {
@@ -396,6 +405,12 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.SET_DECORATION_MODE:
             return { ...state, decorateMode: action.payload };
+
+        case GAME_ACTIONS.UPDATE_ENTITLEMENTS:
+            return { ...state, entitlements: action.payload };
+
+        case GAME_ACTIONS.SET_PREMIUM_LOCK_PROMPT:
+            return { ...state, premiumLockPrompt: action.payload };
 
         case GAME_ACTIONS.UPDATE_SETTINGS:
             return { ...state, settings: { ...state.settings, ...action.payload } };

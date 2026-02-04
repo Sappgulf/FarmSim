@@ -4,6 +4,7 @@ import { revalidateContent } from '../../../content/ContentManager';
 import { buildFarmCardData, renderFarmCard } from '../../../utils/farmCard';
 import { MEMORIES } from '../../../data/identity';
 import { getWeekKey } from '../../../utils/retention';
+import { getItemEntitlementInfo } from '../entitlements/EntitlementManager';
 import {
   QA_SAVE_KEY,
   QA_BACKUP_SAVE_KEY,
@@ -34,6 +35,7 @@ const validateSaveState = (state) => {
   }
   if (!state.settings || typeof state.settings !== 'object') errors.push('settings missing or invalid.');
   if (!state.season || typeof state.season !== 'object') errors.push('season missing or invalid.');
+  if (!state.entitlements || typeof state.entitlements !== 'object') errors.push('entitlements missing or invalid.');
   return errors;
 };
 
@@ -538,6 +540,109 @@ export const QA_TESTS = [
         throw new Error('Retention weekly visits not persisted after load.');
       }
       return { detail: 'Retention fields persisted through save/load.' };
+    },
+  },
+  {
+    id: 'entitlements_free_mode_parity',
+    name: 'Entitlements Free Mode Parity',
+    timeoutMs: 5000,
+    run: async (ctx) => {
+      const starterInfo = getItemEntitlementInfo('starter_flag', 'decor');
+      if (!starterInfo?.packId) {
+        return { status: 'skip', reason: 'Starter pack metadata not available.' };
+      }
+      ctx.actions.setEntitlementMode('free');
+      const plots = Array.isArray(ctx.state().plots) ? [...ctx.state().plots] : [];
+      if (plots[0]) {
+        plots[0] = { ...plots[0], state: 'empty', decorationId: null, decorationPlacedAt: null, crop: null };
+        ctx.actions.updatePlots(plots);
+        await ctx.sleep(50);
+      }
+      const placed = ctx.actions.placeDecoration(0, 'starter_flag');
+      if (placed !== true) {
+        throw new Error(`Expected free mode placement to succeed, got ${placed}`);
+      }
+      const modal = document.querySelector('[data-qa="premium-lock-modal"]');
+      if (modal) {
+        throw new Error('Premium lock modal appeared in free mode.');
+      }
+      ctx.actions.removeDecoration(0);
+      return { detail: 'Free mode allowed premium-tagged decor with no locks.' };
+    },
+  },
+  {
+    id: 'entitlements_premium_gating',
+    name: 'Entitlements Premium Gating',
+    timeoutMs: 6000,
+    run: async (ctx) => {
+      const starterInfo = getItemEntitlementInfo('starter_flag', 'decor');
+      if (!starterInfo?.packId) {
+        return { status: 'skip', reason: 'Starter pack metadata not available.' };
+      }
+      ctx.actions.setEntitlementMode('premium');
+      ctx.actions.revokePackEntitlement(starterInfo.packId);
+      await ctx.switchToTab('inventory');
+      await ctx.sleep(100);
+      const badge = document.querySelector('[data-qa="premium-badge-starter_flag"]');
+      if (!badge) {
+        throw new Error('Premium badge missing for starter decor in premium mode.');
+      }
+      const placed = ctx.actions.placeDecoration(0, 'starter_flag');
+      if (placed !== 'locked') {
+        throw new Error(`Expected placement to be locked, got ${placed}`);
+      }
+      const modal = document.querySelector('[data-qa="premium-lock-modal"]');
+      if (!modal) {
+        throw new Error('Premium lock modal not shown for locked item.');
+      }
+      ctx.actions.grantPackEntitlement(starterInfo.packId);
+      ctx.actions.clearPremiumLockPrompt();
+      const placedAfterGrant = ctx.actions.placeDecoration(0, 'starter_flag');
+      if (placedAfterGrant !== true) {
+        throw new Error(`Expected placement to succeed after grant, got ${placedAfterGrant}`);
+      }
+      ctx.actions.removeDecoration(0);
+      return { detail: 'Premium mode gating and grant flow validated.' };
+    },
+  },
+  {
+    id: 'entitlements_save_fallback',
+    name: 'Entitlements Save Fallback',
+    timeoutMs: 6000,
+    run: async (ctx) => {
+      const starterInfo = getItemEntitlementInfo('starter_flag', 'decor');
+      if (!starterInfo?.packId) {
+        return { status: 'skip', reason: 'Starter pack metadata not available.' };
+      }
+      ctx.actions.setEntitlementMode('free');
+      ctx.actions.placeDecoration(0, 'starter_flag');
+      const saveResult = saveStateToStorage(ctx.state(), {
+        key: QA_SAVE_KEY,
+        backupKey: QA_BACKUP_SAVE_KEY,
+      });
+      if (!saveResult.success) {
+        throw new Error('Failed to save QA state for entitlements fallback.');
+      }
+      ctx.actions.setEntitlementMode('premium');
+      ctx.actions.revokePackEntitlement(starterInfo.packId);
+      const loaded = loadSavedStateFromKey(QA_SAVE_KEY);
+      if (!loaded) {
+        throw new Error('Failed to load QA save for entitlements fallback.');
+      }
+      ctx.actions.debugLoadState(loaded);
+      await ctx.sleep(100);
+      const plot = ctx.state().plots?.[0];
+      if (plot?.state === 'decor') {
+        throw new Error('Locked premium decor did not revert to default.');
+      }
+      const notice = ctx.state().notifications?.some((item) => (
+        item?.message?.includes('premium cosmetic')
+        || item?.message?.includes('premium cosmetic isn’t owned')
+      ));
+      if (!notice) {
+        throw new Error('Fallback notice not shown for locked cosmetic.');
+      }
+      return { detail: 'Save/load fallback reverted locked cosmetics safely.' };
     },
   },
   {

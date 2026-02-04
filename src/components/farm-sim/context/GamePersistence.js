@@ -2,9 +2,10 @@
  * GamePersistence - Save/Load, Migration, and Initialization logic for FarmSim
  */
 import { isDevelopmentMode } from '../../../config/release';
+import { normalizeEntitlements } from '../entitlements/EntitlementManager';
 
 // Save schema version (separate from APP_VERSION in src/config/release.js).
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -217,6 +218,18 @@ export function migrateSaveData(savedData) {
                     weekKey: null,
                     days: [],
                     claimedTiers: [],
+                },
+            };
+        }
+
+        // Version 9 → 10: Entitlements (cosmetics-only)
+        if (saveVersion < 10) {
+            migratedData.entitlements = {
+                mode: 'free',
+                packs: [],
+                lockedCosmetics: {
+                    decor: {},
+                    farmTheme: null,
                 },
             };
         }
@@ -533,6 +546,8 @@ export function migrateSaveData(savedData) {
         migratedData.retention.weeklyVisits.claimedTiers = Array.isArray(migratedData.retention.weeklyVisits.claimedTiers)
             ? migratedData.retention.weeklyVisits.claimedTiers.filter((tier) => Number.isFinite(tier))
             : [];
+
+        migratedData.entitlements = normalizeEntitlements(migratedData.entitlements);
 
         migratedData.saveVersion = SAVE_VERSION;
         return migratedData;

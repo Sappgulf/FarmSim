@@ -88,6 +88,9 @@ Required metadata fields:
 
 Optional metadata fields:
 - `author`, `contentCounts`, `highlights[]`
+- `access`: `"free"` | `"premium"` (default `"free"`)
+- `skuId`: string placeholder for future storefront mapping
+- `badgeLabel`: optional label for UI badges (defaults to `"Premium"` when access is premium)
 
 ### Merge Rules
 - Packs merge into base content at load in deterministic order (pack id sorting).
@@ -99,6 +102,10 @@ Optional metadata fields:
 - Numeric fields are clamped to non-negative values.
 - ID conflicts are logged and skipped deterministically.
 - Almanac pages must reference valid section IDs.
+- Pack metadata validation:
+  - `access` must be `"free"` or `"premium"`.
+  - `skuId` (if present) must be alphanumeric/._-.
+  - Pack IDs must be unique.
 
 ## Extension Guide
 1. Create a new folder under `content/packs/<your_pack_id>/`.

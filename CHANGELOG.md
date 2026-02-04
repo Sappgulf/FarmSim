@@ -8,6 +8,19 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
+## [5.0.3] - 2026-02-06
+### Planned (2026-02-06) — Sprint G3: Monetization-Ready Cosmetics (Disabled by Default)
+- **Scope:** frontend, content, docs, QA
+- **What:** audit content pipeline + cosmetics surfaces, add entitlement foundation, extend pack metadata, add optional premium UI, and update QA harness coverage.
+- **Why:** support premium cosmetics later without changing default free experience.
+- **Verification:** `npm run smoke-test -- --run` (passes with ReactDOMTestUtils act deprecation warning + npm http-proxy warning).
+
+### Implemented (2026-02-06) — Sprint G3: Monetization-Ready Cosmetics (Disabled by Default)
+- **Scope:** frontend, content, docs, QA
+- **What:** added entitlement manager + persistence, premium pack metadata validation, premium UI badges/lock modal (debug-only), save fallback for locked cosmetics, and QA harness coverage for free/premium gating.
+- **Why:** establish a monetization-ready cosmetic layer without introducing payments or altering free-mode gameplay.
+- **Verification:** `npm run qa:full` (passes; ReactDOMTestUtils act deprecation warning + npm http-proxy warning + Browserslist data warning).
+
 ## [5.0.2] - 2026-02-05
 ### Planned (2026-02-05) — Sprint G2: Day 2–7 Retention
 - **Scope:** frontend, docs, QA

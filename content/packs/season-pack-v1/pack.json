@@ -5,6 +5,7 @@
   "description": "A cozy seasonal pack with winter-ready crops, decor set pieces, a hearth festival, and fresh Almanac notes.",
   "author": "FarmSim Core",
   "createdAt": "2026-02-03",
+  "access": "free",
   "contentCounts": {
     "crops": 3,
     "decor": 8,

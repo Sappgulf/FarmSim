@@ -2,6 +2,23 @@
 
 **Date:** 2026-02-05
 
+## Sprint G3 — Monetization-Ready Cosmetics (Disabled by Default) (2026-02-06)
+
+### Automated Checks
+- ✅ `npm run qa:full` (passes; ReactDOMTestUtils act deprecation warning + npm http-proxy warning + Browserslist data warning)
+
+### QA Harness (Debug-only)
+- [ ] `qa: entitlements_free_mode_parity`
+- [ ] `qa: entitlements_premium_gating`
+- [ ] `qa: entitlements_save_fallback`
+- [ ] `qa: content_validation`
+
+### Manual Sanity Checklist (Recommended)
+- [ ] Premium mode toggle works in Debug Stress Panel; release mode stays free.
+- [ ] Premium badges appear only in premium mode for premium packs.
+- [ ] Locked cosmetic attempts show the Premium Item modal.
+- [ ] Save with premium cosmetic reverts safely when not entitled.
+
 ## Sprint G2 — Day 2–7 Retention (2026-02-05)
 
 ### Automated Checks

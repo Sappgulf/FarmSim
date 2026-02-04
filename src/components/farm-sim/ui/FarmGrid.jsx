@@ -548,6 +548,9 @@ const FarmGrid = memo(() => {
     }
 
     const placed = actions.placeDecoration(index, selectedDecoration.id);
+    if (placed === 'locked') {
+      return;
+    }
     if (!placed) {
       actions.addNotification({
         message: 'Not enough decor items. Visit the shop to restock!',
