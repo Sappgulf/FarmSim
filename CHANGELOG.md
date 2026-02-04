@@ -16,7 +16,7 @@ Guiding rules:
 - (placeholder)
 
 ### Fixed
-- (placeholder)
+- Allowed the Preservation Facility to accept any available crop input instead of staying disabled when inventory contains crops.
 
 ### Performance
 - (placeholder)
