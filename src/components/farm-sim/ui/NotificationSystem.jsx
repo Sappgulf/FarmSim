@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useState, useRef } from 'react';
 import { useGame } from '../context/GameContext';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
@@ -7,6 +7,12 @@ import { logDebugAction } from '../../../utils/debugTools';
 
 // Individual Notification Component
 const NotificationItem = memo(({ notification, onClose }) => {
+  const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef(null);
+  const remainingTimeRef = useRef(null);
+  const pausedAtRef = useRef(null);
+  const startTimeRef = useRef(Date.now());
+
   const getNotificationStyle = (type) => {
     switch (type) {
       case 'success':
@@ -42,19 +48,81 @@ const NotificationItem = memo(({ notification, onClose }) => {
 
   const style = getNotificationStyle(notification.type);
 
-  // Auto-remove notification after 5 seconds (configurable per notification or default)
-  // Can be manually closed at any time
+  // Auto-remove notification after 3.5 seconds (AAA Polish requirement)
+  // Pauses on hover/touch for better UX
+  // Timer is properly cleaned up to prevent leaks
   useEffect(() => {
-    const duration = notification.duration || 5000; // Default 5 seconds
-    const timer = setTimeout(() => {
-      onClose(notification.id);
-    }, duration);
+    const duration = notification.duration || 3500; // Default 3.5 seconds
+    remainingTimeRef.current = duration;
+    startTimeRef.current = Date.now();
 
-    return () => clearTimeout(timer);
+    const startTimer = () => {
+      timerRef.current = setTimeout(() => {
+        onClose(notification.id);
+      }, remainingTimeRef.current);
+    };
+
+    startTimer();
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [notification.id, notification.duration, onClose]);
 
+  // Handle pause (on hover or touch)
+  const handlePause = () => {
+    if (!isPaused && timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+
+      // Calculate remaining time
+      const elapsed = Date.now() - startTimeRef.current;
+      const duration = notification.duration || 3500;
+      remainingTimeRef.current = Math.max(0, duration - elapsed);
+
+      pausedAtRef.current = Date.now();
+      setIsPaused(true);
+    }
+  };
+
+  // Handle resume (on mouse leave or touch end)
+  const handleResume = () => {
+    if (isPaused && remainingTimeRef.current > 0) {
+      startTimeRef.current = Date.now();
+
+      timerRef.current = setTimeout(() => {
+        onClose(notification.id);
+      }, remainingTimeRef.current);
+
+      pausedAtRef.current = null;
+      setIsPaused(false);
+    }
+  };
+
+  // Handle close with idempotent cleanup
+  const handleClose = (e) => {
+    e?.stopPropagation();
+
+    // Clear timer if exists (idempotent)
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
+    onClose(notification.id);
+  };
+
   return (
-    <Card className={`p-3 ${style.bgColor} ${style.borderColor} border-l-4 shadow-lg backdrop-blur-sm transition-all duration-300 notification-enter rounded-xl`}>
+    <Card
+      className={`p-3 ${style.bgColor} ${style.borderColor} border-l-4 shadow-lg backdrop-blur-sm transition-all duration-300 notification-enter rounded-xl ${isPaused ? 'ring-2 ring-offset-1 ring-gray-300' : ''}`}
+      onMouseEnter={handlePause}
+      onMouseLeave={handleResume}
+      onTouchStart={handlePause}
+      onTouchEnd={handleResume}
+    >
       <div className="flex items-start gap-2.5">
         <div className="flex-shrink-0 mt-0.5 p-1.5 rounded-lg bg-white/50">
           {style.icon}
@@ -72,17 +140,15 @@ const NotificationItem = memo(({ notification, onClose }) => {
           )}
         </div>
 
+        {/* Close button: 44px tap target (AAA Polish requirement) */}
         <Button
           size="sm"
           variant="ghost"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose(notification.id);
-          }}
-          className="flex-shrink-0 h-7 w-7 p-0 hover:bg-white/50 rounded-lg opacity-60 hover:opacity-100 transition-all"
+          onClick={handleClose}
+          className="flex-shrink-0 h-11 w-11 p-0 hover:bg-white/50 rounded-lg opacity-60 hover:opacity-100 transition-all touch-manipulation"
           aria-label="Close notification"
         >
-          <X className="w-3.5 h-3.5" />
+          <X className="w-5 h-5" />
         </Button>
       </div>
     </Card>
@@ -106,13 +172,20 @@ const NotificationSystem = memo(() => {
   }
 
   return (
-    <div className="fixed top-16 sm:top-20 right-2 sm:right-4 z-50 w-72 sm:w-80 max-w-[calc(100vw-1rem)]">
+    <div
+      className="fixed top-16 sm:top-20 right-2 sm:right-4 z-50 w-72 sm:w-80 max-w-[calc(100vw-1rem)]"
+      style={{
+        // Ensure safe area on iOS (avoid notch/status bar)
+        top: 'max(env(safe-area-inset-top, 0px) + 4rem, 4rem)',
+      }}
+    >
       <div className="space-y-2">
         {state.notifications.slice(0, 4).map((notification, index) => (
           <div
             key={notification.id}
             style={{
               animationDelay: `${index * 50}ms`,
+              // Use transform for performance (no layout thrash)
               transform: `translateY(${index * 2}px)`,
             }}
           >

@@ -4,6 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
+import { formatDisplayText } from '../../../../utils/textFormatters';
 
 // Pet types from original system
 const PET_TYPES = {
@@ -188,7 +189,7 @@ const PetsTab = memo(() => {
       });
     } else {
       actions.addNotification({
-        message: `Not enough ${need.type} supplies!`,
+        message: `Not enough ${formatDisplayText(need.type)} supplies!`,
         type: 'warning'
       });
     }
@@ -212,7 +213,7 @@ const PetsTab = memo(() => {
       actions.updateInventory(updatedInventory);
 
       actions.addNotification({
-        message: `Bought ${quantity} ${supplyType.replace('_', ' ')}!`,
+        message: `Bought ${quantity} ${formatDisplayText(supplyType)}!`,
         type: 'success'
       });
     } else {
@@ -253,7 +254,9 @@ const PetsTab = memo(() => {
                   <span className="text-2xl">{pet.emoji}</span>
                   <div>
                     <div className="font-medium">{pet.name}</div>
-                    <div className="text-xs text-gray-600">{pet.traits.join(', ')}</div>
+                    <div className="text-xs text-gray-600">
+                      {pet.traits.map(trait => formatDisplayText(trait)).join(', ')}
+                    </div>
                   </div>
                 </div>
                 <Button
