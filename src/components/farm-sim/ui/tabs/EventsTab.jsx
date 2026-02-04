@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
@@ -11,6 +11,7 @@ import { buildFarmCardData } from '../../../../utils/farmCard';
 import { getPlanSuggestions } from '../../../../utils/goalHints';
 import { getDailyAlmanacInsight, getDayKey } from '../../../../systems/almanac';
 import { getContentManager } from '../../../../content/ContentManager';
+import { getWeekKey } from '../../../../utils/retention';
 import PerfectHarvestModal from '../minigames/PerfectHarvestModal';
 import FarmCardShareButton from '../FarmCardShareButton';
 
@@ -30,6 +31,14 @@ const FALLBACK_RULE_SET = {
     miss: { coins: 4 },
   },
 };
+
+const WELCOME_BACK_GAP_HOURS = 6;
+const DAILY_DELIGHT_COINS = 5;
+const WEEKLY_VISIT_TIERS = [
+  { visits: 2, reward: { decorId: 'cozy_bench' }, label: 'Cozy Bench' },
+  { visits: 4, reward: { decorId: 'birdbath' }, label: 'Birdbath' },
+  { visits: 6, reward: { decorId: 'stone_path' }, label: 'Stone Path' },
+];
 
 const selectFestivalRuleSet = (rules = [], activeEvent, season) => {
   const list = Array.isArray(rules) ? rules : [];
@@ -60,8 +69,25 @@ const getPlayLimitLabel = (ruleSet, activeEvent) => {
 
 const EventsTab = memo(() => {
   const { state, actions } = useGame();
+  const [welcomeBackSnapshot] = useState(() => ({
+    lastSessionAt: state.retention?.lastSessionAt ?? null,
+    lastSeenDayKey: state.retention?.lastSeenDayKey ?? null,
+    lastSeenGameDay: state.retention?.lastSeenGameDay ?? 0,
+    lastSeenSeason: state.retention?.lastSeenSeason ?? null,
+    lastWelcomeBackShownAt: state.retention?.lastWelcomeBackShownAt ?? null,
+    lastWelcomeBackDayKey: state.retention?.lastWelcomeBackDayKey ?? null,
+  }));
   const content = getContentManager();
   const [eventHistory, setEventHistory] = useState([]);
+  const [showWelcomeBack, setShowWelcomeBack] = useState(() => {
+    const initialDayKey = getDayKey();
+    const lastSessionAt = welcomeBackSnapshot.lastSessionAt;
+    const hasGap = lastSessionAt
+      ? (Date.now() - lastSessionAt) >= WELCOME_BACK_GAP_HOURS * 60 * 60 * 1000
+      : false;
+    const alreadyShown = welcomeBackSnapshot.lastWelcomeBackDayKey === initialDayKey;
+    return (state.settings?.showWelcomeBackSummary !== false) && hasGap && !alreadyShown;
+  });
   const [showPerfectHarvest, setShowPerfectHarvest] = useState(false);
   const [lastReward, setLastReward] = useState(null);
   const [gameSummary, setGameSummary] = useState(null);
@@ -194,6 +220,7 @@ const EventsTab = memo(() => {
   const almanacInsight = getDailyAlmanacInsight(state.almanac, state.philosophy);
   const whatsNewTitle = content.strings?.ui?.whatsNewTitle || "What's New";
   const dayKey = getDayKey();
+  const currentWeekKey = getWeekKey();
   const whatsNewDismissed = state.whatsNew?.dismissed || {};
   const newPackHighlights = packHighlights.filter(
     (pack) => whatsNewDismissed[pack.id] !== pack.version
@@ -214,6 +241,41 @@ const EventsTab = memo(() => {
   const onboardingActive = !state.onboardingSkipped && (state.onboardingStep || 0) < 3;
   const isFirstDay = (state.almanac?.counters?.dayCount || 0) <= 0;
   const farmCardSpotlight = buildFarmCardData(state).spotlight;
+  const readyCropsCount = (state.plots || []).filter((plot) => plot?.state === 'ready').length;
+  const lastSeenSeason = welcomeBackSnapshot.lastSeenSeason || state.season?.current || 'spring';
+  const lastSeenDayCount = Math.max(1, welcomeBackSnapshot.lastSeenGameDay || 1);
+  const weeklyVisits = state.retention?.weeklyVisits || { weekKey: null, days: [], claimedTiers: [] };
+  const weeklyVisitCount = weeklyVisits.days?.length || 0;
+  const weeklyClaimedTiers = new Set(weeklyVisits.claimedTiers || []);
+  const dailyDelightClaimed = state.retention?.lastDailyDelightClaimDate === dayKey;
+  const dailyDelightCount = state.retention?.dailyDelightClaimCount || 0;
+  const sinceThenHighlights = useMemo(() => {
+    const highlights = [];
+    if (activeEvent) {
+      highlights.push(`Festival active: ${activeEvent.emoji} ${activeEvent.name}`);
+    } else if (seasonEvents.length > 0) {
+      highlights.push(`Seasonal events ready: ${seasonEvents.length} ${currentSeason} picks`);
+    }
+    if (readyCropsCount > 0) {
+      highlights.push(`${readyCropsCount} crop${readyCropsCount === 1 ? '' : 's'} ready to harvest`);
+    }
+    if (newPackHighlights.length > 0) {
+      highlights.push(`${newPackHighlights.length} new pack highlight${newPackHighlights.length === 1 ? '' : 's'}`);
+    }
+    return highlights.slice(0, 2);
+  }, [activeEvent, seasonEvents.length, currentSeason, readyCropsCount, newPackHighlights.length]);
+  const cozySuggestion = useMemo(() => {
+    if (activeEvent) {
+      return `Join the ${activeEvent.name} challenge for a cozy reward.`;
+    }
+    if (readyCropsCount > 0) {
+      return 'Harvest the ready crops for a quick, satisfying win.';
+    }
+    if (newPackHighlights.length > 0) {
+      return 'Peek the latest pack highlights on the Town Board.';
+    }
+    return `Plant a seasonal favorite for ${currentSeason}.`;
+  }, [activeEvent, readyCropsCount, newPackHighlights.length, currentSeason]);
 
   useEffect(() => {
     actions.generateCozyGoals(dayKey);
@@ -227,6 +289,57 @@ const EventsTab = memo(() => {
     ? 'Boosts and daily decor picks are ready in the Shop.'
     : 'Shop boosts unlock once you have a few more coins.';
   const vibeLine = state.season?.config?.description || 'The farm feels calm and ready for small wins.';
+
+  const handleDismissWelcomeBack = () => {
+    setShowWelcomeBack(false);
+    actions.updateRetention({
+      lastWelcomeBackShownAt: Date.now(),
+      lastWelcomeBackDayKey: dayKey,
+    });
+  };
+
+  const handleDailyDelightClaim = () => {
+    if (dailyDelightClaimed) return;
+    const nextCount = dailyDelightCount + 1;
+    actions.earnMoney(DAILY_DELIGHT_COINS);
+    actions.updateRetention({
+      lastDailyDelightClaimDate: dayKey,
+      dailyDelightClaimCount: nextCount,
+    });
+    actions.addNotification({
+      message: `🍵 Daily Delight claimed: +${DAILY_DELIGHT_COINS}🪙`,
+      type: 'success',
+    });
+
+    if (nextCount % 7 === 0) {
+      const nextPage = ALMANAC_PAGES.find((page) => !state.almanac?.unlocked?.[page.id]);
+      if (nextPage) {
+        actions.unlockAlmanacPage(nextPage.id);
+      }
+    }
+  };
+
+  const handleWeeklyRewardClaim = (tier) => {
+    if (!tier || weeklyClaimedTiers.has(tier.visits)) return;
+    if (weeklyVisitCount < tier.visits) return;
+    const decorId = tier.reward?.decorId;
+    if (!decorId) return;
+    const decorName = content.decorById?.[decorId]?.name || tier.label || decorId;
+    actions.updateInventory((inventory) => ({
+      ...inventory,
+      [decorId]: (inventory?.[decorId] || 0) + 1,
+    }));
+    actions.updateRetention({
+      weeklyVisits: {
+        ...weeklyVisits,
+        claimedTiers: [...(weeklyVisits.claimedTiers || []), tier.visits],
+      },
+    });
+    actions.addNotification({
+      message: `🎀 Weekly Visits reward: ${decorName}`,
+      type: 'success',
+    });
+  };
 
   const handleFestivalGameComplete = (tier, detail) => {
     const rewardTable = activeRuleSet?.rewards || {};
@@ -292,6 +405,152 @@ const EventsTab = memo(() => {
 
   return (
     <div className="space-y-4">
+      {newPackHighlights.length > 0 && (
+        <Card className="p-4 bg-gradient-to-r from-rose-50 to-amber-50 border-rose-200" data-qa="whats-new-card">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-rose-800">✨ {whatsNewTitle}</h3>
+              <p className="text-sm text-rose-700">Season packs just landed on the Town Board.</p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <Badge variant="outline" className="bg-rose-100 text-rose-700">
+                {newPackHighlights.length} Pack{newPackHighlights.length > 1 ? 's' : ''}
+              </Badge>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => actions.dismissWhatsNew(newPackHighlights)}
+                className="h-8 px-2 text-[11px]"
+              >
+                Dismiss
+              </Button>
+            </div>
+          </div>
+          <div className="mt-3 space-y-3 text-sm text-gray-700">
+            {newPackHighlights.map((highlight, index) => (
+              <div key={`${highlight.packName}-${index}`}>
+                <div className="font-semibold text-rose-700">{highlight.packName}</div>
+                <ul className="list-disc list-inside space-y-1">
+                  {highlight.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {showWelcomeBack && (
+        <Card className="p-4 bg-gradient-to-r from-amber-50 to-rose-50 border-amber-200" data-qa="welcome-back-card">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-amber-800">🌤️ Welcome Back</h3>
+              <p className="text-sm text-amber-700">
+                Last time: Day {lastSeenDayCount}, {lastSeenSeason.charAt(0).toUpperCase() + lastSeenSeason.slice(1)}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDismissWelcomeBack}
+              className="h-8 px-2 text-[11px]"
+              data-qa="welcome-back-dismiss"
+            >
+              Dismiss
+            </Button>
+          </div>
+          <div className="mt-3 space-y-2 text-sm text-gray-700">
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-amber-600">Since then</div>
+              {sinceThenHighlights.length > 0 ? (
+                <ul className="mt-1 space-y-1">
+                  {sinceThenHighlights.map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <span className="text-base">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="mt-1 text-xs text-amber-700">Your farm is calm and ready for a gentle return.</div>
+              )}
+            </div>
+            <div className="text-xs text-amber-700">
+              <span className="font-semibold">Next cozy thing:</span> {cozySuggestion}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <Card className="p-4 bg-gradient-to-r from-amber-50 to-emerald-50 border-amber-200" data-qa="daily-delight-card">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-emerald-800">🍵 Daily Delight</h3>
+            <p className="text-sm text-emerald-700">A tiny thank-you for stopping by.</p>
+          </div>
+          <Badge variant="outline" className="bg-emerald-100 text-emerald-700">
+            +{DAILY_DELIGHT_COINS}🪙
+          </Badge>
+        </div>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-gray-700">
+          <div>
+            {dailyDelightClaimed
+              ? 'Claimed for today. Come back tomorrow!'
+              : 'Claim once per real-world day.'}
+          </div>
+          <Button
+            size="sm"
+            onClick={handleDailyDelightClaim}
+            disabled={dailyDelightClaimed}
+            data-qa="daily-delight-claim"
+          >
+            {dailyDelightClaimed ? 'Claimed' : 'Claim'}
+          </Button>
+        </div>
+      </Card>
+
+      <Card className="p-4 bg-gradient-to-r from-sky-50 to-emerald-50 border-sky-200" data-qa="weekly-visits-card">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-sky-800">🗓️ Weekly Visits</h3>
+            <p className="text-sm text-sky-700">Cosmetic-only thank-yous for gentle consistency.</p>
+          </div>
+          <Badge variant="outline" className="bg-sky-100 text-sky-700">
+            {weeklyVisitCount} visit{weeklyVisitCount === 1 ? '' : 's'}
+          </Badge>
+        </div>
+        <div className="mt-3 text-xs text-sky-700">
+          Week window: {weeklyVisits.weekKey || currentWeekKey}
+        </div>
+        <div className="mt-3 space-y-2 text-sm text-gray-700">
+          {WEEKLY_VISIT_TIERS.map((tier) => {
+            const decor = content.decorById?.[tier.reward.decorId];
+            const rewardLabel = decor ? `${decor.emoji} ${decor.name}` : tier.label;
+            const isClaimed = weeklyClaimedTiers.has(tier.visits);
+            const isEligible = weeklyVisitCount >= tier.visits;
+            return (
+              <div key={tier.visits} className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-semibold text-sky-800">{tier.visits} visits</div>
+                  <div className="text-xs text-gray-600">Reward: {rewardLabel}</div>
+                </div>
+                <Button
+                  size="sm"
+                  variant={isEligible && !isClaimed ? 'default' : 'outline'}
+                  onClick={() => handleWeeklyRewardClaim(tier)}
+                  disabled={!isEligible || isClaimed}
+                  className="h-8 px-3 text-[11px]"
+                  data-qa={`weekly-visit-claim-${tier.visits}`}
+                >
+                  {isClaimed ? 'Claimed' : (isEligible ? 'Claim' : 'Locked')}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
       {(onboardingActive || isFirstDay) && (
         <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
           <div className="flex items-start justify-between gap-3">
@@ -439,42 +698,6 @@ const EventsTab = memo(() => {
           </div>
         )}
       </Card>
-
-      {newPackHighlights.length > 0 && (
-        <Card className="p-4 bg-gradient-to-r from-rose-50 to-amber-50 border-rose-200">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold text-rose-800">✨ {whatsNewTitle}</h3>
-              <p className="text-sm text-rose-700">Season packs just landed on the Town Board.</p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <Badge variant="outline" className="bg-rose-100 text-rose-700">
-                {newPackHighlights.length} Pack{newPackHighlights.length > 1 ? 's' : ''}
-              </Badge>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => actions.dismissWhatsNew(newPackHighlights)}
-                className="h-8 px-2 text-[11px]"
-              >
-                Dismiss
-              </Button>
-            </div>
-          </div>
-          <div className="mt-3 space-y-3 text-sm text-gray-700">
-            {newPackHighlights.map((highlight, index) => (
-              <div key={`${highlight.packName}-${index}`}>
-                <div className="font-semibold text-rose-700">{highlight.packName}</div>
-                <ul className="list-disc list-inside space-y-1">
-                  {highlight.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
 
       {/* Season Header */}
       <Card className="p-4 bg-gradient-to-r from-green-50 to-blue-50">

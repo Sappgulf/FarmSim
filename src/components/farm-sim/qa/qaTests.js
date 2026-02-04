@@ -3,6 +3,7 @@ import { getDayKey } from '../../../systems/almanac';
 import { revalidateContent } from '../../../content/ContentManager';
 import { buildFarmCardData, renderFarmCard } from '../../../utils/farmCard';
 import { MEMORIES } from '../../../data/identity';
+import { getWeekKey } from '../../../utils/retention';
 import {
   QA_SAVE_KEY,
   QA_BACKUP_SAVE_KEY,
@@ -390,6 +391,153 @@ export const QA_TESTS = [
         throw new Error('Spotlight selection did not persist.');
       }
       return { detail: 'Theme, name, and spotlight persisted through save/load.' };
+    },
+  },
+  {
+    id: 'welcome_back_gating',
+    name: 'Welcome Back Gating',
+    timeoutMs: 8000,
+    run: async (ctx) => {
+      const dayKey = getDayKey();
+      ctx.actions.updateRetention({
+        lastSessionAt: Date.now() - DAY_MS,
+        lastWelcomeBackDayKey: '2000-01-01',
+        lastSeenGameDay: 2,
+        lastSeenSeason: 'spring',
+      });
+      await ctx.switchToTab('events');
+      await ctx.sleep(120);
+      const card = document.querySelector('[data-qa="welcome-back-card"]');
+      if (!card) {
+        throw new Error('Welcome Back card did not appear.');
+      }
+      card.querySelector('[data-qa="welcome-back-dismiss"]')?.click();
+      await ctx.sleep(120);
+      if (document.querySelector('[data-qa="welcome-back-card"]')) {
+        throw new Error('Welcome Back card did not dismiss.');
+      }
+      await ctx.switchToTab('farming');
+      await ctx.switchToTab('events');
+      await ctx.sleep(120);
+      if (document.querySelector('[data-qa="welcome-back-card"]')) {
+        throw new Error('Welcome Back card reappeared after dismissal.');
+      }
+      if (ctx.state().retention?.lastWelcomeBackDayKey !== dayKey) {
+        throw new Error('Welcome Back dismissal did not persist day key.');
+      }
+      return { detail: 'Welcome Back shows once and stays dismissed for the day.' };
+    },
+  },
+  {
+    id: 'daily_delight_idempotent',
+    name: 'Daily Delight Idempotency',
+    timeoutMs: 8000,
+    run: async (ctx) => {
+      const dayKey = getDayKey();
+      ctx.actions.updateRetention({ lastDailyDelightClaimDate: '2000-01-01' });
+      await ctx.switchToTab('events');
+      await ctx.sleep(120);
+      const claim = document.querySelector('[data-qa="daily-delight-claim"]');
+      if (!claim) {
+        throw new Error('Daily Delight claim button missing.');
+      }
+      if (claim.disabled) {
+        throw new Error('Daily Delight claim button unexpectedly disabled.');
+      }
+      claim.click();
+      await ctx.sleep(120);
+      const claimAfter = document.querySelector('[data-qa="daily-delight-claim"]');
+      if (!claimAfter?.disabled) {
+        throw new Error('Daily Delight allowed duplicate claim.');
+      }
+      if (ctx.state().retention?.lastDailyDelightClaimDate !== dayKey) {
+        throw new Error('Daily Delight did not persist claim date.');
+      }
+      ctx.actions.updateRetention({ lastDailyDelightClaimDate: '2000-01-01' });
+      await ctx.sleep(120);
+      const claimNext = document.querySelector('[data-qa="daily-delight-claim"]');
+      if (claimNext?.disabled) {
+        throw new Error('Daily Delight did not reset when date advanced.');
+      }
+      return { detail: 'Daily Delight claim is single-use per day and resets.' };
+    },
+  },
+  {
+    id: 'weekly_visits_rewards',
+    name: 'Weekly Visits Rewards',
+    timeoutMs: 8000,
+    run: async (ctx) => {
+      const now = Date.now();
+      const weekKey = getWeekKey(now);
+      const days = [
+        getDayKey(now - DAY_MS * 3),
+        getDayKey(now - DAY_MS * 2),
+        getDayKey(now - DAY_MS),
+        getDayKey(now),
+      ];
+      ctx.actions.updateRetention({
+        weeklyVisits: {
+          weekKey,
+          days,
+          claimedTiers: [],
+        },
+      });
+      await ctx.switchToTab('events');
+      await ctx.sleep(120);
+      const claimTwo = document.querySelector('[data-qa="weekly-visit-claim-2"]');
+      const claimFour = document.querySelector('[data-qa="weekly-visit-claim-4"]');
+      if (!claimTwo || !claimFour) {
+        throw new Error('Weekly Visits claim buttons missing.');
+      }
+      if (claimTwo.disabled || claimFour.disabled) {
+        throw new Error('Weekly Visits claim buttons unexpectedly locked.');
+      }
+      claimTwo.click();
+      await ctx.sleep(120);
+      claimFour.click();
+      await ctx.sleep(120);
+      const claimed = ctx.state().retention?.weeklyVisits?.claimedTiers || [];
+      if (!claimed.includes(2) || !claimed.includes(4)) {
+        throw new Error('Weekly Visits rewards did not persist claimed tiers.');
+      }
+      return { detail: 'Weekly Visits tiers grant once per week.' };
+    },
+  },
+  {
+    id: 'retention_save_load',
+    name: 'Retention Save/Load',
+    timeoutMs: 8000,
+    run: async (ctx) => {
+      const now = Date.now();
+      const weekKey = getWeekKey(now);
+      const claimDate = getDayKey(now);
+      ctx.actions.updateRetention({
+        lastDailyDelightClaimDate: claimDate,
+        dailyDelightClaimCount: 3,
+        weeklyVisits: {
+          weekKey,
+          days: [claimDate],
+          claimedTiers: [2],
+        },
+      });
+      const saveResult = saveStateToStorage(ctx.state(), {
+        key: QA_SAVE_KEY,
+        backupKey: QA_BACKUP_SAVE_KEY,
+      });
+      if (!saveResult.success) {
+        throw new Error('Failed to save QA state for retention check.');
+      }
+      const loaded = loadSavedStateFromKey(QA_SAVE_KEY);
+      if (!loaded) {
+        throw new Error('Failed to load QA save for retention check.');
+      }
+      if (loaded.retention?.lastDailyDelightClaimDate !== claimDate) {
+        throw new Error('Retention daily claim date mismatch after load.');
+      }
+      if (!loaded.retention?.weeklyVisits?.claimedTiers?.includes(2)) {
+        throw new Error('Retention weekly visits not persisted after load.');
+      }
+      return { detail: 'Retention fields persisted through save/load.' };
     },
   },
   {

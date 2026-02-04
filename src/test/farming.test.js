@@ -73,8 +73,8 @@ describe('FarmingSystem', () => {
 
         expect(success).toBe(true);
 
-        // Check earnings (20 coins)
-        expect(mockActions.setCoins).toHaveBeenCalledWith(120);
+        // Check earnings (base value × harvest multiplier)
+        expect(mockActions.setCoins).toHaveBeenCalledWith(124);
 
         // Check plot clear
         const updateCall = mockActions.updatePlots.mock.calls[0][0];

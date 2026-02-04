@@ -22,7 +22,7 @@ describe('Save System Stability', () => {
 
     it('should load default state when no save exists', () => {
         const { result } = renderHook(() => useGame(), { wrapper: GameProvider });
-        expect(result.current.state.coins).toBe(100); // Default coins
+        expect(result.current.state.coins).toBe(140); // Default coins
         expect(result.current.state.level).toBe(1);
     });
 

@@ -1,6 +1,24 @@
 # QA Report — QA Harness
 
-**Date:** 2026-02-04
+**Date:** 2026-02-05
+
+## Sprint G2 — Day 2–7 Retention (2026-02-05)
+
+### Automated Checks
+- ✅ `npm run test -- --run` (passes; ReactDOMTestUtils act deprecation warning + npm http-proxy warning)
+
+### QA Harness (Debug-only)
+- [ ] `qa: welcome_back_gating`
+- [ ] `qa: daily_delight_idempotent`
+- [ ] `qa: weekly_visits_rewards`
+- [ ] `qa: retention_save_load`
+
+### Manual Sanity Checklist (Recommended)
+- [ ] Welcome Back shows after a meaningful gap and dismisses once per day.
+- [ ] Daily Delight claims once per real-world day; reload does not re-claim.
+- [ ] Weekly Visits tiers grant once per week; missing days do not punish.
+- [ ] Save/reload preserves retention fields without errors.
+- [ ] Mobile 375px: Town Board cards fit with no horizontal scroll.
 
 ## Sprint G1 — Release Discipline & Versioning (2026-02-04)
 

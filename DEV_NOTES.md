@@ -48,7 +48,7 @@
 - **Daily Quests**: daily reset logic + streak bonuses. (`src/components/farm-sim/ui/tabs/DailyQuestsTab.jsx`, `src/components/farm-sim/systems/QuestSystem.js`)
 - **Daily Challenges**: daily reset + streaks. (`src/components/farm-sim/ui/tabs/ChallengesTab.jsx`)
 - **Mystery Shop**: rotating pack offerings. (`src/components/farm-sim/ui/tabs/MysteryShopTab.jsx`)
-- **Town Board**: Cozy Goals prompts + “What’s New” pack highlights with dismiss tracking. (`src/components/farm-sim/ui/tabs/EventsTab.jsx`, `src/utils/cozyGoals.js`)
+- **Town Board**: Cozy Goals prompts, “What’s New” highlights, Welcome Back summary, Daily Delight, and Weekly Visits rewards. (`src/components/farm-sim/ui/tabs/EventsTab.jsx`, `src/utils/cozyGoals.js`)
 
 ### Collections / Achievements / Scrapbook / Almanac / Philosophy
 - **Achievements**: achievements data + tab UI. (`src/components/farm-sim/constants/achievementData.js`, `src/components/farm-sim/ui/tabs/AchievementsTab.jsx`)
@@ -78,7 +78,7 @@
 - **Sound + Music systems**: `SoundSystem` + `MusicSystem` with settings toggles. (`src/components/farm-sim/systems/SoundSystem.js`, `src/components/farm-sim/systems/MusicSystem.js`, `src/components/farm-sim/ui/tabs/settings/AudioSettings.jsx`)
 
 ### Save / Load / Versioning
-- **Save/Migrate**: `GamePersistence` handles versioned saves + fallback backup. (`src/components/farm-sim/context/GamePersistence.js`)
+- **Save/Migrate**: `GamePersistence` handles versioned saves + fallback backup, including retention state. (`src/components/farm-sim/context/GamePersistence.js`)
 - **App version**: single source of truth in `src/config/release.js` (APP_VERSION + release mode flag; save schema version remains separate).
 - **Almanac state**: stored under `state.almanac` (unlocked pages, dates, counters, last day key). (`src/components/farm-sim/context/GameReducer.js`)
 - **Save UI**: Settings tab manual save/load. (`src/components/farm-sim/ui/tabs/SettingsTab.jsx`)
