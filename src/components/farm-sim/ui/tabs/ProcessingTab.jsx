@@ -4,6 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
+import { formatDisplayLabel } from '../../../../utils/textFormat';
 
 // Processing facilities from original system
 const PROCESSING_FACILITIES = {
@@ -87,7 +88,7 @@ const ProcessingTab = memo(() => {
           });
 
           actions.addNotification({
-            message: `Processing complete! Produced ${item.quantity} ${item.output.replace('_', ' ')}`,
+            message: `Processing complete! Produced ${item.quantity} ${formatDisplayLabel(item.output)}`,
             type: 'success'
           });
         });
@@ -216,7 +217,7 @@ const ProcessingTab = memo(() => {
     actions.updateProcessingQueue([...processingQueue, processingItem]);
 
     actions.addNotification({
-      message: `Started processing ${facility.output.replace('_', ' ')} in ${facility.name}`,
+      message: `Started processing ${formatDisplayLabel(facility.output)} in ${facility.name}`,
       type: 'info'
     });
   };
@@ -237,7 +238,7 @@ const ProcessingTab = memo(() => {
     actions.updateProcessingQueue(updatedQueue);
 
     actions.addNotification({
-      message: `Collected ${item.quantity} ${item.output.replace('_', ' ')}`,
+      message: `Collected ${item.quantity} ${formatDisplayLabel(item.output)}`,
       type: 'success'
     });
   };
@@ -266,7 +267,7 @@ const ProcessingTab = memo(() => {
     actions.setCoins(state.coins + totalValue);
 
     actions.addNotification({
-      message: `Sold ${quantity} ${itemType.replace('_', ' ')} for ${totalValue}🪙`,
+      message: `Sold ${quantity} ${formatDisplayLabel(itemType)} for ${totalValue}🪙`,
       type: 'success'
     });
   };
@@ -328,7 +329,7 @@ const ProcessingTab = memo(() => {
 
                 <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
                   <span>Input: {facility.input}</span>
-                  <span>Output: {facility.output.replace('_', ' ')}</span>
+                  <span>Output: {formatDisplayLabel(facility.output)}</span>
                   <span>Ratio: {facility.ratio}:1</span>
                 </div>
 
@@ -378,7 +379,7 @@ const ProcessingTab = memo(() => {
                   {facility.isProcessing && (
                     <div className="mb-3">
                       <div className="flex justify-between text-sm mb-1">
-                        <span>Processing: {facility.currentRecipe?.replace('_', ' ')}</span>
+                        <span>Processing: {formatDisplayLabel(facility.currentRecipe)}</span>
                         <span>{getTimeLeft(facility.finishTime)}</span>
                       </div>
                       <Progress
@@ -418,7 +419,7 @@ const ProcessingTab = memo(() => {
               <Card key={item.id} className="p-2">
                 <div className="flex justify-between items-center">
                   <div>
-                    <span className="font-medium">{item.output.replace('_', ' ')}</span>
+                    <span className="font-medium">{formatDisplayLabel(item.output)}</span>
                     <span className="text-sm text-gray-600 ml-2">
                       (Quantity: {item.quantity})
                     </span>
@@ -459,7 +460,7 @@ const ProcessingTab = memo(() => {
                 <Card key={product} className="p-3">
                   <div className="flex justify-between items-center">
                     <div>
-                      <span className="font-medium">{product.replace('_', ' ')}</span>
+                      <span className="font-medium">{formatDisplayLabel(product)}</span>
                       <span className="text-sm text-gray-600 ml-2">
                         Stock: {quantity} • Sell: {sellPrice}🪙 each
                       </span>

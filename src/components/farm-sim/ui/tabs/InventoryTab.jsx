@@ -4,6 +4,7 @@ import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Button } from '../../../ui/button';
 import { DECORATION_DATA } from '../../constants/decorData';
+import { formatDisplayLabel } from '../../../../utils/textFormat';
 
 const InventoryTab = memo(() => {
   const { state, actions } = useGame();
@@ -82,7 +83,7 @@ const InventoryTab = memo(() => {
               <div key={itemId} className="flex justify-between items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{itemEmojis[itemId] || '📦'}</span>
-                  <span className="font-medium capitalize">{itemId.replace('_', ' ')}</span>
+                  <span className="font-medium">{formatDisplayLabel(itemId)}</span>
                 </div>
                 <Badge variant="outline" className="text-sm">
                   x{quantity}
@@ -112,7 +113,7 @@ const InventoryTab = memo(() => {
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{decor?.emoji || '🪴'}</span>
                     <div>
-                      <div className="font-medium">{decor?.name || itemId}</div>
+                      <div className="font-medium">{decor?.name || formatDisplayLabel(itemId)}</div>
                       <div className="text-xs text-rose-600">{decor?.description}</div>
                     </div>
                   </div>
