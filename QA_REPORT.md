@@ -2,6 +2,23 @@
 
 **Date:** 2026-02-04
 
+## Sprint G1 — Release Discipline & Versioning (2026-02-04)
+
+### Automated Checks
+- ✅ `npm run smoke-test -- --run` (passes; ReactDOMTestUtils act deprecation warning + npm http-proxy warning)
+
+### Release Gates (Dev-only)
+- [ ] QA harness suite passes (run via QA Mode panel).
+- [ ] Content validation errors = 0 (warnings logged).
+- [ ] Console errors = 0 during normal play.
+- [ ] Latest save loads without migration errors.
+- [ ] APP_VERSION format validated.
+
+### Manual Sanity Checklist (Recommended)
+- [ ] “What’s New” modal shows once per version and dismisses cleanly.
+- [ ] Debug/QA panels hidden in release mode builds.
+- [ ] Settings shows APP_VERSION + release mode label.
+
 ## Sprint F2 — Shareability + Identity Lock (2026-02-04)
 
 ### Automated Checks

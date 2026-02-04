@@ -62,6 +62,10 @@ When you finish a task, produce:
 - Files changed (exact list)
 - Remaining known issues (if any)
 
+## Release Discipline
+- Follow the release checklist and versioning rules in `RELEASE.md`.
+- Keep APP_VERSION (app release) and SAVE_VERSION (save schema) clearly separated.
+
 ## Forbidden Moves
 - Full rewrites without explicit instruction.
 - Introducing new architecture (framework/state system/router) unless requested.

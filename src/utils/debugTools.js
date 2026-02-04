@@ -1,8 +1,11 @@
+import { isReleaseMode } from '../config/release';
+
 const DEBUG_PARAM = 'debug';
 const ACTION_TRACE_LIMIT = 100;
 
 export const isDebugMode = () => {
   if (typeof window === 'undefined') return false;
+  if (isReleaseMode()) return false;
   return new URLSearchParams(window.location.search).get(DEBUG_PARAM) === '1';
 };
 

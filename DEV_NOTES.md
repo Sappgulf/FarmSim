@@ -79,6 +79,7 @@
 
 ### Save / Load / Versioning
 - **Save/Migrate**: `GamePersistence` handles versioned saves + fallback backup. (`src/components/farm-sim/context/GamePersistence.js`)
+- **App version**: single source of truth in `src/config/release.js` (APP_VERSION + release mode flag; save schema version remains separate).
 - **Almanac state**: stored under `state.almanac` (unlocked pages, dates, counters, last day key). (`src/components/farm-sim/context/GameReducer.js`)
 - **Save UI**: Settings tab manual save/load. (`src/components/farm-sim/ui/tabs/SettingsTab.jsx`)
 

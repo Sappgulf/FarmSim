@@ -5,6 +5,7 @@ import {
   getSprinklerConfig,
   getWateringBonus,
 } from '../../../utils/farmUpgrades';
+import { isDevelopmentMode } from '../../../config/release';
 
 /**
  * Farming System - Handles crop growth, planting, harvesting
@@ -80,7 +81,7 @@ export class FarmingSystem {
       return; // Nothing to update - skip expensive iteration
     }
 
-    if (import.meta.env.MODE === 'development') {
+    if (isDevelopmentMode()) {
       console.debug('[farm]', `Updating ${growingCount} growing crops`);
     }
 
@@ -133,7 +134,7 @@ export class FarmingSystem {
 
       // Check if ready to harvest - use a more lenient threshold
       if (progress >= 0.90) {
-        if (import.meta.env.MODE === 'development') {
+        if (isDevelopmentMode()) {
           console.debug('[farm]', `🌾 ${plot.crop.name} ready`, { progress, timeSince: timeSincePlanted.toFixed(1), effective: effectiveGrowthTime.toFixed(1) });
         }
         hasChanges = true;
@@ -155,7 +156,7 @@ export class FarmingSystem {
       // Still growing - update progress only when something meaningful changed
       if (shouldUpdate) {
         if (Math.random() < 0.01) { // Log 1% of the time
-          if (import.meta.env.MODE === 'development') {
+          if (isDevelopmentMode()) {
             console.debug('[farm]', `🌱 ${plot.crop.name} growing: ${(progress * 100).toFixed(1)}%, stage ${currentStage}/${totalStages}, water=${plot.waterLevel}`);
           }
         }
@@ -305,7 +306,7 @@ export class FarmingSystem {
       ...(shouldBoostFirstCrop ? { growthBoost: 1.5 } : {}),
     };
 
-    if (import.meta.env.MODE === 'development') {
+    if (isDevelopmentMode()) {
       console.debug('[farm]', `Planted ${cropData.name}`, { plotIndex, growthTime: cropData.growthTime });
     }
 

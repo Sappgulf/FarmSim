@@ -10,6 +10,7 @@ import {
   isDebugMode,
   logDebugAction,
 } from '../../../utils/debugTools';
+import { canRelease } from '../../../utils/releaseTools';
 import {
   QA_BACKUP_SAVE_KEY,
   QA_SAVE_KEY,
@@ -44,6 +45,7 @@ const QAModePanel = memo(() => {
   const debugEnabled = isDebugMode();
   const [results, setResults] = useState([]);
   const [suiteSummary, setSuiteSummary] = useState(null);
+  const [releaseSummary, setReleaseSummary] = useState(null);
   const [running, setRunning] = useState(false);
   const [activeTestId, setActiveTestId] = useState(null);
   const [copyStatus, setCopyStatus] = useState(null);
@@ -287,6 +289,9 @@ const QAModePanel = memo(() => {
 
     setSuiteSummary(summary);
     setActiveTestId(null);
+    if (typeof window !== 'undefined') {
+      window.__farmQaLastSummary = summary;
+    }
 
     actions.debugLoadState?.(originalState);
     await sleep(80);
@@ -318,6 +323,11 @@ const QAModePanel = memo(() => {
       setTimeout(() => setCopyStatus(null), 2000);
     }
   }, [buildReport, results, suiteSummary]);
+
+  const handleReleaseCheck = useCallback(() => {
+    const summary = canRelease();
+    setReleaseSummary(summary);
+  }, []);
 
   const handleClearQaData = useCallback(() => {
     clearSaveKey(QA_SAVE_KEY);
@@ -376,6 +386,21 @@ const QAModePanel = memo(() => {
           </Button>
         </div>
 
+        {releaseSummary && (
+          <div className="rounded-lg border border-slate-700 bg-slate-950/60 p-2 text-[11px] text-slate-300">
+            <div className="font-semibold text-slate-200">
+              Release Gates: {releaseSummary.status.toUpperCase()}
+            </div>
+            <ul className="mt-1 space-y-1">
+              {releaseSummary.gates.map((gate) => (
+                <li key={gate.id}>
+                  {gate.status.toUpperCase()}: {gate.label} — {gate.detail}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="max-h-64 overflow-auto space-y-2 pr-1">
           {results.map((result) => (
             <details key={result.id} className="rounded-lg border border-slate-700 bg-slate-950/60 p-2">
@@ -426,13 +451,16 @@ const QAModePanel = memo(() => {
           ))}
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
+          <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={handleReleaseCheck}>
+            Check Release Gates
+          </Button>
           <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={handleClearQaData}>
             Clear QA Data
           </Button>
-          <div className="text-[10px] text-slate-500">
-            Debug-only QA harness. No production impact.
-          </div>
+        </div>
+        <div className="text-[10px] text-slate-500">
+          Debug-only QA harness. No production impact.
         </div>
       </Card>
     </div>

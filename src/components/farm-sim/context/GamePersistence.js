@@ -1,8 +1,10 @@
 /**
  * GamePersistence - Save/Load, Migration, and Initialization logic for FarmSim
  */
+import { isDevelopmentMode } from '../../../config/release';
 
-export const SAVE_VERSION = 7;
+// Save schema version (separate from APP_VERSION in src/config/release.js).
+export const SAVE_VERSION = 8;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -91,7 +93,7 @@ export function migrateSaveData(savedData) {
 
         // Version 0 → 1: Add save version and any new fields
         if (saveVersion < 1) {
-            if (import.meta.env.MODE === 'development') {
+            if (isDevelopmentMode()) {
                 console.debug('[farm]', 'Migrating save from version 0 to 1');
             }
             migratedData.saveVersion = 1;
@@ -192,6 +194,12 @@ export function migrateSaveData(savedData) {
             migratedData.lastUnlockedAlmanacId = typeof migratedData.lastUnlockedAlmanacId === 'string'
                 ? migratedData.lastUnlockedAlmanacId
                 : null;
+        }
+
+        // Version 7 → 8: What's New version tracking
+        if (saveVersion < 8) {
+            migratedData.whatsNew = migratedData.whatsNew || {};
+            migratedData.whatsNew.lastSeenVersion = null;
         }
 
         // Validate critical fields
@@ -312,6 +320,9 @@ export function migrateSaveData(savedData) {
             : [];
         migratedData.whatsNew = ensureObject(migratedData.whatsNew, { dismissed: {} });
         migratedData.whatsNew.dismissed = ensureObject(migratedData.whatsNew.dismissed, {});
+        migratedData.whatsNew.lastSeenVersion = typeof migratedData.whatsNew.lastSeenVersion === 'string'
+            ? migratedData.whatsNew.lastSeenVersion
+            : null;
         migratedData.seasonalEvents = Array.isArray(migratedData.seasonalEvents) ? migratedData.seasonalEvents : [];
         migratedData.activeSeasonalEvents = Array.isArray(migratedData.activeSeasonalEvents) ? migratedData.activeSeasonalEvents : [];
         migratedData.dailyChallenges = Array.isArray(migratedData.dailyChallenges) ? migratedData.dailyChallenges : [];

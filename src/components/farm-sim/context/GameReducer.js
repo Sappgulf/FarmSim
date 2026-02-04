@@ -84,6 +84,7 @@ export const initialState = {
     },
     whatsNew: {
         dismissed: {},
+        lastSeenVersion: null,
     },
     seasonalEvents: [],
     activeSeasonalEvents: [],

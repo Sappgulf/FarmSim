@@ -1,0 +1,69 @@
+import React, { memo, useEffect, useMemo, useState } from 'react';
+import { useGame } from '../context/GameContext';
+import { Card } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { getLatestReleaseNotes } from '../../../utils/changelog';
+import { APP_VERSION } from '../../../config/release';
+import { getContentManager } from '../../../content/ContentManager';
+
+const WhatsNewModal = memo(() => {
+  const { state, actions } = useGame();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const content = getContentManager();
+  const releaseNotes = useMemo(() => getLatestReleaseNotes(), []);
+  const hasNotes = releaseNotes.sections?.length > 0;
+  const lastSeenVersion = state.whatsNew?.lastSeenVersion || null;
+  const shouldShow = hasNotes && lastSeenVersion !== APP_VERSION;
+
+  useEffect(() => {
+    if (shouldShow) {
+      setIsOpen(true);
+    }
+  }, [shouldShow]);
+
+  const handleDismiss = () => {
+    const current = state.whatsNew || { dismissed: {} };
+    actions.updateWhatsNew({
+      ...current,
+      lastSeenVersion: APP_VERSION,
+    });
+    setIsOpen(false);
+  };
+
+  if (!isOpen) return null;
+
+  const title = content.strings?.ui?.whatsNewTitle || "What's New";
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4 py-6">
+      <Card className="w-full max-w-lg bg-white shadow-xl">
+        <div className="border-b border-emerald-100 p-4">
+          <div className="text-xs uppercase tracking-wide text-emerald-600">{releaseNotes.title}</div>
+          <h2 className="mt-1 text-lg font-semibold text-emerald-900">✨ {title}</h2>
+        </div>
+        <div className="max-h-[70vh] space-y-4 overflow-y-auto p-4 text-sm text-gray-700">
+          {releaseNotes.sections.map((section) => (
+            <div key={section.title}>
+              <div className="text-xs uppercase tracking-wide text-emerald-500">{section.title}</div>
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                {section.items.map((item, index) => (
+                  <li key={`${section.title}-${index}`}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center justify-end gap-2 border-t border-emerald-100 p-4">
+          <Button size="sm" onClick={handleDismiss}>
+            Dismiss
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+});
+
+WhatsNewModal.displayName = 'WhatsNewModal';
+
+export default WhatsNewModal;

@@ -2,6 +2,7 @@
  * Season System - Handles seasonal cycles and bonuses
  * 4 seasons, each lasting 2 minutes (120 seconds)
  */
+import { isDevelopmentMode } from '../../../config/release';
 
 export const SEASONS = {
   SPRING: 'spring',
@@ -170,7 +171,7 @@ export class SeasonSystem {
     const nextSeason = seasons[nextIndex];
     const nextConfig = SEASON_CONFIG[nextSeason];
 
-    if (import.meta.env.MODE === 'development') {
+    if (isDevelopmentMode()) {
       console.debug('[farm]', `Season changed: ${currentSeason} → ${nextSeason}`);
     }
 
