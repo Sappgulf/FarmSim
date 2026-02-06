@@ -280,7 +280,7 @@ const DailyQuestsTab = memo(() => {
             <span>14 Days</span>
             <span className="font-semibold">+75% Rewards {streak >= 14 && '✓'}</span>
           </div>
-          <div className={`flex justify-between p-2 rounded ${streak >= 30 ? 'bg-gold-100 border-2 border-yellow-500' : ''}`}>
+          <div className={`flex justify-between p-2 rounded ${streak >= 30 ? 'bg-yellow-100 border-2 border-yellow-500' : ''}`}>
             <span>30 Days 🏆</span>
             <span className="font-semibold">+100% Rewards {streak >= 30 && '✓'}</span>
           </div>

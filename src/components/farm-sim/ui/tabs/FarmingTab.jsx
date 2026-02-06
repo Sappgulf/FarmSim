@@ -278,9 +278,27 @@ const FarmingTab = memo(() => {
           <div>
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm">Farm Efficiency</span>
-              <span className="text-sm font-medium">85%</span>
+              <span className="text-sm font-medium">
+                {(() => {
+                  const plotsArray = Array.isArray(state.plots) ? state.plots : [];
+                  if (plotsArray.length === 0) return '0%';
+                  const active = plotsArray.filter(p => p.state !== 'empty').length;
+                  const healthy = plotsArray.filter(p => p.state !== 'empty' && p.state !== 'withered').length;
+                  const eff = Math.round(((active / plotsArray.length) * 0.5 + (active > 0 ? healthy / active : 1) * 0.5) * 100);
+                  return `${eff}%`;
+                })()}
+              </span>
             </div>
-            <Progress value={85} className="h-2" />
+            <Progress
+              value={(() => {
+                const plotsArray = Array.isArray(state.plots) ? state.plots : [];
+                if (plotsArray.length === 0) return 0;
+                const active = plotsArray.filter(p => p.state !== 'empty').length;
+                const healthy = plotsArray.filter(p => p.state !== 'empty' && p.state !== 'withered').length;
+                return Math.round(((active / plotsArray.length) * 0.5 + (active > 0 ? healthy / active : 1) * 0.5) * 100);
+              })()}
+              className="h-2"
+            />
           </div>
         </div>
       </Card>

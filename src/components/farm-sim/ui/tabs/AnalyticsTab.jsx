@@ -25,7 +25,7 @@ const AnalyticsTab = memo(() => {
     const estimatedEarnings = totalHarvests * 15; // Rough estimate based on average crop value
     
     // Calculate efficiency metrics
-    const plotUtilization = (activePlots.length / state.plots.length) * 100;
+    const plotUtilization = state.plots.length > 0 ? (activePlots.length / state.plots.length) * 100 : 0;
     const harvestReadiness = readyPlots.length > 0 ? (readyPlots.length / activePlots.length) * 100 : 0;
     const healthRate = activePlots.length > 0 ? ((activePlots.length - witheredPlots.length) / activePlots.length) * 100 : 100;
     
@@ -124,13 +124,24 @@ const AnalyticsTab = memo(() => {
     });
   }, [analytics, state]);
 
+  // Static color class mapping (dynamic Tailwind classes get purged in production)
+  const colorClasses = {
+    blue:   { border: 'border-blue-500',   bg: 'bg-blue-100',   text: 'text-blue-600' },
+    green:  { border: 'border-green-500',  bg: 'bg-green-100',  text: 'text-green-600' },
+    yellow: { border: 'border-yellow-500', bg: 'bg-yellow-100', text: 'text-yellow-600' },
+    purple: { border: 'border-purple-500', bg: 'bg-purple-100', text: 'text-purple-600' },
+    red:    { border: 'border-red-500',    bg: 'bg-red-100',    text: 'text-red-600' },
+  };
+
   // Stat card component
-  const StatCard = ({ icon: Icon, label, value, change, trend, color = 'blue' }) => (
-    <Card className={`p-4 border-l-4 border-${color}-500`}>
+  const StatCard = ({ icon: Icon, label, value, change, trend, color = 'blue' }) => {
+    const cls = colorClasses[color] || colorClasses.blue;
+    return (
+    <Card className={`p-4 border-l-4 ${cls.border}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`p-2 bg-${color}-100 rounded-lg`}>
-            <Icon className={`w-5 h-5 text-${color}-600`} />
+          <div className={`p-2 ${cls.bg} rounded-lg`}>
+            <Icon className={`w-5 h-5 ${cls.text}`} />
           </div>
           <div>
             <p className="text-sm text-gray-600">{label}</p>
@@ -151,7 +162,8 @@ const AnalyticsTab = memo(() => {
         </div>
       </div>
     </Card>
-  );
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -187,16 +199,12 @@ const AnalyticsTab = memo(() => {
           icon={DollarSign}
           label="Total Coins"
           value={analytics.progression.coins.toLocaleString()}
-          change="+24%"
-          trend="up"
           color="green"
         />
         <StatCard
           icon={Zap}
           label="XP Per Hour"
           value={analytics.performance.xpPerHour}
-          change="+12%"
-          trend="up"
           color="yellow"
         />
         <StatCard
