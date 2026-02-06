@@ -23,9 +23,15 @@ if ("serviceWorker" in navigator) {
     }
 
     // Production: register service worker
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
   });
 }
+
+// PWA install prompt - store the event so the app can trigger install later
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  window.__pwaInstallPrompt = e;
+});
 
 // Load the full game with error boundary
 ReactDOM.createRoot(document.getElementById("root")).render(

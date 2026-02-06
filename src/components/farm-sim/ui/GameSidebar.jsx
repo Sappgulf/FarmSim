@@ -190,7 +190,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
           </div>
           <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
             <div className="font-bold text-purple-600 text-sm">
-              {state.social.reputation}
+              {state.social?.reputation ?? 0}
             </div>
             <div className="text-gray-500 text-[10px] font-medium">Rep</div>
           </div>

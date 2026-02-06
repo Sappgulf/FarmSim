@@ -1,10 +1,9 @@
-const CACHE_NAME = 'farmsim-v5.0.0';
+const CACHE_NAME = 'farmsim-v5.1.0';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/manifest.webmanifest',
-  '/icons/favicon.svg'
+  './',
+  './index.html',
+  './manifest.json',
+  './icons/favicon.svg'
 ];
 
 const IS_LOCAL_DEV = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';

@@ -111,7 +111,7 @@ export const initialState = {
     disasterProtections: {},
     prestige: {
         tier: 0,
-        totalRebirtths: 0,
+        totalRebirths: 0,
         legacyPoints: 0,
         legacyBonuses: {},
         heirloomSeeds: [],

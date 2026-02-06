@@ -353,17 +353,49 @@ const SettingsTab = memo(() => {
         </div>
       </Card>
 
+      {/* Install App */}
+      <Card className="p-4 bg-gradient-to-r from-sky-50 to-indigo-50">
+        <h4 className="font-semibold mb-3">📲 Install App</h4>
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="font-medium">Add to Home Screen</div>
+            <div className="text-sm text-gray-600">Install FarmSim as a standalone app</div>
+          </div>
+          <Button
+            onClick={() => {
+              const prompt = window.__pwaInstallPrompt;
+              if (prompt) {
+                prompt.prompt();
+                prompt.userChoice.then((result) => {
+                  if (result.outcome === 'accepted') {
+                    actions.addNotification({ message: '📲 App installed!', type: 'success' });
+                  }
+                  window.__pwaInstallPrompt = null;
+                });
+              } else {
+                actions.addNotification({ message: 'Use your browser menu to install, or the app is already installed.', type: 'info' });
+              }
+            }}
+            variant="outline"
+            size="sm"
+          >
+            Install
+          </Button>
+        </div>
+      </Card>
+
       {/* About (Static) */}
       <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50">
         <h4 className="font-semibold mb-2 text-green-800">🌾 About FarmSim</h4>
         <div className="text-sm text-green-700 space-y-1">
-          <p><strong>Version:</strong> 4.3.0</p>
+          <p><strong>Version:</strong> 5.1.0</p>
           <p><strong>Made with:</strong> React + Vite + Tailwind CSS</p>
           <p className="pt-2">A comprehensive farm simulation game with modular architecture, sound effects, background music, livestock management, fishing, and endless possibilities!</p>
 
           <div className="pt-3 border-t border-green-200 mt-3">
-            <p className="font-semibold">✨ New in v4.3.0:</p>
+            <p className="font-semibold">✨ New in v5.1.0:</p>
             <ul className="list-disc list-inside text-xs space-y-0.5 mt-1">
+              <li>📲 Professional PWA with offline support</li>
               <li>🎯 Bottom navigation with 5 grouped sections</li>
               <li>🎓 Interactive onboarding tutorial</li>
               <li>📱 Mobile-first design with iOS safe-area</li>
