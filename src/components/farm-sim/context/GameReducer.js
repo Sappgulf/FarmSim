@@ -132,6 +132,24 @@ export const initialState = {
         reputation: 0,
         marketListings: [],
     },
+    seedProvenance: null,
+    ghostVisit: {
+        active: false,
+        snapshot: null,
+    },
+    milestones: {
+        progress: {
+            daysPlayed: 0,
+            totalHarvests: 0,
+            uniqueCropsGrown: 0,
+            decorSetsCompleted: 0,
+            rareMomentsSeen: 0,
+            minigamesPlayed: 0,
+            petsInteractedDays: 0,
+        },
+        unlocked: {},
+        recent: [],
+    },
 
     // Pets system
     pets: [],
@@ -413,6 +431,15 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_SOCIAL:
             return { ...state, social: action.payload };
+
+        case GAME_ACTIONS.UPDATE_MILESTONES:
+            return { ...state, milestones: action.payload };
+
+        case GAME_ACTIONS.UPDATE_GHOST_VISIT:
+            return { ...state, ghostVisit: action.payload };
+
+        case GAME_ACTIONS.SET_SEED_PROVENANCE:
+            return { ...state, seedProvenance: action.payload };
 
         case GAME_ACTIONS.ADD_NOTIFICATION:
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;

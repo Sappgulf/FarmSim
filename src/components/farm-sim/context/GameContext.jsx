@@ -31,6 +31,8 @@ import { calculateHarvestValue } from '../../../utils/farmUpgrades';
 import { getDailyCropFocus } from '../../../utils/dailyFocus';
 import { getContentManager } from '../../../content/ContentManager';
 import { CROP_DATA } from '../constants/cropData';
+import { MILESTONE_DEFINITIONS } from '../../../data/milestones';
+import { createMilestoneManager } from '../../../systems/milestones';
 import { CROP_TRAITS, CROP_TRAIT_IDS, DECOR_SETS, FARM_TITLES, RARE_MOMENTS, VISUAL_WEATHER_ROTATION, WEEKLY_SPECIAL_DAY } from '../../../data/cozyExpansion';
 import {
   applyCosmeticFallbacks,
@@ -235,6 +237,7 @@ export function GameProvider({ children }) {
           actionsRef.current?.recordAlmanacEvent('day_rollover', { dayKey });
           actionsRef.current?.recordCozyExpansionEvent('day_rollover', { dayKey });
           actionsRef.current?.recordRetentionVisit(dayKey, now);
+          actionsRef.current?.recordMilestoneEvent('day_advance', { dayKey });
         }
         debouncedAutoSave(currentState);
         lastAutoSaveCheck = now;
@@ -257,6 +260,8 @@ export function GameProvider({ children }) {
   useEffect(() => {
     systemsRef.current = systems;
   }, [systems]);
+
+  const milestoneManager = useMemo(() => createMilestoneManager(MILESTONE_DEFINITIONS), []);
 
   const normalizePositiveAmount = useCallback((amount) => {
     const numeric = Number(amount);
@@ -309,6 +314,9 @@ export function GameProvider({ children }) {
     updateResearch: (research) => dispatch({ type: GAME_ACTIONS.UPDATE_RESEARCH, payload: research }),
     updateGenetics: (genetics) => dispatch({ type: GAME_ACTIONS.UPDATE_GENETICS, payload: genetics }),
     updateSocial: (social) => dispatch({ type: GAME_ACTIONS.UPDATE_SOCIAL, payload: social }),
+    updateMilestones: (milestones) => dispatch({ type: GAME_ACTIONS.UPDATE_MILESTONES, payload: milestones }),
+    updateGhostVisit: (ghostVisit) => dispatch({ type: GAME_ACTIONS.UPDATE_GHOST_VISIT, payload: ghostVisit }),
+    setSeedProvenance: (seedProvenance) => dispatch({ type: GAME_ACTIONS.SET_SEED_PROVENANCE, payload: seedProvenance }),
     updatePets: (pets) => dispatch({ type: GAME_ACTIONS.UPDATE_PETS, payload: pets }),
     updateProcessingFacilities: (facilities) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSING_FACILITIES, payload: facilities }),
     updateProcessingQueue: (queue) => dispatch({ type: GAME_ACTIONS.UPDATE_PROCESSING_QUEUE, payload: queue }),
@@ -561,6 +569,39 @@ export function GameProvider({ children }) {
         },
       });
       return goals;
+    },
+
+    recordMilestoneEvent: (eventType, payload = {}) => {
+      const current = stateRef.current;
+      const milestones = current.milestones || { progress: {}, unlocked: {}, recent: [] };
+      const nextProgress = milestoneManager.onEvent(eventType, payload, milestones.progress || {});
+      const unlockedNow = milestoneManager.evaluateUnlocks(nextProgress, milestones.unlocked || {});
+      if (!unlockedNow.length && JSON.stringify(nextProgress) === JSON.stringify(milestones.progress || {})) {
+        return;
+      }
+      const nextUnlocked = { ...(milestones.unlocked || {}) };
+      const recent = [...(milestones.recent || [])];
+      unlockedNow.forEach((milestone) => {
+        nextUnlocked[milestone.id] = true;
+        recent.push(milestone.id);
+        if (milestone.reward?.memoryId) actionsRef.current?.unlockMemory(milestone.reward.memoryId);
+        if (milestone.reward?.almanacId) actionsRef.current?.unlockAlmanacPage(milestone.reward.almanacId);
+        if (milestone.reward?.titleId) {
+          actionsRef.current?.setActiveFarmTitle(milestone.reward.titleId);
+        }
+        actionsRef.current?.addNotification({
+          message: `🏁 Milestone unlocked: ${milestone.name}`,
+          type: 'success',
+        });
+      });
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_MILESTONES,
+        payload: {
+          progress: nextProgress,
+          unlocked: nextUnlocked,
+          recent: recent.slice(-3),
+        },
+      });
     },
 
     recordCozyGoalEvent: (eventType, eventData = {}) => {
@@ -1036,7 +1077,15 @@ export function GameProvider({ children }) {
       }
     },
 
+    enterGhostVisit: (snapshot) => {
+      dispatch({ type: GAME_ACTIONS.UPDATE_GHOST_VISIT, payload: { active: true, snapshot } });
+    },
+    exitGhostVisit: () => {
+      dispatch({ type: GAME_ACTIONS.UPDATE_GHOST_VISIT, payload: { active: false, snapshot: null } });
+    },
+
     placeDecoration: (plotIndex, decorationId) => {
+      if (stateRef.current.ghostVisit?.active) return false;
       const currentState = stateRef.current;
       const plots = Array.isArray(currentState.plots) ? currentState.plots : [];
       const plot = plots[plotIndex];
@@ -1085,11 +1134,13 @@ export function GameProvider({ children }) {
       actionsRef.current.recordAlmanacEvent('decoration_placed', { decorationId });
       actionsRef.current.recordCozyGoalEvent('decoration_placed', { decorationId });
       actionsRef.current.recordCozyExpansionEvent('decor_layout_changed', { decorationId });
+      actionsRef.current.recordMilestoneEvent('decor_set', { count: Object.keys(stateRef.current.cozyExpansion?.decorSets?.completed || {}).length });
       logDebugAction('decoration_place', { plotIndex, decorationId });
       return true;
     },
 
     removeDecoration: (plotIndex) => {
+      if (stateRef.current.ghostVisit?.active) return false;
       const currentState = stateRef.current;
       const plots = Array.isArray(currentState.plots) ? currentState.plots : [];
       const plot = plots[plotIndex];
@@ -1124,6 +1175,7 @@ export function GameProvider({ children }) {
 
     // Complex Game Logic (Delegated to Systems)
     plantCrop: (plotIndex, cropType, cropData) => {
+      if (stateRef.current.ghostVisit?.active) return false;
       const plots = stateRef.current.plots || [];
       if (typeof plotIndex !== 'number' || plotIndex < 0 || plotIndex >= plots.length) {
         logDebugAction('plant_crop_invalid', { plotIndex, cropId: cropData?.id });
@@ -1149,6 +1201,7 @@ export function GameProvider({ children }) {
     },
 
     harvestCrop: (plotIndex) => {
+      if (stateRef.current.ghostVisit?.active) return false;
       const plots = [...(stateRef.current.plots || [])];
       if (typeof plotIndex !== 'number' || plotIndex < 0 || plotIndex >= plots.length) {
         logDebugAction('harvest_crop_invalid', { plotIndex });
@@ -1164,18 +1217,21 @@ export function GameProvider({ children }) {
     },
 
     earnMoney: (amount) => {
+      if (stateRef.current.ghostVisit?.active) return false;
       const safeAmount = normalizePositiveAmount(amount);
       if (safeAmount <= 0) return false;
       dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => coins + safeAmount });
       return true;
     },
     spendMoney: (amount) => {
+      if (stateRef.current.ghostVisit?.active) return false;
       const safeAmount = normalizePositiveAmount(amount);
       if (safeAmount <= 0) return false;
       dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => Math.max(0, coins - safeAmount) });
       return true;
     },
     addXP: (amount) => {
+      if (stateRef.current.ghostVisit?.active) return false;
       const safeAmount = normalizePositiveAmount(amount);
       if (safeAmount <= 0) return false;
       dispatch({ type: GAME_ACTIONS.SET_XP, payload: (xp) => xp + safeAmount });
@@ -1312,6 +1368,7 @@ export function GameProvider({ children }) {
 
     // Bulk actions
     harvestAllReadyCrops: () => {
+      if (stateRef.current.ghostVisit?.active) return false;
       const currentState = stateRef.current;
       if (!Array.isArray(currentState.plots)) {
         return;
@@ -1360,10 +1417,12 @@ export function GameProvider({ children }) {
         if (inventoryUpdates.cranberry) {
           actionsRef.current?.recordMemoryEvent('crop_harvested', { cropId: 'cranberry' });
         }
+        actionsRef.current?.recordMilestoneEvent('harvest', { count: readyPlotsIndexes.length });
       }, 0);
     },
 
     waterAllPlots: () => {
+      if (stateRef.current.ghostVisit?.active) return false;
       const currentSystems = systemsRef.current;
       if (currentSystems.farmingSystem?.waterAll) {
         currentSystems.farmingSystem.update(stateRef.current);
@@ -1380,6 +1439,7 @@ export function GameProvider({ children }) {
     },
 
     fertilizeAllPlots: () => {
+      if (stateRef.current.ghostVisit?.active) return false;
       const plots = stateRef.current.plots || [];
       const costPerPlot = 15;
       const maxFertilizations = Math.min(plots.length, Math.floor(stateRef.current.coins / costPerPlot));
@@ -1404,6 +1464,7 @@ export function GameProvider({ children }) {
     },
 
     treatAllDiseases: () => {
+      if (stateRef.current.ghostVisit?.active) return false;
       const plots = stateRef.current.plots || [];
       const diseasedIndexes = plots
         .map((plot, index) => (plot?.disease ? index : -1))

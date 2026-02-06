@@ -386,6 +386,10 @@ const FarmGrid = memo(() => {
   const animationsEnabled = state.settings?.animationsEnabled !== false;
   const decorMode = state.decorateMode;
   const selectedDecoration = state.selectedDecoration ? DECORATION_DATA[state.selectedDecoration] : null;
+  const ghostActive = !!state.ghostVisit?.active;
+  const plots = ghostActive
+    ? (Array.isArray(state.ghostVisit?.snapshot?.plots) ? state.ghostVisit.snapshot.plots : [])
+    : (Array.isArray(state.plots) ? state.plots : []);
 
   const pushDecorUndo = useCallback((entry) => {
     decorUndoStack.current = [entry, ...decorUndoStack.current].slice(0, 5);
@@ -473,6 +477,10 @@ const FarmGrid = memo(() => {
   }, []);
 
   const handlePlant = useCallback((index) => {
+    if (ghostActive) {
+      actions.addNotification({ message: 'Ghost Visit is read-only.', type: 'info' });
+      return;
+    }
     // Use consolidated crop data
     const fallbackCrop = CROP_LIST[0];
     const selectedCrop = CROP_DATA[state.selectedCrop] || fallbackCrop;
@@ -503,6 +511,9 @@ const FarmGrid = memo(() => {
 
       if (planted) {
         actions.recordOnboardingEvent('plant');
+        const uniqueCrops = new Set(plots.filter((plot) => plot?.crop?.id).map((plot) => plot.crop.id));
+        uniqueCrops.add(selectedCrop.id);
+        actions.recordMilestoneEvent?.('unique_crop', { size: uniqueCrops.size });
       }
     } else {
       actions.addNotification({
@@ -510,9 +521,10 @@ const FarmGrid = memo(() => {
         type: 'error'
       });
     }
-  }, [actions, animationsEnabled, state.coins, state.selectedCrop]);
+  }, [actions, animationsEnabled, ghostActive, plots, state.coins, state.selectedCrop]);
 
   const handleDecorate = useCallback((index) => {
+    if (ghostActive) return;
     const plotsArray = Array.isArray(state.plots) ? state.plots : [];
     const plot = plotsArray[index];
     if (!plot) return;
@@ -589,9 +601,13 @@ const FarmGrid = memo(() => {
     if (!repeatDecorPlacement) {
       actions.setSelectedDecoration(null);
     }
-  }, [actions, animationsEnabled, pushDecorUndo, repeatDecorPlacement, selectedDecoration, state.plots]);
+  }, [actions, animationsEnabled, ghostActive, pushDecorUndo, repeatDecorPlacement, selectedDecoration, state.plots]);
 
   const handleHarvest = useCallback((index) => {
+    if (ghostActive) {
+      actions.addNotification({ message: 'Ghost Visit is read-only.', type: 'info' });
+      return;
+    }
     const plotsArray = Array.isArray(state.plots) ? state.plots : [];
     const plot = plotsArray[index];
     if (!plot || plot.state !== 'ready') return;
@@ -760,8 +776,6 @@ const FarmGrid = memo(() => {
 
   // Generate grid based on current grid size
   const gridSize = state.gridSize || 3;
-  // FIXED: Ensure plots is always an array
-  const plots = Array.isArray(state.plots) ? state.plots : [];
 
   return (
     <Card
@@ -821,6 +835,9 @@ const FarmGrid = memo(() => {
         )}
       </div>
 
+        {ghostActive && (
+          <p className="mt-2 text-xs font-semibold text-indigo-700">👻 Ghost Visit (Read Only)</p>
+        )}
       {/* Bulk Action Controls - Mobile optimized */}
       {selectedPlots.size > 0 && (
         <div className="mb-4 p-3 sm:p-4 bg-blue-50 border-2 border-blue-300 rounded-lg animate-fade-in">

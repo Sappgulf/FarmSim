@@ -507,6 +507,12 @@ function FarmSimCore() {
       {/* Game Header */}
       <div className="relative z-20"><GameHeader /></div>
 
+      {state.ghostVisit?.active && (
+        <div className="relative z-30 mx-2 sm:mx-4 mt-2 max-w-7xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] lg:mx-auto rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-800">
+          👻 Ghost Visit (Read Only) — actions are disabled until you exit in Social.
+        </div>
+      )}
+
       {/* Main Game Area - Mobile Optimized with bottom padding for NavBar */}
       <div className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4">
         {/* Farm Grid - Full width on mobile, larger on desktop */}
