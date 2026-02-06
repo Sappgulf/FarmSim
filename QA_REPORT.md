@@ -25,3 +25,18 @@
 - 30-minute optimal loop simulation via XP model confirmed early levels no longer spike.
 - Header XP bar shows current level progress + maturity pacing copy.
 - Recent XP source list shows last 3 grant events.
+
+## Progression Deep Balance QA (v5.5)
+### Automated
+- `src/test/progression.test.js` still validates:
+  - non-linear XP growth by level band
+  - harvest diminishing returns
+  - minigame daily hard cap
+  - save migration keeps level valid + tracker defaults
+
+### Manual / simulation checklist
+- Verify repeated harvest spam yields less XP after per-crop daily thresholds.
+- Verify planting and pet interactions do not grant XP.
+- Verify challenge/milestone chain-claiming is bounded by daily caps.
+- Verify old save migration (v14→v15) does not reduce level and keeps XP bar progress coherent.
+- Verify unlock cadence: buildings/genetics appear later and in mastery bands.

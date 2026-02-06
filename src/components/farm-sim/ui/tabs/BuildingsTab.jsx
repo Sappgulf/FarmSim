@@ -13,7 +13,7 @@ const BuildingsTab = memo(() => {
       name: 'Water Well', 
       emoji: '💧', 
       cost: 150, 
-      requiredLevel: 2,
+      requiredLevel: 10,
       description: 'Reduces water needs by 50% + weather protection',
       benefit: '-50% Water',
       category: 'Utility'
@@ -33,7 +33,7 @@ const BuildingsTab = memo(() => {
       name: 'Barn', 
       emoji: '🏚️', 
       cost: 350, 
-      requiredLevel: 4,
+      requiredLevel: 8,
       description: '+20% harvest value + disease protection',
       benefit: '+20% Value',
       category: 'Production'
@@ -53,7 +53,7 @@ const BuildingsTab = memo(() => {
       name: 'Greenhouse', 
       emoji: '🏠', 
       cost: 600, 
-      requiredLevel: 6,
+      requiredLevel: 13,
       description: '+50% growth + weather damage immunity!',
       benefit: '+50% Growth',
       category: 'Production'
@@ -63,7 +63,7 @@ const BuildingsTab = memo(() => {
       name: 'Windmill', 
       emoji: '🏭', 
       cost: 800, 
-      requiredLevel: 7,
+      requiredLevel: 16,
       description: 'Processes crops into premium goods',
       benefit: '+2x Value',
       category: 'Processing'

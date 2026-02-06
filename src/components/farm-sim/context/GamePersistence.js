@@ -3,10 +3,10 @@
  */
 import { isDevelopmentMode } from '../../../config/release';
 import { normalizeEntitlements } from '../entitlements/EntitlementManager';
-import { getLevelFromXp } from '../systems/progression';
+import { getLevelFromXp, remapXpToCurrentCurve } from '../systems/progression';
 
 // Save schema version (separate from APP_VERSION in src/config/release.js).
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -274,8 +274,16 @@ export function migrateSaveData(savedData) {
 
         // Version 13 → 14: Progression XP tracker + recent XP feed
         if (saveVersion < 14) {
-            migratedData.progressionXpTracker = { dayKey: null, harvestCounts: {}, minigameDailyXp: {} };
+            migratedData.progressionXpTracker = { dayKey: null, harvestCounts: {}, minigameDailyXp: {}, milestoneDailyXp: 0, challengeDailyXp: 0, rareMomentDailyXp: 0 };
             migratedData.recentXpEvents = [];
+        }
+
+        // Version 14 → 15: XP curve remap preserving level and within-level progress
+        if (saveVersion < 15) {
+            const priorXp = clampNumber(migratedData.xp, 0, { min: 0 });
+            const priorLevel = clampNumber(migratedData.level, 1, { min: 1 });
+            migratedData.xp = remapXpToCurrentCurve(priorXp, priorLevel);
+            migratedData.level = Math.max(priorLevel, getLevelFromXp(migratedData.xp));
         }
 
 // Validate critical fields
@@ -651,12 +659,15 @@ export function migrateSaveData(savedData) {
             ? migratedData.milestones.recent.filter((id) => typeof id === 'string').slice(-3)
             : [];
 
-        migratedData.progressionXpTracker = ensureObject(migratedData.progressionXpTracker, { dayKey: null, harvestCounts: {}, minigameDailyXp: {} });
+        migratedData.progressionXpTracker = ensureObject(migratedData.progressionXpTracker, { dayKey: null, harvestCounts: {}, minigameDailyXp: {}, milestoneDailyXp: 0, challengeDailyXp: 0, rareMomentDailyXp: 0 });
         migratedData.progressionXpTracker.dayKey = typeof migratedData.progressionXpTracker.dayKey === 'string'
             ? migratedData.progressionXpTracker.dayKey
             : null;
         migratedData.progressionXpTracker.harvestCounts = ensureObject(migratedData.progressionXpTracker.harvestCounts, {});
         migratedData.progressionXpTracker.minigameDailyXp = ensureObject(migratedData.progressionXpTracker.minigameDailyXp, {});
+        migratedData.progressionXpTracker.milestoneDailyXp = clampNumber(migratedData.progressionXpTracker.milestoneDailyXp, 0, { min: 0 });
+        migratedData.progressionXpTracker.challengeDailyXp = clampNumber(migratedData.progressionXpTracker.challengeDailyXp, 0, { min: 0 });
+        migratedData.progressionXpTracker.rareMomentDailyXp = clampNumber(migratedData.progressionXpTracker.rareMomentDailyXp, 0, { min: 0 });
         migratedData.recentXpEvents = Array.isArray(migratedData.recentXpEvents)
             ? migratedData.recentXpEvents.slice(-3)
             : [];

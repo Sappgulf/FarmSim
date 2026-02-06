@@ -40,6 +40,9 @@ describe('progression tuning', () => {
     const migrated = migrateSaveData({ saveVersion: 13, xp: 5000, level: 1, coins: 200, gridSize: 3, plots: [] });
     expect(migrated.level).toBeGreaterThanOrEqual(getLevelFromXp(5000));
     expect(migrated.progressionXpTracker).toBeDefined();
+    expect(migrated.progressionXpTracker.milestoneDailyXp).toBe(0);
+    expect(migrated.progressionXpTracker.challengeDailyXp).toBe(0);
+    expect(migrated.progressionXpTracker.rareMomentDailyXp).toBe(0);
     expect(Array.isArray(migrated.recentXpEvents)).toBe(true);
   });
 });

@@ -1,24 +1,39 @@
 # Progression Notes
 
 ## Target Feel
-- Levels 1–5: onboarding pace, steady progress without burst-leveling.
-- Levels 6–10: requires intentional play sessions and mixed actions.
-- Levels 11–20: variety-driven progression (harvest + minigame + challenges).
-- Beyond 20: long-tail mastery, mostly cosmetic unlock cadence.
+- **Levels 1–3 (onboarding):** quick wins while learning plant → harvest → sell.
+- **Levels 4–7 (early intent):** gains slow down enough that choices matter.
+- **Levels 8–12 (mid-game variety):** best progress comes from mixing harvests, minigames, and goals.
+- **Levels 13–20 (mastery pacing):** unlock chase and consistency over raw spam.
+- **20+:** cosmetic prestige cadence, no power spikes.
 
-## Target Time (rough)
-- Level 5: ~20–30 minutes.
-- Level 10: ~1–2 hours.
-- Level 20: multiple sessions.
+## Target Session Timing (guidelines)
+- Level 3 ≈ 15–20 minutes
+- Level 5 ≈ 30–45 minutes
+- Level 10 ≈ 2–3 hours
+- Level 15 ≈ multiple sessions
+- Level 20 ≈ long-term
 
-## XP Source Map (event-driven)
-- Harvest -> `FarmGrid/FarmingSystem` harvest events -> base XP from earnings, then daily diminishing by crop + first-of-day bonus.
-- Minigame -> `FishingSystem` and weather prediction -> skill-influenced XP with per-minigame daily cap.
-- Daily rewards/quests/events -> reward claim handlers -> low capped XP.
-- Milestone/challenge/achievement -> claim/completion handlers -> one-time burst XP (no passive ticks).
-- Pets -> no XP through tuning path (`source: pet` resolves to zero).
+## XP Source Map (event-driven only)
+- **Harvest** (`FarmGrid`, `FarmingSystem`): reduced base conversion, per-crop daily diminishing returns, first-of-day crop bonus, tiny variety bonus.
+- **Minigames** (`FishingSystem`, weather prediction): skill-weighted reward with per-minigame daily hard cap.
+- **Milestones / challenges**: one-time burst XP, daily burst caps to prevent chain-claim spikes.
+- **Daily rewards/events**: low capped XP (secondary to coin/cosmetic feel).
+- **Pets / planting**: no XP grant.
+- **Rare moments**: optional tiny XP via `rare_moment` source only, daily capped.
 
-## Curve Strategy
-- Centralized in `getXpForLevel(level)` (piecewise non-linear early/mid/late) + `getLevelFromXp(xp)`.
-- Reducer computes level from total XP and never drops player level.
-- Save migration keeps XP non-negative and level at least XP-derived level.
+## Unlock Banding
+- **1–3:** base farming loop, first core tab familiarity.
+- **4–7:** entry genetics and utility unlocks.
+- **8–12:** production/decor/festival variety unlocks.
+- **13–20:** advanced systems and title/almanac depth.
+- **20+:** cosmetic/title collection progression.
+
+## XP Curve Strategy
+- Single source of truth: `getXpRequiredForLevel(level)` in `progression.js`.
+- Piecewise non-linear curve (early/mid/late) with steeper mid/late deltas.
+- All level math uses `getLevelFromXp` + `getXpProgress`.
+- Save migration remaps legacy XP onto the new curve while:
+  - never reducing stored level,
+  - preserving within-level progress proportion,
+  - clamping XP to non-negative integers.

@@ -154,3 +154,14 @@
 - Save safety fields:
   - `progressionXpTracker` for daily counters/caps
   - `recentXpEvents` for last-three source clarity in header dropdown
+
+## Progression system map (v5.5)
+- Canonical level curve API: `getXpRequiredForLevel(level)` (`progression.js`).
+- Compatibility alias `getXpForLevel` kept for call sites/tests.
+- XP remap helper for migrations: `remapXpToCurrentCurve(xp, level)`.
+- Tuning gates in `applyXpTuning` now include:
+  - harvest diminishing + first-of-day + early variety bonus,
+  - minigame per-mode daily cap,
+  - daily caps for `milestone`, `challenge`, `rare_moment`,
+  - zero XP for `pet` and `planting`.
+- Save schema v15 adds migration using remap helper and normalizes expanded `progressionXpTracker` counters.
