@@ -40,7 +40,7 @@ const MysteryShopTab = memo(() => {
     }
 
     // Deduct coins only after a valid roll is confirmed.
-    actions.setCoins((coins) => Math.max(0, coins - pack.cost));
+    actions.spendMoney(pack.cost);
 
     // Animate reveal
     setIsRevealing(true);

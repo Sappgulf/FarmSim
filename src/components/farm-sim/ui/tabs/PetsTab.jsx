@@ -91,7 +91,7 @@ const PetsTab = memo(() => {
   const handleAdoptPet = (petType) => {
     const petData = PET_TYPES[petType];
     if (state.coins >= petData.cost) {
-      actions.setCoins(state.coins - petData.cost);
+      actions.spendMoney(petData.cost);
 
       const newPet = {
         id: Date.now(),
@@ -200,7 +200,7 @@ const PetsTab = memo(() => {
 
   const handleBuySupplies = (supplyType, cost) => {
     if (state.coins >= cost) {
-      actions.setCoins(state.coins - cost);
+      actions.spendMoney(cost);
 
       let quantity = 5; // Default quantity
       if (supplyType === 'vet_care') quantity = 1; // Vet care is more expensive

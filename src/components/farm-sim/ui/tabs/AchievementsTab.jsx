@@ -157,8 +157,8 @@ const AchievementsTab = memo(() => {
     }
 
     // Grant rewards
-    actions.setCoins(state.coins + achievement.reward);
-    actions.setXp(state.xp + Math.floor(achievement.reward * 0.5));
+    actions.earnMoney(achievement.reward);
+    actions.addXP(Math.floor(achievement.reward * 0.5));
 
     // Mark as unlocked
     const updatedAchievements = [...state.achievements];

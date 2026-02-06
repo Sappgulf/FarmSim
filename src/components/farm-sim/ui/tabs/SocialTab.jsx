@@ -20,7 +20,7 @@ const SocialTab = memo(() => {
 
   const handleSendGift = (friendId) => {
     if (state.coins >= 10) {
-      actions.setCoins(state.coins - 10);
+      actions.spendMoney(10);
       actions.addNotification({
         message: 'Gift sent! Your friend will be notified.',
         type: 'success'

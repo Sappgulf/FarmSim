@@ -99,10 +99,10 @@ export class AchievementSystem {
     // Grant rewards
     if (achievement.reward && this.state) {
       if (achievement.reward.coins) {
-        this.actions.setCoins((this.state.coins || 0) + achievement.reward.coins);
+        this.actions.earnMoney(achievement.reward.coins);
       }
       if (achievement.reward.xp) {
-        this.actions.setXp((this.state.xp || 0) + achievement.reward.xp);
+        this.actions.addXP(achievement.reward.xp);
       }
     }
   }

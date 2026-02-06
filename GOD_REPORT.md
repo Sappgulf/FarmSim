@@ -1,24 +1,25 @@
 Meta:
 - Date: 2026-02-06
-- Change summary: Added mobile-first layout polish (responsive farm tiles, compact header flow, mobile-safe notifications), delivered stress regression tests (tab switching, notification flood, save/load spam), and retained prior weather/season polish fixes.
-- TaskType: Debug + AAA polish
-- Risk: Medium (layout behavior and stress-path tests touched)
+- Change summary: Rebuilt the fishing mini-game with continuous fish behavior, tension/quality mechanics, and mobile hold controls; enforced economy integrity with helper reward/cost actions + reducer clamps; and hardened notifications with guaranteed auto-expiry.
+- TaskType: Gameplay deepening + debug + polish
+- Risk: Medium (core gameplay systems and economy pathways updated)
 
 Intake:
-- SuccessCriteria: Audit/debug the codebase, fix concrete gameplay/UI issues, and push polish quality without rewriting core systems.
-- RequiredContext used: `AGENT.md`, `MEMORY.md`, `CHANGELOG.md`, `README.md`, GOD core docs (`START.md`, `CORE.md`, `RUN.md`, `CHECKS.md`, `OUTPUT.md`, `CONFIG.md`, `PROFILES.md`, `REPORT.schema.md`, `GLOSSARY.md`).
+- SuccessCriteria: Ensure notifications auto-dismiss, make fishing deeper and reliable, tighten reward integrity (no unearned XP/coins), run debug/validation, and ship with tests/build green.
+- RequiredContext used: `AGENTS.md`, GOD core docs (`START.md`, `CORE.md`, `RUN.md`, `CHECKS.md`), `CHANGELOG.md`, `README.md`.
 
 Checks:
-- K1: PASS — `npm run test -- --run` and `npm run build` both succeed.
-- K2: PASS — 5×5 grid remains mobile-safe via responsive tile sizing, header controls reflow on small screens, and notification stack uses full-width mobile positioning.
-- K3: PASS — Full suite green with new stress tests (12 files / 29 tests); build remains clean.
-- K4: PASS — Failure paths covered with explicit regressions for rapid tab switching, duplicate notification closes, and repeated save/load.
-- K5: PASS — UI touched and verified through mobile-oriented component updates (touch-target/readability improvements preserved).
-- K6: PASS — `CHANGELOG.md` updated with Sprint G8 entry.
+- K1: PASS — `npm run test -- --run` passes (14 files / 36 tests).
+- K2: PASS — notifications now have per-item timers plus a fallback expiry sweep in `NotificationSystem`.
+- K3: PASS — fishing loop now simulates fish movement/tension continuously with clear win/escape conditions and mobile hold-to-reel controls.
+- K4: PASS — reward/cost pathways across tabs/systems were normalized to `earnMoney` / `spendMoney` / `addXP`; reducer now clamps coin/XP writes.
+- K5: PASS — inventory grant path added via `actions.addToInventory`, fixing runtime gaps in fishing/livestock reward flows.
+- K6: PASS — `npm run build` succeeds.
+- K7: PASS — `CHANGELOG.md` updated with Sprint G9 planned + implemented entries.
 
 Scores:
-- Correctness: 4
+- Correctness: 5
 - Maintainability: 4
 - Performance: 4
-- Security/Safety: 3
+- Security/Safety: 4
 - UX: 5

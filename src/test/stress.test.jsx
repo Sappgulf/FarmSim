@@ -4,6 +4,7 @@ import { act, render, renderHook, waitFor } from '@testing-library/react';
 import FarmSim from '../components/farm-sim/core/FarmSim';
 import { GameProvider, useGame } from '../components/farm-sim/context/GameContext';
 import { TAB_IDS } from '../components/farm-sim/ui/GameSidebar';
+import NotificationSystem from '../components/farm-sim/ui/NotificationSystem';
 
 vi.mock('../components/farm-sim/systems/SoundSystem', () => ({
   getSoundSystem: () => ({
@@ -80,6 +81,36 @@ describe('FarmSim Stress Regressions', () => {
     });
 
     expect(result.current.state.notifications).toHaveLength(0);
+  });
+
+  it('auto-dismisses timed notifications even without manual close', () => {
+    vi.useFakeTimers();
+    const wrapper = ({ children }) => (
+      <GameProvider>
+        <NotificationSystem />
+        {children}
+      </GameProvider>
+    );
+    const { result, unmount } = renderHook(() => useGame(), { wrapper });
+
+    act(() => {
+      result.current.actions.addNotification({
+        message: 'Temporary note',
+        type: 'info',
+        duration: 1200,
+      });
+    });
+
+    expect(result.current.state.notifications).toHaveLength(1);
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(result.current.state.notifications).toHaveLength(0);
+
+    unmount();
+    vi.useRealTimers();
   });
 
   it('keeps state valid during repeated save/load cycles', () => {

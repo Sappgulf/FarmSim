@@ -158,7 +158,7 @@ const GeneticsTab = memo(() => {
     };
     actions.updateInventory(updatedInventory);
 
-    actions.setXp(state.xp + 25);
+    actions.addXP(25);
 
     actions.addNotification({
       message: `Successfully bred ${matchedRecipe.recipe.name}!`,

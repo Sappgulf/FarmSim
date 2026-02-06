@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
@@ -11,18 +11,12 @@ const FishingTab = memo(() => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [gameState, setGameState] = useState(null);
   const [reelPosition, setReelPosition] = useState(0.5);
+  const reelHoldTimerRef = useRef(null);
+  const handleReelRef = useRef(() => {});
 
   // Get systems from context
   const fishingSystem = systems?.fishingSystem;
   const soundSystem = systems?.soundSystem;
-
-  // Check if system becomes available
-  React.useEffect(() => {
-    if (fishingSystem) {
-      // System is now available
-    }
-  }, [fishingSystem]);
-
 
   const fishing = {
     pond: {
@@ -69,29 +63,65 @@ const FishingTab = memo(() => {
   const currentUpgrade = POND_UPGRADES[Object.keys(POND_UPGRADES)[pondLevel - 1]];
   const nextUpgrade = POND_UPGRADES[Object.keys(POND_UPGRADES)[pondLevel]];
 
+  const stopReelHold = useCallback(() => {
+    if (reelHoldTimerRef.current) {
+      clearInterval(reelHoldTimerRef.current);
+      reelHoldTimerRef.current = null;
+    }
+  }, []);
+
+  const resolveMiniGameResult = useCallback((result) => {
+    stopReelHold();
+    setIsPlaying(false);
+    setGameState(null);
+
+    if (!result) return;
+
+    if (result.caught) {
+      soundSystem?.playHarvestSound();
+      if (typeof window.triggerParticleEffect === 'function') {
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 3;
+        window.triggerParticleEffect(centerX, centerY, 'harvest', {
+          text: `🎣 ${result.quality || 'Catch'}! +$${result.value}`,
+          value: result.value
+        });
+      }
+    } else if (result.escaped) {
+      soundSystem?.playFishEscapeSound();
+    }
+  }, [soundSystem, stopReelHold]);
+
   // Mini-game loop
   useEffect(() => {
     if (!isPlaying || !fishingSystem) return;
 
     const intervalId = setInterval(() => {
       try {
+        const stepResult = fishingSystem.stepMiniGame?.();
+        if (stepResult?.caught || stepResult?.escaped) {
+          resolveMiniGameResult(stepResult);
+          return;
+        }
+
         const activeCatch = fishingSystem.getActiveCatch();
         if (activeCatch) {
           setGameState(activeCatch);
           setReelPosition(activeCatch.playerPosition);
         } else {
-          setIsPlaying(false);
-          setGameState(null);
+          resolveMiniGameResult(null);
         }
       } catch (error) {
         console.error('[farm]', 'Fishing: Error in mini-game loop', error);
-        setIsPlaying(false);
-        setGameState(null);
+        resolveMiniGameResult(null);
       }
     }, 50);
 
-    return () => clearInterval(intervalId);
-  }, [isPlaying, fishingSystem]);
+    return () => {
+      clearInterval(intervalId);
+      stopReelHold();
+    };
+  }, [fishingSystem, isPlaying, resolveMiniGameResult, stopReelHold]);
 
   const handleCastLine = () => {
     if (!fishingSystem) {
@@ -108,6 +138,7 @@ const FishingTab = memo(() => {
       if (result.success) {
         setIsPlaying(true);
         setGameState(result.catch);
+        setReelPosition(result.catch.playerPosition);
         soundSystem?.playWaterSound(); // Cast sound
 
         // Add excitement notification
@@ -140,39 +171,22 @@ const FishingTab = memo(() => {
     soundSystem?.playReelSound();
 
     const result = fishingSystem.updateReelPosition(direction);
-
-    if (result.caught) {
-      setIsPlaying(false);
-      setGameState(null);
-      soundSystem?.playHarvestSound();
-
-      // Trigger particle effect for success
-      if (typeof window.triggerParticleEffect === 'function') {
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 3;
-        window.triggerParticleEffect(centerX, centerY, 'harvest', {
-          text: `🎣 Caught ${result.fish.name}! +$${result.value}`,
-          value: result.value
-        });
-      }
-
-      // Success notification
-      actions.addNotification({
-        message: `🎉 Caught ${result.fish.name} (${result.size}cm) for $${result.value}!`,
-        type: 'success'
-      });
-    } else if (result.escaped) {
-      setIsPlaying(false);
-      setGameState(null);
-      soundSystem?.playFishEscapeSound();
-
-      // Failure notification
-      actions.addNotification({
-        message: `💨 The ${result.fish.name} got away! Try again.`,
-        type: 'warning'
-      });
+    if (result?.state) {
+      setReelPosition(result.state.playerPosition);
+      setGameState(result.state);
     }
   };
+
+  handleReelRef.current = handleReel;
+
+  const startReelHold = useCallback((direction) => {
+    if (!isPlaying) return;
+    handleReelRef.current(direction);
+    stopReelHold();
+    reelHoldTimerRef.current = setInterval(() => {
+      handleReelRef.current(direction);
+    }, 85);
+  }, [isPlaying, stopReelHold]);
 
   const handleUpgradePond = () => {
     if (!fishingSystem) return;
@@ -184,13 +198,6 @@ const FishingTab = memo(() => {
       soundSystem?.playErrorSound();
     }
   };
-
-  // Keyboard controls
-  // Use ref to avoid stale closure issues without requiring handleReel in deps
-  const handleReelRef = React.useRef(handleReel);
-  React.useEffect(() => {
-    handleReelRef.current = handleReel;
-  });
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -206,6 +213,8 @@ const FishingTab = memo(() => {
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [isPlaying]);
+
+  useEffect(() => () => stopReelHold(), [stopReelHold]);
 
   const getRarityColor = (rarity) => {
     if (rarity <= 0.01) return 'text-purple-600 font-bold'; // Legendary
@@ -223,6 +232,9 @@ const FishingTab = memo(() => {
     return <Badge className="bg-gray-500">Common</Badge>;
   };
 
+  const safeZoneWidth = Math.max(10, ((gameState?.zoneHalfWidth || 0.1) * 200));
+  const tensionPercent = Math.floor((gameState?.lineTension || 0) * 100);
+
   return (
     <div className="space-y-4">
       {/* Header Stats */}
@@ -234,7 +246,7 @@ const FishingTab = memo(() => {
           </Badge>
         </h3>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-700">{stats.totalCaught}</div>
             <div className="text-xs text-gray-600">Fish Caught</div>
@@ -250,6 +262,10 @@ const FishingTab = memo(() => {
           <div className="text-center">
             <div className="text-2xl font-bold text-cyan-600">{Math.floor(fishing.pond.population)}</div>
             <div className="text-xs text-gray-600">Population</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-amber-600">{stats.streak || 0}</div>
+            <div className="text-xs text-gray-600">Catch Streak</div>
           </div>
         </div>
       </Card>
@@ -319,7 +335,7 @@ const FishingTab = memo(() => {
           </div>
         </Card>
       ) : (
-        <Card className="p-6 bg-gradient-to-br from-blue-200 via-cyan-200 to-blue-300 relative overflow-hidden">
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-blue-200 via-cyan-200 to-blue-300 relative overflow-hidden">
           {/* Mini-game UI */}
           <div className="relative z-10">
             <div className="text-center mb-4">
@@ -328,117 +344,141 @@ const FishingTab = memo(() => {
                 {gameState?.fish.name} Hooked!
               </div>
               <div className="text-sm text-gray-700">
-                Size: {gameState?.size}cm • Value: ${gameState?.fish.baseValue}
+                Size: {gameState?.size}cm • Base Value: ${gameState?.fish.baseValue}
               </div>
             </div>
 
-            {/* Progress Bar */}
-            <div className="mb-4">
-              <div className="text-center text-sm font-bold mb-2">
-                Progress: {Math.floor((gameState?.progress || 0) * 100)}%
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div>
+                <div className="text-center text-sm font-bold mb-2">
+                  Catch Progress: {Math.floor((gameState?.progress || 0) * 100)}%
+                </div>
+                <Progress
+                  value={(gameState?.progress || 0) * 100}
+                  className="h-5"
+                  variant="growth"
+                />
               </div>
-              <Progress
-                value={(gameState?.progress || 0) * 100}
-                className="h-6"
-                variant="growth"
-              />
+              <div>
+                <div className="text-center text-sm font-bold mb-2">
+                  Line Tension: {tensionPercent}%
+                </div>
+                <Progress
+                  value={tensionPercent}
+                  className="h-5"
+                  variant={tensionPercent >= 75 ? 'health' : tensionPercent >= 50 ? 'energy' : 'growth'}
+                />
+              </div>
             </div>
 
             {/* Fishing Bar */}
-            <div className="relative h-28 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-900 rounded-lg overflow-hidden mb-4 border-4 border-blue-600 shadow-2xl">
-              {/* Background waves */}
+            <div className="relative h-28 sm:h-32 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-900 rounded-lg overflow-hidden mb-4 border-4 border-blue-600 shadow-2xl">
               <div className="absolute inset-0 opacity-30">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent animate-pulse"></div>
                 <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-blue-800/50 to-transparent"></div>
               </div>
 
-              {/* Target Zone - More visible and animated */}
               <div
-                className="absolute top-0 bottom-0 bg-gradient-to-r from-green-400 via-green-300 to-green-400 opacity-60 border-2 border-green-300 shadow-lg animate-pulse transition-all duration-300"
+                className="absolute top-0 bottom-0 bg-gradient-to-r from-green-400/80 via-green-300/70 to-green-400/80 border-x-2 border-green-200 shadow-lg transition-all duration-100"
                 style={{
-                  left: `${(gameState?.targetZone || 0.5) * 100 - 12}%`,
-                  width: '96px'
+                  left: `${((gameState?.fishPosition || 0.5) * 100) - (safeZoneWidth / 2)}%`,
+                  width: `${safeZoneWidth}%`
                 }}
               >
-                {/* Zone indicator */}
-                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-green-400 font-bold text-sm animate-bounce">
-                  🎯 SAFE
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-green-300 font-bold text-xs">
+                  SAFE ZONE
                 </div>
               </div>
 
-              {/* Player Position - More prominent */}
               <div
-                className="absolute top-1/2 transform -translate-y-1/2 w-10 h-20 bg-gradient-to-b from-yellow-300 to-yellow-500 rounded-lg border-4 border-yellow-600 transition-all duration-75 shadow-xl hover:scale-110"
+                className="absolute top-2 text-2xl transition-all duration-100"
                 style={{
-                  left: `${reelPosition * 100}%`,
-                  transform: `translate(-50%, -50%) ${reelPosition < (gameState?.targetZone || 0.5) - 0.1 || reelPosition > (gameState?.targetZone || 0.5) + 0.1 ? 'rotate(-5deg)' : 'rotate(0deg)'}`
+                  left: `${(gameState?.fishPosition || 0.5) * 100}%`,
+                  transform: 'translateX(-50%)'
                 }}
               >
-                <div className="text-center text-3xl leading-none mt-2 animate-bounce">🎣</div>
-                {/* Fishing line */}
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-0.5 h-8 bg-gray-400 opacity-60"></div>
+                {gameState?.fish.emoji}
               </div>
 
-              {/* Water ripples */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-40">
-                <div className="text-8xl animate-pulse select-none">🌊</div>
+              <div
+                className="absolute bottom-2 w-9 h-16 sm:w-10 sm:h-20 bg-gradient-to-b from-yellow-300 to-yellow-500 rounded-lg border-4 border-yellow-600 transition-all duration-75 shadow-xl"
+                style={{
+                  left: `${reelPosition * 100}%`,
+                  transform: `translateX(-50%) ${gameState?.inZone ? 'rotate(0deg)' : 'rotate(-4deg)'}`
+                }}
+              >
+                <div className="text-center text-2xl sm:text-3xl leading-none mt-1 sm:mt-2">🎣</div>
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-0.5 h-8 bg-gray-300 opacity-80"></div>
               </div>
 
-              {/* Tension indicator */}
-              <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-xs text-white font-bold bg-black/50 px-2 py-1 rounded">
-                {reelPosition < (gameState?.targetZone || 0.5) - 0.1 || reelPosition > (gameState?.targetZone || 0.5) + 0.1 ? '⚠️ OFF TARGET' : '✅ GOOD POSITION'}
+              <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs text-white font-bold bg-black/50 px-2 py-1 rounded">
+                {gameState?.inZone ? '✅ CONTROLLED' : '⚠️ OUT OF ZONE'}
               </div>
             </div>
 
-            {/* Enhanced Controls */}
             <div className="space-y-3">
-              {/* Main Control Buttons */}
               <div className="flex gap-3 justify-center">
                 <Button
                   onClick={() => handleReel('left')}
+                  onMouseDown={() => startReelHold('left')}
+                  onMouseUp={stopReelHold}
+                  onMouseLeave={stopReelHold}
+                  onTouchStart={(event) => {
+                    event.preventDefault();
+                    startReelHold('left');
+                  }}
+                  onTouchEnd={stopReelHold}
+                  onTouchCancel={stopReelHold}
                   variant="default"
                   size="lg"
-                  className="flex-1 max-w-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl"
+                  className="flex-1 max-w-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 sm:px-6 transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl touch-manipulation"
                   disabled={!isPlaying}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-xl">⬅️</span>
                     <span>LEFT</span>
                   </div>
-                  <div className="text-xs opacity-75">(A Key)</div>
+                  <div className="text-xs opacity-75">(Hold / A)</div>
                 </Button>
                 <Button
                   onClick={() => handleReel('right')}
+                  onMouseDown={() => startReelHold('right')}
+                  onMouseUp={stopReelHold}
+                  onMouseLeave={stopReelHold}
+                  onTouchStart={(event) => {
+                    event.preventDefault();
+                    startReelHold('right');
+                  }}
+                  onTouchEnd={stopReelHold}
+                  onTouchCancel={stopReelHold}
                   variant="default"
                   size="lg"
-                  className="flex-1 max-w-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl"
+                  className="flex-1 max-w-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 sm:px-6 transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl touch-manipulation"
                   disabled={!isPlaying}
                 >
                   <div className="flex items-center gap-2">
                     <span>RIGHT</span>
                     <span className="text-xl">➡️</span>
                   </div>
-                  <div className="text-xs opacity-75">(D Key)</div>
+                  <div className="text-xs opacity-75">(Hold / D)</div>
                 </Button>
               </div>
 
-              {/* Progress and Timer */}
               <div className="flex justify-between items-center text-sm bg-white/10 rounded-lg p-3 backdrop-blur-sm">
                 <div className="text-white font-semibold">
-                  Progress: <span className="text-yellow-300">{Math.floor((gameState?.progress || 0) * 100)}%</span>
+                  Quality Window: <span className="text-emerald-300">{Math.floor(((gameState?.qualityWindowMs || 0) / Math.max(1, gameState?.elapsedMs || 1)) * 100)}%</span>
                 </div>
                 <div className="text-white font-semibold">
-                  Time: <span className="text-red-300">{Math.max(0, Math.floor(((gameState?.timeLimit || 0) - (Date.now() - (gameState?.startTime || 0))) / 1000))}s</span>
+                  Time: <span className="text-red-300">{Math.max(0, Math.ceil(((gameState?.timeLimit || 0) - (gameState?.elapsedMs || 0)) / 1000))}s</span>
                 </div>
               </div>
 
-              {/* Instructions */}
               <div className="text-center space-y-2">
                 <p className="text-sm text-blue-200 font-semibold">
-                  🎯 Keep the fishing rod in the SAFE zone!
+                  🎯 Track the fish and stay inside the safe zone.
                 </p>
                 <p className="text-xs text-blue-300">
-                  Use keyboard (A/D or Arrow Keys) or click buttons • Fish moves randomly • Don't let it escape!
+                  Hold buttons for smooth mobile control. High tension can snap the line.
                 </p>
               </div>
             </div>
@@ -528,11 +568,11 @@ const FishingTab = memo(() => {
           💡 Fishing Tips
         </h4>
         <ul className="text-sm text-gray-700 space-y-1">
-          <li>• Keep your 🎣 reel in the green zone to catch fish</li>
-          <li>• Rarer fish are harder to catch but worth more</li>
+          <li>• Keep your 🎣 rod near the fish to build catch progress</li>
+          <li>• Keep line tension low or the line can snap</li>
           <li>• Pond population regenerates over time</li>
-          <li>• Upgrade your pond for better fish and faster regeneration</li>
-          <li>• Use keyboard (A/D or Arrow Keys) for faster control</li>
+          <li>• Upgrade your pond for wider safe zones and better rewards</li>
+          <li>• Hold controls on mobile for smooth tracking</li>
         </ul>
       </Card>
     </div>
@@ -542,4 +582,3 @@ const FishingTab = memo(() => {
 FishingTab.displayName = 'FishingTab';
 
 export default FishingTab;
-

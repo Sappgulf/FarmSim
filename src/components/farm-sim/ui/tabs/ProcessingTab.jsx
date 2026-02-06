@@ -148,7 +148,7 @@ const ProcessingTab = memo(() => {
     }
 
     // Purchase facility
-    actions.setCoins(state.coins - facility.cost);
+    actions.spendMoney(facility.cost);
 
     const newFacility = {
       id: facilityId,
@@ -282,7 +282,7 @@ const ProcessingTab = memo(() => {
       [itemType]: currentStock - quantity
     });
 
-    actions.setCoins(state.coins + totalValue);
+    actions.earnMoney(totalValue);
 
     actions.addNotification({
       message: `Sold ${quantity} ${formatDisplayLabel(itemType)} for ${totalValue}🪙`,

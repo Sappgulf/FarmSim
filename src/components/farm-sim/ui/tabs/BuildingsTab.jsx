@@ -81,7 +81,7 @@ const BuildingsTab = memo(() => {
     }
     
     if (state.coins >= building.cost && !state.buildings[building.id]) {
-      actions.setCoins(state.coins - building.cost);
+      actions.spendMoney(building.cost);
       actions.updateBuildings({
         ...state.buildings,
         [building.id]: { built: true, level: 1, builtAt: Date.now() }
@@ -108,7 +108,7 @@ const BuildingsTab = memo(() => {
         message: `Built ${building.emoji} ${building.name}!`,
         type: 'success'
       });
-      actions.setXp(state.xp + 20);
+      actions.addXP(20);
     } else if (state.buildings[building.id]) {
       actions.addNotification({
         message: `${building.name} is already built!`,

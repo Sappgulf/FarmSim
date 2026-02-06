@@ -227,7 +227,7 @@ export class DisasterSystem {
     // Direct coin loss
     if (disaster.effects.coinLoss) {
       const coinLoss = Math.floor((this.state.coins || 0) * disaster.effects.coinLoss * protectionFactor);
-      this.actions.setCoins(Math.max(0, (this.state.coins || 0) - coinLoss));
+      this.actions.spendMoney(coinLoss);
       totalDamage += coinLoss;
     }
     
@@ -262,7 +262,7 @@ export class DisasterSystem {
     if (protections.insurance && totalDamage > 0) {
       const coverage = DISASTER_PROTECTIONS.insurance.coverage;
       const reimbursement = Math.floor(totalDamage * coverage);
-      this.actions.setCoins((this.state.coins || 0) + reimbursement);
+      this.actions.earnMoney(reimbursement);
       this.actions.addNotification({
         message: `🛡️ Insurance covered ${reimbursement}🪙 of damage!`,
         type: 'success',
@@ -339,8 +339,8 @@ export class DisasterSystem {
     };
     
     this.actions.updateDisasterProtections(updatedProtections);
-    this.actions.setCoins((this.state.coins || 0) - protection.cost);
-    this.actions.setXp((this.state.xp || 0) + 30);
+    this.actions.spendMoney(protection.cost);
+    this.actions.addXP(30);
     
     this.actions.addNotification({
       message: `${protection.emoji} Purchased ${protection.name}!`,
@@ -377,4 +377,3 @@ export class DisasterSystem {
 }
 
 export default DisasterSystem;
-

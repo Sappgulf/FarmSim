@@ -103,7 +103,7 @@ export class EconomicSystem {
     };
 
     this.actions.updateInventory(updatedInventory);
-    this.actions.setCoins((this.state.coins || 0) + totalValue);
+    this.actions.earnMoney(totalValue);
 
     return {
       earnings: totalValue,

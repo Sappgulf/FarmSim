@@ -7,6 +7,8 @@ import { logDebugAction } from '../../../utils/debugTools';
 
 const AUTO_DISMISS_MS = 3500;
 const MAX_VISIBLE = 5;
+const EXPIRY_SWEEP_MS = 700;
+const EXPIRY_GRACE_MS = 1000;
 
 // Individual Notification Component
 const NotificationItem = memo(({ notification, onClose }) => {
@@ -147,6 +149,28 @@ const NotificationSystem = memo(() => {
     logDebugAction('notification_close', { id });
     actions.clearNotification(id);
   };
+
+  useEffect(() => {
+    if (!Array.isArray(state.notifications) || state.notifications.length === 0) {
+      return undefined;
+    }
+
+    const sweepId = setInterval(() => {
+      const now = Date.now();
+      state.notifications.forEach((notification) => {
+        if (!notification || notification.sticky || notification.important) return;
+        const duration = Number(notification.duration);
+        const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : AUTO_DISMISS_MS;
+        const timestamp = Number(notification.timestamp);
+        if (!Number.isFinite(timestamp)) return;
+        if (now >= timestamp + safeDuration + EXPIRY_GRACE_MS) {
+          actions.clearNotification(notification.id);
+        }
+      });
+    }, EXPIRY_SWEEP_MS);
+
+    return () => clearInterval(sweepId);
+  }, [actions, state.notifications]);
 
   // Don't render if no notifications
   if (state.notifications.length === 0) {

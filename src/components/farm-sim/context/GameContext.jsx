@@ -246,6 +246,12 @@ export function GameProvider({ children }) {
     systemsRef.current = systems;
   }, [systems]);
 
+  const normalizePositiveAmount = useCallback((amount) => {
+    const numeric = Number(amount);
+    if (!Number.isFinite(numeric)) return 0;
+    return Math.max(0, Math.floor(numeric));
+  }, []);
+
   // Memoized action creators
   const actions = useMemo(() => ({
     // Core property setters
@@ -257,6 +263,19 @@ export function GameProvider({ children }) {
     updatePlots: (plots) => dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: plots }),
     setGridSize: (size) => dispatch({ type: GAME_ACTIONS.SET_GRID_SIZE, payload: size }),
     updateInventory: (inventory) => dispatch({ type: GAME_ACTIONS.UPDATE_INVENTORY, payload: inventory }),
+    addToInventory: (itemId, amount = 1) => {
+      if (typeof itemId !== 'string' || !itemId.trim()) return false;
+      const safeAmount = normalizePositiveAmount(amount);
+      if (safeAmount <= 0) return false;
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_INVENTORY,
+        payload: (inventory) => ({
+          ...inventory,
+          [itemId]: Math.max(0, Math.floor(Number(inventory?.[itemId] || 0))) + safeAmount,
+        }),
+      });
+      return true;
+    },
 
     // Systems & Metadata
     setWeather: (weather) => dispatch({ type: GAME_ACTIONS.SET_WEATHER, payload: weather }),
@@ -1029,9 +1048,24 @@ export function GameProvider({ children }) {
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: plots });
     },
 
-    earnMoney: (amount) => dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (c) => c + amount }),
-    spendMoney: (amount) => dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (c) => Math.max(0, c - amount) }),
-    addXP: (amount) => dispatch({ type: GAME_ACTIONS.SET_XP, payload: (x) => x + amount }),
+    earnMoney: (amount) => {
+      const safeAmount = normalizePositiveAmount(amount);
+      if (safeAmount <= 0) return false;
+      dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => coins + safeAmount });
+      return true;
+    },
+    spendMoney: (amount) => {
+      const safeAmount = normalizePositiveAmount(amount);
+      if (safeAmount <= 0) return false;
+      dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => Math.max(0, coins - safeAmount) });
+      return true;
+    },
+    addXP: (amount) => {
+      const safeAmount = normalizePositiveAmount(amount);
+      if (safeAmount <= 0) return false;
+      dispatch({ type: GAME_ACTIONS.SET_XP, payload: (xp) => xp + safeAmount });
+      return true;
+    },
 
     sellInventoryCrop: (cropId, requestedQuantity = 1) => {
       const currentState = stateRef.current;
@@ -1196,8 +1230,8 @@ export function GameProvider({ children }) {
 
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
       setTimeout(() => {
-        dispatch({ type: GAME_ACTIONS.SET_COINS, payload: currentState.coins + totalEarnings });
-        dispatch({ type: GAME_ACTIONS.SET_XP, payload: currentState.xp + totalXp });
+        dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => coins + totalEarnings });
+        dispatch({ type: GAME_ACTIONS.SET_XP, payload: (xp) => xp + totalXp });
         dispatch({
           type: GAME_ACTIONS.UPDATE_INVENTORY, payload: (inv) => {
             const newInv = { ...inv };
@@ -1247,7 +1281,10 @@ export function GameProvider({ children }) {
       });
 
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
-      dispatch({ type: GAME_ACTIONS.SET_COINS, payload: stateRef.current.coins - maxFertilizations * costPerPlot });
+      dispatch({
+        type: GAME_ACTIONS.SET_COINS,
+        payload: (coins) => Math.max(0, coins - (maxFertilizations * costPerPlot))
+      });
       logDebugAction('fertilize_all', { count: maxFertilizations });
     },
 
@@ -1272,7 +1309,10 @@ export function GameProvider({ children }) {
       });
 
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
-      dispatch({ type: GAME_ACTIONS.SET_COINS, payload: stateRef.current.coins - maxTreatments * costPerPlot });
+      dispatch({
+        type: GAME_ACTIONS.SET_COINS,
+        payload: (coins) => Math.max(0, coins - (maxTreatments * costPerPlot))
+      });
       logDebugAction('treat_all_diseases', { count: maxTreatments });
     },
   }), []); // dispatch is stable

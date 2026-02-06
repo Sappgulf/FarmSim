@@ -287,7 +287,7 @@ export class FarmingSystem {
     }
 
     // Deduct cost
-    this.actions.setCoins(this.gameState.coins - cost);
+    this.actions.spendMoney(cost);
 
     // Plant crop
     const plantedAt = Date.now();
@@ -311,7 +311,7 @@ export class FarmingSystem {
     }
 
     this.actions.updatePlots(updatedPlots);
-    this.actions.setXp(this.gameState.xp + 1); // Small XP for planting
+    this.actions.addXP(1); // Small XP for planting
 
     return true;
   }
@@ -344,9 +344,9 @@ export class FarmingSystem {
 
     // Update coins and XP
     // Add coins and XP for harvest
-    this.actions.setCoins(this.gameState.coins + harvestValue);
+    this.actions.earnMoney(harvestValue);
     // REBALANCED: Consistent 15% XP rate across all harvest methods
-    this.actions.setXp(this.gameState.xp + Math.floor(harvestValue * 0.15));
+    this.actions.addXP(Math.floor(harvestValue * 0.15));
 
     // Update inventory
     const updatedInventory = {
@@ -419,7 +419,7 @@ export class FarmingSystem {
       return;
     }
 
-    this.actions.setCoins(this.gameState.coins - cost);
+    this.actions.spendMoney(cost);
 
     const updatedPlots = [...this.gameState.plots];
     updatedPlots[plotIndex] = {

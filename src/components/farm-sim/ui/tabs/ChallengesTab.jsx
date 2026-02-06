@@ -124,8 +124,8 @@ const ChallengesTab = memo(() => {
     const rewardXp = Math.floor((targetChallenge.reward?.xp || 0) * streakMultiplier);
 
     actions.setDailyChallenges(updatedChallenges);
-    actions.setCoins((coins) => coins + rewardCoins);
-    actions.setXp((xp) => xp + rewardXp);
+    actions.earnMoney(rewardCoins);
+    actions.addXP(rewardXp);
 
     if (!allClaimedBefore && allClaimedAfter) {
       actions.updateChallengeStreak((state.challengeStreak || 0) + 1);
@@ -166,7 +166,7 @@ const ChallengesTab = memo(() => {
       rerolledToday: true,
     }));
 
-    actions.setCoins((coins) => Math.max(0, coins - REFRESH_COST));
+    actions.spendMoney(REFRESH_COST);
     actions.setDailyChallenges(nextChallenges);
     actions.updateChallengeProgress({});
 
@@ -193,8 +193,8 @@ const ChallengesTab = memo(() => {
       return;
     }
 
-    actions.setCoins((coins) => coins + milestone.coins);
-    actions.setXp((xp) => xp + milestone.xp);
+    actions.earnMoney(milestone.coins);
+    actions.addXP(milestone.xp);
     actions.updateChallengeProgress({
       ...(state.dailyChallengeProgress || {}),
       operationsWeek: {

@@ -172,8 +172,8 @@ const EventsTab = memo(() => {
     if (!activeEvent) return;
 
     // Grant rewards
-    actions.setCoins(currentState.coins + activeEvent.rewards.coins);
-    actions.setXp(currentState.xp + Math.floor(activeEvent.rewards.coins * 0.5));
+    actions.earnMoney(activeEvent.rewards.coins);
+    actions.addXP(Math.floor(activeEvent.rewards.coins * 0.5));
 
     // Add to event history
     const completedEvent = {

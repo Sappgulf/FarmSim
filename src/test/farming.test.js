@@ -9,8 +9,11 @@ describe('FarmingSystem', () => {
     beforeEach(() => {
         mockActions = {
             setCoins: vi.fn(),
+            spendMoney: vi.fn(),
+            earnMoney: vi.fn(),
             updatePlots: vi.fn(),
             setXp: vi.fn(),
+            addXP: vi.fn(),
             updateInventory: vi.fn(),
         };
 
@@ -37,7 +40,7 @@ describe('FarmingSystem', () => {
         const success = farmingSystem.plantCrop(0, cropData);
 
         expect(success).toBe(true);
-        expect(mockActions.setCoins).toHaveBeenCalledWith(90); // 100 - 10
+        expect(mockActions.spendMoney).toHaveBeenCalledWith(10); // crop cost
         expect(mockActions.updatePlots).toHaveBeenCalled();
 
         // Verify call args
@@ -57,7 +60,7 @@ describe('FarmingSystem', () => {
         const success = farmingSystem.plantCrop(0, cropData);
 
         expect(success).toBe(false);
-        expect(mockActions.setCoins).not.toHaveBeenCalled();
+        expect(mockActions.spendMoney).not.toHaveBeenCalled();
     });
 
     it('should harvest a ready crop', () => {
@@ -74,7 +77,7 @@ describe('FarmingSystem', () => {
         expect(success).toBe(true);
 
         // Check earnings (base value × harvest multiplier)
-        expect(mockActions.setCoins).toHaveBeenCalledWith(124);
+        expect(mockActions.earnMoney).toHaveBeenCalledWith(24);
 
         // Check plot clear
         const updateCall = mockActions.updatePlots.mock.calls[0][0];
@@ -93,7 +96,7 @@ describe('FarmingSystem', () => {
         const success = farmingSystem.harvestCrop(0);
 
         expect(success).toBe(false);
-        expect(mockActions.setCoins).not.toHaveBeenCalled();
+        expect(mockActions.earnMoney).not.toHaveBeenCalled();
     });
 
     it('should calculate growth correctly in update loop', () => {

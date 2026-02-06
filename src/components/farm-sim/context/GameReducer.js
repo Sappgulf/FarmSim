@@ -187,6 +187,14 @@ export const initialState = {
     },
 };
 
+const sanitizeNonNegativeNumber = (value, fallback = 0) => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+        return Math.max(0, Math.floor(Number(fallback) || 0));
+    }
+    return Math.max(0, Math.floor(numeric));
+};
+
 /**
  * Game reducer function
  * @param {Object} state - Current game state
@@ -196,12 +204,18 @@ export const initialState = {
 export function gameReducer(state, action) {
     switch (action.type) {
         case GAME_ACTIONS.SET_COINS:
-            const newCoins = typeof action.payload === 'function' ? action.payload(state.coins) : action.payload;
+            const resolvedCoins = typeof action.payload === 'function'
+                ? action.payload(state.coins)
+                : action.payload;
+            const newCoins = sanitizeNonNegativeNumber(resolvedCoins, state.coins);
             return { ...state, coins: newCoins };
 
         case GAME_ACTIONS.SET_XP:
-            const newXp = typeof action.payload === 'function' ? action.payload(state.xp) : action.payload;
-            const newLevel = Math.floor(Math.sqrt(newXp / 50)) + 1;
+            const resolvedXp = typeof action.payload === 'function'
+                ? action.payload(state.xp)
+                : action.payload;
+            const newXp = sanitizeNonNegativeNumber(resolvedXp, state.xp);
+            const newLevel = Math.max(1, Math.floor(Math.sqrt(newXp / 50)) + 1);
             const didLevelUp = newLevel > state.level;
 
             if (didLevelUp && typeof window !== 'undefined') {

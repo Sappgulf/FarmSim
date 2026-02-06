@@ -89,7 +89,7 @@ const ShopTab = memo(() => {
       return;
     }
     if (state.coins >= item.cost) {
-      actions.setCoins(state.coins - item.cost);
+      actions.spendMoney(item.cost);
       actions.updateInventory({
         ...state.inventory,
         [item.id]: (state.inventory[item.id] || 0) + 1

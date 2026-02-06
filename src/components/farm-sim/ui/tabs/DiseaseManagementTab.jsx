@@ -67,8 +67,8 @@ const DiseaseManagementTab = memo(() => {
           curedAt: Date.now(),
         };
         actions.updatePlots(updatedPlots);
-        actions.setCoins(state.coins - cureItem.cost);
-        actions.setXp(state.xp + 10);
+        actions.spendMoney(cureItem.cost);
+        actions.addXP(10);
         
         actions.addNotification({
           message: `${cureItem.emoji} Cured plot #${targetPlotIndex + 1}!`,
@@ -119,8 +119,8 @@ const DiseaseManagementTab = memo(() => {
     });
     
     actions.updatePlots(updatedPlots);
-    actions.setCoins(state.coins - universalCure.cost);
-    actions.setXp(state.xp + 50);
+    actions.spendMoney(universalCure.cost);
+    actions.addXP(50);
     
     // Particle effect
     if (typeof window.triggerParticleEffect === 'function') {
@@ -358,4 +358,3 @@ const DiseaseManagementTab = memo(() => {
 
 DiseaseManagementTab.displayName = 'DiseaseManagementTab';
 export default DiseaseManagementTab;
-

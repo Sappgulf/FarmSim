@@ -58,8 +58,8 @@ const DailyQuestsTab = memo(() => {
     const reward = Math.floor(quest.reward * streakBonus);
     
     // Grant reward
-    actions.setCoins(state.coins + reward);
-    actions.setXp(state.xp + Math.floor(reward * 0.5));
+    actions.earnMoney(reward);
+    actions.addXP(Math.floor(reward * 0.5));
     
     // Mark as claimed
     const updatedQuests = quests.map(q =>

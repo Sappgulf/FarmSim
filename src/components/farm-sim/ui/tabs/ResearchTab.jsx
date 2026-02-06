@@ -192,7 +192,7 @@ const ResearchTab = memo(() => {
     }
 
     // Deduct cost
-    actions.setCoins(state.coins - research.cost);
+    actions.spendMoney(research.cost);
 
     // Start research in global state
     const updatedResearch = {
@@ -213,7 +213,7 @@ const ResearchTab = memo(() => {
 
     // Grant XP reward
     const xpReward = Math.floor(research.cost * 0.5);
-    actions.setXp(state.xp + xpReward);
+    actions.addXP(xpReward);
 
     // Mark as completed
     // Update research state - complete project and reset active research

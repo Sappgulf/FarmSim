@@ -34,6 +34,20 @@ Guiding rules:
 - **Why:** tighten 375px usability and lock in failure-path stability as systems grow.
 - **Verification:** `npm run test -- --run` and `npm run build` (both pass).
 
+### Planned (2026-02-06) — Sprint G9: Fishing Depth + Economy Integrity
+- **Scope:** gameplay depth, economy correctness, mobile controls, stability tests
+- **What:** rebuild the fishing mini-game with deeper mechanics, ensure notifications always auto-expire, and enforce reward/cost integrity for coins/XP.
+- **Why:** improve core loop depth while eliminating reward-path inconsistencies and stale-notification clutter.
+- **Verification:** `npm run test -- --run` and `npm run build`.
+
+### Implemented (2026-02-06) — Sprint G9: Fishing Depth + Economy Integrity
+- **Scope:** gameplay depth, economy correctness, mobile controls, stability tests
+- **What:** redesigned fishing with continuous fish movement, tension management, catch quality tiers, streak/escape stats, and touch hold-to-reel controls tuned for mobile.
+- **What:** added guaranteed notification expiry sweep, introduced `actions.addToInventory`, and replaced raw economy writes across systems/tabs with `earnMoney` / `spendMoney` / `addXP`.
+- **What:** hardened reducer coin/XP writes with non-negative finite clamping and added new regression tests for fishing rewards, reducer guards, and notification auto-dismiss.
+- **Why:** deliver a more skillful fishing loop, remove reward exploits/inconsistencies, and keep gameplay feedback clean without manual cleanup.
+- **Verification:** `npm run test -- --run` and `npm run build` (both pass).
+
 ## [5.2.0] - 2026-02-06
 ### Planned (2026-02-06) — Sprint G6: Replay Loop + Performance Pass
 - **Scope:** gameplay loops, UI polish, performance, tests, docs

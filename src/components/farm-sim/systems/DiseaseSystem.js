@@ -210,8 +210,8 @@ export class DiseaseSystem {
     };
     
     this.actions.updatePlots(updatedPlots);
-    this.actions.setCoins(this.state.coins - cureItem.cost);
-    this.actions.setXp(this.state.xp + 10); // Reward for disease management
+    this.actions.spendMoney(cureItem.cost);
+    this.actions.addXP(10); // Reward for disease management
     
     // Particle effect
     if (typeof window.triggerParticleEffect === 'function') {
@@ -295,4 +295,3 @@ export class DiseaseSystem {
 }
 
 export default DiseaseSystem;
-
