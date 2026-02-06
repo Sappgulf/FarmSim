@@ -1,0 +1,13 @@
+<svg width="420" height="110" viewBox="0 0 420 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="420" height="110" rx="18" fill="white"/>
+  <g transform="translate(8 10)">
+    <rect x="6" y="28" width="52" height="44" rx="8" fill="#FFF4D6" stroke="#F59E0B" stroke-width="4"/>
+    <path d="M2 34L31 8L62 34" stroke="#EA580C" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="25" y="49" width="14" height="23" rx="4" fill="#92400E"/>
+    <circle cx="78" cy="66" r="20" fill="#F59E0B"/>
+    <circle cx="94" cy="66" r="18" fill="#EA580C" fill-opacity="0.9"/>
+    <path d="M82 32C86 20 99 15 106 8" stroke="#FACC15" stroke-width="5" stroke-linecap="round"/>
+    <path d="M99 34C96 24 103 17 112 14" stroke="#FCD34D" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <text x="130" y="70" fill="#7C2D12" font-size="54" font-weight="700" font-family="'Trebuchet MS', 'Nunito', sans-serif">Cozy Farms</text>
+</svg>
