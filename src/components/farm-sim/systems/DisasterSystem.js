@@ -340,7 +340,7 @@ export class DisasterSystem {
     
     this.actions.updateDisasterProtections(updatedProtections);
     this.actions.spendMoney(protection.cost);
-    this.actions.addXP(30);
+    this.actions.addXP(30, { source: 'milestone', label: 'Farm Expansion' });
     
     this.actions.addNotification({
       message: `${protection.emoji} Purchased ${protection.name}!`,

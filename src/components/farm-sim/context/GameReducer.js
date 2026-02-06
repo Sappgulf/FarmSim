@@ -1,5 +1,6 @@
 import { GAME_ACTIONS } from './GameActions';
 import { SAVE_VERSION, initializePlots } from './GamePersistence';
+import { getLevelBandRewards, getLevelFromXp } from '../systems/progression';
 
 // Initial game state
 export const initialState = {
@@ -11,6 +12,9 @@ export const initialState = {
     xp: 0,
     level: 1,
     gridSize: 3,
+    progressionXpTracker: { dayKey: null, harvestCounts: {}, minigameDailyXp: {} },
+    recentXpEvents: [],
+    cosmeticTokens: 0,
 
     // Game objects
     plots: initializePlots(3),
@@ -240,7 +244,8 @@ export function gameReducer(state, action) {
                 ? action.payload(state.xp)
                 : action.payload;
             const newXp = sanitizeNonNegativeNumber(resolvedXp, state.xp);
-            const newLevel = Math.max(1, Math.floor(Math.sqrt(newXp / 50)) + 1);
+            const computedLevel = getLevelFromXp(newXp);
+            const newLevel = Math.max(state.level, computedLevel);
             const didLevelUp = newLevel > state.level;
 
             if (didLevelUp && typeof window !== 'undefined') {
@@ -256,10 +261,27 @@ export function gameReducer(state, action) {
                 }, 100);
             }
 
+            const levelUps = didLevelUp
+                ? Array.from({ length: newLevel - state.level }, (_, idx) => state.level + idx + 1)
+                : [];
+            let tokenGain = 0;
+            const rewardNotifications = [];
+            levelUps.forEach((lvl) => {
+                const reward = getLevelBandRewards(lvl);
+                if (!reward) return;
+                tokenGain += reward.cosmeticTokens || 0;
+                rewardNotifications.push({
+                    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    message: `✨ ${reward.unlock} unlocked (+${reward.cosmeticTokens || 0} cosmetic tokens).`,
+                    type: 'info',
+                });
+            });
+
             return {
                 ...state,
                 xp: newXp,
                 level: newLevel,
+                cosmeticTokens: Math.max(0, Math.floor(state.cosmeticTokens || 0) + tokenGain),
                 ...(didLevelUp && {
                     notifications: [
                         ...state.notifications,
@@ -267,7 +289,8 @@ export function gameReducer(state, action) {
                             id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                             message: `🎉 Level ${newLevel} Reached!`,
                             type: 'success',
-                        }
+                        },
+                        ...rewardNotifications,
                     ]
                 })
             };
@@ -404,6 +427,12 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_LAST_CHALLENGE_RESET:
             return { ...state, lastChallengeReset: action.payload };
+
+        case GAME_ACTIONS.UPDATE_PROGRESSION_XP_TRACKER:
+            return { ...state, progressionXpTracker: action.payload };
+
+        case GAME_ACTIONS.SET_RECENT_XP_EVENTS:
+            return { ...state, recentXpEvents: Array.isArray(action.payload) ? action.payload : [] };
 
         case GAME_ACTIONS.UPDATE_DAILY_QUESTS:
             return { ...state, dailyQuests: action.payload };

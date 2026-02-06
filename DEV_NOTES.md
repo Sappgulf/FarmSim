@@ -144,3 +144,13 @@
 - Ghost snapshot utilities: `src/utils/farmSnapshot.js`.
 - Milestone definitions + manager: `src/data/milestones.js`, `src/systems/milestones.js`.
 - Social tab now hosts Seed Code + Ghost Visit + Milestones UI.
+
+
+## Progression tuning map (v5.4)
+- Central XP curve + level mapping: `src/components/farm-sim/systems/progression.js`.
+- All XP grants should flow through `actions.addXP(amount, sourceMeta)` in `GameContext`.
+- `sourceMeta` drives balancing rules (harvest diminishing, minigame daily caps, pet suppression, daily reward cap).
+- UI progress and next-level math must use `getXpProgress` (avoid local formulas).
+- Save safety fields:
+  - `progressionXpTracker` for daily counters/caps
+  - `recentXpEvents` for last-three source clarity in header dropdown

@@ -34,6 +34,7 @@ import { CROP_DATA } from '../constants/cropData';
 import { MILESTONE_DEFINITIONS } from '../../../data/milestones';
 import { createMilestoneManager } from '../../../systems/milestones';
 import { CROP_TRAITS, CROP_TRAIT_IDS, DECOR_SETS, FARM_TITLES, RARE_MOMENTS, VISUAL_WEATHER_ROTATION, WEEKLY_SPECIAL_DAY } from '../../../data/cozyExpansion';
+import { applyXpTuning } from '../systems/progression';
 import {
   applyCosmeticFallbacks,
   getItemEntitlementInfo,
@@ -1230,11 +1231,31 @@ export function GameProvider({ children }) {
       dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => Math.max(0, coins - safeAmount) });
       return true;
     },
-    addXP: (amount) => {
+    addXP: (amount, sourceMeta = {}) => {
       if (stateRef.current.ghostVisit?.active) return false;
       const safeAmount = normalizePositiveAmount(amount);
       if (safeAmount <= 0) return false;
-      dispatch({ type: GAME_ACTIONS.SET_XP, payload: (xp) => xp + safeAmount });
+      const currentState = stateRef.current;
+      const dayKey = getDayKey();
+      const tuned = applyXpTuning(
+        safeAmount,
+        sourceMeta,
+        currentState.progressionXpTracker || {},
+        dayKey,
+      );
+      if (tuned.grantedXp <= 0) return false;
+      dispatch({ type: GAME_ACTIONS.UPDATE_PROGRESSION_XP_TRACKER, payload: tuned.tracker });
+      dispatch({ type: GAME_ACTIONS.SET_XP, payload: (xp) => xp + tuned.grantedXp });
+      const recentXp = [
+        ...(Array.isArray(currentState.recentXpEvents) ? currentState.recentXpEvents : []),
+        {
+          id: `xp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          source: sourceMeta?.label || sourceMeta?.source || 'activity',
+          amount: tuned.grantedXp,
+          timestamp: Date.now(),
+        },
+      ].slice(-3);
+      dispatch({ type: GAME_ACTIONS.SET_RECENT_XP_EVENTS, payload: recentXp });
       return true;
     },
 
@@ -1403,7 +1424,7 @@ export function GameProvider({ children }) {
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
       setTimeout(() => {
         dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => coins + totalEarnings });
-        dispatch({ type: GAME_ACTIONS.SET_XP, payload: (xp) => xp + totalXp });
+        actionsRef.current?.addXP(totalXp, { source: 'harvest', label: 'Bulk Harvest' });
         dispatch({
           type: GAME_ACTIONS.UPDATE_INVENTORY, payload: (inv) => {
             const newInv = { ...inv };

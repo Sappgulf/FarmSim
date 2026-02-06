@@ -102,7 +102,7 @@ export class AchievementSystem {
         this.actions.earnMoney(achievement.reward.coins);
       }
       if (achievement.reward.xp) {
-        this.actions.addXP(achievement.reward.xp);
+        this.actions.addXP(achievement.reward.xp, { source: 'milestone', label: `Achievement: ${achievement.name}` });
       }
     }
   }

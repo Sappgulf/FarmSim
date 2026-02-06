@@ -158,7 +158,7 @@ const GeneticsTab = memo(() => {
     };
     actions.updateInventory(updatedInventory);
 
-    actions.addXP(25);
+    actions.addXP(25, { source: 'milestone', label: 'Genetics Breakthrough' });
 
     actions.addNotification({
       message: `Successfully bred ${matchedRecipe.recipe.name}!`,

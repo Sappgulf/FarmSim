@@ -211,7 +211,7 @@ export class DiseaseSystem {
     
     this.actions.updatePlots(updatedPlots);
     this.actions.spendMoney(cureItem.cost);
-    this.actions.addXP(10); // Reward for disease management
+    this.actions.addXP(10, { source: 'milestone', label: 'Disease Managed' }); // Reward for disease management
     
     // Particle effect
     if (typeof window.triggerParticleEffect === 'function') {

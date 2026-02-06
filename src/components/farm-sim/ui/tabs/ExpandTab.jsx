@@ -15,7 +15,7 @@ const ExpandTab = memo(() => {
     if (state.coins >= expansionCost && state.gridSize < maxSize) {
       actions.spendMoney(expansionCost);
       actions.setGridSize(state.gridSize + 1);
-      actions.addXP(30);
+      actions.addXP(30, { source: 'milestone', label: 'Farm Expansion' });
       actions.addNotification({
         message: `🎉 Farm expanded to ${state.gridSize + 1}×${state.gridSize + 1}!`,
         type: 'success'

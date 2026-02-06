@@ -59,7 +59,7 @@ const DailyQuestsTab = memo(() => {
     
     // Grant reward
     actions.earnMoney(reward);
-    actions.addXP(Math.floor(reward * 0.5));
+    actions.addXP(Math.floor(reward * 0.5), { source: 'daily_reward', label: 'Daily Quest' });
     
     // Mark as claimed
     const updatedQuests = quests.map(q =>
