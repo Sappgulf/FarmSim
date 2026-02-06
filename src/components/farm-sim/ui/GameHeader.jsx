@@ -6,6 +6,7 @@ import { Badge } from '../../ui/badge';
 import { Progress } from '../../ui/progress';
 import { Coins, Star, Trophy, Settings, Save, Play, Pause, ChevronDown, TrendingUp, Calendar } from 'lucide-react';
 import { getNextGoal } from '../../../utils/goalHints';
+import { getWeatherMeta } from '../constants/weatherData';
 
 // Animated number counter component
 const AnimatedNumber = memo(({ value, duration = 500 }) => {
@@ -128,19 +129,20 @@ const GameHeader = memo(() => {
   const xpProgress = (currentLevelXp / xpNeededForNext) * 100;
 
   const nextGoal = getNextGoal(state);
+  const weatherMeta = getWeatherMeta(state.weather);
 
   return (
     <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 px-3 sm:px-4 py-2 sm:py-3 relative sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="max-w-7xl mx-auto flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         {/* Left side - Game title and basic stats */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center justify-between lg:justify-start gap-2 sm:gap-4 lg:gap-6 w-full lg:w-auto">
           <div className="flex items-center gap-2">
             <div className="text-2xl sm:text-3xl animate-bounce-slow filter drop-shadow-sm">🚜</div>
             <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent hidden sm:block">FarmLife</h1>
           </div>
 
           {/* Core stats with animations */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-wrap justify-end lg:justify-start">
             <div className="flex items-center gap-1.5 group cursor-pointer bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 px-2 sm:px-3 py-1.5 rounded-xl transition-all shadow-sm border border-amber-200/50">
               <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 group-hover:animate-spin filter drop-shadow-sm" />
               <span className="font-bold text-amber-700 text-sm sm:text-base coin-display">
@@ -156,7 +158,7 @@ const GameHeader = memo(() => {
                 </span>
               </div>
               {/* XP Progress bar to next level */}
-              <div className="w-32">
+              <div className="w-28 sm:w-32 hidden sm:block">
                 <Progress value={xpProgress} className="h-2 bg-blue-100" />
                 <div className="text-[10px] text-gray-600 font-medium text-center mt-0.5">
                   {Math.floor(currentLevelXp)}/{xpNeededForNext} to Lv{state.level + 1}
@@ -177,17 +179,17 @@ const GameHeader = memo(() => {
         </div>
 
         {/* Right side - Controls and weather */}
-        <div className="flex items-center gap-3">
+        <div className="w-full lg:w-auto flex flex-wrap items-center justify-end gap-2">
           {/* Stats Dropdown Button */}
           <div className="relative">
             <Button
               size="sm"
               variant="outline"
               onClick={() => setShowStatsDropdown(!showStatsDropdown)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 min-h-[40px]"
             >
               <TrendingUp className="w-3 h-3" />
-              <span className="text-xs">Stats</span>
+              <span className="text-xs hidden sm:inline">Stats</span>
               <ChevronDown className={`w-3 h-3 transition-transform ${showStatsDropdown ? 'rotate-180' : ''}`} />
             </Button>
 
@@ -251,15 +253,14 @@ const GameHeader = memo(() => {
           )}
 
           {/* Weather display with animation */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg hover:bg-blue-100 transition cursor-pointer">
+          <div
+            className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg transition cursor-pointer ${weatherMeta.headerClassName}`}
+          >
             <span className="text-lg animate-weather">
-              {state.weather === 'sunny' ? '☀️' :
-                state.weather === 'rainy' ? '🌧️' :
-                  state.weather === 'stormy' ? '⛈️' :
-                    state.weather === 'snowy' ? '❄️' : '☀️'}
+              {weatherMeta.emoji}
             </span>
-            <span className="text-sm font-medium text-blue-700 capitalize">
-              {state.weather || 'sunny'}
+            <span className="text-xs sm:text-sm font-medium">
+              {weatherMeta.label}
             </span>
           </div>
 
@@ -319,7 +320,7 @@ const GameHeader = memo(() => {
           </div>
 
           {/* Achievement indicator */}
-          <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition cursor-pointer">
+          <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition cursor-pointer min-h-[40px]">
             <Trophy className="w-4 h-4 text-yellow-600" />
             <span className="text-sm font-medium text-gray-700">
               {state.achievements?.filter(a => a.unlocked).length || 0}/{state.achievements?.length || 0}

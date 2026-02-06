@@ -300,86 +300,112 @@ function FarmSimCore() {
 
   // Enhanced season transition effect
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.triggerSeasonTransition = (seasonConfig) => {
-        // Create full-screen overlay for smooth transition
-        const overlay = document.createElement('div');
-        overlay.style.cssText = `
-          position: fixed;
-          inset: 0;
-          z-index: 9999;
-          pointer-events: none;
-          background: linear-gradient(135deg, ${seasonConfig.colors.primary.split(' ').join(', ')});
-          opacity: 0;
-          transition: opacity 1.5s ease-in-out;
-        `;
-        document.body.appendChild(overlay);
+    if (typeof window === 'undefined') return undefined;
 
-        // Fade in overlay
-        requestAnimationFrame(() => {
-          overlay.style.opacity = '0.95';
-        });
+    let activeNodes = [];
+    let activeTimers = [];
 
-        // Add season icon with dramatic entrance
-        const icon = document.createElement('div');
-        icon.textContent = seasonConfig.emoji;
-        icon.style.cssText = `
-          position: fixed;
-          top: 40%;
-          left: 50%;
-          transform: translate(-50%, -50%) scale(0);
-          font-size: 150px;
-          z-index: 10000;
-          pointer-events: none;
-          filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.9));
-          animation: season-icon-pop 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        `;
-        document.body.appendChild(icon);
+    const clearActiveTransition = () => {
+      activeTimers.forEach((timerId) => clearTimeout(timerId));
+      activeTimers = [];
+      activeNodes.forEach((node) => {
+        if (node && typeof node.remove === 'function') {
+          node.remove();
+        }
+      });
+      activeNodes = [];
+    };
 
-        // Add season name text
-        const text = document.createElement('div');
-        text.textContent = seasonConfig.name;
-        text.style.cssText = `
-          position: fixed;
-          top: 55%;
-          left: 50%;
-          transform: translate(-50%, -50%) scale(0);
-          font-size: 48px;
-          font-weight: bold;
-          color: rgba(255, 255, 255, 0.95);
-          z-index: 10000;
-          pointer-events: none;
-          text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-          animation: season-text-appear 2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
-        `;
-        document.body.appendChild(text);
+    const createGradient = (seasonConfig) => {
+      const gradientStops = Array.isArray(seasonConfig?.overlayGradient)
+        ? seasonConfig.overlayGradient
+        : ['#dcfce7', '#dbeafe'];
+      return `linear-gradient(135deg, ${gradientStops.join(', ')})`;
+    };
 
-        // Add description text
-        const desc = document.createElement('div');
-        desc.textContent = seasonConfig.description;
-        desc.style.cssText = `
-          position: fixed;
-          top: 62%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          font-size: 18px;
-          color: rgba(255, 255, 255, 0.85);
-          z-index: 10000;
-          pointer-events: none;
-          text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-          text-align: center;
-          max-width: 80%;
-          opacity: 0;
-          animation: fade-in 1s ease-in 0.8s forwards;
-        `;
-        document.body.appendChild(desc);
+    window.triggerSeasonTransition = (seasonConfig = {}) => {
+      clearActiveTransition();
 
-        // Create decorative particles
-        const particleCount = 30;
+      const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+
+      // Create full-screen overlay for smooth transition.
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        pointer-events: none;
+        background: ${createGradient(seasonConfig)};
+        opacity: 0;
+        transition: opacity ${prefersReducedMotion ? '300ms' : '1.5s'} ease-in-out;
+      `;
+      document.body.appendChild(overlay);
+      activeNodes.push(overlay);
+
+      requestAnimationFrame(() => {
+        overlay.style.opacity = prefersReducedMotion ? '0.7' : '0.95';
+      });
+
+      const icon = document.createElement('div');
+      icon.textContent = seasonConfig.emoji || '🌱';
+      icon.style.cssText = `
+        position: fixed;
+        top: 40%;
+        left: 50%;
+        transform: ${prefersReducedMotion ? 'translate(-50%, -50%)' : 'translate(-50%, -50%) scale(0)'};
+        font-size: clamp(64px, 12vw, 150px);
+        z-index: 10000;
+        pointer-events: none;
+        filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.9));
+        animation: ${prefersReducedMotion ? 'fade-in 300ms ease-out forwards' : 'season-icon-pop 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'};
+      `;
+      document.body.appendChild(icon);
+      activeNodes.push(icon);
+
+      const text = document.createElement('div');
+      text.textContent = seasonConfig.name || 'Season';
+      text.style.cssText = `
+        position: fixed;
+        top: 55%;
+        left: 50%;
+        transform: ${prefersReducedMotion ? 'translate(-50%, -50%)' : 'translate(-50%, -50%) scale(0)'};
+        font-size: clamp(28px, 6vw, 48px);
+        font-weight: bold;
+        color: rgba(255, 255, 255, 0.95);
+        z-index: 10000;
+        pointer-events: none;
+        text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        animation: ${prefersReducedMotion ? 'fade-in 300ms ease-out 80ms forwards' : 'season-text-appear 2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards'};
+      `;
+      document.body.appendChild(text);
+      activeNodes.push(text);
+
+      const desc = document.createElement('div');
+      desc.textContent = seasonConfig.description || '';
+      desc.style.cssText = `
+        position: fixed;
+        top: 62%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: clamp(14px, 2.8vw, 18px);
+        color: rgba(255, 255, 255, 0.85);
+        z-index: 10000;
+        pointer-events: none;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        max-width: min(80%, 560px);
+        opacity: 0;
+        animation: fade-in 1s ease-in 0.8s forwards;
+      `;
+      document.body.appendChild(desc);
+      activeNodes.push(desc);
+
+      if (!prefersReducedMotion) {
         const particles = [];
-        for (let i = 0; i < particleCount; i++) {
+        const particleCount = 24;
+        for (let i = 0; i < particleCount; i += 1) {
           const particle = document.createElement('div');
-          particle.textContent = seasonConfig.icon || seasonConfig.emoji;
+          particle.textContent = seasonConfig.icon || seasonConfig.emoji || '✨';
           particle.style.cssText = `
             position: fixed;
             top: ${Math.random() * 100}%;
@@ -392,29 +418,31 @@ function FarmSimCore() {
           `;
           document.body.appendChild(particle);
           particles.push(particle);
+          activeNodes.push(particle);
         }
+      }
 
-        // Fade out and cleanup
-        setTimeout(() => {
-          overlay.style.opacity = '0';
-          icon.style.opacity = '0';
-          text.style.opacity = '0';
-          desc.style.opacity = '0';
-          icon.style.transform = 'translate(-50%, -50%) scale(0.5)';
-          text.style.transform = 'translate(-50%, -50%) scale(0.5)';
+      const fadeTimer = setTimeout(() => {
+        overlay.style.opacity = '0';
+        icon.style.opacity = '0';
+        text.style.opacity = '0';
+        desc.style.opacity = '0';
+        icon.style.transform = 'translate(-50%, -50%) scale(0.5)';
+        text.style.transform = 'translate(-50%, -50%) scale(0.5)';
 
-          particles.forEach(p => p.style.opacity = '0');
+        const cleanupTimer = setTimeout(() => {
+          clearActiveTransition();
+        }, prefersReducedMotion ? 400 : 1500);
+        activeTimers.push(cleanupTimer);
+      }, prefersReducedMotion ? 1200 : 2500);
 
-          setTimeout(() => {
-            overlay.remove();
-            icon.remove();
-            text.remove();
-            desc.remove();
-            particles.forEach(p => p.remove());
-          }, 1500);
-        }, 2500);
-      };
-    }
+      activeTimers.push(fadeTimer);
+    };
+
+    return () => {
+      clearActiveTransition();
+      delete window.triggerSeasonTransition;
+    };
   }, []);
 
   const activeTheme = getFarmTheme(state.farmTheme);

@@ -4,6 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
+import { getWeatherMeta, normalizeWeatherType } from '../../constants/weatherData';
 
 // Weather prediction patterns from original system
 const WEATHER_PATTERNS = [
@@ -26,10 +27,10 @@ const WEATHER_PATTERNS = [
     hint: "Strong winds often bring storms"
   },
   {
-    pattern: ["sunny", "hot"],
+    pattern: ["sunny", "sunny", "windy"],
     nextWeather: "drought",
     confidence: 0.6,
-    hint: "Extended heat may cause drought"
+    hint: "Extended dry winds may trigger drought"
   }
 ];
 
@@ -39,6 +40,10 @@ const WEATHER_PREDICTION_REWARDS = {
   okay: { coins: 30, xp: 15, accuracy: 0.6 },
   poor: { coins: 10, xp: 5, accuracy: 0.4 }
 };
+
+const PREDICTION_OPTIONS = Array.from(
+  new Set(['sunny', 'rainy', 'stormy', 'cloudy', ...WEATHER_PATTERNS.map((pattern) => pattern.nextWeather)])
+);
 
 const WeatherTab = memo(() => {
   const { state, actions } = useGame();
@@ -113,16 +118,7 @@ const WeatherTab = memo(() => {
   };
 
   const getWeatherEmoji = (weather) => {
-    switch (weather) {
-      case 'sunny': return '☀️';
-      case 'rainy': return '🌧️';
-      case 'cloudy': return '☁️';
-      case 'stormy': return '⛈️';
-      case 'windy': return '💨';
-      case 'drought': return '🏜️';
-      case 'hot': return '🔥';
-      default: return '❓';
-    }
+    return getWeatherMeta(weather).emoji;
   };
 
   const getCurrentWeatherEffects = () => {
@@ -133,12 +129,13 @@ const WeatherTab = memo(() => {
       stormy: { growth: '-20%', water: '+20%', disease: 'High' },
       windy: { growth: '-10%', water: '-5%', disease: 'Medium' },
       drought: { growth: '-30%', water: '-20%', disease: 'High' },
-      hot: { growth: '+15%', water: '-15%', disease: 'Medium' }
+      snow: { growth: '-70%', water: '+10%', disease: 'Low' },
     };
-    return effects[state.weather] || effects.cloudy;
+    return effects[normalizeWeatherType(state.weather)] || effects.cloudy;
   };
 
   const weatherEffects = getCurrentWeatherEffects();
+  const currentWeatherMeta = getWeatherMeta(state.weather);
 
   return (
     <div className="space-y-4">
@@ -149,7 +146,7 @@ const WeatherTab = memo(() => {
             <h3 className="text-lg font-semibold text-blue-800">🌤️ Current Weather</h3>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-3xl">{getWeatherEmoji(state.weather)}</span>
-              <span className="text-lg font-medium capitalize">{state.weather}</span>
+              <span className="text-lg font-medium">{currentWeatherMeta.label}</span>
             </div>
           </div>
           <Badge variant="outline" className="bg-blue-100 text-blue-700">
@@ -223,8 +220,8 @@ const WeatherTab = memo(() => {
 
               {/* Prediction Buttons */}
               {!predictionGame.result && (
-                <div className="grid grid-cols-2 gap-2">
-                  {["sunny", "rainy", "stormy", "cloudy"].map(weather => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {PREDICTION_OPTIONS.map(weather => (
                     <Button
                       key={weather}
                       onClick={() => makePrediction(weather)}
@@ -284,7 +281,9 @@ const WeatherTab = memo(() => {
           </div>
           <div className="text-center p-2 bg-gray-50 rounded">
             <div className="font-semibold text-gray-800">
-              {state.weatherForecast ? state.weatherForecast.filter(f => f.type === state.weather).length : 0}
+              {state.weatherForecast
+                ? state.weatherForecast.filter((f) => normalizeWeatherType(f.type) === normalizeWeatherType(state.weather)).length
+                : 0}
             </div>
             <div className="text-gray-600">Current Streak</div>
           </div>

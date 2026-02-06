@@ -154,7 +154,7 @@ const NotificationSystem = memo(() => {
   }
 
   return (
-    <div className="fixed top-16 sm:top-20 right-2 sm:right-4 z-50 w-72 sm:w-80 max-w-[calc(100vw-1rem)]">
+    <div className="fixed top-16 sm:top-20 inset-x-2 sm:inset-x-auto sm:right-4 z-50 sm:w-80 max-w-[calc(100vw-1rem)]">
       <div className="space-y-2">
         {state.notifications.map((notification, index) => {
           const isHidden = index >= MAX_VISIBLE;

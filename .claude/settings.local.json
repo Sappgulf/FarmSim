@@ -13,7 +13,11 @@
       "Bash(git pull:*)",
       "Bash(git stash:*)",
       "Bash(git log:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(grep:*)",
+      "Bash(npx vite build:*)",
+      "Bash(./node_modules/.bin/vite build:*)",
+      "Bash(git rm:*)"
     ]
   }
 }

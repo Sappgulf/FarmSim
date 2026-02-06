@@ -45,7 +45,8 @@ const FarmPlot = memo(({
   isDecorMode,
   seasonBonus = 1.0,
   hasSoilAnalyzer = false,
-  harvestMultiplier = 1.0
+  harvestMultiplier = 1.0,
+  gridSize = 3
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -132,6 +133,7 @@ const FarmPlot = memo(({
   };
 
   const display = getPlotDisplay();
+  const isDenseGrid = gridSize >= 5;
 
   // Get soil fertility color gradient
   const getSoilGradient = () => {
@@ -170,7 +172,7 @@ const FarmPlot = memo(({
     <div className="relative">
       <Card
         className={`
-          w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 cursor-pointer relative overflow-hidden
+          w-full aspect-square min-h-[52px] sm:min-h-[72px] md:min-h-[88px] cursor-pointer relative overflow-hidden
           transition-all-fast hover-lift
           ${display.bgColor} ${display.borderColor} border-2
           ${display.hoverEffect} active:scale-95
@@ -212,7 +214,7 @@ const FarmPlot = memo(({
         <div className="flex flex-col items-center justify-center h-full p-0.5 sm:p-1 relative z-10">
           {/* Crop emoji with growth animation - Responsive sizes */}
           <div
-            className={`text-xl sm:text-2xl md:text-3xl mb-0.5 sm:mb-1 transition-transform-medium ${plot?.state === 'growing' ? 'animate-grow' : ''
+            className={`${isDenseGrid ? 'text-lg sm:text-2xl md:text-3xl' : 'text-xl sm:text-2xl md:text-3xl'} mb-0.5 sm:mb-1 transition-transform-medium ${plot?.state === 'growing' ? 'animate-grow' : ''
               } ${plot?.state === 'ready' ? 'animate-ready-pop' : ''
               } ${showPreview ? 'opacity-50' : ''
               }`}
@@ -288,6 +290,9 @@ const FarmPlot = memo(({
               {plot.currentWeather === 'rainy' && '🌧️'}
               {plot.currentWeather === 'cloudy' && '☁️'}
               {plot.currentWeather === 'stormy' && '⛈️'}
+              {plot.currentWeather === 'snow' && '❄️'}
+              {plot.currentWeather === 'windy' && '💨'}
+              {plot.currentWeather === 'drought' && '🏜️'}
             </div>
           )}
 
@@ -855,10 +860,10 @@ const FarmGrid = memo(() => {
 
       {/* Farm Grid - Responsive with larger touch targets on mobile */}
       <div
-        className="grid gap-2 sm:gap-3 md:gap-4 mx-auto justify-center farm-grid relative"
+        className="grid gap-1.5 sm:gap-2.5 md:gap-4 mx-auto justify-center farm-grid relative w-full"
         style={{
-          gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
-          maxWidth: `min(100%, ${gridSize * 120}px)` // Larger for better touch targets
+          gridTemplateColumns: `repeat(${gridSize}, minmax(${gridSize >= 5 ? 52 : 56}px, 1fr))`,
+          maxWidth: `min(100%, ${gridSize * 104}px)`
         }}
       >
         {plots.map((plot, index) => (
@@ -878,6 +883,7 @@ const FarmGrid = memo(() => {
             seasonBonus={seasonBonus}
             hasSoilAnalyzer={hasSoilAnalyzer}
             harvestMultiplier={harvestMultiplier}
+            gridSize={gridSize}
           />
         ))}
       </div>

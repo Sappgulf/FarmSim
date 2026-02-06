@@ -53,17 +53,7 @@ export class WeatherSystem {
     let newWeather;
     if (this.gameState.season?.config?.weatherWeights) {
       // Weighted random selection based on season
-      const weights = this.gameState.season.config.weatherWeights;
-      const random = Math.random();
-      let cumulative = 0;
-
-      for (const [weather, weight] of Object.entries(weights)) {
-        cumulative += weight;
-        if (random <= cumulative && weight > 0) {
-          newWeather = weather;
-          break;
-        }
-      }
+      newWeather = this.pickWeightedWeather(this.gameState.season.config.weatherWeights);
     }
 
     // Fallback to simple cycle if no season or selection failed
@@ -88,10 +78,13 @@ export class WeatherSystem {
 
   updateForecast() {
     const forecast = [];
-    const weatherTypes = ['sunny', 'rainy', 'cloudy', 'stormy'];
+    const weatherWeights = this.gameState.season?.config?.weatherWeights || null;
+    const fallbackWeatherTypes = ['sunny', 'rainy', 'cloudy', 'stormy'];
 
     for (let i = 0; i < 3; i++) {
-      const randomWeather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
+      const randomWeather = weatherWeights
+        ? this.pickWeightedWeather(weatherWeights) || fallbackWeatherTypes[Math.floor(Math.random() * fallbackWeatherTypes.length)]
+        : fallbackWeatherTypes[Math.floor(Math.random() * fallbackWeatherTypes.length)];
       forecast.push({
         type: randomWeather,
         duration: Math.floor(Math.random() * 20) + 15, // 15-35 seconds
@@ -100,6 +93,24 @@ export class WeatherSystem {
     }
 
     this.actions.updateWeatherForecast(forecast);
+  }
+
+  pickWeightedWeather(weights) {
+    if (!weights || typeof weights !== 'object') return null;
+    const entries = Object.entries(weights).filter(([, weight]) => typeof weight === 'number' && weight > 0);
+    if (!entries.length) return null;
+
+    const random = Math.random();
+    let cumulative = 0;
+
+    for (const [weather, weight] of entries) {
+      cumulative += weight;
+      if (random <= cumulative) {
+        return weather;
+      }
+    }
+
+    return entries[entries.length - 1][0];
   }
 
   applyImmediateWeatherEffects(weather) {

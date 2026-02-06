@@ -1,48 +1,50 @@
 import React, { memo, useMemo } from 'react';
+import { normalizeWeatherType } from '../constants/weatherData';
 
 /**
  * Weather Effects Overlay Component
  * Provides visual weather effects like rain, snow, sun rays with smooth transitions
  */
 const WeatherEffects = memo(({ weather, intensity = 1 }) => {
+  const normalizedWeather = normalizeWeatherType(weather);
   const [isTransitioning, setIsTransitioning] = React.useState(false);
-  const prevWeatherRef = React.useRef(weather);
+  const prevWeatherRef = React.useRef(normalizedWeather);
   
   // Detect weather change and trigger transition
   React.useEffect(() => {
-    if (prevWeatherRef.current !== weather) {
+    if (prevWeatherRef.current !== normalizedWeather) {
       setIsTransitioning(true);
       const timer = setTimeout(() => {
         setIsTransitioning(false);
-        prevWeatherRef.current = weather;
+        prevWeatherRef.current = normalizedWeather;
       }, 500); // 500ms transition
       return () => clearTimeout(timer);
     }
-  }, [weather]);
+  }, [normalizedWeather]);
   
   // Generate particle elements based on weather type
   const particles = useMemo(() => {
-    if (!weather || weather === 'sunny') return [];
+    if (!normalizedWeather || normalizedWeather === 'sunny') return [];
 
-    const particleCount = weather === 'stormy' ? 100 : weather === 'rainy' ? 60 : weather === 'snowy' ? 50 : 30;
+    const particleCount = normalizedWeather === 'stormy' ? 100 : normalizedWeather === 'rainy' ? 60 : normalizedWeather === 'snow' ? 50 : 30;
     
     return Array.from({ length: Math.floor(particleCount * intensity) }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       delay: Math.random() * 3,
       duration: 1 + Math.random() * 2,
-      size: weather === 'snowy' ? 3 + Math.random() * 3 : 1 + Math.random() * 2,
+      size: normalizedWeather === 'snow' ? 3 + Math.random() * 3 : 1 + Math.random() * 2,
     }));
-  }, [weather, intensity]);
+  }, [normalizedWeather, intensity]);
 
   // Don't render anything for clear weather
-  if (!weather || weather === 'sunny' || weather === 'cloudy') {
+  if (!normalizedWeather || normalizedWeather === 'sunny' || normalizedWeather === 'cloudy') {
     return null;
   }
 
   return (
     <div className={`absolute inset-0 pointer-events-none overflow-hidden z-10 transition-opacity duration-500 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-      {weather === 'rainy' && (
+      {normalizedWeather === 'rainy' && (
         <>
           {particles.map((particle) => (
             <div
@@ -59,7 +61,7 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
         </>
       )}
 
-      {weather === 'stormy' && (
+      {normalizedWeather === 'stormy' && (
         <>
           {/* Rain */}
           {particles.map((particle) => (
@@ -79,7 +81,7 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
         </>
       )}
 
-      {weather === 'snowy' && (
+      {normalizedWeather === 'snow' && (
         <>
           {particles.map((particle) => (
             <div
@@ -104,4 +106,3 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
 WeatherEffects.displayName = 'WeatherEffects';
 
 export default WeatherEffects;
-

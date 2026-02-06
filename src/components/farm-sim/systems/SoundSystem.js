@@ -3,6 +3,7 @@
  * Provides procedurally generated sound effects for game actions
  */
 import { isDevelopmentMode } from '../../../config/release';
+import { normalizeWeatherType } from '../constants/weatherData';
 
 export class SoundSystem {
   constructor() {
@@ -322,8 +323,9 @@ export class SoundSystem {
    */
   playWeatherSound(weatherType) {
     if (!this.enabled || !this.audioContext) return;
+    const normalizedWeatherType = normalizeWeatherType(weatherType);
     
-    switch (weatherType) {
+    switch (normalizedWeatherType) {
       case 'rainy':
       case 'stormy':
         // Rain/storm ambient (handled separately for continuous sounds)
@@ -335,7 +337,7 @@ export class SoundSystem {
           this.createSound(1000, 'sine', 0.3);
         }, 100);
         break;
-      case 'snowy':
+      case 'snow':
         this.createSound(600, 'triangle', 0.4);
         break;
       default:

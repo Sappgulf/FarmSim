@@ -173,25 +173,25 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
             <div className="font-bold text-emerald-700 text-sm">
               {inventoryCount}
             </div>
-            <div className="text-gray-500 text-[10px] font-medium">Items</div>
+            <div className="text-gray-500 text-[11px] font-medium">Items</div>
           </div>
           <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
             <div className="font-bold text-amber-600 text-sm">
               {builtCount}
             </div>
-            <div className="text-gray-500 text-[10px] font-medium">Built</div>
+            <div className="text-gray-500 text-[11px] font-medium">Built</div>
           </div>
           <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
             <div className="font-bold text-blue-600 text-sm">
               {state.livestock?.animals?.length || 0}
             </div>
-            <div className="text-gray-500 text-[10px] font-medium">Animals</div>
+            <div className="text-gray-500 text-[11px] font-medium">Animals</div>
           </div>
           <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
             <div className="font-bold text-purple-600 text-sm">
               {state.social?.reputation ?? 0}
             </div>
-            <div className="text-gray-500 text-[10px] font-medium">Rep</div>
+            <div className="text-gray-500 text-[11px] font-medium">Rep</div>
           </div>
         </div>
       </div>

@@ -16,6 +16,7 @@ export const SEASON_CONFIG = {
     name: 'Spring',
     emoji: '🌸',
     duration: 120000, // 2 minutes in milliseconds
+    overlayGradient: ['#fdf2f8', '#dcfce7'],
     colors: {
       primary: 'from-pink-100 to-green-100',
       accent: 'from-pink-200 to-green-200',
@@ -44,6 +45,7 @@ export const SEASON_CONFIG = {
     name: 'Summer',
     emoji: '☀️',
     duration: 120000,
+    overlayGradient: ['#fef3c7', '#ffedd5'],
     colors: {
       primary: 'from-yellow-100 to-orange-100',
       accent: 'from-yellow-200 to-orange-200',
@@ -72,6 +74,7 @@ export const SEASON_CONFIG = {
     name: 'Fall',
     emoji: '🍂',
     duration: 120000,
+    overlayGradient: ['#fed7aa', '#fef3c7'],
     colors: {
       primary: 'from-orange-100 to-amber-100',
       accent: 'from-orange-200 to-amber-200',
@@ -100,6 +103,7 @@ export const SEASON_CONFIG = {
     name: 'Winter',
     emoji: '❄️',
     duration: 120000,
+    overlayGradient: ['#dbeafe', '#e2e8f0'],
     colors: {
       primary: 'from-blue-100 to-slate-100',
       accent: 'from-blue-200 to-slate-200',

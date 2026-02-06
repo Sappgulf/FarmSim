@@ -21,6 +21,19 @@ Guiding rules:
 - **Why:** improve replay value through weekly goals, stabilize quality gates, and reduce UI compute overhead.
 - **Verification:** `npm run test -- --run` and `npm run build` (both pass).
 
+### Implemented (2026-02-06) — Sprint G7b: Weather Debug + Season Transition Polish
+- **Scope:** gameplay correctness, UI polish, accessibility, tests
+- **What:** unified weather key handling (`snow`/`snowy`) with shared weather metadata, fixed Weather Prediction patterns/options so rounds are always winnable, upgraded seasonal forecast generation to follow season weights, and rebuilt season transition overlays with valid gradients + strict cleanup + reduced-motion handling.
+- **Why:** remove weather presentation/logic drift and raise moment-to-moment presentation quality without adding parallel systems.
+- **Verification:** `npm run test -- --run` and `npm run build` (both pass).
+
+### Implemented (2026-02-06) — Sprint G8: Mobile Layout Polish + Stress Gates
+- **Scope:** mobile UX, stability, test coverage
+- **What:** made farm plots responsive for dense grids (5×5) with smaller mobile-safe minimums, reflowed header controls for small screens, widened mobile notification layout to avoid clipping, and increased tiny sidebar stat text for readability.
+- **What:** added stress regression tests for rapid tab switching, notification flood + duplicate closes, and repeated save/load cycles.
+- **Why:** tighten 375px usability and lock in failure-path stability as systems grow.
+- **Verification:** `npm run test -- --run` and `npm run build` (both pass).
+
 ## [5.2.0] - 2026-02-06
 ### Planned (2026-02-06) — Sprint G6: Replay Loop + Performance Pass
 - **Scope:** gameplay loops, UI polish, performance, tests, docs
