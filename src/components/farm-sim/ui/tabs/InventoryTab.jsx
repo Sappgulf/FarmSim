@@ -11,8 +11,9 @@ import {
   isPremiumModeEnabled,
 } from '../../entitlements/EntitlementManager';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
+import { getDailyCropFocus } from '../../../../utils/dailyFocus';
 
-const getSellPriceForCrop = (state, cropId) => {
+const getUnitSellPriceForCrop = (state, cropId) => {
   const marketPrice = Number(state.inventory?.[`${cropId}_price`]);
   if (Number.isFinite(marketPrice) && marketPrice > 0) {
     return Math.floor(marketPrice);
@@ -23,6 +24,7 @@ const getSellPriceForCrop = (state, cropId) => {
 const InventoryTab = memo(() => {
   const { state, actions } = useGame();
   const premiumModeEnabled = isPremiumModeEnabled(state);
+  const dailyFocus = useMemo(() => getDailyCropFocus(state), [state]);
 
   // Item emoji mapping
   const itemEmojis = {
@@ -75,21 +77,28 @@ const InventoryTab = memo(() => {
   const totalValue = useMemo(() => (
     inventoryItems.reduce((sum, [itemId, qty]) => {
       if (CROP_DATA[itemId]) {
-        return sum + getSellPriceForCrop(state, itemId) * (Number(qty) || 0);
+        const unitPrice = getUnitSellPriceForCrop(state, itemId);
+        const bonusMultiplier = dailyFocus?.cropId === itemId
+          ? Number(dailyFocus.bonusMultiplier || 1)
+          : 1;
+        return sum + Math.floor(unitPrice * (Number(qty) || 0) * bonusMultiplier);
       }
       return sum + (Number(qty) || 0) * 5;
     }, 0)
-  ), [inventoryItems, state]);
+  ), [inventoryItems, state, dailyFocus]);
 
   const cropSellSummary = useMemo(() => (
     cropItems.reduce((summary, [cropId, quantity]) => {
       const qty = Number(quantity) || 0;
-      const unitPrice = getSellPriceForCrop(state, cropId);
+      const unitPrice = getUnitSellPriceForCrop(state, cropId);
+      const bonusMultiplier = dailyFocus?.cropId === cropId
+        ? Number(dailyFocus.bonusMultiplier || 1)
+        : 1;
       summary.totalQuantity += qty;
-      summary.totalEarnings += unitPrice * qty;
+      summary.totalEarnings += Math.floor(unitPrice * qty * bonusMultiplier);
       return summary;
     }, { totalQuantity: 0, totalEarnings: 0 })
-  ), [cropItems, state]);
+  ), [cropItems, state, dailyFocus]);
 
   const handleSellCrop = (cropId, quantity) => {
     const result = actions.sellInventoryCrop(cropId, quantity);
@@ -102,7 +111,7 @@ const InventoryTab = memo(() => {
     }
 
     actions.addNotification({
-      message: `Sold ${result.quantity} ${formatDisplayLabel(cropId)} for ${result.earnings}🪙`,
+      message: `Sold ${result.quantity} ${formatDisplayLabel(cropId)} for ${result.earnings}🪙${result.isDailyFocus ? ' (Daily Focus bonus)' : ''}`,
       type: 'success',
     });
   };
@@ -140,6 +149,22 @@ const InventoryTab = memo(() => {
         </div>
       </Card>
 
+      {dailyFocus?.crop && (
+        <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="font-semibold text-amber-800">📈 Daily Market Focus</h4>
+              <p className="text-sm text-amber-700">
+                Sell {dailyFocus.crop.emoji} {dailyFocus.crop.name} for +{Math.round((dailyFocus.bonusMultiplier - 1) * 100)}% today.
+              </p>
+            </div>
+            <Badge className="bg-amber-600">
+              +{Math.round((dailyFocus.bonusMultiplier - 1) * 100)}%
+            </Badge>
+          </div>
+        </Card>
+      )}
+
       {/* Crops & Quick Sell */}
       <Card className="p-4">
         <div className="flex items-center justify-between gap-2 mb-3">
@@ -164,7 +189,12 @@ const InventoryTab = memo(() => {
         ) : (
           <div className="space-y-2">
             {cropItems.map(([itemId, quantity]) => {
-              const sellPrice = getSellPriceForCrop(state, itemId);
+              const unitPrice = getUnitSellPriceForCrop(state, itemId);
+              const isDailyFocusCrop = dailyFocus?.cropId === itemId;
+              const bonusMultiplier = isDailyFocusCrop
+                ? Number(dailyFocus?.bonusMultiplier || 1)
+                : 1;
+              const effectiveSellPrice = Math.floor(unitPrice * bonusMultiplier);
               const qty = Number(quantity) || 0;
               const bulkSellCount = Math.min(5, qty);
 
@@ -174,8 +204,18 @@ const InventoryTab = memo(() => {
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{itemEmojis[itemId] || '📦'}</span>
                       <div>
-                        <div className="font-medium">{formatDisplayLabel(itemId)}</div>
-                        <div className="text-xs text-gray-600">{sellPrice}🪙 each</div>
+                        <div className="font-medium flex items-center gap-2">
+                          {formatDisplayLabel(itemId)}
+                          {isDailyFocusCrop && (
+                            <Badge className="text-[10px] bg-amber-600">Daily Focus</Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {effectiveSellPrice}🪙 each
+                          {isDailyFocusCrop && (
+                            <span className="text-amber-700 font-medium"> ({unitPrice} base)</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <Badge variant="outline" className="text-sm">
@@ -208,7 +248,7 @@ const InventoryTab = memo(() => {
                       disabled={qty < 1}
                       className="min-h-[40px]"
                     >
-                      Sell All ({sellPrice * qty}🪙)
+                      Sell All ({effectiveSellPrice * qty}🪙)
                     </Button>
                   </div>
                 </div>

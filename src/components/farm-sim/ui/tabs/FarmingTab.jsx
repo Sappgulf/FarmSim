@@ -7,12 +7,14 @@ import { Progress } from '../../../ui/progress';
 import { getCropsByLevel, CROP_CATEGORIES } from '../../constants/cropData';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { getSoilAnalyzerEnabled } from '../../../../utils/farmUpgrades';
+import { getDailyCropFocus } from '../../../../utils/dailyFocus';
 
 // Farming Tab Component
 const FarmingTab = memo(() => {
   const { state, actions } = useGame();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const hasSoilAnalyzer = getSoilAnalyzerEnabled(state.inventory);
+  const dailyFocus = getDailyCropFocus(state);
 
   // Get crops available at player's level
   const availableCrops = getCropsByLevel(state.level);
@@ -112,6 +114,32 @@ const FarmingTab = memo(() => {
 
   return (
     <div className="space-y-4">
+      {/* Daily Focus */}
+      {dailyFocus?.crop && (
+        <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-amber-800">📈 Daily Market Focus</h3>
+              <p className="text-sm text-amber-700">
+                Today, {dailyFocus.crop.emoji} {dailyFocus.crop.name} sells for +{Math.round((dailyFocus.bonusMultiplier - 1) * 100)}%.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="min-h-[40px]"
+              onClick={() => {
+                if (typeof window.switchToTab === 'function') {
+                  window.switchToTab('inventory');
+                }
+              }}
+            >
+              Open Inventory
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {/* Category Filter */}
       <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50">
         <h3 className="font-semibold mb-2 text-green-800">🌱 Crop Categories</h3>
@@ -197,6 +225,7 @@ const FarmingTab = memo(() => {
           ) : (
             cropList.map(crop => {
               const isSelected = state.selectedCrop === crop.id;
+              const isDailyFocusCrop = dailyFocus?.cropId === crop.id;
               return (
                 <div 
                   key={crop.id} 
@@ -204,7 +233,9 @@ const FarmingTab = memo(() => {
                     flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
                     ${isSelected 
                       ? 'bg-green-100 border-2 border-green-500 shadow-md' 
-                      : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                      : isDailyFocusCrop
+                        ? 'bg-amber-50 border-2 border-amber-200 hover:bg-amber-100'
+                        : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
                     }
                   `}
                   onClick={() => handleSelectCrop(crop.id)}
@@ -217,6 +248,11 @@ const FarmingTab = memo(() => {
                         {crop.level > 1 && (
                           <Badge variant="outline" className="text-[10px] px-1 py-0">
                             Lvl {crop.level}
+                          </Badge>
+                        )}
+                        {isDailyFocusCrop && (
+                          <Badge className="text-[10px] px-1 py-0 bg-amber-600">
+                            Focus
                           </Badge>
                         )}
                       </div>

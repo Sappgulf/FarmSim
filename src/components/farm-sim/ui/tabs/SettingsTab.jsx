@@ -397,11 +397,11 @@ const SettingsTab = memo(() => {
           <div className="pt-3 border-t border-green-200 mt-3">
             <p className="font-semibold">✨ Recent upgrades:</p>
             <ul className="list-disc list-inside text-xs space-y-0.5 mt-1">
+              <li>📈 Daily Market Focus bonus crop loop</li>
+              <li>🎯 Reworked Daily Operations board with reroll</li>
+              <li>🚀 Sidebar now mounts only active tab content</li>
               <li>🔔 Notification Center with saved history</li>
               <li>🌾 Inventory quick-sell actions for crops</li>
-              <li>🧭 Navigation sync and tab stability fixes</li>
-              <li>🎰 Mystery seed roll reliability fixes</li>
-              <li>💾 Manual save path now uses canonical save API</li>
             </ul>
           </div>
         </div>

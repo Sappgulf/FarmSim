@@ -2,8 +2,6 @@ import React, { memo, useState, lazy, Suspense, useCallback, useEffect, useMemo,
 import { useGame } from '../context/GameContext';
 import { Tabs, TabsContent } from '../../ui/tabs';
 import { Card } from '../../ui/card';
-import { Button } from '../../ui/button';
-import { Badge } from '../../ui/badge';
 import TabWrapper from './tabs/TabWrapper';
 import { TAB_INFO } from './NavBar';
 import { Circle } from 'lucide-react';
@@ -68,6 +66,7 @@ const TAB_CONFIGS = [
 ];
 
 export const TAB_IDS = TAB_CONFIGS.map((tab) => tab.id);
+const TAB_CONFIG_BY_ID = Object.fromEntries(TAB_CONFIGS.map((tab) => [tab.id, tab]));
 
 // Game Sidebar Component - Now accepts controlled props
 const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
@@ -93,7 +92,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.switchToTab = (tabId) => {
-        if (TAB_CONFIGS.find(t => t.id === tabId)) {
+        if (TAB_CONFIG_BY_ID[tabId]) {
           handleTabChangeRef.current(tabId);
         }
       };
@@ -126,6 +125,9 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
     return <Circle className="icon-16" aria-hidden="true" />;
   };
 
+  const activeConfig = TAB_CONFIG_BY_ID[activeTab] || TAB_CONFIG_BY_ID.farming;
+  const ActiveTabComponent = activeConfig.component;
+
   return (
     <Card className="h-fit rounded-2xl shadow-lg border border-gray-100/50 overflow-hidden">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -154,19 +156,14 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
           </div>
         </div>
 
-        {/* Tab Content with Suspense for lazy loading */}
-        {TAB_CONFIGS.map(tab => {
-          const TabComponent = tab.component;
-          return (
-            <TabsContent key={tab.id} value={tab.id} className="mt-4">
-              <Suspense fallback={<TabLoader />}>
-                <TabWrapper>
-                  <TabComponent />
-                </TabWrapper>
-              </Suspense>
-            </TabsContent>
-          );
-        })}
+        {/* Active tab only: avoids creating all tab panels on each render. */}
+        <TabsContent key={activeConfig.id} value={activeConfig.id} className="mt-4">
+          <Suspense fallback={<TabLoader />}>
+            <TabWrapper>
+              <ActiveTabComponent />
+            </TabWrapper>
+          </Suspense>
+        </TabsContent>
       </Tabs>
 
       {/* Quick Stats Footer - Premium styled */}

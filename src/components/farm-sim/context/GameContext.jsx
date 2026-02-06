@@ -28,6 +28,7 @@ import {
 } from '../../../systems/almanac';
 import { ensureWeeklyVisits, getWeekKey } from '../../../utils/retention';
 import { calculateHarvestValue } from '../../../utils/farmUpgrades';
+import { getDailyCropFocus } from '../../../utils/dailyFocus';
 import { getContentManager } from '../../../content/ContentManager';
 import { CROP_DATA } from '../constants/cropData';
 import {
@@ -1055,7 +1056,10 @@ export function GameProvider({ children }) {
       const unitPrice = Number.isFinite(marketPrice) && marketPrice > 0
         ? Math.floor(marketPrice)
         : Math.max(1, Math.floor(Number(crop.baseValue) || 10));
-      const earnings = unitPrice * quantity;
+      const dailyFocus = getDailyCropFocus(currentState, getDayKey());
+      const isDailyFocus = dailyFocus?.cropId === cropId;
+      const bonusMultiplier = isDailyFocus ? Number(dailyFocus.bonusMultiplier || 1) : 1;
+      const earnings = Math.floor(unitPrice * quantity * bonusMultiplier);
 
       dispatch({
         type: GAME_ACTIONS.UPDATE_INVENTORY,
@@ -1070,6 +1074,8 @@ export function GameProvider({ children }) {
         cropId,
         quantity,
         unitPrice,
+        bonusMultiplier,
+        isDailyFocus,
         earnings,
       });
 
@@ -1078,6 +1084,8 @@ export function GameProvider({ children }) {
         cropId,
         quantity,
         unitPrice,
+        bonusMultiplier,
+        isDailyFocus,
         earnings,
       };
     },
@@ -1095,6 +1103,7 @@ export function GameProvider({ children }) {
       let totalEarnings = 0;
       let totalQuantity = 0;
       const breakdown = [];
+      const dailyFocus = getDailyCropFocus(currentState, getDayKey());
 
       entries.forEach(([cropId, rawQuantity]) => {
         const quantity = Math.max(0, Math.floor(Number(rawQuantity) || 0));
@@ -1105,7 +1114,9 @@ export function GameProvider({ children }) {
         const unitPrice = Number.isFinite(marketPrice) && marketPrice > 0
           ? Math.floor(marketPrice)
           : Math.max(1, Math.floor(Number(crop?.baseValue) || 10));
-        const earnings = unitPrice * quantity;
+        const isDailyFocus = dailyFocus?.cropId === cropId;
+        const bonusMultiplier = isDailyFocus ? Number(dailyFocus.bonusMultiplier || 1) : 1;
+        const earnings = Math.floor(unitPrice * quantity * bonusMultiplier);
 
         totalEarnings += earnings;
         totalQuantity += quantity;
@@ -1113,6 +1124,8 @@ export function GameProvider({ children }) {
           cropId,
           quantity,
           unitPrice,
+          bonusMultiplier,
+          isDailyFocus,
           earnings,
         });
       });

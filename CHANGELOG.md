@@ -8,6 +8,19 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
+## [5.2.0] - 2026-02-06
+### Planned (2026-02-06) — Sprint G6: Replay Loop + Performance Pass
+- **Scope:** gameplay loops, UI polish, performance, tests, docs
+- **What:** deepen daily replay systems, surface a daily economy focus loop in farm/inventory UI, and reduce tab rendering overhead in sidebar navigation.
+- **Why:** increase return-to-play motivation while keeping frame/render cost low on large sessions.
+- **Verification:** `npm run test -- --run` and `npm run build`.
+
+### Implemented (2026-02-06) — Sprint G6: Replay Loop + Performance Pass
+- **Scope:** gameplay loops, UI polish, performance, tests, docs
+- **What:** added deterministic Daily Market Focus bonus sales loop (+25% featured crop), rebuilt Daily Operations challenge board with state-driven progress + one paid reroll per day, and optimized sidebar to mount only the active tab panel.
+- **Why:** deliver clearer daily goals, better economic variety, and less unnecessary UI rendering work.
+- **Verification:** `npm run test -- --run` and `npm run build` (pass; existing ReactDOMTestUtils act warning + Browserslist data warning remain).
+
 ## [5.1.1] - 2026-02-06
 ### Planned (2026-02-06) — Sprint G5: Stability Sweep + UI Polish
 - **Scope:** frontend, systems, docs, tests
