@@ -10,6 +10,19 @@ Guiding rules:
 
 ## [5.3.0] - 2026-02-06
 
+### Planned (2026-02-06) — Header Branding: Cozy Farms Logo Navigation
+- **Scope:** frontend UI/header, assets
+- **What:** replace the top-left tractor/title header mark with a compact Cozy Farms logo and wire tap/click behavior to jump back to the Farm tab.
+- **Why:** match requested brand identity and make returning to farming context one-tap from the header.
+- **Verification:** Baseline run completed with `npm run build` (pass; existing Vite chunk-size warnings remain).
+
+### Implemented (2026-02-06) — Header Branding: Cozy Farms Logo Navigation
+- **Scope:** frontend UI/header, assets
+- **What:** replaced the top-left tractor/title mark in the sticky header with a compact clickable Cozy Farms logo asset sized for mobile and desktop.
+- **What:** wired the new logo button to jump users directly to the `farming` tab (`Go to Farm`) and added keyboard-focus styles for accessibility.
+- **Why:** deliver requested logo branding while preserving a fast route back to core farm gameplay.
+- **Verification:** `npm run test -- --run` (fails on pre-existing `src/test/socialLite.test.js` idempotency test), `npm run build` (pass), plus manual visual check via Playwright screenshot.
+
 ### Planned (2026-02-06) — Sprint G8: Progression Flow Rework
 - **Scope:** gameplay systems, progression UI, save migration, QA/docs
 - **What:** rebalance XP curve and source grants to prevent runaway early leveling, add daily anti-spam caps/diminishing, and improve progression readability.

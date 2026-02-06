@@ -138,10 +138,20 @@ const GameHeader = memo(() => {
       <div className="max-w-7xl mx-auto flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         {/* Left side - Game title and basic stats */}
         <div className="flex items-center justify-between lg:justify-start gap-2 sm:gap-4 lg:gap-6 w-full lg:w-auto">
-          <div className="flex items-center gap-2">
-            <div className="text-2xl sm:text-3xl animate-bounce-slow filter drop-shadow-sm">🚜</div>
-            <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent hidden sm:block">FarmLife</h1>
-          </div>
+          <button
+            type="button"
+            onClick={() => openRelatedTab('farming')}
+            className="flex items-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/70 focus-visible:ring-offset-2"
+            title="Go to Farm"
+            aria-label="Go to Farm"
+          >
+            <img
+              src="/icons/cozy-farms-logo.svg"
+              alt="Cozy Farms"
+              className="h-10 w-auto sm:h-12 md:h-14 object-contain drop-shadow-sm"
+              loading="eager"
+            />
+          </button>
 
           {/* Core stats with animations */}
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-wrap justify-end lg:justify-start">
