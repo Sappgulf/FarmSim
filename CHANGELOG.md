@@ -10,6 +10,21 @@ Guiding rules:
 
 ## [5.3.0] - 2026-02-06
 
+### Planned (2026-02-06) — Sprint G10: Fishing Content Polish + Early Economy Rebalance
+- **Scope:** gameplay systems, achievement tuning, UI copy, tests
+- **What:** add more fishing species/content, polish fishing reward pacing/debug safeguards, and reduce early coin spikes from low-tier achievements.
+- **Why:** improve fishing depth while keeping early progression rewarding without trivializing economy decisions.
+- **Verification:** Baseline run completed with `npm run test -- --run` (fails on pre-existing `src/test/socialLite.test.js`) and `npm run build` (pass).
+
+### Implemented (2026-02-06) — Sprint G10: Fishing Content Polish + Early Economy Rebalance
+- **Scope:** gameplay systems, achievement tuning, UI copy, tests
+- **What:** expanded fishing species with Koi Carp and Moon Eel, added streak-based catch value bonus, and tuned early-level fishing payouts to reduce frontloaded coin spikes while preserving mastery upside.
+- **What:** polished fishing tab copy/tips for mobile hold controls, quality play, and streak guidance.
+- **What:** rebalanced early/common achievements (first plant/harvest/coin and related early milestones) to smooth early-game economy pacing.
+- **What:** added regression tests for fishing payout tuning + streak scaling and achievement onboarding-coin guardrails.
+- **Why:** deliver richer fishing content and cleaner progression pacing without changing core loops.
+- **Verification:** `npm run test -- --run` (fails on pre-existing `src/test/socialLite.test.js`), `npm run build` (pass).
+
 ### Planned (2026-02-06) — Header Branding: Cozy Farms Logo Navigation
 - **Scope:** frontend UI/header, assets
 - **What:** replace the top-left tractor/title header mark with a compact Cozy Farms logo and wire tap/click behavior to jump back to the Farm tab.

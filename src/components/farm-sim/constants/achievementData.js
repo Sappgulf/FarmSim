@@ -12,7 +12,7 @@ export const ACHIEVEMENTS = [
     emoji: '🌱',
     category: 'farming',
     requirement: { type: 'plants', count: 1 },
-    reward: { coins: 10, xp: 5 },
+    reward: { coins: 6, xp: 5 },
     rarity: 'common',
   },
   {
@@ -22,7 +22,7 @@ export const ACHIEVEMENTS = [
     emoji: '👨‍🌾',
     category: 'farming',
     requirement: { type: 'plants', count: 10 },
-    reward: { coins: 25, xp: 15 },
+    reward: { coins: 15, xp: 12 },
     rarity: 'common',
   },
   {
@@ -32,7 +32,7 @@ export const ACHIEVEMENTS = [
     emoji: '🚜',
     category: 'farming',
     requirement: { type: 'plants', count: 50 },
-    reward: { coins: 100, xp: 50 },
+    reward: { coins: 70, xp: 45 },
     rarity: 'uncommon',
   },
   {
@@ -54,7 +54,7 @@ export const ACHIEVEMENTS = [
     emoji: '🎉',
     category: 'farming',
     requirement: { type: 'harvests', count: 1 },
-    reward: { coins: 15, xp: 10 },
+    reward: { coins: 9, xp: 8 },
     rarity: 'common',
   },
   {
@@ -64,7 +64,7 @@ export const ACHIEVEMENTS = [
     emoji: '🌽',
     category: 'farming',
     requirement: { type: 'harvests', count: 25 },
-    reward: { coins: 75, xp: 30 },
+    reward: { coins: 55, xp: 28 },
     rarity: 'common',
   },
   {
@@ -96,7 +96,7 @@ export const ACHIEVEMENTS = [
     emoji: '🪙',
     category: 'economy',
     requirement: { type: 'coins_earned', count: 1 },
-    reward: { coins: 5, xp: 5 },
+    reward: { coins: 3, xp: 5 },
     rarity: 'common',
   },
   {
@@ -106,7 +106,7 @@ export const ACHIEVEMENTS = [
     emoji: '💰',
     category: 'economy',
     requirement: { type: 'coins_earned', count: 100 },
-    reward: { coins: 50, xp: 25 },
+    reward: { coins: 30, xp: 20 },
     rarity: 'common',
   },
   {
@@ -116,7 +116,7 @@ export const ACHIEVEMENTS = [
     emoji: '💼',
     category: 'economy',
     requirement: { type: 'coins_earned', count: 500 },
-    reward: { coins: 200, xp: 75 },
+    reward: { coins: 120, xp: 65 },
     rarity: 'uncommon',
   },
   {
@@ -190,7 +190,7 @@ export const ACHIEVEMENTS = [
     emoji: '🏗️',
     category: 'buildings',
     requirement: { type: 'buildings', count: 1 },
-    reward: { coins: 50, xp: 25 },
+    reward: { coins: 30, xp: 20 },
     rarity: 'common',
   },
   {
@@ -222,7 +222,7 @@ export const ACHIEVEMENTS = [
     emoji: '📦',
     category: 'collection',
     requirement: { type: 'crop_types', count: 5 },
-    reward: { coins: 100, xp: 50 },
+    reward: { coins: 70, xp: 45 },
     rarity: 'common',
   },
   {
@@ -254,7 +254,7 @@ export const ACHIEVEMENTS = [
     emoji: '📏',
     category: 'expansion',
     requirement: { type: 'expansions', count: 1 },
-    reward: { coins: 75, xp: 40 },
+    reward: { coins: 55, xp: 35 },
     rarity: 'common',
   },
   {
@@ -298,7 +298,7 @@ export const ACHIEVEMENTS = [
     emoji: '🦉',
     category: 'special',
     requirement: { type: 'play_time', time: 'night' },
-    reward: { coins: 100, xp: 50 },
+    reward: { coins: 70, xp: 45 },
     rarity: 'rare',
   },
   {
@@ -308,7 +308,7 @@ export const ACHIEVEMENTS = [
     emoji: '🐦',
     category: 'special',
     requirement: { type: 'play_time', time: 'early' },
-    reward: { coins: 100, xp: 50 },
+    reward: { coins: 70, xp: 45 },
     rarity: 'rare',
   },
   {
