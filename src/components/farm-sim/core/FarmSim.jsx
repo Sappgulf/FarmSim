@@ -44,6 +44,9 @@ function FarmSimCore() {
   // Navigation state for new consolidated nav
   const [activeSection, setActiveSection] = useState('farm');
   const [activeTab, setActiveTab] = useState('farming');
+  const findSectionForTab = (tabId) => (
+    Object.values(NAV_SECTIONS).find((section) => section.tabs.includes(tabId))?.id || null
+  );
 
   // Handle section change
   const handleSectionChange = (sectionId) => {
@@ -59,11 +62,11 @@ function FarmSimCore() {
   // Handle tab change
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    logDebugAction('tab_change', { tabId });
-    // Also switch sidebar tab via global method (for legacy compat)
-    if (typeof window.switchToTab === 'function') {
-      window.switchToTab(tabId);
+    const sectionId = findSectionForTab(tabId);
+    if (sectionId) {
+      setActiveSection(sectionId);
     }
+    logDebugAction('tab_change', { tabId });
     if (tabId === 'events') {
       actions.recordOnboardingEvent('board_open');
     }

@@ -3,6 +3,7 @@ import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
+import { APP_VERSION, getReleaseModeLabel } from '../../../../config/release';
 
 // Subcomponents
 import { AudioSettings } from './settings/AudioSettings';
@@ -388,18 +389,19 @@ const SettingsTab = memo(() => {
       <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50">
         <h4 className="font-semibold mb-2 text-green-800">🌾 About FarmSim</h4>
         <div className="text-sm text-green-700 space-y-1">
-          <p><strong>Version:</strong> 5.1.0</p>
+          <p><strong>Version:</strong> {APP_VERSION}</p>
+          <p><strong>Mode:</strong> {getReleaseModeLabel()}</p>
           <p><strong>Made with:</strong> React + Vite + Tailwind CSS</p>
           <p className="pt-2">A comprehensive farm simulation game with modular architecture, sound effects, background music, livestock management, fishing, and endless possibilities!</p>
 
           <div className="pt-3 border-t border-green-200 mt-3">
-            <p className="font-semibold">✨ New in v5.1.0:</p>
+            <p className="font-semibold">✨ Recent upgrades:</p>
             <ul className="list-disc list-inside text-xs space-y-0.5 mt-1">
-              <li>📲 Professional PWA with offline support</li>
-              <li>🎯 Bottom navigation with 5 grouped sections</li>
-              <li>🎓 Interactive onboarding tutorial</li>
-              <li>📱 Mobile-first design with iOS safe-area</li>
-              <li>🎵 Sound effects & seasonal music</li>
+              <li>🔔 Notification Center with saved history</li>
+              <li>🌾 Inventory quick-sell actions for crops</li>
+              <li>🧭 Navigation sync and tab stability fixes</li>
+              <li>🎰 Mystery seed roll reliability fixes</li>
+              <li>💾 Manual save path now uses canonical save API</li>
             </ul>
           </div>
         </div>

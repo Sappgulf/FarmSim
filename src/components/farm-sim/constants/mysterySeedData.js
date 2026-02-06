@@ -41,6 +41,13 @@ export const SEED_RARITIES = {
   },
 };
 
+const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+const RARITY_LIST = Object.values(SEED_RARITIES);
+const RARITY_BY_ID = RARITY_LIST.reduce((acc, rarity) => {
+  acc[rarity.id] = rarity;
+  return acc;
+}, {});
+
 // Map crops to rarities
 export const CROP_RARITY_MAP = {
   // Common (60%) - Level 1 crops
@@ -85,10 +92,10 @@ export function rollMysterySeed() {
   let selectedRarity = 'common';
   
   // Determine rarity based on drop rates
-  for (const [rarityId, rarity] of Object.entries(SEED_RARITIES)) {
+  for (const rarity of RARITY_LIST) {
     cumulativeProbability += rarity.dropRate;
     if (roll <= cumulativeProbability) {
-      selectedRarity = rarityId;
+      selectedRarity = rarity.id;
       break;
     }
   }
@@ -97,14 +104,17 @@ export function rollMysterySeed() {
   const cropsOfRarity = Object.entries(CROP_RARITY_MAP)
     .filter(([_, rarity]) => rarity === selectedRarity)
     .map(([cropId]) => cropId);
+
+  const fallbackPool = Object.keys(CROP_RARITY_MAP);
+  const selectedPool = cropsOfRarity.length > 0 ? cropsOfRarity : fallbackPool;
   
   // Randomly select one crop from this rarity tier
-  const cropId = cropsOfRarity[Math.floor(Math.random() * cropsOfRarity.length)];
+  const cropId = selectedPool[Math.floor(Math.random() * selectedPool.length)];
   
   return {
     cropId,
     rarity: selectedRarity,
-    rarityData: SEED_RARITIES[selectedRarity],
+    rarityData: RARITY_BY_ID[selectedRarity] || SEED_RARITIES.COMMON,
   };
 }
 
@@ -155,9 +165,8 @@ export function rollMysterySeedWithGuarantee(minimumRarity) {
   const result = rollMysterySeed();
   
   // Check if result meets minimum rarity
-  const rarityOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
-  const resultRarityIndex = rarityOrder.indexOf(result.rarity);
-  const minRarityIndex = rarityOrder.indexOf(minimumRarity);
+  const resultRarityIndex = RARITY_ORDER.indexOf(result.rarity);
+  const minRarityIndex = RARITY_ORDER.indexOf(minimumRarity);
   
   // If result is better than or equal to minimum, return it
   if (resultRarityIndex >= minRarityIndex) {
@@ -168,7 +177,7 @@ export function rollMysterySeedWithGuarantee(minimumRarity) {
   let attempts = 0;
   while (attempts < 100) { // Safety limit
     const reroll = rollMysterySeed();
-    const rerollRarityIndex = rarityOrder.indexOf(reroll.rarity);
+    const rerollRarityIndex = RARITY_ORDER.indexOf(reroll.rarity);
     if (rerollRarityIndex >= minRarityIndex) {
       return reroll;
     }
@@ -185,7 +194,7 @@ export function rollMysterySeedWithGuarantee(minimumRarity) {
   return {
     cropId,
     rarity: minimumRarity,
-    rarityData: SEED_RARITIES[minimumRarity],
+    rarityData: RARITY_BY_ID[minimumRarity] || SEED_RARITIES.COMMON,
   };
 }
 
@@ -193,7 +202,7 @@ export function rollMysterySeedWithGuarantee(minimumRarity) {
  * Get rarity display name with emoji
  */
 export function getRarityDisplay(rarity) {
-  const rarityData = SEED_RARITIES[rarity];
+  const rarityData = RARITY_BY_ID[rarity] || SEED_RARITIES.COMMON;
   return `${rarityData.emoji} ${rarityData.name}`;
 }
 
@@ -201,7 +210,7 @@ export function getRarityDisplay(rarity) {
  * Get rarity color for styling
  */
 export function getRarityColor(rarity) {
-  return SEED_RARITIES[rarity]?.color || '#9ca3af';
+  return (RARITY_BY_ID[rarity] || SEED_RARITIES.COMMON).color;
 }
 
 export default {

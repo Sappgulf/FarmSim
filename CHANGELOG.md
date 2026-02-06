@@ -8,6 +8,19 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
+## [5.1.1] - 2026-02-06
+### Planned (2026-02-06) — Sprint G5: Stability Sweep + UI Polish
+- **Scope:** frontend, systems, docs, tests
+- **What:** fix reported tab recursion and Mystery Shop runtime errors, run code-wide bug checks, and apply focused UX polish to navigation/notifications/settings metadata.
+- **Why:** remove production console crashes and improve day-to-day usability before adding more content.
+- **Verification:** `npm run test -- --run` and `npm run build`.
+
+### Implemented (2026-02-06) — Sprint G5: Stability Sweep + UI Polish
+- **Scope:** frontend, systems, docs, tests
+- **What:** removed recursive tab switching path in `FarmSim`, fixed Mystery Shop rarity resolution + safeguards, added regression tests for mystery seed rolling, synced section state when tabs change, enabled live notification history timestamps, and centralized displayed app version in Settings.
+- **Why:** ensure stable navigation/reward flows and cleaner in-game metadata presentation.
+- **Verification:** `npm run test -- --run` and `npm run build` (both pass; existing ReactDOMTestUtils act warning + Browserslist data warning remain).
+
 ## [5.0.4] - 2026-02-06
 ### Planned (2026-02-06) — Sprint G4: Inventory + Notifications QoL
 - **Scope:** frontend, save schema, docs

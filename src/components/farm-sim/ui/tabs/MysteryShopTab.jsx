@@ -25,15 +25,22 @@ const MysteryShopTab = memo(() => {
       return;
     }
 
-    // Deduct coins
-    actions.setCoins(state.coins - pack.cost);
-
     // Roll the mystery seed
     const result = pack.guaranteedRarity 
       ? rollMysterySeedWithGuarantee(pack.guaranteedRarity)
       : rollMysterySeed();
 
     const crop = CROP_DATA[result.cropId];
+    if (!crop) {
+      actions.addNotification({
+        message: 'Mystery pack failed to resolve a valid crop.',
+        type: 'error',
+      });
+      return;
+    }
+
+    // Deduct coins only after a valid roll is confirmed.
+    actions.setCoins((coins) => Math.max(0, coins - pack.cost));
 
     // Animate reveal
     setIsRevealing(true);
@@ -252,4 +259,3 @@ const MysteryShopTab = memo(() => {
 
 MysteryShopTab.displayName = 'MysteryShopTab';
 export default MysteryShopTab;
-

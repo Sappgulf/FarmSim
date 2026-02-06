@@ -1,5 +1,6 @@
 import React, { memo, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
+import { useTick } from '../../context/TickContext';
 import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Button } from '../../../ui/button';
@@ -48,6 +49,7 @@ const formatRelativeTime = (timestamp) => {
 
 const NotificationCenterTab = memo(() => {
   const { state, actions } = useGame();
+  useTick();
   const [activeFilter, setActiveFilter] = useState('all');
 
   const history = useMemo(
