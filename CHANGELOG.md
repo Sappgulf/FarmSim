@@ -250,3 +250,15 @@ Guiding rules:
 
 ### Engineering Notes
 - (placeholder)
+
+### Planned (2026-02-06) — Deep progression, XP, leveling, unlock pacing pass
+- **Scope:** frontend, systems, docs, QA
+- **What:** audit all XP grant paths and progression UI, tighten non-linear XP curve, add anti-spam caps/diminishing, rebalance unlock gates and achievement thresholds, and add migration-safe XP remap for old saves.
+- **Why:** leveling and achievement unlock cadence were too fast and spam-driven.
+- **Verification:** `npm run test -- src/test/progression.test.js` (pass).
+
+### Implemented (2026-02-06) — Deep progression, XP, leveling, unlock pacing pass
+- **Scope:** frontend, systems, docs, QA
+- **What:** replaced curve source with steeper piecewise `getXpRequiredForLevel`, added source caps (milestone/challenge/rare moment), harvest variety bonus + stronger diminishing, zeroed passive XP sources (pets/planting), moved save schema to v15 with XP remap preserving level/progress, raised unlock levels (buildings/genetics), and increased milestone/achievement thresholds.
+- **Why:** restore meaningful pacing and make unlocks/achievements feel earned without grind walls.
+- **Verification:** `npm run test -- src/test/progression.test.js` (pass), `npm run build` (pass).

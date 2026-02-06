@@ -12,7 +12,14 @@ export const initialState = {
     xp: 0,
     level: 1,
     gridSize: 3,
-    progressionXpTracker: { dayKey: null, harvestCounts: {}, minigameDailyXp: {} },
+    progressionXpTracker: {
+        dayKey: null,
+        harvestCounts: {},
+        minigameDailyXp: {},
+        milestoneDailyXp: 0,
+        challengeDailyXp: 0,
+        rareMomentDailyXp: 0,
+    },
     recentXpEvents: [],
     cosmeticTokens: 0,
 

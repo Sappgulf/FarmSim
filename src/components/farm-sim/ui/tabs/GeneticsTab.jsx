@@ -18,7 +18,7 @@ const BREEDING_RECIPES = {
     quality: 1.5,
     description: "Enhanced carrot with faster growth and higher value",
     traits: ["fast_growth", "high_value"],
-    unlockLevel: 2
+    unlockLevel: 12
   },
   rainbow_corn: {
     name: "Rainbow Corn",
@@ -30,7 +30,7 @@ const BREEDING_RECIPES = {
     quality: 2.0,
     description: "Colorful hybrid corn with premium market appeal",
     traits: ["premium_quality", "weather_resistant"],
-    unlockLevel: 3
+    unlockLevel: 7
   },
   golden_tomato: {
     name: "Golden Tomato",
@@ -42,7 +42,7 @@ const BREEDING_RECIPES = {
     quality: 1.8,
     description: "Luxurious golden tomato with enhanced flavor",
     traits: ["luxury_appeal", "disease_resistant"],
-    unlockLevel: 3
+    unlockLevel: 9
   },
   frost_potato: {
     name: "Frost Potato",
@@ -66,7 +66,7 @@ const BREEDING_RECIPES = {
     quality: 3.0,
     description: "Legendary spicy pepper with incredible value",
     traits: ["legendary", "pest_repellent", "high_value"],
-    unlockLevel: 5
+    unlockLevel: 16
   }
 };
 

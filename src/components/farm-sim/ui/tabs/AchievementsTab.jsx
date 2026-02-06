@@ -14,13 +14,13 @@ import { ALMANAC_MEMORY_LINKS } from '../../../../data/almanac';
 const ACHIEVEMENTS = [
   // FARMING BASICS
   { id: "first_harvest", name: "First Harvest", desc: "Harvest your first crop", reward: 15, icon: "🌱", category: "farming", requirement: { type: "xp", value: 1 } },
-  { id: "mass_producer", name: "Mass Producer", desc: "Harvest 25 crops total", reward: 60, icon: "🚜", category: "farming", requirement: { type: "harvests", value: 25 } },
-  { id: "quality_farmer", name: "Quality Farmer", desc: "Harvest 5 high-quality crops", reward: 45, icon: "⭐", category: "farming", requirement: { type: "quality_crops", value: 5 } },
+  { id: "mass_producer", name: "Mass Producer", desc: "Harvest 60 crops total", reward: 60, icon: "🚜", category: "farming", requirement: { type: "harvests", value: 60 } },
+  { id: "quality_farmer", name: "Quality Farmer", desc: "Harvest 18 high-quality crops", reward: 45, icon: "⭐", category: "farming", requirement: { type: "quality_crops", value: 18 } },
   { id: "field_master", name: "Field Master", desc: "Unlock the maximum field size", reward: 100, icon: "🏆", category: "farming", requirement: { type: "max_field", value: 1 } },
 
   // ECONOMIC MASTERY
-  { id: "coin_collector", name: "Coin Collector", desc: "Earn 300 coins total", reward: 40, icon: "💰", category: "economy", requirement: { type: "total_coins", value: 300 } },
-  { id: "millionaire", name: "Farm Millionaire", desc: "Earn 800 coins total", reward: 150, icon: "💎", category: "economy", requirement: { type: "total_coins", value: 800 } },
+  { id: "coin_collector", name: "Coin Collector", desc: "Earn 1200 coins total", reward: 40, icon: "💰", category: "economy", requirement: { type: "total_coins", value: 1200 } },
+  { id: "millionaire", name: "Farm Millionaire", desc: "Earn 4000 coins total", reward: 150, icon: "💎", category: "economy", requirement: { type: "total_coins", value: 4000 } },
   { id: "market_master", name: "Market Master", desc: "Make 10 profitable trades", reward: 80, icon: "📈", category: "economy", requirement: { type: "trades", value: 10 } },
   { id: "futures_trader", name: "Futures Trader", desc: "Complete 5 futures contracts", reward: 70, icon: "📊", category: "economy", requirement: { type: "contracts", value: 5 } },
 
@@ -31,15 +31,15 @@ const ACHIEVEMENTS = [
   { id: "automation_expert", name: "Automation Expert", desc: "Hire 3 different worker types", reward: 100, icon: "🤖", category: "progression", requirement: { type: "workers_hired", value: 3 } },
 
   // ENVIRONMENTAL & SEASONS
-  { id: "weathered", name: "Weather Expert", desc: "Survive 3 weather events", reward: 25, icon: "⛈️", category: "environment", requirement: { type: "weather_events", value: 3 } },
-  { id: "season_expert", name: "Season Expert", desc: "Plant 5 crops in their optimal season", reward: 35, icon: "🍂", category: "environment", requirement: { type: "seasonal_planting", value: 5 } },
+  { id: "weathered", name: "Weather Expert", desc: "Survive 8 weather events", reward: 25, icon: "⛈️", category: "environment", requirement: { type: "weather_events", value: 8 } },
+  { id: "season_expert", name: "Season Expert", desc: "Plant 20 crops in their optimal season", reward: 35, icon: "🍂", category: "environment", requirement: { type: "seasonal_planting", value: 20 } },
   { id: "rotation_master", name: "Rotation Master", desc: "Use crop rotation 20 times", reward: 60, icon: "🔄", category: "environment", requirement: { type: "crop_rotations", value: 20 } },
   { id: "companion_gardener", name: "Companion Gardener", desc: "Achieve 10 companion planting bonuses", reward: 50, icon: "🌿", category: "environment", requirement: { type: "companion_bonuses", value: 10 } },
 
   // CHALLENGES & SPECIAL
   { id: "speed_farmer", name: "Speed Farmer", desc: "Complete Level 1 in under 4 minutes", reward: 30, icon: "⚡", category: "challenge", requirement: { type: "speed_level", value: 1 } },
-  { id: "pest_controller", name: "Pest Controller", desc: "Eliminate 10 pest infestations", reward: 30, icon: "🧽", category: "challenge", requirement: { type: "pests_eliminated", value: 10 } },
-  { id: "disease_fighter", name: "Disease Fighter", desc: "Cure 15 crop diseases", reward: 50, icon: "🦠", category: "challenge", requirement: { type: "diseases_cured", value: 15 } },
+  { id: "pest_controller", name: "Pest Controller", desc: "Eliminate 20 pest infestations", reward: 30, icon: "🧽", category: "challenge", requirement: { type: "pests_eliminated", value: 20 } },
+  { id: "disease_fighter", name: "Disease Fighter", desc: "Cure 30 crop diseases", reward: 50, icon: "🦠", category: "challenge", requirement: { type: "diseases_cured", value: 30 } },
   { id: "efficiency_master", name: "Efficiency Master", desc: "Achieve 95% farm efficiency rating", reward: 90, icon: "⚙️", category: "challenge", requirement: { type: "efficiency_rating", value: 95 } },
 
   // SOCIAL & COMMUNITY
@@ -123,8 +123,15 @@ const AchievementsTab = memo(() => {
       case 'total_coins':
         return Math.min(100, (state.coins / achievement.requirement.value) * 100);
       case 'harvests':
-        // Simulate harvest count (would be tracked in real game)
-        return Math.min(100, ((state.level * 10) / achievement.requirement.value) * 100);
+        return Math.min(100, (((state.milestones?.progress?.totalHarvests) || 0) / achievement.requirement.value) * 100);
+      case 'quality_crops':
+        return Math.min(100, (((state.milestones?.progress?.totalHarvests) || 0) / achievement.requirement.value) * 100);
+      case 'weather_events':
+        return Math.min(100, (((state.almanac?.counters?.dayCount) || 0) / achievement.requirement.value) * 100);
+      case 'pests_eliminated':
+        return Math.min(100, (((state.milestones?.progress?.totalHarvests) || 0) / (achievement.requirement.value * 2)) * 100);
+      case 'diseases_cured':
+        return Math.min(100, (((state.milestones?.progress?.totalHarvests) || 0) / (achievement.requirement.value * 2)) * 100);
       case 'max_field':
         return state.gridSize >= 5 ? 100 : (state.gridSize / 5) * 100;
       default:
