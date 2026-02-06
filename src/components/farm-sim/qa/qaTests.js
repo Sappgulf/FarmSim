@@ -701,7 +701,55 @@ export const QA_TESTS = [
       }
       return { detail: '30 day rollover complete with stable counters.' };
     },
+  },,
+  {
+    id: 'seed_code_roundtrip',
+    name: 'Seed Code Roundtrip',
+    timeoutMs: 4000,
+    run: async () => {
+      const { encodeSeed, decodeSeed } = await import('../../../utils/seedCode');
+      const code = encodeSeed({ version: 1, seed: 11, season: 'summer', packs: ['core'] });
+      const parsed = decodeSeed(code);
+      if (parsed.error || parsed.payload.season !== 'summer') {
+        throw new Error('Seed code roundtrip failed.');
+      }
+      return { detail: 'Seed encode/decode OK.' };
+    },
   },
+  {
+    id: 'ghost_visit_read_only',
+    name: 'Ghost Visit Read-only',
+    timeoutMs: 5000,
+    run: async (ctx) => {
+      const { exportFarmSnapshot, hydrateSnapshotPlots } = await import('../../../utils/farmSnapshot');
+      const snapshot = exportFarmSnapshot(ctx.state());
+      ctx.actions.enterGhostVisit({ ...snapshot, plots: hydrateSnapshotPlots(snapshot.plots) });
+      const before = ctx.state().coins;
+      ctx.actions.spendMoney(5);
+      if (ctx.state().coins !== before) {
+        throw new Error('Coins changed in ghost visit mode.');
+      }
+      ctx.actions.exitGhostVisit();
+      return { detail: 'Ghost mode blocked economy mutations.' };
+    },
+  },
+  {
+    id: 'milestone_progress_persist',
+    name: 'Milestone Save/Load Persist',
+    timeoutMs: 6000,
+    run: async (ctx) => {
+      ctx.actions.recordMilestoneEvent?.('harvest', { count: 5 });
+      const before = ctx.state().milestones?.progress?.totalHarvests || 0;
+      const saveResult = saveStateToStorage(ctx.state(), { key: QA_SAVE_KEY, backupKey: QA_BACKUP_SAVE_KEY });
+      if (!saveResult.success) throw new Error('Failed to save QA milestone state.');
+      const loaded = loadSavedStateFromKey(QA_SAVE_KEY);
+      if ((loaded?.milestones?.progress?.totalHarvests || 0) < before) {
+        throw new Error('Milestone progress did not persist.');
+      }
+      return { detail: 'Milestone counters persisted across save/load.' };
+    },
+  }
+
 ];
 
 export const QA_TEST_IDS = QA_TESTS.map((test) => test.id);

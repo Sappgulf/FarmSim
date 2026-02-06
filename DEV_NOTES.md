@@ -138,3 +138,9 @@
   - `farmCard` rendering includes active title text.
 - **Visual accents:** `FarmSim` applies time-of-day tint/filter accents and reuses `WeatherEffects` for low-cost weather ambience (visual-only).
 
+
+## Sprint I4 Notes
+- Seed Code utilities: `src/utils/seedCode.js`.
+- Ghost snapshot utilities: `src/utils/farmSnapshot.js`.
+- Milestone definitions + manager: `src/data/milestones.js`, `src/systems/milestones.js`.
+- Social tab now hosts Seed Code + Ghost Visit + Milestones UI.

@@ -5,6 +5,9 @@ import baseAlmanac from '../../content/almanac.json';
 import baseMinigames from '../../content/minigames.json';
 import baseStrings from '../../content/strings.json';
 import { isDebugMode } from '../utils/debugTools';
+import { MILESTONE_DEFINITIONS } from '../data/milestones';
+import { SEED_CODE_VERSION, validateSeedPayload } from '../utils/seedCode';
+import { SNAPSHOT_VERSION, validateSnapshotPayload } from '../utils/farmSnapshot';
 
 const PACK_META_MODULES = import.meta.glob('../../content/packs/**/pack.json', { eager: true });
 const PACK_CROP_MODULES = import.meta.glob('../../content/packs/**/crops.json', { eager: true });
@@ -336,6 +339,28 @@ const mergeItems = (baseItems, packItems, report, context, packId) => {
   return merged;
 };
 
+
+const validateSocialLiteSchemas = (report) => {
+  MILESTONE_DEFINITIONS.forEach((milestone) => {
+    if (!milestone?.id || !milestone?.type || !Number.isFinite(milestone?.target)) {
+      report.errors.push({
+        type: 'milestones',
+        issue: 'invalid_milestone',
+        message: `milestone ${milestone?.id || 'unknown'} is invalid`,
+        context: 'milestones',
+      });
+    }
+  });
+  const seedValidation = validateSeedPayload({ version: SEED_CODE_VERSION, season: 'spring', packs: [] });
+  if (!seedValidation.ok) {
+    report.errors.push({ type: 'seed_code', issue: 'seed_version', message: 'Seed code schema validation failed', context: 'seed' });
+  }
+  const snapshotValidation = validateSnapshotPayload({ version: SNAPSHOT_VERSION, plots: [] });
+  if (!snapshotValidation.ok) {
+    report.errors.push({ type: 'snapshot', issue: 'snapshot_schema', message: 'Snapshot schema validation failed', context: 'snapshot' });
+  }
+};
+
 const buildContent = () => {
   const report = {
     errors: [],
@@ -444,6 +469,7 @@ const buildContent = () => {
     validateItems(type, base[type], report, 'base');
   });
   validateAlmanac(base.almanac.sections, base.almanac.pages, report, 'base');
+  validateSocialLiteSchemas(report);
 
   const content = {
     ...base,

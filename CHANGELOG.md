@@ -115,6 +115,19 @@ Guiding rules:
 - **Verification:** `npm run qa:full` (passes; ReactDOMTestUtils act deprecation warning + npm http-proxy warning + Browserslist data warning).
 
 ## [5.0.2] - 2026-02-05
+
+### Planned (2026-02-06) — Sprint I4: Seed Codes + Ghost Visits + Milestones
+- **Scope:** frontend, content, docs, QA
+- **What:** add shareable seed codes, read-only ghost farm visits via snapshot import/export, and event-driven cosmetic milestones.
+- **Why:** deliver lightweight social + long-term progression with no networking.
+- **Verification:** `npm run test -- --run`, `npm run build`.
+
+### Implemented (2026-02-06) — Sprint I4: Seed Codes + Ghost Visits + Milestones
+- **Scope:** frontend, content, docs, QA
+- **What:** added Seed Code encode/decode + import UI, snapshot export/import with Ghost Visit read-only mode, milestone manager/data/UI, save migration v13, and QA coverage.
+- **Why:** satisfy social-lite goals with deterministic offline sharing and cosmetic-only progression.
+- **Verification:** `npm run test -- --run`, `npm run build`.
+
 ### Planned (2026-02-05) — Sprint G2: Day 2–7 Retention
 - **Scope:** frontend, docs, QA
 - **What:** audit existing Town Board/What’s New/save systems, add Welcome Back summary, Daily Delight, Weekly Visits, and QA harness coverage.

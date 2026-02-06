@@ -5,7 +5,7 @@ import { isDevelopmentMode } from '../../../config/release';
 import { normalizeEntitlements } from '../entitlements/EntitlementManager';
 
 // Save schema version (separate from APP_VERSION in src/config/release.js).
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -250,7 +250,26 @@ export function migrateSaveData(savedData) {
             };
         }
 
-        // Validate critical fields
+        
+        // Version 12 → 13: Seed provenance, ghost visit, milestones
+        if (saveVersion < 13) {
+            migratedData.seedProvenance = null;
+            migratedData.ghostVisit = { active: false, snapshot: null };
+            migratedData.milestones = {
+                progress: {
+                    daysPlayed: 0,
+                    totalHarvests: 0,
+                    uniqueCropsGrown: 0,
+                    decorSetsCompleted: 0,
+                    rareMomentsSeen: 0,
+                    minigamesPlayed: 0,
+                    petsInteractedDays: 0,
+                },
+                unlocked: {},
+                recent: [],
+            };
+        }
+// Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
         migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
         migratedData.level = clampNumber(migratedData.level, 1, { min: 1 });
@@ -598,6 +617,29 @@ export function migrateSaveData(savedData) {
             ? migratedData.retention.weeklyVisits.claimedTiers.filter((tier) => Number.isFinite(tier))
             : [];
 
+
+        migratedData.seedProvenance = ensureObject(migratedData.seedProvenance, null);
+        migratedData.ghostVisit = ensureObject(migratedData.ghostVisit, { active: false, snapshot: null });
+        migratedData.ghostVisit.active = false;
+        migratedData.ghostVisit.snapshot = null;
+        const milestoneDefaults = {
+            daysPlayed: 0,
+            totalHarvests: 0,
+            uniqueCropsGrown: 0,
+            decorSetsCompleted: 0,
+            rareMomentsSeen: 0,
+            minigamesPlayed: 0,
+            petsInteractedDays: 0,
+        };
+        migratedData.milestones = ensureObject(migratedData.milestones, { progress: milestoneDefaults, unlocked: {}, recent: [] });
+        migratedData.milestones.progress = { ...milestoneDefaults, ...ensureObject(migratedData.milestones.progress, {}) };
+        Object.keys(migratedData.milestones.progress).forEach((key) => {
+            migratedData.milestones.progress[key] = clampNumber(migratedData.milestones.progress[key], 0, { min: 0 });
+        });
+        migratedData.milestones.unlocked = ensureObject(migratedData.milestones.unlocked, {});
+        migratedData.milestones.recent = Array.isArray(migratedData.milestones.recent)
+            ? migratedData.milestones.recent.filter((id) => typeof id === 'string').slice(-3)
+            : [];
         migratedData.entitlements = normalizeEntitlements(migratedData.entitlements);
 
         migratedData.saveVersion = SAVE_VERSION;
