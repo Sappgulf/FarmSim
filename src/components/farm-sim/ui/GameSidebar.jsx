@@ -31,6 +31,7 @@ const DailyQuestsTab = lazy(() => import('./tabs/DailyQuestsTab'));
 const DiseaseManagementTab = lazy(() => import('./tabs/DiseaseManagementTab'));
 const ExpandTab = lazy(() => import('./tabs/ExpandTab'));
 const SettingsTab = lazy(() => import('./tabs/SettingsTab'));
+const NotificationCenterTab = lazy(() => import('./tabs/NotificationCenterTab'));
 
 // Loading fallback component
 const TabLoader = () => (
@@ -63,6 +64,7 @@ const TAB_CONFIGS = [
   { id: 'diseases', label: 'Diseases', component: DiseaseManagementTab },
   { id: 'expand', label: 'Expand', component: ExpandTab },
   { id: 'settings', label: 'Settings', component: SettingsTab },
+  { id: 'notifications', label: 'Inbox', component: NotificationCenterTab },
 ];
 
 export const TAB_IDS = TAB_CONFIGS.map((tab) => tab.id);

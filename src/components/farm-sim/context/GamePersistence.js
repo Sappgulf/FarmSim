@@ -5,7 +5,7 @@ import { isDevelopmentMode } from '../../../config/release';
 import { normalizeEntitlements } from '../entitlements/EntitlementManager';
 
 // Save schema version (separate from APP_VERSION in src/config/release.js).
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -234,6 +234,11 @@ export function migrateSaveData(savedData) {
             };
         }
 
+        // Version 10 → 11: Notification history support
+        if (saveVersion < 11) {
+            migratedData.notificationHistory = [];
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
         migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
@@ -360,6 +365,18 @@ export function migrateSaveData(savedData) {
         migratedData.dailyChallenges = Array.isArray(migratedData.dailyChallenges) ? migratedData.dailyChallenges : [];
         migratedData.dailyChallengeProgress = ensureObject(migratedData.dailyChallengeProgress, {});
         migratedData.notifications = Array.isArray(migratedData.notifications) ? migratedData.notifications : [];
+        migratedData.notificationHistory = Array.isArray(migratedData.notificationHistory)
+            ? migratedData.notificationHistory
+                .filter((entry) => entry && typeof entry === 'object')
+                .map((entry) => ({
+                    id: typeof entry.id === 'string' ? entry.id : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                    message: typeof entry.message === 'string' ? entry.message : '',
+                    type: typeof entry.type === 'string' ? entry.type : 'info',
+                    details: typeof entry.details === 'string' ? entry.details : null,
+                    timestamp: clampNumber(entry.timestamp, Date.now(), { min: 0 }),
+                }))
+                .slice(-120)
+            : [];
         migratedData.minigames = ensureObject(migratedData.minigames, {
             perfectHarvest: {
                 lastPlayedDayKey: null,

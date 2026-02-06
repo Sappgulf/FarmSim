@@ -20,6 +20,7 @@ import {
     ShieldAlert,
     Target,
     Trophy,
+    Bell,
     Users,
     Building2,
     Home,
@@ -77,7 +78,7 @@ export const NAV_SECTIONS = {
         label: 'More',
         icon: Settings,
         emoji: '⚙️',
-        tabs: ['settings', 'achievements', 'almanac', 'quests', 'analytics', 'weather', 'events', 'challenges', 'social', 'mystery', 'diseases'],
+        tabs: ['settings', 'notifications', 'achievements', 'almanac', 'quests', 'analytics', 'weather', 'events', 'challenges', 'social', 'mystery', 'diseases'],
         description: 'Settings and extras'
     }
 };
@@ -96,6 +97,7 @@ export const TAB_INFO = {
     pets: { label: 'Pets', icon: PawPrint, emoji: '🐕' },
     fishing: { label: 'Fishing', icon: Fish, emoji: '🎣' },
     settings: { label: 'Settings', icon: Settings, emoji: '⚙️' },
+    notifications: { label: 'Inbox', icon: Bell, emoji: '🔔' },
     achievements: { label: 'Achievements', icon: Trophy, emoji: '🏆' },
     almanac: { label: 'Almanac', icon: BookOpen, emoji: '📖' },
     quests: { label: 'Quests', icon: ClipboardList, emoji: '📋' },
@@ -137,7 +139,11 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                 const unclaimedQuests = (state.dailyChallenges || []).filter(
                     q => q.completed && !q.claimed
                 ).length;
-                return unclaimedQuests > 0 ? unclaimedQuests : null;
+                const activeNotifications = Array.isArray(state.notifications)
+                    ? state.notifications.length
+                    : 0;
+                const totalMoreAlerts = unclaimedQuests + activeNotifications;
+                return totalMoreAlerts > 0 ? totalMoreAlerts : null;
             default:
                 return null;
         }

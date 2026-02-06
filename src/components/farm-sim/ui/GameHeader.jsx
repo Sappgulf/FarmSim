@@ -279,14 +279,13 @@ const GameHeader = memo(() => {
               size="sm"
               variant="outline"
               onClick={() => {
-                try {
-                  localStorage.setItem('farm_sim_enhanced_v2', JSON.stringify(state));
-                  actions.updateGameLoop({ lastSaveTime: Date.now() });
+                const saved = actions.saveGame();
+                if (saved) {
                   actions.addNotification({
                     message: '💾 Game saved successfully!',
                     type: 'success'
                   });
-                } catch (error) {
+                } else {
                   actions.addNotification({
                     message: '❌ Failed to save game',
                     type: 'error'

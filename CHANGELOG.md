@@ -8,6 +8,19 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
+## [5.0.4] - 2026-02-06
+### Planned (2026-02-06) — Sprint G4: Inventory + Notifications QoL
+- **Scope:** frontend, save schema, docs
+- **What:** add a notification center history tab, add crop quick-sell actions in inventory, and route header manual save through the canonical save API.
+- **Why:** improve daily usability while keeping existing systems and save stability intact.
+- **Verification:** `npm run smoke-test -- --run` and `npm run build`.
+
+### Implemented (2026-02-06) — Sprint G4: Inventory + Notifications QoL
+- **Scope:** frontend, save schema, docs
+- **What:** added a Notification Center tab with filterable history + clear actions, added per-crop and bulk crop quick-sell in Inventory, and updated header save to use `actions.saveGame()`.
+- **Why:** make routine actions faster (selling, reviewing alerts, saving) without adding parallel systems.
+- **Verification:** `npm run smoke-test -- --run` and `npm run build`.
+
 ## [5.0.3] - 2026-02-06
 ### Planned (2026-02-06) — Sprint G3: Monetization-Ready Cosmetics (Disabled by Default)
 - **Scope:** frontend, content, docs, QA

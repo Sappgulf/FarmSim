@@ -29,6 +29,7 @@ import {
 import { ensureWeeklyVisits, getWeekKey } from '../../../utils/retention';
 import { calculateHarvestValue } from '../../../utils/farmUpgrades';
 import { getContentManager } from '../../../content/ContentManager';
+import { CROP_DATA } from '../constants/cropData';
 import {
   applyCosmeticFallbacks,
   getItemEntitlementInfo,
@@ -286,6 +287,7 @@ export function GameProvider({ children }) {
     // UI & Settings
     addNotification: (notification) => dispatch({ type: GAME_ACTIONS.ADD_NOTIFICATION, payload: notification }),
     clearNotification: (id) => dispatch({ type: GAME_ACTIONS.CLEAR_NOTIFICATION, payload: id }),
+    clearNotificationHistory: () => dispatch({ type: GAME_ACTIONS.CLEAR_NOTIFICATION_HISTORY }),
     setSelectedCrop: (cropId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_CROP, payload: cropId }),
     setSelectedDecoration: (decorId) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_DECORATION, payload: decorId }),
     setDecorationMode: (enabled) => dispatch({ type: GAME_ACTIONS.SET_DECORATION_MODE, payload: enabled }),
@@ -1029,6 +1031,122 @@ export function GameProvider({ children }) {
     earnMoney: (amount) => dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (c) => c + amount }),
     spendMoney: (amount) => dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (c) => Math.max(0, c - amount) }),
     addXP: (amount) => dispatch({ type: GAME_ACTIONS.SET_XP, payload: (x) => x + amount }),
+
+    sellInventoryCrop: (cropId, requestedQuantity = 1) => {
+      const currentState = stateRef.current;
+      const crop = CROP_DATA[cropId];
+      if (!crop) {
+        return { success: false, reason: 'invalid_crop' };
+      }
+
+      const availableQuantity = Math.max(
+        0,
+        Math.floor(Number(currentState.inventory?.[cropId] || 0))
+      );
+      if (availableQuantity <= 0) {
+        return { success: false, reason: 'none_available' };
+      }
+
+      const quantity = Math.min(
+        availableQuantity,
+        Math.max(1, Math.floor(Number(requestedQuantity) || 1))
+      );
+      const marketPrice = Number(currentState.inventory?.[`${cropId}_price`]);
+      const unitPrice = Number.isFinite(marketPrice) && marketPrice > 0
+        ? Math.floor(marketPrice)
+        : Math.max(1, Math.floor(Number(crop.baseValue) || 10));
+      const earnings = unitPrice * quantity;
+
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_INVENTORY,
+        payload: (inventory) => ({
+          ...inventory,
+          [cropId]: Math.max(0, Math.floor(Number(inventory?.[cropId] || 0)) - quantity),
+        }),
+      });
+      dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => coins + earnings });
+
+      logDebugAction('sell_inventory_crop', {
+        cropId,
+        quantity,
+        unitPrice,
+        earnings,
+      });
+
+      return {
+        success: true,
+        cropId,
+        quantity,
+        unitPrice,
+        earnings,
+      };
+    },
+
+    sellAllInventoryCrops: () => {
+      const currentState = stateRef.current;
+      const entries = Object.entries(currentState.inventory || {}).filter(([itemId, quantity]) => (
+        CROP_DATA[itemId] && Number(quantity) > 0
+      ));
+
+      if (entries.length === 0) {
+        return { success: false, reason: 'none_available' };
+      }
+
+      let totalEarnings = 0;
+      let totalQuantity = 0;
+      const breakdown = [];
+
+      entries.forEach(([cropId, rawQuantity]) => {
+        const quantity = Math.max(0, Math.floor(Number(rawQuantity) || 0));
+        if (quantity <= 0) return;
+
+        const crop = CROP_DATA[cropId];
+        const marketPrice = Number(currentState.inventory?.[`${cropId}_price`]);
+        const unitPrice = Number.isFinite(marketPrice) && marketPrice > 0
+          ? Math.floor(marketPrice)
+          : Math.max(1, Math.floor(Number(crop?.baseValue) || 10));
+        const earnings = unitPrice * quantity;
+
+        totalEarnings += earnings;
+        totalQuantity += quantity;
+        breakdown.push({
+          cropId,
+          quantity,
+          unitPrice,
+          earnings,
+        });
+      });
+
+      if (totalQuantity <= 0) {
+        return { success: false, reason: 'none_available' };
+      }
+
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_INVENTORY,
+        payload: (inventory) => {
+          const nextInventory = { ...inventory };
+          breakdown.forEach(({ cropId }) => {
+            nextInventory[cropId] = 0;
+          });
+          return nextInventory;
+        },
+      });
+      dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => coins + totalEarnings });
+
+      logDebugAction('sell_all_inventory_crops', {
+        cropCount: breakdown.length,
+        totalQuantity,
+        totalEarnings,
+      });
+
+      return {
+        success: true,
+        cropCount: breakdown.length,
+        totalQuantity,
+        totalEarnings,
+        breakdown,
+      };
+    },
 
     // Bulk actions
     harvestAllReadyCrops: () => {

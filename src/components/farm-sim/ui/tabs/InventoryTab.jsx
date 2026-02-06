@@ -1,15 +1,24 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Button } from '../../../ui/button';
 import { DECORATION_DATA } from '../../constants/decorData';
+import { CROP_DATA } from '../../constants/cropData';
 import {
   getItemEntitlementInfo,
   isItemUnlocked,
   isPremiumModeEnabled,
 } from '../../entitlements/EntitlementManager';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
+
+const getSellPriceForCrop = (state, cropId) => {
+  const marketPrice = Number(state.inventory?.[`${cropId}_price`]);
+  if (Number.isFinite(marketPrice) && marketPrice > 0) {
+    return Math.floor(marketPrice);
+  }
+  return Math.max(1, Math.floor(Number(CROP_DATA[cropId]?.baseValue) || 10));
+};
 
 const InventoryTab = memo(() => {
   const { state, actions } = useGame();
@@ -41,26 +50,78 @@ const InventoryTab = memo(() => {
     compost_bin: '🗑️',
   };
 
-  const inventoryItems = Object.entries(state.inventory).filter(([_, qty]) => qty > 0);
-  const decorationItems = inventoryItems.filter(([itemId]) => !!DECORATION_DATA[itemId]);
-  const cropItems = inventoryItems.filter(([itemId]) => !DECORATION_DATA[itemId]);
-  
-  // Calculate total items
-  const totalItems = inventoryItems.reduce((sum, [_, qty]) => sum + (qty || 0), 0);
-  const totalValue = inventoryItems.reduce((sum, [itemId, qty]) => {
-    const baseValue = itemId === 'carrot' ? 12
-      : itemId === 'potato' ? 15
-      : itemId === 'corn' ? 22
-      : itemId === 'tomato' ? 28
-      : itemId === 'parsnip' ? 15
-      : itemId === 'okra' ? 26
-      : itemId === 'cranberry' ? 44
-      : itemId === 'snowdrop' ? 46
-      : itemId === 'turnip' ? 26
-      : itemId === 'ginger_root' ? 66
-      : 5;
-    return sum + (baseValue * (qty || 0));
-  }, 0);
+  const inventoryItems = useMemo(() => (
+    Object.entries(state.inventory || {}).filter(([itemId, qty]) => (
+      !itemId.endsWith('_price') && Number(qty) > 0
+    ))
+  ), [state.inventory]);
+
+  const cropItems = useMemo(() => (
+    inventoryItems.filter(([itemId]) => Boolean(CROP_DATA[itemId]))
+  ), [inventoryItems]);
+
+  const decorationItems = useMemo(() => (
+    inventoryItems.filter(([itemId]) => Boolean(DECORATION_DATA[itemId]))
+  ), [inventoryItems]);
+
+  const utilityItems = useMemo(() => (
+    inventoryItems.filter(([itemId]) => !CROP_DATA[itemId] && !DECORATION_DATA[itemId])
+  ), [inventoryItems]);
+
+  const totalItems = useMemo(() => (
+    inventoryItems.reduce((sum, [_, qty]) => sum + (Number(qty) || 0), 0)
+  ), [inventoryItems]);
+
+  const totalValue = useMemo(() => (
+    inventoryItems.reduce((sum, [itemId, qty]) => {
+      if (CROP_DATA[itemId]) {
+        return sum + getSellPriceForCrop(state, itemId) * (Number(qty) || 0);
+      }
+      return sum + (Number(qty) || 0) * 5;
+    }, 0)
+  ), [inventoryItems, state]);
+
+  const cropSellSummary = useMemo(() => (
+    cropItems.reduce((summary, [cropId, quantity]) => {
+      const qty = Number(quantity) || 0;
+      const unitPrice = getSellPriceForCrop(state, cropId);
+      summary.totalQuantity += qty;
+      summary.totalEarnings += unitPrice * qty;
+      return summary;
+    }, { totalQuantity: 0, totalEarnings: 0 })
+  ), [cropItems, state]);
+
+  const handleSellCrop = (cropId, quantity) => {
+    const result = actions.sellInventoryCrop(cropId, quantity);
+    if (!result?.success) {
+      actions.addNotification({
+        message: `No ${formatDisplayLabel(cropId)} available to sell.`,
+        type: 'info',
+      });
+      return;
+    }
+
+    actions.addNotification({
+      message: `Sold ${result.quantity} ${formatDisplayLabel(cropId)} for ${result.earnings}🪙`,
+      type: 'success',
+    });
+  };
+
+  const handleSellAllCrops = () => {
+    const result = actions.sellAllInventoryCrops();
+    if (!result?.success) {
+      actions.addNotification({
+        message: 'No crops in inventory to sell.',
+        type: 'info',
+      });
+      return;
+    }
+
+    actions.addNotification({
+      message: `Sold ${result.totalQuantity} crops for ${result.totalEarnings}🪙`,
+      type: 'success',
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -79,17 +140,22 @@ const InventoryTab = memo(() => {
         </div>
       </Card>
 
-      {/* Items List */}
+      {/* Crops & Quick Sell */}
       <Card className="p-4">
-        <h4 className="font-semibold mb-3">📦 Items</h4>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <h4 className="font-semibold">🌾 Crops</h4>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleSellAllCrops}
+            disabled={cropSellSummary.totalQuantity === 0}
+            className="min-h-[40px]"
+          >
+            Sell All ({cropSellSummary.totalEarnings}🪙)
+          </Button>
+        </div>
 
-        {inventoryItems.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-4xl mb-2">📭</div>
-            <p className="text-gray-500">Your inventory is empty</p>
-            <p className="text-sm text-gray-400 mt-1">Harvest crops to fill it!</p>
-          </div>
-        ) : cropItems.length === 0 ? (
+        {cropItems.length === 0 ? (
           <div className="text-center py-6">
             <div className="text-3xl mb-2">🌾</div>
             <p className="text-gray-500">No crops stored</p>
@@ -97,7 +163,74 @@ const InventoryTab = memo(() => {
           </div>
         ) : (
           <div className="space-y-2">
-            {cropItems.map(([itemId, quantity]) => (
+            {cropItems.map(([itemId, quantity]) => {
+              const sellPrice = getSellPriceForCrop(state, itemId);
+              const qty = Number(quantity) || 0;
+              const bulkSellCount = Math.min(5, qty);
+
+              return (
+                <div key={itemId} className="p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{itemEmojis[itemId] || '📦'}</span>
+                      <div>
+                        <div className="font-medium">{formatDisplayLabel(itemId)}</div>
+                        <div className="text-xs text-gray-600">{sellPrice}🪙 each</div>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-sm">
+                      x{qty}
+                    </Badge>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleSellCrop(itemId, 1)}
+                      disabled={qty < 1}
+                      className="min-h-[40px]"
+                    >
+                      Sell 1
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleSellCrop(itemId, bulkSellCount)}
+                      disabled={qty < 1}
+                      className="min-h-[40px]"
+                    >
+                      Sell {bulkSellCount}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSellCrop(itemId, qty)}
+                      disabled={qty < 1}
+                      className="min-h-[40px]"
+                    >
+                      Sell All ({sellPrice * qty}🪙)
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+
+      {/* Supplies & Upgrades */}
+      <Card className="p-4">
+        <h4 className="font-semibold mb-3">📦 Supplies & Upgrades</h4>
+
+        {utilityItems.length === 0 ? (
+          <div className="text-center py-6">
+            <div className="text-3xl mb-2">🧰</div>
+            <p className="text-gray-500">No supplies in storage</p>
+            <p className="text-sm text-gray-400 mt-1">Visit the Shop to stock up.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {utilityItems.map(([itemId, quantity]) => (
               <div key={itemId} className="flex justify-between items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{itemEmojis[itemId] || '📦'}</span>
@@ -180,13 +313,13 @@ const InventoryTab = memo(() => {
         )}
       </Card>
 
-      {/* Quick Actions */}
+      {/* Tips */}
       {inventoryItems.length > 0 && (
         <Card className="p-4 bg-gray-50">
           <h4 className="font-semibold mb-2">💡 Tips</h4>
           <ul className="text-sm text-gray-700 space-y-1">
-            <li>• Use items from Shop tab to boost your farm</li>
-            <li>• Sell crops at the best prices for profit</li>
+            <li>• Use quick-sell to free storage and reinvest into seeds</li>
+            <li>• Market prices update over time, so selling windows can vary</li>
             <li>• Build processing facilities to increase crop value</li>
           </ul>
         </Card>

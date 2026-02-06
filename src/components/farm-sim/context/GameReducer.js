@@ -136,6 +136,7 @@ export const initialState = {
 
     // UI state
     notifications: [],
+    notificationHistory: [],
     selectedCrop: 'lettuce',
     selectedDecoration: null,
     decorateMode: false,
@@ -379,19 +380,39 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.ADD_NOTIFICATION:
             const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const timestamp = Date.now();
+            const nextNotification = {
+                id: uniqueId,
+                ...action.payload,
+                type: action.payload?.type || 'info',
+                timestamp,
+            };
+            const nextHistory = [
+                ...(Array.isArray(state.notificationHistory) ? state.notificationHistory : []),
+                {
+                    id: uniqueId,
+                    message: nextNotification.message || '',
+                    type: nextNotification.type,
+                    details: nextNotification.details || null,
+                    timestamp,
+                },
+            ].slice(-120);
             return {
                 ...state,
-                notifications: [...state.notifications, {
-                    id: uniqueId,
-                    ...action.payload,
-                    timestamp: Date.now(),
-                }],
+                notifications: [...state.notifications, nextNotification],
+                notificationHistory: nextHistory,
             };
 
         case GAME_ACTIONS.CLEAR_NOTIFICATION:
             return {
                 ...state,
                 notifications: state.notifications.filter(n => n.id !== action.payload),
+            };
+
+        case GAME_ACTIONS.CLEAR_NOTIFICATION_HISTORY:
+            return {
+                ...state,
+                notificationHistory: [],
             };
 
         case GAME_ACTIONS.UPDATE_SEASON:
@@ -453,6 +474,9 @@ export function gameReducer(state, action) {
                         ?? Date.now(),
                 },
                 notifications: [],
+                notificationHistory: Array.isArray(action.payload?.notificationHistory)
+                    ? action.payload.notificationHistory
+                    : [],
             };
 
         default:
