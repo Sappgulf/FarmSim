@@ -4,7 +4,7 @@ import { useTick } from '../context/TickContext';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Progress } from '../../ui/progress';
-import { Coins, Star, Trophy, Settings, Save, Play, Pause, ChevronDown, TrendingUp, Calendar } from 'lucide-react';
+import { Coins, Star, Trophy, ChevronDown, TrendingUp, Calendar } from 'lucide-react';
 import { getNextGoal } from '../../../utils/goalHints';
 import { getXpProgress } from '../systems/progression';
 import { getWeatherMeta } from '../constants/weatherData';
@@ -127,6 +127,11 @@ const GameHeader = memo(() => {
 
   const nextGoal = getNextGoal(state);
   const weatherMeta = getWeatherMeta(state.weather);
+  const openRelatedTab = (tabId) => {
+    if (typeof window.switchToTab === 'function') {
+      window.switchToTab(tabId);
+    }
+  };
 
   return (
     <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 px-3 sm:px-4 py-2 sm:py-3 relative sticky top-0 z-50">
@@ -140,20 +145,30 @@ const GameHeader = memo(() => {
 
           {/* Core stats with animations */}
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-wrap justify-end lg:justify-start">
-            <div className="flex items-center gap-1.5 group cursor-pointer bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 px-2 sm:px-3 py-1.5 rounded-xl transition-all shadow-sm border border-amber-200/50">
+            <button
+              type="button"
+              onClick={() => openRelatedTab('shop')}
+              className="flex items-center gap-1.5 group bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 px-2 sm:px-3 py-1.5 rounded-xl transition-all shadow-sm border border-amber-200/50"
+              title="Open Shop"
+            >
               <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 group-hover:animate-spin filter drop-shadow-sm" />
               <span className="font-bold text-amber-700 text-sm sm:text-base coin-display">
                 <AnimatedNumber value={state.coins} />
               </span>
-            </div>
+            </button>
 
             <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1 cursor-pointer hover:bg-blue-50 px-2 py-1 rounded transition">
+              <button
+                type="button"
+                onClick={() => openRelatedTab('analytics')}
+                className="flex items-center gap-1 hover:bg-blue-50 px-2 py-1 rounded transition"
+                title="Open Analytics"
+              >
                 <Star className="w-4 h-4 text-blue-600" />
                 <span className="font-semibold text-gray-900 text-sm">
                   <AnimatedNumber value={state.xp} /> XP
                 </span>
-              </div>
+              </button>
               {/* XP Progress bar to next level */}
               <div className="w-28 sm:w-32 hidden sm:block">
                 <Progress value={xpProgress} className="h-2 bg-blue-100" />
@@ -164,9 +179,11 @@ const GameHeader = memo(() => {
               </div>
             </div>
 
-            <Badge variant="outline" className="bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200 font-bold">
-              Level {state.level}
-            </Badge>
+            <button type="button" onClick={() => openRelatedTab('achievements')} title="Open Achievements">
+              <Badge variant="outline" className="bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200 font-bold hover:bg-emerald-100/80 transition-colors cursor-pointer">
+                Level {state.level}
+              </Badge>
+            </button>
 
             {/* Next Goal Indicator */}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
@@ -240,9 +257,15 @@ const GameHeader = memo(() => {
           </div>
           {/* Season display with animation */}
           {state.season?.config && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-all cursor-pointer group relative shadow-md hover:shadow-lg" style={{
+            <button
+              type="button"
+              onClick={() => openRelatedTab('events')}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-all group relative shadow-md hover:shadow-lg"
+              title="Open Events"
+              style={{
               boxShadow: '0 2px 8px rgba(168, 85, 247, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
-            }}>
+              }}
+            >
               <span className="text-lg animate-season drop-shadow-sm">
                 {state.season.config.emoji}
               </span>
@@ -263,12 +286,15 @@ const GameHeader = memo(() => {
                   Next season in: {Math.floor((120000 - (Date.now() - state.season.lastChangeTime)) / 60000)}:{((120000 - (Date.now() - state.season.lastChangeTime)) % 60000 / 1000).toFixed(0).padStart(2, '0')}
                 </div>
               </div>
-            </div>
+            </button>
           )}
 
           {/* Weather display with animation */}
-          <div
+          <button
+            type="button"
+            onClick={() => openRelatedTab('weather')}
             className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg transition cursor-pointer ${weatherMeta.headerClassName}`}
+            title="Open Weather"
           >
             <span className="text-lg animate-weather">
               {weatherMeta.emoji}
@@ -276,70 +302,20 @@ const GameHeader = memo(() => {
             <span className="text-xs sm:text-sm font-medium">
               {weatherMeta.label}
             </span>
-          </div>
-
-          {/* Game controls */}
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={state.gameLoop?.paused ? actions.resumeGame : actions.pauseGame}
-              className="px-2 hover:scale-110 transition-transform"
-              title={state.gameLoop?.paused ? "Resume Game" : "Pause Game"}
-            >
-              {state.gameLoop?.paused ? <Play className="w-3 h-3 text-green-600" /> : <Pause className="w-3 h-3 text-orange-600" />}
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                const saved = actions.saveGame();
-                if (saved) {
-                  actions.addNotification({
-                    message: '💾 Game saved successfully!',
-                    type: 'success'
-                  });
-                } else {
-                  actions.addNotification({
-                    message: '❌ Failed to save game',
-                    type: 'error'
-                  });
-                }
-              }}
-              className="px-2 hover:scale-110 transition-transform group relative"
-              title="Save Game"
-            >
-              <Save className="w-3 h-3 text-blue-600 group-hover:text-green-600" />
-              {state.settings?.autoSave && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"
-                  title="Auto-save enabled"></span>
-              )}
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                // Switch to settings tab
-                if (typeof window.switchToTab === 'function') {
-                  window.switchToTab('settings');
-                }
-              }}
-              className="px-2 hover:scale-110 transition-transform hover:rotate-90"
-              title="Settings"
-            >
-              <Settings className="w-3 h-3 text-gray-600" />
-            </Button>
-          </div>
+          </button>
 
           {/* Achievement indicator */}
-          <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition cursor-pointer min-h-[40px]">
+          <button
+            type="button"
+            onClick={() => openRelatedTab('achievements')}
+            className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition min-h-[40px]"
+            title="Open Achievements"
+          >
             <Trophy className="w-4 h-4 text-yellow-600" />
             <span className="text-sm font-medium text-gray-700">
               {state.achievements?.filter(a => a.unlocked).length || 0}/{state.achievements?.length || 0}
             </span>
-          </div>
+          </button>
         </div>
       </div>
 
