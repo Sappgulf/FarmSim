@@ -99,7 +99,7 @@ const WeatherTab = memo(() => {
 
     // Grant rewards
     actions.earnMoney(reward.coins);
-    actions.addXP(reward.xp);
+    actions.addXP(reward.xp, { source: 'minigame', minigameId: 'weather_prediction', skillFactor: reward.accuracy || 0, label: 'Weather Prediction' });
 
     setPredictionGame(prev => ({
       ...prev,

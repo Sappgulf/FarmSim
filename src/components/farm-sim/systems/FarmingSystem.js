@@ -311,7 +311,7 @@ export class FarmingSystem {
     }
 
     this.actions.updatePlots(updatedPlots);
-    this.actions.addXP(1); // Small XP for planting
+    this.actions.addXP(1, { source: 'planting', label: 'Plant Crop' });
 
     return true;
   }
@@ -346,7 +346,7 @@ export class FarmingSystem {
     // Add coins and XP for harvest
     this.actions.earnMoney(harvestValue);
     // REBALANCED: Consistent 15% XP rate across all harvest methods
-    this.actions.addXP(Math.floor(harvestValue * 0.15));
+    this.actions.addXP(Math.floor(harvestValue * 0.15), { source: 'harvest', cropId: crop.id, label: `Harvest ${crop.name}` });
 
     // Update inventory
     const updatedInventory = {

@@ -3,9 +3,10 @@
  */
 import { isDevelopmentMode } from '../../../config/release';
 import { normalizeEntitlements } from '../entitlements/EntitlementManager';
+import { getLevelFromXp } from '../systems/progression';
 
 // Save schema version (separate from APP_VERSION in src/config/release.js).
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -269,11 +270,20 @@ export function migrateSaveData(savedData) {
                 recent: [],
             };
         }
+
+
+        // Version 13 → 14: Progression XP tracker + recent XP feed
+        if (saveVersion < 14) {
+            migratedData.progressionXpTracker = { dayKey: null, harvestCounts: {}, minigameDailyXp: {} };
+            migratedData.recentXpEvents = [];
+        }
+
 // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
         migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
-        migratedData.level = clampNumber(migratedData.level, 1, { min: 1 });
+        migratedData.level = Math.max(clampNumber(migratedData.level, 1, { min: 1 }), getLevelFromXp(migratedData.xp));
         migratedData.gridSize = Math.round(clampNumber(migratedData.gridSize, 3, { min: 3, max: 5 }));
+        migratedData.cosmeticTokens = clampNumber(migratedData.cosmeticTokens, 0, { min: 0 });
 
         migratedData.plots = normalizePlots(migratedData.plots, migratedData.gridSize);
 
@@ -640,6 +650,17 @@ export function migrateSaveData(savedData) {
         migratedData.milestones.recent = Array.isArray(migratedData.milestones.recent)
             ? migratedData.milestones.recent.filter((id) => typeof id === 'string').slice(-3)
             : [];
+
+        migratedData.progressionXpTracker = ensureObject(migratedData.progressionXpTracker, { dayKey: null, harvestCounts: {}, minigameDailyXp: {} });
+        migratedData.progressionXpTracker.dayKey = typeof migratedData.progressionXpTracker.dayKey === 'string'
+            ? migratedData.progressionXpTracker.dayKey
+            : null;
+        migratedData.progressionXpTracker.harvestCounts = ensureObject(migratedData.progressionXpTracker.harvestCounts, {});
+        migratedData.progressionXpTracker.minigameDailyXp = ensureObject(migratedData.progressionXpTracker.minigameDailyXp, {});
+        migratedData.recentXpEvents = Array.isArray(migratedData.recentXpEvents)
+            ? migratedData.recentXpEvents.slice(-3)
+            : [];
+
         migratedData.entitlements = normalizeEntitlements(migratedData.entitlements);
 
         migratedData.saveVersion = SAVE_VERSION;

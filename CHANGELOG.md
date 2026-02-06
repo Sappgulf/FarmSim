@@ -9,6 +9,21 @@ Guiding rules:
 - Every entry should be auditable (what changed, where, why).
 
 ## [5.3.0] - 2026-02-06
+
+### Planned (2026-02-06) — Sprint G8: Progression Flow Rework
+- **Scope:** gameplay systems, progression UI, save migration, QA/docs
+- **What:** rebalance XP curve and source grants to prevent runaway early leveling, add daily anti-spam caps/diminishing, and improve progression readability.
+- **Why:** make leveling feel earned and layered while keeping cozy momentum.
+- **Verification:** `npm run test -- --run` and `npm run build`.
+
+### Implemented (2026-02-06) — Sprint G8: Progression Flow Rework
+- **Scope:** gameplay systems, progression UI, save migration, QA/docs
+- **What:** centralized level curve in progression system, routed XP grants through source-aware tuning (harvest diminishing + first-of-day bonus, minigame daily cap, low daily reward XP, no pet XP path), and added recent XP source UI + maturity pacing copy.
+- **What:** added level-band cosmetic progression rewards (unlock notifications + cosmetic token currency) to keep non-power progression satisfying while leveling slows.
+- **What:** added save migration defaults for progression tracker/recent events and tests for curve pacing, anti-spam behavior, minigame cap, and save migration safety.
+- **Why:** reduce XP spam and preserve long-term progression cadence without rewrites.
+- **Verification:** `npm run test -- --run` and `npm run build` (pass expected).
+
 ### Planned (2026-02-06) — Sprint I1-I3: Cozy Variety Expansion
 - **Scope:** frontend systems, content data, save compatibility, docs, QA
 - **What:** add cosmetic crop traits + rare moments, time-of-day/weather visual accents, and decor-set-driven farm titles using existing Almanac/Scrapbook/Farm Card systems.

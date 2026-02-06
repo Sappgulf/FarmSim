@@ -125,7 +125,7 @@ const ChallengesTab = memo(() => {
 
     actions.setDailyChallenges(updatedChallenges);
     actions.earnMoney(rewardCoins);
-    actions.addXP(rewardXp);
+    actions.addXP(rewardXp, { source: 'challenge', label: 'Challenge Reward' });
 
     if (!allClaimedBefore && allClaimedAfter) {
       actions.updateChallengeStreak((state.challengeStreak || 0) + 1);
@@ -194,7 +194,7 @@ const ChallengesTab = memo(() => {
     }
 
     actions.earnMoney(milestone.coins);
-    actions.addXP(milestone.xp);
+    actions.addXP(milestone.xp, { source: 'milestone', label: 'Challenge Milestone' });
     actions.updateChallengeProgress({
       ...(state.dailyChallengeProgress || {}),
       operationsWeek: {

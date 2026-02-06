@@ -174,7 +174,7 @@ const EventsTab = memo(() => {
 
     // Grant rewards
     actions.earnMoney(activeEvent.rewards.coins);
-    actions.addXP(Math.floor(activeEvent.rewards.coins * 0.5));
+    actions.addXP(Math.floor(activeEvent.rewards.coins * 0.5), { source: 'daily_reward', label: 'Festival Reward' });
 
     // Add to event history
     const completedEvent = {

@@ -6,6 +6,7 @@ import { Badge } from '../../ui/badge';
 import { Progress } from '../../ui/progress';
 import { Coins, Star, Trophy, Settings, Save, Play, Pause, ChevronDown, TrendingUp, Calendar } from 'lucide-react';
 import { getNextGoal } from '../../../utils/goalHints';
+import { getXpProgress } from '../systems/progression';
 import { getWeatherMeta } from '../constants/weatherData';
 
 // Animated number counter component
@@ -119,14 +120,10 @@ const GameHeader = memo(() => {
     return num.toString();
   };
 
-  // Calculate XP progress to next level (60 XP per level)
-  const xpForCurrentLevel = (state.level - 1) * 60;
-  // REBALANCED: Progressive XP formula - matches GameContext calculation
-  // Formula: XP needed = (level^2) * 50
-  const xpForNextLevel = (state.level * state.level) * 50;
-  const currentLevelXp = state.xp - xpForCurrentLevel;
-  const xpNeededForNext = xpForNextLevel - xpForCurrentLevel;
-  const xpProgress = (currentLevelXp / xpNeededForNext) * 100;
+  const xpProgressData = getXpProgress(state.xp, state.level);
+  const currentLevelXp = xpProgressData.inLevel;
+  const xpNeededForNext = xpProgressData.needed;
+  const xpProgress = xpProgressData.progress;
 
   const nextGoal = getNextGoal(state);
   const weatherMeta = getWeatherMeta(state.weather);
@@ -163,6 +160,7 @@ const GameHeader = memo(() => {
                 <div className="text-[10px] text-gray-600 font-medium text-center mt-0.5">
                   {Math.floor(currentLevelXp)}/{xpNeededForNext} to Lv{state.level + 1}
                 </div>
+                <div className="text-[10px] text-gray-500 text-center">Leveling slows as your farm matures.</div>
               </div>
             </div>
 
@@ -207,6 +205,22 @@ const GameHeader = memo(() => {
                       <span className="text-gray-600">Experience:</span>
                       <span className="font-semibold">{formatNumber(state.xp)} XP</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Cosmetic Tokens:</span>
+                      <span className="font-semibold">{formatNumber(state.cosmeticTokens || 0)}</span>
+                    </div>
+                    {(state.recentXpEvents || []).length > 0 && (
+                      <div className="pt-1 border-t border-gray-100">
+                        <div className="text-[11px] font-semibold text-gray-600 mb-1">Recent XP</div>
+                        <div className="space-y-0.5">
+                          {(state.recentXpEvents || []).slice().reverse().map((event) => (
+                            <div key={event.id} className="text-[11px] text-gray-600 flex justify-between">
+                              <span className="truncate pr-2">{event.source}</span><span>+{event.amount}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span className="text-gray-600">Active Plots:</span>
                       <span className="font-semibold">{state.plots?.filter(p => p.state !== 'empty').length || 0}</span>

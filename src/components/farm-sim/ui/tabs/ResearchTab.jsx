@@ -213,7 +213,7 @@ const ResearchTab = memo(() => {
 
     // Grant XP reward
     const xpReward = Math.floor(research.cost * 0.5);
-    actions.addXP(xpReward);
+    actions.addXP(xpReward, { source: 'milestone', label: 'Research Complete' });
 
     // Mark as completed
     // Update research state - complete project and reset active research

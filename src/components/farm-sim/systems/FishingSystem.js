@@ -388,7 +388,7 @@ export class FishingSystem {
     const xpReward = Math.max(2, Math.floor((fish.difficulty * 4) + (qualityScore * 8)));
 
     this.actions.earnMoney(value);
-    this.actions.addXP(xpReward);
+    this.actions.addXP(xpReward, { source: 'minigame', minigameId: 'fishing', skillFactor: qualityScore, label: 'Fishing Catch' });
     this.actions.addToInventory(fish.id, 1);
 
     const previousStats = this.gameState.fishing.stats || {};

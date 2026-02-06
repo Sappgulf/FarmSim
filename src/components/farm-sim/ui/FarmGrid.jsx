@@ -644,7 +644,7 @@ const FarmGrid = memo(() => {
     // Update coins and inventory
     actions.earnMoney(earnings);
     // REBALANCED: Consistent 15% XP rate across all harvest methods
-    actions.addXP(Math.floor(earnings * 0.15));
+    actions.addXP(Math.floor(earnings * 0.15), { source: 'harvest', cropId: crop.id, label: `Harvest ${crop.name}` });
 
     // Update inventory
     actions.updateInventory((inventory) => ({
@@ -707,7 +707,7 @@ const FarmGrid = memo(() => {
     if (harvestedCount > 0) {
       actions.updatePlots(updatedPlots);
       actions.earnMoney(totalEarnings);
-      actions.addXP(totalXp);
+      actions.addXP(totalXp, { source: 'harvest', label: 'Bulk Harvest' });
       actions.updateInventory((inventory) => {
         const nextInventory = { ...(inventory || {}) };
         Object.entries(inventoryUpdates).forEach(([id, amt]) => {

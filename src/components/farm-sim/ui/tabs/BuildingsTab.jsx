@@ -108,7 +108,7 @@ const BuildingsTab = memo(() => {
         message: `Built ${building.emoji} ${building.name}!`,
         type: 'success'
       });
-      actions.addXP(20);
+      actions.addXP(20, { source: 'milestone', label: 'Building Upgrade' });
     } else if (state.buildings[building.id]) {
       actions.addNotification({
         message: `${building.name} is already built!`,

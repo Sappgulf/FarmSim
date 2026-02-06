@@ -68,7 +68,7 @@ const DiseaseManagementTab = memo(() => {
         };
         actions.updatePlots(updatedPlots);
         actions.spendMoney(cureItem.cost);
-        actions.addXP(10);
+        actions.addXP(10, { source: 'milestone', label: 'Disease Managed' });
         
         actions.addNotification({
           message: `${cureItem.emoji} Cured plot #${targetPlotIndex + 1}!`,
@@ -120,7 +120,7 @@ const DiseaseManagementTab = memo(() => {
     
     actions.updatePlots(updatedPlots);
     actions.spendMoney(universalCure.cost);
-    actions.addXP(50);
+    actions.addXP(50, { source: 'milestone', label: 'Disease Cleared' });
     
     // Particle effect
     if (typeof window.triggerParticleEffect === 'function') {
