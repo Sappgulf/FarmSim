@@ -9,6 +9,20 @@ Guiding rules:
 - Every entry should be auditable (what changed, where, why).
 
 ## [5.3.0] - 2026-02-06
+### Planned (2026-02-06) — Sprint I1-I3: Cozy Variety Expansion
+- **Scope:** frontend systems, content data, save compatibility, docs, QA
+- **What:** add cosmetic crop traits + rare moments, time-of-day/weather visual accents, and decor-set-driven farm titles using existing Almanac/Scrapbook/Farm Card systems.
+- **Why:** deepen cozy expression and narrative variety without introducing new gameplay pressure or parallel loops.
+- **Verification:** `npm run test -- --run` and `npm run build`.
+
+### Implemented (2026-02-06) — Sprint I1-I3: Cozy Variety Expansion
+- **Scope:** frontend systems, content data, save compatibility, docs, QA
+- **What:** added passive cosmetic crop traits, three ultra-rare moments (Golden Crop, Shooting Star Night, Perfect Harvest Morning), data-driven decor set completion tracking, and cosmetic Farm Titles with a single active selection.
+- **What:** extended Almanac/Scrapbook content for traits, rare moments, and decor sets; surfaced title selection in Almanac and Town Board/Farm Card display; and announced a weekly special day via Town Board copy only.
+- **What:** added visual-only time-of-day tint accents and lightweight weather micro-overlays using existing WeatherEffects and root CSS filters, with save-safe cozyExpansion state + migration defaults.
+- **Why:** deepen expression and narrative variety while preserving balance and existing core loops.
+- **Verification:** `npm run test -- --run` and `npm run build` (both pass).
+
 ### Planned (2026-02-06) — Sprint G7: Weekly Depth + Warning Cleanup
 - **Scope:** replay systems, performance, tooling, docs
 - **What:** remove remaining test/build warnings, add deeper weekly challenge incentives, and optimize frequent farm tab computations.

@@ -31,6 +31,7 @@ import { calculateHarvestValue } from '../../../utils/farmUpgrades';
 import { getDailyCropFocus } from '../../../utils/dailyFocus';
 import { getContentManager } from '../../../content/ContentManager';
 import { CROP_DATA } from '../constants/cropData';
+import { CROP_TRAITS, CROP_TRAIT_IDS, DECOR_SETS, FARM_TITLES, RARE_MOMENTS, VISUAL_WEATHER_ROTATION, WEEKLY_SPECIAL_DAY } from '../../../data/cozyExpansion';
 import {
   applyCosmeticFallbacks,
   getItemEntitlementInfo,
@@ -45,6 +46,16 @@ import {
   getCozyGoalRewardLabel,
   isCozyGoalSatisfied,
 } from '../../../utils/cozyGoals';
+
+const rollChance = (chance = 0) => Math.random() < chance;
+
+const getRandomTraitId = () => CROP_TRAIT_IDS[Math.floor(Math.random() * CROP_TRAIT_IDS.length)] || null;
+
+const getDayOfWeekIndex = (dayKey) => {
+  const date = dayKey ? new Date(`${dayKey}T00:00:00`) : new Date();
+  const idx = date.getDay();
+  return Number.isFinite(idx) ? idx : 0;
+};
 
 /**
  * GameContext - Centralized state management for FarmSim
@@ -222,6 +233,7 @@ export function GameProvider({ children }) {
         const dayKey = getDayKey();
         if (dayKey !== currentState.almanac?.lastDayKey) {
           actionsRef.current?.recordAlmanacEvent('day_rollover', { dayKey });
+          actionsRef.current?.recordCozyExpansionEvent('day_rollover', { dayKey });
           actionsRef.current?.recordRetentionVisit(dayKey, now);
         }
         debouncedAutoSave(currentState);
@@ -343,6 +355,7 @@ export function GameProvider({ children }) {
     setFarmName: (farmName) => dispatch({ type: GAME_ACTIONS.SET_FARM_NAME, payload: farmName }),
     setFarmTheme: (themeId) => dispatch({ type: GAME_ACTIONS.SET_FARM_THEME, payload: themeId }),
     setSpotlight: (spotlight) => dispatch({ type: GAME_ACTIONS.SET_SPOTLIGHT, payload: spotlight }),
+    setActiveFarmTitle: (titleId) => dispatch({ type: GAME_ACTIONS.SET_ACTIVE_FARM_TITLE, payload: titleId }),
     updateSettings: (settings) => dispatch({ type: GAME_ACTIONS.UPDATE_SETTINGS, payload: settings }),
     setEntitlementMode: (mode) => {
       const currentState = stateRef.current;
@@ -774,6 +787,106 @@ export function GameProvider({ children }) {
       }
     },
 
+    recordCozyExpansionEvent: (eventType, eventData = {}) => {
+      const currentState = stateRef.current;
+      const current = currentState.cozyExpansion || {};
+      const cropTraits = current.cropTraits || { discoveredByCrop: {}, totalDiscovered: 0, lastDiscovered: null };
+      const rareMoments = current.rareMoments || { unlocked: {}, dayKeys: {} };
+      const decorSets = current.decorSets || { completed: {}, progress: {} };
+      const farmTitles = current.farmTitles || { unlocked: { home_grower: true }, activeId: 'home_grower' };
+      const visualState = current.visualState || { weather: 'sunny', lastPeriodKey: null, lastWeeklySpecialDayKey: null };
+      const dayKey = eventData.dayKey || getDayKey();
+
+      let next = {
+        cropTraits: { ...cropTraits, discoveredByCrop: { ...(cropTraits.discoveredByCrop || {}) } },
+        rareMoments: { ...rareMoments, unlocked: { ...(rareMoments.unlocked || {}) }, dayKeys: { ...(rareMoments.dayKeys || {}) } },
+        decorSets: { ...decorSets, completed: { ...(decorSets.completed || {}) }, progress: { ...(decorSets.progress || {}) } },
+        farmTitles: { ...farmTitles, unlocked: { ...(farmTitles.unlocked || {}), home_grower: true }, activeId: farmTitles.activeId || 'home_grower' },
+        visualState: { ...visualState },
+      };
+      let changed = false;
+
+      const unlockTitle = (titleId) => {
+        if (!titleId || !FARM_TITLES[titleId] || next.farmTitles.unlocked[titleId]) return;
+        next.farmTitles.unlocked[titleId] = true;
+        changed = true;
+        dispatch({ type: GAME_ACTIONS.ADD_NOTIFICATION, payload: { message: `🏷️ New Farm Title: ${FARM_TITLES[titleId].name}`, type: 'info' } });
+      };
+
+      const triggerRareMoment = (momentId) => {
+        const moment = RARE_MOMENTS[momentId];
+        if (!moment) return;
+        if (next.rareMoments.dayKeys[momentId] === dayKey) return;
+        if (!rollChance(moment.chance)) return;
+        next.rareMoments.unlocked[momentId] = true;
+        next.rareMoments.dayKeys[momentId] = dayKey;
+        changed = true;
+        if (moment.memoryId) actionsRef.current?.unlockMemory(moment.memoryId);
+        if (moment.almanacPageId) actionsRef.current?.unlockAlmanacPage(moment.almanacPageId);
+        unlockTitle(moment.titleId);
+        dispatch({ type: GAME_ACTIONS.ADD_NOTIFICATION, payload: { message: `${moment.icon} Rare Moment: ${moment.name}`, type: 'success' } });
+      };
+
+      if (eventType === 'crop_harvested' && eventData.cropId) {
+        if (!next.cropTraits.discoveredByCrop[eventData.cropId] && rollChance(0.09)) {
+          const traitId = getRandomTraitId();
+          if (traitId) {
+            next.cropTraits.discoveredByCrop[eventData.cropId] = traitId;
+            next.cropTraits.totalDiscovered = Math.max(0, Number(next.cropTraits.totalDiscovered || 0)) + 1;
+            next.cropTraits.lastDiscovered = { cropId: eventData.cropId, traitId, dayKey, at: Date.now() };
+            changed = true;
+            actionsRef.current?.unlockAlmanacPage('crop_traits_field_notes');
+            dispatch({ type: GAME_ACTIONS.ADD_NOTIFICATION, payload: { message: `${CROP_TRAITS[traitId]?.icon || '🌿'} Trait discovered: ${CROP_TRAITS[traitId]?.name || traitId}`, type: 'info' } });
+          }
+        }
+        triggerRareMoment('golden_crop');
+      }
+
+      if (eventType === 'nightfall') {
+        triggerRareMoment('shooting_star_night');
+      }
+
+      if (eventType === 'day_rollover') {
+        triggerRareMoment('perfect_harvest_morning');
+        if (getDayOfWeekIndex(dayKey) === WEEKLY_SPECIAL_DAY.dayIndex && next.visualState.lastWeeklySpecialDayKey !== dayKey) {
+          next.visualState.lastWeeklySpecialDayKey = dayKey;
+          changed = true;
+          dispatch({ type: GAME_ACTIONS.ADD_NOTIFICATION, payload: { message: `📌 ${WEEKLY_SPECIAL_DAY.boardCopy}`, type: 'info' } });
+        }
+      }
+
+      if (eventType === 'weather_changed' && eventData.weather) {
+        next.visualState.weather = eventData.weather;
+        changed = true;
+      }
+
+      if (eventType === 'decor_layout_changed') {
+        const plots = Array.isArray(currentState.plots) ? currentState.plots : [];
+        const placedIds = plots.filter((plot) => plot?.state === 'decor' && plot?.decorationId).map((plot) => plot.decorationId);
+        DECOR_SETS.forEach((setDef) => {
+          const placedCount = setDef.itemIds.filter((id) => placedIds.includes(id)).length;
+          next.decorSets.progress[setDef.id] = placedCount;
+          if (placedCount >= setDef.itemIds.length && !next.decorSets.completed[setDef.id]) {
+            next.decorSets.completed[setDef.id] = true;
+            changed = true;
+            if (setDef.memoryId) actionsRef.current?.unlockMemory(setDef.memoryId);
+            if (setDef.almanacPageId) actionsRef.current?.unlockAlmanacPage(setDef.almanacPageId);
+            unlockTitle(setDef.titleId);
+            dispatch({ type: GAME_ACTIONS.ADD_NOTIFICATION, payload: { message: `🪴 Decor Set complete: ${setDef.name}`, type: 'success' } });
+          }
+        });
+      }
+
+      const unlockedPages = Object.values(currentState.almanac?.unlocked || {}).filter(Boolean).length;
+      if (unlockedPages >= 12) {
+        unlockTitle('almanac_whisperer');
+      }
+
+      if (changed) {
+        dispatch({ type: GAME_ACTIONS.UPDATE_COZY_EXPANSION, payload: next });
+      }
+    },
+
     recordAlmanacEvent: (eventType, eventData = {}) => {
       const currentState = stateRef.current;
       const currentAlmanac = currentState.almanac || {};
@@ -971,6 +1084,7 @@ export function GameProvider({ children }) {
       actionsRef.current.recordMemoryEvent('decoration_placed', { decorationId });
       actionsRef.current.recordAlmanacEvent('decoration_placed', { decorationId });
       actionsRef.current.recordCozyGoalEvent('decoration_placed', { decorationId });
+      actionsRef.current.recordCozyExpansionEvent('decor_layout_changed', { decorationId });
       logDebugAction('decoration_place', { plotIndex, decorationId });
       return true;
     },
@@ -1003,6 +1117,7 @@ export function GameProvider({ children }) {
         }),
       });
 
+      actionsRef.current.recordCozyExpansionEvent('decor_layout_changed', { decorationId, removed: true });
       logDebugAction('decoration_remove', { plotIndex, decorationId });
       return true;
     },

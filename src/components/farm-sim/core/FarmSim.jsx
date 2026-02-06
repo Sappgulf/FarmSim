@@ -16,9 +16,12 @@ import QAModePanel from '../ui/QAModePanel';
 import Tutorial from '../ui/Tutorial';
 import WhatsNewModal from '../ui/WhatsNewModal';
 import PremiumLockModal from '../ui/PremiumLockModal';
+import WeatherEffects from '../ui/WeatherEffects';
 import { logDebugAction } from '../../../utils/debugTools';
 import { getFarmTheme, getFarmThemeVars } from '../../../data/farmThemes';
 import { isDevelopmentMode } from '../../../config/release';
+import { TIME_OF_DAY_VISUALS, VISUAL_WEATHER_ROTATION } from '../../../data/cozyExpansion';
+import { getDayKey } from '../../../systems/almanac';
 
 // Import systems
 import { FarmingSystem } from '../systems/FarmingSystem';
@@ -44,6 +47,16 @@ function FarmSimCore() {
   // Navigation state for new consolidated nav
   const [activeSection, setActiveSection] = useState('farm');
   const [activeTab, setActiveTab] = useState('farming');
+  const [timePeriod, setTimePeriod] = useState('day');
+
+  const computeTimePeriod = () => {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 11) return 'morning';
+    if (hour >= 17 && hour < 20) return 'dusk';
+    if (hour >= 20 || hour < 5) return 'night';
+    return 'day';
+  };
+
   const findSectionForTab = (tabId) => (
     Object.values(NAV_SECTIONS).find((section) => section.tabs.includes(tabId))?.id || null
   );
@@ -445,15 +458,45 @@ function FarmSimCore() {
     };
   }, []);
 
+  useEffect(() => {
+    const updatePeriod = () => {
+      const next = computeTimePeriod();
+      setTimePeriod((prev) => {
+        if (prev !== 'night' && next === 'night') {
+          actions.recordCozyExpansionEvent?.('nightfall', { dayKey: getDayKey() });
+        }
+        return next;
+      });
+    };
+
+    updatePeriod();
+    const timer = setInterval(updatePeriod, 60000);
+    return () => clearInterval(timer);
+  }, [actions]);
+
+  useEffect(() => {
+    const cozyVisual = state.cozyExpansion?.visualState || {};
+    if (cozyVisual.weather) return;
+    const dayCount = state.almanac?.counters?.dayCount || 0;
+    const weather = VISUAL_WEATHER_ROTATION[dayCount % VISUAL_WEATHER_ROTATION.length];
+    actions.recordCozyExpansionEvent?.('weather_changed', { weather });
+  }, [actions, state.almanac?.counters?.dayCount, state.cozyExpansion?.visualState]);
+
   const activeTheme = getFarmTheme(state.farmTheme);
   const themeVars = getFarmThemeVars(activeTheme);
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000 flex flex-col`}
+      className={`min-h-screen bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000 flex flex-col relative overflow-hidden`}
       data-farm-theme={activeTheme.id}
-      style={themeVars}
+      style={{ ...themeVars, filter: TIME_OF_DAY_VISUALS[timePeriod]?.filter || 'none' }}
     >
+      <div
+        className="pointer-events-none absolute inset-0 z-[1] transition-colors duration-700"
+        style={{ backgroundColor: TIME_OF_DAY_VISUALS[timePeriod]?.tint || 'transparent' }}
+      />
+      <WeatherEffects weather={state.cozyExpansion?.visualState?.weather || state.weather} intensity={0.45} />
+
       {/* Performance monitoring (dev only) */}
       {isDevelopmentMode() && (
         <div className="fixed top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded z-50">
@@ -462,10 +505,10 @@ function FarmSimCore() {
       )}
 
       {/* Game Header */}
-      <GameHeader />
+      <div className="relative z-20"><GameHeader /></div>
 
       {/* Main Game Area - Mobile Optimized with bottom padding for NavBar */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto relative w-full pb-24 lg:pb-4">
+      <div className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4">
         {/* Farm Grid - Full width on mobile, larger on desktop */}
         <div className="w-full lg:flex-1 order-2 lg:order-1">
           <FarmGrid />

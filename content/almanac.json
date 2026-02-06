@@ -5,31 +5,31 @@
       "id": "seasons",
       "title": "Seasons",
       "description": "What each season has meant for this farm.",
-      "icon": "🍂"
+      "icon": "\ud83c\udf42"
     },
     {
       "id": "weather",
       "title": "Weather",
       "description": "Sky notes and field observations.",
-      "icon": "🌤️"
+      "icon": "\ud83c\udf24\ufe0f"
     },
     {
       "id": "crops",
       "title": "Crops",
       "description": "Patterns in the harvests.",
-      "icon": "🌾"
+      "icon": "\ud83c\udf3e"
     },
     {
       "id": "festivals",
       "title": "Festivals",
       "description": "Moments shared with the town.",
-      "icon": "🎉"
+      "icon": "\ud83c\udf89"
     },
     {
       "id": "farm_notes",
       "title": "Farm Notes",
       "description": "Gentle guidance shaped by your philosophy.",
-      "icon": "📝"
+      "icon": "\ud83d\udcdd"
     }
   ],
   "pages": [
@@ -37,7 +37,7 @@
       "id": "spring_turning",
       "section": "seasons",
       "title": "Spring Turning",
-      "icon": "🌸",
+      "icon": "\ud83c\udf38",
       "hint": "Welcome spring as the season begins.",
       "unlock": {
         "type": "season_start",
@@ -54,7 +54,7 @@
       "id": "summer_glow",
       "section": "seasons",
       "title": "Summer Glow",
-      "icon": "☀️",
+      "icon": "\u2600\ufe0f",
       "hint": "Let summer arrive in full.",
       "unlock": {
         "type": "season_start",
@@ -71,7 +71,7 @@
       "id": "autumn_gold",
       "section": "seasons",
       "title": "Autumn Gold",
-      "icon": "🍁",
+      "icon": "\ud83c\udf41",
       "hint": "See the first fall transition.",
       "unlock": {
         "type": "season_start",
@@ -88,7 +88,7 @@
       "id": "winter_quiet",
       "section": "seasons",
       "title": "Winter Quiet",
-      "icon": "❄️",
+      "icon": "\u2744\ufe0f",
       "hint": "Let winter settle on the farm.",
       "unlock": {
         "type": "season_start",
@@ -105,23 +105,23 @@
       "id": "full_circle",
       "section": "seasons",
       "title": "Full Circle",
-      "icon": "🌀",
+      "icon": "\ud83c\udf00",
       "hint": "Experience every season at least once.",
       "unlock": {
         "type": "seasons_complete"
       },
       "text": {
         "default": "The farm has turned through every season. The rhythm feels familiar now.",
-        "nature": "Seasons are the farm’s heartbeat. You’ve learned its steady pulse.",
+        "nature": "Seasons are the farm\u2019s heartbeat. You\u2019ve learned its steady pulse.",
         "market": "A full cycle reveals the trends. You know when to push and when to pause.",
-        "slow": "A year’s worth of moments now lives here. Cozy and complete."
+        "slow": "A year\u2019s worth of moments now lives here. Cozy and complete."
       }
     },
     {
       "id": "rainsoft_fields",
       "section": "weather",
       "title": "Rainsoft Fields",
-      "icon": "🌧️",
+      "icon": "\ud83c\udf27\ufe0f",
       "hint": "Harvest while rain is falling.",
       "unlock": {
         "type": "rainy_harvest"
@@ -137,7 +137,7 @@
       "id": "stormwatch",
       "section": "weather",
       "title": "Stormwatch",
-      "icon": "⛈️",
+      "icon": "\u26c8\ufe0f",
       "hint": "Witness a stormy sky.",
       "unlock": {
         "type": "weather_observed",
@@ -145,7 +145,7 @@
       },
       "text": {
         "default": "You stood with the farm through wild weather. The fields remember.",
-        "nature": "Storms are a reminder of the sky’s power. You stayed grounded.",
+        "nature": "Storms are a reminder of the sky\u2019s power. You stayed grounded.",
         "market": "Storms test planning. You kept the farm steady anyway.",
         "slow": "Even storms pass. You waited it out with a steady heart."
       }
@@ -154,7 +154,7 @@
       "id": "reading_the_sky",
       "section": "weather",
       "title": "Reading the Sky",
-      "icon": "🌈",
+      "icon": "\ud83c\udf08",
       "hint": "Experience every weather type.",
       "unlock": {
         "type": "all_weather_seen"
@@ -163,14 +163,14 @@
         "default": "Every kind of sky has visited your farm. You can read its moods now.",
         "nature": "The weather has told you its stories. You learned each one.",
         "market": "Knowing the sky means knowing the market. You plan with confidence.",
-        "slow": "You’ve watched the sky change and found peace in each shift."
+        "slow": "You\u2019ve watched the sky change and found peace in each shift."
       }
     },
     {
       "id": "cold_roots",
       "section": "crops",
       "title": "Cold Roots",
-      "icon": "🥕",
+      "icon": "\ud83e\udd55",
       "hint": "Harvest a crop during winter.",
       "unlock": {
         "type": "winter_harvest"
@@ -186,7 +186,7 @@
       "id": "reliable_favorite",
       "section": "crops",
       "title": "A Reliable Favorite",
-      "icon": "🌱",
+      "icon": "\ud83c\udf31",
       "hint": "Harvest the same crop across three seasons.",
       "unlock": {
         "type": "crop_three_seasons"
@@ -195,14 +195,14 @@
         "default": "One crop keeps returning to your fields. A faithful favorite.",
         "nature": "Some plants just belong here. You found one that stays.",
         "market": "Reliable crops keep the ledger calm. Consistency looks good.",
-        "slow": "There’s comfort in the familiar. A favorite, season after season."
+        "slow": "There\u2019s comfort in the familiar. A favorite, season after season."
       }
     },
     {
       "id": "gathering_light",
       "section": "festivals",
       "title": "Gathering Light",
-      "icon": "🏮",
+      "icon": "\ud83c\udfee",
       "hint": "Attend your first festival.",
       "unlock": {
         "type": "festival_attended",
@@ -210,7 +210,7 @@
       },
       "text": {
         "default": "The town gathered, and so did you. The farm feels less alone.",
-        "nature": "Festivals remind the land it’s shared. You felt the warmth.",
+        "nature": "Festivals remind the land it\u2019s shared. You felt the warmth.",
         "market": "Festivals bring opportunities and stories. You showed up.",
         "slow": "A night of lanterns, a heart full of quiet joy."
       }
@@ -219,14 +219,14 @@
       "id": "festival_regular",
       "section": "festivals",
       "title": "Festival Regular",
-      "icon": "🎪",
+      "icon": "\ud83c\udfaa",
       "hint": "Attend three seasonal festivals.",
       "unlock": {
         "type": "festival_attended",
         "count": 3
       },
       "text": {
-        "default": "The town knows your footsteps now. You’re part of the rhythm.",
+        "default": "The town knows your footsteps now. You\u2019re part of the rhythm.",
         "nature": "Seasonal gatherings ground the year. You came each time.",
         "market": "Showing up builds trust. Your stall is becoming familiar.",
         "slow": "The festivals feel like home now. A cozy tradition."
@@ -236,7 +236,7 @@
       "id": "first_steps",
       "section": "farm_notes",
       "title": "First Steps",
-      "icon": "🧺",
+      "icon": "\ud83e\uddfa",
       "hint": "Harvest your first crop or visit the Town Board.",
       "unlock": {
         "type": "first_steps"
@@ -252,14 +252,14 @@
       "id": "philosophy_compass",
       "section": "farm_notes",
       "title": "Philosophy Compass",
-      "icon": "🧭",
+      "icon": "\ud83e\udded",
       "hint": "Choose a farm philosophy.",
       "unlock": {
         "type": "philosophy_selected"
       },
       "text": {
         "default": "You chose a gentle direction. Let it guide the small decisions.",
-        "nature": "Follow the land’s quiet cues. They’ll guide you well.",
+        "nature": "Follow the land\u2019s quiet cues. They\u2019ll guide you well.",
         "market": "Keep your eyes on the trends. Small margins add up.",
         "slow": "Let the farm be a place of calm. Move at the speed of comfort."
       }
@@ -268,14 +268,14 @@
       "id": "morning_notes",
       "section": "farm_notes",
       "title": "Morning Notes",
-      "icon": "🫖",
+      "icon": "\ud83e\uded6",
       "hint": "Let a new day begin on the farm.",
       "unlock": {
         "type": "day_rollover",
         "count": 1
       },
       "text": {
-        "default": "Each morning adds a new line to the farm’s story.",
+        "default": "Each morning adds a new line to the farm\u2019s story.",
         "nature": "A new day means new signals from the land.",
         "market": "A fresh day is a fresh plan. Check the ledger and the sky.",
         "slow": "Morning light feels like a soft promise. Start gently."
@@ -285,7 +285,7 @@
       "id": "steadied_habits",
       "section": "farm_notes",
       "title": "Steadied Habits",
-      "icon": "📌",
+      "icon": "\ud83d\udccc",
       "hint": "See three day rollovers.",
       "unlock": {
         "type": "day_rollover",
@@ -295,14 +295,14 @@
         "default": "Small rituals are taking root. The farm feels steady.",
         "nature": "With each day, the land learns your rhythm.",
         "market": "Consistency keeps the farm strong. The routine is paying off.",
-        "slow": "A calm routine is a quiet treasure. You’re finding it."
+        "slow": "A calm routine is a quiet treasure. You\u2019re finding it."
       }
     },
     {
       "id": "festival_rhythm",
       "section": "farm_notes",
       "title": "Festival Rhythm",
-      "icon": "🥁",
+      "icon": "\ud83e\udd41",
       "hint": "Find your timing at a festival.",
       "unlock": {
         "type": "festival_game"
@@ -311,7 +311,77 @@
         "default": "You found the rhythm the town keeps in its harvest songs.",
         "nature": "Timing comes from listening. The fields kept the beat with you.",
         "market": "Good timing turns small chances into steady wins.",
-        "slow": "You matched the festival’s gentle tempo. Cozy and bright."
+        "slow": "You matched the festival\u2019s gentle tempo. Cozy and bright."
+      }
+    },
+    {
+      "id": "crop_traits_field_notes",
+      "section": "crops",
+      "title": "Crop Trait Field Notes",
+      "icon": "\ud83c\udf3f",
+      "hint": "Discover a trait on harvest.",
+      "text": {
+        "default": "Some harvests carry tiny visual quirks\u2014purely cosmetic, always delightful."
+      }
+    },
+    {
+      "id": "golden_crop_note",
+      "section": "crops",
+      "title": "Golden Crop",
+      "icon": "\ud83c\udf1f",
+      "hint": "Witness a truly rare harvest.",
+      "text": {
+        "default": "A golden harvest glows for a moment, then settles into storybook memory."
+      }
+    },
+    {
+      "id": "shooting_star_night",
+      "section": "weather",
+      "title": "Shooting Star Night",
+      "icon": "\ud83c\udf20",
+      "hint": "Watch the sky at night.",
+      "text": {
+        "default": "On rare nights a silver streak crosses the farm sky, leaving calm wonder."
+      }
+    },
+    {
+      "id": "perfect_harvest_morning",
+      "section": "farm_notes",
+      "title": "Perfect Harvest Morning",
+      "icon": "\ud83c\udf05",
+      "hint": "A rare morning mood can appear at daybreak.",
+      "text": {
+        "default": "Some mornings feel perfectly tuned\u2014light, breeze, and baskets all in harmony."
+      }
+    },
+    {
+      "id": "decor_set_lantern_walk",
+      "section": "farm_notes",
+      "title": "Decor Set: Lantern Walk",
+      "icon": "\ud83c\udfee",
+      "hint": "Place a complete decor set.",
+      "text": {
+        "default": "A full lantern walk turns pathways into a cozy evening invitation."
+      }
+    },
+    {
+      "id": "decor_set_hearth_garden",
+      "section": "farm_notes",
+      "title": "Decor Set: Hearth Garden",
+      "icon": "\ud83e\uddfa",
+      "hint": "Place a complete decor set.",
+      "text": {
+        "default": "A curated corner of bench, blooms, and birdsong becomes a favorite pause."
+      }
+    },
+    {
+      "id": "decor_set_harvest_border",
+      "section": "farm_notes",
+      "title": "Decor Set: Harvest Border",
+      "icon": "\ud83c\udf83",
+      "hint": "Place a complete decor set.",
+      "text": {
+        "default": "A neat border of seasonal decor frames harvest days with warmth."
       }
     }
   ],
@@ -341,6 +411,12 @@
     "ginger_harvest": "ginger_warmth",
     "winter_market": "hearth_market",
     "cozy_goal_complete": "cozy_goals",
-    "winter_showcase": "seasonal_trimmings"
+    "winter_showcase": "seasonal_trimmings",
+    "golden_crop_note": "golden_crop",
+    "shooting_star_night": "shooting_star_night",
+    "perfect_harvest_morning": "perfect_harvest_morning",
+    "decor_set_lantern_walk": "lantern_walk_complete",
+    "decor_set_hearth_garden": "hearth_garden_complete",
+    "decor_set_harvest_border": "harvest_border_complete"
   }
 }

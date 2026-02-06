@@ -639,6 +639,7 @@ const FarmGrid = memo(() => {
     // Reset plot
     actions.harvestCrop(index, earnings);
     actions.recordMemoryEvent('crop_harvested', { cropId: crop.id });
+    actions.recordCozyExpansionEvent('crop_harvested', { cropId: crop.id });
     actions.recordAlmanacEvent('crop_harvested', {
       cropId: crop.id,
       season: state.season?.current,
@@ -700,6 +701,7 @@ const FarmGrid = memo(() => {
       });
 
       Object.keys(inventoryUpdates).forEach((cropId) => {
+        actions.recordCozyExpansionEvent('crop_harvested', { cropId });
         actions.recordAlmanacEvent('crop_harvested', {
           cropId,
           season: state.season?.current,

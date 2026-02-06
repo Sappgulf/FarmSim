@@ -126,3 +126,15 @@
 
 ### Polished (Feedback / Audio / Accessibility)
 - Added audio ducking for music during sound effects. (`src/components/farm-sim/systems/SoundSystem.js`, `src/components/farm-sim/systems/MusicSystem.js`)
+
+## Sprint I1-I3 (Cozy Variety Expansion)
+
+- **Data definitions:** `src/data/cozyExpansion.js` contains crop trait tables, rare moments, decor sets, farm titles, weekly special day copy, and visual accent tokens.
+- **State + logic:** `GameContext.recordCozyExpansionEvent` in `src/components/farm-sim/context/GameContext.jsx` handles trait discovery, rare moment idempotency, decor set completion checks, and title unlocks/event notifications.
+- **Save safety:** `GameReducer` adds `cozyExpansion` defaults; `GamePersistence` migrates/normalizes to save version 12 with optional fields for old saves.
+- **UI surfaces:**
+  - `AlmanacTab` shows trait discoveries and farm title selection.
+  - `EventsTab` shows weekly special-day copy and current active title in Farm Card summary.
+  - `farmCard` rendering includes active title text.
+- **Visual accents:** `FarmSim` applies time-of-day tint/filter accents and reuses `WeatherEffects` for low-cost weather ambience (visual-only).
+
