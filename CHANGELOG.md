@@ -262,3 +262,16 @@ Guiding rules:
 - **What:** replaced curve source with steeper piecewise `getXpRequiredForLevel`, added source caps (milestone/challenge/rare moment), harvest variety bonus + stronger diminishing, zeroed passive XP sources (pets/planting), moved save schema to v15 with XP remap preserving level/progress, raised unlock levels (buildings/genetics), and increased milestone/achievement thresholds.
 - **Why:** restore meaningful pacing and make unlocks/achievements feel earned without grind walls.
 - **Verification:** `npm run test -- src/test/progression.test.js` (pass), `npm run build` (pass).
+
+
+### Planned (2026-02-06) — Header cleanup and quick-link navigation
+- **Scope:** frontend, UI, docs
+- **What:** remove redundant pause/save/settings controls from the game header, make remaining stat chips clickable to related tabs, and tighten layout spacing for a cleaner fit.
+- **Why:** these controls already exist elsewhere and the header should stay focused, tappable, and uncluttered.
+- **Verification:** `npm run build` (pass with existing npm env warning and Vite chunk warnings).
+
+### Implemented (2026-02-06) — Header cleanup and quick-link navigation
+- **Scope:** frontend, UI
+- **What:** removed pause/save/settings icon buttons from the header, wired coin/xp/level/season/weather/achievements chips to open related tabs, and preserved compact responsive sizing.
+- **Why:** reduce duplicate controls and make header elements actionable while keeping the top bar visually clean.
+- **Verification:** `npm run smoke-test` (pass with existing ReactDOMTestUtils deprecation warning + npm env warning), `npm run build` (pass with existing npm env warning and Vite chunk warnings).
