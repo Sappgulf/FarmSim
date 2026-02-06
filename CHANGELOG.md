@@ -8,6 +8,19 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
+## [5.3.0] - 2026-02-06
+### Planned (2026-02-06) — Sprint G7: Weekly Depth + Warning Cleanup
+- **Scope:** replay systems, performance, tooling, docs
+- **What:** remove remaining test/build warnings, add deeper weekly challenge incentives, and optimize frequent farm tab computations.
+- **Why:** keep momentum on depth while improving CI/dev signal quality and runtime efficiency.
+- **Verification:** `npm run test -- --run` and `npm run build`.
+
+### Implemented (2026-02-06) — Sprint G7: Weekly Depth + Warning Cleanup
+- **Scope:** replay systems, performance, tooling, docs
+- **What:** upgraded Testing Library stack and refreshed Browserslist data (warnings cleared), added weekly challenge milestones and streak-based challenge reward boosts, and memoized farming stat calculations to avoid repeated per-render scans.
+- **Why:** improve replay value through weekly goals, stabilize quality gates, and reduce UI compute overhead.
+- **Verification:** `npm run test -- --run` and `npm run build` (both pass).
+
 ## [5.2.0] - 2026-02-06
 ### Planned (2026-02-06) — Sprint G6: Replay Loop + Performance Pass
 - **Scope:** gameplay loops, UI polish, performance, tests, docs

@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Button } from '../../../ui/button';
 import { Card } from '../../../ui/card';
@@ -15,20 +15,66 @@ const FarmingTab = memo(() => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const hasSoilAnalyzer = getSoilAnalyzerEnabled(state.inventory);
   const dailyFocus = getDailyCropFocus(state);
+  const plotsArray = useMemo(() => (Array.isArray(state.plots) ? state.plots : []), [state.plots]);
 
   // Get crops available at player's level
-  const availableCrops = getCropsByLevel(state.level);
+  const availableCrops = useMemo(() => getCropsByLevel(state.level), [state.level]);
   
   // Filter by category
-  const crops = selectedCategory === 'all' 
+  const crops = selectedCategory === 'all'
     ? availableCrops
     : availableCrops.filter(crop => crop.category === selectedCategory);
 
-  const cropList = crops.map(crop => ({
+  const cropList = useMemo(() => crops.map(crop => ({
     ...crop,
     value: crop.baseValue,
     time: crop.growthTime,
-  }));
+  })), [crops]);
+
+  const farmStats = useMemo(() => {
+    const totalPlots = plotsArray.length;
+    if (totalPlots === 0) {
+      return {
+        totalPlots: 0,
+        activePlots: 0,
+        readyPlots: 0,
+        avgSoilFertilityLabel: '100%',
+        efficiencyPercent: 0,
+      };
+    }
+
+    let activePlots = 0;
+    let readyPlots = 0;
+    let healthyPlots = 0;
+    let soilTotal = 0;
+
+    plotsArray.forEach((plot) => {
+      const stateLabel = plot?.state;
+      if (stateLabel !== 'empty') {
+        activePlots += 1;
+      }
+      if (stateLabel === 'ready') {
+        readyPlots += 1;
+      }
+      if (stateLabel !== 'empty' && stateLabel !== 'withered') {
+        healthyPlots += 1;
+      }
+      soilTotal += (plot?.soilFertility || 1.0);
+    });
+
+    const avgSoilFertilityLabel = `${Math.round((soilTotal / totalPlots) * 100)}%`;
+    const efficiencyPercent = Math.round(
+      ((activePlots / totalPlots) * 0.5 + (activePlots > 0 ? healthyPlots / activePlots : 1) * 0.5) * 100
+    );
+
+    return {
+      totalPlots,
+      activePlots,
+      readyPlots,
+      avgSoilFertilityLabel,
+      efficiencyPercent,
+    };
+  }, [plotsArray]);
 
   const handleSelectCrop = (cropId) => {
     actions.setSelectedCrop(cropId);
@@ -48,8 +94,7 @@ const FarmingTab = memo(() => {
         });
         break;
       case 'Harvest All':
-        const plotsArray = Array.isArray(state.plots) ? state.plots : [];
-        const readyCount = plotsArray.filter(p => p.state === 'ready').length;
+        const readyCount = farmStats.readyPlots;
         if (readyCount > 0) {
           actions.harvestAllReadyCrops();
           actions.addNotification({
@@ -64,8 +109,7 @@ const FarmingTab = memo(() => {
         }
         break;
       case 'Fertilize All':
-        const plotsArray2 = Array.isArray(state.plots) ? state.plots : [];
-        const fertilizablePlots = plotsArray2.length;
+        const fertilizablePlots = plotsArray.length;
         const maxFertilizations = Math.floor(state.coins / 15);
         if (maxFertilizations > 0) {
           actions.fertilizeAllPlots();
@@ -82,8 +126,7 @@ const FarmingTab = memo(() => {
         }
         break;
       case 'Pesticide All':
-        const plotsArray3 = Array.isArray(state.plots) ? state.plots : [];
-        const diseasedCount = plotsArray3.filter(p => p.disease).length;
+        const diseasedCount = plotsArray.filter(p => p.disease).length;
         const maxTreatments = Math.floor(state.coins / 20);
         if (diseasedCount > 0 && maxTreatments > 0) {
           actions.treatAllDiseases();
@@ -281,32 +324,21 @@ const FarmingTab = memo(() => {
           <div className="flex justify-between items-center">
             <span className="text-sm">Active Plots</span>
             <Badge variant="outline">
-              {(() => {
-                const plotsArray = Array.isArray(state.plots) ? state.plots : [];
-                return `${plotsArray.filter(p => p.state !== 'empty').length}/${plotsArray.length}`;
-              })()}
+              {`${farmStats.activePlots}/${farmStats.totalPlots}`}
             </Badge>
           </div>
 
           <div className="flex justify-between items-center">
             <span className="text-sm">Ready to Harvest</span>
             <Badge variant="outline">
-              {(() => {
-                const plotsArray = Array.isArray(state.plots) ? state.plots : [];
-                return plotsArray.filter(p => p.state === 'ready').length;
-              })()}
+              {farmStats.readyPlots}
             </Badge>
           </div>
           {hasSoilAnalyzer && (
             <div className="flex justify-between items-center">
               <span className="text-sm">Avg Soil Fertility</span>
               <Badge variant="outline">
-                {(() => {
-                  const plotsArray = Array.isArray(state.plots) ? state.plots : [];
-                  if (plotsArray.length === 0) return '100%';
-                  const total = plotsArray.reduce((sum, plot) => sum + (plot?.soilFertility || 1.0), 0);
-                  return `${Math.round((total / plotsArray.length) * 100)}%`;
-                })()}
+                {farmStats.avgSoilFertilityLabel}
               </Badge>
             </div>
           )}
@@ -315,24 +347,11 @@ const FarmingTab = memo(() => {
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm">Farm Efficiency</span>
               <span className="text-sm font-medium">
-                {(() => {
-                  const plotsArray = Array.isArray(state.plots) ? state.plots : [];
-                  if (plotsArray.length === 0) return '0%';
-                  const active = plotsArray.filter(p => p.state !== 'empty').length;
-                  const healthy = plotsArray.filter(p => p.state !== 'empty' && p.state !== 'withered').length;
-                  const eff = Math.round(((active / plotsArray.length) * 0.5 + (active > 0 ? healthy / active : 1) * 0.5) * 100);
-                  return `${eff}%`;
-                })()}
+                {`${farmStats.efficiencyPercent}%`}
               </span>
             </div>
             <Progress
-              value={(() => {
-                const plotsArray = Array.isArray(state.plots) ? state.plots : [];
-                if (plotsArray.length === 0) return 0;
-                const active = plotsArray.filter(p => p.state !== 'empty').length;
-                const healthy = plotsArray.filter(p => p.state !== 'empty' && p.state !== 'withered').length;
-                return Math.round(((active / plotsArray.length) * 0.5 + (active > 0 ? healthy / active : 1) * 0.5) * 100);
-              })()}
+              value={farmStats.efficiencyPercent}
               className="h-2"
             />
           </div>

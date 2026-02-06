@@ -6,6 +6,7 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { getDayKey } from '../../../../systems/almanac';
+import { getWeekKey } from '../../../../utils/retention';
 import {
   buildDailyOperations,
   getDailyOperationProgress,
@@ -14,6 +15,11 @@ import {
 import { logDebugAction } from '../../../../utils/debugTools';
 
 const REFRESH_COST = 90;
+const WEEKLY_MILESTONES = [
+  { days: 2, coins: 120, xp: 70 },
+  { days: 4, coins: 220, xp: 120 },
+  { days: 6, coins: 360, xp: 200 },
+];
 
 const getDifficultyStyles = (difficulty) => {
   switch (difficulty) {
@@ -26,13 +32,38 @@ const getDifficultyStyles = (difficulty) => {
   }
 };
 
+const getStreakRewardMultiplier = (streak = 0) => {
+  if (streak >= 14) return 1.5;
+  if (streak >= 7) return 1.3;
+  if (streak >= 3) return 1.15;
+  return 1;
+};
+
 const ChallengesTab = memo(() => {
   const { state, actions } = useGame();
   useTick();
 
   const dayKey = getDayKey();
+  const weekKey = getWeekKey();
   const dailyChallenges = Array.isArray(state.dailyChallenges) ? state.dailyChallenges : [];
   const challengeSetDayKey = dailyChallenges[0]?.dayKey || null;
+  const streakMultiplier = getStreakRewardMultiplier(state.challengeStreak || 0);
+
+  const weeklyOpsState = useMemo(() => {
+    const raw = state.dailyChallengeProgress?.operationsWeek;
+    if (!raw || raw.weekKey !== weekKey) {
+      return {
+        weekKey,
+        completedDays: [],
+        claimedTiers: [],
+      };
+    }
+    return {
+      weekKey,
+      completedDays: Array.isArray(raw.completedDays) ? raw.completedDays : [],
+      claimedTiers: Array.isArray(raw.claimedTiers) ? raw.claimedTiers : [],
+    };
+  }, [state.dailyChallengeProgress, weekKey]);
 
   const isChallengeSetValid = useMemo(() => (
     dailyChallenges.length > 0 &&
@@ -50,7 +81,6 @@ const ChallengesTab = memo(() => {
 
     const nextChallenges = buildDailyOperations(state.level, dayKey);
     actions.setDailyChallenges(nextChallenges);
-    actions.updateChallengeProgress({});
     actions.updateLastChallengeReset(Date.now());
 
     logDebugAction('daily_challenge_reset', {
@@ -90,16 +120,32 @@ const ChallengesTab = memo(() => {
     ));
     const allClaimedAfter = updatedChallenges.length > 0 && updatedChallenges.every((challenge) => challenge.claimed);
 
+    const rewardCoins = Math.floor((targetChallenge.reward?.coins || 0) * streakMultiplier);
+    const rewardXp = Math.floor((targetChallenge.reward?.xp || 0) * streakMultiplier);
+
     actions.setDailyChallenges(updatedChallenges);
-    actions.setCoins((coins) => coins + (targetChallenge.reward?.coins || 0));
-    actions.setXp((xp) => xp + (targetChallenge.reward?.xp || 0));
+    actions.setCoins((coins) => coins + rewardCoins);
+    actions.setXp((xp) => xp + rewardXp);
 
     if (!allClaimedBefore && allClaimedAfter) {
       actions.updateChallengeStreak((state.challengeStreak || 0) + 1);
+      const nextWeeklyState = weeklyOpsState.weekKey === weekKey
+        ? weeklyOpsState
+        : { weekKey, completedDays: [], claimedTiers: [] };
+      const completedDays = nextWeeklyState.completedDays.includes(dayKey)
+        ? nextWeeklyState.completedDays
+        : [...nextWeeklyState.completedDays, dayKey];
+      actions.updateChallengeProgress({
+        ...(state.dailyChallengeProgress || {}),
+        operationsWeek: {
+          ...nextWeeklyState,
+          completedDays,
+        },
+      });
     }
 
     actions.addNotification({
-      message: `Challenge cleared! +${targetChallenge.reward?.coins || 0}🪙 +${targetChallenge.reward?.xp || 0} XP`,
+      message: `Challenge cleared! +${rewardCoins}🪙 +${rewardXp} XP${streakMultiplier > 1 ? ` (${Math.round((streakMultiplier - 1) * 100)}% streak boost)` : ''}`,
       type: 'success',
     });
 
@@ -135,6 +181,37 @@ const ChallengesTab = memo(() => {
     });
   };
 
+  const handleClaimWeeklyMilestone = (milestoneDays) => {
+    if (weeklyOpsState.claimedTiers.includes(milestoneDays)) {
+      return;
+    }
+    if (weeklyOpsState.completedDays.length < milestoneDays) {
+      return;
+    }
+    const milestone = WEEKLY_MILESTONES.find((tier) => tier.days === milestoneDays);
+    if (!milestone) {
+      return;
+    }
+
+    actions.setCoins((coins) => coins + milestone.coins);
+    actions.setXp((xp) => xp + milestone.xp);
+    actions.updateChallengeProgress({
+      ...(state.dailyChallengeProgress || {}),
+      operationsWeek: {
+        ...weeklyOpsState,
+        claimedTiers: [...weeklyOpsState.claimedTiers, milestoneDays],
+      },
+    });
+    actions.addNotification({
+      message: `Weekly milestone claimed! +${milestone.coins}🪙 +${milestone.xp} XP`,
+      type: 'success',
+    });
+    logDebugAction('weekly_ops_milestone_claim', {
+      milestoneDays,
+      weekKey,
+    });
+  };
+
   return (
     <div className="space-y-4">
       <Card className="p-4 bg-gradient-to-r from-orange-50 to-amber-50">
@@ -150,6 +227,9 @@ const ChallengesTab = memo(() => {
 
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
           <span>Resets in: {getResetCountdownLabel(state.lastChallengeReset || Date.now())}</span>
+          <span className="font-medium text-orange-700">
+            Reward Boost: +{Math.round((streakMultiplier - 1) * 100)}%
+          </span>
           <Button
             size="sm"
             variant="outline"
@@ -230,6 +310,45 @@ const ChallengesTab = memo(() => {
             <div className="font-bold text-orange-700">{state.challengeStreak || 0}</div>
             <div className="text-gray-600">Current Streak</div>
           </div>
+        </div>
+      </Card>
+
+      <Card className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50">
+        <h4 className="font-semibold mb-2 text-indigo-800">🗓️ Weekly Operations Milestones</h4>
+        <p className="text-xs text-indigo-700 mb-3">
+          Clear all daily operations on multiple days this week to unlock milestone rewards.
+        </p>
+        <div className="space-y-2">
+          {WEEKLY_MILESTONES.map((milestone) => {
+            const reached = weeklyOpsState.completedDays.length >= milestone.days;
+            const claimed = weeklyOpsState.claimedTiers.includes(milestone.days);
+            return (
+              <div key={milestone.days} className="p-3 rounded-lg bg-white border border-indigo-100">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="font-medium text-sm text-indigo-900">
+                      {milestone.days} completion days this week
+                    </div>
+                    <div className="text-xs text-indigo-700">
+                      Reward: +{milestone.coins}🪙 +{milestone.xp} XP
+                    </div>
+                  </div>
+                  {claimed ? (
+                    <Badge className="bg-emerald-600">Claimed</Badge>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleClaimWeeklyMilestone(milestone.days)}
+                      disabled={!reached}
+                    >
+                      {reached ? 'Claim' : `${weeklyOpsState.completedDays.length}/${milestone.days}`}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Card>
     </div>

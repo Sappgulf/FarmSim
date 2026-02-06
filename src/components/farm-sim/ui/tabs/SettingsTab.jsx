@@ -397,6 +397,8 @@ const SettingsTab = memo(() => {
           <div className="pt-3 border-t border-green-200 mt-3">
             <p className="font-semibold">✨ Recent upgrades:</p>
             <ul className="list-disc list-inside text-xs space-y-0.5 mt-1">
+              <li>🗓️ Weekly Operations milestone rewards</li>
+              <li>🔥 Streak-based challenge reward boosts</li>
               <li>📈 Daily Market Focus bonus crop loop</li>
               <li>🎯 Reworked Daily Operations board with reroll</li>
               <li>🚀 Sidebar now mounts only active tab content</li>
