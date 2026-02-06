@@ -406,7 +406,7 @@ const ProcessingTab = memo(() => {
                         <span>{getTimeLeft(facility.finishTime)}</span>
                       </div>
                       <Progress
-                        value={((facility.finishTime - Date.now()) / (facilityData.time * 1000)) * 100}
+                        value={Math.max(0, 100 - ((facility.finishTime - Date.now()) / (facilityData.time * 1000)) * 100)}
                         className="h-2"
                       />
                     </div>

@@ -278,15 +278,15 @@ const WeatherTab = memo(() => {
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="text-center p-2 bg-gray-50 rounded">
             <div className="font-semibold text-gray-800">
-              {Math.floor(Math.random() * 100)}%
+              {state.weatherForecast?.length || 0}
             </div>
-            <div className="text-gray-600">Prediction Accuracy</div>
+            <div className="text-gray-600">Forecasts Seen</div>
           </div>
           <div className="text-center p-2 bg-gray-50 rounded">
             <div className="font-semibold text-gray-800">
-              {Math.floor(Math.random() * 50) + 10}
+              {state.weatherForecast ? state.weatherForecast.filter(f => f.type === state.weather).length : 0}
             </div>
-            <div className="text-gray-600">Games Played</div>
+            <div className="text-gray-600">Current Streak</div>
           </div>
         </div>
       </Card>

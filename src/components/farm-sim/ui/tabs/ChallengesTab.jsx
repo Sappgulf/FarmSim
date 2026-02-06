@@ -227,7 +227,7 @@ const ChallengesTab = memo(() => {
 
           <div className="text-center p-2 bg-green-50 rounded">
             <div className="font-bold text-green-600">
-              {state.dailyChallenges.filter(c => c.completed).length}/{state.dailyChallenges.length}
+              {dailyChallenges.filter(c => c.completed).length}/{dailyChallenges.length}
             </div>
             <div className="text-green-700">Today's Progress</div>
           </div>
