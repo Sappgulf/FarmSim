@@ -35,6 +35,16 @@ export const FISH_TYPES = {
     size: { min: 20, max: 40 },
     description: 'A beautiful trout'
   },
+  KOI: {
+    id: 'koi',
+    name: 'Koi Carp',
+    emoji: '🪷',
+    rarity: 0.07, // 7% chance
+    baseValue: 110,
+    difficulty: 3,
+    size: { min: 22, max: 45 },
+    description: 'A graceful koi with shimmering scales'
+  },
   EPIC: {
     id: 'epic',
     name: 'Salmon',
@@ -54,6 +64,16 @@ export const FISH_TYPES = {
     difficulty: 5,
     size: { min: 40, max: 100 },
     description: 'A legendary golden koi!'
+  },
+  MYTHIC: {
+    id: 'mythic',
+    name: 'Moon Eel',
+    emoji: '🌙',
+    rarity: 0.004, // 0.4% chance
+    baseValue: 900,
+    difficulty: 5,
+    size: { min: 55, max: 120 },
+    description: 'A mythic eel seen only under calm moonlight'
   }
 };
 
@@ -381,9 +401,14 @@ export class FishingSystem {
     const qualityTier = QUALITY_TIERS.find((tier) => qualityScore >= tier.min) || QUALITY_TIERS[QUALITY_TIERS.length - 1];
     const sizeMultiplier = 1 + ((size - fish.size.min) / sizeRange);
     const difficultyMultiplier = 1 + (catchState.difficulty * 0.35);
+    const level = this.gameState?.progression?.level || 1;
+    const earlyCatchTuning = level < 6 ? 0.86 : 1;
+    const projectedStreak = (this.gameState?.fishing?.stats?.streak || 0) + 1;
+    const streakBonus = clamp(1 + Math.max(0, projectedStreak - 2) * 0.04, 1, 1.24);
+
     const value = Math.max(
       1,
-      Math.floor(fish.baseValue * sizeMultiplier * difficultyMultiplier * qualityTier.multiplier)
+      Math.floor(fish.baseValue * sizeMultiplier * difficultyMultiplier * qualityTier.multiplier * earlyCatchTuning * streakBonus)
     );
     const xpReward = Math.max(2, Math.floor((fish.difficulty * 4) + (qualityScore * 8)));
 
@@ -414,7 +439,7 @@ export class FishingSystem {
     });
 
     this.actions.addNotification({
-      message: `${fish.emoji} ${qualityTier.label} catch: ${fish.name} (${size}cm) +$${value} +${xpReward} XP`,
+      message: `${fish.emoji} ${qualityTier.label} catch: ${fish.name} (${size}cm) +$${value} +${xpReward} XP${qualityTier.label === 'Perfect' ? ' • Bonus payout!' : ''}`,
       type: 'success'
     });
 

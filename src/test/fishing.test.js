@@ -65,6 +65,44 @@ describe('FishingSystem', () => {
     expect(actions.addToInventory).toHaveBeenCalledWith(success.fish.id, 1);
   });
 
+
+  it('applies early-game tuning while rewarding catch streak mastery', () => {
+    const makeCatchState = () => ({
+      fish: {
+        id: 'common',
+        name: 'Common Fish',
+        emoji: '🐟',
+        baseValue: 20,
+        difficulty: 1,
+        size: { min: 5, max: 15 },
+      },
+      size: 10,
+      difficulty: 1,
+      elapsedMs: 1000,
+      timeLimit: 10000,
+      qualityWindowMs: 900,
+      lineTension: 0.1,
+    });
+
+    state.progression = { level: 3 };
+    state.fishing.stats.streak = 0;
+    system = new FishingSystem(state, actions);
+    system.activeCatch = makeCatchState();
+    system.catchSuccess();
+    const earlyValue = actions.earnMoney.mock.calls[0][0];
+
+    actions.earnMoney.mockClear();
+
+    state.progression = { level: 10 };
+    state.fishing.stats.streak = 5;
+    system = new FishingSystem(state, actions);
+    system.activeCatch = makeCatchState();
+    system.catchSuccess();
+    const lateStreakValue = actions.earnMoney.mock.calls[0][0];
+
+    expect(earlyValue).toBeLessThan(lateStreakValue);
+  });
+
   it('records escape and resets streak when fish gets away', () => {
     state.fishing.stats.streak = 4;
     system = new FishingSystem(state, actions);

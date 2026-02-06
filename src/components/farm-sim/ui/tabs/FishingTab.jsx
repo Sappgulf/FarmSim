@@ -316,7 +316,7 @@ const FishingTab = memo(() => {
             <div className="text-7xl mb-4 animate-bounce-slow">🎣</div>
             <h3 className="text-2xl font-bold mb-2 text-blue-900">Ready to Fish?</h3>
             <p className="text-sm text-gray-700 mb-6">
-              Cast your line and catch some fish! Use A/D keys to reel them in.
+              Cast your line and catch rare species! Use A/D keys or hold controls to reel with precision.
             </p>
             <Button
               onClick={handleCastLine}
@@ -568,10 +568,11 @@ const FishingTab = memo(() => {
           💡 Fishing Tips
         </h4>
         <ul className="text-sm text-gray-700 space-y-1">
-          <li>• Keep your 🎣 rod near the fish to build catch progress</li>
+          <li>• Keep your 🎣 rod near the fish to build catch progress and quality</li>
           <li>• Keep line tension low or the line can snap</li>
           <li>• Pond population regenerates over time</li>
-          <li>• Upgrade your pond for wider safe zones and better rewards</li>
+          <li>• Keep streaks alive for better coin payouts per catch</li>
+          <li>• Upgrade your pond for wider safe zones and better rare fish odds</li>
           <li>• Hold controls on mobile for smooth tracking</li>
         </ul>
       </Card>
