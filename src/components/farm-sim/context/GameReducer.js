@@ -67,6 +67,13 @@ export const initialState = {
     },
     lastUnlockedMemoryId: null,
     lastUnlockedAlmanacId: null,
+    cozyExpansion: {
+        cropTraits: { discoveredByCrop: {}, totalDiscovered: 0, lastDiscovered: null },
+        rareMoments: { unlocked: {}, dayKeys: {} },
+        decorSets: { completed: {}, progress: {} },
+        farmTitles: { unlocked: { home_grower: true }, activeId: 'home_grower' },
+        visualState: { weather: 'sunny', lastPeriodKey: null, lastWeeklySpecialDayKey: null },
+    },
     almanac: {
         unlocked: {},
         dates: {},
@@ -340,6 +347,21 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.SET_LAST_UNLOCKED_ALMANAC:
             return { ...state, lastUnlockedAlmanacId: action.payload };
+
+        case GAME_ACTIONS.UPDATE_COZY_EXPANSION:
+            return { ...state, cozyExpansion: action.payload };
+
+        case GAME_ACTIONS.SET_ACTIVE_FARM_TITLE:
+            return {
+                ...state,
+                cozyExpansion: {
+                    ...(state.cozyExpansion || {}),
+                    farmTitles: {
+                        ...(state.cozyExpansion?.farmTitles || { unlocked: { home_grower: true }, activeId: 'home_grower' }),
+                        activeId: action.payload || 'home_grower',
+                    },
+                },
+            };
 
         case GAME_ACTIONS.UPDATE_COZY_GOALS:
             return { ...state, cozyGoals: action.payload };

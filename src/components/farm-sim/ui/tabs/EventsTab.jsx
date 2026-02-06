@@ -10,6 +10,7 @@ import { ALMANAC_PAGES } from '../../../../data/almanac';
 import { buildFarmCardData } from '../../../../utils/farmCard';
 import { getPlanSuggestions } from '../../../../utils/goalHints';
 import { getDailyAlmanacInsight, getDayKey } from '../../../../systems/almanac';
+import { FARM_TITLES, WEEKLY_SPECIAL_DAY } from '../../../../data/cozyExpansion';
 import { getContentManager } from '../../../../content/ContentManager';
 import { getWeekKey } from '../../../../utils/retention';
 import PerfectHarvestModal from '../minigames/PerfectHarvestModal';
@@ -241,6 +242,9 @@ const EventsTab = memo(() => {
   const onboardingActive = !state.onboardingSkipped && (state.onboardingStep || 0) < 3;
   const isFirstDay = (state.almanac?.counters?.dayCount || 0) <= 0;
   const farmCardSpotlight = buildFarmCardData(state).spotlight;
+  const activeTitleId = state.cozyExpansion?.farmTitles?.activeId || 'home_grower';
+  const activeTitleName = FARM_TITLES[activeTitleId]?.name || FARM_TITLES.home_grower.name;
+  const weeklySpecialToday = new Date(`${dayKey}T00:00:00`).getDay() === WEEKLY_SPECIAL_DAY.dayIndex;
   const readyCropsCount = (state.plots || []).filter((plot) => plot?.state === 'ready').length;
   const lastSeenSeason = welcomeBackSnapshot.lastSeenSeason || state.season?.current || 'spring';
   const lastSeenDayCount = Math.max(1, welcomeBackSnapshot.lastSeenGameDay || 1);
@@ -620,6 +624,18 @@ const EventsTab = memo(() => {
         </Card>
       )}
 
+      {weeklySpecialToday && (
+        <Card className="p-4 bg-gradient-to-r from-rose-50 to-amber-50 border-rose-200">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-rose-800">✨ Weekly Special Day</h3>
+              <p className="text-sm text-rose-700">{WEEKLY_SPECIAL_DAY.boardCopy}</p>
+            </div>
+            <Badge variant="outline" className="bg-rose-100 text-rose-700">Town Board</Badge>
+          </div>
+        </Card>
+      )}
+
       {/* Town Board Insight */}
       <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
         <div className="flex justify-between items-center">
@@ -657,6 +673,7 @@ const EventsTab = memo(() => {
           <div className="text-xs uppercase tracking-wide text-gray-500">Spotlight</div>
           <div className="mt-1 font-semibold">{farmCardSpotlight.title}</div>
           <div className="text-sm text-gray-600">{farmCardSpotlight.text}</div>
+          <div className="mt-2 text-xs text-gray-500">Current Title: <span className="font-semibold text-gray-700">{activeTitleName}</span></div>
         </div>
       </Card>
 

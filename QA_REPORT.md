@@ -2,6 +2,22 @@
 
 **Date:** 2026-02-05
 
+## Sprint I1-I3 — Crop Traits, Time/Weather Accents, Decor Sets + Titles (2026-02-06)
+
+### Automated Checks
+- ✅ `npm run test -- --run` (passes; npm http-proxy warning)
+- ✅ `npm run build` (passes; npm http-proxy warning)
+
+### Manual Checklist
+- [x] Crop trait discovery triggers passively on harvest and stores per-crop trait records.
+- [x] Rare moments trigger from harvest/day rollover/nightfall paths with per-day idempotency guards.
+- [x] Time-of-day transitions (morning/dusk/night) apply tint/filter overlays without gameplay effects.
+- [x] Weather visuals use one active low-intensity accent at a time (existing WeatherEffects).
+- [x] Decor set completion unlocks memory + almanac + cosmetic title once.
+- [x] Farm title selection displays in Farm Card/Town Board and preserves a single active title.
+- [x] Save/reload migration defaults keep backward compatibility (`SAVE_VERSION` 12).
+- [x] Mobile 375px layout remains functional (visual review in responsive viewport).
+
 ## Sprint G3 — Monetization-Ready Cosmetics (Disabled by Default) (2026-02-06)
 
 ### Automated Checks

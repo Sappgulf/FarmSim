@@ -3,6 +3,7 @@ import { ALMANAC_PAGES } from '../data/almanac';
 import { getAlmanacText } from '../systems/almanac';
 import { getFarmTheme } from '../data/farmThemes';
 import { getCropById } from '../components/farm-sim/constants/cropData';
+import { FARM_TITLES } from '../data/cozyExpansion';
 
 export const FARM_CARD_SIZE = 1080;
 
@@ -106,11 +107,14 @@ export const buildFarmCardData = (state) => {
   const petEmoji = pet?.type ? PET_EMOJIS[pet.type] : null;
   const season = state.season?.current || 'spring';
   const dayCount = Math.max(1, state.almanac?.counters?.dayCount || 1);
+  const activeTitleId = state.cozyExpansion?.farmTitles?.activeId || 'home_grower';
+  const activeFarmTitle = FARM_TITLES[activeTitleId]?.name || FARM_TITLES.home_grower.name;
 
   return {
     farmName: state.farmName || DEFAULT_FARM_NAME,
     season,
     dayCount,
+    activeFarmTitle,
     moodTier,
     philosophy,
     pet: pet
@@ -208,6 +212,7 @@ export const renderFarmCard = async (data, { size = FARM_CARD_SIZE, returnCanvas
   ctx.font = '600 30px "Inter", "Segoe UI", sans-serif';
   ctx.fillStyle = palette.muted;
   ctx.fillText(`${data.season.charAt(0).toUpperCase() + data.season.slice(1)} • Day ${data.dayCount}`, headerX, cursorY + 80);
+  ctx.fillText(`Title: ${data.activeFarmTitle}`, headerX, cursorY + 118);
 
   const pillX = padding + cardSize - 260;
   const pillY = padding + 64;

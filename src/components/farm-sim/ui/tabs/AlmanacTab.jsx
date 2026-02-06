@@ -9,6 +9,7 @@ import { ALMANAC_PAGES, ALMANAC_SECTIONS } from '../../../../data/almanac';
 import { getAlmanacText } from '../../../../systems/almanac';
 import { FARM_THEMES, getFarmTheme } from '../../../../data/farmThemes';
 import { buildFarmCardData, getSpotlightSelection } from '../../../../utils/farmCard';
+import { CROP_TRAITS, FARM_TITLES } from '../../../../data/cozyExpansion';
 import FarmCardShareButton from '../FarmCardShareButton';
 
 const AlmanacTab = memo(() => {
@@ -69,6 +70,26 @@ const AlmanacTab = memo(() => {
           <Badge variant="outline" className="bg-emerald-100 text-emerald-700">
             {totalUnlocked}/{ALMANAC_PAGES.length} pages
           </Badge>
+        </div>
+      </Card>
+
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h4 className="font-semibold text-gray-800">Farm Title</h4>
+            <p className="text-sm text-gray-600">Cosmetic title for your Farm Card and Town Board.</p>
+          </div>
+        </div>
+        <div className="mt-3">
+          <select
+            className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+            value={state.cozyExpansion?.farmTitles?.activeId || 'home_grower'}
+            onChange={(event) => actions.setActiveFarmTitle(event.target.value)}
+          >
+            {Object.values(FARM_TITLES).filter((title) => state.cozyExpansion?.farmTitles?.unlocked?.[title.id]).map((title) => (
+              <option key={title.id} value={title.id}>{title.name}</option>
+            ))}
+          </select>
         </div>
       </Card>
 
@@ -185,6 +206,25 @@ const AlmanacTab = memo(() => {
           <div className="text-xs uppercase tracking-wide text-gray-500">Current Spotlight</div>
           <div className="mt-1 font-semibold">{farmCardSpotlight.title}</div>
           <div className="text-sm text-gray-600">{farmCardSpotlight.text}</div>
+        </div>
+      </Card>
+
+      <Card className="p-4">
+        <h4 className="font-semibold text-gray-800">Crop Trait Discoveries</h4>
+        <p className="text-sm text-gray-600">Discovered passively on harvest. Cosmetic only.</p>
+        <div className="mt-3 grid grid-cols-1 gap-2">
+          {Object.entries(state.cozyExpansion?.cropTraits?.discoveredByCrop || {}).length === 0 && (
+            <div className="text-sm text-gray-500">No traits discovered yet.</div>
+          )}
+          {Object.entries(state.cozyExpansion?.cropTraits?.discoveredByCrop || {}).map(([cropId, traitId]) => {
+            const trait = CROP_TRAITS[traitId];
+            return (
+              <div key={cropId} className="rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2 text-sm">
+                <span className="font-semibold">{cropId}</span>: {trait?.icon || '🌿'} {trait?.name || traitId}
+                <span className="ml-1 text-xs text-gray-600">{trait?.flavor}</span>
+              </div>
+            );
+          })}
         </div>
       </Card>
 

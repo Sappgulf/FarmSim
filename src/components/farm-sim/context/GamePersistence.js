@@ -5,7 +5,7 @@ import { isDevelopmentMode } from '../../../config/release';
 import { normalizeEntitlements } from '../entitlements/EntitlementManager';
 
 // Save schema version (separate from APP_VERSION in src/config/release.js).
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -239,6 +239,17 @@ export function migrateSaveData(savedData) {
             migratedData.notificationHistory = [];
         }
 
+        // Version 11 → 12: Cozy expansion cosmetics
+        if (saveVersion < 12) {
+            migratedData.cozyExpansion = {
+                cropTraits: { discoveredByCrop: {}, totalDiscovered: 0, lastDiscovered: null },
+                rareMoments: { unlocked: {}, dayKeys: {} },
+                decorSets: { completed: {}, progress: {} },
+                farmTitles: { unlocked: { home_grower: true }, activeId: 'home_grower' },
+                visualState: { weather: 'sunny', lastPeriodKey: null, lastWeeklySpecialDayKey: null },
+            };
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
         migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
@@ -285,6 +296,29 @@ export function migrateSaveData(savedData) {
         migratedData.lastUnlockedAlmanacId = typeof migratedData.lastUnlockedAlmanacId === 'string'
             ? migratedData.lastUnlockedAlmanacId
             : null;
+        migratedData.cozyExpansion = ensureObject(migratedData.cozyExpansion, {});
+        migratedData.cozyExpansion.cropTraits = ensureObject(migratedData.cozyExpansion.cropTraits, { discoveredByCrop: {}, totalDiscovered: 0, lastDiscovered: null });
+        migratedData.cozyExpansion.cropTraits.discoveredByCrop = ensureObject(migratedData.cozyExpansion.cropTraits.discoveredByCrop, {});
+        migratedData.cozyExpansion.cropTraits.totalDiscovered = clampNumber(migratedData.cozyExpansion.cropTraits.totalDiscovered, 0, { min: 0 });
+        migratedData.cozyExpansion.cropTraits.lastDiscovered = migratedData.cozyExpansion.cropTraits.lastDiscovered && typeof migratedData.cozyExpansion.cropTraits.lastDiscovered === 'object'
+            ? migratedData.cozyExpansion.cropTraits.lastDiscovered
+            : null;
+        migratedData.cozyExpansion.rareMoments = ensureObject(migratedData.cozyExpansion.rareMoments, { unlocked: {}, dayKeys: {} });
+        migratedData.cozyExpansion.rareMoments.unlocked = ensureObject(migratedData.cozyExpansion.rareMoments.unlocked, {});
+        migratedData.cozyExpansion.rareMoments.dayKeys = ensureObject(migratedData.cozyExpansion.rareMoments.dayKeys, {});
+        migratedData.cozyExpansion.decorSets = ensureObject(migratedData.cozyExpansion.decorSets, { completed: {}, progress: {} });
+        migratedData.cozyExpansion.decorSets.completed = ensureObject(migratedData.cozyExpansion.decorSets.completed, {});
+        migratedData.cozyExpansion.decorSets.progress = ensureObject(migratedData.cozyExpansion.decorSets.progress, {});
+        migratedData.cozyExpansion.farmTitles = ensureObject(migratedData.cozyExpansion.farmTitles, { unlocked: { home_grower: true }, activeId: 'home_grower' });
+        migratedData.cozyExpansion.farmTitles.unlocked = ensureObject(migratedData.cozyExpansion.farmTitles.unlocked, { home_grower: true });
+        migratedData.cozyExpansion.farmTitles.unlocked.home_grower = true;
+        migratedData.cozyExpansion.farmTitles.activeId = typeof migratedData.cozyExpansion.farmTitles.activeId === 'string'
+            ? migratedData.cozyExpansion.farmTitles.activeId
+            : 'home_grower';
+        migratedData.cozyExpansion.visualState = ensureObject(migratedData.cozyExpansion.visualState, { weather: 'sunny', lastPeriodKey: null, lastWeeklySpecialDayKey: null });
+        migratedData.cozyExpansion.visualState.weather = typeof migratedData.cozyExpansion.visualState.weather === 'string' ? migratedData.cozyExpansion.visualState.weather : 'sunny';
+        migratedData.cozyExpansion.visualState.lastPeriodKey = typeof migratedData.cozyExpansion.visualState.lastPeriodKey === 'string' ? migratedData.cozyExpansion.visualState.lastPeriodKey : null;
+        migratedData.cozyExpansion.visualState.lastWeeklySpecialDayKey = typeof migratedData.cozyExpansion.visualState.lastWeeklySpecialDayKey === 'string' ? migratedData.cozyExpansion.visualState.lastWeeklySpecialDayKey : null;
         if (!['latest', 'favorite'].includes(migratedData.spotlight.mode)) {
             migratedData.spotlight.mode = 'latest';
         }
