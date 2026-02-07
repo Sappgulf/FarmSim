@@ -34,7 +34,14 @@ import { CROP_DATA } from '../constants/cropData';
 import { MILESTONE_DEFINITIONS } from '../../../data/milestones';
 import { createMilestoneManager } from '../../../systems/milestones';
 import { CROP_TRAITS, CROP_TRAIT_IDS, DECOR_SETS, FARM_TITLES, RARE_MOMENTS, VISUAL_WEATHER_ROTATION, WEEKLY_SPECIAL_DAY } from '../../../data/cozyExpansion';
-import { applyXpTuning } from '../systems/progression';
+import {
+  applyXpTuning,
+  getDifficultyModifier,
+  getEconomyRewardModifier,
+  getEconomySinkModifier,
+  getLevelFromXp,
+  getXpProgress,
+} from '../systems/progression';
 import {
   applyCosmeticFallbacks,
   getItemEntitlementInfo,
@@ -1217,18 +1224,25 @@ export function GameProvider({ children }) {
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: plots });
     },
 
-    earnMoney: (amount) => {
+    earnMoney: (amount, source = 'generic') => {
       if (stateRef.current.ghostVisit?.active) return false;
       const safeAmount = normalizePositiveAmount(amount);
       if (safeAmount <= 0) return false;
-      dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => coins + safeAmount });
+      const level = stateRef.current.level || 1;
+      const modifier = getEconomyRewardModifier(level, source);
+      const tunedAmount = Math.max(1, Math.floor(safeAmount * modifier));
+      dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => coins + tunedAmount });
       return true;
     },
-    spendMoney: (amount) => {
+    spendMoney: (amount, { optional = false } = {}) => {
       if (stateRef.current.ghostVisit?.active) return false;
       const safeAmount = normalizePositiveAmount(amount);
       if (safeAmount <= 0) return false;
-      dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => Math.max(0, coins - safeAmount) });
+      const level = stateRef.current.level || 1;
+      const sinkModifier = optional ? getEconomySinkModifier(level) : 1;
+      const tunedCost = Math.max(1, Math.floor(safeAmount * sinkModifier));
+      if (!optional && (stateRef.current.coins || 0) < tunedCost) return false;
+      dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => Math.max(0, coins - tunedCost) });
       return true;
     },
     addXP: (amount, sourceMeta = {}) => {

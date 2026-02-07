@@ -13,6 +13,7 @@ import { getDailyAlmanacInsight, getDayKey } from '../../../../systems/almanac';
 import { FARM_TITLES, WEEKLY_SPECIAL_DAY } from '../../../../data/cozyExpansion';
 import { getContentManager } from '../../../../content/ContentManager';
 import { getWeekKey } from '../../../../utils/retention';
+import { getDifficultyModifier, getProgressionBand } from '../../systems/progression';
 import PerfectHarvestModal from '../minigames/PerfectHarvestModal';
 import FarmCardShareButton from '../FarmCardShareButton';
 
@@ -35,6 +36,7 @@ const FALLBACK_RULE_SET = {
 
 const WELCOME_BACK_GAP_HOURS = 6;
 const DAILY_DELIGHT_COINS = 5;
+const FESTIVAL_PARTICIPATION_COST_BY_BAND = { onboarding: 0, early_intent: 2, mid_depth: 3, mastery: 4, prestige: 4 };
 const WEEKLY_VISIT_TIERS = [
   { visits: 2, reward: { decorId: 'cozy_bench' }, label: 'Cozy Bench' },
   { visits: 4, reward: { decorId: 'birdbath' }, label: 'Birdbath' },
@@ -173,7 +175,7 @@ const EventsTab = memo(() => {
     if (!activeEvent) return;
 
     // Grant rewards
-    actions.earnMoney(activeEvent.rewards.coins);
+    actions.earnMoney(activeEvent.rewards.coins, 'daily_reward');
     actions.addXP(Math.floor(activeEvent.rewards.coins * 0.5), { source: 'daily_reward', label: 'Festival Reward' });
 
     // Add to event history
@@ -230,7 +232,17 @@ const EventsTab = memo(() => {
   const completedCozyGoals = new Set(state.cozyGoals?.completedGoalIds || []);
   const minigameState = state.minigames?.festivalGame || state.minigames?.perfectHarvest || {};
   const reducedMotion = state.settings?.reducedMotion === true || state.settings?.animationsEnabled === false;
-  const activeRuleSet = selectFestivalRuleSet(content.minigames, activeEvent, currentSeason);
+  const baseRuleSet = selectFestivalRuleSet(content.minigames, activeEvent, currentSeason);
+  const minigameDifficulty = getDifficultyModifier(getProgressionBand(state.level || 1).id);
+  const activeRuleSet = {
+    ...baseRuleSet,
+    targetWindows: {
+      ...baseRuleSet.targetWindows,
+      gold: Math.max(0.04, (baseRuleSet.targetWindows?.gold || 0.05) * minigameDifficulty.minigameWindow),
+      silver: Math.max(0.07, (baseRuleSet.targetWindows?.silver || 0.08) * minigameDifficulty.minigameWindow),
+      bronze: Math.max(0.09, (baseRuleSet.targetWindows?.bronze || 0.1) * minigameDifficulty.minigameWindow),
+    },
+  };
   const playLimitLabel = getPlayLimitLabel(activeRuleSet, activeEvent);
   const playLimit = activeRuleSet?.playLimit || (activeEvent ? 'festival_day' : 'daily');
   const playedFestival = activeEvent ? minigameState.lastFestivalId === activeEvent.id : false;
@@ -305,7 +317,7 @@ const EventsTab = memo(() => {
   const handleDailyDelightClaim = () => {
     if (dailyDelightClaimed) return;
     const nextCount = dailyDelightCount + 1;
-    actions.earnMoney(DAILY_DELIGHT_COINS);
+    actions.earnMoney(DAILY_DELIGHT_COINS, 'daily_reward');
     actions.updateRetention({
       lastDailyDelightClaimDate: dayKey,
       dailyDelightClaimCount: nextCount,
@@ -352,7 +364,7 @@ const EventsTab = memo(() => {
 
     const summaryParts = [];
     if (reward.coins) {
-      actions.earnMoney(reward.coins);
+      actions.earnMoney(reward.coins, 'minigame');
       summaryParts.push(`+${reward.coins}🪙`);
     }
     if (reward.reputation) {
@@ -698,6 +710,15 @@ const EventsTab = memo(() => {
           <Button
             size="sm"
             onClick={() => {
+              const levelBand = getProgressionBand(state.level || 1).id;
+              const entryCost = FESTIVAL_PARTICIPATION_COST_BY_BAND[levelBand] || 0;
+              if (entryCost > 0 && (state.coins || 0) >= entryCost) {
+                actions.spendMoney(entryCost, { optional: true });
+                actions.addNotification({
+                  message: `🏮 Festival entry: -${entryCost}🪙`,
+                  type: 'info',
+                });
+              }
               setGameSummary(null);
               setShowPerfectHarvest(true);
             }}

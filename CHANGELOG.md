@@ -303,3 +303,16 @@ Guiding rules:
 - **What:** removed pause/save/settings icon buttons from the header, wired coin/xp/level/season/weather/achievements chips to open related tabs, and preserved compact responsive sizing.
 - **Why:** reduce duplicate controls and make header elements actionable while keeping the top bar visually clean.
 - **Verification:** `npm run smoke-test` (pass with existing ReactDOMTestUtils deprecation warning + npm env warning), `npm run build` (pass with existing npm env warning and Vite chunk warnings).
+
+
+### Planned (2026-02-07) — Sprint: Progression/Economy/Difficulty/Performance Polish
+- **Scope:** frontend, balance, docs, QA
+- **What:** audit XP/economy/achievement/performance loops, centralize progression bands, tune economy+difficulty modifiers, rebalance achievement rewards away from power, and add tab-visibility performance guardrails.
+- **Why:** slow runaway progression, restore money value, align difficulty to mastery bands, and prevent hidden-tab update waste.
+- **Verification:** `npm run smoke-test`, `npm run test -- --run`, `npm run build`.
+
+### Implemented (2026-02-07) — Sprint: Progression/Economy/Difficulty/Performance Polish
+- **Scope:** frontend, balance, docs, QA
+- **What:** added centralized progression bands + difficulty/economy modifiers, applied level-band tuning to growth/minigame windows/money gains, introduced optional festival participation sink, removed power rewards from manual achievement claims, and paused system loop on hidden tabs with debug perf counters.
+- **Why:** connect pacing systems with one data spine while preserving cozy non-punitive progression.
+- **Verification:** `npm run smoke-test`, `npm run test -- --run`, `npm run build`.

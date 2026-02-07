@@ -6,6 +6,7 @@ import {
   getWateringBonus,
 } from '../../../utils/farmUpgrades';
 import { isDevelopmentMode } from '../../../config/release';
+import { getDifficultyModifier } from './progression';
 
 /**
  * Farming System - Handles crop growth, planting, harvesting
@@ -124,7 +125,9 @@ export class FarmingSystem {
       const baseGrowthTime = plot.crop.growthTime || 10;
       const plotWeatherModifier = plot.weatherModifier || weatherModifier;
       const growthBoost = plot.growthBoost || 1;
-      const effectiveGrowthTime = baseGrowthTime / (plotWeatherModifier * seasonBonus * greenhouseGrowthBonus * growthBoost);
+      const level = this.gameState.level || 1;
+      const difficulty = getDifficultyModifier(level);
+      const effectiveGrowthTime = (baseGrowthTime * difficulty.growthTime) / (plotWeatherModifier * seasonBonus * greenhouseGrowthBonus * growthBoost);
       const progress = Math.min(1.0, timeSincePlanted / effectiveGrowthTime);
 
 
@@ -344,7 +347,7 @@ export class FarmingSystem {
 
     // Update coins and XP
     // Add coins and XP for harvest
-    this.actions.earnMoney(harvestValue);
+    this.actions.earnMoney(harvestValue, 'harvest');
     // REBALANCED: Consistent 15% XP rate across all harvest methods
     this.actions.addXP(Math.floor(harvestValue * 0.15), { source: 'harvest', cropId: crop.id, label: `Harvest ${crop.name}` });
 

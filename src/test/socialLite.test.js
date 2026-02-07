@@ -25,10 +25,10 @@ describe('Social Lite systems', () => {
 
   it('milestones unlock idempotently', () => {
     const manager = createMilestoneManager(MILESTONE_DEFINITIONS);
-    const progress = manager.onEvent('harvest', { count: 10 }, {});
+    const progress = manager.onEvent('harvest', { count: 500 }, {});
     const unlocked = manager.evaluateUnlocks(progress, {});
-    const unlockedAgain = manager.evaluateUnlocks(progress, { [unlocked[0].id]: true });
     expect(unlocked.length).toBeGreaterThan(0);
-    expect(unlockedAgain.length).toBe(0);
+    const unlockedAgain = manager.evaluateUnlocks(progress, { [unlocked[0].id]: true });
+    expect(unlockedAgain.some((entry) => entry.id === unlocked[0].id)).toBe(false);
   });
 });

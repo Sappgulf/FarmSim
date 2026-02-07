@@ -169,6 +169,17 @@ function FarmSimCore() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [farmingSystem, livestockSystem, fishingSystem, soundSystem, musicSystem]);
 
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      const hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
+      actions.updateGameLoop({ paused: hidden });
+    };
+    handleVisibility();
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [actions]);
+
   // System update loop - Optimized with requestAnimationFrame for better timing
   useEffect(() => {
     if (state.gameLoop.paused) return;
@@ -207,6 +218,11 @@ function FarmSimCore() {
 
         // PERF: Record update time for overlay
         window.__lastUpdateTime = performance.now() - updateStart;
+        if (isDevelopmentMode()) {
+          window.__farmPerf = window.__farmPerf || { loops: 0, maxUpdateMs: 0 };
+          window.__farmPerf.loops += 1;
+          window.__farmPerf.maxUpdateMs = Math.max(window.__farmPerf.maxUpdateMs, window.__lastUpdateTime);
+        }
 
         lastUpdateTime = currentTime - (deltaTime % targetFrameTime); // Maintain frame timing
       }

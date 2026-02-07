@@ -164,8 +164,15 @@ const AchievementsTab = memo(() => {
     }
 
     // Grant rewards
-    actions.earnMoney(achievement.reward);
-    actions.addXP(Math.floor(achievement.reward * 0.5), { source: 'milestone', label: 'Achievement Claim' });
+    actions.recordMemoryEvent('achievement_claimed', { achievementId: achievement.id, category: achievement.category });
+    const almanacRewardByCategory = {
+      farming: 'first_steps',
+      economy: 'seedling_economy',
+      progression: 'steady_growth',
+      milestone: 'legacy_roots',
+    };
+    const rewardPage = almanacRewardByCategory[achievement.category] || 'town_board_basics';
+    actions.unlockAlmanacPage(rewardPage);
 
     // Mark as unlocked
     const updatedAchievements = [...state.achievements];
@@ -188,7 +195,7 @@ const AchievementsTab = memo(() => {
     actions.updateAchievements(updatedAchievements);
 
     actions.addNotification({
-      message: `Achievement unlocked: ${achievement.name}! +${achievement.reward}🪙`,
+      message: `Achievement unlocked: ${achievement.name}! Memory + Almanac depth added.`,
       type: 'success'
     });
   };
@@ -268,7 +275,7 @@ const AchievementsTab = memo(() => {
 
                 <div className="flex justify-between items-center">
                   <div className="text-sm text-green-600 font-medium">
-                    Reward: +{achievement.reward}🪙 +{Math.floor(achievement.reward * 0.5)} XP
+                    Reward: Memory + Almanac depth
                   </div>
 
                   {canClaim && (
@@ -337,7 +344,7 @@ const AchievementsTab = memo(() => {
                       <span className="text-lg">{achievementData.icon}</span>
                       <span className="font-medium">{achievementData.name}</span>
                     </div>
-                    <span className="text-sm text-green-600">+{achievementData.reward}🪙</span>
+                    <span className="text-sm text-green-600">Memory + Almanac</span>
                   </div>
                 );
               })}

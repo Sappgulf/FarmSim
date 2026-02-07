@@ -165,3 +165,13 @@
   - daily caps for `milestone`, `challenge`, `rare_moment`,
   - zero XP for `pet` and `planting`.
 - Save schema v15 adds migration using remap helper and normalizes expanded `progressionXpTracker` counters.
+
+
+## Hot paths + tuning map (v5.6)
+- Progression spine: `src/components/farm-sim/systems/progression.js`
+  - `PROGRESSION_BANDS`
+  - `getDifficultyModifier(levelBand)`
+  - `getEconomyRewardModifier(level, source)`
+  - `getEconomySinkModifier(level)`
+- Hidden-tab performance guard: system loop pauses via `document.visibilityState` in `core/FarmSim.jsx`.
+- Debug instrumentation: `window.__farmPerf` tracks loop count and max update ms in development mode only.

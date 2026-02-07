@@ -57,19 +57,19 @@ export class AchievementSystem {
     
     switch (achievement.id) {
       case 'first_harvest':
-        return (this.state.xp || 0) > 0;
+        return (this.state.milestones?.progress?.totalHarvests || 0) >= 3;
 
       case 'coin_collector':
-        return (this.state.coins || 0) >= 300;
+        return (this.state.milestones?.progress?.totalHarvests || 0) >= 40 && (this.state.coins || 0) >= 800;
 
       case 'level_up':
-        return (this.state.level || 1) >= 5;
+        return (this.state.level || 1) >= 8;
 
       case 'big_farmer':
-        return (this.state.plots || []).filter(p => p.state !== 'empty').length >= 5;
+        return (this.state.plots || []).filter(p => p.state !== 'empty').length >= 8;
 
       case 'master_farmer':
-        return (this.state.level || 1) >= 10;
+        return (this.state.level || 1) >= 14;
 
       default:
         return false;
@@ -96,15 +96,6 @@ export class AchievementSystem {
 
     this.actions.updateAchievements(updatedAchievements);
 
-    // Grant rewards
-    if (achievement.reward && this.state) {
-      if (achievement.reward.coins) {
-        this.actions.earnMoney(achievement.reward.coins);
-      }
-      if (achievement.reward.xp) {
-        this.actions.addXP(achievement.reward.xp, { source: 'milestone', label: `Achievement: ${achievement.name}` });
-      }
-    }
   }
 
   getAchievements() {
