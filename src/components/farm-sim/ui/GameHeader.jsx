@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect, useRef } from 'react';
+import React, { memo, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useGame } from '../context/GameContext';
 import { useTick } from '../context/TickContext';
 import { Button } from '../../ui/button';
@@ -14,6 +14,7 @@ const AnimatedNumber = memo(({ value, duration = 500 }) => {
   const [displayValue, setDisplayValue] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
   const prevValueRef = useRef(value);
+  const animationFrameRef = useRef(null);
 
   useEffect(() => {
     if (prevValueRef.current !== value) {
@@ -30,15 +31,21 @@ const AnimatedNumber = memo(({ value, duration = 500 }) => {
         setDisplayValue(currentValue);
 
         if (progress < 1) {
-          requestAnimationFrame(animate);
+          animationFrameRef.current = requestAnimationFrame(animate);
         } else {
           setIsAnimating(false);
           prevValueRef.current = value;
         }
       };
 
-      requestAnimationFrame(animate);
+      animationFrameRef.current = requestAnimationFrame(animate);
     }
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
   }, [value, duration]);
 
   return (
@@ -73,6 +80,7 @@ LastSaveTime.displayName = 'LastSaveTime';
 const GameHeader = memo(() => {
   const { state, actions } = useGame();
   const [showStatsDropdown, setShowStatsDropdown] = useState(false);
+  const statsDropdownRef = useRef(null);
   const prevLevelRef = useRef(state.level);
 
   // Use ref for actions to avoid dependency issues
@@ -127,14 +135,59 @@ const GameHeader = memo(() => {
 
   const nextGoal = getNextGoal(state);
   const weatherMeta = getWeatherMeta(state.weather);
-  const openRelatedTab = (tabId) => {
+  const openRelatedTab = useCallback((tabId) => {
     if (typeof window.switchToTab === 'function') {
       window.switchToTab(tabId);
     }
-  };
+    setShowStatsDropdown(false);
+  }, []);
+
+  const activePlotCount = useMemo(
+    () => state.plots?.filter((plot) => plot.state !== 'empty').length || 0,
+    [state.plots]
+  );
+  const unlockedAchievements = useMemo(
+    () => state.achievements?.filter((achievement) => achievement.unlocked).length || 0,
+    [state.achievements]
+  );
+  const builtBuildings = useMemo(
+    () => Object.values(state.buildings || {}).filter((building) => building?.built).length,
+    [state.buildings]
+  );
+
+  const seasonCountdown = useMemo(() => {
+    const totalMs = 120000;
+    const elapsed = Math.max(0, Date.now() - (state.season?.lastChangeTime || 0));
+    const remaining = Math.max(0, totalMs - elapsed);
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  }, [state.season?.lastChangeTime]);
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (statsDropdownRef.current && !statsDropdownRef.current.contains(event.target)) {
+        setShowStatsDropdown(false);
+      }
+    };
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setShowStatsDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown, { passive: true });
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
 
   return (
-    <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 px-3 sm:px-4 py-2 sm:py-3 relative sticky top-0 z-50">
+    <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 px-2.5 sm:px-4 py-2 sm:py-3 relative sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         {/* Left side - Game title and basic stats */}
         <div className="flex items-center justify-between lg:justify-start gap-2 sm:gap-4 lg:gap-6 w-full lg:w-auto">
@@ -204,14 +257,16 @@ const GameHeader = memo(() => {
         </div>
 
         {/* Right side - Controls and weather */}
-        <div className="w-full lg:w-auto flex flex-wrap items-center justify-end gap-2">
+        <div className="w-full lg:w-auto flex flex-wrap items-center justify-between sm:justify-end gap-2">
           {/* Stats Dropdown Button */}
-          <div className="relative">
+          <div className="relative" ref={statsDropdownRef}>
             <Button
               size="sm"
               variant="outline"
               onClick={() => setShowStatsDropdown(!showStatsDropdown)}
               className="flex items-center gap-1 min-h-[40px]"
+              aria-expanded={showStatsDropdown}
+              aria-controls="farm-stats-dropdown"
             >
               <TrendingUp className="w-3 h-3" />
               <span className="text-xs hidden sm:inline">Stats</span>
@@ -220,7 +275,7 @@ const GameHeader = memo(() => {
 
             {/* Dropdown panel */}
             {showStatsDropdown && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 animate-fade-in">
+              <div id="farm-stats-dropdown" className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 animate-fade-in" role="dialog" aria-label="Farm stats">
                 <div className="p-3">
                   <h3 className="font-semibold text-sm mb-2 text-gray-700">📊 Farm Statistics</h3>
                   <div className="space-y-2 text-xs">
@@ -250,15 +305,15 @@ const GameHeader = memo(() => {
                     )}
                     <div className="flex justify-between">
                       <span className="text-gray-600">Active Plots:</span>
-                      <span className="font-semibold">{state.plots?.filter(p => p.state !== 'empty').length || 0}</span>
+                      <span className="font-semibold">{activePlotCount}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Achievements:</span>
-                      <span className="font-semibold">{state.achievements?.filter(a => a.unlocked).length || 0}/{state.achievements?.length || 0}</span>
+                      <span className="font-semibold">{unlockedAchievements}/{state.achievements?.length || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Buildings:</span>
-                      <span className="font-semibold">{Object.keys(state.buildings || {}).filter(k => state.buildings[k]?.built).length}</span>
+                      <span className="font-semibold">{builtBuildings}</span>
                     </div>
                   </div>
                 </div>
@@ -293,7 +348,7 @@ const GameHeader = memo(() => {
                   {state.season.config.description}
                 </div>
                 <div className="text-xs text-gray-500">
-                  Next season in: {Math.floor((120000 - (Date.now() - state.season.lastChangeTime)) / 60000)}:{((120000 - (Date.now() - state.season.lastChangeTime)) % 60000 / 1000).toFixed(0).padStart(2, '0')}
+                  Next season in: {seasonCountdown}
                 </div>
               </div>
             </button>
@@ -323,7 +378,7 @@ const GameHeader = memo(() => {
           >
             <Trophy className="w-4 h-4 text-yellow-600" />
             <span className="text-sm font-medium text-gray-700">
-              {state.achievements?.filter(a => a.unlocked).length || 0}/{state.achievements?.length || 0}
+              {unlockedAchievements}/{state.achievements?.length || 0}
             </span>
           </button>
         </div>

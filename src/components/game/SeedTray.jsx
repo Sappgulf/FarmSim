@@ -50,7 +50,7 @@ function SeedTrayComponent({
 
       {/* Seed list or empty state */}
       {hasSeeds ? (
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-smart scrollbar-gutter-stable -mx-1 px-1">
           {availableSeeds.map((seed) => {
             const isSelected = selectedSeed === seed.id;
             const isPressed = pressedSeed === seed.id;
