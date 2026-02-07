@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useMemo, useCallback } from 'react';
 import {
     BarChart3,
     BookOpen,
@@ -113,8 +113,7 @@ export const TAB_INFO = {
 const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange }) => {
     const { state } = useGame();
     const [showSubTabs, setShowSubTabs] = useState(false);
-
-    const sections = Object.values(NAV_SECTIONS);
+    const sections = useMemo(() => Object.values(NAV_SECTIONS), []);
     const renderIcon = (IconComponent, fallbackEmoji, className) => {
         if (IconComponent) {
             return <IconComponent className={className} aria-hidden="true" />;
@@ -126,7 +125,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
     };
 
     // Get notification counts for badges
-    const getNotificationCount = (sectionId) => {
+    const getNotificationCount = useCallback((sectionId) => {
         switch (sectionId) {
             case 'animals':
                 // Count animals that need attention
@@ -147,14 +146,24 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
             default:
                 return null;
         }
-    };
+    }, [state.dailyChallenges, state.livestock?.animals, state.notifications]);
+
+    const handleSectionPress = useCallback((section, isActive) => {
+        onSectionChange(section.id);
+        if (section.tabs.length > 1) {
+            setShowSubTabs(isActive ? !showSubTabs : true);
+            return;
+        }
+        setShowSubTabs(false);
+        onTabChange(section.tabs[0]);
+    }, [onSectionChange, onTabChange, showSubTabs]);
 
     return (
-        <nav className="bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-2xl">
+        <nav className="bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-2xl mobile-scroll relative">
             {/* Sub-tabs panel (slides up when section selected) */}
             {showSubTabs && activeSection && NAV_SECTIONS[activeSection].tabs.length > 1 && (
                 <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 px-2 py-2.5 animate-tab-slide-in">
-                    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+                    <div className="flex gap-1.5 overflow-x-auto scrollbar-smart scrollbar-gutter-stable">
                         {NAV_SECTIONS[activeSection].tabs.map(tabId => {
                             const tabInfo = TAB_INFO[tabId];
                             const isActive = activeTab === tabId;
@@ -192,16 +201,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                     return (
                         <button
                             key={section.id}
-                            onClick={() => {
-                                onSectionChange(section.id);
-                                // Show sub-tabs if section has multiple tabs
-                                if (section.tabs.length > 1) {
-                                    setShowSubTabs(isActive ? !showSubTabs : true);
-                                } else {
-                                    setShowSubTabs(false);
-                                    onTabChange(section.tabs[0]);
-                                }
-                            }}
+                            onClick={() => handleSectionPress(section, isActive)}
                             className={`
                 relative flex flex-col items-center justify-center
                 min-w-[64px] min-h-[60px] px-2 py-1.5 rounded-2xl

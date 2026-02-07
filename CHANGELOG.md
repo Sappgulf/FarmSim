@@ -8,6 +8,22 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
+## [5.5.2] - 2026-02-07
+### Planned (2026-02-07) — Sprint G13: UI/UX Polish + Mobile + Scrollbar Behavior
+- **Scope:** frontend, performance, mobile usability
+- **What:** improve header/nav responsiveness and accessibility on small screens, reduce avoidable re-render/animation overhead in UI, and implement smart scrollbar visibility that stays hidden until interaction.
+- **Why:** deliver a cleaner and faster-feeling interface while addressing mobile ergonomics and the requested scrollbar behavior.
+- **Verification:** Baseline run completed with `npm run test -- --run` (53/53 tests passing).
+
+### Implemented (2026-02-07) — Sprint G13: UI/UX Polish + Mobile + Scrollbar Behavior
+- **Scope:** frontend, performance, mobile usability
+- **What:** polished the game header UX with better mobile spacing/alignment, improved stats dropdown behavior (outside click + Escape close), and added stronger accessibility metadata (`aria-expanded`, labeled dropdown dialog).
+- **What:** added targeted memoization/callback stabilization in header/nav to reduce unnecessary recomputation and improve UI responsiveness during frequent game-state updates.
+- **What:** implemented smart scrollbar behavior via new `scrollbar-smart` and `scrollbar-gutter-stable` utilities so scrollbars stay hidden by default and appear during interaction (hover/focus/active).
+- **What:** applied smart scrollbar behavior to key horizontal/vertical scroll surfaces (main nav subtabs, sidebar quick tabs, seed tray) for cleaner visual polish on desktop and mobile.
+- **Why:** satisfy requested UI polish, mobile quality improvements, and conditional scrollbar visibility while keeping rendering fast and stable.
+- **Verification:** `npm run test -- --run` (pass), `npm run build` (pass).
+
 ## [5.5.1] - 2026-02-07
 ### Planned (2026-02-07) — Sprint G12: Fishing Gear + Async Stability Hardening
 - **Scope:** gameplay systems, shop content, reducer stability, tests

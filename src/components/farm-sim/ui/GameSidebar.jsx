@@ -133,7 +133,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         {/* Tab Navigation - Premium styled scrollable grid */}
         <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 p-2.5">
-          <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-hide">
+          <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-smart scrollbar-gutter-stable">
             {TAB_CONFIGS.map(tab => (
               <button
                 key={tab.id}
