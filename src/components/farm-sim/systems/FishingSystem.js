@@ -151,6 +151,12 @@ export class FishingSystem {
     };
   }
 
+
+  getRareCatchBonus() {
+    const inventory = this.gameState?.inventory || {};
+    return inventory.lucky_lure > 0 ? 1.35 : 1;
+  }
+
   /**
    * Updates fishing system state (called by game loop)
    * Regenerates fish population and updates pond state
@@ -250,9 +256,11 @@ export class FishingSystem {
   determineFish() {
     const upgrade = this.getCurrentUpgrade();
     const rarityBonus = upgrade.rarityBonus || 1.0;
+    const lureBonus = this.getRareCatchBonus();
 
     const fishArray = Object.values(FISH_TYPES).map((fish) => {
-      const adjustedWeight = fish.rarity * (fish.rarity < 0.1 ? rarityBonus : 1.0);
+      const isRareTier = fish.rarity <= 0.1;
+      const adjustedWeight = fish.rarity * (isRareTier ? (rarityBonus * lureBonus) : 1.0);
       return { fish, weight: adjustedWeight };
     });
 

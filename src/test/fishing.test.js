@@ -103,6 +103,20 @@ describe('FishingSystem', () => {
     expect(earlyValue).toBeLessThan(lateStreakValue);
   });
 
+
+  it('applies lucky lure bonus to rare catch weighting', () => {
+    state.inventory = { lucky_lure: 1 };
+    system = new FishingSystem(state, actions);
+
+    expect(system.getRareCatchBonus()).toBeCloseTo(1.35, 5);
+
+    const rollSpy = vi.spyOn(Math, 'random').mockReturnValue(0.9999);
+    const fish = system.determineFish();
+    rollSpy.mockRestore();
+
+    expect(['rare', 'koi', 'epic', 'legendary', 'mythic']).toContain(fish.id);
+  });
+
   it('records escape and resets streak when fish gets away', () => {
     state.fishing.stats.streak = 4;
     system = new FishingSystem(state, actions);
