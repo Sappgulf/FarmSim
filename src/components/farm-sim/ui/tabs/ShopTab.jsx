@@ -56,6 +56,7 @@ const ShopTab = memo(() => {
       { id: 'rain_collector', name: 'Rain Collector', emoji: '🛢️', cost: 170, description: 'Boosts sprinkler pressure and cadence', effect: 'Sprinklers: +4 water, faster cycle', unique: true },
       { id: 'precision_hoe', name: 'Precision Hoe', emoji: '⛏️', cost: 140, description: 'Cleaner rows reduce seed waste', effect: '-10% seed costs', unique: true },
       { id: 'drone_harvester', name: 'Drone Harvester', emoji: '🛸', cost: 420, description: 'Automates small batches of harvesting', effect: 'Auto-harvest up to 2 ready plots', unique: true },
+      { id: 'lucky_lure', name: 'Lucky Lure Kit', emoji: '🪝', cost: 220, description: 'Premium lure kit that attracts rare fish', effect: '+35% rare fish odds', unique: true },
     ],
     upgrades: [
       { id: 'soil_analyzer', name: 'Soil Analyzer', emoji: '🔬', cost: 150, description: 'Reveals soil and yield details', effect: 'Est. harvest value', unique: true },

@@ -8,6 +8,23 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
+## [5.5.1] - 2026-02-07
+### Planned (2026-02-07) — Sprint G12: Fishing Gear + Async Stability Hardening
+- **Scope:** gameplay systems, shop content, reducer stability, tests
+- **What:** add new purchasable fishing gear that improves rare-catch odds, wire the bonus through fishing rarity math, and harden level-up particle scheduling to avoid post-test environment crashes.
+- **Why:** increase item/gameplay depth while fixing a real async teardown stability issue found in baseline verification.
+- **Verification:** Baseline run completed with `npm run test -- --run` (tests pass but run fails from unhandled `window is not defined` after teardown in `GameReducer` timeout).
+
+
+### Implemented (2026-02-07) — Sprint G12: Fishing Gear + Async Stability Hardening
+- **Scope:** gameplay systems, shop content, reducer stability, tests
+- **What:** added a new unique Shop tool, **Lucky Lure Kit** (`lucky_lure`), that grants a persistent +35% bonus to rare-tier fish weighting (Rare/Koi/Epic/Legendary/Mythic) when owned.
+- **What:** wired FishingSystem rarity rolls to apply both pond upgrade rarity bonus and inventory-based lure bonus through a single path.
+- **What:** hardened `SET_XP` level-up particle timeout logic to use runtime `globalThis.window` guards so delayed callbacks safely no-op after test/env teardown.
+- **What:** added fishing regression coverage for the lure bonus path.
+- **Why:** expand item-driven gameplay depth while removing a real async stability fault in automated runs.
+- **Verification:** `npm run test -- --run` (pass), `npm run build` (pass).
+
 ## [5.5.0] - 2026-02-07
 ### Planned (2026-02-07) — Sprint G11: Content Expansion + Performance Polish
 - **Scope:** decor content, building depth, expand depth, shop UX, performance

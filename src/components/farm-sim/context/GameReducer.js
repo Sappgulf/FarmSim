@@ -257,14 +257,16 @@ export function gameReducer(state, action) {
 
             if (didLevelUp && typeof window !== 'undefined') {
                 setTimeout(() => {
-                    if (typeof window.triggerParticleEffect === 'function') {
-                        const centerX = window.innerWidth / 2;
-                        const centerY = window.innerHeight / 3;
-                        window.triggerParticleEffect(centerX, centerY, 'levelup', {
-                            text: `🎉 Level ${newLevel}!`,
-                            shake: true
-                        });
+                    const runtimeWindow = typeof globalThis !== 'undefined' ? globalThis.window : undefined;
+                    if (!runtimeWindow || typeof runtimeWindow.triggerParticleEffect !== 'function') {
+                        return;
                     }
+                    const centerX = runtimeWindow.innerWidth / 2;
+                    const centerY = runtimeWindow.innerHeight / 3;
+                    runtimeWindow.triggerParticleEffect(centerX, centerY, 'levelup', {
+                        text: `🎉 Level ${newLevel}!`,
+                        shake: true
+                    });
                 }, 100);
             }
 
