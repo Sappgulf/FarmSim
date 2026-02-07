@@ -8,6 +8,7 @@ import { Coins, Star, Trophy, ChevronDown, TrendingUp, Calendar } from 'lucide-r
 import { getNextGoal } from '../../../utils/goalHints';
 import { getXpProgress } from '../systems/progression';
 import { getWeatherMeta } from '../constants/weatherData';
+import { getFarmTheme } from '../../../data/farmThemes';
 
 // Animated number counter component
 const AnimatedNumber = memo(({ value, duration = 500 }) => {
@@ -135,6 +136,8 @@ const GameHeader = memo(() => {
 
   const nextGoal = getNextGoal(state);
   const weatherMeta = getWeatherMeta(state.weather);
+  const activeTheme = getFarmTheme(state.farmTheme);
+  const farmName = (state.farmName || 'Willowbrook Farm').trim() || 'Willowbrook Farm';
   const openRelatedTab = useCallback((tabId) => {
     if (typeof window.switchToTab === 'function') {
       window.switchToTab(tabId);
@@ -194,7 +197,7 @@ const GameHeader = memo(() => {
           <button
             type="button"
             onClick={() => openRelatedTab('farming')}
-            className="flex items-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/70 focus-visible:ring-offset-2"
+            className="flex items-center gap-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/70 focus-visible:ring-offset-2"
             title="Go to Farm"
             aria-label="Go to Farm"
           >
@@ -204,6 +207,17 @@ const GameHeader = memo(() => {
               className="h-10 w-auto sm:h-12 md:h-14 object-contain drop-shadow-sm"
               loading="eager"
             />
+            <div className="hidden sm:flex flex-col items-start leading-tight">
+              <span className="max-w-[180px] truncate text-sm font-semibold text-gray-900 md:text-base">
+                {farmName}
+              </span>
+              <span
+                className="text-xs font-medium"
+                style={{ color: activeTheme.palette.accent }}
+              >
+                {activeTheme.name}
+              </span>
+            </div>
           </button>
 
           {/* Core stats with animations */}
