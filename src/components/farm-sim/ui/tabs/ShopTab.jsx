@@ -53,11 +53,17 @@ const ShopTab = memo(() => {
       { id: 'watering_can', name: 'Watering Can', emoji: '🚿', cost: 40, description: 'Improves watering actions', effect: '+10 water per use', unique: true },
       { id: 'quality_seeds', name: 'Quality Seeds', emoji: '🌰', cost: 25, description: 'Premium seeds for higher yields', effect: '+20% harvest value', unique: true },
       { id: 'sprinkler', name: 'Sprinkler', emoji: '💦', cost: 100, description: 'Automated irrigation system', effect: '+6 water every 12s', unique: true },
+      { id: 'rain_collector', name: 'Rain Collector', emoji: '🛢️', cost: 170, description: 'Boosts sprinkler pressure and cadence', effect: 'Sprinklers: +4 water, faster cycle', unique: true },
+      { id: 'precision_hoe', name: 'Precision Hoe', emoji: '⛏️', cost: 140, description: 'Cleaner rows reduce seed waste', effect: '-10% seed costs', unique: true },
+      { id: 'drone_harvester', name: 'Drone Harvester', emoji: '🛸', cost: 420, description: 'Automates small batches of harvesting', effect: 'Auto-harvest up to 2 ready plots', unique: true },
     ],
     upgrades: [
       { id: 'soil_analyzer', name: 'Soil Analyzer', emoji: '🔬', cost: 150, description: 'Reveals soil and yield details', effect: 'Est. harvest value', unique: true },
       { id: 'greenhouse', name: 'Mini Greenhouse', emoji: '🏡', cost: 300, description: 'Softens harsh weather impacts', effect: '-25% weather penalties', unique: true },
       { id: 'compost_bin', name: 'Compost Bin', emoji: '🗑️', cost: 75, description: 'Restore soil fertility faster', effect: '+50% fertility regen', unique: true },
+      { id: 'hydroponics_rack', name: 'Hydroponics Rack', emoji: '🧫', cost: 260, description: 'Circulating roots boost indoor growth', effect: '+8% crop growth speed', unique: true },
+      { id: 'soil_nanites', name: 'Soil Nanites', emoji: '⚙️', cost: 360, description: 'Microscopic bots preserve topsoil', effect: 'Higher post-harvest fertility floor', unique: true },
+      { id: 'market_terminal', name: 'Market Terminal', emoji: '📈', cost: 390, description: 'AI market edge for better sell prices', effect: '+10% harvest value', unique: true },
     ],
   }), []);
 
