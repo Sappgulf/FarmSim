@@ -119,17 +119,21 @@ const AlmanacTab = memo(() => {
         </div>
       </Card>
 
-      <Card className="p-4">
+      <Card className="p-4 theme-card-surface border theme-accent-border">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h4 className="font-semibold text-gray-800">Farm Identity</h4>
+            <h4 className="font-semibold">Farm Identity</h4>
             <p className="text-sm text-gray-600">Set a name and theme for your Farm Card.</p>
           </div>
-          <Badge variant="outline" className="bg-emerald-50 text-emerald-700">
+          <Badge variant="outline" className="theme-accent-bg theme-accent-border border theme-accent-text">
             {activeTheme.name}
           </Badge>
         </div>
         <div className="mt-3 space-y-3">
+          <div className="rounded-lg border theme-accent-border theme-accent-bg px-3 py-2">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Live Farm Card Identity</div>
+            <div className="text-sm font-semibold">{(state.farmName || 'Willowbrook Farm').trim() || 'Willowbrook Farm'}</div>
+          </div>
           <div>
             <label className="text-xs font-semibold text-gray-500">Farm Name</label>
             <Input

@@ -9,6 +9,19 @@ Guiding rules:
 - Every entry should be auditable (what changed, where, why).
 
 ## [5.5.2] - 2026-02-07
+### Planned (2026-02-07) — Sprint G14: Farm Identity Customization Binding
+- **Scope:** frontend, UX polish
+- **What:** ensure Farm Identity controls (farm name + farm theme) have immediate visible impact in the interface, not only during export/share flows.
+- **Why:** players need direct feedback that customization choices are active and meaningful while they play.
+- **Verification:** Baseline run completed with `npm run test -- --run` (53/53 tests passing).
+
+### Implemented (2026-02-07) — Sprint G14: Farm Identity Customization Binding
+- **Scope:** frontend, UX polish
+- **What:** surfaced the active farm name and selected farm theme directly in the main header next to the logo, so identity edits are immediately visible during normal gameplay.
+- **What:** updated the Almanac "Farm Identity" card to use active theme surface/accent styling and added a live identity preview row tied to the current farm name value.
+- **Why:** make personalization settings feel real-time and player-facing instead of only affecting exported Farm Cards.
+- **Verification:** `npm run test -- --run` (pass), `npm run build` (pass).
+
 ### Planned (2026-02-07) — Sprint G13: UI/UX Polish + Mobile + Scrollbar Behavior
 - **Scope:** frontend, performance, mobile usability
 - **What:** improve header/nav responsiveness and accessibility on small screens, reduce avoidable re-render/animation overhead in UI, and implement smart scrollbar visibility that stays hidden until interaction.
