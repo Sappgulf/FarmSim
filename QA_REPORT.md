@@ -40,3 +40,17 @@
 - Verify challenge/milestone chain-claiming is bounded by daily caps.
 - Verify old save migration (v14→v15) does not reduce level and keeps XP bar progress coherent.
 - Verify unlock cadence: buildings/genetics appear later and in mastery bands.
+
+
+## Balance + Performance QA (v5.6)
+### Automated
+- `npm run smoke-test`
+- `npm run test -- --run`
+- `npm run build`
+
+### Manual / simulation checklist
+- 30–45 min optimal play simulation: verify level pacing follows onboarding → early intent → mid depth targets.
+- Economy inflation check: verify coin growth slows by band and optional sinks remain affordable.
+- Difficulty sanity: verify growth/minigame challenge tightens gently with no failure penalties.
+- Stress: rapid tab switching, notification spam, plot fill/harvest cycles, festival minigame open/close.
+- Save/load heavy state: no level/currency loss, no console errors.

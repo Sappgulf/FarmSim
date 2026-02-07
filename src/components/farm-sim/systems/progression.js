@@ -1,5 +1,13 @@
 const MAX_LEVEL = 200;
 
+export const PROGRESSION_BANDS = [
+  { id: 'onboarding', minLevel: 1, maxLevel: 3, label: 'Levels 1–3: onboarding' },
+  { id: 'early_intent', minLevel: 4, maxLevel: 7, label: 'Levels 4–7: early intent' },
+  { id: 'mid_depth', minLevel: 8, maxLevel: 12, label: 'Levels 8–12: mid-game depth' },
+  { id: 'mastery', minLevel: 13, maxLevel: 20, label: 'Levels 13–20: mastery' },
+  { id: 'prestige', minLevel: 21, maxLevel: MAX_LEVEL, label: '20+: prestige (cosmetic only)' },
+];
+
 const clampInt = (value, fallback = 0, min = 0) => {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return fallback;
@@ -53,6 +61,48 @@ export const getXpProgress = (xp, level) => {
     needed,
     progress: Math.min(100, Math.max(0, (inLevel / needed) * 100)),
   };
+};
+
+export const getProgressionBand = (level) => {
+  const safeLevel = Math.max(1, clampInt(level, 1, 1));
+  return PROGRESSION_BANDS.find((band) => safeLevel >= band.minLevel && safeLevel <= band.maxLevel)
+    || PROGRESSION_BANDS[PROGRESSION_BANDS.length - 1];
+};
+
+const DIFFICULTY_MODIFIERS = {
+  onboarding: { growthTime: 1, resourceCost: 1, rarityPatience: 1, minigameWindow: 1 },
+  early_intent: { growthTime: 1.04, resourceCost: 1.04, rarityPatience: 0.98, minigameWindow: 0.98 },
+  mid_depth: { growthTime: 1.08, resourceCost: 1.08, rarityPatience: 0.96, minigameWindow: 0.95 },
+  mastery: { growthTime: 1.12, resourceCost: 1.1, rarityPatience: 0.94, minigameWindow: 0.93 },
+  prestige: { growthTime: 1.14, resourceCost: 1.1, rarityPatience: 0.94, minigameWindow: 0.92 },
+};
+
+export const getDifficultyModifier = (levelOrBand) => {
+  const bandId = typeof levelOrBand === 'string'
+    ? levelOrBand
+    : getProgressionBand(levelOrBand).id;
+  return DIFFICULTY_MODIFIERS[bandId] || DIFFICULTY_MODIFIERS.onboarding;
+};
+
+export const getEconomyRewardModifier = (level, source = 'generic') => {
+  const bandId = getProgressionBand(level).id;
+  const byBand = {
+    onboarding: { generic: 1, harvest: 1, minigame: 1, passive: 0.95 },
+    early_intent: { generic: 0.96, harvest: 0.96, minigame: 0.95, passive: 0.88 },
+    mid_depth: { generic: 0.92, harvest: 0.93, minigame: 0.92, passive: 0.8 },
+    mastery: { generic: 0.88, harvest: 0.9, minigame: 0.88, passive: 0.72 },
+    prestige: { generic: 0.88, harvest: 0.9, minigame: 0.88, passive: 0.72 },
+  };
+  const row = byBand[bandId] || byBand.onboarding;
+  return row[source] ?? row.generic;
+};
+
+export const getEconomySinkModifier = (level) => {
+  const bandId = getProgressionBand(level).id;
+  if (bandId === 'onboarding') return 0.9;
+  if (bandId === 'early_intent') return 1;
+  if (bandId === 'mid_depth') return 1.08;
+  return 1.12;
 };
 
 export const applyXpTuning = (requestedXp, sourceMeta = {}, tracker = {}, dayKey = 'unknown-day') => {

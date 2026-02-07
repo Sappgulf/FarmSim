@@ -37,3 +37,9 @@
   - never reducing stored level,
   - preserving within-level progress proportion,
   - clamping XP to non-negative integers.
+
+
+## Unified progression bands (v5.6)
+- Canonical bands now live in `progression.js` (`PROGRESSION_BANDS`) and are used by XP/economy/difficulty tuning.
+- Difficulty is soft-only via `getDifficultyModifier(levelBand)` with gentle growth-time, cost, rarity patience, and minigame window modifiers.
+- Economy now references band-aware modifiers for sources (`getEconomyRewardModifier`) and optional sinks (`getEconomySinkModifier`).
