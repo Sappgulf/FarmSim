@@ -1,25 +1,27 @@
 Meta:
 - Date: 2026-02-07
-- Change summary: Deepened processing system with 3-tier facility upgrades and chain recipes (Bakery, Jam Kitchen); built pet bonus aggregation with visible Active Bonuses UI; overhauled Social tab from mock data to real reputation tiers, daily NPC visitors with trade offers, and state-driven community challenges.
-- TaskType: Gameplay deepening + systems integration + polish
-- Risk: Medium (three mid-tier systems updated, no core state shape changes)
+- Change summary: Expanded decor catalog from 8 to 32 items across 7 categories; added 5 new DECOR_SETS with farm titles (total 8 sets, 13 titles); deepened BuildingsTab with 3-tier upgrades and 4 synergy combos; deepened ExpandTab with plot usage stats, specialization zones, and milestones; overhauled ShopTab with category filter browser and performance memoization.
+- TaskType: Content expansion + systems deepening + performance polish
+- Risk: Low-Medium (content additions, no core state shape changes, no save migration needed)
 
 Intake:
-- SuccessCriteria: Deepen processing/pets/social tabs, integrate pet bonuses visibly, replace mock social data with real mechanics, run debug/validation, ship with tests/build green.
-- RequiredContext used: `AGENT.md`, GOD_REPORT.md, `CHANGELOG.md`, `FEATURE_INVENTORY.md`, `GameReducer.js`, `GameContext.jsx`.
+- SuccessCriteria: Triple decor catalog, fix flower_box data integrity, deepen buildings/expand, improve shop browsing, pass tests/build.
+- RequiredContext used: `AGENT.md`, GOD_REPORT.md, `CHANGELOG.md`, `FEATURE_INVENTORY.md`, `decor.json`, `cozyExpansion.js`, `decorData.js`, `ContentManager.js`.
 
 Checks:
-- K1: PASS — `npm run test -- --run` passes (14 files / 36 tests).
-- K2: PASS — Processing tab now has 6 facilities (4 original + Bakery + Jam Kitchen), 3-tier upgrade system, chain recipe support, and Sell All button.
-- K3: PASS — Pet bonuses computed via `getPetBonuses()` aggregator, displayed in Active Pet Bonuses card, scaled by level and happiness.
-- K4: PASS — Social tab now drives from `state.social.reputation`, with 5 reputation tiers, daily NPC visitors, crop-for-coin trades, and state-driven community challenges.
-- K5: PASS — All economy actions use `earnMoney`/`spendMoney`/`addXP` — no raw coin writes.
-- K6: PASS — `npm run build` succeeds.
-- K7: PASS — `CHANGELOG.md` updated with Sprint G10 planned + implemented entries.
+- K1: PASS — `npm run test -- --run` passes (17 files / 47 tests).
+- K2: PASS — decor.json expanded to 32 items; flower_box added (fixes hearth_garden set).
+- K3: PASS — 8 DECOR_SETS total (3 original + 5 new), 13 FARM_TITLES.
+- K4: PASS — BuildingsTab: 6 buildings with 3-tier upgrades, 4 synergy combos with progress tracking.
+- K5: PASS — ExpandTab: plot usage stats, 4 specialization zones, 4 expansion milestones.
+- K6: PASS — ShopTab: full catalog browser with 7 category filter chips, scrollable, memoized.
+- K7: PASS — All economy actions use `earnMoney`/`spendMoney`/`addXP` — no raw coin writes.
+- K8: PASS — `npm run build` succeeds.
+- K9: PASS — `CHANGELOG.md` updated with Sprint G11 planned + implemented entries.
 
 Scores:
 - Correctness: 5
 - Maintainability: 5
-- Performance: 4
+- Performance: 5
 - Security/Safety: 4
 - UX: 5

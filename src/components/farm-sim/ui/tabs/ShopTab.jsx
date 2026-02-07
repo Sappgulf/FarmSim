@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useRef, useState, useEffect } from 'react';
+import React, { memo, useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
@@ -10,9 +10,20 @@ import {
   isPremiumModeEnabled,
 } from '../../entitlements/EntitlementManager';
 
+const DECOR_CATEGORIES = [
+  { id: 'all', label: 'All' },
+  { id: 'seasonal', label: 'Seasonal' },
+  { id: 'garden', label: 'Garden' },
+  { id: 'cozy', label: 'Cozy' },
+  { id: 'lighting', label: 'Lights' },
+  { id: 'path', label: 'Paths' },
+  { id: 'fence', label: 'Fences' },
+];
+
 const ShopTab = memo(() => {
   const { state, actions } = useGame();
   const [highlightedItemId, setHighlightedItemId] = useState(null);
+  const [decorCategory, setDecorCategory] = useState('all');
   const highlightTimerRef = useRef(null);
   const decorationList = useMemo(() => Object.values(DECORATION_DATA), []);
   const premiumModeEnabled = isPremiumModeEnabled(state);
@@ -25,19 +36,14 @@ const ShopTab = memo(() => {
     };
   }, []);
 
-  const decorRotation = useMemo(() => {
-    if (decorationList.length === 0) return [];
-    const rotationKey = new Date().toDateString();
-    const seed = rotationKey.split('').reduce((total, char) => total + char.charCodeAt(0), 0);
-    const startIndex = seed % decorationList.length;
-    const rotated = [
-      ...decorationList.slice(startIndex),
-      ...decorationList.slice(0, startIndex),
-    ];
-    return rotated.slice(0, 4);
-  }, [decorationList]);
+  const filteredDecor = useMemo(() => {
+    if (decorCategory === 'all') return decorationList;
+    return decorationList.filter((item) =>
+      item.category === decorCategory || item.tags?.includes(decorCategory)
+    );
+  }, [decorationList, decorCategory]);
 
-  const shopItems = {
+  const shopItems = useMemo(() => ({
     supplies: [
       { id: 'fertilizer', name: 'Fertilizer', emoji: '🌱', cost: 8, description: 'Boosts crop growth by 25%', effect: '+25% growth speed' },
       { id: 'pesticide', name: 'Pesticide', emoji: '🐛', cost: 6, description: 'Eliminates crop diseases', effect: 'Cure diseases' },
@@ -53,12 +59,11 @@ const ShopTab = memo(() => {
       { id: 'greenhouse', name: 'Mini Greenhouse', emoji: '🏡', cost: 300, description: 'Softens harsh weather impacts', effect: '-25% weather penalties', unique: true },
       { id: 'compost_bin', name: 'Compost Bin', emoji: '🗑️', cost: 75, description: 'Restore soil fertility faster', effect: '+50% fertility regen', unique: true },
     ],
-    decor: decorRotation,
-  };
+  }), []);
 
-  const getOwnedCount = (itemId) => state.inventory[itemId] || 0;
+  const getOwnedCount = useCallback((itemId) => state.inventory[itemId] || 0, [state.inventory]);
 
-  const triggerHighlight = (itemId) => {
+  const triggerHighlight = useCallback((itemId) => {
     if (highlightTimerRef.current) {
       clearTimeout(highlightTimerRef.current);
     }
@@ -66,9 +71,9 @@ const ShopTab = memo(() => {
     highlightTimerRef.current = setTimeout(() => {
       setHighlightedItemId(null);
     }, 900);
-  };
+  }, []);
 
-  const handlePurchase = (item) => {
+  const handlePurchase = useCallback((item) => {
     if (DECORATION_DATA[item.id]) {
       const entitlementInfo = getItemEntitlementInfo(item.id, 'decor');
       if (premiumModeEnabled && entitlementInfo?.access === 'premium' && !isItemUnlocked(state, item.id, 'decor')) {
@@ -80,24 +85,18 @@ const ShopTab = memo(() => {
         return;
       }
     }
-    const ownedCount = getOwnedCount(item.id);
+    const ownedCount = state.inventory[item.id] || 0;
     if (item.unique && ownedCount > 0) {
-      actions.addNotification({
-        message: `${item.name} already owned.`,
-        type: 'info'
-      });
+      actions.addNotification({ message: `${item.name} already owned.`, type: 'info' });
       return;
     }
     if (state.coins >= item.cost) {
       actions.spendMoney(item.cost);
       actions.updateInventory({
         ...state.inventory,
-        [item.id]: (state.inventory[item.id] || 0) + 1
+        [item.id]: (state.inventory[item.id] || 0) + 1,
       });
-      actions.addNotification({
-        message: `Purchased ${item.emoji} ${item.name}!`,
-        type: 'success'
-      });
+      actions.addNotification({ message: `Purchased ${item.emoji} ${item.name}!`, type: 'success' });
       triggerHighlight(item.id);
 
       if (DECORATION_DATA[item.id]) {
@@ -105,12 +104,42 @@ const ShopTab = memo(() => {
         actions.recordCozyGoalEvent('shop_decor_purchase', { itemId: item.id });
       }
     } else {
-      actions.addNotification({
-        message: `Not enough coins! Need ${item.cost}🪙`,
-        type: 'error'
-      });
+      actions.addNotification({ message: `Not enough coins! Need ${item.cost}`, type: 'error' });
     }
-  };
+  }, [state, actions, premiumModeEnabled, triggerHighlight]);
+
+  const renderShopItem = useCallback((item, bgClass) => {
+    const ownedCount = state.inventory[item.id] || 0;
+    const isOwned = item.unique && ownedCount > 0;
+    const isHighlighted = highlightedItemId === item.id;
+    return (
+      <div key={item.id} className={`flex justify-between items-center p-3 ${bgClass} rounded-lg transition-all ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}>
+        <div className="flex items-center gap-3 flex-1">
+          <span className="text-2xl">{item.emoji}</span>
+          <div className="flex-1">
+            <div className="font-medium">{item.name}</div>
+            <div className="text-xs text-gray-600">{item.description}</div>
+            {item.effect && <div className="text-xs text-green-600 font-medium mt-0.5">{item.effect}</div>}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {ownedCount > 0 && (
+            <Badge variant="outline" className="text-[10px]">
+              {item.unique ? 'Owned' : `x${ownedCount}`}
+            </Badge>
+          )}
+          <Button
+            onClick={() => handlePurchase(item)}
+            size="sm"
+            disabled={state.coins < item.cost || isOwned}
+            className="ml-2 min-w-[72px]"
+          >
+            {isOwned ? 'Owned' : `${item.cost}`}
+          </Button>
+        </div>
+      </div>
+    );
+  }, [state.inventory, state.coins, highlightedItemId, handlePurchase]);
 
   return (
     <div className="space-y-4">
@@ -118,11 +147,11 @@ const ShopTab = memo(() => {
       <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold text-orange-800">🛒 Farm Shop</h3>
+            <h3 className="text-lg font-semibold text-orange-800">Farm Shop</h3>
             <p className="text-sm text-orange-600">Your one-stop shop for farming needs</p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-green-600">{state.coins}🪙</div>
+            <div className="text-2xl font-bold text-green-600">{state.coins}</div>
             <div className="text-xs text-gray-600">Available</div>
           </div>
         </div>
@@ -130,49 +159,38 @@ const ShopTab = memo(() => {
 
       {/* Supplies */}
       <Card className="p-4">
-        <h4 className="font-semibold mb-3 text-green-700">🌱 Farming Supplies</h4>
+        <h4 className="font-semibold mb-3 text-green-700">Farming Supplies</h4>
         <div className="space-y-2">
-          {shopItems.supplies.map(item => {
-            const ownedCount = getOwnedCount(item.id);
-            const isHighlighted = highlightedItemId === item.id;
-            return (
-            <div key={item.id} className={`flex justify-between items-center p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-all ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}>
-              <div className="flex items-center gap-3 flex-1">
-                <span className="text-2xl">{item.emoji}</span>
-                <div className="flex-1">
-                  <div className="font-medium">{item.name}</div>
-                  <div className="text-xs text-gray-600">{item.description}</div>
-                  <div className="text-xs text-green-600 font-medium mt-0.5">{item.effect}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {ownedCount > 0 && (
-                  <Badge variant="outline" className="text-[10px]">
-                    Owned: {ownedCount}
-                  </Badge>
-                )}
-                <Button
-                  onClick={() => handlePurchase(item)}
-                  size="sm"
-                  disabled={state.coins < item.cost}
-                  className="ml-2 min-w-[72px]"
-                >
-                  {item.cost}🪙
-                </Button>
-              </div>
-            </div>
-          )})}
+          {shopItems.supplies.map((item) => renderShopItem(item, 'bg-green-50 hover:bg-green-100'))}
         </div>
       </Card>
 
-      {/* Decor Rotation */}
+      {/* Decor Catalog */}
       <Card className="p-4 bg-rose-50 border-rose-100">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="font-semibold text-rose-700">🪴 Daily Decor Picks</h4>
-          <span className="text-xs text-rose-600">Refreshes daily</span>
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="font-semibold text-rose-700">Decor Catalog</h4>
+          <span className="text-xs text-rose-600">{filteredDecor.length} items</span>
         </div>
-        <div className="space-y-2">
-          {shopItems.decor.map(item => {
+
+        {/* Category Filter */}
+        <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1 -mx-1 px-1">
+          {DECOR_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setDecorCategory(cat.id)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                decorCategory === cat.id
+                  ? 'bg-rose-600 text-white'
+                  : 'bg-white text-rose-600 hover:bg-rose-100'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+          {filteredDecor.map((item) => {
             const ownedCount = state.inventory[item.id] || 0;
             const isHighlighted = highlightedItemId === item.id;
             const entitlementInfo = getItemEntitlementInfo(item.id, 'decor');
@@ -185,26 +203,20 @@ const ShopTab = memo(() => {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{item.name}</span>
                       {isPremium && (
-                        <Badge
-                          variant="warning"
-                          className="text-[10px]"
-                          data-qa={`premium-badge-${item.id}`}
-                        >
+                        <Badge variant="warning" className="text-[10px]" data-qa={`premium-badge-${item.id}`}>
                           {entitlementInfo?.badgeLabel || 'Premium'}
                         </Badge>
                       )}
                     </div>
                     <div className="text-xs text-gray-600">{item.description}</div>
                     <div className="text-xs text-rose-600 font-medium mt-0.5 capitalize">
-                      {item.category} • {item.rarity}
+                      {item.category} &middot; {item.rarity}
                     </div>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   {ownedCount > 0 && (
-                    <Badge variant="outline" className="text-[10px]">
-                      Owned: {ownedCount}
-                    </Badge>
+                    <Badge variant="outline" className="text-[10px]">x{ownedCount}</Badge>
                   )}
                   <Button
                     onClick={() => handlePurchase(item)}
@@ -212,88 +224,31 @@ const ShopTab = memo(() => {
                     disabled={state.coins < item.cost}
                     className="ml-2"
                   >
-                    {item.cost}🪙
+                    {item.cost}
                   </Button>
                 </div>
               </div>
             );
           })}
+          {filteredDecor.length === 0 && (
+            <div className="text-center text-sm text-gray-500 py-4">No decor in this category.</div>
+          )}
         </div>
       </Card>
 
       {/* Tools */}
       <Card className="p-4">
-        <h4 className="font-semibold mb-3 text-blue-700">🔧 Tools & Equipment</h4>
+        <h4 className="font-semibold mb-3 text-blue-700">Tools & Equipment</h4>
         <div className="space-y-2">
-          {shopItems.tools.map(item => {
-            const ownedCount = getOwnedCount(item.id);
-            const isOwned = item.unique && ownedCount > 0;
-            const isHighlighted = highlightedItemId === item.id;
-            return (
-            <div key={item.id} className={`flex justify-between items-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}>
-              <div className="flex items-center gap-3 flex-1">
-                <span className="text-2xl">{item.emoji}</span>
-                <div className="flex-1">
-                  <div className="font-medium">{item.name}</div>
-                  <div className="text-xs text-gray-600">{item.description}</div>
-                  <div className="text-xs text-blue-600 font-medium mt-0.5">{item.effect}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {ownedCount > 0 && (
-                  <Badge variant="outline" className="text-[10px]">
-                    {item.unique ? 'Owned' : `Owned: ${ownedCount}`}
-                  </Badge>
-                )}
-                <Button
-                  onClick={() => handlePurchase(item)}
-                  size="sm"
-                  disabled={state.coins < item.cost || isOwned}
-                  className="ml-2 min-w-[72px]"
-                >
-                  {isOwned ? 'Owned' : `${item.cost}🪙`}
-                </Button>
-              </div>
-            </div>
-          )})}
+          {shopItems.tools.map((item) => renderShopItem(item, 'bg-blue-50 hover:bg-blue-100'))}
         </div>
       </Card>
 
       {/* Upgrades */}
       <Card className="p-4">
-        <h4 className="font-semibold mb-3 text-purple-700">⭐ Premium Upgrades</h4>
+        <h4 className="font-semibold mb-3 text-purple-700">Premium Upgrades</h4>
         <div className="space-y-2">
-          {shopItems.upgrades.map(item => {
-            const ownedCount = getOwnedCount(item.id);
-            const isOwned = item.unique && ownedCount > 0;
-            const isHighlighted = highlightedItemId === item.id;
-            return (
-            <div key={item.id} className={`flex justify-between items-center p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-all ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}>
-              <div className="flex items-center gap-3 flex-1">
-                <span className="text-2xl">{item.emoji}</span>
-                <div className="flex-1">
-                  <div className="font-medium">{item.name}</div>
-                  <div className="text-xs text-gray-600">{item.description}</div>
-                  <div className="text-xs text-purple-600 font-medium mt-0.5">{item.effect}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {ownedCount > 0 && (
-                  <Badge variant="outline" className="text-[10px]">
-                    {item.unique ? 'Owned' : `Owned: ${ownedCount}`}
-                  </Badge>
-                )}
-                <Button
-                  onClick={() => handlePurchase(item)}
-                  size="sm"
-                  disabled={state.coins < item.cost || isOwned}
-                  className="ml-2 min-w-[72px]"
-                >
-                  {isOwned ? 'Owned' : `${item.cost}🪙`}
-                </Button>
-              </div>
-            </div>
-          )})}
+          {shopItems.upgrades.map((item) => renderShopItem(item, 'bg-purple-50 hover:bg-purple-100'))}
         </div>
       </Card>
     </div>

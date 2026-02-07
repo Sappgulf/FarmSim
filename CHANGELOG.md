@@ -8,6 +8,23 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
+## [5.5.0] - 2026-02-07
+### Planned (2026-02-07) — Sprint G11: Content Expansion + Performance Polish
+- **Scope:** decor content, building depth, expand depth, shop UX, performance
+- **What:** expand decor catalog from 8 to 32 items across 7 categories, fix missing flower_box data, add 5 new DECOR_SETS with farm titles, add building upgrade tiers and synergy bonuses, add plot usage stats and specialization zones to ExpandTab, add decor category filter and memoization to ShopTab.
+- **Why:** triple the decorative content to reward placement gameplay, deepen building and expansion progression loops, and improve shop browsing UX for the larger catalog.
+- **Verification:** `npm run test -- --run` and `npm run build`.
+
+### Implemented (2026-02-07) — Sprint G11: Content Expansion + Performance Polish
+- **Scope:** decor content, building depth, expand depth, shop UX, performance
+- **What:** expanded decor.json to 32 items (new: flower_box, herb_planter, sunflower_row, rose_trellis, mushroom_log, fairy_lights, paper_lantern, candle_jar, wishing_well, hammock, rocking_chair, wind_chime, brick_path, mossy_stepping_stones, iron_gate, hedge_row, scarecrow, snowman, cherry_blossom_tree, beach_umbrella, bee_house, garden_gnome, rain_barrel, butterfly_bush) in 7 categories (seasonal, garden, cozy, lighting, path, fence). Fixed missing flower_box that broke hearth_garden DECOR_SET.
+- **What:** added 5 new DECOR_SETS (Twilight Grove, Cottage Corner, Wildflower Walk, Grand Entrance, Four Seasons) with 5 new farm titles, bringing total to 8 sets and 13 titles.
+- **What:** deepened BuildingsTab with 3-tier upgrade system per building (Basic/Improved/Advanced with cost progression), 4 synergy combos (Hydro Garden, Supply Chain, Industrial Hub, Full Farm) with visible progress tracking.
+- **What:** deepened ExpandTab with live plot usage stats and stacked bar, 4 plot specialization zones (Fertile, Irrigated, Decor Garden, Experimental), and 4 expansion milestones.
+- **What:** overhauled ShopTab from daily 4-item decor rotation to full catalog browser with 7 category filter chips, scrollable list with max-height, and useCallback/useMemo performance optimizations.
+- **Why:** dramatically expand decorative content and progression depth for mid-to-late game engagement.
+- **Verification:** `npm run test -- --run` (47/47 pass), `npm run build` (pass).
+
 ## [5.4.0] - 2026-02-07
 ### Planned (2026-02-07) — Sprint G10: Systems Integration + Depth Pass
 - **Scope:** processing depth, pet bonuses, social mechanics, UI polish

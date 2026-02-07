@@ -89,6 +89,46 @@ export const DECOR_SETS = [
     almanacPageId: 'decor_set_harvest_border',
     titleId: 'harvest_host',
   },
+  {
+    id: 'twilight_grove',
+    name: 'Twilight Grove',
+    itemIds: ['fairy_lights', 'mushroom_log', 'candle_jar'],
+    memoryId: 'twilight_grove_complete',
+    almanacPageId: 'decor_set_twilight_grove',
+    titleId: 'twilight_tender',
+  },
+  {
+    id: 'cottage_corner',
+    name: 'Cottage Corner',
+    itemIds: ['rocking_chair', 'wind_chime', 'herb_planter'],
+    memoryId: 'cottage_corner_complete',
+    almanacPageId: 'decor_set_cottage_corner',
+    titleId: 'cottage_keeper',
+  },
+  {
+    id: 'wildflower_walk',
+    name: 'Wildflower Walk',
+    itemIds: ['butterfly_bush', 'sunflower_row', 'mossy_stepping_stones'],
+    memoryId: 'wildflower_walk_complete',
+    almanacPageId: 'decor_set_wildflower_walk',
+    titleId: 'wildflower_warden',
+  },
+  {
+    id: 'grand_entrance',
+    name: 'Grand Entrance',
+    itemIds: ['iron_gate', 'hedge_row', 'brick_path'],
+    memoryId: 'grand_entrance_complete',
+    almanacPageId: 'decor_set_grand_entrance',
+    titleId: 'estate_keeper',
+  },
+  {
+    id: 'four_seasons',
+    name: 'Four Seasons',
+    itemIds: ['cherry_blossom_tree', 'beach_umbrella', 'scarecrow', 'snowman'],
+    memoryId: 'four_seasons_complete',
+    almanacPageId: 'decor_set_four_seasons',
+    titleId: 'season_collector',
+  },
 ];
 
 export const FARM_TITLES = {
@@ -103,6 +143,11 @@ export const FARM_TITLES = {
   pathlight_keeper: { id: 'pathlight_keeper', name: 'Pathlight Keeper', hint: 'Complete Lantern Walk set.' },
   cozy_curator: { id: 'cozy_curator', name: 'Cozy Curator', hint: 'Complete Hearth Garden set.' },
   harvest_host: { id: 'harvest_host', name: 'Harvest Host', hint: 'Complete Harvest Border set.' },
+  twilight_tender: { id: 'twilight_tender', name: 'Twilight Tender', hint: 'Complete Twilight Grove set.' },
+  cottage_keeper: { id: 'cottage_keeper', name: 'Cottage Keeper', hint: 'Complete Cottage Corner set.' },
+  wildflower_warden: { id: 'wildflower_warden', name: 'Wildflower Warden', hint: 'Complete Wildflower Walk set.' },
+  estate_keeper: { id: 'estate_keeper', name: 'Estate Keeper', hint: 'Complete Grand Entrance set.' },
+  season_collector: { id: 'season_collector', name: 'Season Collector', hint: 'Complete Four Seasons set.' },
   almanac_whisperer: { id: 'almanac_whisperer', name: 'Almanac Whisperer', hint: 'Unlock many Almanac pages.' },
 };
 
