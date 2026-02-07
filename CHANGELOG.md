@@ -8,6 +8,21 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
+## [5.4.0] - 2026-02-07
+### Planned (2026-02-07) — Sprint G10: Systems Integration + Depth Pass
+- **Scope:** processing depth, pet bonuses, social mechanics, UI polish
+- **What:** add processing facility upgrades and chain recipes, integrate pet bonuses into UI, overhaul social tab with real reputation/NPC visitors/community challenges.
+- **Why:** deepen mid-tier systems (processing, pets, social) that had placeholder or shallow implementations, and wire them into the core gameplay loop.
+- **Verification:** `npm run test -- --run` and `npm run build`.
+
+### Implemented (2026-02-07) — Sprint G10: Systems Integration + Depth Pass
+- **Scope:** processing depth, pet bonuses, social mechanics, UI polish
+- **What:** added 3-tier facility upgrade system (Basic/Improved/Advanced) with time reduction and value boosts; added Bakery (flour→bread chain recipe) and Jam Kitchen (fruit→jam) processing facilities; added "Sell All" button for processed products; added XP rewards for processing actions.
+- **What:** built `getPetBonuses()` aggregator that computes active bonuses from pet level and happiness; surfaced Active Pet Bonuses card in PetsTab; added XP progress bar per pet and level-cap display.
+- **What:** replaced mock Social tab data with state-driven reputation system: 5 reputation tiers with perks, daily rotating NPC visitors with crop-for-coin trade offers, community challenges driven by real game state (inventory, pets, facilities, level), and reputation gain from trades/challenges.
+- **Why:** connect isolated systems together — pets provide visible bonuses, processing has meaningful progression, social tab rewards real gameplay actions instead of showing static mock data.
+- **Verification:** `npm run test -- --run` and `npm run build` (both pass).
+
 ## [5.3.0] - 2026-02-06
 
 ### Planned (2026-02-06) — Sprint G10: Fishing Content Polish + Early Economy Rebalance

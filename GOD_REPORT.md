@@ -1,25 +1,25 @@
 Meta:
-- Date: 2026-02-06
-- Change summary: Rebuilt the fishing mini-game with continuous fish behavior, tension/quality mechanics, and mobile hold controls; enforced economy integrity with helper reward/cost actions + reducer clamps; and hardened notifications with guaranteed auto-expiry.
-- TaskType: Gameplay deepening + debug + polish
-- Risk: Medium (core gameplay systems and economy pathways updated)
+- Date: 2026-02-07
+- Change summary: Deepened processing system with 3-tier facility upgrades and chain recipes (Bakery, Jam Kitchen); built pet bonus aggregation with visible Active Bonuses UI; overhauled Social tab from mock data to real reputation tiers, daily NPC visitors with trade offers, and state-driven community challenges.
+- TaskType: Gameplay deepening + systems integration + polish
+- Risk: Medium (three mid-tier systems updated, no core state shape changes)
 
 Intake:
-- SuccessCriteria: Ensure notifications auto-dismiss, make fishing deeper and reliable, tighten reward integrity (no unearned XP/coins), run debug/validation, and ship with tests/build green.
-- RequiredContext used: `AGENTS.md`, GOD core docs (`START.md`, `CORE.md`, `RUN.md`, `CHECKS.md`), `CHANGELOG.md`, `README.md`.
+- SuccessCriteria: Deepen processing/pets/social tabs, integrate pet bonuses visibly, replace mock social data with real mechanics, run debug/validation, ship with tests/build green.
+- RequiredContext used: `AGENT.md`, GOD_REPORT.md, `CHANGELOG.md`, `FEATURE_INVENTORY.md`, `GameReducer.js`, `GameContext.jsx`.
 
 Checks:
 - K1: PASS — `npm run test -- --run` passes (14 files / 36 tests).
-- K2: PASS — notifications now have per-item timers plus a fallback expiry sweep in `NotificationSystem`.
-- K3: PASS — fishing loop now simulates fish movement/tension continuously with clear win/escape conditions and mobile hold-to-reel controls.
-- K4: PASS — reward/cost pathways across tabs/systems were normalized to `earnMoney` / `spendMoney` / `addXP`; reducer now clamps coin/XP writes.
-- K5: PASS — inventory grant path added via `actions.addToInventory`, fixing runtime gaps in fishing/livestock reward flows.
+- K2: PASS — Processing tab now has 6 facilities (4 original + Bakery + Jam Kitchen), 3-tier upgrade system, chain recipe support, and Sell All button.
+- K3: PASS — Pet bonuses computed via `getPetBonuses()` aggregator, displayed in Active Pet Bonuses card, scaled by level and happiness.
+- K4: PASS — Social tab now drives from `state.social.reputation`, with 5 reputation tiers, daily NPC visitors, crop-for-coin trades, and state-driven community challenges.
+- K5: PASS — All economy actions use `earnMoney`/`spendMoney`/`addXP` — no raw coin writes.
 - K6: PASS — `npm run build` succeeds.
-- K7: PASS — `CHANGELOG.md` updated with Sprint G9 planned + implemented entries.
+- K7: PASS — `CHANGELOG.md` updated with Sprint G10 planned + implemented entries.
 
 Scores:
 - Correctness: 5
-- Maintainability: 4
+- Maintainability: 5
 - Performance: 4
 - Security/Safety: 4
 - UX: 5

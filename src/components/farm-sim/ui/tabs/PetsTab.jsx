@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
@@ -79,20 +79,64 @@ const PET_TYPES = {
   }
 };
 
+// Aggregate all pet bonuses into a single summary
+export const getPetBonuses = (pets) => {
+  const bonuses = {};
+  if (!Array.isArray(pets)) return bonuses;
+
+  pets.forEach(pet => {
+    const petData = PET_TYPES[pet.type];
+    if (!petData) return;
+
+    // Happiness factor: pets below 40% happiness give reduced bonuses
+    const happinessFactor = Math.max(0.2, (pet.happiness || 0) / 100);
+    const levelBonuses = petData.levelBonuses[pet.level] || petData.levelBonuses[1] || {};
+
+    Object.entries(levelBonuses).forEach(([key, value]) => {
+      bonuses[key] = (bonuses[key] || 0) + value * happinessFactor;
+    });
+  });
+
+  return bonuses;
+};
+
+// Bonus display labels for UI
+const BONUS_LABELS = {
+  pest_prevention: { label: 'Pest Prevention', emoji: '🛡️', format: 'percent' },
+  pest_elimination: { label: 'Pest Removal', emoji: '🐛', format: 'percent' },
+  pest_reduction: { label: 'Pest Reduction', emoji: '🐛', format: 'percent' },
+  security: { label: 'Farm Security', emoji: '🔒', format: 'percent' },
+  loyalty: { label: 'Loyalty', emoji: '❤️', format: 'percent' },
+  crop_quality: { label: 'Crop Quality', emoji: '✨', format: 'percent' },
+  luck_boost: { label: 'Luck', emoji: '🍀', format: 'percent' },
+  happiness_boost: { label: 'Happiness', emoji: '😊', format: 'percent' },
+  daily_eggs: { label: 'Daily Eggs', emoji: '🥚', format: 'number' },
+  fertilizer_production: { label: 'Fertilizer', emoji: '💩', format: 'number' },
+  theft_protection: { label: 'Theft Guard', emoji: '🔐', format: 'percent' },
+};
+
+const formatBonusValue = (key, value) => {
+  const info = BONUS_LABELS[key];
+  if (!info) return `+${value.toFixed(1)}`;
+  if (info.format === 'percent') return `+${Math.round(value * 100)}%`;
+  return `+${value.toFixed(1)}`;
+};
+
 const PetsTab = memo(() => {
   const { state, actions } = useGame();
-  // Use pet supplies from global state
   const petSupplies = state.inventory.petSupplies || {
     pet_food: 5,
     attention: 3,
     vet_care: 2
   };
 
+  const activeBonuses = useMemo(() => getPetBonuses(state.pets), [state.pets]);
+  const hasBonuses = Object.keys(activeBonuses).length > 0;
+
   const handleAdoptPet = (petType) => {
     const petData = PET_TYPES[petType];
     if (state.coins >= petData.cost) {
       actions.spendMoney(petData.cost);
-
       const newPet = {
         id: Date.now(),
         type: petType,
@@ -107,18 +151,11 @@ const PetsTab = memo(() => {
         lastVetVisit: Date.now(),
         experience: 0
       };
-
       actions.updatePets([...state.pets, newPet]);
-
-      actions.addNotification({
-        message: `Adopted a ${petData.name}!`,
-        type: 'success'
-      });
+      actions.addXP(20);
+      actions.addNotification({ message: `Adopted a ${petData.name}!`, type: 'success' });
     } else {
-      actions.addNotification({
-        message: 'Not enough coins to adopt this pet!',
-        type: 'error'
-      });
+      actions.addNotification({ message: 'Not enough coins to adopt this pet!', type: 'error' });
     }
   };
 
@@ -128,52 +165,47 @@ const PetsTab = memo(() => {
 
     const petData = PET_TYPES[pet.type];
     const need = petData.needs[careType];
-
     if (!need) return;
 
-    // Check if we have the required supplies
     if (petSupplies[need.type] >= need.consumption) {
-      // Update pet stats
       const updatedPets = state.pets.map(p => {
-        if (p.id === petId) {
-          let updatedPet = { ...p };
+        if (p.id !== petId) return p;
+        let updatedPet = { ...p };
 
-          switch (careType) {
-            case 'food':
-              updatedPet.hunger = Math.max(0, p.hunger - 30);
-              updatedPet.lastFed = Date.now();
-              break;
-            case 'play':
-              updatedPet.playfulness = Math.min(100, p.playfulness + 30);
-              updatedPet.happiness = Math.min(100, p.happiness + 20);
-              updatedPet.lastPlayed = Date.now();
-              break;
-            case 'health':
-              updatedPet.health = Math.min(100, p.health + 50);
-              updatedPet.lastVetVisit = Date.now();
-              break;
-          }
-
-          // Gain experience and potentially level up
-          updatedPet.experience += 10;
-          const expForNextLevel = pet.level * 100;
-          if (updatedPet.experience >= expForNextLevel && updatedPet.level < petData.maxLevel) {
-            updatedPet.level += 1;
-            updatedPet.experience = 0;
-            actions.addNotification({
-              message: `${updatedPet.name} leveled up to ${updatedPet.level}!`,
-              type: 'success'
-            });
-          }
-
-          return updatedPet;
+        switch (careType) {
+          case 'food':
+            updatedPet.hunger = Math.max(0, p.hunger - 30);
+            updatedPet.lastFed = Date.now();
+            break;
+          case 'play':
+            updatedPet.playfulness = Math.min(100, p.playfulness + 30);
+            updatedPet.happiness = Math.min(100, p.happiness + 20);
+            updatedPet.lastPlayed = Date.now();
+            break;
+          case 'health':
+            updatedPet.health = Math.min(100, p.health + 50);
+            updatedPet.lastVetVisit = Date.now();
+            break;
         }
-        return p;
+
+        // Gain experience and potentially level up
+        updatedPet.experience += 10;
+        const expForNextLevel = pet.level * 100;
+        if (updatedPet.experience >= expForNextLevel && updatedPet.level < petData.maxLevel) {
+          updatedPet.level += 1;
+          updatedPet.experience = 0;
+          actions.addNotification({
+            message: `${updatedPet.name} leveled up to ${updatedPet.level}!`,
+            type: 'success'
+          });
+          actions.addXP(15);
+        }
+
+        return updatedPet;
       });
 
       actions.updatePets(updatedPets);
 
-      // Consume supplies from global inventory
       const updatedInventory = {
         ...state.inventory,
         petSupplies: {
@@ -182,14 +214,9 @@ const PetsTab = memo(() => {
         }
       };
       actions.updateInventory(updatedInventory);
-
       actions.recordCozyGoalEvent('pet_cared', { petId, careType });
       actions.recordAlmanacEvent('pet_cared', { petId, careType });
-
-      actions.addNotification({
-        message: `Cared for ${pet.name}!`,
-        type: 'success'
-      });
+      actions.addNotification({ message: `Cared for ${pet.name}!`, type: 'success' });
     } else {
       actions.addNotification({
         message: `Not enough ${formatDisplayLabel(need.type)} supplies!`,
@@ -201,11 +228,9 @@ const PetsTab = memo(() => {
   const handleBuySupplies = (supplyType, cost) => {
     if (state.coins >= cost) {
       actions.spendMoney(cost);
+      let quantity = 5;
+      if (supplyType === 'vet_care') quantity = 1;
 
-      let quantity = 5; // Default quantity
-      if (supplyType === 'vet_care') quantity = 1; // Vet care is more expensive
-
-      // Update pet supplies in global inventory
       const updatedInventory = {
         ...state.inventory,
         petSupplies: {
@@ -214,16 +239,9 @@ const PetsTab = memo(() => {
         }
       };
       actions.updateInventory(updatedInventory);
-
-      actions.addNotification({
-        message: `Bought ${quantity} ${formatDisplayLabel(supplyType)}!`,
-        type: 'success'
-      });
+      actions.addNotification({ message: `Bought ${quantity} ${formatDisplayLabel(supplyType)}!`, type: 'success' });
     } else {
-      actions.addNotification({
-        message: 'Not enough coins!',
-        type: 'error'
-      });
+      actions.addNotification({ message: 'Not enough coins!', type: 'error' });
     }
   };
 
@@ -251,9 +269,29 @@ const PetsTab = memo(() => {
               Adopt loyal helpers, keep them happy, and earn cozy farm bonuses.
             </p>
           </div>
-          <Badge variant="secondary" className="shrink-0">Pets</Badge>
+          <Badge variant="secondary" className="shrink-0">{state.pets.length} Pets</Badge>
         </div>
       </Card>
+
+      {/* Active Bonuses Summary */}
+      {hasBonuses && (
+        <Card className="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-amber-100">
+          <h3 className="font-semibold mb-2 text-amber-800">⚡ Active Pet Bonuses</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {Object.entries(activeBonuses).map(([key, value]) => {
+              const info = BONUS_LABELS[key] || { label: formatDisplayLabel(key), emoji: '📊' };
+              return (
+                <div key={key} className="flex items-center gap-2 p-2 bg-white/70 rounded text-sm">
+                  <span>{info.emoji}</span>
+                  <span className="text-gray-700">{info.label}</span>
+                  <span className="ml-auto font-semibold text-amber-700">{formatBonusValue(key, value)}</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-xs text-amber-600 mt-2">Bonuses scale with pet level and happiness.</p>
+        </Card>
+      )}
 
       {/* Pet Adoption */}
       {state.pets.length === 0 && (
@@ -305,12 +343,15 @@ const PetsTab = memo(() => {
         <div className="space-y-4">
           <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50">
             <h3 className="font-semibold mb-3 text-green-800">🐾 Your Pets ({state.pets.length})</h3>
-
             <div className="space-y-3">
               {state.pets.map(pet => {
                 const petData = PET_TYPES[pet.type];
                 const healthStatus = getHealthStatus(pet.health);
                 const petIcon = petData?.emoji || '🐾';
+                const expForNext = pet.level * 100;
+                const expPct = petData && pet.level < petData.maxLevel
+                  ? Math.min(100, Math.round((pet.experience / expForNext) * 100))
+                  : 100;
 
                 return (
                   <Card key={pet.id} className="p-3">
@@ -320,7 +361,7 @@ const PetsTab = memo(() => {
                         <div>
                           <div className="font-semibold text-gray-900">{pet.name}</div>
                           <div className="text-sm text-gray-600">
-                            {petData?.name || 'Pet'} • Level {pet.level}
+                            {petData?.name || 'Pet'} • Level {pet.level}{petData && pet.level >= petData.maxLevel ? ' (MAX)' : ''}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
                             Mood: {getHappinessEmoji(pet.happiness)} {Math.round(pet.happiness)}% happy
@@ -333,7 +374,7 @@ const PetsTab = memo(() => {
                     </div>
 
                     {/* Pet Stats */}
-                    <div className="grid grid-cols-3 gap-2 mb-3 text-xs">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 text-xs">
                       <div>
                         <div className="flex justify-between mb-1">
                           <span>Health</span>
@@ -355,6 +396,13 @@ const PetsTab = memo(() => {
                         </div>
                         <Progress value={pet.playfulness} className="h-2" />
                       </div>
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span>XP</span>
+                          <span>{pet.experience}/{expForNext}</span>
+                        </div>
+                        <Progress value={expPct} className="h-2" />
+                      </div>
                     </div>
 
                     {petData?.traits?.length > 0 && (
@@ -373,7 +421,7 @@ const PetsTab = memo(() => {
                         onClick={() => handleCarePet(pet.id, 'food')}
                         size="sm"
                         variant="outline"
-                        className="text-xs flex-1 min-w-[110px]"
+                        className="text-xs flex-1 min-w-[100px]"
                         disabled={petSupplies.pet_food < 1}
                       >
                         🍖 Feed
@@ -382,7 +430,7 @@ const PetsTab = memo(() => {
                         onClick={() => handleCarePet(pet.id, 'play')}
                         size="sm"
                         variant="outline"
-                        className="text-xs flex-1 min-w-[110px]"
+                        className="text-xs flex-1 min-w-[100px]"
                         disabled={petSupplies.attention < 1}
                       >
                         🎾 Play
@@ -391,7 +439,7 @@ const PetsTab = memo(() => {
                         onClick={() => handleCarePet(pet.id, 'health')}
                         size="sm"
                         variant="outline"
-                        className="text-xs flex-1 min-w-[110px]"
+                        className="text-xs flex-1 min-w-[100px]"
                         disabled={petSupplies.vet_care < 1}
                       >
                         🏥 Checkup
@@ -406,10 +454,9 @@ const PetsTab = memo(() => {
           {/* Pet Supplies */}
           <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
             <h3 className="font-semibold mb-3 text-blue-800">🛍️ Pet Supplies</h3>
-
             <div className="grid grid-cols-3 gap-3 mb-4 text-sm">
               <div className="text-center p-2 bg-white rounded">
-                <div className="font-medium">🍖 Pet Food</div>
+                <div className="font-medium">🍖 Food</div>
                 <div className="text-lg font-bold text-blue-600">{petSupplies.pet_food}</div>
               </div>
               <div className="text-center p-2 bg-white rounded">
@@ -421,31 +468,24 @@ const PetsTab = memo(() => {
                 <div className="text-lg font-bold text-blue-600">{petSupplies.vet_care}</div>
               </div>
             </div>
-
             <div className="flex gap-2">
               <Button
                 onClick={() => handleBuySupplies('pet_food', 20)}
-                size="sm"
-                variant="outline"
-                className="text-xs flex-1"
+                size="sm" variant="outline" className="text-xs flex-1"
                 disabled={state.coins < 20}
               >
                 Buy Food (20🪙)
               </Button>
               <Button
                 onClick={() => handleBuySupplies('attention', 15)}
-                size="sm"
-                variant="outline"
-                className="text-xs flex-1"
+                size="sm" variant="outline" className="text-xs flex-1"
                 disabled={state.coins < 15}
               >
                 Buy Attention (15🪙)
               </Button>
               <Button
                 onClick={() => handleBuySupplies('vet_care', 30)}
-                size="sm"
-                variant="outline"
-                className="text-xs flex-1"
+                size="sm" variant="outline" className="text-xs flex-1"
                 disabled={state.coins < 30}
               >
                 Vet Care (30🪙)
