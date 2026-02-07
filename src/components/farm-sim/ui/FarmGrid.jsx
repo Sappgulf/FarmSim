@@ -46,7 +46,8 @@ const FarmPlot = memo(({
   seasonBonus = 1.0,
   hasSoilAnalyzer = false,
   harvestMultiplier = 1.0,
-  gridSize = 3
+  gridSize = 3,
+  plotRef = null
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -169,7 +170,7 @@ const FarmPlot = memo(({
   }, [plot, index, onPlotClick, onPlant, onHarvest, onToggleSelect, onDecorate, isDecorMode]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={plotRef}>
       <Card
         className={`
           w-full aspect-square min-h-[52px] sm:min-h-[72px] md:min-h-[88px] cursor-pointer relative overflow-hidden
@@ -382,7 +383,18 @@ const FarmGrid = memo(() => {
   const [selectedPlots, setSelectedPlots] = useState(new Set());
   const [decorUndoCount, setDecorUndoCount] = useState(0);
   const [repeatDecorPlacement, setRepeatDecorPlacement] = useState(true);
+  const plotRefs = useRef([]);
   const decorUndoStack = useRef([]);
+  const getPlotCenter = useCallback((index) => {
+    const plotNode = plotRefs.current[index];
+    if (!plotNode) return null;
+    const rect = plotNode.getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
+  }, []);
+
   const animationsEnabled = state.settings?.animationsEnabled !== false;
   const decorMode = state.decorateMode;
   const selectedDecoration = state.selectedDecoration ? DECORATION_DATA[state.selectedDecoration] : null;
@@ -492,10 +504,9 @@ const FarmGrid = memo(() => {
       const planted = actions.plantCrop(index, selectedCrop.id, selectedCrop);
 
       if (animationsEnabled && typeof window.triggerParticleEffect === 'function') {
-        const plotElement = document.querySelector(`.farm-grid > div:nth-child(${index + 1})`);
-        if (plotElement) {
-          const rect = plotElement.getBoundingClientRect();
-          window.triggerParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, 'plant');
+        const center = getPlotCenter(index);
+        if (center) {
+          window.triggerParticleEffect(center.x, center.y, 'plant');
         }
       }
 
@@ -521,7 +532,7 @@ const FarmGrid = memo(() => {
         type: 'error'
       });
     }
-  }, [actions, animationsEnabled, ghostActive, plots, state.coins, state.selectedCrop]);
+  }, [actions, animationsEnabled, getPlotCenter, ghostActive, plots, state.coins, state.selectedCrop]);
 
   const handleDecorate = useCallback((index) => {
     if (ghostActive) return;
@@ -584,11 +595,11 @@ const FarmGrid = memo(() => {
     });
 
     if (animationsEnabled && typeof window.triggerParticleEffect === 'function') {
-      const plotElement = document.querySelector(`.farm-grid > div:nth-child(${index + 1})`);
-      if (plotElement) {
-        const rect = plotElement.getBoundingClientRect();
-        window.triggerParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, 'plant', {
+      const center = getPlotCenter(index);
+      if (center) {
+        window.triggerParticleEffect(center.x, center.y, 'plant', {
           text: selectedDecoration.emoji,
+          intensity: 0.75,
         });
       }
     }
@@ -601,7 +612,7 @@ const FarmGrid = memo(() => {
     if (!repeatDecorPlacement) {
       actions.setSelectedDecoration(null);
     }
-  }, [actions, animationsEnabled, ghostActive, pushDecorUndo, repeatDecorPlacement, selectedDecoration, state.plots]);
+  }, [actions, animationsEnabled, getPlotCenter, ghostActive, pushDecorUndo, repeatDecorPlacement, selectedDecoration, state.plots]);
 
   const handleHarvest = useCallback((index) => {
     if (ghostActive) {
@@ -619,12 +630,12 @@ const FarmGrid = memo(() => {
     // Trigger particle effect with earnings text
     if (animationsEnabled && typeof window.triggerParticleEffect === 'function') {
       // Get plot position
-      const plotElement = document.querySelector(`.farm-grid > div:nth-child(${index + 1})`);
-      if (plotElement) {
-        const rect = plotElement.getBoundingClientRect();
-        window.triggerParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, 'harvest', {
+      const center = getPlotCenter(index);
+      if (center) {
+        window.triggerParticleEffect(center.x, center.y, 'harvest', {
           text: `+${earnings}🪙`,
-          value: earnings
+          value: earnings,
+          intensity: earnings >= 100 ? 1.2 : 1,
         });
       }
     }
@@ -671,7 +682,7 @@ const FarmGrid = memo(() => {
       message: `Harvested ${crop.emoji} ${crop.name}! +${earnings}🪙`,
       type: 'success'
     });
-  }, [actions, animationsEnabled, state.plots]);
+  }, [actions, animationsEnabled, getPlotCenter, ghostActive, state.plots, state.season?.current, state.weather, state.inventory]);
 
   // Bulk actions
   const handleBulkHarvest = useCallback(() => {
@@ -759,11 +770,20 @@ const FarmGrid = memo(() => {
         type: 'success'
       });
 
+      if (animationsEnabled && typeof window.triggerParticleEffect === 'function') {
+        window.triggerParticleEffect(window.innerWidth / 2, window.innerHeight * 0.35, 'harvest', {
+          text: `+${totalEarnings}🪙 • ${harvestedCount} crops`,
+          value: totalEarnings,
+          intensity: Math.min(1.6, 1 + harvestedCount * 0.08),
+          shake: false,
+        });
+      }
+
       actions.recordOnboardingEvent('harvest');
     }
 
     setSelectedPlots(new Set());
-  }, [selectedPlots, state.plots, actions]);
+  }, [actions, animationsEnabled, selectedPlots, state.inventory, state.plots, state.season?.current, state.weather]);
 
   const handleSelectAll = useCallback(() => {
     const plotsArray = Array.isArray(state.plots) ? state.plots : [];
@@ -888,6 +908,9 @@ const FarmGrid = memo(() => {
         {plots.map((plot, index) => (
           <FarmPlot
             key={index}
+            plotRef={(el) => {
+              plotRefs.current[index] = el;
+            }}
             plot={plot}
             index={index}
             onPlotClick={handlePlotClick}
@@ -935,5 +958,4 @@ const FarmGrid = memo(() => {
 });
 
 FarmGrid.displayName = 'FarmGrid';
-
 export default FarmGrid;

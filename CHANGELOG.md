@@ -377,3 +377,15 @@ Guiding rules:
 - **What:** expanded Shop tab tool/upgrade catalog with rain collector, precision hoe, drone harvester, hydroponics rack, soil nanites, and market terminal; wired new upgrade effects into farming math (growth speed, harvest value, seed cost, sprinkler cadence, fertility floor, and auto-harvest); and surfaced new utility item icons in inventory.
 - **Why:** deepen mid/late-game progression with clearer premium-feeling goals and meaningful gameplay payoffs.
 - **Verification:** `npm run test -- src/test/farmUpgrades.test.js src/test/farming.test.js --run` (pass), `npm run build` (pass).
+
+### Planned (2026-02-07) — Harvest/reward animation polish + interaction performance pass
+- **Scope:** frontend, performance, UX
+- **What:** upgrade harvest/reward feedback animation quality, improve bulk harvest celebration clarity, and remove repeated DOM query hot-path work during farm interactions.
+- **Why:** harvest/reward moments should feel more premium while reducing interaction overhead and avoiding avoidable frame-time spikes.
+- **Verification:** Baseline `npm run smoke-test` before changes, then targeted tests + build after implementation.
+
+### Implemented (2026-02-07) — Harvest/reward animation polish + interaction performance pass
+- **Scope:** frontend, performance, UX
+- **What:** upgraded harvest/decor particle intensity control, added stronger bulk-harvest celebration text burst, and replaced per-interaction `querySelector` lookups with cached plot refs for plant/decor/harvest particle anchoring.
+- **Why:** make harvest reward feedback feel more premium while reducing avoidable DOM query overhead in high-frequency interaction paths.
+- **Verification:** `npm run smoke-test -- --run` (pass), `npm run test -- src/test/farming.test.js src/test/smoke.test.jsx --run` (pass), `npm run build` (pass with existing npm env + Vite chunk warnings).
