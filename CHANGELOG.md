@@ -348,3 +348,15 @@ Guiding rules:
 - **What:** added centralized progression bands + difficulty/economy modifiers, applied level-band tuning to growth/minigame windows/money gains, introduced optional festival participation sink, removed power rewards from manual achievement claims, and paused system loop on hidden tabs with debug perf counters.
 - **Why:** connect pacing systems with one data spine while preserving cozy non-punitive progression.
 - **Verification:** `npm run smoke-test`, `npm run test -- --run`, `npm run build`.
+
+### Planned (2026-02-07) — Shop expansion: premium upgrades + advanced tools
+- **Scope:** frontend, gameplay systems, balance, QA
+- **What:** expand shop inventory with more high-tier tool/upgrades, wire new purchases into core farming loops (growth, sprinkler automation, planting efficiency, and auto-harvest), and add unit coverage for new upgrade math.
+- **Why:** gameplay needs a stronger late-game progression layer and clearer premium-feeling purchase goals.
+- **Verification:** Baseline `npm run smoke-test` (pass).
+
+### Implemented (2026-02-07) — Shop expansion: premium upgrades + advanced tools
+- **Scope:** frontend, gameplay systems, balance, QA
+- **What:** expanded Shop tab tool/upgrade catalog with rain collector, precision hoe, drone harvester, hydroponics rack, soil nanites, and market terminal; wired new upgrade effects into farming math (growth speed, harvest value, seed cost, sprinkler cadence, fertility floor, and auto-harvest); and surfaced new utility item icons in inventory.
+- **Why:** deepen mid/late-game progression with clearer premium-feeling goals and meaningful gameplay payoffs.
+- **Verification:** `npm run test -- src/test/farmUpgrades.test.js src/test/farming.test.js --run` (pass), `npm run build` (pass).

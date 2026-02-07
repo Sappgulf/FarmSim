@@ -47,9 +47,15 @@ const InventoryTab = memo(() => {
     ginger_root: '🫚',
     quality_seeds: '🌰',
     sprinkler: '💦',
+    rain_collector: '🛢️',
+    precision_hoe: '⛏️',
+    drone_harvester: '🛸',
     soil_analyzer: '🔬',
     greenhouse: '🏡',
     compost_bin: '🗑️',
+    hydroponics_rack: '🧫',
+    soil_nanites: '⚙️',
+    market_terminal: '📈',
   };
 
   const inventoryItems = useMemo(() => (

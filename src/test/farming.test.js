@@ -15,6 +15,7 @@ describe('FarmingSystem', () => {
             setXp: vi.fn(),
             addXP: vi.fn(),
             updateInventory: vi.fn(),
+            addNotification: vi.fn(),
         };
 
         mockGameState = {
@@ -63,6 +64,17 @@ describe('FarmingSystem', () => {
         expect(mockActions.spendMoney).not.toHaveBeenCalled();
     });
 
+    it('should reduce planting seed cost with precision hoe', () => {
+        mockGameState.inventory = { precision_hoe: 1 };
+        farmingSystem = new FarmingSystem(mockGameState, mockActions);
+
+        const cropData = { id: 'corn', cost: 25, growthTime: 10, name: 'Corn' };
+        const success = farmingSystem.plantCrop(0, cropData);
+
+        expect(success).toBe(true);
+        expect(mockActions.spendMoney).toHaveBeenCalledWith(22);
+    });
+
     it('should harvest a ready crop', () => {
         // Setup a ready plot
         mockGameState.plots[0] = {
@@ -97,6 +109,25 @@ describe('FarmingSystem', () => {
 
         expect(success).toBe(false);
         expect(mockActions.earnMoney).not.toHaveBeenCalled();
+    });
+
+    it('should auto-harvest up to two ready plots when drone harvester is owned', () => {
+        const now = Date.now();
+        mockGameState.inventory = { drone_harvester: 1 };
+        mockGameState.plots[0] = { state: 'ready', crop: { id: 'carrot', baseValue: 20, name: 'Carrot', emoji: '🥕' }, soilFertility: 1.0 };
+        mockGameState.plots[1] = { state: 'ready', crop: { id: 'potato', baseValue: 18, name: 'Potato', emoji: '🥔' }, soilFertility: 1.0 };
+        mockGameState.plots[2] = { state: 'ready', crop: { id: 'corn', baseValue: 16, name: 'Corn', emoji: '🌽' }, soilFertility: 1.0 };
+        farmingSystem = new FarmingSystem(mockGameState, mockActions);
+
+        vi.useFakeTimers();
+        vi.setSystemTime(now);
+        farmingSystem.update(mockGameState);
+        vi.setSystemTime(now + 16000);
+        farmingSystem.update(mockGameState);
+
+        expect(mockActions.earnMoney).toHaveBeenCalledTimes(2);
+        expect(mockActions.addNotification).toHaveBeenCalled();
+        vi.useRealTimers();
     });
 
     it('should calculate growth correctly in update loop', () => {

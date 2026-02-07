@@ -1,7 +1,11 @@
 import {
+  getAutoHarvestConfig,
   calculateHarvestValue,
   getCompostRegenMultiplier,
+  getHydroponicsGrowthBonus,
   getMiniGreenhouseGrowthBonus,
+  getPostHarvestFertilityFloor,
+  getSeedCostMultiplier,
   getSprinklerConfig,
   getWateringBonus,
 } from '../../../utils/farmUpgrades';
@@ -25,6 +29,7 @@ export class FarmingSystem {
     this.actions = gameActions;
     this.lastFertilityUpdate = 0;
     this.lastSprinklerWater = 0;
+    this.lastAutoHarvestTick = 0;
   }
 
   /**
@@ -57,6 +62,9 @@ export class FarmingSystem {
 
     // Apply sprinkler automation (if owned)
     this.applySprinklerAutoWater();
+
+    // Apply optional auto-harvest automation (if owned)
+    this.applyAutoHarvest();
   }
 
   /**
@@ -103,6 +111,7 @@ export class FarmingSystem {
     const seasonBonus = this.gameState.season?.config?.bonuses?.growthSpeed || 1.0;
     const inventory = this.gameState.inventory || {};
     const greenhouseGrowthBonus = getMiniGreenhouseGrowthBonus(inventory);
+    const hydroponicsGrowthBonus = getHydroponicsGrowthBonus(inventory);
 
     const updatedPlots = this.gameState.plots.map(plot => {
       // Safety check for invalid plot
@@ -127,7 +136,7 @@ export class FarmingSystem {
       const growthBoost = plot.growthBoost || 1;
       const level = this.gameState.level || 1;
       const difficulty = getDifficultyModifier(level);
-      const effectiveGrowthTime = (baseGrowthTime * difficulty.growthTime) / (plotWeatherModifier * seasonBonus * greenhouseGrowthBonus * growthBoost);
+      const effectiveGrowthTime = (baseGrowthTime * difficulty.growthTime) / (plotWeatherModifier * seasonBonus * greenhouseGrowthBonus * hydroponicsGrowthBonus * growthBoost);
       const progress = Math.min(1.0, timeSincePlanted / effectiveGrowthTime);
 
 
@@ -284,7 +293,8 @@ export class FarmingSystem {
       return false; // Can't plant in non-empty plot
     }
 
-    const cost = cropData.cost || 0;
+    const seedMultiplier = getSeedCostMultiplier(this.gameState.inventory);
+    const cost = Math.max(1, Math.floor((cropData.cost || 0) * seedMultiplier));
     if (this.gameState.coins < cost) {
       return false; // Can't afford
     }
@@ -296,6 +306,7 @@ export class FarmingSystem {
     const plantedAt = Date.now();
     const shouldBoostFirstCrop = !this.gameState.memoryFlags?.first_seed && !this.gameState.onboardingSkipped;
     const updatedPlots = [...this.gameState.plots];
+    const fertilityFloor = getPostHarvestFertilityFloor(this.gameState.inventory);
     updatedPlots[plotIndex] = {
       ...plot,
       crop: cropData,
@@ -360,6 +371,7 @@ export class FarmingSystem {
 
     // Clear plot and reduce fertility
     const updatedPlots = [...this.gameState.plots];
+    const fertilityFloor = getPostHarvestFertilityFloor(this.gameState.inventory);
     updatedPlots[plotIndex] = {
       ...plot,
       crop: null,
@@ -369,7 +381,7 @@ export class FarmingSystem {
       readyAt: null,
       growthStage: 0,
       progress: 0,
-      soilFertility: Math.max(0.5, (plot.soilFertility || 1.0) - 0.1),
+      soilFertility: Math.max(fertilityFloor, (plot.soilFertility || 1.0) - 0.1),
       waterLevel: 50,
     };
 
@@ -471,6 +483,48 @@ export class FarmingSystem {
 
     if (hasChanges) {
       this.actions.updatePlots(updatedPlots);
+    }
+  }
+
+  applyAutoHarvest() {
+    if (!this.gameState || !Array.isArray(this.gameState.plots)) {
+      return;
+    }
+
+    const config = getAutoHarvestConfig(this.gameState.inventory);
+    if (!config) {
+      return;
+    }
+
+    const now = Date.now();
+    if (!this.lastAutoHarvestTick) {
+      this.lastAutoHarvestTick = now;
+      return;
+    }
+
+    if (now - this.lastAutoHarvestTick < config.intervalMs) {
+      return;
+    }
+    this.lastAutoHarvestTick = now;
+
+    let harvestedCount = 0;
+    for (let index = 0; index < this.gameState.plots.length; index += 1) {
+      if (harvestedCount >= config.maxPlotsPerTick) {
+        break;
+      }
+      if (this.gameState.plots[index]?.state === 'ready') {
+        const harvested = this.harvestCrop(index);
+        if (harvested) {
+          harvestedCount += 1;
+        }
+      }
+    }
+
+    if (harvestedCount > 0) {
+      this.actions.addNotification?.({
+        message: `🤖 Drone Harvester collected ${harvestedCount} crop${harvestedCount > 1 ? 's' : ''}.`,
+        type: 'success',
+      });
     }
   }
 }
