@@ -4,7 +4,7 @@ import React, { memo, useState, useEffect } from 'react';
  * Particle Effect Component
  * Creates visual particle effects for actions like harvesting, watering, fertilizing
  */
-const ParticleEffect = memo(({ x, y, type, onComplete, text }) => {
+const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1 }) => {
   // Store particles data in ref to avoid re-renders
   const particlesRef = React.useRef([]);
   // Store DOM refs to manipulate styles directly
@@ -14,14 +14,14 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text }) => {
 
   useEffect(() => {
     // Generate particles with variety ONCE
-    const particleCount = type === 'harvest' ? 60 : type === 'levelup' ? 100 : 25;
+    const particleCount = Math.round((type === 'harvest' ? 60 : type === 'levelup' ? 100 : 25) * Math.max(0.6, intensity));
 
     particlesRef.current = Array.from({ length: particleCount }, (_, i) => {
       const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
-      const baseVelocity = type === 'harvest' ? 120 : type === 'levelup' ? 80 : 60;
+      const baseVelocity = (type === 'harvest' ? 120 : type === 'levelup' ? 80 : 60) * Math.max(0.75, intensity);
       const velocityVariation = Math.random() * 80;
       const velocity = baseVelocity + velocityVariation;
-      const upwardBias = type === 'levelup' ? -120 : type === 'harvest' ? -50 : -40;
+      const upwardBias = (type === 'levelup' ? -120 : type === 'harvest' ? -50 : -40) * Math.max(0.8, intensity);
 
       return {
         id: i,
@@ -46,7 +46,8 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text }) => {
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
-      const progress = elapsed / 1200; // 1.2 second animation
+      const animationDurationMs = Math.max(900, 1200 / Math.max(0.85, intensity));
+      const progress = elapsed / animationDurationMs;
 
       if (progress >= 1) {
         if (onComplete) onComplete();
@@ -69,7 +70,7 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text }) => {
         p.vx *= airResistance;
         p.vy *= airResistance;
 
-        const gravity = type === 'levelup' ? 12 : 15;
+        const gravity = (type === 'levelup' ? 12 : 15) * (2 - Math.min(1.25, intensity));
 
         p.x += p.vx * 0.016;
         p.y += p.vy * 0.016 + (gravity * actualProgress * 60);
@@ -92,7 +93,7 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text }) => {
     return () => {
       if (animationFrame) cancelAnimationFrame(animationFrame);
     };
-  }, [type, onComplete]);
+  }, [intensity, onComplete, type]);
 
   // Helper for styles (static stuff)
   const getParticleStaticStyle = (p) => {
@@ -243,10 +244,10 @@ export const ParticleEffectsManager = memo(() => {
           // Remove oldest effect to make room
           const trimmed = prev.slice(1);
           const id = Date.now() + Math.random();
-          return [...trimmed, { id, x, y, type, text: options.text, value: options.value }];
+          return [...trimmed, { id, x, y, type, text: options.text, value: options.value, intensity: options.intensity || 1 }];
         }
         const id = Date.now() + Math.random();
-        return [...prev, { id, x, y, type, text: options.text, value: options.value }];
+        return [...prev, { id, x, y, type, text: options.text, value: options.value, intensity: options.intensity || 1 }];
       });
 
       // Trigger screen shake for harvest and levelup (very subtle!)
@@ -280,6 +281,7 @@ export const ParticleEffectsManager = memo(() => {
           type={effect.type}
           text={effect.text}
           value={effect.value}
+          intensity={effect.intensity}
           onComplete={() => handleEffectComplete(effect.id)}
         />
       ))}
