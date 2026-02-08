@@ -266,7 +266,8 @@ const InventoryTab = memo(() => {
 
       {/* Supplies & Upgrades */}
       <Card className="p-4">
-        <h4 className="font-semibold mb-3">📦 Supplies & Upgrades</h4>
+        <h4 className="font-semibold">📦 Supplies & Upgrades</h4>
+        <p className="text-xs text-gray-500 mt-1 mb-3">Fresh saves start with a small starter kit so you can plant immediately.</p>
 
         {utilityItems.length === 0 ? (
           <div className="text-center py-6">

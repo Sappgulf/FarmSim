@@ -15,6 +15,23 @@ Guiding rules:
 - **Why:** reduce initial bundle pressure from debug-only code paths and keep displayed/versioned release metadata consistent.
 - **Verification:** Baseline run completed with `npm run test -- --run` (53/53 tests passing) and `npm run build` (pass; main chunk warning present at 541.44 kB).
 
+
+### Planned (2026-02-08) — Sprint G16: New-Game Starter Inventory Rebalance
+- **Scope:** frontend, gameplay onboarding, UX polish
+- **What:** rebalance fresh-save inventory so new games begin with a clean inventory profile plus a practical starter kit (small seed stock + basic crop care tools), and align related copy/tests.
+- **Why:** satisfy requested new-game inventory behavior while preserving early-game playability.
+- **Verification:** Baseline run completed with `npm run smoke-test` (pass).
+
+
+### Implemented (2026-02-08) — Sprint G16: New-Game Starter Inventory Rebalance
+- **Scope:** frontend, gameplay onboarding, UX polish
+- **What:** replaced the default fresh-save inventory with a cleaner starter kit (`lettuce`, `carrot`, `fertilizer`, `pesticide`, and the starter flag) and removed extra utility clutter from first-session loadouts.
+- **What:** updated Settings reset confirmation copy to clarify that resets now start from a clean farm with a small starter kit.
+- **What:** polished Inventory “Supplies & Upgrades” copy to explicitly explain starter-kit behavior.
+- **What:** added reducer coverage to lock starter-kit defaults and prevent regression to bloated/unclear initial inventory.
+- **Why:** align new-game expectations (“start clean, but playable”) and make onboarding behavior obvious in the UI.
+- **Verification:** `npm run test -- --run` (pass), `npm run build` (pass).
+
 ### Implemented (2026-02-08) — Sprint G15: Debug Bundle Isolation + Version Alignment
 - **Scope:** frontend, performance, release metadata
 - **What:** converted `PerformanceOverlay`, `DebugStressPanel`, and `QAModePanel` to lazy imports in `FarmSim`, gated debug-only panels behind `?debug=1`, and kept all debug tooling fully disabled in release mode.

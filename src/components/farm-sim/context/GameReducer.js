@@ -1,5 +1,13 @@
 import { GAME_ACTIONS } from './GameActions';
 import { SAVE_VERSION, initializePlots } from './GamePersistence';
+
+const STARTER_INVENTORY = Object.freeze({
+    lettuce: 4,
+    carrot: 3,
+    fertilizer: 2,
+    pesticide: 2,
+    starter_flag: 1,
+});
 import { getLevelBandRewards, getLevelFromXp } from '../systems/progression';
 
 // Initial game state
@@ -25,11 +33,7 @@ export const initialState = {
 
     // Game objects
     plots: initializePlots(3),
-    inventory: {
-        fertilizer: 1,
-        water_boost: 1,
-        starter_flag: 1,
-    },
+    inventory: { ...STARTER_INVENTORY },
     buildings: {},
     livestock: {
         animals: [],

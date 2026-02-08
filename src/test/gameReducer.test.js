@@ -3,6 +3,17 @@ import { gameReducer, initialState } from '../components/farm-sim/context/GameRe
 import { GAME_ACTIONS } from '../components/farm-sim/context/GameActions';
 
 describe('gameReducer economy guards', () => {
+
+  it('bootstraps a starter kit without pre-harvest stockpile bloat', () => {
+    expect(initialState.inventory).toMatchObject({
+      lettuce: 4,
+      carrot: 3,
+      fertilizer: 2,
+      pesticide: 2,
+      starter_flag: 1,
+    });
+    expect(initialState.inventory.water_boost || 0).toBe(0);
+  });
   it('clamps coins to non-negative finite values', () => {
     const next = gameReducer(initialState, {
       type: GAME_ACTIONS.SET_COINS,
