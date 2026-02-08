@@ -128,7 +128,7 @@ const SettingsTab = memo(() => {
   };
 
   const handleResetGame = () => {
-    if (window.confirm('Are you sure you want to reset your farm? This cannot be undone!')) {
+    if (window.confirm('Reset your farm to a fresh start? This cannot be undone. New saves include a small starter kit (seeds + crop care tools).')) {
       try {
         localStorage.removeItem('farm_sim_enhanced_v2');
         window.location.reload();
