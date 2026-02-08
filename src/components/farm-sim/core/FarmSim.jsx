@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { GameProvider, useGame } from '../context/GameContext';
 import { TickProvider } from '../context/TickContext';
 
@@ -10,16 +10,13 @@ import NavBar, { NAV_SECTIONS } from '../ui/NavBar';
 import NotificationSystem from '../ui/NotificationSystem';
 import { ParticleEffectsManager } from '../ui/ParticleEffect';
 import FPSCounter from '../ui/FPSCounter';
-import PerformanceOverlay from '../ui/PerformanceOverlay';
-import DebugStressPanel from '../ui/DebugStressPanel';
-import QAModePanel from '../ui/QAModePanel';
 import Tutorial from '../ui/Tutorial';
 import WhatsNewModal from '../ui/WhatsNewModal';
 import PremiumLockModal from '../ui/PremiumLockModal';
 import WeatherEffects from '../ui/WeatherEffects';
 import { logDebugAction } from '../../../utils/debugTools';
 import { getFarmTheme, getFarmThemeVars } from '../../../data/farmThemes';
-import { isDevelopmentMode } from '../../../config/release';
+import { isDevelopmentMode, shouldShowDebugTools } from '../../../config/release';
 import { TIME_OF_DAY_VISUALS, VISUAL_WEATHER_ROTATION } from '../../../data/cozyExpansion';
 import { getDayKey } from '../../../systems/almanac';
 
@@ -36,6 +33,10 @@ import { FishingSystem } from '../systems/FishingSystem';
 import { getSoundSystem } from '../systems/SoundSystem';
 import { getMusicSystem } from '../systems/MusicSystem';
 
+const PerformanceOverlay = lazy(() => import('../ui/PerformanceOverlay'));
+const DebugStressPanel = lazy(() => import('../ui/DebugStressPanel'));
+const QAModePanel = lazy(() => import('../ui/QAModePanel'));
+
 /**
  * Main FarmSim Component (Orchestrator)
  * Manages game systems, update loops, and initialization
@@ -43,6 +44,12 @@ import { getMusicSystem } from '../systems/MusicSystem';
  */
 function FarmSimCore() {
   const { state, actions } = useGame();
+
+  const debugToolsAllowed = shouldShowDebugTools();
+  const debugQueryEnabled = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('debug') === '1';
+  }, []);
 
   // Navigation state for new consolidated nav
   const [activeSection, setActiveSection] = useState('farm');
@@ -561,14 +568,18 @@ function FarmSimCore() {
       {/* FPS Overlay */}
       <FPSCounter />
 
-      {/* Performance Overlay (dev, toggle with `) */}
-      <PerformanceOverlay />
+      {debugToolsAllowed && (
+        <Suspense fallback={null}>
+          {/* Performance Overlay (dev, toggle with `) */}
+          <PerformanceOverlay />
 
-      {/* Debug Stress Panel (?debug=1) */}
-      <DebugStressPanel />
+          {/* Debug Stress Panel (?debug=1) */}
+          {debugQueryEnabled ? <DebugStressPanel /> : null}
 
-      {/* QA Mode Panel (?debug=1) */}
-      <QAModePanel />
+          {/* QA Mode Panel (?debug=1) */}
+          {debugQueryEnabled ? <QAModePanel /> : null}
+        </Suspense>
+      )}
 
       {/* Onboarding Tutorial (auto-shows for new players) */}
       <Tutorial />

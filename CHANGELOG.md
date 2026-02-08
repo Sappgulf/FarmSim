@@ -8,6 +8,20 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
+## [5.5.3] - 2026-02-08
+### Planned (2026-02-08) — Sprint G15: Debug Bundle Isolation + Version Alignment
+- **Scope:** frontend, performance, release metadata
+- **What:** isolate heavy debug/QA panels behind lazy loading so production boot avoids downloading QA suites by default, then align app/package version metadata to the new release.
+- **Why:** reduce initial bundle pressure from debug-only code paths and keep displayed/versioned release metadata consistent.
+- **Verification:** Baseline run completed with `npm run test -- --run` (53/53 tests passing) and `npm run build` (pass; main chunk warning present at 541.44 kB).
+
+### Implemented (2026-02-08) — Sprint G15: Debug Bundle Isolation + Version Alignment
+- **Scope:** frontend, performance, release metadata
+- **What:** converted `PerformanceOverlay`, `DebugStressPanel`, and `QAModePanel` to lazy imports in `FarmSim`, gated debug-only panels behind `?debug=1`, and kept all debug tooling fully disabled in release mode.
+- **What:** bumped `APP_VERSION` and `package.json` version from `5.5.0` to `5.5.3` to align runtime and package metadata.
+- **Why:** shrink default production payload by splitting dev/QA tooling into on-demand chunks and keep release identifiers consistent across app surfaces.
+- **Verification:** `npm run test -- --run` (pass), `npm run build` (pass; main bundle reduced from 541.44 kB to 491.88 kB).
+
 ## [5.5.2] - 2026-02-07
 ### Planned (2026-02-07) — Sprint G14: Farm Identity Customization Binding
 - **Scope:** frontend, UX polish
