@@ -8,6 +8,7 @@ import { getCropsByLevel, CROP_CATEGORIES } from '../../constants/cropData';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { getSoilAnalyzerEnabled } from '../../../../utils/farmUpgrades';
 import { getDailyCropFocus } from '../../../../utils/dailyFocus';
+import { SUPPLY_UNIT_COSTS } from '../../../../utils/supplies';
 
 // Farming Tab Component
 const FarmingTab = memo(() => {
@@ -109,41 +110,49 @@ const FarmingTab = memo(() => {
         }
         break;
       case 'Fertilize All':
-        const fertilizablePlots = plotsArray.length;
-        const maxFertilizations = Math.floor(state.coins / 15);
-        if (maxFertilizations > 0) {
-          actions.fertilizeAllPlots();
-          const actualFertilizations = Math.min(fertilizablePlots, maxFertilizations);
+        {
+          const result = actions.fertilizeAllPlots?.();
+          if (!result || !result.applied) {
+            actions.addNotification({
+              message: `Not enough fertilizer or coins. Fertilizer costs ${SUPPLY_UNIT_COSTS.fertilizer}🪙 each in the shop.`,
+              type: 'error'
+            });
+            break;
+          }
+          const parts = [];
+          if (result.usedFromInventory) parts.push(`used ${result.usedFromInventory} fertilizer`);
+          if (result.boughtUnits) parts.push(`bought ${result.boughtUnits} (-${result.coinCost}🪙)`);
           actions.addNotification({
-            message: `🌱 Fertilized ${actualFertilizations} plots! (-${actualFertilizations * 15}🪙)`,
+            message: `🌱 Fertilized ${result.applied} plots${parts.length ? ` (${parts.join(', ')})` : ''}!`,
             type: 'success'
-          });
-        } else {
-          actions.addNotification({
-            message: `Not enough coins! Need at least 15🪙 for one plot.`,
-            type: 'error'
           });
         }
         break;
       case 'Pesticide All':
-        const diseasedCount = plotsArray.filter(p => p.disease).length;
-        const maxTreatments = Math.floor(state.coins / 20);
-        if (diseasedCount > 0 && maxTreatments > 0) {
-          actions.treatAllDiseases();
-          const actualTreatments = Math.min(diseasedCount, maxTreatments);
+        {
+          const diseasedCount = plotsArray.filter(p => p.disease).length;
+          if (diseasedCount === 0) {
+            actions.addNotification({
+              message: `No diseased crops to treat!`,
+              type: 'info'
+            });
+            break;
+          }
+
+          const result = actions.treatAllDiseases?.();
+          if (!result || !result.applied) {
+            actions.addNotification({
+              message: `Not enough pesticide or coins. Pesticide costs ${SUPPLY_UNIT_COSTS.pesticide}🪙 each in the shop.`,
+              type: 'error'
+            });
+            break;
+          }
+          const parts = [];
+          if (result.usedFromInventory) parts.push(`used ${result.usedFromInventory} pesticide`);
+          if (result.boughtUnits) parts.push(`bought ${result.boughtUnits} (-${result.coinCost}🪙)`);
           actions.addNotification({
-            message: `🐛 Treated ${actualTreatments} diseased crops! (-${actualTreatments * 20}🪙)`,
+            message: `🐛 Treated ${result.applied} diseased crops${parts.length ? ` (${parts.join(', ')})` : ''}!`,
             type: 'success'
-          });
-        } else if (diseasedCount === 0) {
-          actions.addNotification({
-            message: `No diseased crops to treat!`,
-            type: 'info'
-          });
-        } else {
-          actions.addNotification({
-            message: `Not enough coins! Need at least 20🪙 for one treatment.`,
-            type: 'error'
           });
         }
         break;

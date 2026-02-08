@@ -9,6 +9,7 @@ import {
   isItemUnlocked,
   isPremiumModeEnabled,
 } from '../../entitlements/EntitlementManager';
+import { SUPPLY_UNIT_COSTS } from '../../../../utils/supplies';
 
 const DECOR_CATEGORIES = [
   { id: 'all', label: 'All' },
@@ -45,8 +46,8 @@ const ShopTab = memo(() => {
 
   const shopItems = useMemo(() => ({
     supplies: [
-      { id: 'fertilizer', name: 'Fertilizer', emoji: '🌱', cost: 8, description: 'Boosts crop growth by 25%', effect: '+25% growth speed' },
-      { id: 'pesticide', name: 'Pesticide', emoji: '🐛', cost: 6, description: 'Eliminates crop diseases', effect: 'Cure diseases' },
+      { id: 'fertilizer', name: 'Fertilizer', emoji: '🌱', cost: SUPPLY_UNIT_COSTS.fertilizer, description: 'Consumable supply for fertilizing plots', effect: 'Use in Farming quick actions' },
+      { id: 'pesticide', name: 'Pesticide', emoji: '🐛', cost: SUPPLY_UNIT_COSTS.pesticide, description: 'Consumable supply for treating diseased crops', effect: 'Use in Farming quick actions' },
       { id: 'water_boost', name: 'Water Boost', emoji: '💧', cost: 5, description: 'Maintains water level', effect: '+100% water' },
     ],
     tools: [

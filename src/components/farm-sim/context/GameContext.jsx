@@ -56,6 +56,7 @@ import {
   getCozyGoalRewardLabel,
   isCozyGoalSatisfied,
 } from '../../../utils/cozyGoals';
+import { SUPPLY_UNIT_COSTS, planSupplyUsage } from '../../../utils/supplies';
 
 const rollChance = (chance = 0) => Math.random() < chance;
 
@@ -1475,13 +1476,20 @@ export function GameProvider({ children }) {
 
     fertilizeAllPlots: () => {
       if (stateRef.current.ghostVisit?.active) return false;
-      const plots = stateRef.current.plots || [];
-      const costPerPlot = 15;
-      const maxFertilizations = Math.min(plots.length, Math.floor(stateRef.current.coins / costPerPlot));
-      if (maxFertilizations <= 0) return;
+      const currentState = stateRef.current;
+      const plots = Array.isArray(currentState.plots) ? currentState.plots : [];
+      const requestedUnits = plots.length;
+      const unitCost = SUPPLY_UNIT_COSTS.fertilizer;
+      const planned = planSupplyUsage({
+        inventoryCount: currentState.inventory?.fertilizer || 0,
+        coins: currentState.coins || 0,
+        unitCost,
+        requestedUnits,
+      });
+      if (planned.appliedUnits <= 0) return { applied: 0, reason: 'insufficient' };
 
       const updatedPlots = plots.map((plot, index) => {
-        if (index >= maxFertilizations) return plot;
+        if (index >= planned.appliedUnits) return plot;
         return {
           ...plot,
           soilFertility: Math.min(1.5, (plot.soilFertility || 1.0) + 0.3),
@@ -1491,24 +1499,50 @@ export function GameProvider({ children }) {
       });
 
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
-      dispatch({
-        type: GAME_ACTIONS.SET_COINS,
-        payload: (coins) => Math.max(0, coins - (maxFertilizations * costPerPlot))
+      if (planned.coinCost > 0) {
+        actionsRef.current?.spendMoney(planned.coinCost);
+      }
+      if (planned.usedFromInventory > 0) {
+        dispatch({
+          type: GAME_ACTIONS.UPDATE_INVENTORY,
+          payload: (inventory) => ({
+            ...(inventory || {}),
+            fertilizer: Math.max(0, Math.floor(Number(inventory?.fertilizer || 0)) - planned.usedFromInventory),
+          }),
+        });
+      }
+      logDebugAction('fertilize_all', {
+        count: planned.appliedUnits,
+        usedFromInventory: planned.usedFromInventory,
+        boughtUnits: planned.boughtUnits,
+        coinCost: planned.coinCost,
       });
-      logDebugAction('fertilize_all', { count: maxFertilizations });
+      return {
+        applied: planned.appliedUnits,
+        usedFromInventory: planned.usedFromInventory,
+        boughtUnits: planned.boughtUnits,
+        coinCost: planned.coinCost,
+      };
     },
 
     treatAllDiseases: () => {
       if (stateRef.current.ghostVisit?.active) return false;
-      const plots = stateRef.current.plots || [];
+      const currentState = stateRef.current;
+      const plots = Array.isArray(currentState.plots) ? currentState.plots : [];
       const diseasedIndexes = plots
         .map((plot, index) => (plot?.disease ? index : -1))
         .filter((index) => index !== -1);
-      const costPerPlot = 20;
-      const maxTreatments = Math.min(diseasedIndexes.length, Math.floor(stateRef.current.coins / costPerPlot));
-      if (maxTreatments <= 0) return;
+      const requestedUnits = diseasedIndexes.length;
+      const unitCost = SUPPLY_UNIT_COSTS.pesticide;
+      const planned = planSupplyUsage({
+        inventoryCount: currentState.inventory?.pesticide || 0,
+        coins: currentState.coins || 0,
+        unitCost,
+        requestedUnits,
+      });
+      if (planned.appliedUnits <= 0) return { applied: 0, reason: 'insufficient' };
 
-      const treatSet = new Set(diseasedIndexes.slice(0, maxTreatments));
+      const treatSet = new Set(diseasedIndexes.slice(0, planned.appliedUnits));
       const updatedPlots = plots.map((plot, index) => {
         if (!treatSet.has(index)) return plot;
         return {
@@ -1520,11 +1554,30 @@ export function GameProvider({ children }) {
       });
 
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
-      dispatch({
-        type: GAME_ACTIONS.SET_COINS,
-        payload: (coins) => Math.max(0, coins - (maxTreatments * costPerPlot))
+      if (planned.coinCost > 0) {
+        actionsRef.current?.spendMoney(planned.coinCost);
+      }
+      if (planned.usedFromInventory > 0) {
+        dispatch({
+          type: GAME_ACTIONS.UPDATE_INVENTORY,
+          payload: (inventory) => ({
+            ...(inventory || {}),
+            pesticide: Math.max(0, Math.floor(Number(inventory?.pesticide || 0)) - planned.usedFromInventory),
+          }),
+        });
+      }
+      logDebugAction('treat_all_diseases', {
+        count: planned.appliedUnits,
+        usedFromInventory: planned.usedFromInventory,
+        boughtUnits: planned.boughtUnits,
+        coinCost: planned.coinCost,
       });
-      logDebugAction('treat_all_diseases', { count: maxTreatments });
+      return {
+        applied: planned.appliedUnits,
+        usedFromInventory: planned.usedFromInventory,
+        boughtUnits: planned.boughtUnits,
+        coinCost: planned.coinCost,
+      };
     },
   }), []); // dispatch is stable
 

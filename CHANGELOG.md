@@ -8,6 +8,20 @@ Guiding rules:
 - Include a short “Engineering Notes” section when changes affect performance, saves, or architecture.
 - Every entry should be auditable (what changed, where, why).
 
+## [5.5.4] - 2026-02-08
+### Planned (2026-02-08) — Sprint G17: Supplies-Backed Bulk Actions
+- **Scope:** frontend, gameplay economy, UX polish, tests
+- **What:** make Farming quick actions consume (or auto-buy) `fertilizer` and `pesticide` supplies instead of hard-coded coin-only costs, and align Shop supply pricing to the same unit costs.
+- **Why:** supplies were purchasable/visible in inventory but not actually used by gameplay actions; this makes the Shop loop and starter kit items meaningful.
+- **Verification:** run full test suite and production build.
+
+### Implemented (2026-02-08) — Sprint G17: Supplies-Backed Bulk Actions
+- **Scope:** frontend, gameplay economy, UX polish, tests
+- **What:** introduced `planSupplyUsage()` with canonical unit costs (`fertilizer`: 15🪙, `pesticide`: 20🪙) and wired `fertilizeAllPlots` / `treatAllDiseases` to consume inventory supplies first, then auto-buy the remainder with coins (via `spendMoney`) when needed.
+- **What:** updated Shop supply pricing and Farming quick-action copy to report how many supplies were used vs auto-bought.
+- **Why:** closes a core “items exist but don’t do anything” gap while keeping bulk actions cozy and one-tap.
+- **Verification:** `npm run test -- --run` (pass; 57/57), `npm run build` (pass).
+
 ## [5.5.3] - 2026-02-08
 ### Planned (2026-02-08) — Sprint G15: Debug Bundle Isolation + Version Alignment
 - **Scope:** frontend, performance, release metadata
