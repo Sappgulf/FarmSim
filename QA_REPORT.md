@@ -54,3 +54,18 @@
 - Difficulty sanity: verify growth/minigame challenge tightens gently with no failure penalties.
 - Stress: rapid tab switching, notification spam, plot fill/harvest cycles, festival minigame open/close.
 - Save/load heavy state: no level/currency loss, no console errors.
+
+## Polish + Stability QA (v5.5.4 / Sprint G19)
+### Automated
+- `npm run test -- --run`
+- `npm run build`
+
+### QA harness additions
+- Added `mini_game_stress_10x` (open/close fishing flow 10x).
+- Added `offline_load_pwa_sanity` (local save restore with service worker API sanity check).
+
+### Manual checklist
+- Verify one-time context hints appear once and do not repeat after trigger.
+- Verify dawn/night ambient overlays are subtle and disabled with reduced motion.
+- Verify harvest bloom appears on harvest and does not persist.
+- Verify trinket decor placement/removal works with existing save data.

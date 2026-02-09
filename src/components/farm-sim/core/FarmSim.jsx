@@ -507,6 +507,7 @@ function FarmSimCore() {
 
   const activeTheme = getFarmTheme(state.farmTheme);
   const themeVars = getFarmThemeVars(activeTheme);
+  const reducedMotionEnabled = state.settings?.reducedMotion === true;
 
   return (
     <div
@@ -518,6 +519,12 @@ function FarmSimCore() {
         className="pointer-events-none absolute inset-0 z-[1] transition-colors duration-700"
         style={{ backgroundColor: TIME_OF_DAY_VISUALS[timePeriod]?.tint || 'transparent' }}
       />
+      {!reducedMotionEnabled && timePeriod === 'morning' && (
+        <div className="ambient-vfx ambient-vfx--dawn" aria-hidden="true" />
+      )}
+      {!reducedMotionEnabled && timePeriod === 'night' && (
+        <div className="ambient-vfx ambient-vfx--night" aria-hidden="true" />
+      )}
       <WeatherEffects weather={state.cozyExpansion?.visualState?.weather || state.weather} intensity={0.45} />
 
       {/* Performance monitoring (dev only) */}

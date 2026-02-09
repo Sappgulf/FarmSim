@@ -353,6 +353,8 @@ export function migrateSaveData(savedData) {
             ? migratedData.cozyExpansion.farmTitles.activeId
             : 'home_grower';
         migratedData.cozyExpansion.visualState = ensureObject(migratedData.cozyExpansion.visualState, { weather: 'sunny', lastPeriodKey: null, lastWeeklySpecialDayKey: null });
+        migratedData.cozyExpansion.contextHints = ensureObject(migratedData.cozyExpansion.contextHints, { dismissed: {} });
+        migratedData.cozyExpansion.contextHints.dismissed = ensureObject(migratedData.cozyExpansion.contextHints.dismissed, {});
         migratedData.cozyExpansion.visualState.weather = typeof migratedData.cozyExpansion.visualState.weather === 'string' ? migratedData.cozyExpansion.visualState.weather : 'sunny';
         migratedData.cozyExpansion.visualState.lastPeriodKey = typeof migratedData.cozyExpansion.visualState.lastPeriodKey === 'string' ? migratedData.cozyExpansion.visualState.lastPeriodKey : null;
         migratedData.cozyExpansion.visualState.lastWeeklySpecialDayKey = typeof migratedData.cozyExpansion.visualState.lastWeeklySpecialDayKey === 'string' ? migratedData.cozyExpansion.visualState.lastWeeklySpecialDayKey : null;
@@ -525,6 +527,7 @@ export function migrateSaveData(savedData) {
             showFPS: ensureBoolean(migratedData.settings?.showFPS, false),
             showAlmanacHints: ensureBoolean(migratedData.settings?.showAlmanacHints, true),
             showWelcomeBackSummary: ensureBoolean(migratedData.settings?.showWelcomeBackSummary, true),
+            showTooltips: ensureBoolean(migratedData.settings?.showTooltips, true),
         };
 
         migratedData.selectedDecoration = typeof migratedData.selectedDecoration === 'string'

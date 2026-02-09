@@ -1325,3 +1325,76 @@
 .slider:disabled { opacity: 0.5; cursor: not-allowed; }
 .slider:disabled::-webkit-slider-thumb { background: #9ca3af; cursor: not-allowed; }
 .slider:disabled::-moz-range-thumb { background: #9ca3af; cursor: not-allowed; }
+
+/* Ambient polish + low-cost decorative motion */
+@keyframes trinket-idle-float {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-2px) scale(1.02); }
+}
+
+@keyframes ambient-dawn-drift {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 0.35; }
+  100% { transform: translateY(-40px) translateX(18px); opacity: 0; }
+}
+
+@keyframes ambient-night-twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.18); }
+}
+
+@keyframes harvest-bloom {
+  0% { opacity: 0; transform: scale(0.95); }
+  40% { opacity: 0.45; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+
+.trinket-idle {
+  animation: trinket-idle-float 2.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.ambient-vfx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ambient-vfx--dawn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.45) 0, rgba(255,255,255,0) 40%);
+  animation: ambient-dawn-drift 4.2s linear infinite;
+}
+
+.ambient-vfx--night::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(255,255,255,0.38) 0 2px, transparent 3px),
+    radial-gradient(circle at 67% 35%, rgba(255,255,255,0.32) 0 2px, transparent 3px),
+    radial-gradient(circle at 44% 70%, rgba(255,255,255,0.28) 0 2px, transparent 3px);
+  animation: ambient-night-twinkle 3s ease-in-out infinite;
+}
+
+.harvest-bloom-overlay {
+  position: absolute;
+  inset: 8%;
+  border-radius: 16px;
+  background: radial-gradient(circle, rgba(255, 249, 196, 0.7) 0%, rgba(255, 249, 196, 0) 65%);
+  pointer-events: none;
+  animation: harvest-bloom 550ms ease-out forwards;
+  z-index: 5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trinket-idle,
+  .ambient-vfx--dawn::before,
+  .ambient-vfx--night::before,
+  .harvest-bloom-overlay {
+    animation: none !important;
+  }
+}
