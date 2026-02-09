@@ -4,6 +4,32 @@ import FarmSim from "./components/farm-sim/core/FarmSim";
 import GameErrorBoundary from "./components/GameErrorBoundary";
 import "./index.css";
 
+// Global error capture buffer for QA and postmortems
+window.__farmErrorBuffer = window.__farmErrorBuffer || [];
+const pushGlobalError = (entry) => {
+  const buffer = window.__farmErrorBuffer || [];
+  buffer.push({ at: Date.now(), ...entry });
+  window.__farmErrorBuffer = buffer.slice(-100);
+};
+
+window.addEventListener('error', (event) => {
+  pushGlobalError({
+    type: 'error',
+    message: event?.message || 'Unknown error',
+    source: event?.filename || 'unknown',
+    line: event?.lineno || null,
+    column: event?.colno || null,
+  });
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event?.reason;
+  pushGlobalError({
+    type: 'unhandledrejection',
+    message: reason?.message || String(reason || 'Unknown rejection'),
+  });
+});
+
 // Register service worker for PWA/offline support (production only)
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

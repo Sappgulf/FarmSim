@@ -175,3 +175,9 @@
   - `getEconomySinkModifier(level)`
 - Hidden-tab performance guard: system loop pauses via `document.visibilityState` in `core/FarmSim.jsx`.
 - Debug instrumentation: `window.__farmPerf` tracks loop count and max update ms in development mode only.
+
+## Sprint G19 Performance Notes
+- Added ambient polish using CSS-only animation layers (no new per-tick JS loops).
+- Added trinket idle motion via `transform` animation to keep updates on compositor path.
+- Added transient harvest bloom effect driven by harvest events, with timer cleanup and no persistent loop.
+- Added global error capture ring buffer (`window.__farmErrorBuffer`) capped at 100 entries to improve diagnostics without memory growth.
