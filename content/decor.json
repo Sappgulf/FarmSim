@@ -4,426 +4,646 @@
     {
       "id": "spring_blossoms",
       "name": "Spring Blossom Planter",
-      "emoji": "🌸",
+      "emoji": "\ud83c\udf38",
       "cost": 40,
       "description": "Fresh blossoms to brighten the rows.",
       "category": "seasonal",
       "season": "spring",
-      "tags": ["seasonal", "spring"],
+      "tags": [
+        "seasonal",
+        "spring"
+      ],
       "rarity": "common",
-      "seasonTags": ["spring"],
-      "icon": "🌸",
-      "placementRules": { "gridSnap": true }
+      "seasonTags": [
+        "spring"
+      ],
+      "icon": "\ud83c\udf38",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "summer_streamers",
       "name": "Summer Streamers",
-      "emoji": "🎏",
+      "emoji": "\ud83c\udf8f",
       "cost": 55,
       "description": "Breezy banners for warm afternoons.",
       "category": "seasonal",
       "season": "summer",
-      "tags": ["seasonal", "summer"],
+      "tags": [
+        "seasonal",
+        "summer"
+      ],
       "rarity": "uncommon",
-      "seasonTags": ["summer"],
-      "icon": "🎏",
-      "placementRules": { "gridSnap": true }
+      "seasonTags": [
+        "summer"
+      ],
+      "icon": "\ud83c\udf8f",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "autumn_wreath",
       "name": "Autumn Harvest Wreath",
-      "emoji": "🍁",
+      "emoji": "\ud83c\udf41",
       "cost": 65,
       "description": "Amber leaves to celebrate the fall.",
       "category": "seasonal",
       "season": "autumn",
-      "tags": ["seasonal", "autumn"],
+      "tags": [
+        "seasonal",
+        "autumn"
+      ],
       "rarity": "uncommon",
-      "seasonTags": ["autumn"],
-      "icon": "🍁",
-      "placementRules": { "gridSnap": true }
+      "seasonTags": [
+        "autumn"
+      ],
+      "icon": "\ud83c\udf41",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "winter_star_lantern",
       "name": "Star Lantern",
-      "emoji": "🏮",
+      "emoji": "\ud83c\udfee",
       "cost": 75,
       "description": "A soft glow for snowy nights.",
       "category": "lighting",
       "season": "winter",
-      "tags": ["lighting", "seasonal", "winter"],
+      "tags": [
+        "lighting",
+        "seasonal",
+        "winter"
+      ],
       "rarity": "rare",
-      "seasonTags": ["winter"],
-      "icon": "🏮",
-      "placementRules": { "gridSnap": true }
+      "seasonTags": [
+        "winter"
+      ],
+      "icon": "\ud83c\udfee",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "cozy_bench",
       "name": "Cozy Bench",
-      "emoji": "🪑",
+      "emoji": "\ud83e\ude91",
       "cost": 60,
       "description": "A quiet spot to watch the fields.",
       "category": "cozy",
-      "tags": ["cozy"],
+      "tags": [
+        "cozy"
+      ],
       "rarity": "common",
       "seasonTags": [],
-      "icon": "🪑",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83e\ude91",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "birdbath",
       "name": "Birdbath",
-      "emoji": "⛲",
+      "emoji": "\u26f2",
       "cost": 70,
       "description": "Invites feathered friends to visit.",
       "category": "cozy",
-      "tags": ["cozy", "water"],
+      "tags": [
+        "cozy",
+        "water"
+      ],
       "rarity": "uncommon",
       "seasonTags": [],
-      "icon": "⛲",
-      "placementRules": { "gridSnap": true }
+      "icon": "\u26f2",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "stone_path",
       "name": "Stone Path",
-      "emoji": "🪨",
+      "emoji": "\ud83e\udea8",
       "cost": 30,
       "description": "Neat paths between garden beds.",
       "category": "path",
-      "tags": ["path"],
+      "tags": [
+        "path"
+      ],
       "rarity": "common",
       "seasonTags": [],
-      "icon": "🪨",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83e\udea8",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "picket_fence",
       "name": "Picket Fence",
-      "emoji": "🪵",
+      "emoji": "\ud83e\udeb5",
       "cost": 35,
       "description": "A charming fence for tidy borders.",
       "category": "fence",
-      "tags": ["fence"],
+      "tags": [
+        "fence"
+      ],
       "rarity": "common",
       "seasonTags": [],
-      "icon": "🪵",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83e\udeb5",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "flower_box",
       "name": "Flower Box",
-      "emoji": "🌺",
+      "emoji": "\ud83c\udf3a",
       "cost": 45,
       "description": "A window box overflowing with petals.",
       "category": "garden",
-      "tags": ["garden", "cozy"],
+      "tags": [
+        "garden",
+        "cozy"
+      ],
       "rarity": "common",
       "seasonTags": [],
-      "icon": "🌺",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83c\udf3a",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "herb_planter",
       "name": "Herb Planter",
-      "emoji": "🌿",
+      "emoji": "\ud83c\udf3f",
       "cost": 50,
       "description": "Fragrant herbs in a rustic planter.",
       "category": "garden",
-      "tags": ["garden"],
+      "tags": [
+        "garden"
+      ],
       "rarity": "common",
       "seasonTags": [],
-      "icon": "🌿",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83c\udf3f",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "sunflower_row",
       "name": "Sunflower Row",
-      "emoji": "🌻",
+      "emoji": "\ud83c\udf3b",
       "cost": 55,
       "description": "Tall sunflowers lining the field edge.",
       "category": "garden",
-      "tags": ["garden", "seasonal", "summer"],
+      "tags": [
+        "garden",
+        "seasonal",
+        "summer"
+      ],
       "rarity": "uncommon",
-      "seasonTags": ["summer"],
-      "icon": "🌻",
-      "placementRules": { "gridSnap": true }
+      "seasonTags": [
+        "summer"
+      ],
+      "icon": "\ud83c\udf3b",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "rose_trellis",
       "name": "Rose Trellis",
-      "emoji": "🌹",
+      "emoji": "\ud83c\udf39",
       "cost": 80,
       "description": "Climbing roses on a painted trellis.",
       "category": "garden",
-      "tags": ["garden"],
+      "tags": [
+        "garden"
+      ],
       "rarity": "uncommon",
       "seasonTags": [],
-      "icon": "🌹",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83c\udf39",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "mushroom_log",
       "name": "Mushroom Log",
-      "emoji": "🍄",
+      "emoji": "\ud83c\udf44",
       "cost": 40,
       "description": "A mossy log with friendly mushrooms.",
       "category": "garden",
-      "tags": ["garden", "cozy"],
+      "tags": [
+        "garden",
+        "cozy"
+      ],
       "rarity": "common",
       "seasonTags": [],
-      "icon": "🍄",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83c\udf44",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "fairy_lights",
       "name": "Fairy Lights",
-      "emoji": "✨",
+      "emoji": "\u2728",
       "cost": 65,
       "description": "Twinkling lights strung across the plot.",
       "category": "lighting",
-      "tags": ["lighting", "cozy"],
+      "tags": [
+        "lighting",
+        "cozy"
+      ],
       "rarity": "uncommon",
       "seasonTags": [],
-      "icon": "✨",
-      "placementRules": { "gridSnap": true }
+      "icon": "\u2728",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "paper_lantern",
       "name": "Paper Lantern",
-      "emoji": "🪔",
+      "emoji": "\ud83e\ude94",
       "cost": 50,
       "description": "A warm paper lantern on a post.",
       "category": "lighting",
-      "tags": ["lighting"],
+      "tags": [
+        "lighting"
+      ],
       "rarity": "common",
       "seasonTags": [],
-      "icon": "🪔",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83e\ude94",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "candle_jar",
       "name": "Candle Jar",
-      "emoji": "🕯️",
+      "emoji": "\ud83d\udd6f\ufe0f",
       "cost": 35,
       "description": "A glass jar flickering by the path.",
       "category": "lighting",
-      "tags": ["lighting"],
+      "tags": [
+        "lighting"
+      ],
       "rarity": "common",
       "seasonTags": [],
-      "icon": "🕯️",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83d\udd6f\ufe0f",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "wishing_well",
       "name": "Wishing Well",
-      "emoji": "🪣",
+      "emoji": "\ud83e\udea3",
       "cost": 120,
       "description": "Toss a coin and make a wish.",
       "category": "cozy",
-      "tags": ["cozy", "water"],
+      "tags": [
+        "cozy",
+        "water"
+      ],
       "rarity": "rare",
       "seasonTags": [],
-      "icon": "🪣",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83e\udea3",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "hammock",
       "name": "Garden Hammock",
-      "emoji": "🛏️",
+      "emoji": "\ud83d\udecf\ufe0f",
       "cost": 85,
       "description": "Strung between two old trees.",
       "category": "cozy",
-      "tags": ["cozy"],
+      "tags": [
+        "cozy"
+      ],
       "rarity": "uncommon",
       "seasonTags": [],
-      "icon": "🛏️",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83d\udecf\ufe0f",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "rocking_chair",
       "name": "Rocking Chair",
-      "emoji": "🪑",
+      "emoji": "\ud83e\ude91",
       "cost": 70,
       "description": "A porch-style rocker for long evenings.",
       "category": "cozy",
-      "tags": ["cozy"],
+      "tags": [
+        "cozy"
+      ],
       "rarity": "uncommon",
       "seasonTags": [],
-      "icon": "🪑",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83e\ude91",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "wind_chime",
       "name": "Wind Chime",
-      "emoji": "🎐",
+      "emoji": "\ud83c\udf90",
       "cost": 45,
       "description": "Soft tones on a breezy afternoon.",
       "category": "cozy",
-      "tags": ["cozy"],
+      "tags": [
+        "cozy"
+      ],
       "rarity": "common",
       "seasonTags": [],
-      "icon": "🎐",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83c\udf90",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "brick_path",
       "name": "Brick Path",
-      "emoji": "🧱",
+      "emoji": "\ud83e\uddf1",
       "cost": 40,
       "description": "Warm-toned bricks for a rustic trail.",
       "category": "path",
-      "tags": ["path"],
+      "tags": [
+        "path"
+      ],
       "rarity": "common",
       "seasonTags": [],
-      "icon": "🧱",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83e\uddf1",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "mossy_stepping_stones",
       "name": "Mossy Stepping Stones",
-      "emoji": "🟢",
+      "emoji": "\ud83d\udfe2",
       "cost": 55,
       "description": "Natural stones with green moss edges.",
       "category": "path",
-      "tags": ["path", "garden"],
+      "tags": [
+        "path",
+        "garden"
+      ],
       "rarity": "uncommon",
       "seasonTags": [],
-      "icon": "🟢",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83d\udfe2",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "iron_gate",
       "name": "Iron Gate",
-      "emoji": "🚪",
+      "emoji": "\ud83d\udeaa",
       "cost": 90,
       "description": "An ornate gate for a grand entrance.",
       "category": "fence",
-      "tags": ["fence"],
+      "tags": [
+        "fence"
+      ],
       "rarity": "uncommon",
       "seasonTags": [],
-      "icon": "🚪",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83d\udeaa",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "hedge_row",
       "name": "Hedge Row",
-      "emoji": "🌳",
+      "emoji": "\ud83c\udf33",
       "cost": 50,
       "description": "A neatly trimmed green border.",
       "category": "fence",
-      "tags": ["fence", "garden"],
+      "tags": [
+        "fence",
+        "garden"
+      ],
       "rarity": "common",
       "seasonTags": [],
-      "icon": "🌳",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83c\udf33",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "scarecrow",
       "name": "Friendly Scarecrow",
-      "emoji": "🎃",
+      "emoji": "\ud83c\udf83",
       "cost": 60,
       "description": "Keeps critters at bay with a smile.",
       "category": "seasonal",
       "season": "autumn",
-      "tags": ["seasonal", "autumn"],
+      "tags": [
+        "seasonal",
+        "autumn"
+      ],
       "rarity": "common",
-      "seasonTags": ["autumn"],
-      "icon": "🎃",
-      "placementRules": { "gridSnap": true }
+      "seasonTags": [
+        "autumn"
+      ],
+      "icon": "\ud83c\udf83",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "snowman",
       "name": "Frosty Snowman",
-      "emoji": "⛄",
+      "emoji": "\u26c4",
       "cost": 55,
       "description": "A cheerful friend for cold days.",
       "category": "seasonal",
       "season": "winter",
-      "tags": ["seasonal", "winter"],
+      "tags": [
+        "seasonal",
+        "winter"
+      ],
       "rarity": "common",
-      "seasonTags": ["winter"],
-      "icon": "⛄",
-      "placementRules": { "gridSnap": true }
+      "seasonTags": [
+        "winter"
+      ],
+      "icon": "\u26c4",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "cherry_blossom_tree",
       "name": "Cherry Blossom Tree",
-      "emoji": "🌸",
+      "emoji": "\ud83c\udf38",
       "cost": 95,
       "description": "Petals drift in the spring breeze.",
       "category": "seasonal",
       "season": "spring",
-      "tags": ["seasonal", "spring", "garden"],
+      "tags": [
+        "seasonal",
+        "spring",
+        "garden"
+      ],
       "rarity": "rare",
-      "seasonTags": ["spring"],
-      "icon": "🌸",
-      "placementRules": { "gridSnap": true }
+      "seasonTags": [
+        "spring"
+      ],
+      "icon": "\ud83c\udf38",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "beach_umbrella",
       "name": "Beach Umbrella",
-      "emoji": "⛱️",
+      "emoji": "\u26f1\ufe0f",
       "cost": 70,
       "description": "Summer vibes right on the farm.",
       "category": "seasonal",
       "season": "summer",
-      "tags": ["seasonal", "summer"],
+      "tags": [
+        "seasonal",
+        "summer"
+      ],
       "rarity": "uncommon",
-      "seasonTags": ["summer"],
-      "icon": "⛱️",
-      "placementRules": { "gridSnap": true }
+      "seasonTags": [
+        "summer"
+      ],
+      "icon": "\u26f1\ufe0f",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "bee_house",
       "name": "Bee House",
-      "emoji": "🐝",
+      "emoji": "\ud83d\udc1d",
       "cost": 75,
       "description": "Happy bees buzzing among the flowers.",
       "category": "garden",
-      "tags": ["garden"],
+      "tags": [
+        "garden"
+      ],
       "rarity": "uncommon",
       "seasonTags": [],
-      "icon": "🐝",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83d\udc1d",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "garden_gnome",
       "name": "Garden Gnome",
-      "emoji": "🧙",
+      "emoji": "\ud83e\uddd9",
       "cost": 100,
       "description": "A tiny guardian watching the crops.",
       "category": "cozy",
-      "tags": ["cozy"],
+      "tags": [
+        "cozy"
+      ],
       "rarity": "rare",
       "seasonTags": [],
-      "icon": "🧙",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83e\uddd9",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "rain_barrel",
       "name": "Rain Barrel",
-      "emoji": "🛢️",
+      "emoji": "\ud83d\udee2\ufe0f",
       "cost": 55,
       "description": "Collects rainwater for your plants.",
       "category": "cozy",
-      "tags": ["cozy", "water"],
+      "tags": [
+        "cozy",
+        "water"
+      ],
       "rarity": "common",
       "seasonTags": [],
-      "icon": "🛢️",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83d\udee2\ufe0f",
+      "placementRules": {
+        "gridSnap": true
+      }
     },
     {
       "id": "butterfly_bush",
       "name": "Butterfly Bush",
-      "emoji": "🦋",
+      "emoji": "\ud83e\udd8b",
       "cost": 65,
       "description": "Attracts colorful butterflies all day.",
       "category": "garden",
-      "tags": ["garden"],
+      "tags": [
+        "garden"
+      ],
       "rarity": "uncommon",
       "seasonTags": [],
-      "icon": "🦋",
-      "placementRules": { "gridSnap": true }
+      "icon": "\ud83e\udd8b",
+      "placementRules": {
+        "gridSnap": true
+      }
+    },
+    {
+      "id": "wind_spinner",
+      "name": "Wind Spinner",
+      "emoji": "\ud83c\udf00",
+      "cost": 48,
+      "description": "A playful spinner that twirls in the breeze.",
+      "category": "garden",
+      "tags": [
+        "garden",
+        "trinket"
+      ],
+      "rarity": "common",
+      "seasonTags": [],
+      "icon": "\ud83c\udf00",
+      "placementRules": {
+        "gridSnap": true
+      }
+    },
+    {
+      "id": "tiny_pond_frog",
+      "name": "Tiny Pond Frog",
+      "emoji": "\ud83d\udc38",
+      "cost": 58,
+      "description": "A tiny ceramic frog that feels lucky.",
+      "category": "cozy",
+      "tags": [
+        "cozy",
+        "trinket"
+      ],
+      "rarity": "uncommon",
+      "seasonTags": [],
+      "icon": "\ud83d\udc38",
+      "placementRules": {
+        "gridSnap": true
+      }
+    },
+    {
+      "id": "sun_chime",
+      "name": "Sun Chime",
+      "emoji": "\u2600\ufe0f",
+      "cost": 72,
+      "description": "A warm golden chime with a gentle sway.",
+      "category": "lighting",
+      "tags": [
+        "lighting",
+        "trinket"
+      ],
+      "rarity": "uncommon",
+      "seasonTags": [],
+      "icon": "\u2600\ufe0f",
+      "placementRules": {
+        "gridSnap": true
+      }
     }
   ]
 }

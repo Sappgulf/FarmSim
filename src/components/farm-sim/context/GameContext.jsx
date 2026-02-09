@@ -910,6 +910,16 @@ export function GameProvider({ children }) {
         changed = true;
       }
 
+      if (eventType === 'context_hint_seen' && eventData.id) {
+        const contextHints = next.contextHints || { dismissed: {} };
+        const dismissed = { ...(contextHints.dismissed || {}) };
+        if (!dismissed[eventData.id]) {
+          dismissed[eventData.id] = Date.now();
+          next.contextHints = { ...contextHints, dismissed };
+          changed = true;
+        }
+      }
+
       if (eventType === 'decor_layout_changed') {
         const plots = Array.isArray(currentState.plots) ? currentState.plots : [];
         const placedIds = plots.filter((plot) => plot?.state === 'decor' && plot?.decorationId).map((plot) => plot.decorationId);

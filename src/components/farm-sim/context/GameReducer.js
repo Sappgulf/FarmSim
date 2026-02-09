@@ -88,6 +88,7 @@ export const initialState = {
         decorSets: { completed: {}, progress: {} },
         farmTitles: { unlocked: { home_grower: true }, activeId: 'home_grower' },
         visualState: { weather: 'sunny', lastPeriodKey: null, lastWeeklySpecialDayKey: null },
+        contextHints: { dismissed: {} },
     },
     almanac: {
         unlocked: {},
@@ -190,6 +191,7 @@ export const initialState = {
         animationsEnabled: true,
         showAlmanacHints: true,
         showWelcomeBackSummary: true,
+        showTooltips: true,
     },
     entitlements: {
         mode: 'free',
