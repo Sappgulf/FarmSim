@@ -9,6 +9,18 @@ Guiding rules:
 - Every entry should be auditable (what changed, where, why).
 
 ## [5.5.4] - 2026-02-08
+### Planned (2026-02-09) — Sprint G20: Bulk-Action Access Follow-up
+- **Scope:** frontend, UX polish
+- **What:** ensure bulk harvest controls (especially `Select Ready Crops`) are reachable when no plots are pre-selected.
+- **Why:** previous rail visibility required an existing selection, which blocked the shortcut in common first-use flow.
+- **Verification:** baseline run with `npm run test -- --run` and `npm run build` from Sprint G19.
+
+### Planned (2026-02-09) — Sprint G19: Polish Audit + Ambient Cohesion Pass
+- **Scope:** frontend, UX polish, performance, QA/docs
+- **What:** run a full polish audit, add low-risk trinket/ambient/context-hint improvements, harden error capture, and expand QA stress coverage.
+- **Why:** tighten visual consistency and reliability without introducing new systems or save-breaking behavior.
+- **Verification:** Baseline completed with `npm run test -- --run` (57/57 pass) and `npm run build` (pass).
+
 ### Planned (2026-02-09) — Sprint G18: Farm Grid Throughput + Harvest UX Boost
 - **Scope:** frontend, performance, UX polish
 - **What:** reduce avoidable Farm Grid recomputation/re-renders and add faster harvest-selection controls for dense farms.
@@ -476,3 +488,19 @@ Guiding rules:
 - **What:** upgraded harvest/decor particle intensity control, added stronger bulk-harvest celebration text burst, and replaced per-interaction `querySelector` lookups with cached plot refs for plant/decor/harvest particle anchoring.
 - **Why:** make harvest reward feedback feel more premium while reducing avoidable DOM query overhead in high-frequency interaction paths.
 - **Verification:** `npm run smoke-test -- --run` (pass), `npm run test -- src/test/farming.test.js src/test/smoke.test.jsx --run` (pass), `npm run build` (pass with existing npm env + Vite chunk warnings).
+
+### Implemented (2026-02-09) — Sprint G19: Polish Audit + Ambient Cohesion Pass
+- **Scope:** frontend, UX polish, performance, QA/docs
+- **What:** added `POLISH_AUDIT.md` with repo-wide polish findings, introduced decorative Farm Trinkets and a new `Trinket Nook` decor set, and improved farm copy consistency (e.g., “Selected decoration”, “Select Ready Crops”).
+- **What:** added low-cost ambient VFX layers (dawn dust, night sparkle) plus harvest bloom feedback and trinket idle motion using CSS animation paths that respect reduced-motion settings.
+- **What:** added one-time context hints wired through `cozyExpansion.contextHints.dismissed` for decor-mode and ready-harvest workflows.
+- **What:** added global `error`/`unhandledrejection` capture buffer (`window.__farmErrorBuffer`) and expanded QA harness with mini-game 10x stress and offline-load/PWA sanity checks.
+- **Why:** improve perceived quality and retention cues while keeping save compatibility and event-driven performance intact.
+- **Verification:** `npm run test -- --run` (pass; 57/57), `npm run build` (pass).
+
+### Implemented (2026-02-09) — Sprint G20: Bulk-Action Access Follow-up
+- **Scope:** frontend, UX polish
+- **What:** changed the Farm Grid bulk-action rail visibility from `selectedPlots.size > 0` to `(selectedPlots.size > 0 || hasReadyPlots)`.
+- **What:** kept `Harvest Selected` and `Clear` disabled when nothing is selected, while exposing `Select Ready Crops` whenever ready plots exist.
+- **Why:** fixes a first-use UX dead-end where players could not trigger “Select Ready Crops” unless they had already selected something manually.
+- **Verification:** `npm run test -- --run` (pass; 57/57), `npm run build` (pass).
