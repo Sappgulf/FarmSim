@@ -128,7 +128,7 @@ export function calculateDiseaseRisk(weather, plotHealth = 1.0, adjacentDiseased
   const risks = {};
   
   Object.values(DISEASE_TYPES).forEach(disease => {
-    let baseRisk = 0.02; // 2% base chance per tick
+    let baseRisk = 0.0075; // 0.75% base chance per disease-check tick
     
     // Weather modifier
     if (disease.favorableWeather.includes(weather)) {
@@ -139,7 +139,7 @@ export function calculateDiseaseRisk(weather, plotHealth = 1.0, adjacentDiseased
     baseRisk *= (2.0 - plotHealth); // 0.5 health = 3x risk
     
     // Adjacent disease pressure
-    baseRisk += adjacentDiseased * 0.05; // +5% per adjacent diseased plot
+    baseRisk += adjacentDiseased * 0.03; // +3% per adjacent diseased plot
     
     risks[disease.id] = Math.min(baseRisk, 0.5); // Cap at 50% max
   });
@@ -176,4 +176,3 @@ export default {
   calculateDiseaseRisk,
   getAdjacentPlots,
 };
-
