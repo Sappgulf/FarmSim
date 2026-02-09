@@ -9,6 +9,19 @@ Guiding rules:
 - Every entry should be auditable (what changed, where, why).
 
 ## [5.5.4] - 2026-02-08
+### Planned (2026-02-09) — Sprint G18: Farm Grid Throughput + Harvest UX Boost
+- **Scope:** frontend, performance, UX polish
+- **What:** reduce avoidable Farm Grid recomputation/re-renders and add faster harvest-selection controls for dense farms.
+- **Why:** improve responsiveness as plot count grows while giving players fewer taps for common harvest workflows.
+- **Verification:** Baseline completed with `npm run test -- --run` (57/57 pass) and `npm run build` (pass).
+
+### Implemented (2026-02-09) — Sprint G18: Farm Grid Throughput + Harvest UX Boost
+- **Scope:** frontend, performance, UX polish
+- **What:** memoized frequently reused Farm Grid derivations (active selected crop, plots-in-use count, ready-plot indexes) to avoid repeat per-render scans and prop churn.
+- **What:** added a `Select Ready` bulk-action shortcut plus ready-count visibility in the bulk action rail to speed up harvest flows on larger farms.
+- **Why:** reduce unnecessary UI work while improving one-tap harvesting ergonomics.
+- **Verification:** `npm run test -- --run` (pass; 57/57), `npm run build` (pass).
+
 ### Planned (2026-02-08) — Sprint G17: Supplies-Backed Bulk Actions
 - **Scope:** frontend, gameplay economy, UX polish, tests
 - **What:** make Farming quick actions consume (or auto-buy) `fertilizer` and `pesticide` supplies instead of hard-coded coin-only costs, and align Shop supply pricing to the same unit costs.
