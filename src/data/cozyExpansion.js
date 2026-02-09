@@ -122,6 +122,14 @@ export const DECOR_SETS = [
     titleId: 'estate_keeper',
   },
   {
+    id: 'trinket_nook',
+    name: 'Trinket Nook',
+    itemIds: ['wind_spinner', 'tiny_pond_frog', 'sun_chime'],
+    memoryId: 'trinket_nook_complete',
+    almanacPageId: 'decor_set_trinket_nook',
+    titleId: 'trinket_tender',
+  },
+  {
     id: 'four_seasons',
     name: 'Four Seasons',
     itemIds: ['cherry_blossom_tree', 'beach_umbrella', 'scarecrow', 'snowman'],
@@ -148,6 +156,7 @@ export const FARM_TITLES = {
   wildflower_warden: { id: 'wildflower_warden', name: 'Wildflower Warden', hint: 'Complete Wildflower Walk set.' },
   estate_keeper: { id: 'estate_keeper', name: 'Estate Keeper', hint: 'Complete Grand Entrance set.' },
   season_collector: { id: 'season_collector', name: 'Season Collector', hint: 'Complete Four Seasons set.' },
+  trinket_tender: { id: 'trinket_tender', name: 'Trinket Tender', hint: 'Complete Trinket Nook set.' },
   almanac_whisperer: { id: 'almanac_whisperer', name: 'Almanac Whisperer', hint: 'Unlock many Almanac pages.' },
 };
 
