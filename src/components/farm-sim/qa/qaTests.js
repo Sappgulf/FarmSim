@@ -431,6 +431,53 @@ export const QA_TESTS = [
     },
   },
   {
+    id: 'mini_game_stress_10x',
+    name: 'Mini-game Stress 10x',
+    timeoutMs: 10000,
+    run: async (ctx) => {
+      if (!TAB_IDS.includes('fishing')) {
+        return { status: 'skip', reason: 'Fishing tab not available.' };
+      }
+      const fishingSystem = ctx.systems?.fishingSystem;
+      if (!fishingSystem) {
+        return { status: 'skip', reason: 'Fishing system unavailable.' };
+      }
+      for (let i = 0; i < 10; i += 1) {
+        await ctx.switchToTab('fishing');
+        await ctx.sleep(40);
+        const result = fishingSystem.castLine();
+        if (!result?.success) {
+          throw new Error(`Cast line failed on run ${i + 1}`);
+        }
+        fishingSystem.cancelFishing?.();
+        await ctx.switchToTab('farming');
+      }
+      return { detail: 'Fishing tab opened/closed 10x without stale session state.' };
+    },
+  },
+  {
+    id: 'offline_load_pwa_sanity',
+    name: 'Offline Load PWA Sanity',
+    timeoutMs: 6000,
+    run: async (ctx) => {
+      const saveResult = saveStateToStorage(ctx.state(), {
+        key: QA_SAVE_KEY,
+        backupKey: QA_BACKUP_SAVE_KEY,
+      });
+      if (!saveResult.success) {
+        throw new Error('Could not persist save for offline load check.');
+      }
+      const loaded = loadSavedStateFromKey(QA_SAVE_KEY);
+      if (!loaded) {
+        throw new Error('Saved state was not readable from local storage fallback.');
+      }
+      if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+        return { detail: 'Local save restore path works; PWA SW API is available.' };
+      }
+      return { status: 'skip', reason: 'Service worker API unavailable in this runtime.' };
+    },
+  },
+  {
     id: 'daily_delight_idempotent',
     name: 'Daily Delight Idempotency',
     timeoutMs: 8000,
