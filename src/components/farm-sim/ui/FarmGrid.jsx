@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useRef, useState } from 'react';
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { useTick } from '../context/TickContext';
 import { Card } from '../../ui/card';
@@ -402,6 +402,22 @@ const FarmGrid = memo(() => {
   const plots = ghostActive
     ? (Array.isArray(state.ghostVisit?.snapshot?.plots) ? state.ghostVisit.snapshot.plots : [])
     : (Array.isArray(state.plots) ? state.plots : []);
+  const selectedCrop = useMemo(
+    () => CROP_DATA[state.selectedCrop] || CROP_LIST[0],
+    [state.selectedCrop]
+  );
+  const plotsInUseCount = useMemo(
+    () => plots.reduce((count, plot) => (plot?.state !== 'empty' ? count + 1 : count), 0),
+    [plots]
+  );
+  const readyPlotIndexes = useMemo(() => {
+    const indexes = [];
+    plots.forEach((plot, index) => {
+      if (plot?.state === 'ready' && plot.crop) indexes.push(index);
+    });
+    return indexes;
+  }, [plots]);
+  const hasReadyPlots = readyPlotIndexes.length > 0;
 
   const pushDecorUndo = useCallback((entry) => {
     decorUndoStack.current = [entry, ...decorUndoStack.current].slice(0, 5);
@@ -494,8 +510,6 @@ const FarmGrid = memo(() => {
       return;
     }
     // Use consolidated crop data
-    const fallbackCrop = CROP_LIST[0];
-    const selectedCrop = CROP_DATA[state.selectedCrop] || fallbackCrop;
     if (!selectedCrop) return;
 
     // Check if player has enough coins
@@ -532,7 +546,7 @@ const FarmGrid = memo(() => {
         type: 'error'
       });
     }
-  }, [actions, animationsEnabled, getPlotCenter, ghostActive, plots, state.coins, state.selectedCrop]);
+  }, [actions, animationsEnabled, getPlotCenter, ghostActive, plots, selectedCrop, state.coins]);
 
   const handleDecorate = useCallback((index) => {
     if (ghostActive) return;
@@ -790,6 +804,10 @@ const FarmGrid = memo(() => {
     setSelectedPlots(new Set(plotsArray.map((_, index) => index)));
   }, [state.plots]);
 
+  const handleSelectReady = useCallback(() => {
+    setSelectedPlots(new Set(readyPlotIndexes));
+  }, [readyPlotIndexes]);
+
   const handleClearSelection = useCallback(() => {
     setSelectedPlots(new Set());
   }, []);
@@ -813,7 +831,7 @@ const FarmGrid = memo(() => {
           )}
         </h2>
         <p className="text-gray-500 text-sm font-medium">
-          {gridSize}×{gridSize} grid • <span className="text-emerald-600">{plots.filter(p => p.state !== 'empty').length}</span> plots in use
+          {gridSize}×{gridSize} grid • <span className="text-emerald-600">{plotsInUseCount}</span> plots in use
         </p>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
           <Button
@@ -867,6 +885,7 @@ const FarmGrid = memo(() => {
                 {selectedPlots.size} plots selected
               </Badge>
               <span className="hidden sm:inline text-sm text-gray-600">Shift+Click to multi-select</span>
+              <span className="text-xs text-emerald-700 font-semibold">{readyPlotIndexes.length} ready</span>
             </div>
             <div className="flex gap-2 flex-wrap">
               <Button
@@ -875,6 +894,15 @@ const FarmGrid = memo(() => {
                 className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none min-h-[44px] touch-manipulation"
               >
                 🌾 Harvest Selected
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSelectReady}
+                variant="outline"
+                className="flex-1 sm:flex-none min-h-[44px] touch-manipulation"
+                disabled={!hasReadyPlots}
+              >
+                Select Ready
               </Button>
               <Button
                 size="sm"
@@ -919,7 +947,7 @@ const FarmGrid = memo(() => {
             onDecorate={handleDecorate}
             isSelected={selectedPlots.has(index)}
             onToggleSelect={handleToggleSelect}
-            selectedCrop={CROP_DATA[state.selectedCrop] || CROP_LIST[0]}
+            selectedCrop={selectedCrop}
             selectedDecoration={selectedDecoration}
             isDecorMode={decorMode}
             seasonBonus={seasonBonus}
