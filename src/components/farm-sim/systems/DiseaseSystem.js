@@ -9,7 +9,9 @@ export class DiseaseSystem {
     this.state = gameState;
     this.actions = actions;
     this.lastDiseaseCheck = Date.now();
-    this.diseaseCheckInterval = 15000; // Check every 15 seconds
+    this.diseaseCheckInterval = 25000; // Target cadence between disease checks
+    this.diseaseCheckJitter = 10000; // Randomized +0-10s jitter to avoid predictable spikes
+    this.nextDiseaseCheckAt = this.lastDiseaseCheck + this.getNextDiseaseCheckDelay();
   }
 
   /**
@@ -25,17 +27,27 @@ export class DiseaseSystem {
     this.state = currentState;
     
     const now = Date.now();
-    if (now - this.lastDiseaseCheck < this.diseaseCheckInterval) {
+    if (now < this.nextDiseaseCheckAt) {
       return; // Not time yet
     }
     
     this.lastDiseaseCheck = now;
+    this.nextDiseaseCheckAt = now + this.getNextDiseaseCheckDelay();
     
     // Check for disease spread from existing diseases
     this.spreadDiseases();
     
     // Check for new random disease occurrences
     this.checkNewDiseases();
+  }
+
+
+  /**
+   * Get the next disease-check delay using jitter so timing feels less patterned
+   * @returns {number}
+   */
+  getNextDiseaseCheckDelay() {
+    return this.diseaseCheckInterval + Math.floor(Math.random() * this.diseaseCheckJitter);
   }
 
   /**

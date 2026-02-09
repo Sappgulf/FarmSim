@@ -153,6 +153,7 @@ const DiseaseManagementTab = memo(() => {
               🐛 Disease Management
             </h3>
             <p className="text-sm text-red-600 mt-1">Protect your crops from diseases and pests!</p>
+            <p className="text-xs text-red-500 mt-1">Infection checks are now randomized and less frequent for smoother pacing.</p>
           </div>
           <div className="text-right">
             <div className={`text-3xl font-bold ${getHealthColor(diseaseStats.healthPercent)}`}>
@@ -345,6 +346,7 @@ const DiseaseManagementTab = memo(() => {
       <Card className="p-4 bg-blue-50 border-blue-200">
         <h4 className="font-semibold mb-2 text-blue-800">💡 Disease Prevention Tips</h4>
         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
+          <li>Disease checks happen at randomized intervals, so outbreaks feel less predictable.</li>
           <li>Diseases spread to adjacent plots - treat infections quickly!</li>
           <li>Low water and poor soil health increase disease risk</li>
           <li>Build a Barn to reduce disease chance by 50%</li>

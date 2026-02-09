@@ -504,3 +504,16 @@ Guiding rules:
 - **What:** kept `Harvest Selected` and `Clear` disabled when nothing is selected, while exposing `Select Ready Crops` whenever ready plots exist.
 - **Why:** fixes a first-use UX dead-end where players could not trigger “Select Ready Crops” unless they had already selected something manually.
 - **Verification:** `npm run test -- --run` (pass; 57/57), `npm run build` (pass).
+
+### Planned (2026-02-09) — Disease frequency rebalance + disease UX clarity polish
+- **Scope:** frontend, gameplay balance, UX
+- **What:** lower random disease incidence, add less predictable disease-check cadence to avoid repeated spike timing, and polish Disease Management tab copy/telemetry so players understand calmer infection pressure.
+- **Why:** disease events currently feel too frequent and predictable, making farm maintenance feel punitive instead of strategic.
+- **Verification:** Baseline `npm run smoke-test -- --run` (pass; npm env warning persists).
+
+### Implemented (2026-02-09) — Disease frequency rebalance + disease UX clarity polish
+- **Scope:** frontend, gameplay balance, UX
+- **What:** increased disease system check cadence from fixed 15s to randomized 25–35s intervals, lowered per-disease base infection risk, and reduced adjacent-infection pressure scaling.
+- **What:** updated Disease Management tab copy/tips to communicate calmer randomized outbreak pacing.
+- **Why:** make disease outbreaks less frequent and less predictable so crop management remains strategic without feeling overly punishing.
+- **Verification:** `npm run test -- src/test/smoke.test.jsx --run` (pass), `npm run build` (pass; existing npm env warning and Vite chunk-size warning).
