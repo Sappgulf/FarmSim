@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { useTick } from '../context/TickContext';
 import { Card } from '../../ui/card';
@@ -47,7 +47,8 @@ const FarmPlot = memo(({
   hasSoilAnalyzer = false,
   harvestMultiplier = 1.0,
   gridSize = 3,
-  plotRef = null
+  plotRef = null,
+  isTrinket = false
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -183,6 +184,7 @@ const FarmPlot = memo(({
           ${isSelected ? 'ring-4 ring-blue-500 ring-opacity-70 scale-105' : ''}
           ${showPreview && plot?.state === 'empty' ? 'ring-4 ring-emerald-400 ring-opacity-70' : ''}
           ${plot?.state === 'decor' ? 'shadow-inner' : ''}
+          ${isTrinket ? 'trinket-idle' : ''}
           touch-manipulation select-none
         `}
         onClick={handleClick}
@@ -383,6 +385,8 @@ const FarmGrid = memo(() => {
   const [selectedPlots, setSelectedPlots] = useState(new Set());
   const [decorUndoCount, setDecorUndoCount] = useState(0);
   const [repeatDecorPlacement, setRepeatDecorPlacement] = useState(true);
+  const [harvestBloomTick, setHarvestBloomTick] = useState(0);
+  const harvestBloomTimerRef = useRef(null);
   const plotRefs = useRef([]);
   const decorUndoStack = useRef([]);
   const getPlotCenter = useCallback((index) => {
@@ -406,6 +410,8 @@ const FarmGrid = memo(() => {
     () => CROP_DATA[state.selectedCrop] || CROP_LIST[0],
     [state.selectedCrop]
   );
+  const showTooltips = state.settings?.showTooltips !== false;
+  const dismissedHints = state.cozyExpansion?.contextHints?.dismissed || {};
   const plotsInUseCount = useMemo(
     () => plots.reduce((count, plot) => (plot?.state !== 'empty' ? count + 1 : count), 0),
     [plots]
@@ -418,6 +424,36 @@ const FarmGrid = memo(() => {
     return indexes;
   }, [plots]);
   const hasReadyPlots = readyPlotIndexes.length > 0;
+
+  useEffect(() => () => {
+    if (harvestBloomTimerRef.current) {
+      clearTimeout(harvestBloomTimerRef.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!showTooltips || !decorMode || dismissedHints.decor_mode_intro || ghostActive) return;
+    actions.addNotification({
+      message: '💡 Decor mode tip: Place trinkets and decor on empty plots. Tap a decor plot to pick it back up.',
+      type: 'info'
+    });
+    actions.recordCozyExpansionEvent('context_hint_seen', { id: 'decor_mode_intro' });
+  }, [actions, decorMode, dismissedHints.decor_mode_intro, ghostActive, showTooltips]);
+
+  useEffect(() => {
+    if (!showTooltips || !hasReadyPlots || dismissedHints.harvest_ready || ghostActive) return;
+    actions.addNotification({
+      message: '💡 Harvest tip: Use “Select Ready” to gather mature crops faster.',
+      type: 'info'
+    });
+    actions.recordCozyExpansionEvent('context_hint_seen', { id: 'harvest_ready' });
+  }, [actions, dismissedHints.harvest_ready, ghostActive, hasReadyPlots, showTooltips]);
+
+  useEffect(() => {
+    if (!harvestBloomTick) return;
+    if (harvestBloomTimerRef.current) clearTimeout(harvestBloomTimerRef.current);
+    harvestBloomTimerRef.current = setTimeout(() => setHarvestBloomTick(0), 550);
+  }, [harvestBloomTick]);
 
   const pushDecorUndo = useCallback((entry) => {
     decorUndoStack.current = [entry, ...decorUndoStack.current].slice(0, 5);
@@ -477,6 +513,7 @@ const FarmGrid = memo(() => {
           witheredAt: null
         };
         actions.updatePlots(updatedPlots);
+      setHarvestBloomTick(Date.now());
         actions.addNotification({
           message: `🗑️ Cleared withered crop from plot ${index + 1}`,
           type: 'info'
@@ -679,6 +716,7 @@ const FarmGrid = memo(() => {
 
     // Reset plot
     actions.harvestCrop(index, earnings);
+    setHarvestBloomTick(Date.now());
     actions.recordMemoryEvent('crop_harvested', { cropId: crop.id });
     actions.recordCozyExpansionEvent('crop_harvested', { cropId: crop.id });
     actions.recordAlmanacEvent('crop_harvested', {
@@ -731,6 +769,7 @@ const FarmGrid = memo(() => {
 
     if (harvestedCount > 0) {
       actions.updatePlots(updatedPlots);
+      setHarvestBloomTick(Date.now());
       actions.earnMoney(totalEarnings);
       actions.addXP(totalXp, { source: 'harvest', label: 'Bulk Harvest' });
       actions.updateInventory((inventory) => {
@@ -867,7 +906,7 @@ const FarmGrid = memo(() => {
         {decorMode && (
           <p className="mt-2 text-xs text-rose-600 font-semibold">
             {selectedDecoration
-              ? `Selected decor: ${selectedDecoration.emoji} ${selectedDecoration.name}`
+              ? `Selected decoration: ${selectedDecoration.emoji} ${selectedDecoration.name}`
               : 'Select a decoration from Inventory to place.'}
           </p>
         )}
@@ -877,7 +916,7 @@ const FarmGrid = memo(() => {
           <p className="mt-2 text-xs font-semibold text-indigo-700">👻 Ghost Visit (Read Only)</p>
         )}
       {/* Bulk Action Controls - Mobile optimized */}
-      {selectedPlots.size > 0 && (
+      {(selectedPlots.size > 0 || hasReadyPlots) && (
         <div className="mb-4 p-3 sm:p-4 bg-blue-50 border-2 border-blue-300 rounded-lg animate-fade-in">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -892,6 +931,7 @@ const FarmGrid = memo(() => {
                 size="sm"
                 onClick={handleBulkHarvest}
                 className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none min-h-[44px] touch-manipulation"
+                disabled={selectedPlots.size === 0}
               >
                 🌾 Harvest Selected
               </Button>
@@ -902,7 +942,7 @@ const FarmGrid = memo(() => {
                 className="flex-1 sm:flex-none min-h-[44px] touch-manipulation"
                 disabled={!hasReadyPlots}
               >
-                Select Ready
+                Select Ready Crops
               </Button>
               <Button
                 size="sm"
@@ -917,6 +957,7 @@ const FarmGrid = memo(() => {
                 onClick={handleClearSelection}
                 variant="outline"
                 className="flex-1 sm:flex-none min-h-[44px] touch-manipulation"
+                disabled={selectedPlots.size === 0}
               >
                 Clear
               </Button>
@@ -928,11 +969,15 @@ const FarmGrid = memo(() => {
       {/* Farm Grid - Responsive with larger touch targets on mobile */}
       <div
         className="grid gap-1.5 sm:gap-2.5 md:gap-4 mx-auto justify-center farm-grid relative w-full"
+        data-harvest-bloom={harvestBloomTick > 0 ? 'on' : 'off'}
         style={{
           gridTemplateColumns: `repeat(${gridSize}, minmax(${gridSize >= 5 ? 52 : 56}px, 1fr))`,
           maxWidth: `min(100%, ${gridSize * 104}px)`
         }}
       >
+        {harvestBloomTick > 0 && (
+          <div className="harvest-bloom-overlay" key={`bloom-${harvestBloomTick}`} />
+        )}
         {plots.map((plot, index) => (
           <FarmPlot
             key={index}
@@ -954,6 +999,7 @@ const FarmGrid = memo(() => {
             hasSoilAnalyzer={hasSoilAnalyzer}
             harvestMultiplier={harvestMultiplier}
             gridSize={gridSize}
+            isTrinket={Boolean(DECORATION_DATA[plot?.decorationId]?.tags?.includes('trinket'))}
           />
         ))}
       </div>
