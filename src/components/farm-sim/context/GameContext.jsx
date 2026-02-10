@@ -624,7 +624,7 @@ export function GameProvider({ children }) {
       const milestones = current.milestones || { progress: {}, unlocked: {}, recent: [] };
       const nextProgress = milestoneManager.onEvent(eventType, payload, milestones.progress || {});
       const unlockedNow = milestoneManager.evaluateUnlocks(nextProgress, milestones.unlocked || {});
-      if (!unlockedNow.length && JSON.stringify(nextProgress) === JSON.stringify(milestones.progress || {})) {
+      if (!unlockedNow.length && nextProgress === (milestones.progress || {})) {
         return;
       }
       const nextUnlocked = { ...(milestones.unlocked || {}) };

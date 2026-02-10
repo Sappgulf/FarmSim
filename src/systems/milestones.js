@@ -7,15 +7,41 @@ export const createMilestoneManager = (definitions = []) => {
   return {
     registerMilestones: () => milestones,
     onEvent: (eventType, payload = {}, progress = {}) => {
-      const next = { ...progress };
-      if (eventType === 'day_advance') next.daysPlayed = (next.daysPlayed || 0) + 1;
-      if (eventType === 'harvest') next.totalHarvests = (next.totalHarvests || 0) + (payload.count || 1);
-      if (eventType === 'unique_crop') next.uniqueCropsGrown = Math.max(next.uniqueCropsGrown || 0, payload.size || 0);
-      if (eventType === 'decor_set') next.decorSetsCompleted = payload.count || next.decorSetsCompleted || 0;
-      if (eventType === 'rare_moment') next.rareMomentsSeen = (next.rareMomentsSeen || 0) + 1;
-      if (eventType === 'minigame') next.minigamesPlayed = (next.minigamesPlayed || 0) + 1;
-      if (eventType === 'pet_day') next.petsInteractedDays = (next.petsInteractedDays || 0) + 1;
-      return next;
+      const current = progress || {};
+
+      if (eventType === 'day_advance') {
+        return { ...current, daysPlayed: (current.daysPlayed || 0) + 1 };
+      }
+
+      if (eventType === 'harvest') {
+        return { ...current, totalHarvests: (current.totalHarvests || 0) + (payload.count || 1) };
+      }
+
+      if (eventType === 'unique_crop') {
+        const nextSize = Math.max(current.uniqueCropsGrown || 0, payload.size || 0);
+        if (nextSize === (current.uniqueCropsGrown || 0)) return current;
+        return { ...current, uniqueCropsGrown: nextSize };
+      }
+
+      if (eventType === 'decor_set') {
+        const nextCount = payload.count || current.decorSetsCompleted || 0;
+        if (nextCount === (current.decorSetsCompleted || 0)) return current;
+        return { ...current, decorSetsCompleted: nextCount };
+      }
+
+      if (eventType === 'rare_moment') {
+        return { ...current, rareMomentsSeen: (current.rareMomentsSeen || 0) + 1 };
+      }
+
+      if (eventType === 'minigame') {
+        return { ...current, minigamesPlayed: (current.minigamesPlayed || 0) + 1 };
+      }
+
+      if (eventType === 'pet_day') {
+        return { ...current, petsInteractedDays: (current.petsInteractedDays || 0) + 1 };
+      }
+
+      return current;
     },
     evaluateUnlocks,
   };
