@@ -406,6 +406,12 @@ const FarmGrid = memo(() => {
   const plots = ghostActive
     ? (Array.isArray(state.ghostVisit?.snapshot?.plots) ? state.ghostVisit.snapshot.plots : [])
     : (Array.isArray(state.plots) ? state.plots : []);
+  const plotRefCallbacks = useMemo(() => {
+    // Stable per-index ref callbacks so FarmPlot memo isn't defeated by a new function every render.
+    return Array.from({ length: plots.length }, (_, index) => (el) => {
+      plotRefs.current[index] = el;
+    });
+  }, [plots.length]);
   const selectedCrop = useMemo(
     () => CROP_DATA[state.selectedCrop] || CROP_LIST[0],
     [state.selectedCrop]
@@ -981,9 +987,7 @@ const FarmGrid = memo(() => {
         {plots.map((plot, index) => (
           <FarmPlot
             key={index}
-            plotRef={(el) => {
-              plotRefs.current[index] = el;
-            }}
+            plotRef={plotRefCallbacks[index]}
             plot={plot}
             index={index}
             onPlotClick={handlePlotClick}

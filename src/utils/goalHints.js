@@ -1,6 +1,6 @@
 import { getCropsByLevel } from '../components/farm-sim/constants/cropData';
 
-const getPlotCounts = (plots = []) => {
+export const getPlotCounts = (plots = []) => {
   const counts = { active: 0, ready: 0, empty: 0 };
   plots.forEach((plot) => {
     if (!plot) return;
@@ -11,34 +11,45 @@ const getPlotCounts = (plots = []) => {
   return counts;
 };
 
-const getMinSeedCost = (level = 1) => {
+export const getMinSeedCost = (level = 1) => {
   const crops = getCropsByLevel(level) || [];
   const costs = crops.map((crop) => Number(crop.cost) || 0).filter((cost) => cost > 0);
   if (!costs.length) return 10;
   return Math.max(1, Math.min(...costs));
 };
 
-export const getNextGoal = (state) => {
-  const plots = Array.isArray(state?.plots) ? state.plots : [];
-  const { active, ready, empty } = getPlotCounts(plots);
-  const minSeedCost = getMinSeedCost(state?.level || 1);
+export const getNextGoalFromCounts = ({ ready = 0, empty = 0, active = 0, coins = 0, level = 1, buildings = {} } = {}) => {
+  const minSeedCost = getMinSeedCost(level);
 
   if (ready > 0) {
     return { id: 'harvest', text: `Harvest ${ready} crop${ready > 1 ? 's' : ''}`, emoji: '🌾' };
   }
-  if (empty > 0 && state?.coins >= minSeedCost) {
+  if (empty > 0 && coins >= minSeedCost) {
     return { id: 'plant', text: `Plant ${Math.min(empty, 3)} seed${empty > 1 ? 's' : ''}`, emoji: '🌱' };
   }
   if (active > 0) {
     return { id: 'wait', text: 'Let crops grow a little longer', emoji: '⏳' };
   }
-  if (state?.level >= 2 && !Object.values(state?.buildings || {}).some((b) => b?.built)) {
+  if (level >= 2 && !Object.values(buildings || {}).some((b) => b?.built)) {
     return { id: 'build', text: 'Build your first structure', emoji: '🏠' };
   }
-  if (state?.coins < minSeedCost) {
-    return { id: 'earn', text: `Earn ${minSeedCost - (state?.coins || 0)}🪙 for seeds`, emoji: '💰' };
+  if (coins < minSeedCost) {
+    return { id: 'earn', text: `Earn ${minSeedCost - (coins || 0)}🪙 for seeds`, emoji: '💰' };
   }
   return { id: 'explore', text: 'Explore your farm', emoji: '🚜' };
+};
+
+export const getNextGoal = (state) => {
+  const plots = Array.isArray(state?.plots) ? state.plots : [];
+  const { active, ready, empty } = getPlotCounts(plots);
+  return getNextGoalFromCounts({
+    ready,
+    empty,
+    active,
+    coins: state?.coins || 0,
+    level: state?.level || 1,
+    buildings: state?.buildings || {},
+  });
 };
 
 export const getPlanSuggestions = (state, maxSuggestions = 2) => {

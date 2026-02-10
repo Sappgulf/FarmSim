@@ -1,5 +1,5 @@
 import React, { memo, useState, lazy, Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGameActions, useGameSelector } from '../context/GameContext';
 import { Tabs, TabsContent } from '../../ui/tabs';
 import { Card } from '../../ui/card';
 import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
@@ -71,7 +71,13 @@ const TAB_CONFIG_BY_ID = Object.fromEntries(TAB_CONFIGS.map((tab) => [tab.id, ta
 
 // Game Sidebar Component - Now accepts controlled props
 const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
-  const { state, actions } = useGame();
+  const actions = useGameActions();
+  const keyboardShortcutsEnabled = useGameSelector((state) => state.settings?.keyboardShortcuts !== false);
+  const paused = useGameSelector((state) => Boolean(state.gameLoop?.paused));
+  const inventory = useGameSelector((state) => state.inventory || {});
+  const buildings = useGameSelector((state) => state.buildings || {});
+  const animals = useGameSelector((state) => state.livestock?.animals || []);
+  const reputation = useGameSelector((state) => state.social?.reputation ?? 0);
   // Use controlled mode if props provided, otherwise internal state (backward compat)
   const [internalTab, setInternalTab] = useState('farming');
   const activeTab = controlledTab ?? internalTab;
@@ -94,10 +100,37 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
     }
   }, [actions]);
 
+  const handleQuickSave = useCallback(() => {
+    try {
+      const success = actions.saveGame?.();
+      actions.addNotification?.({
+        message: success ? '💾 Game saved successfully!' : '❌ Failed to save game',
+        type: success ? 'success' : 'error',
+      });
+    } catch (error) {
+      console.error('[farm]', 'Quick save shortcut error', error);
+      actions.addNotification?.({ message: '❌ Failed to save game', type: 'error' });
+    }
+  }, [actions]);
+
+  const handleTogglePause = useCallback(() => {
+    try {
+      if (paused) {
+        actions.resumeGame?.();
+      } else {
+        actions.pauseGame?.();
+      }
+    } catch (error) {
+      console.error('[farm]', 'Pause shortcut error', error);
+    }
+  }, [actions, paused]);
+
   useKeyboardShortcuts({
-    enabled: state.settings?.keyboardShortcuts !== false,
+    enabled: keyboardShortcutsEnabled,
     onTabChange: handleTabChange,
     onBulkAction: handleBulkAction,
+    onQuickSave: handleQuickSave,
+    onTogglePause: handleTogglePause,
   });
 
   // Expose tab switching globally so header buttons can use it
@@ -122,15 +155,15 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   }, []); // Empty deps - only run once on mount
 
   const inventoryCount = useMemo(() => {
-    return Object.values(state.inventory || {}).reduce((sum, qty) => {
+    return Object.values(inventory).reduce((sum, qty) => {
       const count = typeof qty === 'number' ? qty : (typeof qty === 'object' && qty !== null ? (qty.count || qty.quantity || 0) : 0);
       return sum + (Number(count) || 0);
     }, 0);
-  }, [state.inventory]);
+  }, [inventory]);
 
   const builtCount = useMemo(() => {
-    return Object.keys(state.buildings || {}).filter(k => state.buildings[k]?.built).length;
-  }, [state.buildings]);
+    return Object.keys(buildings).filter(k => buildings[k]?.built).length;
+  }, [buildings]);
 
   const renderIcon = (IconComponent, fallbackEmoji) => {
     if (IconComponent) {
@@ -198,18 +231,18 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
             </div>
             <div className="text-gray-500 text-xs font-medium">Built</div>
           </div>
-          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
-            <div className="font-bold text-blue-600 text-sm">
-              {state.livestock?.animals?.length || 0}
-            </div>
-            <div className="text-gray-500 text-xs font-medium">Animals</div>
-          </div>
-          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
-            <div className="font-bold text-purple-600 text-sm">
-              {state.social?.reputation ?? 0}
-            </div>
-            <div className="text-gray-500 text-xs font-medium">Rep</div>
-          </div>
+	          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
+	            <div className="font-bold text-blue-600 text-sm">
+	              {animals.length || 0}
+	            </div>
+	            <div className="text-gray-500 text-xs font-medium">Animals</div>
+	          </div>
+	          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
+	            <div className="font-bold text-purple-600 text-sm">
+	              {reputation}
+	            </div>
+	            <div className="text-gray-500 text-xs font-medium">Rep</div>
+	          </div>
         </div>
       </div>
     </Card>

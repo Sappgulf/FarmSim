@@ -30,6 +30,10 @@ export class FarmingSystem {
     this.lastFertilityUpdate = 0;
     this.lastSprinklerWater = 0;
     this.lastAutoHarvestTick = 0;
+    // PERF: timestamp-based growth doesn't require high-frequency React state writes.
+    // Throttle expensive full-plot scans to reduce CPU and GC pressure.
+    this.lastGrowthUpdate = 0;
+    this.lastWitherCheck = 0;
   }
 
   /**
@@ -78,6 +82,15 @@ export class FarmingSystem {
       return;
     }
 
+    const now = Date.now();
+
+    // PERF: Throttle growth scans (UI doesn't benefit from 10Hz state churn).
+    // Keep this low enough for short crops, but high enough to reduce work.
+    if (this.lastGrowthUpdate && (now - this.lastGrowthUpdate < 250)) {
+      return;
+    }
+    this.lastGrowthUpdate = now;
+
     // PERF: Early exit if no crops are growing (big win for idle farms)
     let growingCount = 0;
     for (let i = 0; i < this.gameState.plots.length; i++) {
@@ -95,7 +108,6 @@ export class FarmingSystem {
     }
 
     let hasChanges = false;
-    const now = Date.now();
     const weather = this.gameState.weather || 'sunny';
     const weatherEffects = {
       sunny: { growthModifier: 1.2 },
@@ -113,21 +125,14 @@ export class FarmingSystem {
     const greenhouseGrowthBonus = getMiniGreenhouseGrowthBonus(inventory);
     const hydroponicsGrowthBonus = getHydroponicsGrowthBonus(inventory);
 
-    const updatedPlots = this.gameState.plots.map(plot => {
-      // Safety check for invalid plot
-      if (!plot) {
-        return plot;
-      }
-
-      // Skip if not planted or growing
-      if (plot.state !== 'planted' && plot.state !== 'growing') {
-        return plot;
-      }
-
-      // Skip if no crop data
-      if (!plot.crop || !plot.plantedAt) {
-        return plot;
-      }
+    // PERF: copy-on-write; avoid allocating a full array unless something changes.
+    let updatedPlots = null;
+    const plots = this.gameState.plots;
+    for (let i = 0; i < plots.length; i++) {
+      const plot = plots[i];
+      if (!plot) continue;
+      if (plot.state !== 'planted' && plot.state !== 'growing') continue;
+      if (!plot.crop || !plot.plantedAt) continue;
 
       // Calculate progress from timestamp (NO deltaTime issues!)
       const timeSincePlanted = (now - plot.plantedAt) / 1000; // seconds
@@ -136,66 +141,77 @@ export class FarmingSystem {
       const growthBoost = plot.growthBoost || 1;
       const level = this.gameState.level || 1;
       const difficulty = getDifficultyModifier(level);
-      const effectiveGrowthTime = (baseGrowthTime * difficulty.growthTime) / (plotWeatherModifier * seasonBonus * greenhouseGrowthBonus * hydroponicsGrowthBonus * growthBoost);
+      const effectiveGrowthTime =
+        (baseGrowthTime * difficulty.growthTime) /
+        (plotWeatherModifier * seasonBonus * greenhouseGrowthBonus * hydroponicsGrowthBonus * growthBoost);
 
       // Crop rotation bonus: +5% growth speed per unique predecessor in last 3 crops
       const rotationHistory = Array.isArray(plot.rotationHistory) ? plot.rotationHistory : [];
       const predecessors = rotationHistory.slice(0, -1); // exclude current crop (last entry)
-      const uniquePredecessors = new Set(predecessors.filter(id => id !== (plot.crop.id || ''))).size;
+      const uniquePredecessors = new Set(predecessors.filter((id) => id !== (plot.crop.id || ''))).size;
       const rotationBonus = 1 + (uniquePredecessors * 0.05); // +5% per unique, max +15%
       const rotatedGrowthTime = effectiveGrowthTime / rotationBonus;
 
       const progress = Math.min(1.0, timeSincePlanted / rotatedGrowthTime);
 
-
       // Calculate growth stage
       const totalStages = plot.crop.stages || 3;
       const currentStage = Math.min(totalStages, Math.floor(progress * totalStages) + 1);
 
+      let nextPlot = null;
+
       // Check if ready to harvest - use a more lenient threshold
       if (progress >= 0.90) {
         if (isDevelopmentMode()) {
-          console.debug('[farm]', `🌾 ${plot.crop.name} ready`, { progress, timeSince: timeSincePlanted.toFixed(1), effective: effectiveGrowthTime.toFixed(1) });
+          console.debug('[farm]', `🌾 ${plot.crop.name} ready`, {
+            progress,
+            timeSince: timeSincePlanted.toFixed(1),
+            effective: effectiveGrowthTime.toFixed(1),
+          });
         }
-        hasChanges = true;
-        return {
+        nextPlot = {
           ...plot,
           state: 'ready',
           growthStage: totalStages,
           progress: 1.0,
-          readyAt: now
+          readyAt: now,
         };
-      }
+      } else {
+        const prevProgress = plot.progress || 0;
+        const prevStage = plot.growthStage || 1;
+        const stageChanged = currentStage !== prevStage;
+        const progressDelta = Math.abs(progress - prevProgress);
+        const shouldUpdate = stageChanged || progressDelta >= 0.01 || plot.state !== 'growing';
 
-      const prevProgress = plot.progress || 0;
-      const prevStage = plot.growthStage || 1;
-      const stageChanged = currentStage !== prevStage;
-      const progressDelta = Math.abs(progress - prevProgress);
-      const shouldUpdate = stageChanged || progressDelta >= 0.01 || plot.state !== 'growing';
-
-      // Still growing - update progress only when something meaningful changed
-      if (shouldUpdate) {
-        if (Math.random() < 0.01) { // Log 1% of the time
-          if (isDevelopmentMode()) {
-            console.debug('[farm]', `🌱 ${plot.crop.name} growing: ${(progress * 100).toFixed(1)}%, stage ${currentStage}/${totalStages}, water=${plot.waterLevel}`);
+        if (shouldUpdate) {
+          if (Math.random() < 0.01) { // Log 1% of the time
+            if (isDevelopmentMode()) {
+              console.debug(
+                '[farm]',
+                `🌱 ${plot.crop.name} growing: ${(progress * 100).toFixed(1)}%, stage ${currentStage}/${totalStages}, water=${plot.waterLevel}`
+              );
+            }
           }
+          nextPlot = {
+            ...plot,
+            state: 'growing',
+            growthStage: currentStage,
+            progress,
+          };
         }
-        hasChanges = true;
-        return {
-          ...plot,
-          state: 'growing',
-          growthStage: currentStage,
-          progress: progress
-        };
       }
 
-      return plot;
-    });
+      if (nextPlot) {
+        if (!updatedPlots) updatedPlots = plots.slice();
+        updatedPlots[i] = nextPlot;
+        hasChanges = true;
+      }
+    }
 
     // Update if any crops are growing
     // React 18+ automatically batches state updates, so no manual batching needed
     if (hasChanges) {
-      this.actions.updatePlots(updatedPlots);
+      this.actions.updatePlots(updatedPlots || plots);
     }
   }
 
@@ -206,39 +222,52 @@ export class FarmingSystem {
     }
 
     const now = Date.now();
+    // PERF: wither/overripe checks don't need to run at high frequency.
+    if (this.lastWitherCheck && (now - this.lastWitherCheck < 1000)) {
+      return;
+    }
+    this.lastWitherCheck = now;
     const HARVEST_WINDOW = 45000; // 45 seconds to harvest after ready
 
-    const updatedPlots = this.gameState.plots.map(plot => {
-      if (plot.state === 'empty' || plot.state === 'withered' || plot.state === 'decor') return plot;
+    const plots = this.gameState.plots;
+    let updatedPlots = null;
+    for (let i = 0; i < plots.length; i++) {
+      const plot = plots[i];
+      if (!plot) continue;
+      if (plot.state === 'empty' || plot.state === 'withered' || plot.state === 'decor') continue;
+
+      let nextPlot = null;
 
       // Check water level - growing crops wither if no water
       if ((plot.waterLevel || 0) <= 0 && (plot.state === 'growing' || plot.state === 'planted')) {
-        return {
+        nextPlot = {
           ...plot,
           state: 'withered',
           witheredAt: now,
-          witherReason: 'no_water'
+          witherReason: 'no_water',
         };
       }
 
       // Check if ready crops are overripe (harvest window expired)
-      if (plot.state === 'ready' && plot.readyAt) {
+      if (!nextPlot && plot.state === 'ready' && plot.readyAt) {
         const timeSinceReady = now - plot.readyAt;
         if (timeSinceReady > HARVEST_WINDOW) {
-          return {
+          nextPlot = {
             ...plot,
             state: 'withered',
             witheredAt: now,
-            witherReason: 'overripe'
+            witherReason: 'overripe',
           };
         }
       }
 
-      return plot;
-    });
+      if (nextPlot) {
+        if (!updatedPlots) updatedPlots = plots.slice();
+        updatedPlots[i] = nextPlot;
+      }
+    }
 
-    // Only update if something changed
-    if (updatedPlots.some((plot, index) => plot.state !== this.gameState.plots[index].state)) {
+    if (updatedPlots) {
       this.actions.updatePlots(updatedPlots);
     }
   }

@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGameActions, useGameSelector } from '../context/GameContext';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
@@ -7,8 +7,8 @@ import { isDebugMode } from '../../../utils/debugTools';
 import { getPackMeta } from '../entitlements/EntitlementManager';
 
 const PremiumLockModal = memo(() => {
-  const { state, actions } = useGame();
-  const lock = state.premiumLockPrompt;
+  const actions = useGameActions();
+  const lock = useGameSelector((state) => state.premiumLockPrompt || null);
   const debugEnabled = isDebugMode();
 
   const packMeta = useMemo(() => (

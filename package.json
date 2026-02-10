@@ -6,13 +6,13 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest",
+    "test": "vitest --run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "test:watch": "vitest --watch",
+    "test:watch": "vitest",
     "lint": "echo 'Lint check completed'",
     "qa:full": "npm run test && npm run build",
-    "smoke-test": "vitest src/test/smoke.test.js"
+    "smoke-test": "vitest --run src/test/smoke.test.jsx"
   },
   "dependencies": {
     "lucide-react": "^0.539.0",

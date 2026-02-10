@@ -25,7 +25,7 @@ import {
     Building2,
     Home,
 } from 'lucide-react';
-import { useGame } from '../context/GameContext';
+import { useGameSelector } from '../context/GameContext';
 
 /**
  * NavBar - Consolidated navigation with 5 main sections
@@ -111,7 +111,9 @@ export const TAB_INFO = {
 };
 
 const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange }) => {
-    const { state } = useGame();
+    const livestockAnimals = useGameSelector((state) => state.livestock?.animals || []);
+    const dailyChallenges = useGameSelector((state) => state.dailyChallenges || []);
+    const notifications = useGameSelector((state) => state.notifications || []);
     const [showSubTabs, setShowSubTabs] = useState(false);
     const sections = useMemo(() => Object.values(NAV_SECTIONS), []);
     const renderIcon = (IconComponent, fallbackEmoji, className) => {
@@ -129,24 +131,22 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
         switch (sectionId) {
             case 'animals':
                 // Count animals that need attention
-                const animalsNeedingCare = (state.livestock?.animals || []).filter(
+                const animalsNeedingCare = livestockAnimals.filter(
                     a => a.hunger < 30 || a.happiness < 30 || a.productionReady
                 ).length;
                 return animalsNeedingCare > 0 ? animalsNeedingCare : null;
             case 'more':
                 // Count unclaimed quest rewards
-                const unclaimedQuests = (state.dailyChallenges || []).filter(
+                const unclaimedQuests = dailyChallenges.filter(
                     q => q.completed && !q.claimed
                 ).length;
-                const activeNotifications = Array.isArray(state.notifications)
-                    ? state.notifications.length
-                    : 0;
+                const activeNotifications = Array.isArray(notifications) ? notifications.length : 0;
                 const totalMoreAlerts = unclaimedQuests + activeNotifications;
                 return totalMoreAlerts > 0 ? totalMoreAlerts : null;
             default:
                 return null;
         }
-    }, [state.dailyChallenges, state.livestock?.animals, state.notifications]);
+    }, [dailyChallenges, livestockAnimals, notifications]);
 
     const handleSectionPress = useCallback((section, isActive) => {
         onSectionChange(section.id);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '../../ui/button';
-import { useGame } from '../context/GameContext';
+import { useGameActions, useGameStore } from '../context/GameContext';
 import { exportFarmCard } from '../../../utils/farmCard';
 
 const FarmCardShareButton = ({
@@ -9,7 +9,8 @@ const FarmCardShareButton = ({
   variant = 'default',
   className = '',
 }) => {
-  const { state, actions } = useGame();
+  const actions = useGameActions();
+  const store = useGameStore();
   const [isExporting, setIsExporting] = useState(false);
 
   const handleShare = async () => {
@@ -18,7 +19,8 @@ const FarmCardShareButton = ({
     actions.addNotification({ message: 'Preparing your Farm Card…', type: 'info' });
 
     try {
-      await exportFarmCard(state);
+      // Read the latest snapshot at click-time without subscribing this component to state churn.
+      await exportFarmCard(store.getState());
       actions.addNotification({ message: '📸 Farm Card saved to your device.', type: 'success' });
     } catch (error) {
       actions.addNotification({ message: 'Share failed. Please try again.', type: 'error' });

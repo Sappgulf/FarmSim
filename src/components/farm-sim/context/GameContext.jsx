@@ -1,4 +1,15 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback, useState, useMemo, useRef } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useState,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from 'react';
 import { GAME_ACTIONS } from './GameActions';
 import {
   SAVE_VERSION,
@@ -68,11 +79,11 @@ const getDayOfWeekIndex = (dayKey) => {
   return Number.isFinite(idx) ? idx : 0;
 };
 
-/**
- * GameContext - Centralized state management for FarmSim
- * Optimized for performance by decoupling actions, reducer, and persistence logic.
- */
-const GameContext = createContext(null);
+// PERF: Use a store + useSyncExternalStore so components can subscribe to stable slices
+// (e.g. inventory/settings) and avoid re-rendering on unrelated updates (e.g. plot progress).
+const GameStoreContext = createContext(null);
+const GameActionsContext = createContext(null);
+const GameSystemsContext = createContext(null);
 
 /**
  * GameProvider Component
@@ -108,6 +119,34 @@ export function GameProvider({ children }) {
       return initial;
     }
   );
+
+  // External store wrapper for selector-based subscriptions.
+  const storeRef = useRef(null);
+  if (!storeRef.current) {
+    const listeners = new Set();
+    storeRef.current = {
+      state,
+      getState: () => storeRef.current.state,
+      subscribe: (listener) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+      _listeners: listeners,
+    };
+  }
+  storeRef.current.state = state;
+  useLayoutEffect(() => {
+    const listeners = storeRef.current?._listeners;
+    if (!listeners || listeners.size === 0) return;
+    listeners.forEach((listener) => {
+      try {
+        listener();
+      } catch (error) {
+        // Avoid breaking the store if a subscriber throws.
+        console.error('[farm] Store subscriber error', error);
+      }
+    });
+  }, [state]);
 
   // Use refs to access latest state without causing re-renders in callbacks
   const stateRef = useRef(state);
@@ -1598,17 +1637,56 @@ export function GameProvider({ children }) {
   }, []);
 
   return (
-    <GameContext.Provider value={{ state, actions, systems }}>
-      {children}
-    </GameContext.Provider>
+    <GameStoreContext.Provider value={storeRef.current}>
+      <GameActionsContext.Provider value={actions}>
+        <GameSystemsContext.Provider value={systems}>
+          {children}
+        </GameSystemsContext.Provider>
+      </GameActionsContext.Provider>
+    </GameStoreContext.Provider>
   );
 }
 
+export function useGameSelector(selector) {
+  const store = useContext(GameStoreContext);
+  if (!store) throw new Error('useGameSelector must be used within a GameProvider');
+  const select = typeof selector === 'function' ? selector : (s) => s;
+  return useSyncExternalStore(
+    store.subscribe,
+    () => select(store.getState()),
+    () => select(store.getState())
+  );
+}
+
+export function useGameStore() {
+  const store = useContext(GameStoreContext);
+  if (!store) throw new Error('useGameStore must be used within a GameProvider');
+  return store;
+}
+
+export function useGameState() {
+  return useGameSelector((s) => s);
+}
+
+export function useGameActions() {
+  const actions = useContext(GameActionsContext);
+  if (!actions) throw new Error('useGameActions must be used within a GameProvider');
+  return actions;
+}
+
+export function useGameSystems() {
+  const systems = useContext(GameSystemsContext);
+  if (!systems) throw new Error('useGameSystems must be used within a GameProvider');
+  return systems;
+}
+
 export function useGame() {
-  const context = useContext(GameContext);
-  if (!context) throw new Error('useGame must be used within a GameProvider');
-  return context;
+  return {
+    state: useGameState(),
+    actions: useGameActions(),
+    systems: useGameSystems(),
+  };
 }
 
 export { GAME_ACTIONS };
-export default GameContext;
+export default GameStoreContext;

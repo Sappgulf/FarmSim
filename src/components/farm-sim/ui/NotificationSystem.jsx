@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGameActions, useGameSelector } from '../context/GameContext';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
@@ -143,7 +143,8 @@ NotificationItem.displayName = 'NotificationItem';
 
 // Main Notification System Component
 const NotificationSystem = memo(() => {
-  const { state, actions } = useGame();
+  const actions = useGameActions();
+  const notifications = useGameSelector((state) => (Array.isArray(state.notifications) ? state.notifications : []));
 
   const handleCloseNotification = (id) => {
     logDebugAction('notification_close', { id });
@@ -151,13 +152,13 @@ const NotificationSystem = memo(() => {
   };
 
   useEffect(() => {
-    if (!Array.isArray(state.notifications) || state.notifications.length === 0) {
+    if (notifications.length === 0) {
       return undefined;
     }
 
     const sweepId = setInterval(() => {
       const now = Date.now();
-      state.notifications.forEach((notification) => {
+      notifications.forEach((notification) => {
         if (!notification || notification.sticky || notification.important) return;
         const duration = Number(notification.duration);
         const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : AUTO_DISMISS_MS;
@@ -170,17 +171,17 @@ const NotificationSystem = memo(() => {
     }, EXPIRY_SWEEP_MS);
 
     return () => clearInterval(sweepId);
-  }, [actions, state.notifications]);
+  }, [actions, notifications]);
 
   // Don't render if no notifications
-  if (state.notifications.length === 0) {
+  if (notifications.length === 0) {
     return null;
   }
 
   return (
     <div className="fixed top-16 sm:top-20 inset-x-2 sm:inset-x-auto sm:right-4 z-50 sm:w-80 max-w-[calc(100vw-1rem)]">
       <div className="space-y-2">
-        {state.notifications.map((notification, index) => {
+        {notifications.map((notification, index) => {
           const isHidden = index >= MAX_VISIBLE;
           return (
             <div
@@ -204,10 +205,10 @@ const NotificationSystem = memo(() => {
         })}
 
         {/* Show notification count if more than 4 */}
-        {state.notifications.length > MAX_VISIBLE && (
+        {notifications.length > MAX_VISIBLE && (
           <Card className="p-2 bg-gray-50/90 backdrop-blur-sm border border-gray-200 text-center rounded-xl shadow-sm">
             <p className="text-xs text-gray-600 font-medium">
-              +{state.notifications.length - MAX_VISIBLE} more notifications
+              +{notifications.length - MAX_VISIBLE} more notifications
             </p>
           </Card>
         )}

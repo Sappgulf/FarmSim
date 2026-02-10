@@ -215,33 +215,6 @@ const SettingsTab = memo(() => {
     }
   };
 
-  // Keyboard shortcuts - added after all handlers are defined
-  React.useEffect(() => {
-    const handleKeyPress = (e) => {
-      try {
-        // Ctrl + S - Quick Save
-        if (e.ctrlKey && e.key === 's') {
-          e.preventDefault();
-          handleSaveGame();
-        }
-        // Space - Pause/Resume (only if not in input field)
-        if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-          e.preventDefault();
-          if (state.gameLoop?.paused) {
-            actions.resumeGame();
-          } else {
-            actions.pauseGame();
-          }
-        }
-      } catch (error) {
-        console.error('[farm]', 'Settings: Keyboard shortcut error', error);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [state.gameLoop?.paused, actions, handleSaveGame]);
-
   return (
     <div className="space-y-4">
       {/* Game Controls Header (Kept inline as it's simple) */}
@@ -312,14 +285,15 @@ const SettingsTab = memo(() => {
           <h4 className="font-semibold">⌨️ Keyboard Shortcuts</h4>
           <Button
             onClick={() => {
-              const newState = !state.settings.keyboardShortcuts;
+              const currentlyEnabled = state.settings.keyboardShortcuts !== false;
+              const newState = !currentlyEnabled;
               actions.updateSettings({ keyboardShortcuts: newState });
               actions.addNotification({
                 message: `Keyboard shortcuts ${newState ? 'enabled ⌨️' : 'disabled'}`,
                 type: 'info',
               });
             }}
-            variant={state.settings.keyboardShortcuts ? 'default' : 'outline'}
+            variant={state.settings.keyboardShortcuts !== false ? 'default' : 'outline'}
             size="sm"
           >
             {state.settings.keyboardShortcuts !== false ? 'On' : 'Off'}

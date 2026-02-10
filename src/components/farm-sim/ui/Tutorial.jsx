@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGameActions, useGameSelector } from '../context/GameContext';
 import { Button } from '../../ui/button';
 import { Card } from '../../ui/card';
 
@@ -38,22 +38,25 @@ const ONBOARDING_STEPS = [
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
 const Tutorial = memo(() => {
-  const { state, actions } = useGame();
+  const actions = useGameActions();
+  const onboardingStep = useGameSelector((state) => state.onboardingStep || 0);
+  const onboardingSkipped = useGameSelector((state) => Boolean(state.onboardingSkipped));
+  const onboardingSeen = useGameSelector((state) => Boolean(state.onboardingSeen));
   const [targetRect, setTargetRect] = useState(null);
   const [manualPosition, setManualPosition] = useState(null);
   const dragStateRef = useRef(null);
 
-  const stepIndex = state.onboardingStep || 0;
+  const stepIndex = onboardingStep;
   const currentStep = ONBOARDING_STEPS[stepIndex];
   const totalSteps = ONBOARDING_STEPS.length;
 
-  const shouldShow = !state.onboardingSkipped && stepIndex < totalSteps;
+  const shouldShow = !onboardingSkipped && stepIndex < totalSteps;
 
   useEffect(() => {
-    if (shouldShow && !state.onboardingSeen) {
+    if (shouldShow && !onboardingSeen) {
       actions.updateOnboarding({ onboardingSeen: true });
     }
-  }, [shouldShow, state.onboardingSeen, actions]);
+  }, [shouldShow, onboardingSeen, actions]);
 
   useEffect(() => {
     if (!shouldShow || !currentStep?.target) {

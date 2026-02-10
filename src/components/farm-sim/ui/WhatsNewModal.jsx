@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useMemo, useState } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGameActions, useGameSelector } from '../context/GameContext';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { getLatestReleaseNotes } from '../../../utils/changelog';
@@ -7,13 +7,14 @@ import { APP_VERSION } from '../../../config/release';
 import { getContentManager } from '../../../content/ContentManager';
 
 const WhatsNewModal = memo(() => {
-  const { state, actions } = useGame();
+  const actions = useGameActions();
+  const whatsNew = useGameSelector((state) => state.whatsNew || null);
   const [isOpen, setIsOpen] = useState(false);
 
   const content = getContentManager();
   const releaseNotes = useMemo(() => getLatestReleaseNotes(), []);
   const hasNotes = releaseNotes.sections?.length > 0;
-  const lastSeenVersion = state.whatsNew?.lastSeenVersion || null;
+  const lastSeenVersion = whatsNew?.lastSeenVersion || null;
   const shouldShow = hasNotes && lastSeenVersion !== APP_VERSION;
 
   useEffect(() => {
@@ -23,7 +24,7 @@ const WhatsNewModal = memo(() => {
   }, [shouldShow]);
 
   const handleDismiss = () => {
-    const current = state.whatsNew || { dismissed: {} };
+    const current = whatsNew || { dismissed: {} };
     actions.updateWhatsNew({
       ...current,
       lastSeenVersion: APP_VERSION,
