@@ -43,4 +43,30 @@ describe('gameReducer economy guards', () => {
     expect(next.xp).toBe(500);
     expect(next.level).toBeGreaterThan(1);
   });
+
+  it('returns same state reference for no-op game loop merges', () => {
+    const seeded = {
+      ...initialState,
+      gameLoop: { ...initialState.gameLoop, paused: false },
+    };
+    const next = gameReducer(seeded, {
+      type: GAME_ACTIONS.UPDATE_GAME_LOOP,
+      payload: { paused: false },
+    });
+
+    expect(next).toBe(seeded);
+  });
+
+  it('returns same state reference for no-op settings merges', () => {
+    const seeded = {
+      ...initialState,
+      settings: { ...initialState.settings, autoSave: true },
+    };
+    const next = gameReducer(seeded, {
+      type: GAME_ACTIONS.UPDATE_SETTINGS,
+      payload: { autoSave: true },
+    });
+
+    expect(next).toBe(seeded);
+  });
 });

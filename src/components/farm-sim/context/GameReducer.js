@@ -238,6 +238,19 @@ const sanitizeNonNegativeNumber = (value, fallback = 0) => {
     return Math.max(0, Math.floor(numeric));
 };
 
+const mergeIfChanged = (current, patch) => {
+    if (!patch || typeof patch !== 'object') return current;
+    let changed = false;
+    const merged = { ...current };
+    for (const [key, value] of Object.entries(patch)) {
+        if (!Object.is(current?.[key], value)) {
+            merged[key] = value;
+            changed = true;
+        }
+    }
+    return changed ? merged : current;
+};
+
 /**
  * Game reducer function
  * @param {Object} state - Current game state
@@ -251,6 +264,7 @@ export function gameReducer(state, action) {
                 ? action.payload(state.coins)
                 : action.payload;
             const newCoins = sanitizeNonNegativeNumber(resolvedCoins, state.coins);
+            if (newCoins === state.coins) return state;
             return { ...state, coins: newCoins };
 
         case GAME_ACTIONS.SET_XP:
@@ -261,6 +275,10 @@ export function gameReducer(state, action) {
             const computedLevel = getLevelFromXp(newXp);
             const newLevel = Math.max(state.level, computedLevel);
             const didLevelUp = newLevel > state.level;
+
+            if (!didLevelUp && newXp === state.xp) {
+                return state;
+            }
 
             if (didLevelUp && typeof window !== 'undefined') {
                 setTimeout(() => {
@@ -543,13 +561,19 @@ export function gameReducer(state, action) {
             return { ...state, premiumLockPrompt: action.payload };
 
         case GAME_ACTIONS.UPDATE_SETTINGS:
-            return { ...state, settings: { ...state.settings, ...action.payload } };
+            const nextSettings = mergeIfChanged(state.settings, action.payload);
+            if (nextSettings === state.settings) return state;
+            return { ...state, settings: nextSettings };
 
         case GAME_ACTIONS.UPDATE_RETENTION:
-            return { ...state, retention: { ...state.retention, ...action.payload } };
+            const nextRetention = mergeIfChanged(state.retention, action.payload);
+            if (nextRetention === state.retention) return state;
+            return { ...state, retention: nextRetention };
 
         case GAME_ACTIONS.UPDATE_GAME_LOOP:
-            return { ...state, gameLoop: { ...state.gameLoop, ...action.payload } };
+            const nextGameLoop = mergeIfChanged(state.gameLoop, action.payload);
+            if (nextGameLoop === state.gameLoop) return state;
+            return { ...state, gameLoop: nextGameLoop };
 
         case GAME_ACTIONS.UPDATE_ONBOARDING:
             return {
