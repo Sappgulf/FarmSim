@@ -129,7 +129,7 @@ const NotificationItem = memo(({ notification, onClose }) => {
             e.stopPropagation();
             handleClose();
           }}
-          className="flex-shrink-0 h-9 w-9 p-0 hover:bg-white/70 rounded-lg text-gray-700 hover:text-gray-900 transition-all"
+          className="flex-shrink-0 h-11 w-11 p-0 hover:bg-white/70 rounded-lg text-gray-700 hover:text-gray-900 transition-all"
           aria-label="Close notification"
         >
           <X className="w-4 h-4" />
@@ -190,9 +190,9 @@ const NotificationSystem = memo(() => {
                 isHidden
                   ? undefined
                   : {
-                      animationDelay: `${index * 50}ms`,
-                      transform: `translateY(${index * 2}px)`,
-                    }
+                    animationDelay: `${index * 50}ms`,
+                    transform: `translateY(${index * 2}px)`,
+                  }
               }
             >
               <NotificationItem

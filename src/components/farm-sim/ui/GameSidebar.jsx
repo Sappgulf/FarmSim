@@ -2,6 +2,7 @@ import React, { memo, useState, lazy, Suspense, useCallback, useEffect, useMemo,
 import { useGame } from '../context/GameContext';
 import { Tabs, TabsContent } from '../../ui/tabs';
 import { Card } from '../../ui/card';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 import TabWrapper from './tabs/TabWrapper';
 import { TAB_INFO } from './NavBar';
 import { Circle } from 'lucide-react';
@@ -70,7 +71,7 @@ const TAB_CONFIG_BY_ID = Object.fromEntries(TAB_CONFIGS.map((tab) => [tab.id, ta
 
 // Game Sidebar Component - Now accepts controlled props
 const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
-  const { state } = useGame();
+  const { state, actions } = useGame();
   // Use controlled mode if props provided, otherwise internal state (backward compat)
   const [internalTab, setInternalTab] = useState('farming');
   const activeTab = controlledTab ?? internalTab;
@@ -82,6 +83,22 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
       setInternalTab(tabId);
     }
   }, [onTabChange]);
+
+  // Keyboard shortcuts: 1-9 for tabs, W/H/F/T for bulk actions
+  const handleBulkAction = useCallback((action) => {
+    switch (action) {
+      case 'water': actions.waterAllPlots?.(); break;
+      case 'harvest': actions.harvestAllReadyCrops?.(); break;
+      case 'fertilize': actions.fertilizeAllPlots?.(); break;
+      case 'treat': actions.treatAllDiseases?.(); break;
+    }
+  }, [actions]);
+
+  useKeyboardShortcuts({
+    enabled: state.settings?.keyboardShortcuts !== false,
+    onTabChange: handleTabChange,
+    onBulkAction: handleBulkAction,
+  });
 
   // Expose tab switching globally so header buttons can use it
   const handleTabChangeRef = useRef(handleTabChange);
@@ -173,25 +190,25 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
             <div className="font-bold text-emerald-700 text-sm">
               {inventoryCount}
             </div>
-            <div className="text-gray-500 text-[11px] font-medium">Items</div>
+            <div className="text-gray-500 text-xs font-medium">Items</div>
           </div>
           <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
             <div className="font-bold text-amber-600 text-sm">
               {builtCount}
             </div>
-            <div className="text-gray-500 text-[11px] font-medium">Built</div>
+            <div className="text-gray-500 text-xs font-medium">Built</div>
           </div>
           <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
             <div className="font-bold text-blue-600 text-sm">
               {state.livestock?.animals?.length || 0}
             </div>
-            <div className="text-gray-500 text-[11px] font-medium">Animals</div>
+            <div className="text-gray-500 text-xs font-medium">Animals</div>
           </div>
           <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
             <div className="font-bold text-purple-600 text-sm">
               {state.social?.reputation ?? 0}
             </div>
-            <div className="text-gray-500 text-[11px] font-medium">Rep</div>
+            <div className="text-gray-500 text-xs font-medium">Rep</div>
           </div>
         </div>
       </div>

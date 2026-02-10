@@ -192,6 +192,7 @@ export const initialState = {
         showAlmanacHints: true,
         showWelcomeBackSummary: true,
         showTooltips: true,
+        keyboardShortcuts: true,
     },
     entitlements: {
         mode: 'free',
@@ -342,7 +343,8 @@ export function gameReducer(state, action) {
                         fertilizer: 0,
                         disease: null,
                         soilFertility: 1.0,
-                        progress: 0
+                        progress: 0,
+                        rotationHistory: []
                     }))
                 ]
                 : existingPlots.slice(0, newTotalPlots);
@@ -370,7 +372,7 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_ACHIEVEMENTS:
             return { ...state, achievements: action.payload };
-        
+
         case GAME_ACTIONS.UPDATE_MEMORY_FLAGS:
             const updatedMemoryFlags = typeof action.payload === 'function'
                 ? action.payload(state.memoryFlags)

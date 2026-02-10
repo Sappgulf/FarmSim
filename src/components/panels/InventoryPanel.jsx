@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ALL_CROPS } from '../../data/crops';
 import { TOOLS } from '../../data/constants';
+import { formatDisplayLabel } from '../../utils/textFormat';
 
 function InventoryPanelComponent({
   inventory,
@@ -129,7 +130,7 @@ function InventoryPanelComponent({
                   key={id}
                   className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-gray-200"
                 >
-                  <span className="text-sm capitalize truncate">{id.replace(/_/g, ' ')}</span>
+                  <span className="text-sm truncate">{formatDisplayLabel(id)}</span>
                   <Badge variant="secondary">×{qty}</Badge>
                 </div>
               ))}

@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { Clock, Coins, Star, Leaf, Droplet, Zap, TrendingUp, Info } from 'lucide-react';
 import { CROPS, QUALITY_TIERS, RARITY_COLORS, CROP_FAMILIES, ALL_CROPS } from '../../data/crops';
 import { BUILDINGS } from '../../data/buildings';
+import { formatDisplayLabel } from '../../utils/textFormat';
 
 // Flavor text for crops
 const CROP_DESCRIPTIONS = {
@@ -58,7 +59,7 @@ function TooltipContent({ type, data, children }) {
         <div className="flex items-center gap-3 mb-3 pb-2 border-b border-gray-200">
           <span className="text-3xl">{crop.emoji}</span>
           <div>
-            <h4 className="font-bold text-gray-900 capitalize">{data.id.replace(/_/g, ' ')}</h4>
+            <h4 className="font-bold text-gray-900">{formatDisplayLabel(data.id)}</h4>
             <span className={`text-xs px-2 py-0.5 rounded-full ${RARITY_COLORS[crop.rarity]}`}>
               {crop.rarity}
             </span>
@@ -97,7 +98,7 @@ function TooltipContent({ type, data, children }) {
               {family.emoji} {crop.family.charAt(0).toUpperCase() + crop.family.slice(1)} Family
             </div>
             <div className="text-emerald-600">
-              Benefit: {family.benefit.replace(/_/g, ' ')}
+              Benefit: {formatDisplayLabel(family.benefit)}
             </div>
           </div>
         )}

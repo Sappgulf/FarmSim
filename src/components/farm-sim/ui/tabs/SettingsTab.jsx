@@ -306,11 +306,31 @@ const SettingsTab = memo(() => {
 
       <GameStats state={state} />
 
-      {/* Keyboard Shortcuts (Static) */}
+      {/* Keyboard Shortcuts */}
       <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
-        <h4 className="font-semibold mb-3">⌨️ Keyboard Shortcuts</h4>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-semibold">⌨️ Keyboard Shortcuts</h4>
+          <Button
+            onClick={() => {
+              const newState = !state.settings.keyboardShortcuts;
+              actions.updateSettings({ keyboardShortcuts: newState });
+              actions.addNotification({
+                message: `Keyboard shortcuts ${newState ? 'enabled ⌨️' : 'disabled'}`,
+                type: 'info',
+              });
+            }}
+            variant={state.settings.keyboardShortcuts ? 'default' : 'outline'}
+            size="sm"
+          >
+            {state.settings.keyboardShortcuts !== false ? 'On' : 'Off'}
+          </Button>
+        </div>
 
         <div className="space-y-2 text-sm">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-700">Switch Tabs</span>
+            <Badge variant="outline" className="font-mono">1 – 9</Badge>
+          </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-700">Pause/Resume Game</span>
             <Badge variant="outline" className="font-mono">Space</Badge>
@@ -327,6 +347,24 @@ const SettingsTab = memo(() => {
             <span className="text-gray-700">Quick Save</span>
             <Badge variant="outline" className="font-mono">Ctrl + S</Badge>
           </div>
+          <div className="border-t border-blue-100 my-2" />
+          <div className="flex justify-between items-center">
+            <span className="text-gray-700">Water All</span>
+            <Badge variant="outline" className="font-mono">W</Badge>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-700">Harvest All</span>
+            <Badge variant="outline" className="font-mono">H</Badge>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-700">Fertilize All</span>
+            <Badge variant="outline" className="font-mono">F</Badge>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-700">Treat Diseases</span>
+            <Badge variant="outline" className="font-mono">T</Badge>
+          </div>
+
         </div>
       </Card>
 

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Progress } from '../ui/progress';
 import { BREEDING_RECIPES } from '../../data/buildings';
 import { ALL_CROPS } from '../../data/crops';
+import { formatDisplayLabel } from '../../utils/textFormat';
 
 function BreedingPanelComponent({
   inventory,
@@ -192,7 +193,7 @@ function BreedingPanelComponent({
                             key={trait}
                             className="text-[10px] bg-purple-100 text-purple-700"
                           >
-                            {trait.replace('_', ' ')}
+                            {formatDisplayLabel(trait)}
                           </Badge>
                         ))}
                       </div>

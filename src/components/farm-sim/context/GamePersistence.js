@@ -6,7 +6,7 @@ import { normalizeEntitlements } from '../entitlements/EntitlementManager';
 import { getLevelFromXp, remapXpToCurrentCurve } from '../systems/progression';
 
 // Save schema version (separate from APP_VERSION in src/config/release.js).
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -31,7 +31,8 @@ export const initializePlots = (gridSize) => {
         fertilizer: 0,
         disease: null,
         soilFertility: 1.0,
-        progress: 0
+        progress: 0,
+        rotationHistory: []
     }));
 };
 
@@ -72,6 +73,7 @@ const normalizePlots = (plots, gridSize) => {
             fertilizer: clampNumber(plot.fertilizer, fallbackPlot.fertilizer, { min: 0 }),
             soilFertility: clampNumber(plot.soilFertility, fallbackPlot.soilFertility, { min: 0, max: 2 }),
             progress: clampNumber(plot.progress, fallbackPlot.progress, { min: 0, max: 1 }),
+            rotationHistory: Array.isArray(plot.rotationHistory) ? plot.rotationHistory.slice(-3) : [],
         };
     });
 };
@@ -251,7 +253,7 @@ export function migrateSaveData(savedData) {
             };
         }
 
-        
+
         // Version 12 → 13: Seed provenance, ghost visit, milestones
         if (saveVersion < 13) {
             migratedData.seedProvenance = null;
@@ -286,7 +288,16 @@ export function migrateSaveData(savedData) {
             migratedData.level = Math.max(priorLevel, getLevelFromXp(migratedData.xp));
         }
 
-// Validate critical fields
+        // Version 15 → 16: Crop rotation history + keyboard shortcuts setting
+        if (saveVersion < 16) {
+            // rotationHistory added to plots via normalizePlots fallback
+            // Add keyboard shortcuts setting
+            if (migratedData.settings) {
+                migratedData.settings.keyboardShortcuts = true;
+            }
+        }
+
+        // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
         migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
         migratedData.level = Math.max(clampNumber(migratedData.level, 1, { min: 1 }), getLevelFromXp(migratedData.xp));
@@ -528,6 +539,7 @@ export function migrateSaveData(savedData) {
             showAlmanacHints: ensureBoolean(migratedData.settings?.showAlmanacHints, true),
             showWelcomeBackSummary: ensureBoolean(migratedData.settings?.showWelcomeBackSummary, true),
             showTooltips: ensureBoolean(migratedData.settings?.showTooltips, true),
+            keyboardShortcuts: ensureBoolean(migratedData.settings?.keyboardShortcuts, true),
         };
 
         migratedData.selectedDecoration = typeof migratedData.selectedDecoration === 'string'

@@ -137,7 +137,15 @@ export class FarmingSystem {
       const level = this.gameState.level || 1;
       const difficulty = getDifficultyModifier(level);
       const effectiveGrowthTime = (baseGrowthTime * difficulty.growthTime) / (plotWeatherModifier * seasonBonus * greenhouseGrowthBonus * hydroponicsGrowthBonus * growthBoost);
-      const progress = Math.min(1.0, timeSincePlanted / effectiveGrowthTime);
+
+      // Crop rotation bonus: +5% growth speed per unique predecessor in last 3 crops
+      const rotationHistory = Array.isArray(plot.rotationHistory) ? plot.rotationHistory : [];
+      const predecessors = rotationHistory.slice(0, -1); // exclude current crop (last entry)
+      const uniquePredecessors = new Set(predecessors.filter(id => id !== (plot.crop.id || ''))).size;
+      const rotationBonus = 1 + (uniquePredecessors * 0.05); // +5% per unique, max +15%
+      const rotatedGrowthTime = effectiveGrowthTime / rotationBonus;
+
+      const progress = Math.min(1.0, timeSincePlanted / rotatedGrowthTime);
 
 
       // Calculate growth stage
@@ -302,11 +310,16 @@ export class FarmingSystem {
     // Deduct cost
     this.actions.spendMoney(cost);
 
-    // Plant crop
+    // Plant crop — record rotation history for diversity bonus
     const plantedAt = Date.now();
     const shouldBoostFirstCrop = !this.gameState.memoryFlags?.first_seed && !this.gameState.onboardingSkipped;
     const updatedPlots = [...this.gameState.plots];
     const fertilityFloor = getPostHarvestFertilityFloor(this.gameState.inventory);
+
+    // Build rotation history: keep last 3 crops planted on this plot
+    const prevHistory = Array.isArray(plot.rotationHistory) ? plot.rotationHistory : [];
+    const newRotationHistory = [...prevHistory, cropData.id].slice(-3);
+
     updatedPlots[plotIndex] = {
       ...plot,
       crop: cropData,
@@ -317,11 +330,13 @@ export class FarmingSystem {
       waterLevel: 85, // Start with ample water for growth
       soilFertility: plot.soilFertility || 1.0,
       weatherModifier: 1.0,
+      rotationHistory: newRotationHistory,
       ...(shouldBoostFirstCrop ? { growthBoost: 1.5 } : {}),
     };
 
     if (isDevelopmentMode()) {
-      console.debug('[farm]', `Planted ${cropData.name}`, { plotIndex, growthTime: cropData.growthTime });
+      const uniquePast = new Set(prevHistory.filter(id => id !== cropData.id)).size;
+      console.debug('[farm]', `Planted ${cropData.name}`, { plotIndex, growthTime: cropData.growthTime, rotationUnique: uniquePast });
     }
 
     this.actions.updatePlots(updatedPlots);

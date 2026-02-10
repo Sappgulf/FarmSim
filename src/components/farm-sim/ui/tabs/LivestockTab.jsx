@@ -20,7 +20,7 @@ const LivestockTab = memo(() => {
     capacity: (state.livestock?.capacity) || 10,
     totalProduced: (state.livestock?.totalProduced) || 0
   };
-  
+
   // Safety check for LIVESTOCK_TYPES
   if (!LIVESTOCK_TYPES || typeof LIVESTOCK_TYPES !== 'object') {
     return (
@@ -33,7 +33,7 @@ const LivestockTab = memo(() => {
       </div>
     );
   }
-  
+
   // If system isn't available yet, show loading
   if (!livestockSystem) {
     return (
@@ -46,7 +46,7 @@ const LivestockTab = memo(() => {
       </div>
     );
   }
-  
+
   const stats = livestockSystem.getStats() || {
     totalAnimals: 0,
     capacity: 10,
@@ -93,7 +93,7 @@ const LivestockTab = memo(() => {
 
   const handleFeedAnimal = (animalId) => {
     if (!livestockSystem) return;
-    
+
     const result = livestockSystem.feedAnimal(animalId);
     if (result.success) {
       soundSystem?.playWaterSound();
@@ -104,18 +104,18 @@ const LivestockTab = memo(() => {
 
   const handlePetAnimal = (animalId) => {
     if (!livestockSystem) return;
-    
+
     livestockSystem.petAnimal(animalId);
     soundSystem?.playClickSound();
   };
 
   const handleCollectProduct = (animalId) => {
     if (!livestockSystem) return;
-    
+
     const result = livestockSystem.collectProduct(animalId);
     if (result.success) {
       soundSystem?.playMoneySound();
-      
+
       // Trigger particle effect
       if (typeof window.triggerParticleEffect === 'function') {
         const centerX = window.innerWidth / 2;
@@ -129,7 +129,7 @@ const LivestockTab = memo(() => {
 
   const handleSellAnimal = (animalId) => {
     if (!livestockSystem) return;
-    
+
     const result = livestockSystem.sellAnimal(animalId);
     if (result.success) {
       soundSystem?.playMoneySound();
@@ -138,7 +138,7 @@ const LivestockTab = memo(() => {
 
   const handleUpgradeBarn = () => {
     if (!livestockSystem) return;
-    
+
     const result = livestockSystem.upgradeBarn();
     if (result.success) {
       soundSystem?.playBuildSound();
@@ -169,7 +169,7 @@ const LivestockTab = memo(() => {
             {stats.totalAnimals} Animals
           </Badge>
         </h3>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="text-center">
             <div className="text-2xl font-bold text-amber-700">{stats.totalAnimals}/{stats.capacity}</div>
@@ -188,7 +188,7 @@ const LivestockTab = memo(() => {
             <div className="text-xs text-gray-600">Ready to Collect</div>
           </div>
         </div>
-        
+
         {stats.dailyCost > 0 && (
           <div className="mt-3 text-center text-sm text-gray-600">
             Daily Maintenance: ${stats.dailyCost}
@@ -204,8 +204,8 @@ const LivestockTab = memo(() => {
             <div>
               <h4 className="font-bold text-gray-800">Barn Capacity</h4>
               <div className="flex items-center gap-2 mt-1">
-                <Progress 
-                  value={(stats.spaceUsed / stats.capacity) * 100} 
+                <Progress
+                  value={(stats.spaceUsed / stats.capacity) * 100}
                   className="h-2 w-32"
                   variant="energy"
                 />
@@ -236,7 +236,7 @@ const LivestockTab = memo(() => {
           🛒 Buy Animals
           <span className="text-xs text-gray-500 font-normal ml-2">Click to purchase</span>
         </h4>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {Object.values(LIVESTOCK_TYPES).map(animalType => {
             const canAfford = state.coins >= animalType.cost;
@@ -245,13 +245,12 @@ const LivestockTab = memo(() => {
             const canBuy = canAfford && hasSpace && meetsLevel;
 
             return (
-              <Card 
+              <Card
                 key={animalType.id}
-                className={`p-3 cursor-pointer transition-all duration-200 ${
-                  canBuy 
-                    ? 'hover:shadow-lg hover:scale-105 hover:border-green-300 bg-white border-2 border-transparent' 
+                className={`p-3 cursor-pointer transition-all duration-200 ${canBuy
+                    ? 'hover:shadow-lg hover:scale-105 hover:border-green-300 bg-white border-2 border-transparent'
                     : 'opacity-50 bg-gray-50 cursor-not-allowed'
-                }`}
+                  }`}
                 onClick={() => canBuy && handleBuyAnimal(animalType.id)}
               >
                 <div className="text-center">
@@ -260,7 +259,7 @@ const LivestockTab = memo(() => {
                   <div className="text-xs text-gray-600 mb-2">
                     {animalType.description}
                   </div>
-                  
+
                   <div className="text-sm space-y-1 mb-2">
                     <div className="flex justify-between text-xs">
                       <span>Cost:</span>
@@ -281,7 +280,7 @@ const LivestockTab = memo(() => {
                       <span>{animalType.productionTime}s</span>
                     </div>
                   </div>
-                  
+
                   {!meetsLevel && (
                     <Badge variant="destructive" className="text-xs">
                       Level {animalType.requirements.level} Required
@@ -310,20 +309,21 @@ const LivestockTab = memo(() => {
           🐾 Your Animals
           <Badge className="ml-2">{livestock.animals.length}</Badge>
         </h4>
-        
+
         {livestock.animals.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <div className="text-4xl mb-2">🏚️</div>
-            <p>No animals yet. Buy some above!</p>
+          <div className="text-center py-10 px-4">
+            <div className="text-5xl mb-3">🐄</div>
+            <p className="font-semibold text-gray-700 mb-1">Your barn is empty</p>
+            <p className="text-sm text-gray-500 mb-4">Purchase your first animal above to start collecting products and earning extra income!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {livestock.animals.map(animal => {
               const timeSinceProduction = (Date.now() - animal.lastProduction) / 1000;
               const productionProgress = Math.min(100, (timeSinceProduction / animal.type.productionTime) * 100);
-              
+
               return (
-                <Card 
+                <Card
                   key={animal.id}
                   className="p-4 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-all duration-200 border-2 border-transparent hover:border-amber-200"
                 >
@@ -346,7 +346,7 @@ const LivestockTab = memo(() => {
                       Sell
                     </Button>
                   </div>
-                  
+
                   {/* Stats */}
                   <div className="space-y-2 mb-3">
                     <div>
@@ -357,7 +357,7 @@ const LivestockTab = memo(() => {
                       </div>
                       <Progress value={animal.health} variant="health" className="h-2" />
                     </div>
-                    
+
                     <div>
                       <div className="flex justify-between text-xs mb-1">
                         <span className={getHappinessColor(animal.happiness)}>
@@ -366,7 +366,7 @@ const LivestockTab = memo(() => {
                       </div>
                       <Progress value={animal.happiness} variant="xp" className="h-2" />
                     </div>
-                    
+
                     <div>
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-orange-600">
@@ -375,7 +375,7 @@ const LivestockTab = memo(() => {
                       </div>
                       <Progress value={animal.hunger} variant="energy" className="h-2" />
                     </div>
-                    
+
                     <div>
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-green-600">
@@ -385,7 +385,7 @@ const LivestockTab = memo(() => {
                       <Progress value={productionProgress} variant="growth" className="h-2" />
                     </div>
                   </div>
-                  
+
                   {/* Actions */}
                   <div className="flex gap-2">
                     <Button

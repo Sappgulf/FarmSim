@@ -17,15 +17,15 @@ const DiseaseManagementTab = memo(() => {
   const diseaseStats = useMemo(() => {
     const diseasedPlots = (state.plots || []).filter(p => p.disease);
     const diseaseTypes = {};
-    
+
     diseasedPlots.forEach(plot => {
       diseaseTypes[plot.disease] = (diseaseTypes[plot.disease] || 0) + 1;
     });
-    
+
     const totalPlots = (state.plots || []).filter(p => p.state !== 'empty').length;
     const healthyPlots = totalPlots - diseasedPlots.length;
     const healthPercent = totalPlots > 0 ? (healthyPlots / totalPlots) * 100 : 100;
-    
+
     return {
       totalDiseased: diseasedPlots.length,
       diseaseTypes,
@@ -39,12 +39,12 @@ const DiseaseManagementTab = memo(() => {
   const handleApplyCure = (cureItemId) => {
     const cureItem = CURE_ITEMS[cureItemId];
     if (!cureItem) return;
-    
+
     // Find first diseased plot that this cure can fix
-    const targetPlotIndex = state.plots.findIndex(plot => 
+    const targetPlotIndex = state.plots.findIndex(plot =>
       plot.disease && cureItem.cures.includes(plot.disease)
     );
-    
+
     if (targetPlotIndex === -1) {
       actions.addNotification({
         message: `No crops infected with diseases that ${cureItem.name} can cure!`,
@@ -52,7 +52,7 @@ const DiseaseManagementTab = memo(() => {
       });
       return;
     }
-    
+
     // Apply cure via disease system action
     if (state.diseaseSystem) {
       state.diseaseSystem.applyCure(targetPlotIndex, cureItemId);
@@ -69,7 +69,7 @@ const DiseaseManagementTab = memo(() => {
         actions.updatePlots(updatedPlots);
         actions.spendMoney(cureItem.cost);
         actions.addXP(10, { source: 'milestone', label: 'Disease Managed' });
-        
+
         actions.addNotification({
           message: `${cureItem.emoji} Cured plot #${targetPlotIndex + 1}!`,
           type: 'success',
@@ -87,7 +87,7 @@ const DiseaseManagementTab = memo(() => {
   const handleCureAll = () => {
     const universalCure = CURE_ITEMS.universal_cure;
     const diseasedPlots = (state.plots || []).filter(p => p.disease);
-    
+
     if (diseasedPlots.length === 0) {
       actions.addNotification({
         message: 'No diseased crops to cure!',
@@ -95,7 +95,7 @@ const DiseaseManagementTab = memo(() => {
       });
       return;
     }
-    
+
     if (state.coins < universalCure.cost) {
       actions.addNotification({
         message: `Not enough coins! Need ${universalCure.cost}🪙`,
@@ -103,7 +103,7 @@ const DiseaseManagementTab = memo(() => {
       });
       return;
     }
-    
+
     // Cure all diseased plots
     const updatedPlots = state.plots.map(plot => {
       if (plot.disease) {
@@ -117,16 +117,16 @@ const DiseaseManagementTab = memo(() => {
       }
       return plot;
     });
-    
+
     actions.updatePlots(updatedPlots);
     actions.spendMoney(universalCure.cost);
     actions.addXP(50, { source: 'milestone', label: 'Disease Cleared' });
-    
+
     // Particle effect
     if (typeof window.triggerParticleEffect === 'function') {
       window.triggerParticleEffect(window.innerWidth / 2, window.innerHeight / 2, 'levelup');
     }
-    
+
     actions.addNotification({
       message: `✨ Cured ALL diseases! +24h protection!`,
       type: 'success',
@@ -162,7 +162,7 @@ const DiseaseManagementTab = memo(() => {
             <div className="text-xs text-gray-600">Farm Health</div>
           </div>
         </div>
-        
+
         <div className="mt-3">
           <Progress value={diseaseStats.healthPercent} className="h-2" />
           <div className="flex justify-between text-xs text-gray-600 mt-1">
@@ -172,8 +172,22 @@ const DiseaseManagementTab = memo(() => {
         </div>
       </Card>
 
-      {/* Active Diseases Alert */}
-      {diseaseStats.totalDiseased > 0 && (
+      {/* Active Diseases Alert / Healthy Farm State */}
+      {diseaseStats.totalDiseased === 0 ? (
+        <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300">
+          <div className="flex items-center gap-3">
+            <Shield className="w-8 h-8 text-green-600 flex-shrink-0" />
+            <div>
+              <div className="font-semibold text-green-800 text-lg">
+                🌿 All Crops Healthy!
+              </div>
+              <p className="text-sm text-green-600 mt-1">
+                No diseases detected. Keep your soil watered and your barn built to stay protected.
+              </p>
+            </div>
+          </div>
+        </Card>
+      ) : (
         <Card className="p-4 bg-red-50 border-2 border-red-400">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
@@ -219,25 +233,24 @@ const DiseaseManagementTab = memo(() => {
           <Droplet className="w-4 h-4" />
           Treatment Shop
         </h4>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {Object.values(CURE_ITEMS).map((cureItem) => {
             const canAfford = state.coins >= cureItem.cost;
-            const hasMatchingDisease = state.plots.some(plot => 
+            const hasMatchingDisease = state.plots.some(plot =>
               plot.disease && cureItem.cures.includes(plot.disease)
             );
             const isUniversal = cureItem.id === 'universal_cure';
-            
+
             return (
               <Card
                 key={cureItem.id}
-                className={`p-3 border-2 transition-all ${
-                  hasMatchingDisease && canAfford
-                    ? 'border-green-400 bg-green-50'
-                    : isUniversal
+                className={`p-3 border-2 transition-all ${hasMatchingDisease && canAfford
+                  ? 'border-green-400 bg-green-50'
+                  : isUniversal
                     ? 'border-purple-400 bg-purple-50'
                     : 'border-gray-200'
-                }`}
+                  }`}
               >
                 <div className="flex items-start gap-3">
                   <span className="text-3xl">{cureItem.emoji}</span>
@@ -248,7 +261,7 @@ const DiseaseManagementTab = memo(() => {
                     <p className="text-xs text-gray-600 mb-2">
                       {cureItem.description}
                     </p>
-                    
+
                     <div className="flex flex-wrap gap-1 mb-2">
                       {cureItem.cures.map(diseaseId => {
                         const disease = DISEASE_TYPES[diseaseId];
@@ -259,7 +272,7 @@ const DiseaseManagementTab = memo(() => {
                         ) : null;
                       })}
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-semibold text-yellow-700">
                         {cureItem.cost}🪙
@@ -270,13 +283,13 @@ const DiseaseManagementTab = memo(() => {
                         disabled={!canAfford || (!hasMatchingDisease && !isUniversal)}
                         className={canAfford && hasMatchingDisease ? 'bg-green-600 hover:bg-green-700' : ''}
                       >
-                        {!canAfford 
-                          ? `Need ${cureItem.cost}🪙` 
+                        {!canAfford
+                          ? `Need ${cureItem.cost}🪙`
                           : !hasMatchingDisease && !isUniversal
-                          ? 'No Target'
-                          : isUniversal
-                          ? '✨ Cure All'
-                          : '💊 Apply'
+                            ? 'No Target'
+                            : isUniversal
+                              ? '✨ Cure All'
+                              : '💊 Apply'
                         }
                       </Button>
                     </div>
@@ -291,11 +304,11 @@ const DiseaseManagementTab = memo(() => {
       {/* Disease Encyclopedia */}
       <Card className="p-4">
         <h4 className="font-semibold mb-3">📚 Disease Encyclopedia</h4>
-        
+
         <div className="space-y-3">
           {Object.values(DISEASE_TYPES).map((disease) => {
             const activeCount = diseaseStats.diseaseTypes[disease.id] || 0;
-            
+
             return (
               <Card
                 key={disease.id}
@@ -311,7 +324,7 @@ const DiseaseManagementTab = memo(() => {
                       )}
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{disease.description}</p>
-                    
+
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <span className="text-gray-500">Spread Rate:</span>
@@ -324,7 +337,7 @@ const DiseaseManagementTab = memo(() => {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="mt-2 flex items-center gap-2 text-xs text-gray-600">
                       <span>Favorable:</span>
                       {disease.favorableWeather.map(w => (
