@@ -1,11 +1,11 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGameActions, useGameSelector, useGameStore } from '../context/GameContext';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { isDebugMode, logDebugAction } from '../../../utils/debugTools';
 import { getContentManager, printContentReport, revalidateContent } from '../../../content/ContentManager';
 import { TAB_IDS } from './GameSidebar';
-import { ENTITLEMENT_MODES, getEntitlementsState, isPremiumModeEnabled } from '../entitlements/EntitlementManager';
+import { ENTITLEMENT_MODES, isPremiumModeEnabled } from '../entitlements/EntitlementManager';
 import {
   advanceChallengeDays,
   clearBuildings,
@@ -16,13 +16,17 @@ import {
 } from '../debug/debugActions';
 
 const DebugStressPanel = memo(() => {
-  const { state, actions } = useGame();
+  const actions = useGameActions();
+  const store = useGameStore();
+  const entitlementMode = useGameSelector((state) => state.entitlements?.mode || ENTITLEMENT_MODES.FREE_MODE);
+  const entitlementPacks = useGameSelector((state) => (
+    Array.isArray(state.entitlements?.packs) ? state.entitlements.packs : []
+  ));
   const debugEnabled = isDebugMode();
   const [tabStressRunning, setTabStressRunning] = useState(false);
   const tabStressRef = useRef(null);
   const content = getContentManager();
-  const entitlements = getEntitlementsState(state);
-  const premiumModeEnabled = isPremiumModeEnabled(state);
+  const premiumModeEnabled = isPremiumModeEnabled({ entitlements: { mode: entitlementMode, packs: entitlementPacks } });
   const packs = content?.packs || [];
 
   useEffect(() => {
@@ -87,10 +91,10 @@ const DebugStressPanel = memo(() => {
       <Card className="bg-black/85 text-white border border-gray-700 shadow-xl p-3 space-y-2">
         <div className="text-xs font-semibold tracking-wide text-gray-200">🧪 Debug Stress Panel</div>
         <div className="grid grid-cols-2 gap-2 text-xs">
-          <Button size="sm" className="h-10" onClick={() => fillAllPlots(state, actions, 'planted')}>
+          <Button size="sm" className="h-10" onClick={() => fillAllPlots(store.getState(), actions, 'planted')}>
             Fill Plots
           </Button>
-          <Button size="sm" className="h-10" onClick={() => fillAllPlots(state, actions, 'ready')}>
+          <Button size="sm" className="h-10" onClick={() => fillAllPlots(store.getState(), actions, 'ready')}>
             Ready Plots
           </Button>
           <Button size="sm" className="h-10" onClick={actions.harvestAllReadyCrops}>
@@ -99,7 +103,7 @@ const DebugStressPanel = memo(() => {
           <Button size="sm" className="h-10" onClick={() => spawnNotifications(actions, 50)}>
             +50 Notifs
           </Button>
-          <Button size="sm" className="h-10" onClick={() => clearNotifications(state, actions)}>
+          <Button size="sm" className="h-10" onClick={() => clearNotifications(store.getState(), actions)}>
             Clear Notifs
           </Button>
           <Button size="sm" className="h-10" onClick={tabStressRunning ? stopTabStress : startTabStress}>
@@ -111,7 +115,7 @@ const DebugStressPanel = memo(() => {
           <Button size="sm" className="h-10" onClick={() => clearBuildings(actions)}>
             Clear Builds
           </Button>
-          <Button size="sm" className="h-10 col-span-2" onClick={() => advanceChallengeDays(state, actions, 30)}>
+          <Button size="sm" className="h-10 col-span-2" onClick={() => advanceChallengeDays(store.getState(), actions, 30)}>
             Advance 30 Days
           </Button>
           <Button size="sm" className="h-10" onClick={revalidateContentNow}>
@@ -138,7 +142,7 @@ const DebugStressPanel = memo(() => {
           <div className="space-y-1 text-[11px] text-gray-300">
             {packs.map((pack) => {
               const isPremium = pack.access === 'premium';
-              const isUnlocked = entitlements.packs.includes(pack.id);
+              const isUnlocked = entitlementPacks.includes(pack.id);
               return (
                 <div key={pack.id} className="flex items-center justify-between gap-2">
                   <div className="flex flex-col">

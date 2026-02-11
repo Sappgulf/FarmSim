@@ -6,7 +6,14 @@ import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { CROP_DATA, CROP_LIST } from '../constants/cropData';
 import { DECORATION_DATA } from '../constants/decorData';
-import { calculateHarvestValue, getHarvestMultiplier, getSoilAnalyzerEnabled } from '../../../utils/farmUpgrades';
+import {
+  calculateHarvestValue,
+  getHarvestMultiplier,
+  getHydroponicsGrowthBonus,
+  getMiniGreenhouseGrowthBonus,
+  getSoilAnalyzerEnabled,
+} from '../../../utils/farmUpgrades';
+import { getDifficultyModifier } from '../systems/progression';
 
 const ReadyCountdown = memo(({ readyAt, harvestWindowMs = 45000 }) => {
   useTick();
@@ -44,6 +51,9 @@ const FarmPlot = memo(({
   selectedDecoration,
   isDecorMode,
   seasonBonus = 1.0,
+  growthDifficulty = 1.0,
+  greenhouseGrowthBonus = 1.0,
+  hydroponicsGrowthBonus = 1.0,
   hasSoilAnalyzer = false,
   harvestMultiplier = 1.0,
   gridSize = 3,
@@ -77,25 +87,36 @@ const FarmPlot = memo(({
     }
 
     if (plot.state === 'planted' || plot.state === 'growing') {
-      const progress = plot.progress || 0;
-      const growthStage = plot.growthStage || 1;
-
-      // Calculate time remaining based on progress and growth time
-      // Match FarmingSystem calculation exactly
-      const baseGrowthTime = plot.crop?.growthTime || 15; // Use seconds directly
+      // Derive growth from timestamps so UI can stay smooth without frequent global state writes.
+      const now = Date.now();
+      const plantedAt = Number(plot.plantedAt) || now;
+      const elapsedSeconds = Math.max(0, (now - plantedAt) / 1000);
+      const baseGrowthTime = plot.crop?.growthTime || 15;
       const weatherModifier = plot.weatherModifier || 1.0;
-      const effectiveGrowthTime = baseGrowthTime / (weatherModifier * seasonBonus);
-      const timeElapsed = progress * effectiveGrowthTime;
-      const timeRemaining = Math.max(0, effectiveGrowthTime - timeElapsed);
+      const growthBoost = plot.growthBoost || 1;
+      const rotationHistory = Array.isArray(plot.rotationHistory) ? plot.rotationHistory : [];
+      const predecessors = rotationHistory.slice(0, -1);
+      const uniquePredecessors = new Set(predecessors.filter((id) => id !== (plot.crop?.id || ''))).size;
+      const rotationBonus = 1 + (uniquePredecessors * 0.05);
+      const effectiveGrowthTime = (
+        (baseGrowthTime * growthDifficulty) /
+        (weatherModifier * seasonBonus * greenhouseGrowthBonus * hydroponicsGrowthBonus * growthBoost)
+      );
+      const rotatedGrowthTime = Math.max(0.001, effectiveGrowthTime / rotationBonus);
+      const liveProgress = Math.min(1.0, elapsedSeconds / rotatedGrowthTime);
+      const totalStages = plot.crop?.stages || 3;
+      const growthStage = Math.min(totalStages, Math.floor(liveProgress * totalStages) + 1);
+      const timeRemaining = Math.max(0, rotatedGrowthTime - elapsedSeconds);
       const secondsLeft = Math.ceil(timeRemaining);
 
       return {
         emoji: plot.crop.emoji || '🌱',
         bgColor: 'bg-green-50',
         borderColor: 'border-green-400',
-        text: `Stage ${growthStage}/${plot.crop.stages || 3}`,
+        text: `Stage ${growthStage}/${totalStages}`,
         subText: secondsLeft > 0 ? `${secondsLeft}s left` : 'Almost ready...',
-        progress: Math.round(progress * 100),
+        progress: Math.round(liveProgress * 100),
+        liveProgress,
         hoverEffect: 'hover:bg-green-100 hover:scale-105'
       };
     }
@@ -135,6 +156,7 @@ const FarmPlot = memo(({
   };
 
   const display = getPlotDisplay();
+  const growthScaleProgress = display.liveProgress != null ? display.liveProgress : (plot?.progress || 0);
   const isDenseGrid = gridSize >= 5;
 
   // Get soil fertility color gradient
@@ -223,7 +245,7 @@ const FarmPlot = memo(({
               }`}
             style={{
               transform: plot?.state === 'growing'
-                ? `scale(${0.6 + (plot.progress || 0) * 0.6})`  // Grows from 60% to 120% size
+                ? `scale(${0.6 + (growthScaleProgress * 0.6)})`  // Grows from 60% to 120% size
                 : plot?.state === 'ready'
                   ? 'scale(1.2)'
                   : 'scale(1)'
@@ -331,7 +353,9 @@ const FarmPlot = memo(({
                   <div>🌱 Fertility: {Math.round((plot.soilFertility || 1.0) * 100)}%</div>
                   {plot.fertilizer > 0 && <div>✨ Fertilizer: +{plot.fertilizer * 10}%</div>}
                   {plot.disease && <div className="text-red-400">🐛 Diseased!</div>}
-                  {plot.progress !== undefined && <div>📈 Growth: {Math.round(plot.progress * 100)}%</div>}
+                  {(plot.state === 'growing' || plot.state === 'planted') && display.progress !== undefined && (
+                    <div>📈 Growth: {display.progress}%</div>
+                  )}
                   {plot.weatherModifier && plot.weatherModifier !== 1.0 && (
                     <div className={plot.weatherModifier > 1.0 ? 'text-green-400' : 'text-orange-400'}>
                       🌤️ Weather: {plot.weatherModifier > 1.0 ? '+' : ''}{Math.round((plot.weatherModifier - 1.0) * 100)}%
@@ -378,8 +402,12 @@ FarmPlot.displayName = 'FarmPlot';
 
 // Main Farm Grid Component with multi-select
 const FarmGrid = memo(() => {
+  useTick();
   const { state, actions } = useGame();
   const seasonBonus = state.season?.config?.bonuses?.growthSpeed || 1.0;
+  const growthDifficulty = getDifficultyModifier(state.level || 1).growthTime || 1.0;
+  const greenhouseGrowthBonus = getMiniGreenhouseGrowthBonus(state.inventory || {});
+  const hydroponicsGrowthBonus = getHydroponicsGrowthBonus(state.inventory || {});
   const hasSoilAnalyzer = getSoilAnalyzerEnabled(state.inventory);
   const harvestMultiplier = getHarvestMultiplier(state.inventory);
   const [selectedPlots, setSelectedPlots] = useState(new Set());
@@ -1000,6 +1028,9 @@ const FarmGrid = memo(() => {
             selectedDecoration={selectedDecoration}
             isDecorMode={decorMode}
             seasonBonus={seasonBonus}
+            growthDifficulty={growthDifficulty}
+            greenhouseGrowthBonus={greenhouseGrowthBonus}
+            hydroponicsGrowthBonus={hydroponicsGrowthBonus}
             hasSoilAnalyzer={hasSoilAnalyzer}
             harvestMultiplier={harvestMultiplier}
             gridSize={gridSize}

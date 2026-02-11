@@ -177,11 +177,11 @@ export class FarmingSystem {
           readyAt: now,
         };
       } else {
-        const prevProgress = plot.progress || 0;
         const prevStage = plot.growthStage || 1;
         const stageChanged = currentStage !== prevStage;
-        const progressDelta = Math.abs(progress - prevProgress);
-        const shouldUpdate = stageChanged || progressDelta >= 0.01 || plot.state !== 'growing';
+        // PERF: avoid per-tick progress writes; only update on stage boundaries
+        // (or initial transition from planted -> growing).
+        const shouldUpdate = stageChanged || plot.state !== 'growing';
 
         if (shouldUpdate) {
           if (Math.random() < 0.01) { // Log 1% of the time

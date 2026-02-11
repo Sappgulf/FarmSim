@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGameSelector } from '../context/GameContext';
 import { clearDebugError, getDebugMetrics, isDebugMode } from '../../../utils/debugTools';
 
 /**
@@ -8,7 +8,22 @@ import { clearDebugError, getDebugMetrics, isDebugMode } from '../../../utils/de
  * Toggle with backtick (`) key
  */
 const PerformanceOverlay = memo(() => {
-    const { state } = useGame();
+    const coins = useGameSelector((state) => state.coins || 0);
+    const level = useGameSelector((state) => state.level || 1);
+    const gridSize = useGameSelector((state) => state.gridSize || 3);
+    const weather = useGameSelector((state) => state.weather || 'sunny');
+    const seasonCurrent = useGameSelector((state) => state.season?.current || 'spring');
+    const paused = useGameSelector((state) => Boolean(state.gameLoop?.paused));
+    const plotCount = useGameSelector((state) => (Array.isArray(state.plots) ? state.plots.length : 0));
+    const buildingCount = useGameSelector((state) => Object.keys(state.buildings || {}).length);
+    const decorationCount = useGameSelector((state) => (
+        Array.isArray(state.decorations)
+            ? state.decorations.length
+            : Object.keys(state.decorations || {}).length
+    ));
+    const notificationCount = useGameSelector((state) => (
+        Array.isArray(state.notifications) ? state.notifications.length : 0
+    ));
     const debugEnabled = isDebugMode();
     const [isVisible, setIsVisible] = useState(debugEnabled);
     const [metrics, setMetrics] = useState({
@@ -62,12 +77,12 @@ const PerformanceOverlay = memo(() => {
                 particles: metrics.particleCount,
             },
             state: {
-                coins: state.coins,
-                level: state.level,
-                gridSize: state.gridSize,
-                weather: state.weather,
-                season: state.season?.current,
-                paused: state.gameLoop?.paused,
+                coins,
+                level,
+                gridSize,
+                weather,
+                season: seasonCurrent,
+                paused,
             },
             error: error ? {
                 source: error.source,
@@ -157,12 +172,10 @@ const PerformanceOverlay = memo(() => {
                 ? Math.round(performance.memory.usedJSHeapSize / (1024 * 1024))
                 : 0;
 
-            const plots = state.plots?.length || 0;
-            const buildings = Object.keys(state.buildings || {}).length;
-            const decorations = Array.isArray(state.decorations)
-                ? state.decorations.length
-                : Object.keys(state.decorations || {}).length;
-            const notifications = state.notifications?.length || 0;
+            const plots = plotCount;
+            const buildings = buildingCount;
+            const decorations = decorationCount;
+            const notifications = notificationCount;
 
             // Particle count (from global)
             const particleCount = window.__particleCount || 0;
@@ -217,7 +230,7 @@ const PerformanceOverlay = memo(() => {
         collectMetrics(); // Initial call
 
         return () => clearInterval(intervalId);
-    }, [debugEnabled, isVisible, state.plots?.length, state.notifications?.length, state.buildings]);
+    }, [debugEnabled, isVisible, plotCount, notificationCount, buildingCount, decorationCount]);
 
     if (!debugEnabled) {
         return null;
@@ -401,12 +414,12 @@ const PerformanceOverlay = memo(() => {
                 <div className="border-t border-gray-700 my-2" />
                 <div className="flex justify-between">
                     <span>Grid:</span>
-                    <span className="text-gray-300">{state.gridSize}×{state.gridSize}</span>
+                    <span className="text-gray-300">{gridSize}×{gridSize}</span>
                 </div>
                 <div className="flex justify-between">
                     <span>Paused:</span>
-                    <span className={state.gameLoop?.paused ? 'text-yellow-400' : 'text-green-400'}>
-                        {state.gameLoop?.paused ? 'YES' : 'NO'}
+                    <span className={paused ? 'text-yellow-400' : 'text-green-400'}>
+                        {paused ? 'YES' : 'NO'}
                     </span>
                 </div>
             </div>
