@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGameActions, useGameSelector } from '../context/GameContext';
 import { useTick } from '../context/TickContext';
 import { Card } from '../../ui/card';
 import { Badge } from '../../ui/badge';
@@ -45,6 +45,7 @@ const FarmPlot = memo(({
   onPlant,
   onHarvest,
   onDecorate,
+  onMoveFocus,
   isSelected,
   onToggleSelect,
   selectedCrop,
@@ -62,6 +63,16 @@ const FarmPlot = memo(({
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [localLiveNow, setLocalLiveNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (plot?.state !== 'planted' && plot?.state !== 'growing') {
+      return undefined;
+    }
+    setLocalLiveNow(Date.now());
+    const intervalId = setInterval(() => setLocalLiveNow(Date.now()), 1000);
+    return () => clearInterval(intervalId);
+  }, [plot?.crop?.id, plot?.plantedAt, plot?.state]);
 
   const getPlotDisplay = () => {
     if (!plot || plot.state === 'empty') {
@@ -88,7 +99,7 @@ const FarmPlot = memo(({
 
     if (plot.state === 'planted' || plot.state === 'growing') {
       // Derive growth from timestamps so UI can stay smooth without frequent global state writes.
-      const now = Date.now();
+      const now = Number(localLiveNow) || Date.now();
       const plantedAt = Number(plot.plantedAt) || now;
       const elapsedSeconds = Math.max(0, (now - plantedAt) / 1000);
       const baseGrowthTime = plot.crop?.growthTime || 15;
@@ -192,6 +203,40 @@ const FarmPlot = memo(({
     }
   }, [plot, index, onPlotClick, onPlant, onHarvest, onToggleSelect, onDecorate, isDecorMode]);
 
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick({ shiftKey: e.shiftKey });
+      return;
+    }
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      onMoveFocus(index, 'right');
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      onMoveFocus(index, 'left');
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      onMoveFocus(index, 'up');
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      onMoveFocus(index, 'down');
+    }
+  }, [handleClick, index, onMoveFocus]);
+
+  const ariaLabel = useMemo(() => {
+    const stateLabel = plot?.state || 'empty';
+    const cropLabel = plot?.crop?.name ? ` ${plot.crop.name}` : '';
+    return `Plot ${index + 1}: ${stateLabel}${cropLabel}`;
+  }, [index, plot?.crop?.name, plot?.state]);
+
   return (
     <div className="relative" ref={plotRef}>
       <Card
@@ -232,6 +277,11 @@ const FarmPlot = memo(({
             setShowPreview(false);
           }, 2000);
         }}
+        onKeyDown={handleKeyDown}
+        data-plot-button="true"
+        tabIndex={0}
+        role="button"
+        aria-label={ariaLabel}
       >
         {/* Soil fertility gradient overlay */}
         <div className={`absolute inset-0 bg-gradient-to-t ${getSoilGradient()} pointer-events-none`} />
@@ -402,14 +452,30 @@ FarmPlot.displayName = 'FarmPlot';
 
 // Main Farm Grid Component with multi-select
 const FarmGrid = memo(() => {
-  useTick();
-  const { state, actions } = useGame();
-  const seasonBonus = state.season?.config?.bonuses?.growthSpeed || 1.0;
-  const growthDifficulty = getDifficultyModifier(state.level || 1).growthTime || 1.0;
-  const greenhouseGrowthBonus = getMiniGreenhouseGrowthBonus(state.inventory || {});
-  const hydroponicsGrowthBonus = getHydroponicsGrowthBonus(state.inventory || {});
-  const hasSoilAnalyzer = getSoilAnalyzerEnabled(state.inventory);
-  const harvestMultiplier = getHarvestMultiplier(state.inventory);
+  const actions = useGameActions();
+  const seasonBonus = useGameSelector((state) => state.season?.config?.bonuses?.growthSpeed || 1.0);
+  const seasonCurrent = useGameSelector((state) => state.season?.current || null);
+  const weather = useGameSelector((state) => state.weather || 'sunny');
+  const level = useGameSelector((state) => state.level || 1);
+  const inventory = useGameSelector((state) => state.inventory || {});
+  const coins = useGameSelector((state) => state.coins || 0);
+  const gridSize = useGameSelector((state) => state.gridSize || 3);
+  const animationsEnabled = useGameSelector((state) => state.settings?.animationsEnabled !== false);
+  const showTooltips = useGameSelector((state) => state.settings?.showTooltips !== false);
+  const decorMode = useGameSelector((state) => Boolean(state.decorateMode));
+  const selectedDecorationId = useGameSelector((state) => state.selectedDecoration || null);
+  const selectedCropId = useGameSelector((state) => state.selectedCrop || null);
+  const dismissedDecorHint = useGameSelector((state) => Boolean(state.cozyExpansion?.contextHints?.dismissed?.decor_mode_intro));
+  const dismissedHarvestHint = useGameSelector((state) => Boolean(state.cozyExpansion?.contextHints?.dismissed?.harvest_ready));
+  const ghostActive = useGameSelector((state) => Boolean(state.ghostVisit?.active));
+  const ghostSnapshotPlots = useGameSelector((state) => state.ghostVisit?.snapshot?.plots);
+  const farmPlots = useGameSelector((state) => (Array.isArray(state.plots) ? state.plots : []));
+
+  const growthDifficulty = getDifficultyModifier(level).growthTime || 1.0;
+  const greenhouseGrowthBonus = getMiniGreenhouseGrowthBonus(inventory);
+  const hydroponicsGrowthBonus = getHydroponicsGrowthBonus(inventory);
+  const hasSoilAnalyzer = getSoilAnalyzerEnabled(inventory);
+  const harvestMultiplier = getHarvestMultiplier(inventory);
   const [selectedPlots, setSelectedPlots] = useState(new Set());
   const [decorUndoCount, setDecorUndoCount] = useState(0);
   const [repeatDecorPlacement, setRepeatDecorPlacement] = useState(true);
@@ -417,6 +483,15 @@ const FarmGrid = memo(() => {
   const harvestBloomTimerRef = useRef(null);
   const plotRefs = useRef([]);
   const decorUndoStack = useRef([]);
+  const selectedDecoration = selectedDecorationId ? DECORATION_DATA[selectedDecorationId] : null;
+  const plots = ghostActive
+    ? (Array.isArray(ghostSnapshotPlots) ? ghostSnapshotPlots : [])
+    : farmPlots;
+  const selectedCrop = useMemo(
+    () => CROP_DATA[selectedCropId] || CROP_LIST[0],
+    [selectedCropId]
+  );
+
   const getPlotCenter = useCallback((index) => {
     const plotNode = plotRefs.current[index];
     if (!plotNode) return null;
@@ -426,26 +501,12 @@ const FarmGrid = memo(() => {
       y: rect.top + rect.height / 2,
     };
   }, []);
-
-  const animationsEnabled = state.settings?.animationsEnabled !== false;
-  const decorMode = state.decorateMode;
-  const selectedDecoration = state.selectedDecoration ? DECORATION_DATA[state.selectedDecoration] : null;
-  const ghostActive = !!state.ghostVisit?.active;
-  const plots = ghostActive
-    ? (Array.isArray(state.ghostVisit?.snapshot?.plots) ? state.ghostVisit.snapshot.plots : [])
-    : (Array.isArray(state.plots) ? state.plots : []);
   const plotRefCallbacks = useMemo(() => {
     // Stable per-index ref callbacks so FarmPlot memo isn't defeated by a new function every render.
     return Array.from({ length: plots.length }, (_, index) => (el) => {
       plotRefs.current[index] = el;
     });
   }, [plots.length]);
-  const selectedCrop = useMemo(
-    () => CROP_DATA[state.selectedCrop] || CROP_LIST[0],
-    [state.selectedCrop]
-  );
-  const showTooltips = state.settings?.showTooltips !== false;
-  const dismissedHints = state.cozyExpansion?.contextHints?.dismissed || {};
   const plotsInUseCount = useMemo(
     () => plots.reduce((count, plot) => (plot?.state !== 'empty' ? count + 1 : count), 0),
     [plots]
@@ -466,22 +527,22 @@ const FarmGrid = memo(() => {
   }, []);
 
   useEffect(() => {
-    if (!showTooltips || !decorMode || dismissedHints.decor_mode_intro || ghostActive) return;
+    if (!showTooltips || !decorMode || dismissedDecorHint || ghostActive) return;
     actions.addNotification({
       message: '💡 Decor mode tip: Place trinkets and decor on empty plots. Tap a decor plot to pick it back up.',
       type: 'info'
     });
     actions.recordCozyExpansionEvent('context_hint_seen', { id: 'decor_mode_intro' });
-  }, [actions, decorMode, dismissedHints.decor_mode_intro, ghostActive, showTooltips]);
+  }, [actions, decorMode, dismissedDecorHint, ghostActive, showTooltips]);
 
   useEffect(() => {
-    if (!showTooltips || !hasReadyPlots || dismissedHints.harvest_ready || ghostActive) return;
+    if (!showTooltips || !hasReadyPlots || dismissedHarvestHint || ghostActive) return;
     actions.addNotification({
       message: '💡 Harvest tip: Use “Select Ready” to gather mature crops faster.',
       type: 'info'
     });
     actions.recordCozyExpansionEvent('context_hint_seen', { id: 'harvest_ready' });
-  }, [actions, dismissedHints.harvest_ready, ghostActive, hasReadyPlots, showTooltips]);
+  }, [actions, dismissedHarvestHint, ghostActive, hasReadyPlots, showTooltips]);
 
   useEffect(() => {
     if (!harvestBloomTick) return;
@@ -493,6 +554,40 @@ const FarmGrid = memo(() => {
     decorUndoStack.current = [entry, ...decorUndoStack.current].slice(0, 5);
     setDecorUndoCount(decorUndoStack.current.length);
   }, []);
+
+  const handleMoveFocus = useCallback((index, direction) => {
+    const columns = gridSize;
+    const row = Math.floor(index / columns);
+    const col = index % columns;
+    let nextIndex = index;
+
+    if (direction === 'left') {
+      if (col === 0) return;
+      nextIndex = index - 1;
+    }
+    if (direction === 'right') {
+      if (col === columns - 1) return;
+      nextIndex = index + 1;
+    }
+    if (direction === 'up') {
+      if (row === 0) return;
+      nextIndex = index - columns;
+    }
+    if (direction === 'down') {
+      const maxRow = Math.floor((plots.length - 1) / columns);
+      if (row >= maxRow) return;
+      nextIndex = index + columns;
+    }
+
+    if (nextIndex < 0 || nextIndex >= plots.length) return;
+    const nextNode = plotRefs.current[nextIndex];
+    if (!nextNode) return;
+
+    const focusTarget = nextNode.querySelector('[data-plot-button="true"]');
+    if (focusTarget && typeof focusTarget.focus === 'function') {
+      focusTarget.focus();
+    }
+  }, [gridSize, plots.length]);
 
   const handleDecorUndo = useCallback(() => {
     const [last, ...rest] = decorUndoStack.current;
@@ -527,7 +622,7 @@ const FarmGrid = memo(() => {
   const handlePlotClick = useCallback((index, action) => {
     // Handle clearing withered crops
     if (action === 'clear') {
-      const plotsArray = Array.isArray(state.plots) ? state.plots : [];
+      const plotsArray = farmPlots;
       const plot = plotsArray[index];
       if (plot?.state === 'withered') {
         // Clear the withered crop
@@ -561,7 +656,7 @@ const FarmGrid = memo(() => {
       message: `Plot ${index + 1} info displayed`,
       type: 'info'
     });
-  }, [actions, state.plots]);
+  }, [actions, farmPlots]);
 
   const handleToggleSelect = useCallback((index) => {
     setSelectedPlots(prev => {
@@ -584,7 +679,7 @@ const FarmGrid = memo(() => {
     if (!selectedCrop) return;
 
     // Check if player has enough coins
-    if (state.coins >= selectedCrop.cost) {
+    if (coins >= selectedCrop.cost) {
       actions.spendMoney(selectedCrop.cost);
       const planted = actions.plantCrop(index, selectedCrop.id, selectedCrop);
 
@@ -617,11 +712,11 @@ const FarmGrid = memo(() => {
         type: 'error'
       });
     }
-  }, [actions, animationsEnabled, getPlotCenter, ghostActive, plots, selectedCrop, state.coins]);
+  }, [actions, animationsEnabled, coins, getPlotCenter, ghostActive, plots, selectedCrop]);
 
   const handleDecorate = useCallback((index) => {
     if (ghostActive) return;
-    const plotsArray = Array.isArray(state.plots) ? state.plots : [];
+    const plotsArray = farmPlots;
     const plot = plotsArray[index];
     if (!plot) return;
 
@@ -697,20 +792,20 @@ const FarmGrid = memo(() => {
     if (!repeatDecorPlacement) {
       actions.setSelectedDecoration(null);
     }
-  }, [actions, animationsEnabled, getPlotCenter, ghostActive, pushDecorUndo, repeatDecorPlacement, selectedDecoration, state.plots]);
+  }, [actions, animationsEnabled, farmPlots, getPlotCenter, ghostActive, pushDecorUndo, repeatDecorPlacement, selectedDecoration]);
 
   const handleHarvest = useCallback((index) => {
     if (ghostActive) {
       actions.addNotification({ message: 'Ghost Visit is read-only.', type: 'info' });
       return;
     }
-    const plotsArray = Array.isArray(state.plots) ? state.plots : [];
+    const plotsArray = farmPlots;
     const plot = plotsArray[index];
     if (!plot || plot.state !== 'ready') return;
 
     const crop = plot.crop;
     const baseValue = crop?.baseValue || 10;
-    const earnings = calculateHarvestValue(baseValue, plot.soilFertility || 1.0, state.inventory);
+    const earnings = calculateHarvestValue(baseValue, plot.soilFertility || 1.0, inventory);
 
     // Trigger particle effect with earnings text
     if (animationsEnabled && typeof window.triggerParticleEffect === 'function') {
@@ -755,12 +850,12 @@ const FarmGrid = memo(() => {
     actions.recordCozyExpansionEvent('crop_harvested', { cropId: crop.id });
     actions.recordAlmanacEvent('crop_harvested', {
       cropId: crop.id,
-      season: state.season?.current,
-      weather: state.weather,
+      season: seasonCurrent,
+      weather,
     });
     actions.recordCozyGoalEvent('crop_harvested', {
       cropId: crop.id,
-      season: state.season?.current,
+      season: seasonCurrent,
     });
     actions.recordOnboardingEvent('harvest');
 
@@ -768,7 +863,7 @@ const FarmGrid = memo(() => {
       message: `Harvested ${crop.emoji} ${crop.name}! +${earnings}🪙`,
       type: 'success'
     });
-  }, [actions, animationsEnabled, getPlotCenter, ghostActive, state.plots, state.season?.current, state.weather, state.inventory]);
+  }, [actions, animationsEnabled, farmPlots, getPlotCenter, ghostActive, inventory, seasonCurrent, weather]);
 
   // Bulk actions
   const handleBulkHarvest = useCallback(() => {
@@ -776,14 +871,14 @@ const FarmGrid = memo(() => {
     let totalXp = 0;
     let harvestedCount = 0;
     const inventoryUpdates = {};
-    const plotsArray = Array.isArray(state.plots) ? state.plots : [];
+    const plotsArray = farmPlots;
 
     const updatedPlots = plotsArray.map((plot, index) => {
       if (!selectedPlots.has(index) || plot?.state !== 'ready' || !plot.crop) {
         return plot;
       }
 
-      const earnings = calculateHarvestValue(plot.crop?.baseValue || 10, plot.soilFertility || 1.0, state.inventory);
+      const earnings = calculateHarvestValue(plot.crop?.baseValue || 10, plot.soilFertility || 1.0, inventory);
       totalEarnings += earnings;
       totalXp += Math.floor(earnings * 0.15);
       harvestedCount++;
@@ -818,12 +913,12 @@ const FarmGrid = memo(() => {
         actions.recordCozyExpansionEvent('crop_harvested', { cropId });
         actions.recordAlmanacEvent('crop_harvested', {
           cropId,
-          season: state.season?.current,
-          weather: state.weather,
+          season: seasonCurrent,
+          weather,
         });
         actions.recordCozyGoalEvent('crop_harvested', {
           cropId,
-          season: state.season?.current,
+          season: seasonCurrent,
         });
       });
 
@@ -870,12 +965,11 @@ const FarmGrid = memo(() => {
     }
 
     setSelectedPlots(new Set());
-  }, [actions, animationsEnabled, selectedPlots, state.inventory, state.plots, state.season?.current, state.weather]);
+  }, [actions, animationsEnabled, farmPlots, inventory, seasonCurrent, selectedPlots, weather]);
 
   const handleSelectAll = useCallback(() => {
-    const plotsArray = Array.isArray(state.plots) ? state.plots : [];
-    setSelectedPlots(new Set(plotsArray.map((_, index) => index)));
-  }, [state.plots]);
+    setSelectedPlots(new Set(farmPlots.map((_, index) => index)));
+  }, [farmPlots]);
 
   const handleSelectReady = useCallback(() => {
     setSelectedPlots(new Set(readyPlotIndexes));
@@ -884,9 +978,6 @@ const FarmGrid = memo(() => {
   const handleClearSelection = useCallback(() => {
     setSelectedPlots(new Set());
   }, []);
-
-  // Generate grid based on current grid size
-  const gridSize = state.gridSize || 3;
 
   return (
     <Card
@@ -1022,6 +1113,7 @@ const FarmGrid = memo(() => {
             onPlant={handlePlant}
             onHarvest={handleHarvest}
             onDecorate={handleDecorate}
+            onMoveFocus={handleMoveFocus}
             isSelected={selectedPlots.has(index)}
             onToggleSelect={handleToggleSelect}
             selectedCrop={selectedCrop}

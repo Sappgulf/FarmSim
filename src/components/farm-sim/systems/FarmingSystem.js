@@ -294,21 +294,24 @@ export class FarmingSystem {
     const regenMultiplier = getCompostRegenMultiplier(inventory);
     const regenAmount = 0.0005 * (elapsedMs / 100) * regenMultiplier;
 
-    // Slowly regenerate soil fertility
-    const updatedPlots = this.gameState.plots.map(plot => {
-      if (plot.soilFertility < 1.0) {
-        return {
-          ...plot,
-          soilFertility: Math.min(1.0, (plot.soilFertility || 1.0) + regenAmount)
-        };
-      }
-      return plot;
-    });
+    // Slowly regenerate soil fertility (copy-on-write to avoid full-array churn).
+    const plots = this.gameState.plots;
+    let updatedPlots = null;
+    for (let i = 0; i < plots.length; i++) {
+      const plot = plots[i];
+      if (!plot) continue;
+      const currentFertility = Number.isFinite(plot.soilFertility) ? plot.soilFertility : 1.0;
+      if (currentFertility >= 1.0) continue;
+      const nextFertility = Math.min(1.0, currentFertility + regenAmount);
+      if (nextFertility === currentFertility) continue;
+      if (!updatedPlots) updatedPlots = plots.slice();
+      updatedPlots[i] = {
+        ...plot,
+        soilFertility: nextFertility,
+      };
+    }
 
-    // Only update if something changed
-    if (updatedPlots.some((plot, index) =>
-      plot.soilFertility !== this.gameState.plots[index].soilFertility
-    )) {
+    if (updatedPlots) {
       this.actions.updatePlots(updatedPlots);
     }
   }
