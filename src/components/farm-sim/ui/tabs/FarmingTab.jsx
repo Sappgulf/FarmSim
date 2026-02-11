@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Button } from '../../../ui/button';
 import { Card } from '../../../ui/card';
@@ -17,6 +17,8 @@ const FarmingTab = memo(() => {
   const hasSoilAnalyzer = getSoilAnalyzerEnabled(state.inventory);
   const dailyFocus = getDailyCropFocus(state);
   const plotsArray = useMemo(() => (Array.isArray(state.plots) ? state.plots : []), [state.plots]);
+  const seasonName = state.season?.config?.name || 'Spring';
+  const weatherLabel = state.weather || 'sunny';
 
   // Get crops available at player's level
   const availableCrops = useMemo(() => getCropsByLevel(state.level), [state.level]);
@@ -77,15 +79,45 @@ const FarmingTab = memo(() => {
     };
   }, [plotsArray]);
 
-  const handleSelectCrop = (cropId) => {
+  const plotInsights = useMemo(() => {
+    let emptyPlots = 0;
+    let readyPlots = 0;
+    let diseasedPlots = 0;
+    let thirstyPlots = 0;
+    let activeGrowingPlots = 0;
+
+    plotsArray.forEach((plot) => {
+      if (!plot) return;
+      const plotState = plot.state;
+      if (plotState === 'empty') emptyPlots += 1;
+      if (plotState === 'ready') readyPlots += 1;
+      if (plot?.disease) diseasedPlots += 1;
+      if ((plotState === 'planted' || plotState === 'growing') && (plot.waterLevel || 0) <= 40) {
+        thirstyPlots += 1;
+      }
+      if (plotState === 'planted' || plotState === 'growing') {
+        activeGrowingPlots += 1;
+      }
+    });
+
+    return {
+      emptyPlots,
+      readyPlots,
+      diseasedPlots,
+      thirstyPlots,
+      activeGrowingPlots,
+    };
+  }, [plotsArray]);
+
+  const handleSelectCrop = useCallback((cropId) => {
     actions.setSelectedCrop(cropId);
     actions.addNotification({
       message: `Selected ${cropList.find(c => c.id === cropId)?.name}! Click empty plots to plant.`,
       type: 'info'
     });
-  };
+  }, [actions, cropList]);
 
-  const handleBulkAction = (action) => {
+  const handleBulkAction = useCallback((action) => {
     switch (action) {
       case 'Water All':
         actions.waterAllPlots();
@@ -162,10 +194,103 @@ const FarmingTab = memo(() => {
           type: 'info'
         });
     }
-  };
+  }, [actions, farmStats.readyPlots, plotsArray]);
+
+  const advisorCard = useMemo(() => {
+    if (plotInsights.diseasedPlots > 0) {
+      return {
+        title: 'Disease Alert',
+        emoji: '🚨',
+        detail: `${plotInsights.diseasedPlots} plot${plotInsights.diseasedPlots === 1 ? '' : 's'} infected. Treat now before yield drops.`,
+        cta: 'Treat All',
+        action: 'Pesticide All',
+        cardClass: 'from-rose-50 to-red-50 border-rose-200',
+        buttonClass: 'bg-rose-600 hover:bg-rose-700 text-white',
+      };
+    }
+    if (plotInsights.readyPlots > 0) {
+      return {
+        title: 'Harvest Window',
+        emoji: '🌾',
+        detail: `${plotInsights.readyPlots} crop${plotInsights.readyPlots === 1 ? '' : 's'} ready. Cash out before they overripe.`,
+        cta: 'Harvest Ready',
+        action: 'Harvest All',
+        cardClass: 'from-amber-50 to-yellow-50 border-amber-200',
+        buttonClass: 'bg-amber-600 hover:bg-amber-700 text-white',
+      };
+    }
+    if (plotInsights.thirstyPlots > 0) {
+      return {
+        title: 'Hydration Needed',
+        emoji: '💧',
+        detail: `${plotInsights.thirstyPlots} active plot${plotInsights.thirstyPlots === 1 ? '' : 's'} are getting dry.`,
+        cta: 'Water All',
+        action: 'Water All',
+        cardClass: 'from-sky-50 to-cyan-50 border-sky-200',
+        buttonClass: 'bg-sky-600 hover:bg-sky-700 text-white',
+      };
+    }
+    if (plotInsights.emptyPlots > 0) {
+      const focusName = dailyFocus?.crop?.name || cropList.find((crop) => crop.id === state.selectedCrop)?.name || 'your selected crop';
+      return {
+        title: 'Planting Opportunity',
+        emoji: '🌱',
+        detail: `${plotInsights.emptyPlots} empty plot${plotInsights.emptyPlots === 1 ? '' : 's'} available. Fill them for stronger farm efficiency.`,
+        cta: `Pick ${focusName}`,
+        action: 'SELECT_CROP',
+        cardClass: 'from-emerald-50 to-green-50 border-emerald-200',
+        buttonClass: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+      };
+    }
+    return {
+      title: 'Farm Flow Stable',
+      emoji: '✨',
+      detail: plotInsights.activeGrowingPlots > 0
+        ? `${plotInsights.activeGrowingPlots} crop${plotInsights.activeGrowingPlots === 1 ? '' : 's'} are growing smoothly. Keep rotating crops to maintain long-term fertility.`
+        : 'Everything looks healthy. Keep rotating crops to maintain long-term fertility.',
+      cta: 'Refresh Soil',
+      action: 'Fertilize All',
+      cardClass: 'from-violet-50 to-indigo-50 border-violet-200',
+      buttonClass: 'bg-violet-600 hover:bg-violet-700 text-white',
+    };
+  }, [cropList, dailyFocus?.crop?.name, plotInsights.activeGrowingPlots, plotInsights.diseasedPlots, plotInsights.emptyPlots, plotInsights.readyPlots, plotInsights.thirstyPlots, state.selectedCrop]);
+
+  const runAdvisorAction = useCallback(() => {
+    if (advisorCard.action === 'SELECT_CROP') {
+      const fallbackCrop = cropList[0];
+      const cropId = dailyFocus?.cropId || state.selectedCrop || fallbackCrop?.id;
+      if (cropId) {
+        handleSelectCrop(cropId);
+      }
+      return;
+    }
+    handleBulkAction(advisorCard.action);
+  }, [advisorCard.action, cropList, dailyFocus?.cropId, handleBulkAction, handleSelectCrop, state.selectedCrop]);
 
   return (
     <div className="space-y-4">
+      <Card className={`p-4 border bg-gradient-to-r ${advisorCard.cardClass}`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+              <span className="text-lg">{advisorCard.emoji}</span>
+              {advisorCard.title}
+            </h3>
+            <p className="text-sm text-gray-700 mt-1">{advisorCard.detail}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {seasonName} • {weatherLabel}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className={`min-h-[40px] ${advisorCard.buttonClass}`}
+            onClick={runAdvisorAction}
+          >
+            {advisorCard.cta}
+          </Button>
+        </div>
+      </Card>
+
       {/* Daily Focus */}
       {dailyFocus?.crop && (
         <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
@@ -230,16 +355,18 @@ const FarmingTab = memo(() => {
             variant="outline"
             size="sm"
             className="text-xs min-h-[44px]"
+            disabled={plotInsights.thirstyPlots === 0}
           >
-            💧 Water All
+            💧 Water ({plotInsights.thirstyPlots})
           </Button>
           <Button
             onClick={() => handleBulkAction('Harvest All')}
             variant="outline"
             size="sm"
             className="text-xs min-h-[44px]"
+            disabled={plotInsights.readyPlots === 0}
           >
-            🌾 Harvest All
+            🌾 Harvest ({plotInsights.readyPlots})
           </Button>
           <Button
             onClick={() => handleBulkAction('Fertilize All')}
@@ -254,9 +381,13 @@ const FarmingTab = memo(() => {
             variant="outline"
             size="sm"
             className="text-xs min-h-[44px]"
+            disabled={plotInsights.diseasedPlots === 0}
           >
-            🐛 Pesticide All
+            🐛 Treat ({plotInsights.diseasedPlots})
           </Button>
+        </div>
+        <div className="mt-3 text-[11px] text-gray-500">
+          Hotkeys: <kbd className="px-1 py-0.5 bg-gray-100 rounded">W</kbd> water, <kbd className="px-1 py-0.5 bg-gray-100 rounded">H</kbd> harvest, <kbd className="px-1 py-0.5 bg-gray-100 rounded">F</kbd> fertilize, <kbd className="px-1 py-0.5 bg-gray-100 rounded">T</kbd> treat
         </div>
       </Card>
 

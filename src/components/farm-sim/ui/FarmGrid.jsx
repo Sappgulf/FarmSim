@@ -519,6 +519,38 @@ const FarmGrid = memo(() => {
     return indexes;
   }, [plots]);
   const hasReadyPlots = readyPlotIndexes.length > 0;
+  const farmAtmosphere = useMemo(() => {
+    const seasonKey = String(seasonCurrent || 'spring').toLowerCase();
+    const weatherKey = String(weather || 'sunny').toLowerCase();
+    const seasonThemes = {
+      spring: { emoji: '🌸', label: 'Spring Pulse', className: 'from-rose-50 via-pink-50 to-emerald-50', hint: 'Fast sprouting and fresh growth.' },
+      summer: { emoji: '☀️', label: 'Summer Heat', className: 'from-amber-50 via-yellow-50 to-orange-50', hint: 'High yield potential with steady water.' },
+      autumn: { emoji: '🍂', label: 'Autumn Harvest', className: 'from-orange-50 via-amber-50 to-red-50', hint: 'Prime season for dependable harvest cycles.' },
+      winter: { emoji: '❄️', label: 'Winter Watch', className: 'from-sky-50 via-cyan-50 to-indigo-50', hint: 'Growth slows; protect crop health.' },
+    };
+    const weatherMood = {
+      sunny: { emoji: '☀️', note: 'Sunlight boost active' },
+      rainy: { emoji: '🌧️', note: 'Rain support active' },
+      cloudy: { emoji: '☁️', note: 'Balanced field conditions' },
+      stormy: { emoji: '⛈️', note: 'Risky weather, keep crops stable' },
+      windy: { emoji: '💨', note: 'Wind stress on tender crops' },
+      drought: { emoji: '🏜️', note: 'Hydration pressure increased' },
+      snow: { emoji: '❄️', note: 'Cold weather growth penalty' },
+    };
+    const seasonTheme = seasonThemes[seasonKey] || seasonThemes.spring;
+    const weatherTheme = weatherMood[weatherKey] || weatherMood.sunny;
+    const growthStateLabel = seasonBonus >= 1.15 ? 'Growth pace: Accelerated' : seasonBonus >= 1 ? 'Growth pace: Stable' : 'Growth pace: Reduced';
+
+    return {
+      seasonEmoji: seasonTheme.emoji,
+      seasonLabel: seasonTheme.label,
+      weatherEmoji: weatherTheme.emoji,
+      weatherLabel: weatherTheme.note,
+      growthStateLabel,
+      className: seasonTheme.className,
+      hint: seasonTheme.hint,
+    };
+  }, [seasonBonus, seasonCurrent, weather]);
 
   useEffect(() => () => {
     if (harvestBloomTimerRef.current) {
@@ -997,6 +1029,18 @@ const FarmGrid = memo(() => {
         <p className="text-gray-500 text-sm font-medium">
           {gridSize}×{gridSize} grid • <span className="text-emerald-600">{plotsInUseCount}</span> plots in use
         </p>
+        <div className={`mt-3 rounded-xl border border-white/70 bg-gradient-to-r ${farmAtmosphere.className} px-3 py-2 shadow-sm`}>
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs sm:text-sm">
+            <span className="font-semibold text-gray-800 flex items-center gap-1">
+              {farmAtmosphere.seasonEmoji} {farmAtmosphere.seasonLabel}
+            </span>
+            <span className="text-gray-600 flex items-center gap-1">
+              {farmAtmosphere.weatherEmoji} {farmAtmosphere.weatherLabel}
+            </span>
+            <span className="text-emerald-700 font-medium">{farmAtmosphere.growthStateLabel}</span>
+          </div>
+          <p className="text-[11px] sm:text-xs text-gray-500 mt-1">{farmAtmosphere.hint}</p>
+        </div>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
           <Button
             size="sm"

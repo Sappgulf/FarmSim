@@ -42,3 +42,33 @@ Original prompt: ok lets continue the next perf options
 ## TODO / Next
 - Continue selector migration in other heavy always-mounted UI (`SettingsTab` still reads broad `useGame()` state).
 - Investigate why skill client script occasionally hangs in this environment (manual Playwright fallback is stable).
+
+## 2026-02-11 - Upgrade + visual polish pass
+- Skills used this turn:
+  - `develop-web-game` for implement+validate loop.
+  - `playwright` for browser automation and screenshot checks.
+- Track A (interaction/gameplay polish):
+  - Added a new context-aware `Field Advisor` card in `FarmingTab` that recommends the highest-priority action (treat, harvest, water, plant, or fertilize) and provides a one-click CTA.
+  - Quick Actions now show live counts and disabled states for unavailable actions:
+    - Water button shows thirsty-plot count
+    - Harvest button shows ready-plot count
+    - Treat button shows diseased-plot count
+  - Added keyboard hint strip directly under quick actions for W/H/F/T.
+- Track B (visual/world polish):
+  - Added a seasonal+weather atmosphere strip under farm title in `FarmGrid`:
+    - season mood label
+    - weather condition note
+    - growth pace state
+    - contextual seasonal hint
+  - Keeps the farm view feeling more alive without changing gameplay logic.
+- Validation:
+  - `npm test` passed (20 files / 61 tests)
+  - `npm run build` passed
+  - Playwright screenshots captured for upgraded UI:
+    - `output/web-game/polish-upgrades.png`
+    - `output/web-game/polish-upgrades-action.png`
+    - `output/web-game/polish-upgrades-verified.png`
+    - `output/web-game/probe.png`
+  - No console/page errors observed during smoke runs.
+- Note:
+  - On fresh runs, the onboarding tooltip can visually cover the new advisor card area until skipped.
