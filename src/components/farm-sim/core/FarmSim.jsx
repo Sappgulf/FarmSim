@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
-import { GameProvider, useGame } from '../context/GameContext';
+import { GameProvider, useGameActions, useGameSelector, useGameStore } from '../context/GameContext';
 import { TickProvider } from '../context/TickContext';
 
 // Import modular components
@@ -43,7 +43,21 @@ const QAModePanel = lazy(() => import('../ui/QAModePanel'));
  * @returns {JSX.Element} The main game component
  */
 function FarmSimCore() {
-  const { state, actions } = useGame();
+  const actions = useGameActions();
+  const store = useGameStore();
+  const paused = useGameSelector((state) => Boolean(state.gameLoop?.paused));
+  const fps = useGameSelector((state) => state.gameLoop?.fps || 0);
+  const musicEnabled = useGameSelector((state) => state.settings?.musicEnabled !== false);
+  const soundEnabled = useGameSelector((state) => state.settings?.soundEnabled !== false);
+  const reducedMotionEnabled = useGameSelector((state) => state.settings?.reducedMotion === true);
+  const seasonCurrent = useGameSelector((state) => state.season?.current || 'spring');
+  const seasonConfig = useGameSelector((state) => state.season?.config || null);
+  const cozyVisualWeather = useGameSelector((state) => state.cozyExpansion?.visualState?.weather || null);
+  const hasCozyVisualWeather = useGameSelector((state) => Boolean(state.cozyExpansion?.visualState?.weather));
+  const dayCount = useGameSelector((state) => state.almanac?.counters?.dayCount || 0);
+  const farmThemeId = useGameSelector((state) => state.farmTheme || null);
+  const weather = useGameSelector((state) => state.weather || 'sunny');
+  const ghostVisitActive = useGameSelector((state) => Boolean(state.ghostVisit?.active));
 
   const debugToolsAllowed = shouldShowDebugTools();
   const debugQueryEnabled = useMemo(() => {
@@ -134,12 +148,6 @@ function FarmSimCore() {
 
   const musicSystem = useMemo(() => getMusicSystem(), []);
 
-  // Use ref to always have latest state (avoids stale closure in interval)
-  const stateRef = React.useRef(state);
-  React.useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
-
   // Update context with systems - only when systems actually change
   // Use ref to track previous systems to avoid unnecessary updates
   const systemsRef = React.useRef({});
@@ -189,7 +197,7 @@ function FarmSimCore() {
 
   // System update loop - Optimized with requestAnimationFrame for better timing
   useEffect(() => {
-    if (state.gameLoop.paused) return;
+    if (paused) return;
 
     let lastUpdateTime = performance.now();
     const targetFPS = 10; // 10 FPS = 100ms per frame
@@ -198,8 +206,7 @@ function FarmSimCore() {
     let animationFrameId = null;
 
     const systemUpdateLoop = (currentTime) => {
-      // Use stateRef.current to always get latest state (fixes stale closure bug!)
-      const currentState = stateRef.current;
+      const currentState = store.getState();
 
       if (currentState.gameLoop.paused) {
         return;
@@ -246,7 +253,7 @@ function FarmSimCore() {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [state.gameLoop.paused, seasonSystem, farmingSystem, weatherSystem, economicSystem, achievementSystem, diseaseSystem, disasterSystem, livestockSystem, fishingSystem]);
+  }, [paused, store, seasonSystem, farmingSystem, weatherSystem, economicSystem, achievementSystem, diseaseSystem, disasterSystem, livestockSystem, fishingSystem]);
 
   // Initialize sound and music systems
   useEffect(() => {
@@ -256,8 +263,8 @@ function FarmSimCore() {
     window.soundSystem = soundSystem;
     window.musicSystem = musicSystem;
 
-    soundSystem.setEnabled(state.settings?.soundEnabled !== false);
-    musicSystem.setEnabled(state.settings?.musicEnabled !== false);
+    soundSystem.setEnabled(soundEnabled);
+    musicSystem.setEnabled(musicEnabled);
 
     // Resume audio context only after user interaction (browser requirement)
     // Don't auto-resume here - let user interaction trigger it
@@ -271,8 +278,8 @@ function FarmSimCore() {
         await musicSystem.resume();
 
         // Start music after audio context is resumed
-        if (state.settings?.musicEnabled !== false && !musicSystem.isPlaying) {
-          musicSystem.setSeason(state.season?.current || 'spring');
+        if (musicEnabled && !musicSystem.isPlaying) {
+          musicSystem.setSeason(seasonCurrent);
           musicSystem.play();
         }
 
@@ -294,8 +301,8 @@ function FarmSimCore() {
     document.addEventListener('touchstart', handleUserInteraction, { once: true });
 
     // Set season for music (will start playing after user interaction)
-    if (state.settings?.musicEnabled !== false) {
-      musicSystem.setSeason(state.season?.current || 'spring');
+    if (musicEnabled) {
+      musicSystem.setSeason(seasonCurrent);
     }
 
     return () => {
@@ -311,26 +318,26 @@ function FarmSimCore() {
         delete window.musicSystem;
       }
     };
-  }, [state.settings?.soundEnabled, state.settings?.musicEnabled]);
+  }, [musicEnabled, seasonCurrent, soundEnabled]);
 
   // Update music when season changes
-  const prevSeasonRef = React.useRef(state.season?.current);
+  const prevSeasonRef = React.useRef(seasonCurrent);
   useEffect(() => {
     const musicSystem = getMusicSystem();
-    const currentSeason = state.season?.current;
+    const currentSeason = seasonCurrent;
 
     // Only update if season actually changed
-    if (currentSeason && currentSeason !== prevSeasonRef.current && state.settings?.musicEnabled !== false) {
+    if (currentSeason && currentSeason !== prevSeasonRef.current && musicEnabled) {
       musicSystem.setSeason(currentSeason);
       prevSeasonRef.current = currentSeason;
       if (isDevelopmentMode()) {
         console.debug('[farm]', `Music changed to ${currentSeason} theme`);
       }
     }
-  }, [state.season?.current, state.settings?.musicEnabled]);
+  }, [musicEnabled, seasonCurrent]);
 
   // Get season colors for theming
-  const seasonColors = state.season?.config?.colors || {
+  const seasonColors = seasonConfig?.colors || {
     primary: 'from-green-50 to-blue-50'
   };
 
@@ -498,16 +505,13 @@ function FarmSimCore() {
   }, [actions]);
 
   useEffect(() => {
-    const cozyVisual = state.cozyExpansion?.visualState || {};
-    if (cozyVisual.weather) return;
-    const dayCount = state.almanac?.counters?.dayCount || 0;
+    if (hasCozyVisualWeather) return;
     const weather = VISUAL_WEATHER_ROTATION[dayCount % VISUAL_WEATHER_ROTATION.length];
     actions.recordCozyExpansionEvent?.('weather_changed', { weather });
-  }, [actions, state.almanac?.counters?.dayCount, state.cozyExpansion?.visualState]);
+  }, [actions, dayCount, hasCozyVisualWeather]);
 
-  const activeTheme = getFarmTheme(state.farmTheme);
+  const activeTheme = getFarmTheme(farmThemeId);
   const themeVars = getFarmThemeVars(activeTheme);
-  const reducedMotionEnabled = state.settings?.reducedMotion === true;
 
   return (
     <div
@@ -525,19 +529,19 @@ function FarmSimCore() {
       {!reducedMotionEnabled && timePeriod === 'night' && (
         <div className="ambient-vfx ambient-vfx--night" aria-hidden="true" />
       )}
-      <WeatherEffects weather={state.cozyExpansion?.visualState?.weather || state.weather} intensity={0.45} />
+      <WeatherEffects weather={cozyVisualWeather || weather} intensity={0.45} />
 
       {/* Performance monitoring (dev only) */}
       {isDevelopmentMode() && (
         <div className="fixed top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded z-50">
-          FPS: {state.gameLoop.fps}
+          FPS: {fps}
         </div>
       )}
 
       {/* Game Header */}
       <div className="relative z-20"><GameHeader /></div>
 
-      {state.ghostVisit?.active && (
+      {ghostVisitActive && (
         <div className="relative z-30 mx-2 sm:mx-4 mt-2 max-w-7xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] lg:mx-auto rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-800">
           👻 Ghost Visit (Read Only) — actions are disabled until you exit in Social.
         </div>

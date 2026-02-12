@@ -1,5 +1,45 @@
 Original prompt: ok lets continue the next perf options
 
+## 2026-02-12 - Fresh parallel pass (core perf + debug UI quality)
+- Skills handling:
+  - Read available skill docs and followed guidance.
+  - No skill matched this request (`skill-creator` / `skill-installer` are for skill management), so implementation proceeded directly.
+- Track 1 (performance / core rerender reduction):
+  - `FarmSimCore` migrated off broad `useGame()` root subscription.
+  - Now uses targeted `useGameSelector` slices (`paused`, `fps`, settings flags, season/weather/theme, ghost state) + `useGameStore()` snapshot reads for the system loop.
+  - System update loop now reads `store.getState()` per frame, preserving latest-state behavior without forcing whole-core rerenders on unrelated state changes.
+- Track 2 (UI / debug overlay quality):
+  - `DebugOverlay.jsx` improvements:
+    - Added `Escape` close support (in addition to backtick toggle).
+    - Fixed level readout to use `level` with fallback to `levelId`.
+    - Memory metric now renders correctly when value is `0`.
+    - Plot counts switched from per-render filter to single-pass memoized counting.
+
+## Validation
+- `npm test` passed (20 files / 61 tests).
+- `npm run build` passed.
+
+## 2026-02-12 - Parallel pass (UI nav + selector perf tightening)
+- Skills check:
+  - Reviewed available skills (`skill-creator`, `skill-installer`) per request.
+  - Neither matched this implementation task, so proceeded with direct code improvements.
+- Track 1 (UI / navigation discoverability + accessibility):
+  - `NavBar.jsx` now includes an active-section context row for multi-tab sections with explicit expand/collapse control.
+  - Added per-section micro-cues (`N tabs` / `Hide`) to make nested navigation discoverable on mobile.
+  - Added ARIA state wiring for sections/sub-tabs (`aria-expanded`, `aria-controls`, `aria-current`, richer labels).
+  - Auto-opens sub-tabs when active tab belongs to the selected section.
+- Track 2 (performance / render-path cleanup):
+  - `GameHeader.jsx` reduced broad subscriptions by deriving compact summary selectors:
+    - achievement summary key (`unlocked|total`)
+    - built-building count
+  - `GameSidebar.jsx` now subscribes directly to derived primitive counts (`inventoryCount`, `builtCount`, `animalCount`) instead of whole objects/arrays.
+  - `goalHints.js` expanded `getNextGoalFromCounts` to accept `builtBuildings` / `hasBuiltStructure`, allowing callers with precomputed counts to avoid object scans.
+  - `QAModePanel.jsx` keeps store-snapshot model (`useGameStore`) to avoid tick-driven rerenders from global state subscriptions.
+
+## Validation
+- `npm test` passed (20 files / 61 tests).
+- `npm run build` passed.
+
 ## 2026-02-12 - Parallel pass (UI agent + perf agent) after npm install
 - Environment/tooling:
   - Installed Node.js + npm via Homebrew (`node v25.6.1`, `npm 11.9.0`) so local validation can run again.
