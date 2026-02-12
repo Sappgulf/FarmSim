@@ -1,5 +1,40 @@
 Original prompt: ok lets continue the next perf options
 
+## 2026-02-12 - Sub-agent orchestration setup (debug/fix/improve/scout)
+- Skills handling:
+  - Used `skill-creator` because the request was to create reusable sub-agent behavior.
+- Implemented a parallel sub-agent runner with isolated git worktrees:
+  - Added `scripts/subagents/run-parallel.sh` to launch role-based Codex agents concurrently.
+  - Added role prompts:
+    - `scripts/subagents/prompts/debug.md`
+    - `scripts/subagents/prompts/fix.md`
+    - `scripts/subagents/prompts/improve.md`
+    - `scripts/subagents/prompts/scout.md`
+  - Added helper scripts:
+    - `scripts/subagents/status.sh` (inspect latest run summary)
+    - `scripts/subagents/cleanup.sh` (remove run worktrees; optional branch deletion)
+  - Added usage docs: `scripts/subagents/README.md`
+- Project script wiring:
+  - `package.json` now includes:
+    - `npm run agents:run`
+    - `npm run agents:status`
+    - `npm run agents:cleanup`
+- Live run validation:
+  - Executed `npm run agents:run -- --agents scout --run-id smoke-scout`.
+  - Successful scout branch/worktree created (`subagent/smoke-scout-scout`) with run artifacts under `.subagents/runs/smoke-scout/`.
+  - Promoted scout improvement into main branch:
+    - Added `clearFarmCache()` helper and migrated Settings reset/cache-clear flows off `localStorage.clear()`.
+    - Added regression tests in `src/test/gamePersistence.test.js`.
+    - Upgraded localStorage test mock (`key`, `length`) in `src/test/setup.js`.
+  - Added `.subagents/` to `.gitignore` and excluded `.subagents/**` from Vitest discovery in `vitest.config.js`.
+
+## Validation
+- `bash -n` passed for all sub-agent scripts.
+- `npm run agents:run -- --help` passed.
+- `npm run agents:status` passed.
+- `npm run agents:cleanup -- --help` passed.
+- `npm run qa:full` passed (`npm test` + `npm run build`).
+
 ## 2026-02-12 - Fresh parallel pass (core perf + debug UI quality)
 - Skills handling:
   - Read available skill docs and followed guidance.

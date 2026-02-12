@@ -17,6 +17,7 @@ const localStorageMock = (() => {
   let store = {};
   return {
     getItem: (key) => store[key] || null,
+    key: (index) => Object.keys(store)[index] || null,
     setItem: (key, value) => {
       store[key] = value.toString();
     },
@@ -25,6 +26,9 @@ const localStorageMock = (() => {
     },
     clear: () => {
       store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
     },
   };
 })();
@@ -61,4 +65,3 @@ global.cancelAnimationFrame = (id) => {
 //   error: vi.fn(),
 //   warn: vi.fn(),
 // };
-

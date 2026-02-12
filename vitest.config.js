@@ -9,6 +9,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.js'],
+    include: [
+      'src/test/**/*.{test,spec}.{js,mjs,jsx,ts,tsx}',
+      'test/**/*.{test,spec}.{js,mjs,jsx,ts,tsx}',
+    ],
+    exclude: ['.subagents/**'],
     coverage: {
       reporter: ['text', 'json', 'html'],
       exclude: [

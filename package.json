@@ -12,7 +12,10 @@
     "test:watch": "vitest",
     "lint": "echo 'Lint check completed'",
     "qa:full": "npm run test && npm run build",
-    "smoke-test": "vitest --run src/test/smoke.test.jsx"
+    "smoke-test": "vitest --run src/test/smoke.test.jsx",
+    "agents:run": "bash scripts/subagents/run-parallel.sh",
+    "agents:status": "bash scripts/subagents/status.sh",
+    "agents:cleanup": "bash scripts/subagents/cleanup.sh"
   },
   "dependencies": {
     "lucide-react": "^0.539.0",

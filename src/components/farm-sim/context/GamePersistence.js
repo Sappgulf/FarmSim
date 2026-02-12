@@ -11,6 +11,16 @@ export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
 export const QA_BACKUP_SAVE_KEY = `${QA_SAVE_KEY}_backup`;
+const LEGACY_STORAGE_KEYS = ['farmSim_save_v3', 'farmSim_welcomed', 'farmLifeSave'];
+
+const isFarmStorageKey = (key) => (
+    typeof key === 'string'
+    && (
+        key.startsWith('farm_sim_')
+        || key.startsWith('farmSim_')
+        || key.startsWith('farmLife')
+    )
+);
 
 /**
  * Helper function to initialize plots
@@ -740,6 +750,45 @@ export const clearSaveKey = (key) => {
         localStorage.removeItem(key);
     } catch (error) {
         console.error('[farm]', 'Failed to clear save key', error);
+    }
+};
+
+export const clearFarmCache = ({ preserveKeys = [SAVE_KEY] } = {}) => {
+    try {
+        const preserved = new Set(
+            Array.isArray(preserveKeys)
+                ? preserveKeys.filter((key) => typeof key === 'string' && key.length > 0)
+                : [SAVE_KEY]
+        );
+        const candidates = new Set([
+            SAVE_KEY,
+            BACKUP_SAVE_KEY,
+            QA_SAVE_KEY,
+            QA_BACKUP_SAVE_KEY,
+            ...LEGACY_STORAGE_KEYS,
+        ]);
+
+        if (typeof localStorage?.length === 'number' && typeof localStorage?.key === 'function') {
+            for (let i = 0; i < localStorage.length; i += 1) {
+                const key = localStorage.key(i);
+                if (typeof key === 'string') {
+                    candidates.add(key);
+                }
+            }
+        }
+
+        const removedKeys = [];
+        for (const key of candidates) {
+            if (!isFarmStorageKey(key) || preserved.has(key)) continue;
+            if (localStorage.getItem(key) === null) continue;
+            localStorage.removeItem(key);
+            removedKeys.push(key);
+        }
+
+        return { success: true, removedKeys };
+    } catch (error) {
+        console.error('[farm]', 'Failed to clear farm cache', error);
+        return { success: false, error, removedKeys: [] };
     }
 };
 

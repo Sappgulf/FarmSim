@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useState } from 'react';
 import { useGameActions, useGameSelector, useGameStore } from '../../context/GameContext';
-import { SAVE_KEY } from '../../context/GamePersistence';
+import { SAVE_KEY, clearFarmCache } from '../../context/GamePersistence';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
@@ -186,7 +186,11 @@ const SettingsTab = memo(() => {
   const handleResetGame = useCallback(() => {
     if (window.confirm('Reset your farm to a fresh start? This cannot be undone. New saves include a small starter kit (seeds + crop care tools).')) {
       try {
-        localStorage.removeItem(SAVE_KEY);
+        const result = clearFarmCache({ preserveKeys: [] });
+        if (!result.success) {
+          addNotification('Failed to reset game', 'error');
+          return;
+        }
         window.location.reload();
       } catch (error) {
         addNotification('Failed to reset game', 'error');
@@ -237,11 +241,10 @@ const SettingsTab = memo(() => {
   const handleClearCache = useCallback(() => {
     if (window.confirm('Clear all cached data? Your save will remain intact.')) {
       try {
-        // Clear all localStorage except save
-        const saveData = localStorage.getItem(SAVE_KEY);
-        localStorage.clear();
-        if (saveData) {
-          localStorage.setItem(SAVE_KEY, saveData);
+        const result = clearFarmCache({ preserveKeys: [SAVE_KEY] });
+        if (!result.success) {
+          addNotification('Failed to clear cache', 'error');
+          return;
         }
         addNotification('🗑️ Cache cleared successfully!', 'success');
       } catch (error) {
