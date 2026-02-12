@@ -1,5 +1,6 @@
-import React, { memo } from 'react';
-import { useGame } from '../../context/GameContext';
+import React, { memo, useCallback, useState } from 'react';
+import { useGameActions, useGameSelector, useGameStore } from '../../context/GameContext';
+import { SAVE_KEY } from '../../context/GamePersistence';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
@@ -12,12 +13,33 @@ import { GameplaySettings } from './settings/GameplaySettings';
 import { GameStats } from './settings/GameStats';
 
 const SettingsTab = memo(() => {
-  const { state, actions } = useGame();
-  const [soundVolume, setSoundVolume] = React.useState(0.3);
-  const [musicVolume, setMusicVolume] = React.useState(0.15);
+  const actions = useGameActions();
+  const store = useGameStore();
+  const settings = useGameSelector((state) => state.settings || {});
+  const paused = useGameSelector((state) => Boolean(state.gameLoop?.paused));
+  const fps = useGameSelector((state) => state.gameLoop?.fps || 0);
+  const [soundVolume, setSoundVolume] = useState(0.3);
+  const [musicVolume, setMusicVolume] = useState(0.15);
 
-  const handleToggleSound = () => {
-    const newState = !state.settings.soundEnabled;
+  const soundEnabled = settings.soundEnabled !== false;
+  const musicEnabled = settings.musicEnabled !== false;
+  const animationsEnabled = settings.animationsEnabled !== false;
+  const autoSaveEnabled = settings.autoSave !== false;
+  const keyboardShortcutsEnabled = settings.keyboardShortcuts !== false;
+  const showFPS = Boolean(settings.showFPS);
+  const reducedMotion = Boolean(settings.reducedMotion);
+  const showTooltips = settings.showTooltips !== false;
+  const showAlmanacHints = settings.showAlmanacHints !== false;
+  const showWelcomeBackSummary = settings.showWelcomeBackSummary !== false;
+  const fastMode = Boolean(settings.fastMode);
+  const particleEffects = settings.particleEffects !== false;
+
+  const addNotification = useCallback((message, type) => {
+    actions.addNotification({ message, type });
+  }, [actions]);
+
+  const handleToggleSound = useCallback(() => {
+    const newState = !soundEnabled;
     actions.updateSettings({
       soundEnabled: newState
     });
@@ -31,14 +53,11 @@ const SettingsTab = memo(() => {
       }
     }
 
-    actions.addNotification({
-      message: `Sound ${newState ? 'enabled 🔊' : 'disabled 🔇'}`,
-      type: 'info'
-    });
-  };
+    addNotification(`Sound ${newState ? 'enabled 🔊' : 'disabled 🔇'}`, 'info');
+  }, [actions, addNotification, soundEnabled]);
 
-  const handleToggleMusic = () => {
-    const newState = !state.settings.musicEnabled;
+  const handleToggleMusic = useCallback(() => {
+    const newState = !musicEnabled;
     actions.updateSettings({
       musicEnabled: newState
     });
@@ -54,96 +73,130 @@ const SettingsTab = memo(() => {
       }
     }
 
-    actions.addNotification({
-      message: `Music ${newState ? 'enabled 🎵' : 'disabled 🔇'}`,
-      type: 'info'
-    });
-  };
+    addNotification(`Music ${newState ? 'enabled 🎵' : 'disabled 🔇'}`, 'info');
+  }, [actions, addNotification, musicEnabled]);
 
-  const handleSoundVolumeChange = (e) => {
+  const handleSoundVolumeChange = useCallback((e) => {
     const volume = parseFloat(e.target.value);
     setSoundVolume(volume);
     if (typeof window !== 'undefined' && window.soundSystem) {
       window.soundSystem.setVolume(volume);
       window.soundSystem.playClickSound();
     }
-  };
+  }, []);
 
-  const handleMusicVolumeChange = (e) => {
+  const handleMusicVolumeChange = useCallback((e) => {
     const volume = parseFloat(e.target.value);
     setMusicVolume(volume);
     if (typeof window !== 'undefined' && window.musicSystem) {
       window.musicSystem.setVolume(volume);
     }
-  };
+  }, []);
 
-  const handleToggleAnimations = () => {
+  const handleToggleAnimations = useCallback(() => {
+    const nextValue = !animationsEnabled;
     actions.updateSettings({
-      animationsEnabled: !state.settings.animationsEnabled
+      animationsEnabled: nextValue
     });
-    actions.addNotification({
-      message: `Animations ${!state.settings.animationsEnabled ? 'enabled' : 'disabled'}`,
-      type: 'info'
-    });
-  };
+    addNotification(`Animations ${nextValue ? 'enabled' : 'disabled'}`, 'info');
+  }, [actions, addNotification, animationsEnabled]);
 
-  const handleToggleAutoSave = () => {
+  const handleToggleAutoSave = useCallback(() => {
+    const nextValue = !autoSaveEnabled;
     actions.updateSettings({
-      autoSave: !state.settings.autoSave
+      autoSave: nextValue
     });
-    actions.addNotification({
-      message: `Auto-save ${!state.settings.autoSave ? 'enabled' : 'disabled'}`,
-      type: 'info'
-    });
-  };
+    addNotification(`Auto-save ${nextValue ? 'enabled' : 'disabled'}`, 'info');
+  }, [actions, addNotification, autoSaveEnabled]);
 
-  const handleSaveGame = () => {
+  const handleToggleShowFps = useCallback(() => {
+    actions.updateSettings({
+      showFPS: !showFPS
+    });
+  }, [actions, showFPS]);
+
+  const handleToggleReducedMotion = useCallback(() => {
+    actions.updateSettings({
+      reducedMotion: !reducedMotion
+    });
+  }, [actions, reducedMotion]);
+
+  const handleToggleTooltips = useCallback(() => {
+    actions.updateSettings({
+      showTooltips: !showTooltips
+    });
+  }, [actions, showTooltips]);
+
+  const handleToggleAlmanacHints = useCallback(() => {
+    actions.updateSettings({
+      showAlmanacHints: !showAlmanacHints
+    });
+  }, [actions, showAlmanacHints]);
+
+  const handleToggleWelcomeBackSummary = useCallback(() => {
+    actions.updateSettings({
+      showWelcomeBackSummary: !showWelcomeBackSummary
+    });
+  }, [actions, showWelcomeBackSummary]);
+
+  const handleToggleFastMode = useCallback(() => {
+    actions.updateSettings({
+      fastMode: !fastMode
+    });
+  }, [actions, fastMode]);
+
+  const handleToggleParticleEffects = useCallback(() => {
+    actions.updateSettings({
+      particleEffects: !particleEffects
+    });
+  }, [actions, particleEffects]);
+
+  const handleToggleKeyboardShortcuts = useCallback(() => {
+    const nextValue = !keyboardShortcutsEnabled;
+    actions.updateSettings({ keyboardShortcuts: nextValue });
+    addNotification(`Keyboard shortcuts ${nextValue ? 'enabled ⌨️' : 'disabled'}`, 'info');
+  }, [actions, addNotification, keyboardShortcutsEnabled]);
+
+  const handleTogglePause = useCallback(() => {
+    if (paused) {
+      actions.resumeGame();
+      return;
+    }
+    actions.pauseGame();
+  }, [actions, paused]);
+
+  const handleSaveGame = useCallback(() => {
     const success = actions.saveGame();
     if (success) {
-      actions.addNotification({
-        message: '💾 Game saved successfully!',
-        type: 'success'
-      });
+      addNotification('💾 Game saved successfully!', 'success');
     } else {
-      actions.addNotification({
-        message: '❌ Failed to save game',
-        type: 'error'
-      });
+      addNotification('❌ Failed to save game', 'error');
     }
-  };
+  }, [actions, addNotification]);
 
-  const handleLoadGame = () => {
+  const handleLoadGame = useCallback(() => {
     const success = actions.loadGame();
     if (success) {
-      actions.addNotification({
-        message: '📂 Game loaded successfully!',
-        type: 'success'
-      });
+      addNotification('📂 Game loaded successfully!', 'success');
     } else {
-      actions.addNotification({
-        message: '⚠️ No saved game found',
-        type: 'warning'
-      });
+      addNotification('⚠️ No saved game found', 'warning');
     }
-  };
+  }, [actions, addNotification]);
 
-  const handleResetGame = () => {
+  const handleResetGame = useCallback(() => {
     if (window.confirm('Reset your farm to a fresh start? This cannot be undone. New saves include a small starter kit (seeds + crop care tools).')) {
       try {
-        localStorage.removeItem('farm_sim_enhanced_v2');
+        localStorage.removeItem(SAVE_KEY);
         window.location.reload();
       } catch (error) {
-        actions.addNotification({
-          message: 'Failed to reset game',
-          type: 'error'
-        });
+        addNotification('Failed to reset game', 'error');
       }
     }
-  };
+  }, [addNotification]);
 
-  const handleExportSave = () => {
+  const handleExportSave = useCallback(() => {
     try {
-      const saveData = JSON.stringify(state, null, 2);
+      const saveData = JSON.stringify(store.getState(), null, 2);
       const blob = new Blob([saveData], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -151,19 +204,13 @@ const SettingsTab = memo(() => {
       a.download = `farmsim-save-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      actions.addNotification({
-        message: '📤 Save exported successfully!',
-        type: 'success'
-      });
+      addNotification('📤 Save exported successfully!', 'success');
     } catch (error) {
-      actions.addNotification({
-        message: 'Failed to export save',
-        type: 'error'
-      });
+      addNotification('Failed to export save', 'error');
     }
-  };
+  }, [addNotification, store]);
 
-  const handleImportSave = () => {
+  const handleImportSave = useCallback(() => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -175,45 +222,53 @@ const SettingsTab = memo(() => {
       reader.onload = (event) => {
         try {
           const importedData = JSON.parse(event.target.result);
-          localStorage.setItem('farm_sim_enhanced_v2', JSON.stringify(importedData));
-          actions.addNotification({
-            message: '📥 Save imported! Reloading...',
-            type: 'success'
-          });
+          localStorage.setItem(SAVE_KEY, JSON.stringify(importedData));
+          addNotification('📥 Save imported! Reloading...', 'success');
           setTimeout(() => window.location.reload(), 1500);
         } catch (error) {
-          actions.addNotification({
-            message: 'Invalid save file format',
-            type: 'error'
-          });
+          addNotification('Invalid save file format', 'error');
         }
       };
       reader.readAsText(file);
     };
     input.click();
-  };
+  }, [addNotification]);
 
-  const handleClearCache = () => {
+  const handleClearCache = useCallback(() => {
     if (window.confirm('Clear all cached data? Your save will remain intact.')) {
       try {
         // Clear all localStorage except save
-        const saveData = localStorage.getItem('farm_sim_enhanced_v2');
+        const saveData = localStorage.getItem(SAVE_KEY);
         localStorage.clear();
         if (saveData) {
-          localStorage.setItem('farm_sim_enhanced_v2', saveData);
+          localStorage.setItem(SAVE_KEY, saveData);
         }
-        actions.addNotification({
-          message: '🗑️ Cache cleared successfully!',
-          type: 'success'
-        });
+        addNotification('🗑️ Cache cleared successfully!', 'success');
       } catch (error) {
-        actions.addNotification({
-          message: 'Failed to clear cache',
-          type: 'error'
-        });
+        addNotification('Failed to clear cache', 'error');
       }
     }
-  };
+  }, [addNotification]);
+
+  const handleResetTutorial = useCallback(() => {
+    actions.resetOnboarding();
+    addNotification('🎓 Tutorial reset! It will show again shortly.', 'success');
+  }, [actions, addNotification]);
+
+  const handleInstallApp = useCallback(() => {
+    const prompt = window.__pwaInstallPrompt;
+    if (prompt) {
+      prompt.prompt();
+      prompt.userChoice.then((result) => {
+        if (result.outcome === 'accepted') {
+          addNotification('📲 App installed!', 'success');
+        }
+        window.__pwaInstallPrompt = null;
+      });
+      return;
+    }
+    addNotification('Use your browser menu to install, or the app is already installed.', 'info');
+  }, [addNotification]);
 
   return (
     <div className="space-y-4">
@@ -227,14 +282,14 @@ const SettingsTab = memo(() => {
             <div>
               <div className="font-medium">Game Status</div>
               <div className="text-sm text-gray-600">
-                {state.gameLoop.paused ? 'Game is paused' : 'Game is running'}
+                {paused ? 'Game is paused' : 'Game is running'}
               </div>
             </div>
             <Button
-              onClick={state.gameLoop.paused ? actions.resumeGame : actions.pauseGame}
-              variant={state.gameLoop.paused ? 'default' : 'outline'}
+              onClick={handleTogglePause}
+              variant={paused ? 'default' : 'outline'}
             >
-              {state.gameLoop.paused ? '▶️ Resume' : '⏸️ Pause'}
+              {paused ? '▶️ Resume' : '⏸️ Pause'}
             </Button>
           </div>
 
@@ -245,7 +300,7 @@ const SettingsTab = memo(() => {
               <div className="text-sm text-gray-600">Current frame rate</div>
             </div>
             <Badge variant="outline" className="text-lg">
-              {state.gameLoop.fps} FPS
+              {fps} FPS
             </Badge>
           </div>
         </div>
@@ -261,14 +316,29 @@ const SettingsTab = memo(() => {
       />
 
       <GameplaySettings
-        state={state}
-        actions={actions}
+        autoSaveEnabled={autoSaveEnabled}
+        animationsEnabled={animationsEnabled}
+        showFPS={showFPS}
+        reducedMotion={reducedMotion}
+        showTooltips={showTooltips}
+        showAlmanacHints={showAlmanacHints}
+        showWelcomeBackSummary={showWelcomeBackSummary}
+        fastMode={fastMode}
+        particleEffects={particleEffects}
         handleToggleAnimations={handleToggleAnimations}
         handleToggleAutoSave={handleToggleAutoSave}
+        handleToggleShowFps={handleToggleShowFps}
+        handleToggleReducedMotion={handleToggleReducedMotion}
+        handleToggleTooltips={handleToggleTooltips}
+        handleToggleAlmanacHints={handleToggleAlmanacHints}
+        handleToggleWelcomeBackSummary={handleToggleWelcomeBackSummary}
+        handleToggleFastMode={handleToggleFastMode}
+        handleToggleParticleEffects={handleToggleParticleEffects}
       />
 
       <AudioSettings
-        state={state}
+        soundEnabled={soundEnabled}
+        musicEnabled={musicEnabled}
         handleToggleSound={handleToggleSound}
         handleToggleMusic={handleToggleMusic}
         handleSoundVolumeChange={handleSoundVolumeChange}
@@ -277,26 +347,18 @@ const SettingsTab = memo(() => {
         musicVolume={musicVolume}
       />
 
-      <GameStats state={state} />
+      <GameStats />
 
       {/* Keyboard Shortcuts */}
       <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
         <div className="flex items-center justify-between mb-3">
           <h4 className="font-semibold">⌨️ Keyboard Shortcuts</h4>
           <Button
-            onClick={() => {
-              const currentlyEnabled = state.settings.keyboardShortcuts !== false;
-              const newState = !currentlyEnabled;
-              actions.updateSettings({ keyboardShortcuts: newState });
-              actions.addNotification({
-                message: `Keyboard shortcuts ${newState ? 'enabled ⌨️' : 'disabled'}`,
-                type: 'info',
-              });
-            }}
-            variant={state.settings.keyboardShortcuts !== false ? 'default' : 'outline'}
+            onClick={handleToggleKeyboardShortcuts}
+            variant={keyboardShortcutsEnabled ? 'default' : 'outline'}
             size="sm"
           >
-            {state.settings.keyboardShortcuts !== false ? 'On' : 'Off'}
+            {keyboardShortcutsEnabled ? 'On' : 'Off'}
           </Button>
         </div>
 
@@ -351,13 +413,7 @@ const SettingsTab = memo(() => {
             <div className="text-sm text-gray-600">Show the onboarding tutorial again</div>
           </div>
           <Button
-            onClick={() => {
-              actions.resetOnboarding();
-              actions.addNotification({
-                message: '🎓 Tutorial reset! It will show again shortly.',
-                type: 'success'
-              });
-            }}
+            onClick={handleResetTutorial}
             variant="outline"
             size="sm"
           >
@@ -375,20 +431,7 @@ const SettingsTab = memo(() => {
             <div className="text-sm text-gray-600">Install FarmSim as a standalone app</div>
           </div>
           <Button
-            onClick={() => {
-              const prompt = window.__pwaInstallPrompt;
-              if (prompt) {
-                prompt.prompt();
-                prompt.userChoice.then((result) => {
-                  if (result.outcome === 'accepted') {
-                    actions.addNotification({ message: '📲 App installed!', type: 'success' });
-                  }
-                  window.__pwaInstallPrompt = null;
-                });
-              } else {
-                actions.addNotification({ message: 'Use your browser menu to install, or the app is already installed.', type: 'info' });
-              }
-            }}
+            onClick={handleInstallApp}
             variant="outline"
             size="sm"
           >

@@ -18,8 +18,24 @@ export const getMinSeedCost = (level = 1) => {
   return Math.max(1, Math.min(...costs));
 };
 
-export const getNextGoalFromCounts = ({ ready = 0, empty = 0, active = 0, coins = 0, level = 1, buildings = {} } = {}) => {
+const hasBuiltStructures = ({ hasBuiltStructure, builtBuildings, buildings }) => {
+  if (typeof hasBuiltStructure === 'boolean') return hasBuiltStructure;
+  if (Number.isFinite(Number(builtBuildings))) return Number(builtBuildings) > 0;
+  return Object.values(buildings || {}).some((building) => building?.built);
+};
+
+export const getNextGoalFromCounts = ({
+  ready = 0,
+  empty = 0,
+  active = 0,
+  coins = 0,
+  level = 1,
+  buildings = {},
+  builtBuildings,
+  hasBuiltStructure,
+} = {}) => {
   const minSeedCost = getMinSeedCost(level);
+  const hasBuiltAnyStructure = hasBuiltStructures({ hasBuiltStructure, builtBuildings, buildings });
 
   if (ready > 0) {
     return { id: 'harvest', text: `Harvest ${ready} crop${ready > 1 ? 's' : ''}`, emoji: '🌾' };
@@ -30,7 +46,7 @@ export const getNextGoalFromCounts = ({ ready = 0, empty = 0, active = 0, coins 
   if (active > 0) {
     return { id: 'wait', text: 'Let crops grow a little longer', emoji: '⏳' };
   }
-  if (level >= 2 && !Object.values(buildings || {}).some((b) => b?.built)) {
+  if (level >= 2 && !hasBuiltAnyStructure) {
     return { id: 'build', text: 'Build your first structure', emoji: '🏠' };
   }
   if (coins < minSeedCost) {

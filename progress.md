@@ -1,5 +1,61 @@
 Original prompt: ok lets continue the next perf options
 
+## 2026-02-12 - Parallel pass (UI agent + perf agent) after npm install
+- Environment/tooling:
+  - Installed Node.js + npm via Homebrew (`node v25.6.1`, `npm 11.9.0`) so local validation can run again.
+- Track 1 (UI / discoverability + accessibility):
+  - Polished `NavBar.jsx` for mobile discoverability:
+    - Added active-section context row with explicit expand/collapse control for multi-tab sections.
+    - Added visual tab-count cues (`N tabs` / `Hide`) on section buttons.
+    - Added ARIA state wiring (`aria-expanded`, `aria-controls`, `aria-label`, `aria-current`) for section/sub-tab controls.
+- Track 2 (Performance / selector cleanup):
+  - Reduced broad subscriptions and repeated derivations:
+    - `QAModePanel.jsx` now uses `useGameStore` snapshot reads (previous pass) and remains isolated from tick churn.
+    - `GameHeader.jsx` now subscribes to compact achievement/building summaries instead of whole `achievements`/`buildings` objects.
+    - `GameSidebar.jsx` now subscribes directly to primitive counts (`inventoryCount`, `builtCount`, `animalCount`) instead of full objects/arrays.
+  - `goalHints.js` now supports `builtBuildings` / `hasBuiltStructure` hints in `getNextGoalFromCounts`, avoiding mandatory object scans in call sites that already have derived counts.
+
+## Validation
+- `npm test` passed (20 files / 61 tests).
+- `npm run build` passed.
+
+## 2026-02-12 - Parallel pass (UI + Performance tracks)
+- Track A (Performance / debug tooling):
+  - Refactored `QAModePanel.jsx` away from broad `useGame()` subscriptions.
+  - Switched to `useGameActions` + `useGameStore` (+ `useGameSystems`) so live game ticks no longer force QA panel rerenders.
+  - QA helpers and perf snapshots now use click-time `store.getState()` reads.
+- Track B (UI + render-path cleanup):
+  - `GameHeader.jsx` season tooltip countdown is now live-updating via a dedicated `SeasonCountdown` component using shared `useTick()`.
+  - Fixed stale countdown behavior that previously only recomputed when season changed.
+  - Reduced selector hot-path cost by replacing per-update plot counting selector with `plots` slice subscription + memoized count derivation on `plots` ref change.
+
+## Validation
+- Could not run `npm test` / `npm run build` in this environment because Node.js/npm binaries are unavailable (`node not found`, `npm not found`).
+
+## TODO / Next
+- Run `npm test` and `npm run build` on a Node-enabled machine.
+- Optional next parallel pass:
+  - UI track: mobile nav discoverability/accessibility polish in `NavBar.jsx` (labels, expanded state cues).
+  - Performance track: reduce heavy derived work in header/sidebar selectors further where counts can be keyed by stable refs.
+
+## 2026-02-12 - Settings tab selector/perf pass
+- Migrated `SettingsTab.jsx` off broad `useGame()` reads:
+  - Replaced with `useGameSelector` for targeted slices (`settings`, `paused`, `fps`), `useGameActions` for commands, and `useGameStore` for click-time export snapshots.
+  - Wrapped settings handlers in `useCallback` so memoized settings subcomponents keep stable function props across unrelated rerenders.
+- Simplified settings section props to avoid passing whole `state` object:
+  - `GameplaySettings.jsx` now receives explicit booleans + toggle handlers.
+  - `AudioSettings.jsx` now receives explicit booleans + volume handlers.
+  - `GameStats.jsx` now self-subscribes with targeted selectors instead of receiving root `state`.
+- Save key hardening:
+  - Replaced repeated string literals with shared `SAVE_KEY` in reset/import/clear-cache paths.
+
+## Validation
+- Could not run `npm test` / `npm run build` in this environment because Node.js/npm binaries are unavailable (`node not found`, `npm not found`).
+
+## TODO / Next
+- Re-run `npm test` and `npm run build` once Node/npm are available to confirm no regressions.
+- Optional follow-up perf pass: migrate other debug-heavy surfaces (`QAModePanel`, `DebugOverlay`) to selector/store snapshot patterns where helpful.
+
 ## 2026-02-11 - Perf iteration
 - Migrated more always-mounted UI away from whole-state `useGame()` subscriptions:
   - `PerformanceOverlay.jsx` now subscribes with `useGameSelector` to targeted primitives/counts.

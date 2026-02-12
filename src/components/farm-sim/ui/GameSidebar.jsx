@@ -1,4 +1,4 @@
-import React, { memo, useState, lazy, Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { memo, useState, lazy, Suspense, useCallback, useEffect, useRef } from 'react';
 import { useGameActions, useGameSelector } from '../context/GameContext';
 import { Tabs, TabsContent } from '../../ui/tabs';
 import { Card } from '../../ui/card';
@@ -74,9 +74,26 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   const actions = useGameActions();
   const keyboardShortcutsEnabled = useGameSelector((state) => state.settings?.keyboardShortcuts !== false);
   const paused = useGameSelector((state) => Boolean(state.gameLoop?.paused));
-  const inventory = useGameSelector((state) => state.inventory || {});
-  const buildings = useGameSelector((state) => state.buildings || {});
-  const animals = useGameSelector((state) => state.livestock?.animals || []);
+  const inventoryCount = useGameSelector((state) => {
+    const inventory = state.inventory || {};
+    let total = 0;
+    for (const qty of Object.values(inventory)) {
+      const count = typeof qty === 'number'
+        ? qty
+        : (typeof qty === 'object' && qty !== null ? (qty.count || qty.quantity || 0) : 0);
+      total += Number(count) || 0;
+    }
+    return total;
+  });
+  const builtCount = useGameSelector((state) => {
+    const buildings = state.buildings || {};
+    let total = 0;
+    for (const key of Object.keys(buildings)) {
+      if (buildings[key]?.built) total += 1;
+    }
+    return total;
+  });
+  const animalCount = useGameSelector((state) => state.livestock?.animals?.length || 0);
   const reputation = useGameSelector((state) => state.social?.reputation ?? 0);
   // Use controlled mode if props provided, otherwise internal state (backward compat)
   const [internalTab, setInternalTab] = useState('farming');
@@ -154,17 +171,6 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
     };
   }, []); // Empty deps - only run once on mount
 
-  const inventoryCount = useMemo(() => {
-    return Object.values(inventory).reduce((sum, qty) => {
-      const count = typeof qty === 'number' ? qty : (typeof qty === 'object' && qty !== null ? (qty.count || qty.quantity || 0) : 0);
-      return sum + (Number(count) || 0);
-    }, 0);
-  }, [inventory]);
-
-  const builtCount = useMemo(() => {
-    return Object.keys(buildings).filter(k => buildings[k]?.built).length;
-  }, [buildings]);
-
   const renderIcon = (IconComponent, fallbackEmoji) => {
     if (IconComponent) {
       return <IconComponent className="icon-16" aria-hidden="true" />;
@@ -233,7 +239,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
           </div>
 	          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
 	            <div className="font-bold text-blue-600 text-sm">
-	              {animals.length || 0}
+	              {animalCount}
 	            </div>
 	            <div className="text-gray-500 text-xs font-medium">Animals</div>
 	          </div>

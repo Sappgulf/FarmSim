@@ -2,10 +2,24 @@ import React, { memo } from 'react';
 import { Card } from '../../../../ui/card';
 
 export const GameplaySettings = memo(({
-    state,
-    actions,
+    autoSaveEnabled,
+    animationsEnabled,
+    showFPS,
+    reducedMotion,
+    showTooltips,
+    showAlmanacHints,
+    showWelcomeBackSummary,
+    fastMode,
+    particleEffects,
     handleToggleAnimations,
-    handleToggleAutoSave
+    handleToggleAutoSave,
+    handleToggleShowFps,
+    handleToggleReducedMotion,
+    handleToggleTooltips,
+    handleToggleAlmanacHints,
+    handleToggleWelcomeBackSummary,
+    handleToggleFastMode,
+    handleToggleParticleEffects
 }) => {
     return (
         <>
@@ -23,13 +37,13 @@ export const GameplaySettings = memo(({
                             onClick={handleToggleAutoSave}
                             className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${state.settings.autoSave ? 'bg-green-600' : 'bg-gray-300'}
+                ${autoSaveEnabled ? 'bg-green-600' : 'bg-gray-300'}
               `}
                         >
                             <span
                                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${state.settings.autoSave ? 'translate-x-6' : 'translate-x-1'}
+                  ${autoSaveEnabled ? 'translate-x-6' : 'translate-x-1'}
                 `}
                             />
                         </button>
@@ -45,13 +59,13 @@ export const GameplaySettings = memo(({
                             onClick={handleToggleAnimations}
                             className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${state.settings.animationsEnabled ? 'bg-green-600' : 'bg-gray-300'}
+                ${animationsEnabled ? 'bg-green-600' : 'bg-gray-300'}
               `}
                         >
                             <span
                                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${state.settings.animationsEnabled ? 'translate-x-6' : 'translate-x-1'}
+                  ${animationsEnabled ? 'translate-x-6' : 'translate-x-1'}
                 `}
                             />
                         </button>
@@ -64,18 +78,16 @@ export const GameplaySettings = memo(({
                             <div className="text-sm text-gray-600">Display performance stats</div>
                         </div>
                         <button
-                            onClick={() => actions.updateSettings({
-                                showFPS: !state.settings.showFPS
-                            })}
+                            onClick={handleToggleShowFps}
                             className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${state.settings.showFPS ? 'bg-green-600' : 'bg-gray-300'}
+                ${showFPS ? 'bg-green-600' : 'bg-gray-300'}
               `}
                         >
                             <span
                                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${state.settings.showFPS ? 'translate-x-6' : 'translate-x-1'}
+                  ${showFPS ? 'translate-x-6' : 'translate-x-1'}
                 `}
                             />
                         </button>
@@ -88,18 +100,16 @@ export const GameplaySettings = memo(({
                             <div className="text-sm text-gray-600">Disable heavy animations</div>
                         </div>
                         <button
-                            onClick={() => actions.updateSettings({
-                                reducedMotion: !state.settings.reducedMotion
-                            })}
+                            onClick={handleToggleReducedMotion}
                             className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                                ${state.settings.reducedMotion ? 'bg-green-600' : 'bg-gray-300'}
+                                ${reducedMotion ? 'bg-green-600' : 'bg-gray-300'}
               `}
                         >
                             <span
                                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${state.settings.reducedMotion ? 'translate-x-6' : 'translate-x-1'}
+                  ${reducedMotion ? 'translate-x-6' : 'translate-x-1'}
                 `}
                             />
                         </button>
@@ -119,18 +129,16 @@ export const GameplaySettings = memo(({
                             <div className="text-sm text-gray-600">Display helpful hints</div>
                         </div>
                         <button
-                            onClick={() => actions.updateSettings({
-                                showTooltips: !state.settings.showTooltips
-                            })}
+                            onClick={handleToggleTooltips}
                             className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${(state.settings.showTooltips !== false) ? 'bg-green-600' : 'bg-gray-300'}
+                ${showTooltips ? 'bg-green-600' : 'bg-gray-300'}
               `}
                         >
                             <span
                                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${(state.settings.showTooltips !== false) ? 'translate-x-6' : 'translate-x-1'}
+                  ${showTooltips ? 'translate-x-6' : 'translate-x-1'}
                 `}
                             />
                         </button>
@@ -143,18 +151,16 @@ export const GameplaySettings = memo(({
                             <div className="text-sm text-gray-600">Show locked page hints</div>
                         </div>
                         <button
-                            onClick={() => actions.updateSettings({
-                                showAlmanacHints: !state.settings.showAlmanacHints
-                            })}
+                            onClick={handleToggleAlmanacHints}
                             className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${state.settings.showAlmanacHints ? 'bg-green-600' : 'bg-gray-300'}
+                ${showAlmanacHints ? 'bg-green-600' : 'bg-gray-300'}
               `}
                         >
                             <span
                                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${state.settings.showAlmanacHints ? 'translate-x-6' : 'translate-x-1'}
+                  ${showAlmanacHints ? 'translate-x-6' : 'translate-x-1'}
                 `}
                             />
                         </button>
@@ -167,18 +173,16 @@ export const GameplaySettings = memo(({
                             <div className="text-sm text-gray-600">Show return recap on the Town Board</div>
                         </div>
                         <button
-                            onClick={() => actions.updateSettings({
-                                showWelcomeBackSummary: !state.settings.showWelcomeBackSummary
-                            })}
+                            onClick={handleToggleWelcomeBackSummary}
                             className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${state.settings.showWelcomeBackSummary ? 'bg-green-600' : 'bg-gray-300'}
+                ${showWelcomeBackSummary ? 'bg-green-600' : 'bg-gray-300'}
               `}
                         >
                             <span
                                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${state.settings.showWelcomeBackSummary ? 'translate-x-6' : 'translate-x-1'}
+                  ${showWelcomeBackSummary ? 'translate-x-6' : 'translate-x-1'}
                 `}
                             />
                         </button>
@@ -191,18 +195,16 @@ export const GameplaySettings = memo(({
                             <div className="text-sm text-gray-600">2x growth speed (for testing)</div>
                         </div>
                         <button
-                            onClick={() => actions.updateSettings({
-                                fastMode: !state.settings.fastMode
-                            })}
+                            onClick={handleToggleFastMode}
                             className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${state.settings.fastMode ? 'bg-green-600' : 'bg-gray-300'}
+                ${fastMode ? 'bg-green-600' : 'bg-gray-300'}
               `}
                         >
                             <span
                                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${state.settings.fastMode ? 'translate-x-6' : 'translate-x-1'}
+                  ${fastMode ? 'translate-x-6' : 'translate-x-1'}
                 `}
                             />
                         </button>
@@ -215,18 +217,16 @@ export const GameplaySettings = memo(({
                             <div className="text-sm text-gray-600">Show harvest & level-up particles</div>
                         </div>
                         <button
-                            onClick={() => actions.updateSettings({
-                                particleEffects: !state.settings.particleEffects
-                            })}
+                            onClick={handleToggleParticleEffects}
                             className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${(state.settings.particleEffects !== false) ? 'bg-green-600' : 'bg-gray-300'}
+                ${particleEffects ? 'bg-green-600' : 'bg-gray-300'}
               `}
                         >
                             <span
                                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${(state.settings.particleEffects !== false) ? 'translate-x-6' : 'translate-x-1'}
+                  ${particleEffects ? 'translate-x-6' : 'translate-x-1'}
                 `}
                             />
                         </button>

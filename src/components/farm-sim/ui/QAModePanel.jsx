@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGameActions, useGameStore, useGameSystems } from '../context/GameContext';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import {
@@ -41,7 +41,9 @@ const cloneState = (state) => {
 };
 
 const QAModePanel = memo(() => {
-  const { state, actions, systems } = useGame();
+  const actions = useGameActions();
+  const systems = useGameSystems();
+  const store = useGameStore();
   const debugEnabled = isDebugMode();
   const [results, setResults] = useState([]);
   const [suiteSummary, setSuiteSummary] = useState(null);
@@ -50,12 +52,8 @@ const QAModePanel = memo(() => {
   const [activeTestId, setActiveTestId] = useState(null);
   const [copyStatus, setCopyStatus] = useState(null);
 
-  const stateRef = useRef(state);
+  const getState = useCallback(() => store.getState(), [store]);
   const systemsRef = useRef(systems);
-
-  useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
 
   useEffect(() => {
     systemsRef.current = systems;
@@ -86,13 +84,13 @@ const QAModePanel = memo(() => {
   }, [waitForPanel]);
 
   const helpers = useMemo(() => ({
-    fillAllPlots: (status) => fillAllPlots(stateRef.current, actions, status),
+    fillAllPlots: (status) => fillAllPlots(getState(), actions, status),
     spawnNotifications: (count) => spawnNotifications(actions, count),
-    clearNotifications: () => clearNotifications(stateRef.current, actions),
+    clearNotifications: () => clearNotifications(getState(), actions),
     placeBuildings: () => placeBuildings(actions),
     clearBuildings: () => clearBuildings(actions),
-    advanceChallengeDays: (days) => advanceChallengeDays(stateRef.current, actions, days),
-  }), [actions]);
+    advanceChallengeDays: (days) => advanceChallengeDays(getState(), actions, days),
+  }), [actions, getState]);
 
   const getDebugMetricsSafe = useCallback(() => (
     getDebugMetrics() || {
@@ -107,7 +105,7 @@ const QAModePanel = memo(() => {
   const getPerfSnapshot = useCallback((label) => {
     const perf = typeof window !== 'undefined' ? window.__farmPerfMetrics : null;
     const debug = getDebugMetricsSafe();
-    const snapshotState = stateRef.current || {};
+    const snapshotState = getState() || {};
     return {
       label,
       timestamp: new Date().toISOString(),
@@ -124,7 +122,7 @@ const QAModePanel = memo(() => {
         listeners: debug.listenerCount || 0,
       },
     };
-  }, [getDebugMetricsSafe]);
+  }, [getDebugMetricsSafe, getState]);
 
   const buildReport = useCallback((summary, testResults) => {
     const lines = [];
@@ -182,7 +180,7 @@ const QAModePanel = memo(() => {
     }
 
     const ctx = {
-      state: () => stateRef.current,
+      state: getState,
       actions,
       systems: systemsRef.current,
       helpers,
@@ -245,7 +243,7 @@ const QAModePanel = memo(() => {
       console: consoleEvents,
       metrics: { start: metricsStart, end: metricsEnd },
     };
-  }, [actions, getDebugMetricsSafe, getPerfSnapshot, helpers, sleep, switchToTab, waitForPanel]);
+  }, [actions, getDebugMetricsSafe, getPerfSnapshot, getState, helpers, sleep, switchToTab, waitForPanel]);
 
   const runTests = useCallback(async (testIds) => {
     if (running) return;
@@ -254,7 +252,7 @@ const QAModePanel = memo(() => {
     setSuiteSummary(null);
     setActiveTestId(null);
 
-    const originalState = cloneState(stateRef.current);
+    const originalState = cloneState(getState());
     const testBaseline = cloneState(originalState);
     testBaseline.settings = { ...testBaseline.settings, autoSave: false };
     testBaseline.gameLoop = { ...testBaseline.gameLoop, paused: true };
@@ -298,7 +296,7 @@ const QAModePanel = memo(() => {
     logDebugAction('qa_suite_end', summary);
 
     setRunning(false);
-  }, [actions, getPerfSnapshot, runTest, running, sleep]);
+  }, [actions, getPerfSnapshot, getState, runTest, running, sleep]);
 
   const handleCopyReport = useCallback(async () => {
     try {

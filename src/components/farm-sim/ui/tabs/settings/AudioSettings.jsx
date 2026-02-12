@@ -2,7 +2,8 @@ import React, { memo } from 'react';
 import { Card } from '../../../../ui/card';
 
 export const AudioSettings = memo(({
-    state,
+    soundEnabled,
+    musicEnabled,
     handleToggleSound,
     handleToggleMusic,
     handleSoundVolumeChange,
@@ -26,13 +27,13 @@ export const AudioSettings = memo(({
                             onClick={handleToggleSound}
                             className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${state.settings.soundEnabled ? 'bg-green-600' : 'bg-gray-300'}
+                ${soundEnabled ? 'bg-green-600' : 'bg-gray-300'}
               `}
                         >
                             <span
                                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${state.settings.soundEnabled ? 'translate-x-6' : 'translate-x-1'}
+                  ${soundEnabled ? 'translate-x-6' : 'translate-x-1'}
                 `}
                             />
                         </button>
@@ -48,13 +49,13 @@ export const AudioSettings = memo(({
                             onClick={handleToggleMusic}
                             className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${state.settings.musicEnabled ? 'bg-green-600' : 'bg-gray-300'}
+                ${musicEnabled ? 'bg-green-600' : 'bg-gray-300'}
               `}
                         >
                             <span
                                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${state.settings.musicEnabled ? 'translate-x-6' : 'translate-x-1'}
+                  ${musicEnabled ? 'translate-x-6' : 'translate-x-1'}
                 `}
                             />
                         </button>
@@ -79,7 +80,7 @@ export const AudioSettings = memo(({
                             step="0.05"
                             value={soundVolume}
                             onChange={handleSoundVolumeChange}
-                            disabled={!state.settings.soundEnabled}
+                            disabled={!soundEnabled}
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                         />
                     </div>
@@ -97,7 +98,7 @@ export const AudioSettings = memo(({
                             step="0.025"
                             value={musicVolume}
                             onChange={handleMusicVolumeChange}
-                            disabled={!state.settings.musicEnabled}
+                            disabled={!musicEnabled}
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                         />
                         <div className="text-xs text-gray-500">

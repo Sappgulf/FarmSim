@@ -77,6 +77,24 @@ const LastSaveTime = memo(({ lastSavedAt, autoSave }) => {
 
 LastSaveTime.displayName = 'LastSaveTime';
 
+const formatCountdown = (remainingMs) => {
+  const safeRemaining = Math.max(0, Number(remainingMs) || 0);
+  const minutes = Math.floor(safeRemaining / 60000);
+  const seconds = Math.floor((safeRemaining % 60000) / 1000).toString().padStart(2, '0');
+  return `${minutes}:${seconds}`;
+};
+
+const SeasonCountdown = memo(({ lastChangeTime, durationMs = 120000 }) => {
+  useTick();
+  if (!lastChangeTime) return <span>Next season in: --:--</span>;
+
+  const elapsed = Math.max(0, Date.now() - lastChangeTime);
+  const remaining = Math.max(0, durationMs - elapsed);
+  return <span>Next season in: {formatCountdown(remaining)}</span>;
+});
+
+SeasonCountdown.displayName = 'SeasonCountdown';
+
 // Game Header Component - Memoized for performance
 const GameHeader = memo(() => {
   const actions = useGameActions();
@@ -85,28 +103,29 @@ const GameHeader = memo(() => {
   const level = useGameSelector((state) => state.level || 1);
   const cosmeticTokens = useGameSelector((state) => state.cosmeticTokens || 0);
   const recentXpEvents = useGameSelector((state) => state.recentXpEvents || []);
-  const achievements = useGameSelector((state) => state.achievements || []);
-  const buildings = useGameSelector((state) => state.buildings || {});
+  const achievementSummaryKey = useGameSelector((state) => {
+    const achievements = Array.isArray(state.achievements) ? state.achievements : [];
+    let unlocked = 0;
+    for (let i = 0; i < achievements.length; i++) {
+      if (achievements[i]?.unlocked) unlocked += 1;
+    }
+    return `${unlocked}|${achievements.length}`;
+  });
+  const builtBuildings = useGameSelector((state) => {
+    const buildings = state.buildings || {};
+    let total = 0;
+    for (const key of Object.keys(buildings)) {
+      if (buildings[key]?.built) total += 1;
+    }
+    return total;
+  });
   const weather = useGameSelector((state) => state.weather || 'sunny');
   const season = useGameSelector((state) => state.season || null);
   const farmTheme = useGameSelector((state) => state.farmTheme || null);
   const farmNameRaw = useGameSelector((state) => state.farmName || '');
   const autoSaveEnabled = useGameSelector((state) => Boolean(state.settings?.autoSave));
   const lastSavedAt = useGameSelector((state) => state.gameLoop?.lastSaveTime || null);
-  const plotCountsKey = useGameSelector((state) => {
-    const plots = Array.isArray(state.plots) ? state.plots : [];
-    let active = 0;
-    let ready = 0;
-    let empty = 0;
-    for (let i = 0; i < plots.length; i++) {
-      const plot = plots[i];
-      if (!plot) continue;
-      if (plot.state === 'ready') ready += 1;
-      if (plot.state === 'empty') empty += 1;
-      if (plot.state !== 'empty') active += 1;
-    }
-    return `${active}|${ready}|${empty}`;
-  });
+  const plots = useGameSelector((state) => (Array.isArray(state.plots) ? state.plots : []));
 
   const [showStatsDropdown, setShowStatsDropdown] = useState(false);
   const statsDropdownRef = useRef(null);
@@ -163,9 +182,22 @@ const GameHeader = memo(() => {
   const xpProgress = xpProgressData.progress;
 
   const [activePlotCount, readyPlotCount, emptyPlotCount] = useMemo(() => {
-    const parts = String(plotCountsKey || '0|0|0').split('|');
-    return [Number(parts[0]) || 0, Number(parts[1]) || 0, Number(parts[2]) || 0];
-  }, [plotCountsKey]);
+    let active = 0;
+    let ready = 0;
+    let empty = 0;
+    for (let i = 0; i < plots.length; i++) {
+      const plot = plots[i];
+      if (!plot) continue;
+      if (plot.state === 'ready') ready += 1;
+      if (plot.state === 'empty') empty += 1;
+      if (plot.state !== 'empty') active += 1;
+    }
+    return [active, ready, empty];
+  }, [plots]);
+  const [unlockedAchievements, totalAchievements] = useMemo(() => {
+    const parts = String(achievementSummaryKey || '0|0').split('|');
+    return [Number(parts[0]) || 0, Number(parts[1]) || 0];
+  }, [achievementSummaryKey]);
 
   const nextGoal = useMemo(() => (
     getNextGoalFromCounts({
@@ -174,9 +206,9 @@ const GameHeader = memo(() => {
       empty: emptyPlotCount,
       coins,
       level,
-      buildings,
+      builtBuildings,
     })
-  ), [activePlotCount, readyPlotCount, emptyPlotCount, coins, level, buildings]);
+  ), [activePlotCount, readyPlotCount, emptyPlotCount, builtBuildings, coins, level]);
 
   const weatherMeta = getWeatherMeta(weather);
   const activeTheme = getFarmTheme(farmTheme);
@@ -187,24 +219,6 @@ const GameHeader = memo(() => {
     }
     setShowStatsDropdown(false);
   }, []);
-
-  const unlockedAchievements = useMemo(
-    () => achievements?.filter((achievement) => achievement.unlocked).length || 0,
-    [achievements]
-  );
-  const builtBuildings = useMemo(
-    () => Object.values(buildings || {}).filter((building) => building?.built).length,
-    [buildings]
-  );
-
-  const seasonCountdown = useMemo(() => {
-    const totalMs = 120000;
-    const elapsed = Math.max(0, Date.now() - (season?.lastChangeTime || 0));
-    const remaining = Math.max(0, totalMs - elapsed);
-    const minutes = Math.floor(remaining / 60000);
-    const seconds = Math.floor((remaining % 60000) / 1000).toString().padStart(2, '0');
-    return `${minutes}:${seconds}`;
-  }, [season?.lastChangeTime]);
 
   useEffect(() => {
     const handlePointerDown = (event) => {
@@ -360,10 +374,10 @@ const GameHeader = memo(() => {
                       <span className="text-gray-600">Active Plots:</span>
                       <span className="font-semibold">{activePlotCount}</span>
                     </div>
-	                    <div className="flex justify-between">
-	                      <span className="text-gray-600">Achievements:</span>
-	                      <span className="font-semibold">{unlockedAchievements}/{achievements?.length || 0}</span>
-	                    </div>
+		                    <div className="flex justify-between">
+		                      <span className="text-gray-600">Achievements:</span>
+		                      <span className="font-semibold">{unlockedAchievements}/{totalAchievements}</span>
+		                    </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Buildings:</span>
                       <span className="font-semibold">{builtBuildings}</span>
@@ -397,11 +411,11 @@ const GameHeader = memo(() => {
 	                <div className="text-xs font-semibold text-gray-700 mb-1">
 	                  {season.config.name} {season.config.icon}
 	                </div>
-	                <div className="text-xs text-gray-600 mb-2">
-	                  {season.config.description}
-	                </div>
+                <div className="text-xs text-gray-600 mb-2">
+                  {season.config.description}
+                </div>
                 <div className="text-xs text-gray-500">
-                  Next season in: {seasonCountdown}
+                  <SeasonCountdown lastChangeTime={season?.lastChangeTime} />
                 </div>
               </div>
             </button>
@@ -430,9 +444,9 @@ const GameHeader = memo(() => {
             title="Open Achievements"
           >
             <Trophy className="w-4 h-4 text-yellow-600" />
-	            <span className="text-sm font-medium text-gray-700">
-	              {unlockedAchievements}/{achievements?.length || 0}
-	            </span>
+		            <span className="text-sm font-medium text-gray-700">
+		              {unlockedAchievements}/{totalAchievements}
+		            </span>
 	          </button>
 	        </div>
 	      </div>
