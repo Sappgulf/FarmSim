@@ -11,6 +11,13 @@ describe('inventory', () => {
     expect(add.potato).toBe(3);
   });
 
+  it('applyInventoryDelta coerces string deltas to numeric values', () => {
+    const start = { carrot: 1 };
+    const updated = applyInventoryDelta(start, 'carrot', '2');
+
+    expect(updated.carrot).toBe(3);
+  });
+
   it('normalizeInventory removes invalid values', () => {
     const normalized = normalizeInventory({ carrot: -2, potato: 4, corn: 'x' });
     expect(normalized.carrot).toBe(0);

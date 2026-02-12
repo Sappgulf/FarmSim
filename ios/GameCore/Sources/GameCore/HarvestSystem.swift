@@ -13,7 +13,8 @@ public enum HarvestSystem {
         inventory: inout Inventory,
         tileIndex: Int,
         cropDef: CropDef,
-        currentDay: Int
+        currentDay: Int,
+        quantity: Int = 1
     ) -> Bool {
         guard world.tiles.indices.contains(tileIndex) else { return false }
         let tile = world.tiles[tileIndex]
@@ -21,7 +22,7 @@ public enum HarvestSystem {
         guard let planted = tile.planted else { return false }
 
         world.tiles[tileIndex].planted = nil
-        inventory.crops[planted.cropID, default: 0] += 1
+        inventory.crops[planted.cropID, default: 0] += max(1, quantity)
         return true
     }
 }

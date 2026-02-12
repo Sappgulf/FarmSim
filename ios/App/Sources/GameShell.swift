@@ -1,85 +1,188 @@
 import SwiftUI
 
-enum GameTab: String, CaseIterable {
-    case farm, shop, inventory
+enum GameTab: String, CaseIterable, Hashable {
+    case farm
+    case inventory
+    case market
+    case almanac
+    case settings
 
-    var label: String {
+    var title: String {
         switch self {
-        case .farm: "Farm"
-        case .shop: "Shop"
-        case .inventory: "Items"
+        case .farm: return "Farm"
+        case .inventory: return "Inventory"
+        case .market: return "Town"
+        case .almanac: return "Almanac"
+        case .settings: return "Settings"
         }
     }
 
     var icon: String {
         switch self {
-        case .farm: "leaf.fill"
-        case .shop: "bag.fill"
-        case .inventory: "archivebox.fill"
+        case .farm: return "leaf.fill"
+        case .inventory: return "shippingbox.fill"
+        case .market: return "storefront.fill"
+        case .almanac: return "book.closed.fill"
+        case .settings: return "gearshape.fill"
         }
     }
 }
 
 struct GameShell: View {
-    var store: GameStore
-    @State private var selectedTab: GameTab = .farm
-    @State private var tabTrigger = 0
+    @Bindable var store: GameStore
+    @Bindable var appState: AppState
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Content area
-            Group {
-                switch selectedTab {
-                case .farm:
-                    FarmView(store: store, onOpenShop: { selectedTab = .shop })
-                case .shop:
-                    ShopView(store: store)
-                case .inventory:
-                    InventoryView(store: store)
-                }
+        Group {
+            if let message = store.contentErrorMessage {
+                ContentMissingView(message: message, palette: store.settings.palette)
+            } else {
+                tabShell
             }
-            .animation(.easeInOut(duration: 0.18), value: selectedTab)
-
-            // Custom tab bar
-            tabBar
-                .padding(.horizontal, 24)
-                .padding(.bottom, 2)
         }
-        .ignoresSafeArea(.keyboard)
-        .sensoryFeedback(.selection, trigger: tabTrigger)
+        .onAppear {
+            if store.onboardingRequired {
+                appState.showingOnboarding = true
+            }
+        }
+        .sheet(isPresented: Binding(get: {
+            appState.showingOnboarding
+        }, set: { appState.showingOnboarding = $0 })) {
+            OnboardingView {
+                store.completeOnboarding()
+                appState.showingOnboarding = false
+            }
+        }
     }
 
-    private var tabBar: some View {
-        HStack(spacing: 0) {
-            ForEach(GameTab.allCases, id: \.self) { tab in
-                Button {
-                    guard selectedTab != tab else { return }
-                    selectedTab = tab
-                    tabTrigger += 1
-                } label: {
-                    VStack(spacing: 3) {
-                        Image(systemName: tab.icon)
-                            .font(.system(size: 18, weight: selectedTab == tab ? .bold : .medium))
-                            .symbolEffect(.bounce, value: selectedTab == tab)
-                        Text(tab.label)
-                            .font(.system(size: 10, weight: .bold, design: .rounded))
-                    }
-                    .foregroundStyle(selectedTab == tab ? .white : .white.opacity(0.45))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(
-                        selectedTab == tab
-                            ? Color.white.opacity(0.15)
-                            : Color.clear,
-                        in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    )
+    private var tabShell: some View {
+        TabView(selection: Binding(get: {
+            appState.selectedTab
+        }, set: { appState.selectedTab = $0 })) {
+            FarmView(store: store, appState: appState)
+                .tabItem {
+                    Label(GameTab.farm.title, systemImage: GameTab.farm.icon)
                 }
-                .buttonStyle(.plain)
-            }
+                .tag(GameTab.farm)
+
+            InventoryView(store: store)
+                .tabItem {
+                    Label(GameTab.inventory.title, systemImage: GameTab.inventory.icon)
+                }
+                .tag(GameTab.inventory)
+
+            TownMarketView(store: store)
+                .tabItem {
+                    Label(GameTab.market.title, systemImage: GameTab.market.icon)
+                }
+                .tag(GameTab.market)
+
+            AlmanacView(store: store)
+                .tabItem {
+                    Label(GameTab.almanac.title, systemImage: GameTab.almanac.icon)
+                }
+                .tag(GameTab.almanac)
+
+            SettingsView(store: store, appState: appState)
+                .tabItem {
+                    Label(GameTab.settings.title, systemImage: GameTab.settings.icon)
+                }
+                .tag(GameTab.settings)
         }
-        .padding(6)
-        .background(.ultraThinMaterial, in: Capsule())
-        .overlay(Capsule().strokeBorder(Theme.cardStroke, lineWidth: 0.5))
-        .shadow(color: .black.opacity(0.25), radius: 16, y: 6)
+    }
+}
+
+struct OnboardingView: View {
+    let onDone: () -> Void
+    @State private var page = 0
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: DS.Space.lg) {
+                TabView(selection: $page) {
+                    onboardingCard(
+                        title: "Plant",
+                        body: "Tap a tile, choose a seed, and plant your first crop.",
+                        symbol: "leaf.circle.fill"
+                    )
+                    .tag(0)
+
+                    onboardingCard(
+                        title: "Advance Day",
+                        body: "Use Next Day to grow crops and trigger sim ticks.",
+                        symbol: "sun.max.fill"
+                    )
+                    .tag(1)
+
+                    onboardingCard(
+                        title: "Harvest",
+                        body: "Collect ready crops, then sell in Town for coins.",
+                        symbol: "basket.fill"
+                    )
+                    .tag(2)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .always))
+
+                Button(page == 2 ? "Start Farming" : "Next") {
+                    if page < 2 {
+                        page += 1
+                    } else {
+                        onDone()
+                    }
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                .padding(.horizontal, DS.Space.lg)
+                .padding(.bottom, DS.Space.md)
+            }
+            .padding(.top, DS.Space.md)
+            .navigationTitle("Welcome")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func onboardingCard(title: String, body: String, symbol: String) -> some View {
+        CardContainer {
+            VStack(spacing: DS.Space.md) {
+                Image(systemName: symbol)
+                    .font(.system(size: 44, weight: .semibold))
+                    .foregroundStyle(DS.Color.accent)
+                Text(title)
+                    .font(.title2.weight(.bold))
+                Text(body)
+                    .font(.body)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, DS.Space.sm)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .padding(.horizontal, DS.Space.lg)
+        .padding(.vertical, DS.Space.md)
+    }
+}
+
+struct ContentMissingView: View {
+    let message: String
+    let palette: FarmPalette
+
+    var body: some View {
+        VStack(spacing: DS.Space.md) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.largeTitle)
+                .foregroundStyle(.yellow)
+
+            Text("Content Missing")
+                .font(.title2.weight(.bold))
+
+            Text(message)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, DS.Space.lg)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .farmBackground(palette: palette)
     }
 }

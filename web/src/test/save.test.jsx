@@ -105,4 +105,50 @@ describe('Save System Stability', () => {
             vi.useRealTimers();
         }
     });
+
+    it('auto-save persists plot layout changes without relying on economy fields', () => {
+        vi.useFakeTimers();
+        const rafMock = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => (
+            setTimeout(() => callback(Date.now()), 1000)
+        ));
+        const cafMock = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+            clearTimeout(id);
+        });
+
+        try {
+            const { result, unmount } = renderHook(() => useGame(), { wrapper: GameProvider });
+
+            act(() => {
+                vi.advanceTimersByTime(35000);
+            });
+            const firstSave = JSON.parse(localStorage.getItem('farm_sim_enhanced_v2'));
+            expect(firstSave.plots[0].state).toBe('empty');
+
+            const updatedPlot = {
+                ...result.current.state.plots[0],
+                state: 'decor',
+                decorationId: 'stone_path',
+                decorationPlacedAt: Date.now(),
+                crop: null,
+            };
+
+            act(() => {
+                result.current.actions.updatePlot(0, updatedPlot);
+            });
+
+            act(() => {
+                vi.advanceTimersByTime(35000);
+            });
+
+            const secondSave = JSON.parse(localStorage.getItem('farm_sim_enhanced_v2'));
+            expect(secondSave.plots[0].state).toBe('decor');
+            expect(secondSave.plots[0].decorationId).toBe('stone_path');
+
+            unmount();
+        } finally {
+            rafMock.mockRestore();
+            cafMock.mockRestore();
+            vi.useRealTimers();
+        }
+    });
 });

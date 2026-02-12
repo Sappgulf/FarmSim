@@ -10,6 +10,7 @@ public enum PlantSystem {
     ) -> Bool {
         guard world.tiles.indices.contains(tileIndex) else { return false }
         guard world.tiles[tileIndex].planted == nil else { return false }
+        guard world.tiles[tileIndex].state.tilled else { return false }
 
         let availableSeeds = inventory.seeds[crop.id] ?? 0
         guard availableSeeds > 0 else { return false }

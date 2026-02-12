@@ -1,7 +1,12 @@
+function toFiniteNumber(value, fallback = 0) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
 export function applyInventoryDelta(inventory, item, delta) {
   const next = { ...inventory };
-  const current = Number.isFinite(next[item]) ? next[item] : 0;
-  const updated = current + delta;
+  const current = toFiniteNumber(next[item], 0);
+  const updated = current + toFiniteNumber(delta, 0);
   next[item] = updated < 0 ? 0 : updated;
   return next;
 }

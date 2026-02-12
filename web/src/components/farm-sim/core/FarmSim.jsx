@@ -42,7 +42,7 @@ const QAModePanel = lazy(() => import('../ui/QAModePanel'));
  * Manages game systems, update loops, and initialization
  * @returns {JSX.Element} The main game component
  */
-function FarmSimCore() {
+export function FarmSimCore() {
   const actions = useGameActions();
   const store = useGameStore();
   const paused = useGameSelector((state) => Boolean(state.gameLoop?.paused));
@@ -183,17 +183,6 @@ function FarmSimCore() {
     // Removed actions from dependencies - using ref instead to prevent infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [farmingSystem, livestockSystem, fishingSystem, soundSystem, musicSystem]);
-
-
-  useEffect(() => {
-    const handleVisibility = () => {
-      const hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
-      actions.updateGameLoop({ paused: hidden });
-    };
-    handleVisibility();
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [actions]);
 
   // System update loop - Optimized with requestAnimationFrame for better timing
   useEffect(() => {

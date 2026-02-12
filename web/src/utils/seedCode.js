@@ -1,18 +1,48 @@
 const SEED_CODE_PREFIX = 'FS1.';
 
-const toBase64 = (value) => {
-  if (typeof btoa === 'function') return btoa(value);
-  return Buffer.from(value, 'utf-8').toString('base64');
+const encodeUtf8 = (value) => {
+  if (typeof TextEncoder !== 'undefined') {
+    return new TextEncoder().encode(value);
+  }
+  if (typeof Buffer !== 'undefined') {
+    return Uint8Array.from(Buffer.from(value, 'utf-8'));
+  }
+  return Uint8Array.from(unescape(encodeURIComponent(value)), (char) => char.charCodeAt(0));
+};
+
+const decodeUtf8 = (bytes) => {
+  if (typeof TextDecoder !== 'undefined') {
+    return new TextDecoder().decode(bytes);
+  }
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(bytes).toString('utf-8');
+  }
+  const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
+  return decodeURIComponent(escape(binary));
+};
+
+const toBase64 = (bytes) => {
+  if (typeof btoa === 'function') {
+    let binary = '';
+    bytes.forEach((byte) => {
+      binary += String.fromCharCode(byte);
+    });
+    return btoa(binary);
+  }
+  return Buffer.from(bytes).toString('base64');
 };
 
 const fromBase64 = (value) => {
-  if (typeof atob === 'function') return atob(value);
-  return Buffer.from(value, 'base64').toString('utf-8');
+  if (typeof atob === 'function') {
+    const binary = atob(value);
+    return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  }
+  return Uint8Array.from(Buffer.from(value, 'base64'));
 };
 
 const base64UrlEncode = (value) => {
   const json = JSON.stringify(value);
-  return toBase64(unescape(encodeURIComponent(json)))
+  return toBase64(encodeUtf8(json))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/g, '');
@@ -21,7 +51,7 @@ const base64UrlEncode = (value) => {
 const base64UrlDecode = (encoded) => {
   const padded = encoded + '==='.slice((encoded.length + 3) % 4);
   const b64 = padded.replace(/-/g, '+').replace(/_/g, '/');
-  const json = decodeURIComponent(escape(fromBase64(b64)));
+  const json = decodeUtf8(fromBase64(b64));
   return JSON.parse(json);
 };
 

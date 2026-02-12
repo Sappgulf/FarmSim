@@ -68,6 +68,7 @@ import {
   isCozyGoalSatisfied,
 } from '../../../utils/cozyGoals';
 import { SUPPLY_UNIT_COSTS, planSupplyUsage } from '../../../utils/supplies';
+import { updateQuestProgress } from '../systems/QuestSystem';
 
 const rollChance = (chance = 0) => Math.random() < chance;
 
@@ -172,7 +173,23 @@ export function GameProvider({ children }) {
 
   // Debounced auto-save management
   const autoSaveTimeoutRef = useRef(null);
+  const deferredAutoSaveRef = useRef(null);
+  const idleAutoSaveRef = useRef(null);
   const lastSaveStateRef = useRef('');
+
+  const buildAutoSaveSignature = useCallback((stateToSave) => {
+    if (!stateToSave || typeof stateToSave !== 'object') return '';
+    const { gameLoop, ...rest } = stateToSave;
+    return JSON.stringify({
+      ...rest,
+      // Notifications are intentionally excluded from persisted payloads.
+      notifications: [],
+      gameLoop: {
+        paused: Boolean(gameLoop?.paused),
+        pauseReason: typeof gameLoop?.pauseReason === 'string' ? gameLoop.pauseReason : null,
+      },
+    });
+  }, []);
 
   useEffect(() => {
     initDebugTools();
@@ -210,30 +227,35 @@ export function GameProvider({ children }) {
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
+    if (deferredAutoSaveRef.current) {
+      clearTimeout(deferredAutoSaveRef.current);
+      deferredAutoSaveRef.current = null;
+    }
+    if (idleAutoSaveRef.current && typeof cancelIdleCallback !== 'undefined') {
+      cancelIdleCallback(idleAutoSaveRef.current);
+      idleAutoSaveRef.current = null;
+    }
 
-    const stateString = JSON.stringify({
-      coins: stateToSave.coins,
-      xp: stateToSave.xp,
-      level: stateToSave.level,
-      plotsCount: stateToSave.plots?.length || 0,
-      gridSize: stateToSave.gridSize,
-      onboardingStep: stateToSave.onboardingStep,
-      onboardingSkipped: stateToSave.onboardingSkipped,
-      onboardingSeen: stateToSave.onboardingSeen,
-      farmName: stateToSave.farmName,
-      farmTheme: stateToSave.farmTheme,
-    });
+    const stateSignature = buildAutoSaveSignature(stateToSave);
 
-    if (stateString === lastSaveStateRef.current) return;
+    if (stateSignature === lastSaveStateRef.current) return;
 
     autoSaveTimeoutRef.current = setTimeout(() => {
       try {
         const saveToStorage = () => {
+          idleAutoSaveRef.current = null;
+          deferredAutoSaveRef.current = null;
+
           try {
-            if (!stateRef.current?.settings?.autoSave) return;
-            const saveResult = saveStateToStorage(stateToSave, { key: SAVE_KEY, backupKey: BACKUP_SAVE_KEY });
+            const latestState = stateRef.current;
+            if (!latestState?.settings?.autoSave) return;
+
+            const latestSignature = buildAutoSaveSignature(latestState);
+            if (latestSignature === lastSaveStateRef.current) return;
+
+            const saveResult = saveStateToStorage(latestState, { key: SAVE_KEY, backupKey: BACKUP_SAVE_KEY });
             if (saveResult.success) {
-              lastSaveStateRef.current = stateString;
+              lastSaveStateRef.current = latestSignature;
               if (dispatchRef.current) {
                 dispatchRef.current({
                   type: GAME_ACTIONS.UPDATE_GAME_LOOP,
@@ -247,15 +269,15 @@ export function GameProvider({ children }) {
         };
 
         if (typeof requestIdleCallback !== 'undefined') {
-          requestIdleCallback(saveToStorage, { timeout: 1000 });
+          idleAutoSaveRef.current = requestIdleCallback(saveToStorage, { timeout: 1000 });
         } else {
-          setTimeout(saveToStorage, 0);
+          deferredAutoSaveRef.current = setTimeout(saveToStorage, 0);
         }
       } catch (error) {
         console.error('[farm] Auto-save serialization failed:', error);
       }
     }, 2000);
-  }, []);
+  }, [buildAutoSaveSignature]);
 
   // Performance loops: FPS monitoring and Auto-save trigger
   const fpsRef = useRef(60);
@@ -301,6 +323,10 @@ export function GameProvider({ children }) {
     return () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+      if (deferredAutoSaveRef.current) clearTimeout(deferredAutoSaveRef.current);
+      if (idleAutoSaveRef.current && typeof cancelIdleCallback !== 'undefined') {
+        cancelIdleCallback(idleAutoSaveRef.current);
+      }
     };
   }, [state.gameLoop.paused, state.settings.autoSave, debouncedAutoSave]);
 
@@ -317,6 +343,24 @@ export function GameProvider({ children }) {
     const numeric = Number(amount);
     if (!Number.isFinite(numeric)) return 0;
     return Math.max(0, Math.floor(numeric));
+  }, []);
+
+  const updateDailyQuestProgress = useCallback((actionType, actionData = {}) => {
+    const currentDailyQuests = stateRef.current?.dailyQuests;
+    const currentQuests = currentDailyQuests?.quests;
+    if (!Array.isArray(currentQuests) || currentQuests.length === 0) return;
+
+    const nextQuests = updateQuestProgress(currentQuests, actionType, actionData);
+    const changed = nextQuests.some((quest, index) => quest !== currentQuests[index]);
+    if (!changed) return;
+
+    dispatchRef.current({
+      type: GAME_ACTIONS.UPDATE_DAILY_QUESTS,
+      payload: {
+        ...currentDailyQuests,
+        quests: nextQuests,
+      },
+    });
   }, []);
 
   // Memoized action creators
@@ -1242,10 +1286,24 @@ export function GameProvider({ children }) {
         return false;
       }
       const currentSystems = systemsRef.current;
+      const uniqueCrops = new Set(
+        plots
+          .map((plot) => plot?.crop?.id)
+          .filter((id) => typeof id === 'string')
+      );
+      if (cropData?.id) uniqueCrops.add(cropData.id);
+      const plantQuestData = {
+        uniqueCrops: uniqueCrops.size,
+        allPlotsFilled: plots.every((plot, index) => (
+          index === plotIndex ? true : plot?.state && plot.state !== 'empty'
+        )),
+      };
+
       if (currentSystems.farmingSystem?.plantCrop) {
         currentSystems.farmingSystem.update(stateRef.current);
         const planted = currentSystems.farmingSystem.plantCrop(plotIndex, cropData);
         if (planted) {
+          updateDailyQuestProgress('plant', plantQuestData);
           logDebugAction('plant_crop', { plotIndex, cropId: cropData?.id, cropName: cropData?.name });
         }
         return planted;
@@ -1256,6 +1314,7 @@ export function GameProvider({ children }) {
         id: plotIndex, state: 'planted', crop: cropData, plantedAt: Date.now(), growthStage: 1, waterLevel: 85, progress: 0
       };
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
+      updateDailyQuestProgress('plant', plantQuestData);
       logDebugAction('plant_crop', { plotIndex, cropId: cropData?.id, cropName: cropData?.name });
       return true;
     },
@@ -1274,6 +1333,10 @@ export function GameProvider({ children }) {
         soilFertility: Math.max(0.5, (plot?.soilFertility || 1.0) - 0.1)
       };
       dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: plots });
+      updateDailyQuestProgress('harvest', {
+        cropId: plot?.crop?.id,
+        weather: stateRef.current.weather,
+      });
     },
 
     earnMoney: (amount, source = 'generic') => {
@@ -1284,6 +1347,7 @@ export function GameProvider({ children }) {
       const modifier = getEconomyRewardModifier(level, source);
       const tunedAmount = Math.max(1, Math.floor(safeAmount * modifier));
       dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => coins + tunedAmount });
+      updateDailyQuestProgress('earn_coins', { amount: tunedAmount, source });
       return true;
     },
     spendMoney: (amount, { optional = false } = {}) => {
@@ -1295,6 +1359,7 @@ export function GameProvider({ children }) {
       const tunedCost = Math.max(1, Math.floor(safeAmount * sinkModifier));
       if (!optional && (stateRef.current.coins || 0) < tunedCost) return false;
       dispatch({ type: GAME_ACTIONS.SET_COINS, payload: (coins) => Math.max(0, coins - tunedCost) });
+      updateDailyQuestProgress('spend_coins', { amount: tunedCost, optional });
       return true;
     },
     addXP: (amount, sourceMeta = {}) => {
@@ -1312,6 +1377,11 @@ export function GameProvider({ children }) {
       if (tuned.grantedXp <= 0) return false;
       dispatch({ type: GAME_ACTIONS.UPDATE_PROGRESSION_XP_TRACKER, payload: tuned.tracker });
       dispatch({ type: GAME_ACTIONS.SET_XP, payload: (xp) => xp + tuned.grantedXp });
+      updateDailyQuestProgress('gain_xp', { amount: tuned.grantedXp });
+      const predictedLevel = getLevelFromXp((currentState.xp || 0) + tuned.grantedXp);
+      if (predictedLevel > (currentState.level || 1)) {
+        updateDailyQuestProgress('level_up', { level: predictedLevel });
+      }
       const recentXp = [
         ...(Array.isArray(currentState.recentXpEvents) ? currentState.recentXpEvents : []),
         {

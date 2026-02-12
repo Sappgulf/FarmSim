@@ -12,6 +12,20 @@ describe('Social Lite systems', () => {
     expect(decoded.payload.season).toBe('fall');
   });
 
+  it('seed code supports utf-8 payloads and stable pack normalization', () => {
+    const code = encodeSeed({
+      version: 1,
+      seed: 19,
+      season: 'winter',
+      packs: ['season-pack', 'core', 'season-pack'],
+      theme: 'cafe-🌾',
+    });
+    const decoded = decodeSeed(code);
+    expect(decoded.error).toBeFalsy();
+    expect(decoded.payload.theme).toBe('cafe-🌾');
+    expect(decoded.payload.packs).toEqual(['core', 'season-pack']);
+  });
+
   it('invalid seed codes are handled', () => {
     expect(decodeSeed('bad').error).toBeTruthy();
   });

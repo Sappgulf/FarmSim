@@ -330,6 +330,9 @@ export function gameReducer(state, action) {
             };
 
         case GAME_ACTIONS.UPDATE_PLOT:
+            if (!action.payload || typeof action.payload.index !== 'number') return state;
+            if (action.payload.index < 0 || action.payload.index >= state.plots.length) return state;
+            if (state.plots[action.payload.index] === action.payload.plot) return state;
             return {
                 ...state,
                 plots: state.plots.map((plot, index) =>
@@ -339,6 +342,7 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_PLOTS:
             const plotsPayload = typeof action.payload === 'function' ? action.payload(state) : action.payload;
+            if (plotsPayload === state.plots) return state;
             return { ...state, plots: plotsPayload };
 
         case GAME_ACTIONS.SET_GRID_SIZE:
@@ -371,6 +375,7 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_INVENTORY:
             const newInventory = typeof action.payload === 'function' ? action.payload(state.inventory) : action.payload;
+            if (newInventory === state.inventory) return state;
             return { ...state, inventory: newInventory };
 
         case GAME_ACTIONS.SET_WEATHER:

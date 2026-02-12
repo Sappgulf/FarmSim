@@ -14,7 +14,7 @@
     - `shared/schema/content-contract.md`
     - `shared/schema/save-contract.md`
     - `shared/schema/save-example.v1.json`
-    - `shared/tests-vectors/sim_vectors.json`
+    - `shared/vectors/sim_vectors.json`
     - web mirror test `web/src/test/sharedVectors.test.js`
   - **Why:** Keeps web and native logic aligned on save/content structure and deterministic sim expectations.
   - **Verification performed:** `npm run test` (pass, includes new vector test).
@@ -26,6 +26,12 @@
     - Includes content load from bundled `shared/content/crops.json`.
   - **Why:** Delivers a first fully native iOS path while preserving existing web gameplay.
   - **Verification performed:** `swift test --package-path ios/GameCore` (pass), `xcodegen generate --spec ios/project.yml` (pass), `xcodebuild -project ios/FarmSim.xcodeproj -scheme FarmSim -destination 'platform=iOS Simulator,name=iPhone 17' build` (pass).
+
+- **Implemented**
+  - **Scope:** native iOS v1 completion
+  - **What:** Upgraded iOS app to a 5-tab native shell (`Farm`, `Inventory`, `Town`, `Almanac`, `Settings`) with AppState/GameStore separation, onboarding pager, tile action sheet, dynamic-type-first SwiftUI components, and incremental SpriteKit tile updates with pinch/pan camera.
+  - **Why:** Meets modern iPhone simulator support expectations with responsive native UI and reduced render churn.
+  - **Verification performed:** `make -C ios ios-gen` (pass), `make -C ios ios-build` (pass), `make -C ios ios-build-small` (pass), `make -C ios ios-build-large` (pass).
 
 ## 2026-02-10
 

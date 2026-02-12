@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import { describe, expect, it } from 'vitest';
-import vectorsDoc from '@shared/tests-vectors/sim_vectors.json';
+import vectorsDoc from '@shared/vectors/sim_vectors.json';
 
 const cloneState = (value) => JSON.parse(JSON.stringify(value));
 

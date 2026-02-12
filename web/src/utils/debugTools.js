@@ -141,8 +141,17 @@ export const initDebugTools = () => {
       consoleWarn: console.warn,
     };
 
-    window.setTimeout = (...args) => {
-      const id = window.__farmDebugOriginals.setTimeout(...args);
+    window.setTimeout = (handler, timeout, ...restArgs) => {
+      let id;
+      const wrappedHandler = (...callbackArgs) => {
+        debugState.timers.timeouts.delete(id);
+        if (typeof handler === 'function') {
+          return handler(...callbackArgs);
+        }
+        return undefined;
+      };
+      const scheduledHandler = typeof handler === 'function' ? wrappedHandler : handler;
+      id = window.__farmDebugOriginals.setTimeout(scheduledHandler, timeout, ...restArgs);
       debugState.timers.timeouts.add(id);
       return id;
     };

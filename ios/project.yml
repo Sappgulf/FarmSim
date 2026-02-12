@@ -12,12 +12,14 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        UIStatusBarHidden: true
-        UIViewControllerBasedStatusBarAppearance: false
+        UIStatusBarHidden: false
+        UIViewControllerBasedStatusBarAppearance: true
         UILaunchScreen:
           UIColorName: systemGreenColor
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
     sources:
       - path: App/Sources
       - path: ../shared/content

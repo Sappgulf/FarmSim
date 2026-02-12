@@ -30,9 +30,13 @@ export function Tabs({ defaultValue, value, onValueChange, children, className =
 }
 
 export function TabsList({ children, className = "", activeTab, onValueChange }) {
-  const layoutOverride = /(grid|flex|inline-flex|block|flow-root)/.test(className);
+  const layoutOverride = /\b(grid|flex|inline-flex|block|flow-root)\b/.test(className);
   const baseClasses = "items-center justify-start rounded-xl bg-slate-100/80 backdrop-blur-sm p-1.5 text-slate-600 shadow-inner";
   const layoutClasses = layoutOverride ? "" : "flex flex-wrap gap-1.5";
+  const tabValues = React.Children.toArray(children)
+    .filter((child) => React.isValidElement(child) && typeof child.type !== "string")
+    .map((child) => child.props?.value)
+    .filter((tabValue) => tabValue !== undefined && tabValue !== null);
 
   return (
     <div
@@ -43,7 +47,7 @@ export function TabsList({ children, className = "", activeTab, onValueChange })
       {React.Children.map(children, child => {
         // Only pass props to React components, not DOM elements
         if (React.isValidElement(child) && typeof child.type !== 'string') {
-          return React.cloneElement(child, { activeTab, onValueChange });
+          return React.cloneElement(child, { activeTab, onValueChange, tabValues });
         }
         return child;
       })}
@@ -51,11 +55,63 @@ export function TabsList({ children, className = "", activeTab, onValueChange })
   );
 }
 
-export function TabsTrigger({ value, children, className = "", activeTab, onValueChange }) {
+export function TabsTrigger({
+  value,
+  children,
+  className = "",
+  activeTab,
+  onValueChange,
+  tabValues = [],
+}) {
   const isActive = activeTab === value;
+  const currentIndex = tabValues.indexOf(value);
+
+  const focusTab = (tabValue) => {
+    const focusAction = () => {
+      const tab = document.getElementById(`tab-${tabValue}`);
+      if (tab && typeof tab.focus === "function") {
+        tab.focus();
+      }
+    };
+
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(focusAction);
+      return;
+    }
+
+    setTimeout(focusAction, 0);
+  };
+
+  const selectTab = (nextValue) => {
+    if (!onValueChange || nextValue === undefined || nextValue === null) {
+      return;
+    }
+    onValueChange(nextValue);
+    focusTab(nextValue);
+  };
+
+  const handleKeyDown = (event) => {
+    if (!tabValues.length || currentIndex < 0) return;
+
+    let nextValue = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextValue = tabValues[(currentIndex + 1) % tabValues.length];
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextValue = tabValues[(currentIndex - 1 + tabValues.length) % tabValues.length];
+    } else if (event.key === "Home") {
+      nextValue = tabValues[0];
+    } else if (event.key === "End") {
+      nextValue = tabValues[tabValues.length - 1];
+    }
+
+    if (nextValue === null || nextValue === value) return;
+    event.preventDefault();
+    selectTab(nextValue);
+  };
 
   return (
     <button
+      type="button"
       role="tab"
       id={`tab-${value}`}
       aria-controls={`panel-${value}`}
@@ -66,7 +122,8 @@ export function TabsTrigger({ value, children, className = "", activeTab, onValu
           ? "bg-white text-emerald-700 shadow-md ring-1 ring-emerald-100"
           : "text-slate-600 hover:bg-white/70 hover:text-slate-900 active:scale-95"
       } ${className}`}
-      onClick={() => onValueChange && onValueChange(value)}
+      onClick={() => selectTab(value)}
+      onKeyDown={handleKeyDown}
     >
       {children}
     </button>

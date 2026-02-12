@@ -45,7 +45,7 @@ Open [http://localhost:5173](http://localhost:5173) to start farming!
 └── shared/
     ├── content/         # Canonical game content JSON
     ├── schema/          # Content/save contracts
-    └── tests-vectors/   # Cross-platform deterministic vectors
+    └── vectors/         # Cross-platform deterministic vectors
 ```
 
 ### Web Commands
@@ -66,16 +66,26 @@ npm run dev
 
 ```bash
 # Generate the Xcode project (deterministic from ios/project.yml)
-npm run ios:generate
+npm run ios:gen
 
 # Build GameCore tests
 npm run ios:test:core
 
-# Build app for simulator
+# Build app for latest available iPhone simulator
 npm run ios:build
+
+# Build against explicit small + large iPhone simulators
+npm run ios:build:small
+npm run ios:build:large
 ```
 
-If your machine does not have an `iPhone 17` simulator, use an installed simulator name:
+If `xcodegen` is missing:
+
+```bash
+brew install xcodegen
+```
+
+If you need an explicit simulator target:
 
 ```bash
 xcodebuild -project ios/FarmSim.xcodeproj -scheme FarmSim -destination 'platform=iOS Simulator,name=<Installed Device Name>' build
@@ -91,7 +101,14 @@ xcodebuild -project ios/FarmSim.xcodeproj -scheme FarmSim -destination 'platform
   - `shared/schema/content-contract.md`
   - `shared/schema/save-contract.md`
   - `shared/schema/save-example.v1.json`
-  - `shared/tests-vectors/sim_vectors.json`
+  - `shared/vectors/sim_vectors.json`
+
+### Add A Crop
+
+1. Edit `shared/content/crops.json` and add a new item in `items[]`.
+2. Keep required fields aligned with `shared/schema/content-contract.md`.
+3. Run `npm run test`, `npm run build`, and `npm run ios:test:core`.
+4. Rebuild iOS (`npm run ios:build`) so bundled shared content refreshes.
 
 ---
 

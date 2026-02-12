@@ -70,6 +70,46 @@ describe('gameReducer economy guards', () => {
     expect(next).toBe(seeded);
   });
 
+  it('returns same state reference for no-op inventory updates', () => {
+    const seeded = {
+      ...initialState,
+      inventory: { ...initialState.inventory },
+    };
+    const next = gameReducer(seeded, {
+      type: GAME_ACTIONS.UPDATE_INVENTORY,
+      payload: seeded.inventory,
+    });
+
+    expect(next).toBe(seeded);
+  });
+
+  it('returns same state reference for no-op full plot updates', () => {
+    const seeded = {
+      ...initialState,
+      plots: [...initialState.plots],
+    };
+    const next = gameReducer(seeded, {
+      type: GAME_ACTIONS.UPDATE_PLOTS,
+      payload: seeded.plots,
+    });
+
+    expect(next).toBe(seeded);
+  });
+
+  it('returns same state reference when UPDATE_PLOT receives unchanged entry', () => {
+    const seeded = {
+      ...initialState,
+      plots: [...initialState.plots],
+    };
+    const unchangedPlot = seeded.plots[0];
+    const next = gameReducer(seeded, {
+      type: GAME_ACTIONS.UPDATE_PLOT,
+      payload: { index: 0, plot: unchangedPlot },
+    });
+
+    expect(next).toBe(seeded);
+  });
+
   it('keeps prestige initialized when PRESTIGE_RESET has no payload', () => {
     const seeded = {
       ...initialState,

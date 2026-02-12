@@ -6,6 +6,7 @@ import React, { useRef, useState, useCallback } from "react";
 export function Button({ 
   children, 
   onClick, 
+  type = "button",
   variant = "default", 
   size = "default", 
   className = "", 
@@ -98,8 +99,12 @@ export function Button({
     const ripple = document.createElement("span");
     const rect = button.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
-    const x = event.clientX - rect.left - size / 2;
-    const y = event.clientY - rect.top - size / 2;
+    const hasPointerPosition = Number.isFinite(event?.clientX) && Number.isFinite(event?.clientY)
+      && (event.clientX !== 0 || event.clientY !== 0);
+    const centerX = rect.width / 2 - size / 2;
+    const centerY = rect.height / 2 - size / 2;
+    const x = hasPointerPosition ? event.clientX - rect.left - size / 2 : centerX;
+    const y = hasPointerPosition ? event.clientY - rect.top - size / 2 : centerY;
 
     ripple.style.cssText = `
       position: absolute;
@@ -127,6 +132,7 @@ export function Button({
 
   return (
     <button
+      type={type}
       ref={buttonRef}
       className={`${baseClasses} ${variants[variant] || variants.default} ${sizes[size] || sizes.default} ${className}`}
       onClick={handleClick}

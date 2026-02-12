@@ -105,7 +105,7 @@ final class GameCoreTests: XCTestCase {
             .deletingLastPathComponent() // GameCore
             .deletingLastPathComponent() // ios
             .deletingLastPathComponent() // repo root
-        return root.appendingPathComponent("shared/tests-vectors/sim_vectors.json")
+        return root.appendingPathComponent("shared/vectors/sim_vectors.json")
     }
 }
 
