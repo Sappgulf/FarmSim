@@ -203,7 +203,7 @@ struct FarmView: View {
                     .buttonStyle(.plain)
                     .disabled(!unlocked)
                     .accessibilityLabel("\(crop.name), \(count) seeds")
-                    .accessibilityHint(unlocked ? "Select seed for planting" : "Unlock at a higher level")
+                    .accessibilityHint(unlocked ? "Pick this seed for planting" : "Keep growing to unlock this seed")
                 }
             }
             .padding(.horizontal, DS.Space.xs)
@@ -215,28 +215,28 @@ struct FarmView: View {
     private var actionBar: some View {
         HStack(spacing: DS.Space.sm) {
             Menu {
-                Button("Advance 1 Day") {
+                Button("Wait 1 Day") {
                     store.advanceDays(1)
                 }
-                Button("Advance 3 Days") {
+                Button("Wait 3 Days") {
                     store.advanceDays(3)
                 }
-                Button("Advance 7 Days") {
+                Button("Wait a Week") {
                     store.advanceDays(7)
                 }
             } label: {
-                Text("Advance Day")
+                Text("Next Day")
             }
             .buttonStyle(PrimaryButtonStyle(tint: DS.Color.accent))
-            .accessibilityHint("Advance simulation time")
+            .accessibilityHint("Let time pass on the farm")
             .lineLimit(1)
 
-            Button("Harvest All") {
+            Button("Gather Crops") {
                 store.harvestAll()
             }
             .buttonStyle(PrimaryButtonStyle(tint: DS.Color.money))
             .disabled(store.readyTileCount == 0)
-            .accessibilityLabel("Harvest all ready crops")
+            .accessibilityLabel("Gather all ready crops")
             .lineLimit(1)
         }
     }
@@ -254,12 +254,12 @@ struct TileActionSheet: View {
                 if let tile = store.tileSheetState(for: tileIndex) {
                     content(for: tile)
                 } else {
-                    Text("Tile unavailable")
+                    Text("This patch isn't ready yet.")
                         .foregroundStyle(.secondary)
                 }
             }
             .padding(DS.Space.md)
-            .navigationTitle("Tile \(tileIndex + 1)")
+            .navigationTitle("Plot \(tileIndex + 1)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -274,14 +274,14 @@ struct TileActionSheet: View {
     @ViewBuilder
     private func content(for tile: TileSheetState) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.md) {
-            SectionHeader(tile.cropID == nil ? "Empty Tile" : tile.cropName)
+            SectionHeader(tile.cropID == nil ? "Open Patch" : tile.cropName)
 
             if tile.cropID != nil {
                 ProgressView(value: tile.progress)
                     .tint(tile.isReady ? DS.Color.money : DS.Color.xp)
 
                 HStack(spacing: DS.Space.sm) {
-                    Button(tile.isReady ? "Harvest" : "Not Ready") {
+                    Button(tile.isReady ? "Harvest" : "Still Growing") {
                         store.harvestTile(index: tile.index)
                         if tile.isReady { appState.closeTileSheet() }
                     }
@@ -325,7 +325,7 @@ struct TileActionSheet: View {
                     }
                 }
 
-                Button("Plant Selected Seed") {
+                Button("Plant Here") {
                     store.plantSelectedSeed(on: tile.index)
                     appState.closeTileSheet()
                 }

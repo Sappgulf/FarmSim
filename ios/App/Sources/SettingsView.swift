@@ -11,8 +11,8 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Farm Customization") {
-                    TextField("Farm name", text: $farmNameInput)
+                Section("Your Farm") {
+                    TextField("Name your farm", text: $farmNameInput)
                         .textInputAutocapitalization(.words)
                         .onSubmit {
                             store.setFarmName(farmNameInput)
@@ -23,7 +23,7 @@ struct SettingsView: View {
                             }
                         }
 
-                    Picker("Palette", selection: Binding(
+                    Picker("Farm Colors", selection: Binding(
                         get: { store.settings.palette },
                         set: { store.setPalette($0) }
                     )) {
@@ -33,19 +33,19 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Audio & Feedback") {
-                    Toggle("Sound", isOn: Binding(
+                Section("Sounds & Vibes") {
+                    Toggle("Farm Sounds", isOn: Binding(
                         get: { store.settings.soundEnabled },
                         set: { store.setSoundEnabled($0) }
                     ))
 
-                    Toggle("Haptics", isOn: Binding(
+                    Toggle("Haptic Feedback", isOn: Binding(
                         get: { store.settings.hapticsEnabled },
                         set: { store.setHapticsEnabled($0) }
                     ))
                 }
 
-                Section("Accessibility") {
+                Section("Comfort & Ease") {
                     Toggle("Reduce Motion", isOn: Binding(
                         get: { store.settings.reducedMotion },
                         set: { store.setReducedMotion($0) }
@@ -57,7 +57,7 @@ struct SettingsView: View {
                     ))
                 }
 
-                Section("Performance") {
+                Section("Under the Hood") {
                     Toggle("Show Tile Coordinates", isOn: Binding(
                         get: { store.settings.showTileCoordinates },
                         set: { store.setShowTileCoordinates($0) }
@@ -78,7 +78,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Data") {
+                Section("Start Over") {
                     Button(role: .destructive) {
                         confirmReset = true
                     } label: {
@@ -86,16 +86,20 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Debug") {
+                Section("About Your Farm") {
                     LabeledContent("Save Version", value: "\(store.save.version)")
-                    LabeledContent("Grid", value: "\(store.save.world.gridWidth)x\(store.save.world.gridHeight)")
+                    LabeledContent("Farm Size", value: "\(store.save.world.gridWidth)x\(store.save.world.gridHeight)")
                     LabeledContent("Status", value: store.statusText)
                 }
 
-                Section("Navigation") {
-                    Button("Return to Main Menu") {
+                Section {
+                    Button("Back to Main Menu") {
                         appState.openMainMenu()
                     }
+                } footer: {
+                    Text("Happy farming! May your fields be ever green.")
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, DS.Space.sm)
                 }
             }
             .navigationTitle("Settings")
@@ -108,13 +112,13 @@ struct SettingsView: View {
                     }
                 }
             }
-            .alert("Reset Save?", isPresented: $confirmReset) {
-                Button("Reset", role: .destructive) {
+            .alert("Start a Fresh Farm?", isPresented: $confirmReset) {
+                Button("Start Fresh", role: .destructive) {
                     store.resetSave()
                 }
-                Button("Cancel", role: .cancel) { }
+                Button("Keep My Farm", role: .cancel) { }
             } message: {
-                Text("This clears local iOS progress and starts a new farm.")
+                Text("Everything on your current farm will be cleared. This can't be undone.")
             }
             .onAppear {
                 farmNameInput = store.farmName

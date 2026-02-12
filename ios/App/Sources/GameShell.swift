@@ -9,8 +9,8 @@ enum GameTab: String, CaseIterable, Hashable {
 
     var title: String {
         switch self {
-        case .farm: return "Farm"
-        case .inventory: return "Inventory"
+        case .farm: return "My Farm"
+        case .inventory: return "Barn"
         case .market: return "Town"
         case .almanac: return "Almanac"
         case .settings: return "Settings"
@@ -102,21 +102,21 @@ struct OnboardingView: View {
                 TabView(selection: $page) {
                     onboardingCard(
                         title: "Plant",
-                        body: "Tap a tile, choose a seed, and plant your first crop.",
+                        body: "Tap a tile, pick a seed, and watch your first crop take root.",
                         symbol: "leaf.circle.fill"
                     )
                     .tag(0)
 
                     onboardingCard(
-                        title: "Advance Day",
-                        body: "Use Next Day to grow crops and trigger sim ticks.",
+                        title: "Let the Sun Work",
+                        body: "Advance the day and let your crops soak up the sunshine.",
                         symbol: "sun.max.fill"
                     )
                     .tag(1)
 
                     onboardingCard(
                         title: "Harvest",
-                        body: "Collect ready crops, then sell in Town for coins.",
+                        body: "Gather your ripe crops and sell them in Town for coins.",
                         symbol: "basket.fill"
                     )
                     .tag(2)
@@ -135,7 +135,7 @@ struct OnboardingView: View {
                 .padding(.bottom, DS.Space.md)
             }
             .padding(.top, DS.Space.md)
-            .navigationTitle("Welcome")
+            .navigationTitle("Welcome to the Farm")
             .navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.large])
@@ -173,7 +173,7 @@ struct ContentMissingView: View {
                 .font(.largeTitle)
                 .foregroundStyle(.yellow)
 
-            Text("Content Missing")
+            Text("Something's Missing")
                 .font(.title2.weight(.bold))
 
             Text(message)

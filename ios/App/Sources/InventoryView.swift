@@ -18,7 +18,7 @@ struct InventoryView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: DS.Space.md) {
-                    SectionHeader("Inventory", subtitle: "Search and filter seeds and harvest items")
+                    SectionHeader("Your Barn", subtitle: "Everything you've gathered and saved")
 
                     Picker("Category", selection: $category) {
                         ForEach(InventoryCategory.allCases) { value in
@@ -30,7 +30,7 @@ struct InventoryView: View {
                     CardContainer {
                         VStack(spacing: DS.Space.sm) {
                             if filteredSeeds.isEmpty {
-                                emptyState("No matching seeds")
+                                emptyState("No seeds here yet")
                             } else {
                                 ForEach(filteredSeeds, id: \.id) { item in
                                     row(emoji: item.emoji, name: item.name, count: item.count, label: "Seeds")
@@ -43,7 +43,7 @@ struct InventoryView: View {
                     CardContainer {
                         VStack(spacing: DS.Space.sm) {
                             if filteredHarvest.isEmpty {
-                                emptyState("No matching harvested crops")
+                                emptyState("Nothing harvested yet")
                             } else {
                                 ForEach(filteredHarvest, id: \.id) { item in
                                     row(emoji: item.emoji, name: item.name, count: item.count, label: "Harvest")
@@ -56,8 +56,8 @@ struct InventoryView: View {
                 .padding(DS.Space.md)
                 .padding(.bottom, DS.Space.lg)
             }
-            .navigationTitle("Inventory")
-            .searchable(text: $query, prompt: "Search crops")
+            .navigationTitle("Barn")
+            .searchable(text: $query, prompt: "Find something in the barn")
             .farmBackground(palette: store.settings.palette)
         }
     }
