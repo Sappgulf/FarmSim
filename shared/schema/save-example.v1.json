@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "day": 3,
+  "coins": 67,
+  "player": {
+    "inventory": {
+      "seeds": {
+        "carrot": 1,
+        "lettuce": 0
+      },
+      "crops": {
+        "carrot": 2,
+        "lettuce": 1
+      }
+    }
+  },
+  "world": {
+    "gridWidth": 2,
+    "gridHeight": 2,
+    "tiles": [
+      {
+        "index": 0,
+        "plantedCropId": null,
+        "plantedDay": null
+      },
+      {
+        "index": 1,
+        "plantedCropId": "carrot",
+        "plantedDay": 2
+      },
+      {
+        "index": 2,
+        "plantedCropId": null,
+        "plantedDay": null
+      },
+      {
+        "index": 3,
+        "plantedCropId": null,
+        "plantedDay": null
+      }
+    ]
+  }
+}

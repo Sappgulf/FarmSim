@@ -1,0 +1,66 @@
+{
+  "project": "FarmLife",
+  "model": "Sora",
+  "generatedAt": "2026-02-12",
+  "style": {
+    "direction": "cozy stylized farm-sim game iconography",
+    "shape": "single centered object, rounded forms, no harsh edges",
+    "materials": "clean painted texture with subtle grain",
+    "lighting": "soft daylight key light with gentle rim light",
+    "palette": "leaf green, warm amber, sky blue, soil brown, cream highlights",
+    "consistency": "same camera angle, same contrast, same line weight across all icons"
+  },
+  "output": {
+    "format": "png",
+    "size": "512x512",
+    "background": "transparent",
+    "padding": "about 12 percent empty margin around icon",
+    "forbidden": "no text, no numbers, no watermark, no borders, no drop shadow clipping"
+  },
+  "icons": [
+    { "id": "nav-section-farm", "label": "Farm Section", "category": "nav", "subject": "small farmhouse with a sprout patch", "notes": "friendly main navigation icon" },
+    { "id": "nav-section-items", "label": "Items Section", "category": "nav", "subject": "open farm crate with produce", "notes": "inventory and storage feeling" },
+    { "id": "nav-section-build", "label": "Build Section", "category": "nav", "subject": "wooden sign with hammer and blueprint corner", "notes": "construction and upgrades" },
+    { "id": "nav-section-animals", "label": "Animals Section", "category": "nav", "subject": "paw print with a small barn silhouette", "notes": "livestock and pets" },
+    { "id": "nav-section-more", "label": "More Section", "category": "nav", "subject": "gear with leaf accent", "notes": "settings and utility actions" },
+
+    { "id": "tab-farming", "label": "Farming Tab", "category": "tab", "subject": "wheat sprout bundle", "notes": "crop management" },
+    { "id": "tab-inventory", "label": "Inventory Tab", "category": "tab", "subject": "canvas backpack with produce peeking out", "notes": "inventory overview" },
+    { "id": "tab-shop", "label": "Shop Tab", "category": "tab", "subject": "market stall awning with coin", "notes": "buy and sell" },
+    { "id": "tab-processing", "label": "Processing Tab", "category": "tab", "subject": "small processing mill with conveyor", "notes": "processing facilities" },
+    { "id": "tab-buildings", "label": "Buildings Tab", "category": "tab", "subject": "barn and silo pair", "notes": "building management" },
+    { "id": "tab-expand", "label": "Expand Tab", "category": "tab", "subject": "farm map tile expanding outward arrows", "notes": "land expansion" },
+    { "id": "tab-research", "label": "Research Tab", "category": "tab", "subject": "glass flask with leaf sample", "notes": "research and upgrades" },
+    { "id": "tab-genetics", "label": "Genetics Tab", "category": "tab", "subject": "dna helix wrapped by vine", "notes": "crop genetics" },
+    { "id": "tab-livestock", "label": "Livestock Tab", "category": "tab", "subject": "cow head badge with hay", "notes": "livestock management" },
+    { "id": "tab-pets", "label": "Pets Tab", "category": "tab", "subject": "friendly farm dog face", "notes": "pet care" },
+    { "id": "tab-fishing", "label": "Fishing Tab", "category": "tab", "subject": "fishing bobber and fish", "notes": "fishing minigame" },
+    { "id": "tab-settings", "label": "Settings Tab", "category": "tab", "subject": "gear and slider knobs", "notes": "configuration" },
+    { "id": "tab-notifications", "label": "Notifications Tab", "category": "tab", "subject": "bell with sparkle", "notes": "alerts and inbox" },
+    { "id": "tab-achievements", "label": "Achievements Tab", "category": "tab", "subject": "gold trophy with ribbon", "notes": "achievement tracking" },
+    { "id": "tab-almanac", "label": "Almanac Tab", "category": "tab", "subject": "open illustrated farm journal", "notes": "knowledge and encyclopedia" },
+    { "id": "tab-quests", "label": "Quests Tab", "category": "tab", "subject": "clipboard with checkmarks", "notes": "task list" },
+    { "id": "tab-analytics", "label": "Analytics Tab", "category": "tab", "subject": "bar chart card with growth arrow", "notes": "farm analytics" },
+    { "id": "tab-weather", "label": "Weather Tab", "category": "tab", "subject": "sun and cloud duo", "notes": "weather systems" },
+    { "id": "tab-events", "label": "Events Tab", "category": "tab", "subject": "festival lantern with confetti", "notes": "seasonal events" },
+    { "id": "tab-challenges", "label": "Challenges Tab", "category": "tab", "subject": "target board with dart", "notes": "challenge goals" },
+    { "id": "tab-social", "label": "Social Tab", "category": "tab", "subject": "two farmer silhouettes", "notes": "friends and community" },
+    { "id": "tab-mystery", "label": "Mystery Tab", "category": "tab", "subject": "mystery box with star burst", "notes": "surprise rewards" },
+    { "id": "tab-diseases", "label": "Diseases Tab", "category": "tab", "subject": "shield blocking bug", "notes": "crop disease control" },
+
+    { "id": "resource-coin", "label": "Coin", "category": "resource", "subject": "single shiny farm coin", "notes": "currency icon" },
+    { "id": "resource-water", "label": "Water", "category": "resource", "subject": "clean water droplet", "notes": "watering and hydration" },
+    { "id": "resource-seed", "label": "Seed", "category": "resource", "subject": "seed packet with tiny sprout", "notes": "planting resource" },
+    { "id": "resource-fertilizer", "label": "Fertilizer", "category": "resource", "subject": "fertilizer bag with leaf mark", "notes": "soil boost" },
+    { "id": "resource-xp", "label": "XP", "category": "resource", "subject": "star badge with glow", "notes": "progress and experience" },
+
+    { "id": "weather-sunny", "label": "Sunny", "category": "weather", "subject": "warm smiling sun", "notes": "clear weather" },
+    { "id": "weather-rainy", "label": "Rainy", "category": "weather", "subject": "cloud with rain drops", "notes": "rain weather" },
+    { "id": "weather-storm", "label": "Storm", "category": "weather", "subject": "dark cloud with lightning bolt", "notes": "storm weather" },
+    { "id": "weather-snow", "label": "Snow", "category": "weather", "subject": "cloud with snowflakes", "notes": "snow weather" },
+
+    { "id": "building-greenhouse", "label": "Greenhouse", "category": "building", "subject": "glass greenhouse with plants", "notes": "weather protection building" },
+    { "id": "building-barn", "label": "Barn", "category": "building", "subject": "classic red barn", "notes": "animal housing" },
+    { "id": "building-silo", "label": "Silo", "category": "building", "subject": "metal silo with hatch", "notes": "storage building" }
+  ]
+}

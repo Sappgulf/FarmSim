@@ -55,3 +55,8 @@ temp/
 
 # Local Codex sub-agent artifacts
 .subagents/
+
+# iOS generated/build artifacts
+ios/FarmSim.xcodeproj/
+ios/GameCore/.build/
+*.xcresult

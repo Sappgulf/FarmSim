@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "hashAlgorithm": "sha256",
+  "canonicalFormat": "day=<day>;coins=<coins>;tiles=<tile0>|<tile1>|...;seeds=<cropId:count,... or ->;crops=<cropId:count,... or ->",
+  "vectors": [
+    {
+      "id": "single_crop_harvest",
+      "seed": 42,
+      "cropDefs": {
+        "carrot": {
+          "daysToGrow": 2,
+          "sellPrice": 24
+        }
+      },
+      "initialState": {
+        "day": 0,
+        "coins": 0,
+        "tiles": [
+          { "cropId": null, "plantedDay": null },
+          { "cropId": null, "plantedDay": null },
+          { "cropId": null, "plantedDay": null },
+          { "cropId": null, "plantedDay": null }
+        ],
+        "seeds": {
+          "carrot": 1
+        },
+        "crops": {}
+      },
+      "actions": [
+        { "type": "plant", "tile": 0, "cropId": "carrot" },
+        { "type": "advance_day" },
+        { "type": "advance_day" },
+        { "type": "harvest", "tile": 0 }
+      ],
+      "expectedEndStateHash": "1664fc9a2009af32cd9066c38b3bbafd4ec137f19b1767e683811d5a8fbae76f"
+    },
+    {
+      "id": "not_ready_harvest_noop",
+      "seed": 99,
+      "cropDefs": {
+        "carrot": {
+          "daysToGrow": 3,
+          "sellPrice": 24
+        }
+      },
+      "initialState": {
+        "day": 0,
+        "coins": 0,
+        "tiles": [
+          { "cropId": null, "plantedDay": null },
+          { "cropId": null, "plantedDay": null },
+          { "cropId": null, "plantedDay": null },
+          { "cropId": null, "plantedDay": null }
+        ],
+        "seeds": {
+          "carrot": 1
+        },
+        "crops": {}
+      },
+      "actions": [
+        { "type": "plant", "tile": 0, "cropId": "carrot" },
+        { "type": "advance_day" },
+        { "type": "harvest", "tile": 0 }
+      ],
+      "expectedEndStateHash": "e445bf222c1eeb9f94c89eac6bce6ba99d3d63046f556c7cde626b36c68c9c83"
+    },
+    {
+      "id": "two_tiles_independent_growth",
+      "seed": 7,
+      "cropDefs": {
+        "carrot": {
+          "daysToGrow": 2,
+          "sellPrice": 24
+        },
+        "lettuce": {
+          "daysToGrow": 1,
+          "sellPrice": 19
+        }
+      },
+      "initialState": {
+        "day": 0,
+        "coins": 0,
+        "tiles": [
+          { "cropId": null, "plantedDay": null },
+          { "cropId": null, "plantedDay": null },
+          { "cropId": null, "plantedDay": null },
+          { "cropId": null, "plantedDay": null }
+        ],
+        "seeds": {
+          "carrot": 1,
+          "lettuce": 1
+        },
+        "crops": {}
+      },
+      "actions": [
+        { "type": "plant", "tile": 0, "cropId": "carrot" },
+        { "type": "plant", "tile": 1, "cropId": "lettuce" },
+        { "type": "advance_day" },
+        { "type": "harvest", "tile": 1 },
+        { "type": "advance_day" },
+        { "type": "harvest", "tile": 0 }
+      ],
+      "expectedEndStateHash": "7a2c2322d4498591d78600eda721a8ce43f3dfa1d2caa1a20bb30edf30d19a2c"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+id,label,category,status,file
+nav-section-farm,Farm Section,nav,todo,public/assets/sora/icons/nav-section-farm.png
+nav-section-items,Items Section,nav,todo,public/assets/sora/icons/nav-section-items.png
+nav-section-build,Build Section,nav,todo,public/assets/sora/icons/nav-section-build.png
+nav-section-animals,Animals Section,nav,todo,public/assets/sora/icons/nav-section-animals.png
+nav-section-more,More Section,nav,todo,public/assets/sora/icons/nav-section-more.png
+tab-farming,Farming Tab,tab,todo,public/assets/sora/icons/tab-farming.png
+tab-inventory,Inventory Tab,tab,todo,public/assets/sora/icons/tab-inventory.png
+tab-shop,Shop Tab,tab,todo,public/assets/sora/icons/tab-shop.png
+tab-processing,Processing Tab,tab,todo,public/assets/sora/icons/tab-processing.png
+tab-buildings,Buildings Tab,tab,todo,public/assets/sora/icons/tab-buildings.png
+tab-expand,Expand Tab,tab,todo,public/assets/sora/icons/tab-expand.png
+tab-research,Research Tab,tab,todo,public/assets/sora/icons/tab-research.png
+tab-genetics,Genetics Tab,tab,todo,public/assets/sora/icons/tab-genetics.png
+tab-livestock,Livestock Tab,tab,todo,public/assets/sora/icons/tab-livestock.png
+tab-pets,Pets Tab,tab,todo,public/assets/sora/icons/tab-pets.png
+tab-fishing,Fishing Tab,tab,todo,public/assets/sora/icons/tab-fishing.png
+tab-settings,Settings Tab,tab,todo,public/assets/sora/icons/tab-settings.png
+tab-notifications,Notifications Tab,tab,todo,public/assets/sora/icons/tab-notifications.png
+tab-achievements,Achievements Tab,tab,todo,public/assets/sora/icons/tab-achievements.png
+tab-almanac,Almanac Tab,tab,todo,public/assets/sora/icons/tab-almanac.png
+tab-quests,Quests Tab,tab,todo,public/assets/sora/icons/tab-quests.png
+tab-analytics,Analytics Tab,tab,todo,public/assets/sora/icons/tab-analytics.png
+tab-weather,Weather Tab,tab,todo,public/assets/sora/icons/tab-weather.png
+tab-events,Events Tab,tab,todo,public/assets/sora/icons/tab-events.png
+tab-challenges,Challenges Tab,tab,todo,public/assets/sora/icons/tab-challenges.png
+tab-social,Social Tab,tab,todo,public/assets/sora/icons/tab-social.png
+tab-mystery,Mystery Tab,tab,todo,public/assets/sora/icons/tab-mystery.png
+tab-diseases,Diseases Tab,tab,todo,public/assets/sora/icons/tab-diseases.png
+resource-coin,Coin,resource,todo,public/assets/sora/icons/resource-coin.png
+resource-water,Water,resource,todo,public/assets/sora/icons/resource-water.png
+resource-seed,Seed,resource,todo,public/assets/sora/icons/resource-seed.png
+resource-fertilizer,Fertilizer,resource,todo,public/assets/sora/icons/resource-fertilizer.png
+resource-xp,XP,resource,todo,public/assets/sora/icons/resource-xp.png
+weather-sunny,Sunny,weather,todo,public/assets/sora/icons/weather-sunny.png
+weather-rainy,Rainy,weather,todo,public/assets/sora/icons/weather-rainy.png
+weather-storm,Storm,weather,todo,public/assets/sora/icons/weather-storm.png
+weather-snow,Snow,weather,todo,public/assets/sora/icons/weather-snow.png
+building-greenhouse,Greenhouse,building,todo,public/assets/sora/icons/building-greenhouse.png
+building-barn,Barn,building,todo,public/assets/sora/icons/building-barn.png
+building-silo,Silo,building,todo,public/assets/sora/icons/building-silo.png

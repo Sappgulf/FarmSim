@@ -14,20 +14,84 @@ A comprehensive React-based farm simulation game featuring a clean modular archi
 ## 🚀 Quick Start
 
 ```bash
-# Install dependencies
-npm install
+# Install web dependencies
+npm run install:web
 
-# Start development server
+# Start web app from repo root
 npm run dev
 
-# Build for production
+# Run web tests
+npm run test
+
+# Build web app
 npm run build
 
-# Preview production build
+# Preview web build
 npm run preview
 ```
 
 Open [http://localhost:5173](http://localhost:5173) to start farming!
+
+### Monorepo Layout
+
+```text
+/
+├── web/                 # Existing Vite web app
+├── ios/                 # Native iOS app (SwiftUI + SpriteKit)
+│   ├── App/             # iOS UI target source
+│   ├── GameCore/        # Swift package for core sim logic
+│   ├── project.yml      # XcodeGen spec
+│   └── Makefile         # iOS helper commands
+└── shared/
+    ├── content/         # Canonical game content JSON
+    ├── schema/          # Content/save contracts
+    └── tests-vectors/   # Cross-platform deterministic vectors
+```
+
+### Web Commands
+
+```bash
+# From repo root (forwarded to /web)
+npm run dev
+npm run test
+npm run build
+
+# Or run directly in /web
+cd web
+npm install
+npm run dev
+```
+
+### iOS Commands
+
+```bash
+# Generate the Xcode project (deterministic from ios/project.yml)
+npm run ios:generate
+
+# Build GameCore tests
+npm run ios:test:core
+
+# Build app for simulator
+npm run ios:build
+```
+
+If your machine does not have an `iPhone 17` simulator, use an installed simulator name:
+
+```bash
+xcodebuild -project ios/FarmSim.xcodeproj -scheme FarmSim -destination 'platform=iOS Simulator,name=<Installed Device Name>' build
+```
+
+### Shared Content Contract
+
+- Canonical content lives in `shared/content`.
+- Web content loading uses Vite aliases:
+  - `@shared -> ../shared`
+  - `@content -> ../shared/content`
+- Contract docs:
+  - `shared/schema/content-contract.md`
+  - `shared/schema/save-contract.md`
+  - `shared/schema/save-example.v1.json`
+  - `shared/tests-vectors/sim_vectors.json`
 
 ---
 

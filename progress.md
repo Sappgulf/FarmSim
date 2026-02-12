@@ -203,3 +203,39 @@ Original prompt: ok lets continue the next perf options
   - No console/page errors observed during smoke runs.
 - Note:
   - On fresh runs, the onboarding tooltip can visually cover the new advisor card area until skipped.
+
+## 2026-02-12 - Phase 0 discovery (monorepo + iOS prep)
+- Current web entrypoint:
+  - `src/main.jsx` mounts `FarmSim` from `src/components/farm-sim/core/FarmSim.jsx` inside `GameErrorBoundary`.
+- Current state storage:
+  - Main runtime save is persisted to `localStorage` via `src/components/farm-sim/context/GamePersistence.js` with `SAVE_KEY = farm_sim_enhanced_v2` and `SAVE_VERSION = 16`.
+  - Legacy save paths still exist (`farmSim_save_v3`, `farmLifeSave`) for migration/cleanup compatibility.
+- Grid logic location:
+  - Plot state shape is initialized in `initializePlots()` inside `src/components/farm-sim/context/GamePersistence.js`.
+  - Core grid state mutations live in `src/components/farm-sim/context/GameReducer.js` (`UPDATE_PLOT`, `UPDATE_PLOTS`, `SET_GRID_SIZE`).
+  - Plant/grow/harvest runtime behavior is driven by `src/components/farm-sim/systems/FarmingSystem.js` and wired from `GameContext`.
+- JSON files used at runtime:
+  - Runtime canonical loader is `src/content/ContentManager.js`.
+  - It currently imports base JSON from `/content`: `crops.json`, `decor.json`, `festivals.json`, `almanac.json`, `minigames.json`, `strings.json`.
+  - It also eager-loads pack JSONs via `import.meta.glob('../../content/packs/**/...')`.
+
+## 2026-02-12 - Monorepo + native iOS MVP delivered
+- Completed:
+  - Restructured repo into `/web`, `/shared`, `/ios`.
+  - Web remains runnable from repo root via forwarding scripts.
+  - Canonical content moved to `shared/content` and wired into web via `@content` alias.
+  - Added shared schema + save/content contracts and deterministic sim vectors.
+  - Added native iOS app scaffold (`SwiftUI` + `SpriteView`) and `ios/GameCore` Swift package.
+  - Added playable iOS loop: tap tile to plant, advance day, harvest ready crop, save/load.
+- Validation:
+  - `npm run test` passed.
+  - `npm run build` passed.
+  - `swift test --package-path ios/GameCore` passed.
+  - `xcodegen generate --spec ios/project.yml` passed.
+  - `xcodebuild -project ios/FarmSim.xcodeproj -scheme FarmSim -destination 'platform=iOS Simulator,name=iPhone 17' build` passed.
+  - Note: requested `iPhone 15` simulator destination is unavailable on this machine.
+- Next steps:
+  - Replace placeholder SpriteKit tile visuals with authored sprites + crop stage art.
+  - Polish HUD/action bar layout and interaction states (selected seed, ready indicators, disabled affordances).
+  - Add native iOS audio layer (plant/harvest/day-advance feedback + ambient loop).
+  - Add local notifications for crop-ready reminders when app is backgrounded.

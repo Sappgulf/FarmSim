@@ -1,0 +1,44 @@
+name: FarmSim
+options:
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  GameCore:
+    path: GameCore
+targets:
+  FarmSim:
+    type: application
+    platform: iOS
+    info:
+      path: App/Info.plist
+      properties:
+        UIStatusBarHidden: true
+        UIViewControllerBasedStatusBarAppearance: false
+        UILaunchScreen:
+          UIColorName: systemGreenColor
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    sources:
+      - path: App/Sources
+      - path: ../shared/content
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.austinbeatty.farmsim
+        PRODUCT_NAME: FarmSim
+        SWIFT_VERSION: 5.10
+        INFOPLIST_FILE: App/Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"
+    dependencies:
+      - package: GameCore
+        product: GameCore
+schemes:
+  FarmSim:
+    build:
+      targets:
+        FarmSim: all
+    run:
+      config: Debug
+    archive:
+      config: Release
