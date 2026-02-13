@@ -18,6 +18,8 @@
     }
   ],
   "ui": {
+    "appTitle": "FarmSim",
+    "menuTagline": "Grow your homestead one cozy day at a time.",
     "whatsNewTitle": "What's New",
     "noPacks": "No new packs loaded."
   }

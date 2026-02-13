@@ -1,5 +1,159 @@
 # Changelog
 
+## 2026-02-13
+
+- **Implemented**
+  - **Scope:** iOS cozy animated homestead main menu + boot navigation flow
+  - **What:** Replaced the previous menu entry with a dedicated Boot/Menu/GameShell flow and SpriteKit homestead menu scene:
+    - Added lazy boot flow and quick save-presence probing:
+      - `ios/App/Sources/Menu/BootView.swift`
+      - `ios/App/Sources/FarmSimApp.swift`
+      - `ios/App/Sources/GameShellView.swift`
+    - Added cozy animated menu scene (sky gradient, hills, barn silhouette, fence, grass, clouds, ambient motes/fireflies, warm window glow) with reduced-motion handling:
+      - `ios/App/Sources/Menu/HomesteadMenuScene.swift`
+    - Added new menu overlay UI and button module:
+      - `ios/App/Sources/Menu/MainMenuView.swift`
+      - `ios/App/Sources/Menu/MenuButtonsView.swift`
+    - Added credits sheet and wired menu actions:
+      - `Continue`, `Start Game`, `New Game` (with confirmation), `Settings`, `Credits`, and disabled `Load Slot (Soon)` stub.
+    - Added menu title/tagline keys to shared content:
+      - `shared/content/strings.json` (`ui.appTitle`, `ui.menuTagline`)
+    - Added stable menu source anchors:
+      - `ios/FarmSimApp/Menu/MainMenuView.swift`
+      - `ios/FarmSimApp/Menu/MenuButtonsView.swift`
+      - `ios/FarmSimApp/Menu/HomesteadMenuScene.swift`
+  - **Why:** Delivers a cleaner entry UX with native animation, fast launch-state detection, and smoother transition into gameplay while preserving iOS-native architecture.
+
+- **Implemented**
+  - **Scope:** iOS polish + expand master pass
+  - **What:** Added cohesive gameplay/UI polish and feature depth while preserving web behavior:
+    - Market flow expanded with segmented `Buy / Sell / Upgrades`, quantity steppers, sell-all confirmations, and deterministic daily seed specials:
+      - `ios/App/Sources/TownMarketView.swift`
+      - `ios/App/Sources/GameStore.swift`
+    - Added daily task board with deterministic day-based objectives and claim rewards:
+      - `ios/App/Sources/AppModels.swift`
+      - `ios/App/Sources/GameStore.swift`
+      - `ios/App/Sources/TownMarketView.swift`
+    - Barn inventory now supports persisted favorites (save-backed), sorting (`Name/Qty/Value`), and existing search/chip filters:
+      - `ios/App/Sources/Inventory/Barn/BarnInventoryView.swift`
+      - `ios/App/Sources/GameStore.swift`
+      - `ios/GameCore/Sources/GameCore/Models.swift`
+    - Farm visuals upgraded with day/night lighting overlay, ready-to-harvest badge animation, and double-tap camera focus:
+      - `ios/App/Sources/FarmScene.swift`
+      - `ios/App/Sources/FarmView.swift`
+    - Almanac expanded with festival detail sheets and clearer crop sourcing hints:
+      - `ios/App/Sources/AlmanacView.swift`
+    - Design system expanded with typography/components and documented anchor path:
+      - `ios/App/Sources/DesignSystem/Typography.swift`
+      - `ios/App/Sources/DesignSystem/Components.swift`
+      - `ios/FarmSimApp/DesignSystem/*`
+    - Save contract/version updated to v5 (`favoriteItems`) with migration coverage:
+      - `ios/GameCore/Sources/GameCore/Persistence.swift`
+      - `ios/GameCore/Tests/GameCoreTests/GameCoreTests.swift`
+      - `shared/schema/save-contract.md`
+      - `shared/schema/save-example.v5.json`
+    - Expanded deterministic vectors and planning docs:
+      - `shared/vectors/sim_vectors.json`
+      - `shared/ROADMAP_NEXT.md`
+      - `shared/PARITY_CHECKLIST.md`
+      - `shared/schema/content-contract.md`
+      - `README.md`
+  - **Why:** Improves iOS UX cohesion and loop depth without web regressions, while keeping state/content contracts deterministic and documented.
+
+- **Implemented**
+  - **Scope:** iOS cozy barn inventory + shop integration
+  - **What:** Replaced the basic inventory list with a barn-themed inventory module and wired a diegetic shop counter entry point while keeping Market tab flow intact.
+    - Added new inventory barn module:
+      - `ios/App/Sources/Inventory/Barn/BarnInventoryView.swift`
+      - `ios/App/Sources/Inventory/Barn/BarnBackgroundView.swift`
+      - `ios/App/Sources/Inventory/Barn/ShelfSectionView.swift`
+      - `ios/App/Sources/Inventory/Barn/ItemCardView.swift`
+      - `ios/App/Sources/Inventory/Barn/BarnHeaderHUD.swift`
+      - `ios/App/Sources/Inventory/Barn/BarnInventoryModels.swift`
+    - `InventoryView` now hosts barn module and routes to Farm/Market through `AppState`:
+      - `ios/App/Sources/InventoryView.swift`
+      - `ios/App/Sources/GameShell.swift`
+    - Added barn art/asset plan:
+      - `ios/FarmSimApp/Inventory/Barn/BARN_ART.md`
+    - Centralized buy/sell item APIs in GameCore and switched store calls to those APIs:
+      - `ios/GameCore/Sources/GameCore/GameCoreEngine.swift`
+      - `ios/GameCore/Sources/GameCore/EconomySystem.swift`
+      - `ios/App/Sources/GameStore.swift`
+      - `ios/GameCore/Tests/GameCoreTests/GameCoreTests.swift`
+    - Added barn tokens in design system:
+      - `ios/App/Sources/DesignSystem.swift`
+    - Updated parity tracking entries:
+      - `shared/PARITY_CHECKLIST.md`
+  - **Why:** Delivers a warmer inventory UX with in-barn shop access and keeps economy logic centralized in GameCore for consistency and testing.
+
+- **Implemented**
+  - **Scope:** iOS automatic time progression + warm farm UI pass
+  - **What:** Replaced production manual day progression with an app-driven automatic clock and day rollover pipeline:
+    - Added web time-model audit doc: `shared/schema/time-model.md`.
+    - Added GameCore `TimeEngine` and persisted time meta state:
+      - `ios/GameCore/Sources/GameCore/TimeEngine.swift`
+      - `ios/GameCore/Sources/GameCore/Models.swift` (`meta.time`)
+      - `ios/GameCore/Sources/GameCore/Persistence.swift` (`v4` migration path).
+      - Extended tests for tick/day rollover/offline catch-up and `v3 -> v4` migration:
+        - `ios/GameCore/Tests/GameCoreTests/GameCoreTests.swift`
+    - Added iOS app-level loop driver and lifecycle integration:
+      - `ios/App/Sources/GameLoopDriver.swift`
+      - `ios/App/Sources/FarmSimApp.swift`
+      - `ios/App/Sources/GameStore.swift` (`stepAutoTime`, offline catch-up, throttled HUD updates).
+    - Removed production day-skip UI and added debug-only fast-forward:
+      - `ios/App/Sources/FarmView.swift`
+      - `ios/App/Sources/SettingsView.swift`
+    - Added day-rollover transition overlay and warm HUD clock/season indicators.
+    - Added optional crops-ready local notification plumbing and widget snapshot stub:
+      - `ios/App/Sources/FarmNotifications.swift`
+      - `ios/App/Sources/AppModels.swift`
+    - Warmed iOS visual language and scene ambience:
+      - `ios/App/Sources/DesignSystem.swift`
+      - `ios/App/Sources/Theme.swift`
+      - `ios/App/Sources/FarmScene.swift`
+    - Updated parity/integration/save docs:
+      - `shared/PARITY_CHECKLIST.md`
+      - `ios/INTEGRATION.md`
+      - `ios/AGENTS.md`
+      - `shared/schema/save-contract.md`
+      - `shared/schema/save-example.v4.json`
+  - **Why:** Aligns iOS with continuous web-style time flow while preserving day-based GameCore crop logic and save compatibility.
+
+- **Implemented**
+  - **Scope:** iOS parity slice (Buildings + Expand + Research + Genetics)
+  - **What:** Completed the next Town-tab parity slice by wiring web-equivalent building/research/genetics/expansion catalogs into `GameStore`, adding sell/yield/seed-cost modifiers, and exposing intent-driven flows in `TownMarketView`.
+    - Added save `meta` usage in iOS app logic and documented save contract `v2`.
+    - Added save migration coverage and meta round-trip coverage in `GameCoreTests`.
+    - Updated parity/integration docs:
+      - `ios/AGENTS.md`
+      - `ios/INTEGRATION.md`
+      - `shared/PARITY_CHECKLIST.md`
+      - `shared/schema/save-contract.md`
+      - `shared/schema/save-example.v2.json`
+  - **Why:** Moves iOS toward full web feature parity while preserving strict GameStore intent boundaries and migration-safe persistence.
+  - **Verification performed:** `npm run ios:test:core` (pass), `npm run test -- --run` (pass), `npm run build` (pass), `npm run ios:build:small` (pass), `npm run ios:build:large` (pass), `make -C ios ios-run` (pass), `xcrun simctl launch ... com.austinbeatty.farmsim` (pass).
+
+- **Implemented**
+  - **Scope:** canonical content migration + parity slice (Livestock + Pets + Fishing + Challenges)
+  - **What:** Added canonical shared datasets and moved web/iOS consumers to them:
+    - Added: `shared/content/buildings.json`, `shared/content/research.json`, `shared/content/genetics.json`, `shared/content/livestock.json`, `shared/content/pets.json`, `shared/content/fishing.json`, `shared/content/challenges.json`.
+    - Web now reads buildings/research/genetics through `web/src/content/ContentManager.js` and updated tabs:
+      - `web/src/components/farm-sim/ui/tabs/BuildingsTab.jsx`
+      - `web/src/components/farm-sim/ui/tabs/ResearchTab.jsx`
+      - `web/src/components/farm-sim/ui/tabs/GeneticsTab.jsx`
+      - legacy `web/src/components/farm-sim/constants/buildingData.js` now hydrates from content manager.
+    - iOS now decodes those datasets in `ios/App/Sources/ContentRepository.swift` and surfaces new Town gameplay flows in:
+      - `ios/App/Sources/GameStore.swift`
+      - `ios/App/Sources/TownMarketView.swift`
+    - Save schema advanced to v3 with migration + docs/tests updates:
+      - `ios/GameCore/Sources/GameCore/Models.swift`
+      - `ios/GameCore/Sources/GameCore/Persistence.swift`
+      - `ios/GameCore/Tests/GameCoreTests/GameCoreTests.swift`
+      - `shared/schema/save-contract.md`
+      - `shared/schema/save-example.v3.json`
+  - **Why:** Establishes shared content as source of truth and extends iOS parity for the next feature group while keeping migration safety.
+  - **Verification performed:** `npm run ios:test:core` (pass), `npm run test -- --run` (pass), `npm run build` (pass), `npm run ios:build:small` (pass), `npm run ios:build:large` (pass).
+
 ## 2026-02-12
 
 - **Implemented**
@@ -32,6 +186,31 @@
   - **What:** Upgraded iOS app to a 5-tab native shell (`Farm`, `Inventory`, `Town`, `Almanac`, `Settings`) with AppState/GameStore separation, onboarding pager, tile action sheet, dynamic-type-first SwiftUI components, and incremental SpriteKit tile updates with pinch/pan camera.
   - **Why:** Meets modern iPhone simulator support expectations with responsive native UI and reduced render churn.
   - **Verification performed:** `make -C ios ios-gen` (pass), `make -C ios ios-build` (pass), `make -C ios ios-build-small` (pass), `make -C ios ios-build-large` (pass).
+
+- **Implemented**
+  - **Scope:** planning/integration contracts
+  - **What:** Added sub-agent ownership and merge contracts plus parity inventory:
+    - `ios/AGENTS.md`
+    - `ios/INTEGRATION.md`
+    - `shared/PARITY_CHECKLIST.md`
+  - **Why:** Enables concurrent tab-focused implementation without file ownership collisions and tracks explicit web->iOS parity gaps with source references.
+  - **Verification performed:** docs reviewed against current source tree and tab/system inventories.
+
+- **Implemented**
+  - **Scope:** cross-platform performance instrumentation
+  - **What:** Added web dev perf HUD with localStorage toggles, removed per-plot growth timers in farm grid, added iOS perf signposts + debug overlay + save-write coalescing, and introduced perf budget tests + benchmark notes.
+    - `web/src/components/farm-sim/ui/PerfHud.jsx`
+    - `web/src/components/farm-sim/ui/FarmGrid.jsx`
+    - `web/src/components/farm-sim/core/FarmSim.jsx`
+    - `ios/App/Sources/PerfTelemetry.swift`
+    - `ios/App/Sources/GameStore.swift`
+    - `ios/App/Sources/FarmScene.swift`
+    - `ios/App/Sources/FarmView.swift`
+    - `web/src/test/perfBudget.test.js`
+    - `ios/GameCore/Tests/GameCoreTests/GameCoreTests.swift`
+    - `shared/perf/bench.md`
+  - **Why:** Reduces timer/node churn, adds measurable perf visibility, and enforces sim-tick perf budgets.
+  - **Verification performed:** `npm --prefix web run test -- --run src/test/perfBudget.test.js` (pass), `swift test --package-path ios/GameCore --filter testSimTickPerformance20x20` (pass).
 
 ## 2026-02-10
 
