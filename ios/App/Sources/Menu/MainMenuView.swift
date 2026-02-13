@@ -1,241 +1,180 @@
 import SwiftUI
 import SpriteKit
+import GameCore
 
 struct MainMenuView: View {
-    let title: String
-    let tagline: String?
-    let hasSave: Bool
-    let isBusy: Bool
-    let onPrimaryAction: () -> Void
-    let onNewGameAction: () -> Void
-    let onSettingsAction: () -> Void
-    let onCreditsAction: () -> Void
+    @Bindable var appState: AppState
+    @Bindable var store: GameStore
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
+    let onContinue: () -> Void
+    let onNewGame: () -> Void
 
     @StateObject private var sceneHolder = HomesteadMenuSceneHolder()
+    @State private var showSettings = false
+    @State private var showCredits = false
     @State private var confirmNewGame = false
+    @State private var titleAppeared = false
+    @State private var buttonsAppeared = false
+
+    private var hasSave: Bool {
+        FileManager.default.fileExists(
+            atPath: GameCore.SavePaths.defaultSaveURL(appName: "FarmSim").path
+        )
+    }
 
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                // 1. Background Scene
                 SpriteView(
                     scene: sceneHolder.scene,
                     options: [.ignoresSiblingOrder]
                 )
                 .ignoresSafeArea()
 
-                // 2. Subtle Gradient for Text Readability (Top only)
+                // Bottom gradient for contrast
                 VStack {
+                    Spacer()
                     LinearGradient(
-                        colors: [.black.opacity(0.35), .clear],
+                        colors: [.clear, .black.opacity(0.45)],
                         startPoint: .top,
                         endPoint: .bottom
                     )
-                    .frame(height: 140)
-                    .ignoresSafeArea()
-                    
-                    Spacer()
+                    .frame(height: proxy.size.height * 0.5)
+                    .allowsHitTesting(false)
                 }
-                .allowsHitTesting(false)
+                .ignoresSafeArea()
 
-                // 3. UI Layer (Minimal)
                 VStack {
-                    // Top Bar: Title & Settings
-                    HStack(alignment: .top) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(title)
-                                .font(.system(size: 42, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
-                                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
-                                .accessibilityLabel("Game title \(title)")
-
-                            if let tagline, !tagline.isEmpty {
-                                Text(tagline)
-                                    .font(.system(size: 16, weight: .medium, design: .rounded))
-                                    .foregroundStyle(.white.opacity(0.9))
-                                    .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                                    .accessibilityLabel(tagline)
-                            }
-                        }
-                        
-                        Spacer()
-                        
-                        // Settings (Top Right)
-                        Button(action: onSettingsAction) {
-                            Image(systemName: "gearshape.fill")
-                                .font(.title3)
-                                .foregroundStyle(.white)
-                                .padding(12)
-                                .background(.ultraThinMaterial, in: Circle())
-                                .shadow(radius: 4)
-                        }
-                        .accessibilityLabel("Settings")
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.top, max(proxy.safeAreaInsets.top, 20))
-
                     Spacer()
 
-                    // Bottom: Play Button & Secondary Actions
-                    HStack(alignment: .bottom) {
-                        // Credits (Bottom Left)
-                        Button(action: onCreditsAction) {
-                            Image(systemName: "person.3.fill")
-                                .font(.headline)
-                                .foregroundStyle(.white.opacity(0.9))
-                                .frame(width: 44, height: 44) // Target size
-                                .background(.black.opacity(0.3), in: Circle())
-                        }
-                        .accessibilityLabel("Credits")
-                        
-                        Spacer()
-                        
-                        // Primary Play Button (Center)
-                        Button(action: onPrimaryAction) {
-                            HStack(spacing: 8) {
-                                Image(systemName: hasSave ? "play.fill" : "sprout.fill")
-                                Text(hasSave ? "Continue Farm" : "New Farm")
-                                    .fontWeight(.bold)
-                            }
-                            .font(.title3)
-                            .foregroundStyle(DS.Color.accent)
-                            .padding(.vertical, 18) // Slightly taller
-                            .padding(.horizontal, 36) // Slightly wider
-                            .background(
-                                Capsule()
-                                    .fill(.white)
-                                    .shadow(color: .black.opacity(0.3), radius: 12, x: 0, y: 6) // Enhanced shadow
-                            )
-                        }
-                        .accessibilityLabel(hasSave ? "Continue your farm" : "Start a new farm")
-                        .disabled(isBusy)
+                    // Title
+                    VStack(spacing: DS.Space.xs) {
+                        Text("FarmSim")
+                            .font(Typography.display)
+                            .foregroundStyle(.white)
+                            .shadow(color: DS.Color.money.opacity(0.55), radius: 18, x: 0, y: 4)
+                            .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
+                            .scaleEffect(titleAppeared ? 1.0 : 0.88)
+                            .opacity(titleAppeared ? 1.0 : 0)
 
-                        Spacer()
-                        
-                        // New Game (Bottom Right)
-                        if hasSave {
-                            Button(action: { confirmNewGame = true }) {
-                                Image(systemName: "arrow.counterclockwise")
-                                    .font(.headline)
-                                    .foregroundStyle(.white.opacity(0.9))
-                                    .frame(width: 44, height: 44)
-                                    .background(.black.opacity(0.3), in: Circle())
-                            }
-                            .accessibilityLabel("Start over")
-                        } else {
-                            // Balance layout
-                            Color.clear.frame(width: 44, height: 44)
-                        }
-                    }
-                    .padding(.horizontal, 32)
-                    .padding(.bottom, max(proxy.safeAreaInsets.bottom, 24)) // Tighter to bottom
-                }
-                
-                #if DEBUG
-                VStack {
-                    HStack {
-                        Spacer()
-                        Text("Nodes: \(sceneHolder.scene.debugNodeCount)")
-                            .font(.caption.monospacedDigit())
+                        Text("Grow your homestead")
+                            .font(Typography.section)
                             .foregroundStyle(.white.opacity(0.8))
-                            .padding(6)
-                            .background(.black.opacity(0.4), in: RoundedRectangle(cornerRadius: 4))
+                            .scaleEffect(titleAppeared ? 1.0 : 0.95)
+                            .opacity(titleAppeared ? 1.0 : 0)
                     }
-                    Spacer()
+                    .padding(.bottom, DS.Space.lg)
+
+                    // Buttons
+                    VStack(spacing: DS.Space.sm) {
+                        MenuButtonsView(
+                            hasSave: hasSave,
+                            isBusy: false,
+                            onPrimaryAction: onContinue,
+                            onNewGameAction: { confirmNewGame = true },
+                            onSettingsAction: { appState.showingMenuSettings = true },
+                            onCreditsAction: { showCredits = true }
+                        )
+                    }
+                    .padding(.horizontal, DS.Space.xl)
+                    .padding(.bottom, DS.Space.xl)
+                    .offset(y: buttonsAppeared ? 0 : 30)
+                    .opacity(buttonsAppeared ? 1.0 : 0)
                 }
-                .padding(.top, proxy.safeAreaInsets.top + 60) // Below header
-                .padding(.trailing, 20)
-                .accessibilityHidden(true)
-                #endif
+                .padding(.bottom, proxy.safeAreaInsets.bottom > 0 ? 0 : DS.Space.md)
             }
             .onAppear {
-                sceneHolder.scene.setReducedMotion(reduceMotion)
-            }
-            .onChange(of: reduceMotion) { _, value in
-                sceneHolder.scene.setReducedMotion(value)
-            }
-            .alert("Start a New Farm?", isPresented: $confirmNewGame) {
-                Button("Start Fresh", role: .destructive) {
-                    onNewGameAction()
+                sceneHolder.resize(proxy.size)
+                withAnimation(.spring(response: 0.7, dampingFraction: 0.65).delay(0.15)) {
+                    titleAppeared = true
                 }
-                Button("Keep Current Farm", role: .cancel) { }
-            } message: {
-                Text("Your existing progress will be replaced.")
+                withAnimation(.easeOut(duration: 0.5).delay(0.35)) {
+                    buttonsAppeared = true
+                }
             }
+            .onChange(of: proxy.size) { _, newSize in
+                sceneHolder.resize(newSize)
+            }
+        }
+        .alert("Start a New Farm?", isPresented: $confirmNewGame) {
+            Button("New Farm", role: .destructive) {
+                onNewGame()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your current progress will be erased.")
+        }
+        .sheet(isPresented: $showCredits) {
+            CreditsView()
         }
     }
 }
 
-private final class HomesteadMenuSceneHolder: ObservableObject {
+final class HomesteadMenuSceneHolder: ObservableObject {
     let scene: HomesteadMenuScene
 
     init() {
-        let scene = HomesteadMenuScene(size: CGSize(width: 1080, height: 1920))
-        scene.scaleMode = .aspectFill
-        self.scene = scene
+        let s = HomesteadMenuScene(size: CGSize(width: 1200, height: 800))
+        s.scaleMode = .aspectFill
+        scene = s
+    }
+
+    func resize(_ viewSize: CGSize) {
+        let scale: CGFloat = 1.5
+        scene.size = CGSize(width: viewSize.width * scale, height: viewSize.height * scale)
     }
 }
 
 struct CreditsView: View {
-    let appTitle: String
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: DS.Space.lg) {
-                     // Logo / Title
-                    VStack(spacing: DS.Space.xs) {
-                        Image(systemName: "leaf.fill")
-                            .font(.system(size: 48))
-                            .foregroundStyle(DS.Color.accent)
-                            .padding(.bottom, DS.Space.xs)
-                        
-                        Text(appTitle)
-                            .font(.system(.title, design: .rounded).weight(.bold))
-                            .foregroundStyle(DS.Color.textPrimary)
-                    }
-                    .padding(.top, DS.Space.xl)
+                VStack(alignment: .leading, spacing: DS.Space.lg) {
+                    SectionHeader("Credits")
 
                     CardContainer {
-                        VStack(alignment: .leading, spacing: DS.Space.md) {
-                            Text("Crafted with SwiftUI, SpriteKit, and GameCore.")
-                                .font(Typography.body)
-                                .foregroundStyle(DS.Color.textSecondary)
-
-                            Divider().opacity(0.3)
-
-                            Text("Thanks for playing and helping shape the farm.")
-                                .font(Typography.body)
-                                .foregroundStyle(DS.Color.textSecondary)
-
-                            VStack(alignment: .leading, spacing: DS.Space.md) {
-                                Label("Design & Product", systemImage: "paintpalette.fill")
-                                Label("Game Systems", systemImage: "leaf.fill")
-                                Label("Engineering", systemImage: "hammer.fill")
-                            }
-                            .font(Typography.bodyStrong)
-                            .foregroundStyle(DS.Color.textPrimary)
+                        VStack(alignment: .leading, spacing: DS.Space.sm) {
+                            creditRow("Design & Code", value: "Austin Beatty")
+                            creditRow("Art Direction", value: "Vector-first, SpriteKit pipeline")
+                            creditRow("Game Engine", value: "GameCore · Swift 5.10")
+                            creditRow("UI Framework", value: "SwiftUI · SpriteKit")
+                            creditRow("Minimum OS", value: "iOS 17.0")
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .padding(.horizontal, DS.Space.lg)
+
+                    CardContainer {
+                        VStack(alignment: .leading, spacing: DS.Space.sm) {
+                            Text("Technology")
+                                .font(Typography.section)
+                            Text("Built with Swift, SpriteKit for rendering, SwiftUI for interface, and custom GameCore for simulation. Vector-first art pipeline rasterized into sprites for maximum performance.")
+                                .font(Typography.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
+                .padding(DS.Space.md)
             }
+            .farmBackground(palette: .meadow)
             .navigationTitle("Credits")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
+                    Button("Done") { dismiss() }
                 }
             }
-            .scrollContentBackground(.hidden)
-            .farmBackground()
+        }
+    }
+
+    private func creditRow(_ label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(Typography.bodyStrong)
+            Spacer()
+            Text(value)
+                .font(Typography.caption)
+                .foregroundStyle(.secondary)
         }
     }
 }

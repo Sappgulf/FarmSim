@@ -31,7 +31,7 @@ struct BarnHeaderHUD: View {
             }
 
             HStack(spacing: DS.Space.sm) {
-                IconLabel(title: "\(stockCount) crates", symbol: "shippingbox.fill", tint: DS.Color.textSecondary)
+                IconLabel(icon: "shippingbox.fill", text: "\(stockCount) crates", tint: DS.Color.textSecondary)
                     .font(Typography.caption)
 
                 Spacer()

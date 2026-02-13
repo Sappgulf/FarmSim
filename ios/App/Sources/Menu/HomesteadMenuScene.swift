@@ -5,15 +5,16 @@ final class HomesteadMenuScene: SKScene {
     private enum Z: CGFloat {
         case sky = 0
         case sun = 5
+        case sunRays = 3
         case mountains = 10
         case farHills = 15
         case closeHills = 20
         case ground = 25
-        case fence = 28 // New
-        case structures = 30 // Barn, Silo
+        case fence = 28
+        case structures = 30
         case animals = 35
-        case vegetation = 38 // New (Corn/Wheat)
-        case foreground = 40 // Grass, props
+        case vegetation = 38
+        case foreground = 40
         case ambient = 50
     }
 
@@ -22,6 +23,7 @@ final class HomesteadMenuScene: SKScene {
     // Vector Layers
     private let skyNode = SKShapeNode()
     private let sunNode = SKShapeNode(circleOfRadius: 60)
+    private let sunRaysNode = SKNode()
     private let mountainNode = SKShapeNode()
     private let farHillNode = SKShapeNode()
     private let closeHillNode = SKShapeNode()
@@ -29,8 +31,8 @@ final class HomesteadMenuScene: SKScene {
     
     // Entities
     private let barnNode = SKNode()
-    private let fenceNode = SKNode() // New
-    private let vegetationNode = SKNode() // New
+    private let fenceNode = SKNode()
+    private let vegetationNode = SKNode()
     private let animalLayer = SKNode()
     private var animals: [SKNode] = []
     
@@ -43,7 +45,7 @@ final class HomesteadMenuScene: SKScene {
         super.init(size: size)
         scaleMode = .aspectFill
         anchorPoint = CGPoint(x: 0.5, y: 0.5)
-        backgroundColor = UIColor(red: 0.4, green: 0.8, blue: 0.9, alpha: 1)
+        backgroundColor = UIColor(red: 0.45, green: 0.78, blue: 0.92, alpha: 1)
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -76,68 +78,81 @@ final class HomesteadMenuScene: SKScene {
 
     // MARK: - Scene Building
     
-    // MARK: - Scene Building
-    
     private func buildVectorScene() {
         guard let view = view else { return }
 
-        // 1. Sky
+        // 1. Sky — warm gradient via layered fills
         skyNode.zPosition = Z.sky.rawValue
         root.addChild(skyNode)
         
-        // 2. Sun
+        // 2. Sun Rays (behind sun)
+        sunRaysNode.zPosition = Z.sunRays.rawValue
+        root.addChild(sunRaysNode)
+        buildSunRays()
+        
+        // 3. Sun — warm golden glow
         sunNode.zPosition = Z.sun.rawValue
-        sunNode.fillColor = UIColor(red: 1.0, green: 0.95, blue: 0.7, alpha: 1) // Warmer yellow
+        sunNode.fillColor = UIColor(red: 1.0, green: 0.92, blue: 0.62, alpha: 1)
         sunNode.strokeColor = .clear
+        sunNode.glowWidth = 12
         root.addChild(sunNode)
         
-        // 3. Mountains (Rasterized)
-        mountainNode.zPosition = Z.mountains.rawValue
-        mountainNode.fillColor = UIColor(red: 0.35, green: 0.55, blue: 0.65, alpha: 1)
-        mountainNode.strokeColor = .clear
-        // Add to temp node for rasterization, not root yet
+        // 4. Sun halo
+        let halo = SKShapeNode(circleOfRadius: 90)
+        halo.fillColor = UIColor(red: 1.0, green: 0.95, blue: 0.7, alpha: 0.15)
+        halo.strokeColor = .clear
+        halo.zPosition = Z.sun.rawValue - 0.5
+        sunNode.addChild(halo)
         
-        // 4. Far Hills (Rasterized)
+        // 5. Mountains (Rasterized)
+        mountainNode.zPosition = Z.mountains.rawValue
+        mountainNode.fillColor = UIColor(red: 0.32, green: 0.52, blue: 0.62, alpha: 1)
+        mountainNode.strokeColor = .clear
+        
+        // 6. Far Hills (Rasterized)
         farHillNode.zPosition = Z.farHills.rawValue
-        farHillNode.fillColor = UIColor(red: 0.6, green: 0.8, blue: 0.5, alpha: 1)
+        farHillNode.fillColor = UIColor(red: 0.55, green: 0.78, blue: 0.45, alpha: 1)
         farHillNode.strokeColor = .clear
         
-        // 5. Close Hills (Rasterized)
+        // 7. Close Hills (Rasterized)
         closeHillNode.zPosition = Z.closeHills.rawValue
-        closeHillNode.fillColor = UIColor(red: 0.5, green: 0.75, blue: 0.4, alpha: 1)
+        closeHillNode.fillColor = UIColor(red: 0.48, green: 0.72, blue: 0.38, alpha: 1)
         closeHillNode.strokeColor = .clear
         
-        // 6. Ground (Rasterized)
+        // 8. Ground (Rasterized)
         groundNode.zPosition = Z.ground.rawValue
-        groundNode.fillColor = UIColor(red: 0.45, green: 0.7, blue: 0.35, alpha: 1)
+        groundNode.fillColor = UIColor(red: 0.42, green: 0.68, blue: 0.32, alpha: 1)
         groundNode.strokeColor = .clear
         
-        // Ground Patches
-        for _ in 0..<5 {
-            let patch = SKShapeNode(ellipseOf: CGSize(width: CGFloat.random(in: 100...300), height: CGFloat.random(in: 40...80)))
-            patch.fillColor = UIColor(red: 0.42, green: 0.68, blue: 0.32, alpha: 1)
+        // Ground Patches — darker soil patches
+        for _ in 0..<6 {
+            let patch = SKShapeNode(ellipseOf: CGSize(width: CGFloat.random(in: 80...260), height: CGFloat.random(in: 35...75)))
+            patch.fillColor = UIColor(red: 0.38, green: 0.64, blue: 0.28, alpha: 1)
             patch.strokeColor = .clear
             patch.position = CGPoint(x: CGFloat.random(in: -400...400), y: CGFloat.random(in: -150...(-50)))
             groundNode.addChild(patch)
         }
         
-        // 7. Fence (Rasterized)
+        // Wildflowers scattered across ground
+        buildWildflowers()
+        
+        // 9. Fence (Rasterized)
         buildFence()
         
-        // 8. Structures (Barn - Rasterized)
+        // 10. Structures (Barn - Rasterized)
         buildBarn()
         
-        // 9. Animals (Dynamic)
+        // 11. Animals (Dynamic)
         animalLayer.zPosition = Z.animals.rawValue
         root.addChild(animalLayer)
         
-        // 10. Vegetation (Rasterized)
+        // 12. Vegetation (Rasterized)
         buildVegetation()
         
-        // 11. Foreground Grass items (Dynamic)
-        for _ in 0..<25 {
-            let blade = SKShapeNode(rectOf: CGSize(width: 3, height: CGFloat.random(in: 8...16)), cornerRadius: 1.5)
-            blade.fillColor = UIColor(red: 0.3, green: 0.5, blue: 0.2, alpha: 1)
+        // 13. Foreground Grass items (Dynamic)
+        for _ in 0..<20 {
+            let blade = SKShapeNode(rectOf: CGSize(width: 3, height: CGFloat.random(in: 8...18)), cornerRadius: 1.5)
+            blade.fillColor = UIColor(red: 0.28, green: 0.48, blue: 0.18, alpha: 1)
             blade.strokeColor = .clear
             blade.zPosition = Z.foreground.rawValue
             blade.name = "grass"
@@ -145,34 +160,88 @@ final class HomesteadMenuScene: SKScene {
         }
     }
     
-
+    // MARK: - Sun Rays
     
+    private func buildSunRays() {
+        let rayCount = 6
+        for i in 0..<rayCount {
+            let angle = (CGFloat.pi * 2.0 / CGFloat(rayCount)) * CGFloat(i) + 0.3
+            let rayLength: CGFloat = 240
+            let rayWidth: CGFloat = 28
+            
+            let rayPath = CGMutablePath()
+            rayPath.move(to: .zero)
+            rayPath.addLine(to: CGPoint(x: -rayWidth * 0.5, y: rayLength))
+            rayPath.addLine(to: CGPoint(x: rayWidth * 0.5, y: rayLength))
+            rayPath.closeSubpath()
+            
+            let ray = SKShapeNode(path: rayPath)
+            ray.fillColor = UIColor(red: 1.0, green: 0.95, blue: 0.7, alpha: 0.08)
+            ray.strokeColor = .clear
+            ray.zRotation = angle
+            ray.name = "sunRay"
+            sunRaysNode.addChild(ray)
+        }
+    }
+    
+    // MARK: - Wildflowers
+    
+    private func buildWildflowers() {
+        let flowerColors: [UIColor] = [
+            UIColor(red: 1.0, green: 0.92, blue: 0.30, alpha: 1),  // Yellow
+            UIColor(red: 0.85, green: 0.45, blue: 0.65, alpha: 1), // Pink
+            UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.85), // White
+            UIColor(red: 0.65, green: 0.50, blue: 0.85, alpha: 1), // Purple
+            UIColor(red: 0.95, green: 0.60, blue: 0.25, alpha: 1), // Orange
+        ]
+        
+        for _ in 0..<18 {
+            let flower = SKShapeNode(circleOfRadius: CGFloat.random(in: 2.5...5))
+            flower.fillColor = flowerColors.randomElement() ?? .yellow
+            flower.strokeColor = .clear
+            flower.zPosition = Z.ground.rawValue + 0.5
+            flower.position = CGPoint(
+                x: CGFloat.random(in: -450...450),
+                y: CGFloat.random(in: -180...(-60))
+            )
+            flower.name = "flower"
+            groundNode.addChild(flower)
+        }
+    }
+    
+    // MARK: - Fence
+
     private func buildFence() {
         fenceNode.zPosition = Z.fence.rawValue
         root.addChild(fenceNode)
         
-        // Simple post and rail fence
-        let postSize = CGSize(width: 8, height: 40)
+        let postSize = CGSize(width: 8, height: 42)
         let railSize = CGSize(width: 80, height: 6)
         
-        // Left side
         for i in 0..<4 {
             let x = -300 + CGFloat(i) * 80
             let post = SKShapeNode(rectOf: postSize, cornerRadius: 2)
-            post.fillColor = UIColor(red: 0.6, green: 0.4, blue: 0.2, alpha: 1) // Wood
+            post.fillColor = UIColor(red: 0.58, green: 0.38, blue: 0.18, alpha: 1)
             post.strokeColor = .clear
             post.position = CGPoint(x: x, y: -20)
             fenceNode.addChild(post)
             
+            // Post cap
+            let cap = SKShapeNode(rectOf: CGSize(width: 12, height: 4), cornerRadius: 2)
+            cap.fillColor = UIColor(red: 0.52, green: 0.34, blue: 0.16, alpha: 1)
+            cap.strokeColor = .clear
+            cap.position = CGPoint(x: 0, y: 21)
+            post.addChild(cap)
+            
             if i < 3 {
                 let rail = SKShapeNode(rectOf: railSize, cornerRadius: 2)
-                rail.fillColor = UIColor(red: 0.55, green: 0.35, blue: 0.18, alpha: 1)
+                rail.fillColor = UIColor(red: 0.52, green: 0.34, blue: 0.16, alpha: 1)
                 rail.strokeColor = .clear
                 rail.position = CGPoint(x: x + 40, y: -10)
                 fenceNode.addChild(rail)
                 
                 let rail2 = SKShapeNode(rectOf: railSize, cornerRadius: 2)
-                rail2.fillColor = UIColor(red: 0.55, green: 0.35, blue: 0.18, alpha: 1)
+                rail2.fillColor = UIColor(red: 0.52, green: 0.34, blue: 0.16, alpha: 1)
                 rail2.strokeColor = .clear
                 rail2.position = CGPoint(x: x + 40, y: -25)
                 fenceNode.addChild(rail2)
@@ -180,13 +249,15 @@ final class HomesteadMenuScene: SKScene {
         }
     }
     
+    // MARK: - Barn
+    
     private func buildBarn() {
         barnNode.zPosition = Z.structures.rawValue
         root.addChild(barnNode)
         
         // Barn Base
         let base = SKShapeNode(rectOf: CGSize(width: 140, height: 100), cornerRadius: 4)
-        base.fillColor = UIColor(red: 0.8, green: 0.25, blue: 0.2, alpha: 1) // Barn Red
+        base.fillColor = UIColor(red: 0.78, green: 0.22, blue: 0.18, alpha: 1)
         base.strokeColor = .clear
         base.position = CGPoint(x: 0, y: 50)
         barnNode.addChild(base)
@@ -200,52 +271,80 @@ final class HomesteadMenuScene: SKScene {
             base.addChild(line)
         }
         
+        // Trim strip at base
+        let trim = SKShapeNode(rectOf: CGSize(width: 142, height: 6))
+        trim.fillColor = UIColor(red: 0.9, green: 0.88, blue: 0.82, alpha: 1)
+        trim.strokeColor = .clear
+        trim.position = CGPoint(x: 0, y: 0)
+        base.addChild(trim)
+        
         // Roof
         let roofPath = CGMutablePath()
-        roofPath.move(to: CGPoint(x: -80, y: 100))
-        roofPath.addLine(to: CGPoint(x: 0, y: 155)) // Taller roof
-        roofPath.addLine(to: CGPoint(x: 80, y: 100))
+        roofPath.move(to: CGPoint(x: -82, y: 100))
+        roofPath.addLine(to: CGPoint(x: 0, y: 158))
+        roofPath.addLine(to: CGPoint(x: 82, y: 100))
         roofPath.closeSubpath()
         let roof = SKShapeNode(path: roofPath)
-        roof.fillColor = UIColor(red: 0.3, green: 0.2, blue: 0.15, alpha: 1) // Dark Brown
+        roof.fillColor = UIColor(red: 0.28, green: 0.18, blue: 0.12, alpha: 1)
         roof.strokeColor = .clear
         barnNode.addChild(roof)
         
         // Door
         let door = SKShapeNode(rectOf: CGSize(width: 50, height: 75), cornerRadius: 2)
-        door.fillColor = UIColor(red: 0.2, green: 0.1, blue: 0.1, alpha: 1)
-        door.strokeColor = UIColor.white.withAlphaComponent(0.8)
-        door.lineWidth = 4
+        door.fillColor = UIColor(red: 0.18, green: 0.08, blue: 0.08, alpha: 1)
+        door.strokeColor = UIColor.white.withAlphaComponent(0.7)
+        door.lineWidth = 3
         door.position = CGPoint(x: 0, y: 37)
         barnNode.addChild(door)
         
         // Cross brace on door
-        let brace = SKShapeNode(rectOf: CGSize(width: 60, height: 4))
-        brace.fillColor = UIColor.white.withAlphaComponent(0.5)
+        let brace = SKShapeNode(rectOf: CGSize(width: 58, height: 3.5))
+        brace.fillColor = UIColor.white.withAlphaComponent(0.45)
         brace.strokeColor = .clear
         brace.zRotation = .pi / 4
         door.addChild(brace)
         
-        let brace2 = SKShapeNode(rectOf: CGSize(width: 60, height: 4))
-        brace2.fillColor = UIColor.white.withAlphaComponent(0.5)
+        let brace2 = SKShapeNode(rectOf: CGSize(width: 58, height: 3.5))
+        brace2.fillColor = UIColor.white.withAlphaComponent(0.45)
         brace2.strokeColor = .clear
         brace2.zRotation = -.pi / 4
         door.addChild(brace2)
         
-        // Window
+        // Warm light glow from door
+        let doorGlow = SKShapeNode(rectOf: CGSize(width: 46, height: 70), cornerRadius: 2)
+        doorGlow.fillColor = UIColor(red: 1.0, green: 0.9, blue: 0.6, alpha: 0.12)
+        doorGlow.strokeColor = .clear
+        door.addChild(doorGlow)
+        
+        // Window — warm light
         let win = SKShapeNode(circleOfRadius: 14)
-        win.fillColor = UIColor(red: 1.0, green: 0.95, blue: 0.6, alpha: 1) // Warm light
+        win.fillColor = UIColor(red: 1.0, green: 0.92, blue: 0.55, alpha: 1)
         win.strokeColor = .white
         win.lineWidth = 3
-        win.position = CGPoint(x: 0, y: 125)
+        win.position = CGPoint(x: 0, y: 128)
         barnNode.addChild(win)
+        
+        // Window glow
+        let winGlow = SKShapeNode(circleOfRadius: 22)
+        winGlow.fillColor = UIColor(red: 1.0, green: 0.92, blue: 0.55, alpha: 0.10)
+        winGlow.strokeColor = .clear
+        win.addChild(winGlow)
         
         // Silo
         let silo = SKShapeNode(rectOf: CGSize(width: 40, height: 90), cornerRadius: 2)
-        silo.fillColor = UIColor(red: 0.7, green: 0.7, blue: 0.75, alpha: 1) // Metal
+        silo.fillColor = UIColor(red: 0.68, green: 0.68, blue: 0.72, alpha: 1)
         silo.strokeColor = .clear
         silo.position = CGPoint(x: 85, y: 45)
         barnNode.addChild(silo)
+        
+        // Silo bands
+        for i in 0..<3 {
+            let band = SKShapeNode(rectOf: CGSize(width: 42, height: 2))
+            band.fillColor = UIColor(red: 0.58, green: 0.58, blue: 0.62, alpha: 1)
+            band.strokeColor = .clear
+            band.position = CGPoint(x: 0, y: -25 + CGFloat(i) * 25)
+            silo.addChild(band)
+        }
         
         let siloRoof = SKShapeNode(path: {
             let p = CGMutablePath()
@@ -253,10 +352,12 @@ final class HomesteadMenuScene: SKScene {
             p.addArc(center: CGPoint(x: 0, y: 45), radius: 20, startAngle: .pi, endAngle: 0, clockwise: false)
             return p
         }())
-        siloRoof.fillColor = UIColor(red: 0.6, green: 0.6, blue: 0.65, alpha: 1)
+        siloRoof.fillColor = UIColor(red: 0.58, green: 0.58, blue: 0.62, alpha: 1)
         siloRoof.strokeColor = .clear
         silo.addChild(siloRoof)
     }
+    
+    // MARK: - Vegetation
     
     private func buildVegetation() {
         vegetationNode.zPosition = Z.vegetation.rawValue
@@ -270,37 +371,63 @@ final class HomesteadMenuScene: SKScene {
             let stalk = SKNode()
             stalk.position = CGPoint(x: x, y: y)
             
-            // Stem
-            let stem = SKShapeNode(rectOf: CGSize(width: 4, height: 60), cornerRadius: 2)
-            stem.fillColor = UIColor(red: 0.4, green: 0.7, blue: 0.2, alpha: 1)
+            // Stem — slightly thicker
+            let stemHeight = CGFloat.random(in: 55...70)
+            let stem = SKShapeNode(rectOf: CGSize(width: 4.5, height: stemHeight), cornerRadius: 2)
+            stem.fillColor = UIColor(red: 0.38, green: 0.68, blue: 0.18, alpha: 1)
             stem.strokeColor = .clear
-            stem.position = CGPoint(x: 0, y: 30)
+            stem.position = CGPoint(x: 0, y: stemHeight / 2)
             stalk.addChild(stem)
             
             // Leaves
-            let leaf1 = SKShapeNode(ellipseOf: CGSize(width: 20, height: 6))
-            leaf1.fillColor = UIColor(red: 0.35, green: 0.65, blue: 0.15, alpha: 1)
+            let leaf1 = SKShapeNode(ellipseOf: CGSize(width: 22, height: 6))
+            leaf1.fillColor = UIColor(red: 0.32, green: 0.62, blue: 0.12, alpha: 1)
             leaf1.strokeColor = .clear
             leaf1.zRotation = .pi / 4
-            leaf1.position = CGPoint(x: 8, y: 20)
+            leaf1.position = CGPoint(x: 9, y: 20)
             stalk.addChild(leaf1)
             
-            let leaf2 = SKShapeNode(ellipseOf: CGSize(width: 20, height: 6))
-            leaf2.fillColor = UIColor(red: 0.35, green: 0.65, blue: 0.15, alpha: 1)
+            let leaf2 = SKShapeNode(ellipseOf: CGSize(width: 22, height: 6))
+            leaf2.fillColor = UIColor(red: 0.32, green: 0.62, blue: 0.12, alpha: 1)
             leaf2.strokeColor = .clear
             leaf2.zRotation = -.pi / 4
-            leaf2.position = CGPoint(x: -8, y: 40)
+            leaf2.position = CGPoint(x: -9, y: 40)
             stalk.addChild(leaf2)
             
-            // Corn cob (yellow dot)
+            // Corn cob
             if i % 2 == 0 {
-                let cob = SKShapeNode(ellipseOf: CGSize(width: 6, height: 12))
-                cob.fillColor = UIColor(red: 0.9, green: 0.8, blue: 0.2, alpha: 1)
+                let cob = SKShapeNode(ellipseOf: CGSize(width: 7, height: 13))
+                cob.fillColor = UIColor(red: 0.92, green: 0.82, blue: 0.22, alpha: 1)
                 cob.strokeColor = .clear
-                cob.position = CGPoint(x: 4, y: 35)
+                cob.position = CGPoint(x: 5, y: 35)
                 cob.zRotation = .pi / 6
                 stalk.addChild(cob)
             }
+            
+            vegetationNode.addChild(stalk)
+        }
+        
+        // Wheat stalks (Left side) — NEW
+        for i in 0..<8 {
+            let x = -340 + CGFloat(i) * 22 + CGFloat.random(in: -8...8)
+            let y = -150 + CGFloat.random(in: -15...15)
+            
+            let stalk = SKNode()
+            stalk.position = CGPoint(x: x, y: y)
+            
+            let stemH = CGFloat.random(in: 40...55)
+            let stem = SKShapeNode(rectOf: CGSize(width: 3, height: stemH), cornerRadius: 1.5)
+            stem.fillColor = UIColor(red: 0.72, green: 0.62, blue: 0.28, alpha: 1)
+            stem.strokeColor = .clear
+            stem.position = CGPoint(x: 0, y: stemH / 2)
+            stalk.addChild(stem)
+            
+            // Wheat head
+            let head = SKShapeNode(ellipseOf: CGSize(width: 8, height: 14))
+            head.fillColor = UIColor(red: 0.85, green: 0.72, blue: 0.32, alpha: 1)
+            head.strokeColor = .clear
+            head.position = CGPoint(x: 0, y: stemH + 4)
+            stalk.addChild(head)
             
             vegetationNode.addChild(stalk)
         }
@@ -309,11 +436,9 @@ final class HomesteadMenuScene: SKScene {
     // MARK: - Layout & Animation
     
     private func spawnVectorAnimals() {
-        // Clear old
         animalLayer.removeAllChildren()
         animals.removeAll()
         
-        // Create 2 Cows, 2 Sheep, 1 Pig, 2 Chickens
         let factory = AnimalFactory()
         
         let cow1 = factory.createCow()
@@ -328,26 +453,47 @@ final class HomesteadMenuScene: SKScene {
         animalLayer.addChild(sheep1)
         animals.append(sheep1)
         
+        let sheep2 = factory.createSheep()
+        animalLayer.addChild(sheep2)
+        animals.append(sheep2)
+        
         let pig = factory.createPig()
         animalLayer.addChild(pig)
         animals.append(pig)
         
-        let chicken = factory.createChicken()
-        animalLayer.addChild(chicken)
-        animals.append(chicken)
+        let chicken1 = factory.createChicken()
+        animalLayer.addChild(chicken1)
+        animals.append(chicken1)
+        
+        let chicken2 = factory.createChicken()
+        animalLayer.addChild(chicken2)
+        animals.append(chicken2)
     }
 
     private func layoutScene() {
         let w = size.width
         let h = size.height
         
-        // 1. Sky
+        // 1. Sky — warm multi-stop gradient via overlayed fills
         let skyRect = CGRect(x: -w, y: -h, width: w*2, height: h*2)
         skyNode.path = CGPath(rect: skyRect, transform: nil)
-        skyNode.fillColor = UIColor(red: 0.5, green: 0.8, blue: 0.95, alpha: 1)
+        skyNode.fillColor = UIColor(red: 0.48, green: 0.78, blue: 0.92, alpha: 1)
         
-        // 2. Sun
+        // Warm horizon tint
+        let horizonNode = skyNode.childNode(withName: "horizon") as? SKShapeNode ?? {
+            let n = SKShapeNode()
+            n.name = "horizon"
+            n.strokeColor = .clear
+            skyNode.addChild(n)
+            return n
+        }()
+        let horizonRect = CGRect(x: -w, y: -h * 0.4, width: w * 2, height: h * 0.5)
+        horizonNode.path = CGPath(rect: horizonRect, transform: nil)
+        horizonNode.fillColor = UIColor(red: 0.98, green: 0.88, blue: 0.68, alpha: 0.35)
+        
+        // 2. Sun position
         sunNode.position = CGPoint(x: w * 0.3, y: h * 0.35)
+        sunRaysNode.position = sunNode.position
         
         // 3. Mountains
         mountainNode.path = createHillPath(width: w, amplitude: 80, yOffset: 50)
@@ -379,10 +525,12 @@ final class HomesteadMenuScene: SKScene {
         // 8. Vegetation placement
         vegetationNode.position = CGPoint(x: 0, y: -h * 0.05)
         
-        // 9. Initial Animal Placement
+        // 9. Animal Placement — spread across pasture
+        let animalMinX = -w * 0.4
+        let animalMaxX = w * 0.15  // Don't overlap barn too much
         for (i, anim) in animals.enumerated() {
-            let xPos = CGFloat.random(in: -w*0.4...w*0.4)
-            let yPos = -h * 0.3 + CGFloat.random(in: -20...20)
+            let xPos = animalMinX + (animalMaxX - animalMinX) * CGFloat(i) / max(1, CGFloat(animals.count - 1)) + CGFloat.random(in: -20...20)
+            let yPos = -h * 0.3 + CGFloat.random(in: -25...25)
             anim.position = CGPoint(x: xPos, y: yPos)
             anim.zPosition = Z.animals.rawValue - yPos * 0.01
         }
@@ -396,7 +544,7 @@ final class HomesteadMenuScene: SKScene {
         
         debugNodeCount = recursiveNodeCount(from: root)
         
-        // Trigger Rasterization
+        // Rasterize
         if let view = view {
             rasterizeStaticNodes(in: view)
         }
@@ -404,29 +552,21 @@ final class HomesteadMenuScene: SKScene {
     
     // Performance: Rasterize complex vector nodes into sprites
     private func rasterizeStaticNodes(in view: SKView) {
-        // Helper
         func cache(_ node: SKNode, z: CGFloat, name: String) {
-            // Only rasterize if not already done (check for sprite child)
-            if node.parent == nil { return } // Already removed/rasterized
+            if node.parent == nil { return }
             if node.children.first(where: { $0 is SKSpriteNode }) != nil { return }
             
-            // 1. Snapshot
             guard let texture = view.texture(from: node) else { return }
             
-            // 2. Create Sprite
             let sprite = SKSpriteNode(texture: texture)
             sprite.position = node.position
             sprite.zPosition = z
             sprite.name = name + "_cached"
             
-            // Add sprite to root
             root.addChild(sprite)
-            
-            // Remove original vector node from root
             node.removeFromParent()
         }
         
-        // Order matters for Z
         cache(mountainNode, z: Z.mountains.rawValue, name: "mountains")
         cache(farHillNode, z: Z.farHills.rawValue, name: "farHills")
         cache(closeHillNode, z: Z.closeHills.rawValue, name: "closeHills")
@@ -435,35 +575,37 @@ final class HomesteadMenuScene: SKScene {
         cache(barnNode, z: Z.structures.rawValue, name: "barn")
         cache(vegetationNode, z: Z.vegetation.rawValue, name: "vegetation")
         
-        // Update debug count
         debugNodeCount = recursiveNodeCount(from: root)
         
-        // Ambient Particles
         if ambientNodes.isEmpty {
             buildAmbientParticles()
         }
     }
     
     private func buildAmbientParticles() {
-        for _ in 0..<25 {
-            let p = SKShapeNode(circleOfRadius: CGFloat.random(in: 1...3))
-            p.fillColor = UIColor.white.withAlphaComponent(0.4)
+        // Warm firefly-like golden motes
+        for _ in 0..<20 {
+            let p = SKShapeNode(circleOfRadius: CGFloat.random(in: 1.5...3.5))
+            p.fillColor = UIColor(red: 1.0, green: 0.92, blue: 0.55, alpha: 0.3)
             p.strokeColor = .clear
             p.blendMode = .add
             p.zPosition = Z.ambient.rawValue
             p.position = CGPoint(
                 x: CGFloat.random(in: -size.width/2...size.width/2),
-                y: CGFloat.random(in: -size.height/2...size.height/2)
+                y: CGFloat.random(in: -size.height * 0.3...size.height * 0.3)
             )
             
-            // Subtle motion
             let move = SKAction.moveBy(
-                x: CGFloat.random(in: -30...30),
-                y: CGFloat.random(in: -20...20),
-                duration: Double.random(in: 3...7)
+                x: CGFloat.random(in: -25...25),
+                y: CGFloat.random(in: -15...15),
+                duration: Double.random(in: 3.5...7)
             )
+            let fade = SKAction.sequence([
+                SKAction.fadeAlpha(to: CGFloat.random(in: 0.12...0.35), duration: Double.random(in: 2...4)),
+                SKAction.fadeAlpha(to: CGFloat.random(in: 0.25...0.45), duration: Double.random(in: 2...4))
+            ])
             let seq = SKAction.sequence([move, move.reversed()])
-            p.run(.repeatForever(seq))
+            p.run(.repeatForever(.group([seq, fade])))
             
             root.addChild(p)
             ambientNodes.append(p)
@@ -486,15 +628,21 @@ final class HomesteadMenuScene: SKScene {
     
     private func animateScene() {
         sunNode.removeAllActions()
+        sunRaysNode.removeAllActions()
         for anim in animals { anim.removeAllActions() }
         
         if !reducedMotion {
-            // Sun Glow
-            let scaleUp = SKAction.scale(to: 1.1, duration: 3.0)
-            let scaleDown = SKAction.scale(to: 1.0, duration: 3.0)
+            // Sun pulse
+            let scaleUp = SKAction.scale(to: 1.08, duration: 3.5)
+            let scaleDown = SKAction.scale(to: 1.0, duration: 3.5)
+            scaleUp.timingMode = .easeInEaseOut
+            scaleDown.timingMode = .easeInEaseOut
             sunNode.run(.repeatForever(.sequence([scaleUp, scaleDown])))
             
-            // Animals Wander
+            // Sun rays slow rotation
+            sunRaysNode.run(.repeatForever(.rotate(byAngle: .pi * 2, duration: 90)))
+            
+            // Animals wander
             for anim in animals {
                 wander(anim)
             }
@@ -508,7 +656,6 @@ final class HomesteadMenuScene: SKScene {
             let dist = CGFloat.random(in: 20...50)
             let left = Bool.random()
             
-            // Face direction
             node.xScale = left ? abs(node.xScale) : -abs(node.xScale)
             
             let moveAction = SKAction.moveBy(x: left ? -dist : dist, y: 0, duration: Double.random(in: 1.5...3.0))
@@ -522,7 +669,6 @@ final class HomesteadMenuScene: SKScene {
             ])
             
             node.run(walk) {
-                // Keep in bounds
                 if abs(node.position.x) > self.size.width * 0.45 {
                     node.position.x = node.position.x > 0 ? self.size.width * 0.4 : -self.size.width * 0.4
                 }
@@ -546,55 +692,107 @@ private class AnimalFactory {
         let node = SKNode()
         
         // Body
-        let body = SKShapeNode(rectOf: CGSize(width: 40, height: 26), cornerRadius: 8)
+        let body = SKShapeNode(rectOf: CGSize(width: 42, height: 28), cornerRadius: 10)
         body.fillColor = .white
         body.strokeColor = .clear
         node.addChild(body)
         
         // Spots
-        let spot = SKShapeNode(circleOfRadius: 6)
-        spot.fillColor = .black
-        spot.strokeColor = .clear
-        spot.position = CGPoint(x: -10, y: 2)
-        node.addChild(spot)
+        let spot1 = SKShapeNode(circleOfRadius: 6)
+        spot1.fillColor = UIColor(red: 0.2, green: 0.15, blue: 0.1, alpha: 1)
+        spot1.strokeColor = .clear
+        spot1.position = CGPoint(x: -10, y: 2)
+        node.addChild(spot1)
+        
+        let spot2 = SKShapeNode(circleOfRadius: 4)
+        spot2.fillColor = UIColor(red: 0.2, green: 0.15, blue: 0.1, alpha: 1)
+        spot2.strokeColor = .clear
+        spot2.position = CGPoint(x: 8, y: -3)
+        node.addChild(spot2)
         
         // Head
         let head = SKShapeNode(rectOf: CGSize(width: 22, height: 22), cornerRadius: 6)
         head.fillColor = .white
         head.strokeColor = .clear
-        head.position = CGPoint(x: -22, y: 12)
+        head.position = CGPoint(x: -24, y: 12)
         node.addChild(head)
         
+        // Eye
+        let eye = SKShapeNode(circleOfRadius: 2)
+        eye.fillColor = .black
+        eye.strokeColor = .clear
+        eye.position = CGPoint(x: -4, y: 3)
+        head.addChild(eye)
+        
+        // Nose
+        let nose = SKShapeNode(ellipseOf: CGSize(width: 8, height: 5))
+        nose.fillColor = UIColor(red: 1.0, green: 0.78, blue: 0.72, alpha: 1)
+        nose.strokeColor = .clear
+        nose.position = CGPoint(x: -6, y: -3)
+        head.addChild(nose)
+        
         // Legs
-        let legSize = CGSize(width: 6, height: 12)
-        for x in [-12, 12] {
+        let legSize = CGSize(width: 6, height: 14)
+        for x in [-14, 14] {
             let leg = SKShapeNode(rectOf: legSize, cornerRadius: 2)
             leg.fillColor = .white
-            leg.position = CGPoint(x: CGFloat(x), y: -16)
+            leg.strokeColor = .clear
+            leg.position = CGPoint(x: CGFloat(x), y: -18)
             node.addChild(leg)
         }
+        
+        // Tail
+        let tail = SKShapeNode(rectOf: CGSize(width: 2, height: 12), cornerRadius: 1)
+        tail.fillColor = UIColor(red: 0.75, green: 0.65, blue: 0.55, alpha: 1)
+        tail.strokeColor = .clear
+        tail.position = CGPoint(x: 22, y: 8)
+        tail.zRotation = -.pi / 6
+        node.addChild(tail)
         
         return node
     }
     
     func createSheep() -> SKNode {
         let node = SKNode()
+        
+        // Fluffy body (multiple overlapping circles)
         let body = SKShapeNode(circleOfRadius: 16)
-        body.fillColor = .white
+        body.fillColor = UIColor(red: 0.96, green: 0.95, blue: 0.92, alpha: 1)
         body.strokeColor = .clear
         node.addChild(body)
         
+        let fluff1 = SKShapeNode(circleOfRadius: 10)
+        fluff1.fillColor = UIColor(red: 0.98, green: 0.97, blue: 0.94, alpha: 1)
+        fluff1.strokeColor = .clear
+        fluff1.position = CGPoint(x: -6, y: 8)
+        node.addChild(fluff1)
+        
+        let fluff2 = SKShapeNode(circleOfRadius: 10)
+        fluff2.fillColor = UIColor(red: 0.94, green: 0.93, blue: 0.9, alpha: 1)
+        fluff2.strokeColor = .clear
+        fluff2.position = CGPoint(x: 6, y: 6)
+        node.addChild(fluff2)
+        
+        // Head
         let head = SKShapeNode(circleOfRadius: 10)
-        head.fillColor = .black
+        head.fillColor = UIColor(red: 0.15, green: 0.12, blue: 0.1, alpha: 1)
+        head.strokeColor = .clear
         head.position = CGPoint(x: -14, y: 6)
         node.addChild(head)
         
+        // Eye
+        let eye = SKShapeNode(circleOfRadius: 1.5)
+        eye.fillColor = .white
+        eye.strokeColor = .clear
+        eye.position = CGPoint(x: -3, y: 2)
+        head.addChild(eye)
+        
         // Legs
         for x in [-8, 8] {
-            let leg = SKShapeNode(rectOf: CGSize(width: 4, height: 10))
-            leg.fillColor = .black
+            let leg = SKShapeNode(rectOf: CGSize(width: 4, height: 12))
+            leg.fillColor = UIColor(red: 0.15, green: 0.12, blue: 0.1, alpha: 1)
             leg.strokeColor = .clear
-            leg.position = CGPoint(x: x, y: -16)
+            leg.position = CGPoint(x: x, y: -18)
             node.addChild(leg)
         }
         return node
@@ -602,38 +800,113 @@ private class AnimalFactory {
     
     func createPig() -> SKNode {
         let node = SKNode()
-        let body = SKShapeNode(rectOf: CGSize(width: 30, height: 20), cornerRadius: 10)
-        body.fillColor = UIColor(red: 1.0, green: 0.7, blue: 0.8, alpha: 1) // Pink
+        
+        // Body
+        let body = SKShapeNode(rectOf: CGSize(width: 32, height: 22), cornerRadius: 11)
+        body.fillColor = UIColor(red: 0.98, green: 0.72, blue: 0.78, alpha: 1)
         body.strokeColor = .clear
         node.addChild(body)
         
-        let snout = SKShapeNode(rectOf: CGSize(width: 8, height: 6), cornerRadius: 2)
-        snout.fillColor = UIColor(red: 1.0, green: 0.5, blue: 0.6, alpha: 1)
-        snout.position = CGPoint(x: -16, y: 2)
+        // Snout
+        let snout = SKShapeNode(rectOf: CGSize(width: 10, height: 8), cornerRadius: 3)
+        snout.fillColor = UIColor(red: 0.98, green: 0.52, blue: 0.58, alpha: 1)
+        snout.strokeColor = .clear
+        snout.position = CGPoint(x: -18, y: 2)
         node.addChild(snout)
+        
+        // Nostrils
+        let nostril1 = SKShapeNode(circleOfRadius: 1.5)
+        nostril1.fillColor = UIColor(red: 0.85, green: 0.42, blue: 0.48, alpha: 1)
+        nostril1.strokeColor = .clear
+        nostril1.position = CGPoint(x: -2, y: 0)
+        snout.addChild(nostril1)
+        
+        let nostril2 = SKShapeNode(circleOfRadius: 1.5)
+        nostril2.fillColor = UIColor(red: 0.85, green: 0.42, blue: 0.48, alpha: 1)
+        nostril2.strokeColor = .clear
+        nostril2.position = CGPoint(x: 2, y: 0)
+        snout.addChild(nostril2)
+        
+        // Eye
+        let eye = SKShapeNode(circleOfRadius: 2)
+        eye.fillColor = .black
+        eye.strokeColor = .clear
+        eye.position = CGPoint(x: -12, y: 6)
+        node.addChild(eye)
+        
+        // Ears
+        let ear = SKShapeNode(ellipseOf: CGSize(width: 8, height: 6))
+        ear.fillColor = UIColor(red: 0.95, green: 0.62, blue: 0.68, alpha: 1)
+        ear.strokeColor = .clear
+        ear.position = CGPoint(x: -8, y: 12)
+        ear.zRotation = .pi / 6
+        node.addChild(ear)
+        
+        // Legs
+        for x in [-10, 10] {
+            let leg = SKShapeNode(rectOf: CGSize(width: 5, height: 10), cornerRadius: 2)
+            leg.fillColor = UIColor(red: 0.95, green: 0.65, blue: 0.72, alpha: 1)
+            leg.strokeColor = .clear
+            leg.position = CGPoint(x: CGFloat(x), y: -14)
+            node.addChild(leg)
+        }
+        
+        // Curly tail
+        let tail = SKShapeNode(circleOfRadius: 3)
+        tail.fillColor = UIColor(red: 0.95, green: 0.65, blue: 0.72, alpha: 1)
+        tail.strokeColor = .clear
+        tail.position = CGPoint(x: 18, y: 5)
+        node.addChild(tail)
         
         return node
     }
     
     func createChicken() -> SKNode {
         let node = SKNode()
-        let body = SKShapeNode(circleOfRadius: 8)
-        body.fillColor = .white
+        
+        // Body
+        let body = SKShapeNode(circleOfRadius: 9)
+        body.fillColor = UIColor(red: 0.98, green: 0.96, blue: 0.90, alpha: 1)
         body.strokeColor = .clear
         node.addChild(body)
         
-        let comb = SKShapeNode(circleOfRadius: 3)
-        comb.fillColor = .red
+        // Wing
+        let wing = SKShapeNode(ellipseOf: CGSize(width: 8, height: 6))
+        wing.fillColor = UIColor(red: 0.92, green: 0.88, blue: 0.8, alpha: 1)
+        wing.strokeColor = .clear
+        wing.position = CGPoint(x: 4, y: 0)
+        node.addChild(wing)
+        
+        // Comb
+        let comb = SKShapeNode(circleOfRadius: 3.5)
+        comb.fillColor = UIColor(red: 0.92, green: 0.22, blue: 0.18, alpha: 1)
         comb.strokeColor = .clear
-        comb.position = CGPoint(x: 0, y: 8)
+        comb.position = CGPoint(x: -1, y: 10)
         node.addChild(comb)
         
-        let beak = SKShapeNode(rectOf: CGSize(width: 4, height: 4))
-        beak.fillColor = .orange
+        // Beak
+        let beak = SKShapeNode(rectOf: CGSize(width: 5, height: 4))
+        beak.fillColor = UIColor(red: 0.95, green: 0.72, blue: 0.18, alpha: 1)
         beak.strokeColor = .clear
         beak.zRotation = .pi / 4
-        beak.position = CGPoint(x: -8, y: 2)
+        beak.position = CGPoint(x: -9, y: 2)
         node.addChild(beak)
+        
+        // Eye
+        let eye = SKShapeNode(circleOfRadius: 1.5)
+        eye.fillColor = .black
+        eye.strokeColor = .clear
+        eye.position = CGPoint(x: -5, y: 4)
+        node.addChild(eye)
+        
+        // Legs
+        for x in [-3, 3] {
+            let leg = SKShapeNode(rectOf: CGSize(width: 2, height: 6))
+            leg.fillColor = UIColor(red: 0.92, green: 0.72, blue: 0.18, alpha: 1)
+            leg.strokeColor = .clear
+            leg.position = CGPoint(x: CGFloat(x), y: -12)
+            node.addChild(leg)
+        }
         
         return node
     }

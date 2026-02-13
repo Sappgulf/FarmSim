@@ -9,33 +9,48 @@ struct BootView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var hasSave = false
-    @State private var menuDisplay = MenuDisplayContent.defaultValue
     @State private var isBusy = false
-    @State private var showingCredits = false
 
     var body: some View {
         ZStack {
             if appState.rootScreen == .game, let store {
                 GameShellView(store: store, appState: appState)
                     .transition(gameTransition)
-            } else {
+            } else if let store {
                 MainMenuView(
-                    title: menuDisplay.title,
-                    tagline: menuDisplay.tagline,
-                    hasSave: hasSave,
-                    isBusy: isBusy,
-                    onPrimaryAction: handlePrimaryAction,
-                    onNewGameAction: handleNewGame,
-                    onSettingsAction: openSettings,
-                    onCreditsAction: { showingCredits = true }
+                    appState: appState,
+                    store: store,
+                    onContinue: handlePrimaryAction,
+                    onNewGame: handleNewGame
                 )
                 .transition(menuTransition)
+            } else {
+                // Pre-store loading state
+                Color.clear
+                    .farmBackground(palette: .meadow)
+                    .overlay {
+                        VStack(spacing: DS.Space.md) {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .scaleEffect(1.2)
+                            Text("Loading…")
+                                .font(Typography.bodyStrong)
+                                .foregroundStyle(.white.opacity(0.8))
+                        }
+                    }
+                    .ignoresSafeArea()
             }
         }
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.32), value: appState.rootScreen)
         .onAppear {
             hasSave = Self.probeHasSave()
-            menuDisplay = Self.loadMenuDisplay()
+            // Eagerly load store for menu
+            if store == nil {
+                let loadedStore = GameStore()
+                loadedStore.setMenuPresented(true)
+                store = loadedStore
+                onStoreReady(loadedStore)
+            }
             store?.setMenuPresented(appState.rootScreen == .menu)
         }
         .onChange(of: appState.rootScreen) { _, screen in
@@ -57,11 +72,8 @@ struct BootView: View {
                     .presentationDragIndicator(.visible)
             } else {
                 ProgressView("Loading settings...")
-                    .padding(24)
+                    .padding(DS.Space.xl)
             }
-        }
-        .sheet(isPresented: $showingCredits) {
-            CreditsView(appTitle: menuDisplay.title)
         }
         .overlay {
             if isBusy {
@@ -72,11 +84,12 @@ struct BootView: View {
                             HStack(spacing: DS.Space.sm) {
                                 ProgressView()
                                     .progressViewStyle(.circular)
-                                Text("Preparing your homestead...")
+                                Text("Preparing your homestead…")
                                     .font(Typography.bodyStrong)
                             }
                         }
                         .padding(.horizontal, DS.Space.lg)
+                        .shadow(color: .black.opacity(0.15), radius: 16, y: 8)
                     }
                     .transition(.opacity)
             }
@@ -127,13 +140,6 @@ struct BootView: View {
         }
     }
 
-    private func openSettings() {
-        runBusyAction {
-            _ = ensureStoreLoaded()
-            appState.showingMenuSettings = true
-        }
-    }
-
     private func runBusyAction(_ action: @escaping @MainActor () -> Void) {
         guard !isBusy else { return }
         Task { @MainActor in
@@ -159,35 +165,4 @@ struct BootView: View {
     private static func probeHasSave() -> Bool {
         FileManager.default.fileExists(atPath: SavePaths.defaultSaveURL(appName: "FarmSim").path)
     }
-
-    private static func loadMenuDisplay() -> MenuDisplayContent {
-        let bundle = Bundle.main
-        guard
-            let url = bundle.url(forResource: "strings", withExtension: "json", subdirectory: "content")
-                ?? bundle.url(forResource: "strings", withExtension: "json"),
-            let data = try? Data(contentsOf: url),
-            let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-            let ui = object["ui"] as? [String: Any]
-        else {
-            return .defaultValue
-        }
-
-        let title = (ui["appTitle"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let tagline = (ui["menuTagline"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let resolvedTitle = (title?.isEmpty == false ? title : nil) ?? MenuDisplayContent.defaultValue.title
-        return MenuDisplayContent(
-            title: resolvedTitle,
-            tagline: tagline?.isEmpty == false ? tagline : MenuDisplayContent.defaultValue.tagline
-        )
-    }
-}
-
-private struct MenuDisplayContent: Sendable {
-    let title: String
-    let tagline: String?
-
-    static let defaultValue = MenuDisplayContent(
-        title: "FarmSim",
-        tagline: "Grow your homestead one cozy day at a time."
-    )
 }

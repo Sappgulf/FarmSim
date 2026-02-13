@@ -264,7 +264,10 @@ struct FarmView: View {
                             RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                                 .stroke(selected ? DS.Color.money : .clear, lineWidth: 1.5)
                         )
+                        .shadow(color: selected ? DS.Color.money.opacity(0.4) : .clear, radius: 8, x: 0, y: 2)
                         .opacity(unlocked ? 1.0 : 0.45)
+                        .scaleEffect(selected ? 1.08 : 1.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.65), value: selected)
                     }
                     .buttonStyle(.plain)
                     .disabled(!unlocked)
@@ -308,6 +311,7 @@ struct FarmView: View {
                 Image(systemName: "sunrise.fill")
                     .font(.system(size: 40, weight: .semibold))
                     .foregroundStyle(DS.Color.money)
+                    .shadow(color: DS.Color.money.opacity(0.45), radius: 12, x: 0, y: 2)
                 Text(store.dayRolloverMessage)
                     .font(.headline.weight(.semibold))
                     .multilineTextAlignment(.center)
@@ -322,9 +326,10 @@ struct FarmView: View {
                     .stroke(DS.Color.cardStroke, lineWidth: 0.5)
             )
             .padding(.horizontal, DS.Space.lg)
-            .shadow(color: DS.shadow, radius: 12, y: 8)
+            .shadow(color: DS.shadow, radius: 16, y: 8)
         }
         .buttonStyle(.plain)
+        .transition(.scale(scale: 0.92).combined(with: .opacity))
     }
 }
 

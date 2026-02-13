@@ -129,38 +129,21 @@ struct ShopView: View {
                     .padding(.vertical, 8)
             }
         }
-        .padding(12)
+        .padding(DS.Space.sm)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                 .strokeBorder(Theme.cardStroke, lineWidth: 0.5)
         )
+        .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
         .opacity(unlocked ? 1.0 : 0.55)
     }
 
     private func seasonBadge(_ season: String) -> some View {
-        let icon: String
-        let color: Color
-        switch season.lowercased() {
-        case "spring": icon = "leaf.fill"; color = .green
-        case "summer": icon = "sun.max.fill"; color = .orange
-        case "fall": icon = "leaf.fill"; color = .brown
-        case "winter": icon = "snowflake"; color = .cyan
-        default: icon = "questionmark"; color = .gray
-        }
-        return HStack(spacing: 3) {
-            Image(systemName: icon)
-                .font(.system(size: 8, weight: .bold))
-            Text(season.capitalized)
-                .font(.system(size: 9, weight: .bold, design: .rounded))
-        }
-        .foregroundStyle(color)
-        .padding(.horizontal, 7)
-        .padding(.vertical, 3)
-        .background(color.opacity(0.15), in: Capsule())
+        SeasonBadge(season: season)
     }
 }
 

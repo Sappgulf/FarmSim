@@ -32,6 +32,9 @@ struct TownMarketView: View {
 
                     CardContainer {
                         HStack {
+                            Image(systemName: "dollarsign.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(DS.Color.money)
                             Text("Coins")
                                 .font(.headline)
                             Spacer()
@@ -255,6 +258,11 @@ struct TownMarketView: View {
                                         Text("Lv \(level)/\(plan.maxLevel)")
                                             .font(.caption.monospacedDigit())
                                             .foregroundStyle(level > 0 ? .secondary : .primary)
+                                    }
+
+                                    if level > 0 {
+                                        ProgressView(value: Double(level), total: Double(plan.maxLevel))
+                                            .tint(DS.Color.accent)
                                     }
 
                                     if locked {
@@ -583,9 +591,8 @@ struct TownMarketView: View {
                                             .foregroundStyle(.secondary)
                                     }
                                     HStack {
-                                        Text("Progress \(progress)/\(challenge.target) • Reward \(challenge.rewardCoins) coins + \(challenge.rewardXP) XP")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
+                                        ProgressView(value: Double(progress), total: Double(challenge.target))
+                                            .tint(ready ? Theme.success : DS.Color.xp)
                                         Spacer()
                                         if claimedToday {
                                             Text("Claimed")

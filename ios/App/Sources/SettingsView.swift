@@ -11,7 +11,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Your Farm") {
+                Section {
                     TextField("Name your farm", text: $farmNameInput)
                         .textInputAutocapitalization(.words)
                         .onSubmit {
@@ -31,9 +31,12 @@ struct SettingsView: View {
                             Text(palette.title).tag(palette)
                         }
                     }
+                } header: {
+                    Label("Your Farm", systemImage: "leaf.fill")
+                        .foregroundStyle(DS.Color.accent)
                 }
 
-                Section("Sounds & Vibes") {
+                Section {
                     Toggle("Farm Sounds", isOn: Binding(
                         get: { store.settings.soundEnabled },
                         set: { store.setSoundEnabled($0) }
@@ -48,9 +51,12 @@ struct SettingsView: View {
                         get: { store.settings.cropsReadyNotifications },
                         set: { store.setCropsReadyNotifications($0) }
                     ))
+                } header: {
+                    Label("Sounds & Vibes", systemImage: "speaker.wave.2.fill")
+                        .foregroundStyle(DS.Color.accent)
                 }
 
-                Section("Comfort & Ease") {
+                Section {
                     Toggle("Reduce Motion", isOn: Binding(
                         get: { store.settings.reducedMotion },
                         set: { store.setReducedMotion($0) }
@@ -60,9 +66,12 @@ struct SettingsView: View {
                         get: { store.settings.voiceOverHints },
                         set: { store.setVoiceOverHints($0) }
                     ))
+                } header: {
+                    Label("Comfort & Ease", systemImage: "accessibility")
+                        .foregroundStyle(DS.Color.accent)
                 }
 
-                Section("Under the Hood") {
+                Section {
                     Toggle("Show Tile Coordinates", isOn: Binding(
                         get: { store.settings.showTileCoordinates },
                         set: { store.setShowTileCoordinates($0) }
@@ -81,28 +90,40 @@ struct SettingsView: View {
                         Text("60 FPS").tag(60)
                         Text("120 FPS").tag(120)
                     }
+                } header: {
+                    Label("Under the Hood", systemImage: "gearshape.2.fill")
+                        .foregroundStyle(DS.Color.accent)
                 }
 
-                Section("Start Over") {
+                Section {
                     Button(role: .destructive) {
                         confirmReset = true
                     } label: {
-                        Text("Reset Save")
+                        Label("Reset Save", systemImage: "trash.fill")
                     }
+                } header: {
+                    Label("Start Over", systemImage: "arrow.counterclockwise")
+                        .foregroundStyle(.red)
                 }
 
-                Section("About Your Farm") {
+                Section {
                     LabeledContent("Save Version", value: "\(store.save.version)")
                     LabeledContent("Farm Size", value: "\(store.save.world.gridWidth)x\(store.save.world.gridHeight)")
                     LabeledContent("Farm Clock", value: store.hudTimeText)
                     LabeledContent("Status", value: store.statusText)
+                } header: {
+                    Label("About Your Farm", systemImage: "info.circle.fill")
+                        .foregroundStyle(DS.Color.accent)
                 }
 
                 #if DEBUG
-                Section("Debug Time") {
+                Section {
                     Button("Fast-forward 1 Day") {
                         store.advanceDays(1)
                     }
+                } header: {
+                    Label("Debug Time", systemImage: "timer")
+                        .foregroundStyle(.orange)
                 }
                 #endif
 
@@ -111,9 +132,14 @@ struct SettingsView: View {
                         appState.openMainMenu()
                     }
                 } footer: {
-                    Text("Happy farming! May your fields be ever green.")
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, DS.Space.sm)
+                    VStack(spacing: DS.Space.xs) {
+                        Text("Happy farming! May your fields be ever green.")
+                        Text("FarmSim v1.0 · Swift 5.10 · iOS 17+")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, DS.Space.sm)
                 }
             }
             .navigationTitle("Settings")

@@ -9,6 +9,7 @@ enum DS {
         static let md: CGFloat = 16
         static let lg: CGFloat = 20
         static let xl: CGFloat = 24
+        static let xxl: CGFloat = 32
     }
 
     enum Radius {
@@ -16,6 +17,7 @@ enum DS {
         static let md: CGFloat = 14
         static let lg: CGFloat = 18
         static let xl: CGFloat = 24
+        static let xxl: CGFloat = 28
     }
 
     enum Color {
@@ -63,48 +65,11 @@ struct CardContainer<Content: View>: View {
                 RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                     .stroke(DS.Color.cardStroke, lineWidth: 0.5)
             )
+            .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
     }
 }
 
-struct SectionHeader: View {
-    let title: String
-    let subtitle: String?
 
-    init(_ title: String, subtitle: String? = nil) {
-        self.title = title
-        self.subtitle = subtitle
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: DS.Space.xs) {
-            Text(title)
-                .font(.title3.weight(.semibold))
-            if let subtitle {
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-struct StatPill: View {
-    let icon: String
-    let value: String
-
-    var body: some View {
-        Label {
-            Text(value)
-                .font(.footnote.monospacedDigit().weight(.semibold))
-        } icon: {
-            Image(systemName: icon)
-        }
-        .padding(.horizontal, DS.Space.sm)
-        .padding(.vertical, DS.Space.xs)
-        .background(.ultraThinMaterial, in: Capsule())
-    }
-}
 
 struct PrimaryButtonStyle: ButtonStyle {
     var tint: SwiftUI.Color = DS.Color.accent
@@ -119,8 +84,9 @@ struct PrimaryButtonStyle: ButtonStyle {
                 in: RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
             )
             .foregroundStyle(.white)
-            .scaleEffect(configuration.isPressed ? 0.99 : 1.0)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .shadow(color: tint.opacity(0.35), radius: configuration.isPressed ? 2 : 8, x: 0, y: configuration.isPressed ? 1 : 4)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 
