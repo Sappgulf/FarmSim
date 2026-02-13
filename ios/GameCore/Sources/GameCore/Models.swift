@@ -245,12 +245,14 @@ public struct SaveGame: Codable, Hashable, Sendable {
     public var daySeed: UInt64
     public var player: PlayerState
     public var world: WorldState
+    public var meta: MetaState
 
-    public init(version: Int, daySeed: UInt64 = 1, player: PlayerState, world: WorldState) {
+    public init(version: Int, daySeed: UInt64 = 1, player: PlayerState, world: WorldState, meta: MetaState = MetaState()) {
         self.version = version
         self.daySeed = daySeed
         self.player = player
         self.world = world
+        self.meta = meta
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -258,6 +260,7 @@ public struct SaveGame: Codable, Hashable, Sendable {
         case daySeed
         case player
         case world
+        case meta
     }
 
     public init(from decoder: Decoder) throws {
@@ -266,7 +269,111 @@ public struct SaveGame: Codable, Hashable, Sendable {
         daySeed = try container.decodeIfPresent(UInt64.self, forKey: .daySeed) ?? 1
         player = try container.decode(PlayerState.self, forKey: .player)
         world = try container.decode(WorldState.self, forKey: .world)
+        meta = try container.decodeIfPresent(MetaState.self, forKey: .meta) ?? MetaState()
     }
 }
 
 public typealias GameState = SaveGame
+
+public struct TimeMetaState: Codable, Hashable, Sendable {
+    public var currentTimeSeconds: Double
+    public var dayIndex: Int
+    public var lastRealWorldTimestamp: TimeInterval
+
+    public init(
+        currentTimeSeconds: Double = 0,
+        dayIndex: Int = 0,
+        lastRealWorldTimestamp: TimeInterval = 0
+    ) {
+        self.currentTimeSeconds = max(0, currentTimeSeconds)
+        self.dayIndex = max(0, dayIndex)
+        self.lastRealWorldTimestamp = max(0, lastRealWorldTimestamp)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case currentTimeSeconds
+        case dayIndex
+        case lastRealWorldTimestamp
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        currentTimeSeconds = max(0, try container.decodeIfPresent(Double.self, forKey: .currentTimeSeconds) ?? 0)
+        dayIndex = max(0, try container.decodeIfPresent(Int.self, forKey: .dayIndex) ?? 0)
+        lastRealWorldTimestamp = max(0, try container.decodeIfPresent(TimeInterval.self, forKey: .lastRealWorldTimestamp) ?? 0)
+    }
+}
+
+public struct MetaState: Codable, Hashable, Sendable {
+    public var buildingLevels: [String: Int]
+    public var completedResearch: [String: Bool]
+    public var discoveredHybrids: [String: Bool]
+    public var expansionPurchases: Int
+    public var livestockCounts: [String: Int]
+    public var petLevels: [String: Int]
+    public var fishCaughtCounts: [String: Int]
+    public var fishingPondLevel: Int
+    public var challengeClaims: [String: Int]
+    public var challengeStreak: Int
+    public var favoriteItems: [String: Bool]
+    public var time: TimeMetaState
+
+    public init(
+        buildingLevels: [String: Int] = [:],
+        completedResearch: [String: Bool] = [:],
+        discoveredHybrids: [String: Bool] = [:],
+        expansionPurchases: Int = 0,
+        livestockCounts: [String: Int] = [:],
+        petLevels: [String: Int] = [:],
+        fishCaughtCounts: [String: Int] = [:],
+        fishingPondLevel: Int = 1,
+        challengeClaims: [String: Int] = [:],
+        challengeStreak: Int = 0,
+        favoriteItems: [String: Bool] = [:],
+        time: TimeMetaState = TimeMetaState()
+    ) {
+        self.buildingLevels = buildingLevels
+        self.completedResearch = completedResearch
+        self.discoveredHybrids = discoveredHybrids
+        self.expansionPurchases = max(0, expansionPurchases)
+        self.livestockCounts = livestockCounts
+        self.petLevels = petLevels
+        self.fishCaughtCounts = fishCaughtCounts
+        self.fishingPondLevel = max(1, fishingPondLevel)
+        self.challengeClaims = challengeClaims
+        self.challengeStreak = max(0, challengeStreak)
+        self.favoriteItems = favoriteItems
+        self.time = time
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case buildingLevels
+        case completedResearch
+        case discoveredHybrids
+        case expansionPurchases
+        case livestockCounts
+        case petLevels
+        case fishCaughtCounts
+        case fishingPondLevel
+        case challengeClaims
+        case challengeStreak
+        case favoriteItems
+        case time
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        buildingLevels = try container.decodeIfPresent([String: Int].self, forKey: .buildingLevels) ?? [:]
+        completedResearch = try container.decodeIfPresent([String: Bool].self, forKey: .completedResearch) ?? [:]
+        discoveredHybrids = try container.decodeIfPresent([String: Bool].self, forKey: .discoveredHybrids) ?? [:]
+        expansionPurchases = max(0, try container.decodeIfPresent(Int.self, forKey: .expansionPurchases) ?? 0)
+        livestockCounts = try container.decodeIfPresent([String: Int].self, forKey: .livestockCounts) ?? [:]
+        petLevels = try container.decodeIfPresent([String: Int].self, forKey: .petLevels) ?? [:]
+        fishCaughtCounts = try container.decodeIfPresent([String: Int].self, forKey: .fishCaughtCounts) ?? [:]
+        fishingPondLevel = max(1, try container.decodeIfPresent(Int.self, forKey: .fishingPondLevel) ?? 1)
+        challengeClaims = try container.decodeIfPresent([String: Int].self, forKey: .challengeClaims) ?? [:]
+        challengeStreak = max(0, try container.decodeIfPresent(Int.self, forKey: .challengeStreak) ?? 0)
+        favoriteItems = try container.decodeIfPresent([String: Bool].self, forKey: .favoriteItems) ?? [:]
+        time = try container.decodeIfPresent(TimeMetaState.self, forKey: .time) ?? TimeMetaState()
+    }
+}

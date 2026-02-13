@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "crop_stockpile",
+      "name": "Crop Stockpile",
+      "emoji": "🌾",
+      "description": "Store crops in inventory.",
+      "difficulty": "easy",
+      "metric": "total_crops_inventory",
+      "target": 20,
+      "rewardCoins": 80,
+      "rewardXP": 35
+    },
+    {
+      "id": "active_plots",
+      "name": "Field Coverage",
+      "emoji": "🧑‍🌾",
+      "description": "Keep plots actively growing.",
+      "difficulty": "easy",
+      "metric": "active_plots",
+      "target": 8,
+      "rewardCoins": 70,
+      "rewardXP": 30
+    },
+    {
+      "id": "builder_count",
+      "name": "Town Builder",
+      "emoji": "🏗️",
+      "description": "Own built structures.",
+      "difficulty": "medium",
+      "metric": "built_structures",
+      "target": 3,
+      "rewardCoins": 120,
+      "rewardXP": 50
+    },
+    {
+      "id": "animal_caretaker",
+      "name": "Animal Caretaker",
+      "emoji": "🐾",
+      "description": "Maintain livestock animals.",
+      "difficulty": "medium",
+      "metric": "livestock_count",
+      "target": 4,
+      "rewardCoins": 130,
+      "rewardXP": 55
+    },
+    {
+      "id": "coin_reserve",
+      "name": "Rainy Day Fund",
+      "emoji": "💰",
+      "description": "Build a reserve of coins.",
+      "difficulty": "hard",
+      "metric": "coin_balance",
+      "target": 600,
+      "rewardCoins": 180,
+      "rewardXP": 70
+    }
+  ]
+}

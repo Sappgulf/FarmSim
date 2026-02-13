@@ -17,7 +17,13 @@
       "Bash(grep:*)",
       "Bash(npx vite build:*)",
       "Bash(./node_modules/.bin/vite build:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git -C /Users/austinbeatty/Downloads/FarmSim log --oneline -10)",
+      "Bash(du -sh:*)",
+      "Bash(xcodegen generate:*)",
+      "Bash(xcodebuild build:*)",
+      "Bash(swift test:*)",
+      "Bash(xcodebuild:*)"
     ]
   }
 }

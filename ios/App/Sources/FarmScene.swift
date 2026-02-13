@@ -1,15 +1,23 @@
 import Foundation
 import SpriteKit
 
+struct FarmSceneDebugStats: Equatable, Sendable {
+    var fps: Int = 0
+    var nodeCount: Int = 0
+}
+
 final class FarmScene: SKScene {
     var onTileTapped: ((Int) -> Void)?
+    var onDebugStats: ((FarmSceneDebugStats) -> Void)?
 
     private var currentSnapshot: FarmRenderSnapshot?
     private var tileVisuals: [Int: TileVisual] = [:]
+    private var tileBaseColors: [Int: SKColor] = [:]
     private var cropEmojiByID: [String: String] = [:]
 
     private let boardNode = SKNode()
     private let backgroundNode = SKNode()
+    private let dayNightOverlayNode = SKSpriteNode()
     private let worldCamera = SKCameraNode()
     private weak var attachedView: SKView?
 
@@ -20,6 +28,10 @@ final class FarmScene: SKScene {
     private var particleEffectsEnabled = true
     private var showTileIndices = false
     private var preferredFPS = 60
+    private var timeOfDayProgress: Double = 0
+    private var lastFrameTimestamp: TimeInterval?
+    private var smoothedFPS: Double = 60
+    private var lastDebugEmitTimestamp: TimeInterval = 0
 
     override init(size: CGSize) {
         super.init(size: size)
@@ -74,11 +86,31 @@ final class FarmScene: SKScene {
 
         for node in boardNode.nodes(at: location) {
             if let index = tileIndex(from: node) {
+                if touch.tapCount >= 2 {
+                    focusCamera(on: index)
+                }
                 animateTap(on: index)
                 onTileTapped?(index)
                 return
             }
         }
+    }
+
+    override func update(_ currentTime: TimeInterval) {
+        if let previous = lastFrameTimestamp, currentTime > previous {
+            let fps = 1.0 / (currentTime - previous)
+            smoothedFPS = (smoothedFPS * 0.85) + (fps * 0.15)
+        }
+        lastFrameTimestamp = currentTime
+
+        guard currentTime - lastDebugEmitTimestamp >= 0.5 else { return }
+        lastDebugEmitTimestamp = currentTime
+        onDebugStats?(
+            FarmSceneDebugStats(
+                fps: Int(max(0, smoothedFPS.rounded())),
+                nodeCount: totalNodeCount(startingAt: boardNode) + totalNodeCount(startingAt: backgroundNode) + 1
+            )
+        )
     }
 
     func apply(snapshot: FarmRenderSnapshot, cropDisplay: [String: CropDisplayInfo]) {
@@ -144,27 +176,68 @@ final class FarmScene: SKScene {
         applyRendererPreferences()
     }
 
+    func setTimeOfDayProgress(_ value: Double) {
+        timeOfDayProgress = min(1, max(0, value))
+        dayNightOverlayNode.alpha = nightOverlayAlpha(for: timeOfDayProgress)
+    }
+
     private func drawBackground() {
         backgroundNode.removeAllChildren()
 
-        let sky = SKSpriteNode(
-            color: SKColor(red: 0.53, green: 0.77, blue: 0.93, alpha: 1),
-            size: size
-        )
+        let sky = SKSpriteNode(color: SKColor(red: 0.96, green: 0.83, blue: 0.62, alpha: 1), size: size)
         sky.position = CGPoint(x: size.width / 2, y: size.height / 2)
         sky.zPosition = -100
         backgroundNode.addChild(sky)
 
+        let skyTint = SKSpriteNode(color: SKColor(red: 0.98, green: 0.94, blue: 0.78, alpha: 0.55), size: size)
+        skyTint.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        skyTint.zPosition = -99
+        backgroundNode.addChild(skyTint)
+
         let ground = SKShapeNode(rect: CGRect(x: 0, y: 0, width: size.width, height: size.height * 0.26))
-        ground.fillColor = SKColor(red: 0.31, green: 0.60, blue: 0.33, alpha: 1)
+        ground.fillColor = SKColor(red: 0.43, green: 0.64, blue: 0.36, alpha: 1)
         ground.strokeColor = .clear
         ground.zPosition = -90
         backgroundNode.addChild(ground)
+
+        let horizon = SKShapeNode(rect: CGRect(x: 0, y: size.height * 0.26, width: size.width, height: size.height * 0.08))
+        horizon.fillColor = SKColor(red: 0.80, green: 0.72, blue: 0.47, alpha: 0.35)
+        horizon.strokeColor = .clear
+        horizon.zPosition = -89
+        backgroundNode.addChild(horizon)
+
+        dayNightOverlayNode.removeFromParent()
+        dayNightOverlayNode.color = SKColor(red: 0.07, green: 0.13, blue: 0.22, alpha: 1)
+        dayNightOverlayNode.size = size
+        dayNightOverlayNode.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        dayNightOverlayNode.zPosition = -88
+        dayNightOverlayNode.alpha = nightOverlayAlpha(for: timeOfDayProgress)
+        backgroundNode.addChild(dayNightOverlayNode)
+
+        for idx in 0..<3 {
+            let cloud = SKShapeNode(ellipseOf: CGSize(width: 90 + CGFloat(idx * 24), height: 28 + CGFloat(idx * 8)))
+            cloud.fillColor = SKColor.white.withAlphaComponent(0.28)
+            cloud.strokeColor = .clear
+            cloud.position = CGPoint(
+                x: size.width * (0.2 + CGFloat(idx) * 0.28),
+                y: size.height * (0.82 - CGFloat(idx) * 0.05)
+            )
+            cloud.zPosition = -95
+            backgroundNode.addChild(cloud)
+
+            guard !reduceMotion else { continue }
+            let drift = SKAction.sequence([
+                .moveBy(x: 28 + CGFloat(idx * 10), y: 0, duration: 10 + Double(idx * 3)),
+                .moveBy(x: -(28 + CGFloat(idx * 10)), y: 0, duration: 10 + Double(idx * 3)),
+            ])
+            cloud.run(.repeatForever(drift))
+        }
     }
 
     private func rebuildGrid(for snapshot: FarmRenderSnapshot) {
         boardNode.removeAllChildren()
         tileVisuals.removeAll()
+        tileBaseColors.removeAll()
 
         let columns = max(1, snapshot.gridWidth)
         let rows = max(1, snapshot.gridHeight)
@@ -215,10 +288,12 @@ final class FarmScene: SKScene {
 
         let tile = SKShapeNode(rect: rect, cornerRadius: corner)
         tile.name = "tile_\(index)"
-        tile.fillColor = SKColor(red: 0.52, green: 0.35, blue: 0.21, alpha: 1)
+        let baseColor = soilColor(for: index)
+        tile.fillColor = baseColor
         tile.strokeColor = SKColor.black.withAlphaComponent(0.2)
         tile.lineWidth = 1
         tile.zPosition = 5
+        tileBaseColors[index] = baseColor
 
         let emoji = SKLabelNode(text: "")
         emoji.name = "tile_\(index)"
@@ -269,12 +344,23 @@ final class FarmScene: SKScene {
         water.zPosition = 8
         water.isHidden = true
 
+        let readyBadge = SKLabelNode(text: "✦")
+        readyBadge.position = CGPoint(x: rect.maxX - 12, y: rect.minY + 12)
+        readyBadge.verticalAlignmentMode = .center
+        readyBadge.horizontalAlignmentMode = .center
+        readyBadge.fontName = "AvenirNext-Bold"
+        readyBadge.fontSize = max(12, rect.width * 0.20)
+        readyBadge.fontColor = SKColor(red: 0.97, green: 0.88, blue: 0.33, alpha: 1)
+        readyBadge.zPosition = 9
+        readyBadge.isHidden = true
+
         tile.addChild(track)
         tile.addChild(fill)
         tile.addChild(plus)
         tile.addChild(emoji)
         tile.addChild(indexLabel)
         tile.addChild(water)
+        tile.addChild(readyBadge)
         boardNode.addChild(tile)
 
         return TileVisual(
@@ -285,6 +371,7 @@ final class FarmScene: SKScene {
             progressTrack: track,
             progressFill: fill,
             waterBadge: water,
+            readyBadge: readyBadge,
             progressRect: barRect
         )
     }
@@ -324,12 +411,25 @@ final class FarmScene: SKScene {
             visual.tile.fillColor = newTile.isReady
                 ? SKColor(red: 0.23, green: 0.62, blue: 0.30, alpha: 1)
                 : SKColor(red: 0.69, green: 0.52, blue: 0.25, alpha: 1)
+
+            visual.readyBadge.isHidden = !newTile.isReady
+            if newTile.isReady, !reduceMotion, visual.readyBadge.action(forKey: "ready-bob") == nil {
+                let bob = SKAction.sequence([
+                    .moveBy(x: 0, y: 3, duration: 0.45),
+                    .moveBy(x: 0, y: -3, duration: 0.45),
+                ])
+                visual.readyBadge.run(.repeatForever(bob), withKey: "ready-bob")
+            } else if !newTile.isReady {
+                visual.readyBadge.removeAction(forKey: "ready-bob")
+            }
         } else {
             visual.plus.isHidden = false
             visual.emoji.isHidden = true
             visual.progressTrack.isHidden = true
             visual.progressFill.isHidden = true
-            visual.tile.fillColor = SKColor(red: 0.52, green: 0.35, blue: 0.21, alpha: 1)
+            visual.tile.fillColor = tileBaseColors[newTile.index] ?? SKColor(red: 0.58, green: 0.40, blue: 0.24, alpha: 1)
+            visual.readyBadge.isHidden = true
+            visual.readyBadge.removeAction(forKey: "ready-bob")
         }
 
         visual.waterBadge.isHidden = !newTile.watered
@@ -397,6 +497,22 @@ final class FarmScene: SKScene {
         ]))
     }
 
+    private func focusCamera(on tileIndex: Int) {
+        guard let camera, let tile = tileVisuals[tileIndex]?.tile else { return }
+        let tileCenter = tile.frame.center
+        let target = CGPoint(
+            x: min(max(tileCenter.x, boardFrame.minX), boardFrame.maxX),
+            y: min(max(tileCenter.y, boardFrame.minY), boardFrame.maxY)
+        )
+        guard !reduceMotion else {
+            camera.position = target
+            return
+        }
+        let move = SKAction.move(to: target, duration: 0.18)
+        move.timingMode = .easeOut
+        camera.run(move, withKey: "camera-focus")
+    }
+
     private func applyViewport() {
         guard let camera else { return }
 
@@ -419,6 +535,32 @@ final class FarmScene: SKScene {
     private func applyRendererPreferences() {
         attachedView?.preferredFramesPerSecond = preferredFPS
     }
+
+    private func nightOverlayAlpha(for progress: Double) -> CGFloat {
+        let clamped = max(0.0, min(1.0, progress))
+        let daylight = max(0.0, sin(Double.pi * clamped))
+        return CGFloat(max(0.0, 0.45 - (0.45 * daylight)))
+    }
+
+    private func soilColor(for index: Int) -> SKColor {
+        let offset = CGFloat((index % 5) - 2) * 0.015
+        let red = min(0.72, max(0.46, 0.58 + offset))
+        let green = min(0.52, max(0.31, 0.40 + (offset * 0.6)))
+        let blue = min(0.30, max(0.17, 0.24 + (offset * 0.4)))
+        return SKColor(red: red, green: green, blue: blue, alpha: 1)
+    }
+
+    private func totalNodeCount(startingAt root: SKNode) -> Int {
+        var total = 1
+        var stack: [SKNode] = root.children
+        while let node = stack.popLast() {
+            total += 1
+            if !node.children.isEmpty {
+                stack.append(contentsOf: node.children)
+            }
+        }
+        return total
+    }
 }
 
 private struct TileVisual {
@@ -429,6 +571,7 @@ private struct TileVisual {
     let progressTrack: SKShapeNode
     let progressFill: SKShapeNode
     let waterBadge: SKShapeNode
+    let readyBadge: SKLabelNode
     let progressRect: CGRect
 }
 

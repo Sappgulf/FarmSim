@@ -5,73 +5,31 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs';
+import { getContentManager } from '../../../../content/ContentManager';
 
-// Breeding recipes from original system
-const BREEDING_RECIPES = {
-  super_carrot: {
-    name: "Super Carrot",
-    emoji: "🥕✨",
-    parents: ["carrot", "carrot"],
-    growthTime: 45,
-    baseValue: 25,
-    shopPrice: 40,
-    quality: 1.5,
-    description: "Enhanced carrot with faster growth and higher value",
-    traits: ["fast_growth", "high_value"],
-    unlockLevel: 12
-  },
-  rainbow_corn: {
-    name: "Rainbow Corn",
-    emoji: "🌽🌈",
-    parents: ["corn", "sunflower"],
-    growthTime: 70,
-    baseValue: 45,
-    shopPrice: 65,
-    quality: 2.0,
-    description: "Colorful hybrid corn with premium market appeal",
-    traits: ["premium_quality", "weather_resistant"],
-    unlockLevel: 7
-  },
-  golden_tomato: {
-    name: "Golden Tomato",
-    emoji: "🍅✨",
-    parents: ["tomato", "sunflower"],
-    growthTime: 55,
-    baseValue: 35,
-    shopPrice: 50,
-    quality: 1.8,
-    description: "Luxurious golden tomato with enhanced flavor",
-    traits: ["luxury_appeal", "disease_resistant"],
-    unlockLevel: 9
-  },
-  frost_potato: {
-    name: "Frost Potato",
-    emoji: "🥔❄️",
-    parents: ["potato", "winter_seeds"],
-    growthTime: 40,
-    baseValue: 20,
-    shopPrice: 35,
-    quality: 1.3,
-    description: "Cold-resistant potato that thrives in winter",
-    traits: ["frost_resistant", "winter_bonus"],
-    unlockLevel: 4
-  },
-  dragon_pepper: {
-    name: "Dragon Pepper",
-    emoji: "🌶️🔥",
-    parents: ["bellPepper", "super_carrot"],
-    growthTime: 90,
-    baseValue: 80,
-    shopPrice: 120,
-    quality: 3.0,
-    description: "Legendary spicy pepper with incredible value",
-    traits: ["legendary", "pest_repellent", "high_value"],
-    unlockLevel: 16
-  }
-};
+const buildBreedingRecipes = (items = []) => (
+  Object.fromEntries(items.map((item) => [
+    item.id,
+    {
+      name: item.name,
+      emoji: item.emoji || item.icon || '🧬',
+      parents: [item.parentA, item.parentB],
+      growthTime: 60,
+      baseValue: 35,
+      shopPrice: 50,
+      quality: 1.5 + (Math.max(1, Number(item.levelRequirement || 1)) / 20),
+      description: item.notes || '',
+      traits: [],
+      unlockLevel: Number(item.levelRequirement || 1),
+      outputId: item.outputCropID || item.id,
+    },
+  ]))
+);
 
 const GeneticsTab = memo(() => {
   const { state, actions } = useGame();
+  const content = getContentManager();
+  const BREEDING_RECIPES = buildBreedingRecipes(content.genetics || []);
   const [selectedParent1, setSelectedParent1] = useState(null);
   const [selectedParent2, setSelectedParent2] = useState(null);
 
@@ -154,7 +112,7 @@ const GeneticsTab = memo(() => {
       ...state.inventory,
       [selectedParent1]: (state.inventory[selectedParent1] || 0) - (requiredParents[selectedParent1] || 0),
       [selectedParent2]: (state.inventory[selectedParent2] || 0) - (requiredParents[selectedParent2] || 0),
-      [matchedRecipe.key]: (state.inventory[matchedRecipe.key] || 0) + 1
+      [matchedRecipe.recipe.outputId]: (state.inventory[matchedRecipe.recipe.outputId] || 0) + 1
     };
     actions.updateInventory(updatedInventory);
 
@@ -317,7 +275,7 @@ const GeneticsTab = memo(() => {
 
             <div className="grid grid-cols-1 gap-3">
               {Object.entries(BREEDING_RECIPES).map(([key, recipe]) => {
-                const owned = state.inventory[key] || 0;
+                const owned = state.inventory[recipe.outputId || key] || 0;
                 const unlocked = recipe.unlockLevel <= state.level;
 
                 return (

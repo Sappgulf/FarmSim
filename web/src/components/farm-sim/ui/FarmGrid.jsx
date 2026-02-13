@@ -63,16 +63,7 @@ const FarmPlot = memo(({
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [localLiveNow, setLocalLiveNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (plot?.state !== 'planted' && plot?.state !== 'growing') {
-      return undefined;
-    }
-    setLocalLiveNow(Date.now());
-    const intervalId = setInterval(() => setLocalLiveNow(Date.now()), 1000);
-    return () => clearInterval(intervalId);
-  }, [plot?.crop?.id, plot?.plantedAt, plot?.state]);
+  const sharedTick = useTick();
 
   const getPlotDisplay = () => {
     if (!plot || plot.state === 'empty') {
@@ -99,7 +90,7 @@ const FarmPlot = memo(({
 
     if (plot.state === 'planted' || plot.state === 'growing') {
       // Derive growth from timestamps so UI can stay smooth without frequent global state writes.
-      const now = Number(localLiveNow) || Date.now();
+      const now = Number.isFinite(sharedTick) ? Date.now() : Date.now();
       const plantedAt = Number(plot.plantedAt) || now;
       const elapsedSeconds = Math.max(0, (now - plantedAt) / 1000);
       const baseGrowthTime = plot.crop?.growthTime || 15;

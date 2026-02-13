@@ -1,0 +1,73 @@
+{
+  "version": 2,
+  "daySeed": 20260212,
+  "player": {
+    "coins": 67,
+    "xp": 120,
+    "inventory": {
+      "seeds": {
+        "carrot": 1,
+        "lettuce": 0
+      },
+      "crops": {
+        "carrot": 2,
+        "lettuce": 1
+      }
+    }
+  },
+  "world": {
+    "day": 3,
+    "gridWidth": 2,
+    "gridHeight": 2,
+    "tiles": [
+      {
+        "index": 0,
+        "state": {
+          "tilled": true,
+          "watered": false
+        },
+        "planted": null
+      },
+      {
+        "index": 1,
+        "state": {
+          "tilled": true,
+          "watered": true
+        },
+        "planted": {
+          "cropID": "carrot",
+          "plantedDay": 2
+        }
+      },
+      {
+        "index": 2,
+        "state": {
+          "tilled": true,
+          "watered": false
+        },
+        "planted": null
+      },
+      {
+        "index": 3,
+        "state": {
+          "tilled": true,
+          "watered": false
+        },
+        "planted": null
+      }
+    ]
+  },
+  "meta": {
+    "buildingLevels": {
+      "silo": 2,
+      "barn": 1
+    },
+    "completedResearch": {
+      "hybrid_crops": true
+    },
+    "discoveredHybrids": {
+      "super_carrot": true
+    },
+    "expansionPurchases": 1
+  }
+}

@@ -101,6 +101,7 @@ xcodebuild -project ios/FarmSim.xcodeproj -scheme FarmSim -destination 'platform
   - `shared/schema/content-contract.md`
   - `shared/schema/save-contract.md`
   - `shared/schema/save-example.v1.json`
+  - `shared/schema/save-example.v5.json`
   - `shared/vectors/sim_vectors.json`
 
 ### Add A Crop
@@ -109,6 +110,24 @@ xcodebuild -project ios/FarmSim.xcodeproj -scheme FarmSim -destination 'platform
 2. Keep required fields aligned with `shared/schema/content-contract.md`.
 3. Run `npm run test`, `npm run build`, and `npm run ios:test:core`.
 4. Rebuild iOS (`npm run ios:build`) so bundled shared content refreshes.
+
+### Add/Update Shared Content Item
+
+1. Edit the relevant file in `shared/content` (`decor.json`, `festivals.json`, `research.json`, etc.).
+2. Keep field contracts aligned with `shared/schema/content-contract.md`.
+3. If save shape changes are required, update:
+   - `shared/schema/save-contract.md`
+   - `shared/schema/save-example.v5.json`
+   - GameCore migration/tests in `ios/GameCore/Sources/GameCore/Persistence.swift` and `ios/GameCore/Tests`.
+
+### iOS Design System Notes
+
+- Runtime design system source:
+  - `ios/App/Sources/DesignSystem.swift`
+  - `ios/App/Sources/DesignSystem/Typography.swift`
+  - `ios/App/Sources/DesignSystem/Components.swift`
+- Stable ownership anchor:
+  - `ios/FarmSimApp/DesignSystem/`
 
 ---
 

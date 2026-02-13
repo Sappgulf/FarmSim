@@ -4,6 +4,7 @@ import GameCore
 struct AlmanacView: View {
     @Bindable var store: GameStore
     @State private var query = ""
+    @State private var selectedFestival: FestivalDef?
 
     var body: some View {
         NavigationStack {
@@ -33,6 +34,10 @@ struct AlmanacView: View {
                             }
                             .font(.caption)
                             .foregroundStyle(.secondary)
+
+                            Label("Seeds: Town Market • Buy", systemImage: "storefront.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                         }
                         .padding(.vertical, DS.Space.xxs)
                     }
@@ -44,22 +49,31 @@ struct AlmanacView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(filteredFestivals, id: \.id) { festival in
-                            VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                                HStack {
-                                    Text(festival.icon)
-                                    Text(festival.name)
-                                        .font(.headline)
-                                }
-                                Text("\(festival.season.capitalized) • \(festival.cadence.capitalized)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                if !festival.details.isEmpty {
-                                    Text(festival.details)
+                            Button {
+                                selectedFestival = festival
+                            } label: {
+                                VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                                    HStack {
+                                        Text(festival.icon)
+                                        Text(festival.name)
+                                            .font(.headline)
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption2.weight(.semibold))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Text("\(festival.season.capitalized) • \(festival.cadence.capitalized)")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
-                                        .lineLimit(2)
+                                    if !festival.details.isEmpty {
+                                        Text(festival.details)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(2)
+                                    }
                                 }
                             }
+                            .buttonStyle(.plain)
                             .padding(.vertical, DS.Space.xxs)
                         }
                     }
@@ -141,6 +155,10 @@ struct AlmanacView: View {
             .searchable(text: $query, prompt: "Search crops, festivals, decor")
             .scrollContentBackground(.hidden)
             .farmBackground(palette: store.settings.palette)
+            .sheet(item: $selectedFestival) { festival in
+                festivalDetailSheet(festival)
+                    .presentationDetents([.medium, .large])
+            }
         }
     }
 
@@ -181,4 +199,45 @@ struct AlmanacView: View {
         let profit = max(0, crop.sellPrice - crop.seedCost)
         return Double(profit) / Double(max(1, crop.daysToGrow))
     }
+
+    private func festivalDetailSheet(_ festival: FestivalDef) -> some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: DS.Space.md) {
+                    HStack {
+                        Text(festival.icon)
+                            .font(.system(size: 42))
+                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                            Text(festival.name)
+                                .font(.title3.weight(.bold))
+                            Text("\(festival.season.capitalized) • \(festival.cadence.capitalized)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    CardContainer {
+                        VStack(alignment: .leading, spacing: DS.Space.xs) {
+                            Label("Duration: \(festival.durationSeconds) seconds", systemImage: "timer")
+                                .font(.subheadline.weight(.semibold))
+                            Label("Seasonal board available in Town", systemImage: "calendar")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if !festival.details.isEmpty {
+                        Text(festival.details)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(DS.Space.md)
+            }
+            .navigationTitle("Festival")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
 }
+
+extension FestivalDef: Identifiable {}

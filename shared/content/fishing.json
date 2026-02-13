@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "fish": [
+    {
+      "id": "common",
+      "name": "Common Fish",
+      "emoji": "🐟",
+      "rarity": 0.6,
+      "baseValue": 20,
+      "difficulty": 1,
+      "minSize": 5,
+      "maxSize": 15,
+      "description": "A typical pond fish."
+    },
+    {
+      "id": "uncommon",
+      "name": "Bass",
+      "emoji": "🐠",
+      "rarity": 0.25,
+      "baseValue": 40,
+      "difficulty": 2,
+      "minSize": 10,
+      "maxSize": 25,
+      "description": "A feisty bass."
+    },
+    {
+      "id": "rare",
+      "name": "Trout",
+      "emoji": "🎣",
+      "rarity": 0.1,
+      "baseValue": 80,
+      "difficulty": 3,
+      "minSize": 20,
+      "maxSize": 40,
+      "description": "A beautiful trout."
+    },
+    {
+      "id": "koi",
+      "name": "Koi Carp",
+      "emoji": "🪷",
+      "rarity": 0.07,
+      "baseValue": 110,
+      "difficulty": 3,
+      "minSize": 22,
+      "maxSize": 45,
+      "description": "A graceful koi with shimmering scales."
+    },
+    {
+      "id": "epic",
+      "name": "Salmon",
+      "emoji": "🐡",
+      "rarity": 0.04,
+      "baseValue": 150,
+      "difficulty": 4,
+      "minSize": 30,
+      "maxSize": 60,
+      "description": "A prized salmon."
+    },
+    {
+      "id": "legendary",
+      "name": "Golden Koi",
+      "emoji": "🐲",
+      "rarity": 0.01,
+      "baseValue": 500,
+      "difficulty": 5,
+      "minSize": 40,
+      "maxSize": 100,
+      "description": "A legendary golden koi."
+    },
+    {
+      "id": "mythic",
+      "name": "Moon Eel",
+      "emoji": "🌙",
+      "rarity": 0.004,
+      "baseValue": 900,
+      "difficulty": 5,
+      "minSize": 55,
+      "maxSize": 120,
+      "description": "A mythic eel seen only under calm moonlight."
+    }
+  ],
+  "pondUpgrades": [
+    {
+      "id": "basic",
+      "level": 1,
+      "name": "Basic Pond",
+      "capacity": 3,
+      "regenRate": 1.0,
+      "cost": 0,
+      "rarityBonus": 1.0
+    },
+    {
+      "id": "improved",
+      "level": 2,
+      "name": "Improved Pond",
+      "capacity": 5,
+      "regenRate": 1.5,
+      "cost": 500,
+      "rarityBonus": 1.1
+    },
+    {
+      "id": "advanced",
+      "level": 3,
+      "name": "Advanced Pond",
+      "capacity": 8,
+      "regenRate": 2.0,
+      "cost": 1500,
+      "rarityBonus": 1.25
+    },
+    {
+      "id": "master",
+      "level": 4,
+      "name": "Master Pond",
+      "capacity": 12,
+      "regenRate": 3.0,
+      "cost": 5000,
+      "rarityBonus": 1.5
+    }
+  ]
+}

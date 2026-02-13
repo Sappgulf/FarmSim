@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "dog",
+      "name": "Farm Dog",
+      "emoji": "🐕",
+      "description": "Improves farm security and morale.",
+      "cost": 200,
+      "maxLevel": 5,
+      "requiredLevel": 3,
+      "bonusLabel": "Yield support",
+      "bonusPerLevel": 0.03
+    },
+    {
+      "id": "cat",
+      "name": "Farm Cat",
+      "emoji": "🐱",
+      "description": "Improves crop quality and pest control.",
+      "cost": 150,
+      "maxLevel": 5,
+      "requiredLevel": 2,
+      "bonusLabel": "Sell quality",
+      "bonusPerLevel": 0.025
+    },
+    {
+      "id": "chicken_pet",
+      "name": "Companion Chicken",
+      "emoji": "🐔",
+      "description": "Adds daily bonus resources.",
+      "cost": 100,
+      "maxLevel": 3,
+      "requiredLevel": 1,
+      "bonusLabel": "Daily resources",
+      "bonusPerLevel": 0.02
+    }
+  ]
+}

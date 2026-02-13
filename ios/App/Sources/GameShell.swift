@@ -53,6 +53,9 @@ struct GameShell: View {
                 appState.showingOnboarding = false
             }
         }
+        .onChange(of: appState.showingOnboarding) { _, showing in
+            store.setMenuPresented(showing)
+        }
     }
 
     private var tabShell: some View {
@@ -65,7 +68,7 @@ struct GameShell: View {
                 }
                 .tag(GameTab.farm)
 
-            InventoryView(store: store)
+            InventoryView(store: store, appState: appState)
                 .tabItem {
                     Label(GameTab.inventory.title, systemImage: GameTab.inventory.icon)
                 }
@@ -109,7 +112,7 @@ struct OnboardingView: View {
 
                     onboardingCard(
                         title: "Let the Sun Work",
-                        body: "Advance the day and let your crops soak up the sunshine.",
+                        body: "Time flows automatically. Keep planting while the day moves on.",
                         symbol: "sun.max.fill"
                     )
                     .tag(1)

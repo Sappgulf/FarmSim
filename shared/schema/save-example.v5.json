@@ -1,0 +1,81 @@
+{
+  "version": 5,
+  "daySeed": 20260212,
+  "player": {
+    "coins": 260,
+    "xp": 420,
+    "inventory": {
+      "seeds": {
+        "carrot": 2,
+        "lettuce": 1
+      },
+      "crops": {
+        "carrot": 8,
+        "lettuce": 2
+      }
+    }
+  },
+  "world": {
+    "day": 10,
+    "gridWidth": 4,
+    "gridHeight": 4,
+    "tiles": [
+      { "index": 0, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 1, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 2, "state": { "tilled": true, "watered": true }, "planted": { "cropID": "carrot", "plantedDay": 8 } },
+      { "index": 3, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 4, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 5, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 6, "state": { "tilled": true, "watered": true }, "planted": null },
+      { "index": 7, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 8, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 9, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 10, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 11, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 12, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 13, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 14, "state": { "tilled": true, "watered": false }, "planted": null },
+      { "index": 15, "state": { "tilled": true, "watered": false }, "planted": null }
+    ]
+  },
+  "meta": {
+    "buildingLevels": {
+      "silo": 2,
+      "barn": 1
+    },
+    "completedResearch": {
+      "hybrid_crops": true,
+      "soil_enhancement": true
+    },
+    "discoveredHybrids": {
+      "super_carrot": true
+    },
+    "expansionPurchases": 1,
+    "livestockCounts": {
+      "chicken": 2,
+      "goat": 1
+    },
+    "petLevels": {
+      "dog": 2
+    },
+    "fishCaughtCounts": {
+      "common": 4,
+      "rare": 1
+    },
+    "fishingPondLevel": 2,
+    "challengeClaims": {
+      "crop_stockpile": 10,
+      "daily_task:coins_10": 10
+    },
+    "challengeStreak": 3,
+    "favoriteItems": {
+      "carrot": true,
+      "rainbow_corn": true
+    },
+    "time": {
+      "currentTimeSeconds": 870,
+      "dayIndex": 10,
+      "lastRealWorldTimestamp": 1760000000
+    }
+  }
+}

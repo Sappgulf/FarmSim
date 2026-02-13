@@ -6,6 +6,17 @@ public enum EconomySystem {
     }
 
     @discardableResult
+    public static func buySeed(player: inout PlayerState, cropID: String, unitCost: Int, quantity: Int) -> Bool {
+        let qty = max(1, quantity)
+        let safeCost = max(0, unitCost)
+        let totalCost = safeCost * qty
+        guard player.coins >= totalCost else { return false }
+        player.coins -= totalCost
+        player.inventory.seeds[cropID, default: 0] += qty
+        return true
+    }
+
+    @discardableResult
     public static func sellCrop(player: inout PlayerState, cropID: String, unitPrice: Int, quantity: Int) -> Bool {
         let qty = max(1, quantity)
         let owned = player.inventory.crops[cropID] ?? 0

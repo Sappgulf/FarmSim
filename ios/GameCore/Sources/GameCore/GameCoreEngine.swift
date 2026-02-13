@@ -1,5 +1,63 @@
 import Foundation
 
+public struct MarketPricing: Sendable, Hashable {
+    public var seedUnitCosts: [String: Int]
+    public var cropUnitPrices: [String: Int]
+
+    public init(seedUnitCosts: [String: Int] = [:], cropUnitPrices: [String: Int] = [:]) {
+        self.seedUnitCosts = seedUnitCosts
+        self.cropUnitPrices = cropUnitPrices
+    }
+
+    public func unitCostForSeed(_ cropID: String, default defaultValue: Int) -> Int {
+        max(0, seedUnitCosts[cropID] ?? defaultValue)
+    }
+
+    public func unitPriceForCrop(_ cropID: String, default defaultValue: Int) -> Int {
+        max(0, cropUnitPrices[cropID] ?? defaultValue)
+    }
+}
+
+public enum MarketTradeStatus: String, Sendable {
+    case success
+    case invalidQuantity
+    case unknownItem
+    case insufficientCoins
+    case insufficientQuantity
+}
+
+public struct MarketTradeResult: Sendable, Hashable {
+    public let status: MarketTradeStatus
+    public let itemID: String
+    public let quantity: Int
+    public let unitPrice: Int
+    public let totalPrice: Int
+    public let remainingCoins: Int
+    public let remainingItemCount: Int
+
+    public var success: Bool {
+        status == .success
+    }
+
+    public init(
+        status: MarketTradeStatus,
+        itemID: String,
+        quantity: Int,
+        unitPrice: Int,
+        totalPrice: Int,
+        remainingCoins: Int,
+        remainingItemCount: Int
+    ) {
+        self.status = status
+        self.itemID = itemID
+        self.quantity = quantity
+        self.unitPrice = unitPrice
+        self.totalPrice = totalPrice
+        self.remainingCoins = remainingCoins
+        self.remainingItemCount = remainingItemCount
+    }
+}
+
 public struct GameCoreEngine: Sendable {
     public private(set) var save: SaveGame
     public let cropDefsByID: [String: CropDef]
@@ -66,6 +124,9 @@ public struct GameCoreEngine: Sendable {
     public mutating func advanceDay() {
         lastDailyRoll = SimTickSystem.advanceDay(world: &save.world, rng: &rng)
         save.daySeed = rng.currentState
+        if save.meta.time.dayIndex < save.world.day {
+            save.meta.time.dayIndex = save.world.day
+        }
     }
 
     @discardableResult
@@ -102,18 +163,117 @@ public struct GameCoreEngine: Sendable {
     }
 
     @discardableResult
-    public mutating func buySeed(cropID: String) -> Bool {
-        guard let crop = cropDefsByID[cropID] else { return false }
-        guard save.player.coins >= crop.seedCost else { return false }
-        save.player.coins -= crop.seedCost
-        save.player.inventory.seeds[cropID, default: 0] += 1
-        return true
+    public mutating func buySeed(cropID: String, unitCostOverride: Int? = nil) -> Bool {
+        let pricing = unitCostOverride.map { MarketPricing(seedUnitCosts: [cropID: $0]) } ?? MarketPricing()
+        return buy(itemID: cropID, quantity: 1, pricing: pricing).success
     }
 
     @discardableResult
-    public mutating func sellCrop(cropID: String, quantity: Int = 1) -> Bool {
-        guard let crop = cropDefsByID[cropID] else { return false }
-        return EconomySystem.sellCrop(player: &save.player, cropID: cropID, unitPrice: crop.sellPrice, quantity: quantity)
+    public mutating func sellCrop(cropID: String, quantity: Int = 1, unitPriceOverride: Int? = nil) -> Bool {
+        let pricing = unitPriceOverride.map { MarketPricing(cropUnitPrices: [cropID: $0]) } ?? MarketPricing()
+        return sell(itemID: cropID, quantity: quantity, pricing: pricing).success
+    }
+
+    @discardableResult
+    public mutating func buy(itemID: String, quantity: Int = 1, pricing: MarketPricing = MarketPricing()) -> MarketTradeResult {
+        let qty = max(0, quantity)
+        guard qty > 0 else {
+            return MarketTradeResult(
+                status: .invalidQuantity,
+                itemID: itemID,
+                quantity: quantity,
+                unitPrice: 0,
+                totalPrice: 0,
+                remainingCoins: save.player.coins,
+                remainingItemCount: save.player.inventory.seeds[itemID] ?? 0
+            )
+        }
+        guard let crop = cropDefsByID[itemID] else {
+            return MarketTradeResult(
+                status: .unknownItem,
+                itemID: itemID,
+                quantity: qty,
+                unitPrice: 0,
+                totalPrice: 0,
+                remainingCoins: save.player.coins,
+                remainingItemCount: 0
+            )
+        }
+
+        let unitCost = pricing.unitCostForSeed(itemID, default: crop.seedCost)
+        let totalCost = unitCost * qty
+        guard EconomySystem.buySeed(player: &save.player, cropID: itemID, unitCost: unitCost, quantity: qty) else {
+            return MarketTradeResult(
+                status: .insufficientCoins,
+                itemID: itemID,
+                quantity: qty,
+                unitPrice: unitCost,
+                totalPrice: totalCost,
+                remainingCoins: save.player.coins,
+                remainingItemCount: save.player.inventory.seeds[itemID] ?? 0
+            )
+        }
+
+        return MarketTradeResult(
+            status: .success,
+            itemID: itemID,
+            quantity: qty,
+            unitPrice: unitCost,
+            totalPrice: totalCost,
+            remainingCoins: save.player.coins,
+            remainingItemCount: save.player.inventory.seeds[itemID] ?? 0
+        )
+    }
+
+    @discardableResult
+    public mutating func sell(itemID: String, quantity: Int = 1, pricing: MarketPricing = MarketPricing()) -> MarketTradeResult {
+        let qty = max(0, quantity)
+        guard qty > 0 else {
+            return MarketTradeResult(
+                status: .invalidQuantity,
+                itemID: itemID,
+                quantity: quantity,
+                unitPrice: 0,
+                totalPrice: 0,
+                remainingCoins: save.player.coins,
+                remainingItemCount: save.player.inventory.crops[itemID] ?? 0
+            )
+        }
+        guard let crop = cropDefsByID[itemID] else {
+            return MarketTradeResult(
+                status: .unknownItem,
+                itemID: itemID,
+                quantity: qty,
+                unitPrice: 0,
+                totalPrice: 0,
+                remainingCoins: save.player.coins,
+                remainingItemCount: 0
+            )
+        }
+
+        let unitPrice = pricing.unitPriceForCrop(itemID, default: crop.sellPrice)
+        let totalPrice = unitPrice * qty
+        guard EconomySystem.sellCrop(player: &save.player, cropID: itemID, unitPrice: unitPrice, quantity: qty) else {
+            return MarketTradeResult(
+                status: .insufficientQuantity,
+                itemID: itemID,
+                quantity: qty,
+                unitPrice: unitPrice,
+                totalPrice: totalPrice,
+                remainingCoins: save.player.coins,
+                remainingItemCount: save.player.inventory.crops[itemID] ?? 0
+            )
+        }
+
+        return MarketTradeResult(
+            status: .success,
+            itemID: itemID,
+            quantity: qty,
+            unitPrice: unitPrice,
+            totalPrice: totalPrice,
+            remainingCoins: save.player.coins,
+            remainingItemCount: save.player.inventory.crops[itemID] ?? 0
+        )
     }
 
     public mutating func harvestAll(yieldMultiplier: Double = 1.0) -> Int {
@@ -154,6 +314,144 @@ public struct GameCoreEngine: Sendable {
         save.world.gridWidth = newWidth
         save.world.gridHeight = newHeight
         save.world.tiles = newTiles
+    }
+
+    public mutating func addCoins(_ amount: Int) {
+        guard amount > 0 else { return }
+        save.player.coins += amount
+    }
+
+    public mutating func addXP(_ amount: Int) {
+        guard amount > 0 else { return }
+        save.player.xp += amount
+    }
+
+    @discardableResult
+    public mutating func spendCoins(_ amount: Int) -> Bool {
+        let safeAmount = max(0, amount)
+        guard save.player.coins >= safeAmount else { return false }
+        save.player.coins -= safeAmount
+        return true
+    }
+
+    public func seedCount(for cropID: String) -> Int {
+        save.player.inventory.seeds[cropID] ?? 0
+    }
+
+    @discardableResult
+    public mutating func consumeSeeds(cropID: String, quantity: Int) -> Bool {
+        let qty = max(1, quantity)
+        let current = save.player.inventory.seeds[cropID] ?? 0
+        guard current >= qty else { return false }
+        save.player.inventory.seeds[cropID] = current - qty
+        return true
+    }
+
+    public mutating func grantSeeds(cropID: String, quantity: Int) {
+        guard quantity > 0 else { return }
+        save.player.inventory.seeds[cropID, default: 0] += quantity
+    }
+
+    public func buildingLevel(for id: String) -> Int {
+        max(0, save.meta.buildingLevels[id] ?? 0)
+    }
+
+    public mutating func setBuildingLevel(_ level: Int, for id: String) {
+        save.meta.buildingLevels[id] = max(0, level)
+    }
+
+    public func isResearchCompleted(_ id: String) -> Bool {
+        save.meta.completedResearch[id] ?? false
+    }
+
+    public mutating func markResearchCompleted(_ id: String) {
+        save.meta.completedResearch[id] = true
+    }
+
+    public func isHybridDiscovered(_ id: String) -> Bool {
+        save.meta.discoveredHybrids[id] ?? false
+    }
+
+    public mutating func markHybridDiscovered(_ id: String) {
+        save.meta.discoveredHybrids[id] = true
+    }
+
+    public mutating func incrementExpansionPurchases() {
+        save.meta.expansionPurchases += 1
+    }
+
+    public func livestockCount(for id: String) -> Int {
+        max(0, save.meta.livestockCounts[id] ?? 0)
+    }
+
+    public mutating func setLivestockCount(_ count: Int, for id: String) {
+        save.meta.livestockCounts[id] = max(0, count)
+    }
+
+    public func petLevel(for id: String) -> Int {
+        max(0, save.meta.petLevels[id] ?? 0)
+    }
+
+    public mutating func setPetLevel(_ level: Int, for id: String) {
+        save.meta.petLevels[id] = max(0, level)
+    }
+
+    public func fishCaughtCount(for id: String) -> Int {
+        max(0, save.meta.fishCaughtCounts[id] ?? 0)
+    }
+
+    public mutating func addFishCaught(for id: String, quantity: Int = 1) {
+        let qty = max(1, quantity)
+        save.meta.fishCaughtCounts[id, default: 0] += qty
+    }
+
+    public var fishingPondLevel: Int {
+        max(1, save.meta.fishingPondLevel)
+    }
+
+    public mutating func setFishingPondLevel(_ level: Int) {
+        save.meta.fishingPondLevel = max(1, level)
+    }
+
+    public func challengeClaimDay(for id: String) -> Int? {
+        save.meta.challengeClaims[id]
+    }
+
+    public mutating func setChallengeClaimDay(_ day: Int, for id: String) {
+        save.meta.challengeClaims[id] = day
+    }
+
+    public var challengeStreak: Int {
+        max(0, save.meta.challengeStreak)
+    }
+
+    public mutating func setChallengeStreak(_ value: Int) {
+        save.meta.challengeStreak = max(0, value)
+    }
+
+    public func isFavoriteItem(_ itemID: String) -> Bool {
+        save.meta.favoriteItems[itemID] ?? false
+    }
+
+    public mutating func setFavoriteItem(_ isFavorite: Bool, for itemID: String) {
+        if isFavorite {
+            save.meta.favoriteItems[itemID] = true
+        } else {
+            save.meta.favoriteItems[itemID] = nil
+        }
+    }
+
+    public var timeState: TimeMetaState {
+        save.meta.time
+    }
+
+    public mutating func setTimeState(_ value: TimeMetaState) {
+        save.meta.time = value
+        if save.world.day < value.dayIndex {
+            save.world.day = value.dayIndex
+        } else if save.world.day > value.dayIndex {
+            save.meta.time.dayIndex = save.world.day
+        }
     }
 
     private mutating func resolvedYieldQuantity(multiplier: Double) -> Int {

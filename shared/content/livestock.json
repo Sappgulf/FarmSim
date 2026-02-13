@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "chicken",
+      "name": "Chicken",
+      "emoji": "🐔",
+      "description": "Produces eggs daily. Easy to care for.",
+      "cost": 100,
+      "maintenanceCost": 5,
+      "productionTimeSeconds": 30,
+      "productID": "egg",
+      "productAmount": 1,
+      "productValue": 15,
+      "spaceRequired": 1,
+      "requiredLevel": 1
+    },
+    {
+      "id": "pig",
+      "name": "Pig",
+      "emoji": "🐷",
+      "description": "Grows quickly and finds truffles.",
+      "cost": 300,
+      "maintenanceCost": 10,
+      "productionTimeSeconds": 45,
+      "productID": "truffle",
+      "productAmount": 1,
+      "productValue": 30,
+      "spaceRequired": 1,
+      "requiredLevel": 2
+    },
+    {
+      "id": "cow",
+      "name": "Cow",
+      "emoji": "🐄",
+      "description": "Produces milk but needs more space.",
+      "cost": 500,
+      "maintenanceCost": 15,
+      "productionTimeSeconds": 60,
+      "productID": "milk",
+      "productAmount": 1,
+      "productValue": 40,
+      "spaceRequired": 2,
+      "requiredLevel": 3
+    },
+    {
+      "id": "goat",
+      "name": "Goat",
+      "emoji": "🐐",
+      "description": "Hardy animal that produces cheese.",
+      "cost": 350,
+      "maintenanceCost": 8,
+      "productionTimeSeconds": 50,
+      "productID": "cheese",
+      "productAmount": 1,
+      "productValue": 35,
+      "spaceRequired": 1,
+      "requiredLevel": 3
+    },
+    {
+      "id": "sheep",
+      "name": "Sheep",
+      "emoji": "🐑",
+      "description": "Produces wool periodically.",
+      "cost": 400,
+      "maintenanceCost": 12,
+      "productionTimeSeconds": 90,
+      "productID": "wool",
+      "productAmount": 1,
+      "productValue": 50,
+      "spaceRequired": 2,
+      "requiredLevel": 4
+    }
+  ]
+}

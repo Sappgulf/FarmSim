@@ -3,73 +3,46 @@ import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
+import { getContentManager } from '../../../../content/ContentManager';
 
-const BUILDING_DEFS = [
-  {
-    id: 'well', name: 'Water Well', emoji: '💧', baseCost: 150, requiredLevel: 10,
-    description: 'Reduces water needs by 50% + weather protection',
-    benefit: '-50% Water', category: 'Utility', maxLevel: 3,
-    upgrades: [
-      { level: 2, cost: 300, label: 'Deep Well', bonus: '-70% Water' },
-      { level: 3, cost: 600, label: 'Artesian Well', bonus: '-90% Water' },
-    ],
-  },
-  {
-    id: 'silo', name: 'Silo', emoji: '🗼', baseCost: 200, requiredLevel: 3,
-    description: 'Auto-sell crops when storage is full',
-    benefit: 'Auto-sell', category: 'Storage', maxLevel: 3,
-    upgrades: [
-      { level: 2, cost: 400, label: 'Large Silo', bonus: '+10% sell price' },
-      { level: 3, cost: 800, label: 'Mega Silo', bonus: '+25% sell price' },
-    ],
-  },
-  {
-    id: 'barn', name: 'Barn', emoji: '🏚️', baseCost: 350, requiredLevel: 8,
-    description: '+20% harvest value + disease protection',
-    benefit: '+20% Value', category: 'Production', maxLevel: 3,
-    upgrades: [
-      { level: 2, cost: 700, label: 'Big Barn', bonus: '+35% Value' },
-      { level: 3, cost: 1400, label: 'Grand Barn', bonus: '+50% Value' },
-    ],
-  },
-  {
-    id: 'workshop', name: 'Workshop', emoji: '🔧', baseCost: 450, requiredLevel: 5,
-    description: 'Unlocks advanced tool crafting',
-    benefit: 'Crafting', category: 'Utility', maxLevel: 3,
-    upgrades: [
-      { level: 2, cost: 900, label: 'Forge', bonus: '-20% tool cost' },
-      { level: 3, cost: 1800, label: 'Master Forge', bonus: '-40% tool cost' },
-    ],
-  },
-  {
-    id: 'greenhouse', name: 'Greenhouse', emoji: '🏠', baseCost: 600, requiredLevel: 13,
-    description: '+50% growth + weather damage immunity!',
-    benefit: '+50% Growth', category: 'Production', maxLevel: 3,
-    upgrades: [
-      { level: 2, cost: 1200, label: 'Advanced Greenhouse', bonus: '+75% Growth' },
-      { level: 3, cost: 2400, label: 'Crystal Greenhouse', bonus: '+100% Growth' },
-    ],
-  },
-  {
-    id: 'windmill', name: 'Windmill', emoji: '🏭', baseCost: 800, requiredLevel: 16,
-    description: 'Processes crops into premium goods',
-    benefit: '+2x Value', category: 'Processing', maxLevel: 3,
-    upgrades: [
-      { level: 2, cost: 1600, label: 'Steam Mill', bonus: '+2.5x Value' },
-      { level: 3, cost: 3200, label: 'Auto Mill', bonus: '+3x Value' },
-    ],
-  },
-];
+const toBuildingDefs = (items = []) => (
+  items.map((item) => {
+    const costs = Array.isArray(item.costs) ? item.costs : [];
+    const bonuses = Array.isArray(item.bonuses) ? item.bonuses : [];
+    return {
+      id: item.id,
+      name: item.name,
+      emoji: item.emoji || item.icon || '🏗️',
+      baseCost: costs[0] || 0,
+      requiredLevel: Number(item.requiredLevel || 1),
+      description: item.description || '',
+      benefit: bonuses[0] || '',
+      category: item.category || 'Utility',
+      maxLevel: Number(item.maxLevel || costs.length || 1),
+      upgrades: costs.slice(1).map((cost, idx) => ({
+        level: idx + 2,
+        cost,
+        label: `Level ${idx + 2}`,
+        bonus: bonuses[idx + 1] || '',
+      })),
+    };
+  })
+);
 
-const SYNERGIES = [
-  { ids: ['well', 'greenhouse'], name: 'Hydro Garden', bonus: '+15% growth speed', icon: '💦' },
-  { ids: ['barn', 'silo'], name: 'Supply Chain', bonus: '+10% sell value', icon: '📦' },
-  { ids: ['workshop', 'windmill'], name: 'Industrial Hub', bonus: '-15% processing time', icon: '⚙️' },
-  { ids: ['well', 'barn', 'greenhouse'], name: 'Full Farm', bonus: '+20% all yields', icon: '🌾' },
-];
+const toSynergies = (items = []) => (
+  items.map((item) => ({
+    ids: item.buildingIds || [],
+    name: item.name,
+    bonus: item.bonus || '',
+    icon: item.icon || '✨',
+  }))
+);
 
 const BuildingsTab = memo(() => {
   const { state, actions } = useGame();
+  const content = getContentManager();
+  const BUILDING_DEFS = useMemo(() => toBuildingDefs(content.buildings || []), [content.buildings]);
+  const SYNERGIES = useMemo(() => toSynergies(content.buildingSynergies || []), [content.buildingSynergies]);
 
   const getBuildingState = (id) => state.buildings[id] || null;
   const getBuildingLevel = (id) => state.buildings[id]?.level || 0;

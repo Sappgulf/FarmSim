@@ -5,6 +5,179 @@ import GameCore
 @Observable
 @MainActor
 final class GameStore {
+    private static let defaultBuildingCatalog: [BuildingPlan] = [
+        BuildingPlan(
+            id: "barn",
+            name: "Barn",
+            icon: "🏚️",
+            description: "Increases harvest value and stabilizes output.",
+            category: "Production",
+            requiredLevel: 8,
+            maxLevel: 5,
+            costs: [200, 400, 800, 1600, 3200],
+            bonuses: [
+                "+20% harvest value",
+                "+35% harvest value",
+                "+55% harvest value",
+                "+80% harvest value",
+                "+120% harvest value",
+            ]
+        ),
+        BuildingPlan(
+            id: "greenhouse",
+            name: "Greenhouse",
+            icon: "🏠",
+            description: "Supports faster growth and weather resilience.",
+            category: "Production",
+            requiredLevel: 13,
+            maxLevel: 5,
+            costs: [350, 700, 1400, 2800, 5600],
+            bonuses: [
+                "+30% growth support",
+                "+50% growth support",
+                "+75% growth support",
+                "+110% growth support",
+                "+150% growth support",
+            ]
+        ),
+        BuildingPlan(
+            id: "silo",
+            name: "Silo",
+            icon: "🗼",
+            description: "Increases storage and improves sell operations.",
+            category: "Storage",
+            requiredLevel: 3,
+            maxLevel: 4,
+            costs: [150, 300, 600, 1200],
+            bonuses: [
+                "Storage +50",
+                "Storage +100 + auto sell",
+                "Storage +200 + 10% sell bonus",
+                "Storage +400 + 25% sell bonus",
+            ]
+        ),
+        BuildingPlan(
+            id: "workshop",
+            name: "Workshop",
+            icon: "🔧",
+            description: "Unlocks better farm tooling efficiency.",
+            category: "Utility",
+            requiredLevel: 5,
+            maxLevel: 3,
+            costs: [250, 500, 1000],
+            bonuses: [
+                "Basic tools",
+                "Advanced tools + 10% efficiency",
+                "Master tools + 25% efficiency",
+            ]
+        ),
+        BuildingPlan(
+            id: "well",
+            name: "Water Well",
+            icon: "💧",
+            description: "Reduces water effort and boosts late-game growth.",
+            category: "Utility",
+            requiredLevel: 10,
+            maxLevel: 4,
+            costs: [180, 360, 720, 1440],
+            bonuses: [
+                "-25% water needs",
+                "-50% water needs",
+                "-75% water needs + auto-water",
+                "No water needed + growth bonus",
+            ]
+        ),
+        BuildingPlan(
+            id: "windmill",
+            name: "Windmill",
+            icon: "🏭",
+            description: "Processes crops into higher-value outputs.",
+            category: "Processing",
+            requiredLevel: 16,
+            maxLevel: 5,
+            costs: [400, 800, 1600, 3200, 6400],
+            bonuses: [
+                "Process crops +100% value",
+                "Process crops +150% value",
+                "Process crops +200% value",
+                "Process crops +300% value",
+                "Process crops +500% value",
+            ]
+        ),
+    ]
+
+    private static let defaultBuildingSynergyCatalog: [BuildingSynergy] = [
+        BuildingSynergy(id: "hydro_garden", name: "Hydro Garden", icon: "💦", bonus: "+15% growth speed", buildingIDs: ["well", "greenhouse"]),
+        BuildingSynergy(id: "supply_chain", name: "Supply Chain", icon: "📦", bonus: "+10% sell value", buildingIDs: ["barn", "silo"]),
+        BuildingSynergy(id: "industrial_hub", name: "Industrial Hub", icon: "⚙️", bonus: "-15% processing time", buildingIDs: ["workshop", "windmill"]),
+        BuildingSynergy(id: "full_farm", name: "Full Farm", icon: "🌾", bonus: "+20% all yields", buildingIDs: ["well", "barn", "greenhouse"]),
+    ]
+
+    private static let defaultResearchCatalog: [ResearchPlan] = [
+        ResearchPlan(id: "hybrid_crops", name: "Hybrid Crops", icon: "🧬", category: "genetics", cost: 100, durationSeconds: 300, description: "Develop superior crop varieties.", unlocks: ["premium_seeds"], prerequisites: []),
+        ResearchPlan(id: "irrigation_system", name: "Advanced Irrigation", icon: "💧", category: "technology", cost: 150, durationSeconds: 480, description: "Automated watering systems.", unlocks: ["auto_irrigation"], prerequisites: ["hybrid_crops"]),
+        ResearchPlan(id: "pest_genetics", name: "Pest Genetics", icon: "🧪", category: "genetics", cost: 200, durationSeconds: 600, description: "Genetic pest resistance.", unlocks: ["resistant_crops"], prerequisites: ["hybrid_crops"]),
+        ResearchPlan(id: "market_analytics", name: "Market Analytics", icon: "📊", category: "economics", cost: 250, durationSeconds: 720, description: "Advanced market prediction models.", unlocks: ["price_alerts", "trend_analysis"], prerequisites: []),
+        ResearchPlan(id: "climate_control", name: "Climate Control", icon: "🌡️", category: "technology", cost: 400, durationSeconds: 900, description: "Weather-independent farming strategies.", unlocks: ["weather_immunity"], prerequisites: ["irrigation_system", "pest_genetics"]),
+        ResearchPlan(id: "soil_enhancement", name: "Soil Enhancement", icon: "🌱", category: "agriculture", cost: 180, durationSeconds: 540, description: "Advanced soil fertility techniques.", unlocks: ["fertility_boost"], prerequisites: []),
+        ResearchPlan(id: "automation_core", name: "Automation Core", icon: "🤖", category: "technology", cost: 300, durationSeconds: 800, description: "Foundation for automated farming.", unlocks: ["basic_automation"], prerequisites: ["irrigation_system"]),
+    ]
+
+    private static let defaultGeneticsCatalog: [GeneticsRecipe] = [
+        GeneticsRecipe(id: "super_carrot", name: "Super Carrot", icon: "🥕✨", parentA: "carrot", parentB: "carrot", outputCropID: "super_carrot", levelRequirement: 12, notes: "Enhanced carrot line with strong value."),
+        GeneticsRecipe(id: "rainbow_corn", name: "Rainbow Corn", icon: "🌽🌈", parentA: "corn", parentB: "wheat", outputCropID: "rainbow_corn", levelRequirement: 7, notes: "Premium hybrid with resilient traits."),
+        GeneticsRecipe(id: "golden_tomato", name: "Golden Tomato", icon: "🍅✨", parentA: "tomato", parentB: "strawberry", outputCropID: "golden_tomato", levelRequirement: 9, notes: "Luxurious tomato cultivar for premium buyers."),
+        GeneticsRecipe(id: "frost_potato", name: "Frost Potato", icon: "🥔❄️", parentA: "potato", parentB: "lettuce", outputCropID: "frost_potato", levelRequirement: 4, notes: "Cold-resistant hybrid for tough seasons."),
+        GeneticsRecipe(id: "dragon_pepper", name: "Dragon Pepper", icon: "🌶️🔥", parentA: "chili", parentB: "super_carrot", outputCropID: "dragon_pepper", levelRequirement: 16, notes: "Legendary spicy crop with exceptional value."),
+    ]
+
+    private static let defaultLivestockCatalog: [LivestockTypePlan] = [
+        LivestockTypePlan(id: "chicken", name: "Chicken", icon: "🐔", description: "Produces eggs daily. Easy to care for.", cost: 100, requiredLevel: 1, spaceRequired: 1, maintenanceCost: 5, productionTimeSeconds: 30, productID: "egg", productAmount: 1, productValue: 15),
+        LivestockTypePlan(id: "pig", name: "Pig", icon: "🐷", description: "Grows quickly and finds truffles.", cost: 300, requiredLevel: 2, spaceRequired: 1, maintenanceCost: 10, productionTimeSeconds: 45, productID: "truffle", productAmount: 1, productValue: 30),
+        LivestockTypePlan(id: "cow", name: "Cow", icon: "🐄", description: "Produces milk but needs more space.", cost: 500, requiredLevel: 3, spaceRequired: 2, maintenanceCost: 15, productionTimeSeconds: 60, productID: "milk", productAmount: 1, productValue: 40),
+        LivestockTypePlan(id: "goat", name: "Goat", icon: "🐐", description: "Hardy animal that produces cheese.", cost: 350, requiredLevel: 3, spaceRequired: 1, maintenanceCost: 8, productionTimeSeconds: 50, productID: "cheese", productAmount: 1, productValue: 35),
+        LivestockTypePlan(id: "sheep", name: "Sheep", icon: "🐑", description: "Produces wool periodically.", cost: 400, requiredLevel: 4, spaceRequired: 2, maintenanceCost: 12, productionTimeSeconds: 90, productID: "wool", productAmount: 1, productValue: 50),
+    ]
+
+    private static let defaultPetCatalog: [PetTypePlan] = [
+        PetTypePlan(id: "dog", name: "Farm Dog", icon: "🐕", description: "Improves farm security and morale.", cost: 200, maxLevel: 5, requiredLevel: 3, bonusLabel: "Yield support", bonusPerLevel: 0.03),
+        PetTypePlan(id: "cat", name: "Farm Cat", icon: "🐱", description: "Improves crop quality and pest control.", cost: 150, maxLevel: 5, requiredLevel: 2, bonusLabel: "Sell quality", bonusPerLevel: 0.025),
+        PetTypePlan(id: "chicken_pet", name: "Companion Chicken", icon: "🐔", description: "Adds daily bonus resources.", cost: 100, maxLevel: 3, requiredLevel: 1, bonusLabel: "Daily resources", bonusPerLevel: 0.02),
+    ]
+
+    private static let defaultFishCatalog: [FishTypePlan] = [
+        FishTypePlan(id: "common", name: "Common Fish", icon: "🐟", rarity: 0.6, baseValue: 20, difficulty: 1, minSize: 5, maxSize: 15, description: "A typical pond fish."),
+        FishTypePlan(id: "uncommon", name: "Bass", icon: "🐠", rarity: 0.25, baseValue: 40, difficulty: 2, minSize: 10, maxSize: 25, description: "A feisty bass."),
+        FishTypePlan(id: "rare", name: "Trout", icon: "🎣", rarity: 0.1, baseValue: 80, difficulty: 3, minSize: 20, maxSize: 40, description: "A beautiful trout."),
+        FishTypePlan(id: "koi", name: "Koi Carp", icon: "🪷", rarity: 0.07, baseValue: 110, difficulty: 3, minSize: 22, maxSize: 45, description: "A graceful koi with shimmering scales."),
+        FishTypePlan(id: "epic", name: "Salmon", icon: "🐡", rarity: 0.04, baseValue: 150, difficulty: 4, minSize: 30, maxSize: 60, description: "A prized salmon."),
+        FishTypePlan(id: "legendary", name: "Golden Koi", icon: "🐲", rarity: 0.01, baseValue: 500, difficulty: 5, minSize: 40, maxSize: 100, description: "A legendary golden koi."),
+        FishTypePlan(id: "mythic", name: "Moon Eel", icon: "🌙", rarity: 0.004, baseValue: 900, difficulty: 5, minSize: 55, maxSize: 120, description: "A mythic eel seen only under calm moonlight."),
+    ]
+
+    private static let defaultPondUpgrades: [PondUpgradePlan] = [
+        PondUpgradePlan(id: "basic", level: 1, name: "Basic Pond", capacity: 3, regenRate: 1, cost: 0, rarityBonus: 1),
+        PondUpgradePlan(id: "improved", level: 2, name: "Improved Pond", capacity: 5, regenRate: 1.5, cost: 500, rarityBonus: 1.1),
+        PondUpgradePlan(id: "advanced", level: 3, name: "Advanced Pond", capacity: 8, regenRate: 2, cost: 1500, rarityBonus: 1.25),
+        PondUpgradePlan(id: "master", level: 4, name: "Master Pond", capacity: 12, regenRate: 3, cost: 5000, rarityBonus: 1.5),
+    ]
+
+    private static let defaultChallengeCatalog: [ChallengePlan] = [
+        ChallengePlan(id: "crop_stockpile", name: "Crop Stockpile", icon: "🌾", description: "Store crops in inventory.", difficulty: "easy", metric: "total_crops_inventory", target: 20, rewardCoins: 80, rewardXP: 35),
+        ChallengePlan(id: "active_plots", name: "Field Coverage", icon: "🧑‍🌾", description: "Keep plots actively growing.", difficulty: "easy", metric: "active_plots", target: 8, rewardCoins: 70, rewardXP: 30),
+        ChallengePlan(id: "builder_count", name: "Town Builder", icon: "🏗️", description: "Own built structures.", difficulty: "medium", metric: "built_structures", target: 3, rewardCoins: 120, rewardXP: 50),
+        ChallengePlan(id: "animal_caretaker", name: "Animal Caretaker", icon: "🐾", description: "Maintain livestock animals.", difficulty: "medium", metric: "livestock_count", target: 4, rewardCoins: 130, rewardXP: 55),
+        ChallengePlan(id: "coin_reserve", name: "Rainy Day Fund", icon: "💰", description: "Build a reserve of coins.", difficulty: "hard", metric: "coin_balance", target: 600, rewardCoins: 180, rewardXP: 70),
+    ]
+
+    private static let defaultExpansionConfig = ExpansionPlan(
+        maxGrid: 5,
+        costsByGridSize: [
+            3: 60,
+            4: 180,
+        ]
+    )
+
     private(set) var save: SaveGame
     private(set) var renderSnapshot: FarmRenderSnapshot
 
@@ -15,6 +188,16 @@ final class GameStore {
     private(set) var minigameDefs: [MinigameDef]
     private(set) var almanacEntries: [AlmanacEntry]
     private(set) var strings: [String: String]
+    private(set) var buildingCatalog: [BuildingPlan]
+    private(set) var buildingSynergies: [BuildingSynergy]
+    private(set) var researchCatalog: [ResearchPlan]
+    private(set) var geneticsCatalog: [GeneticsRecipe]
+    private(set) var livestockCatalog: [LivestockTypePlan]
+    private(set) var petCatalog: [PetTypePlan]
+    private(set) var fishCatalog: [FishTypePlan]
+    private(set) var pondUpgradeCatalog: [PondUpgradePlan]
+    private(set) var challengeCatalog: [ChallengePlan]
+    private(set) var expansionConfig: ExpansionPlan
 
     var selectedSeedID: String
     private(set) var statusText: String
@@ -25,20 +208,51 @@ final class GameStore {
 
     private(set) var hapticToken: Int = 0
     private(set) var harvestToken: Int = 0
+    private(set) var lastTickDurationMs: Double = 0
+    private(set) var lastSaveDurationMs: Double = 0
+    private(set) var lastSaveLoadDurationMs: Double = 0
+    private(set) var lastContentLoadDurationMs: Double = 0
+    private(set) var hudTimeText: String = "6:00 AM"
+    private(set) var hudClockSymbol: String = "sun.max.fill"
+    private(set) var hudSeasonText: String = "Spring"
+    private(set) var hudTimeProgress: Double = 0
+    private(set) var dayRolloverToken: Int = 0
+    private(set) var dayRolloverMessage: String = "A new day begins."
 
     @ObservationIgnored private var engine: GameCoreEngine
+    @ObservationIgnored private var timeEngine = TimeEngine(
+        config: TimeEngineConfig(secondsPerDay: 1_440, ticksPerSecond: 12, pauseInMenus: false, offlineCatchup: true)
+    )
     @ObservationIgnored private let saveStore: SaveFileStore
     @ObservationIgnored private let userDefaults: UserDefaults
+    @ObservationIgnored private var pendingSaveTask: Task<Void, Never>?
+    @ObservationIgnored private var appIsActive: Bool = true
+    @ObservationIgnored private var menuPresented: Bool = false
+    @ObservationIgnored private var lastHUDPublishTimestamp: TimeInterval = 0
 
     private static let settingsKey = "com.farmsim.settings.v1"
     private static let onboardingKey = "com.farmsim.onboarding.seen"
+    private static let saveDebounceNanoseconds: UInt64 = 350_000_000
+    private static let hudPublishIntervalSeconds: TimeInterval = 0.25
+    private static let defaultTimeConfig = TimeEngineConfig(
+        // Matches prior web-style accelerated day cycle: 24 minutes per in-game day.
+        secondsPerDay: 1_440,
+        ticksPerSecond: 12,
+        pauseInMenus: false,
+        offlineCatchup: true
+    )
 
     var playerLevel: Int {
         ProgressionSystem.level(forXP: save.player.xp)
     }
 
+    var targetSimTicksPerSecond: Double {
+        Self.defaultTimeConfig.ticksPerSecond
+    }
+
     var yieldMultiplier: Double {
-        ProgressionSystem.yieldMultiplier(forLevel: playerLevel)
+        let base = ProgressionSystem.yieldMultiplier(forLevel: playerLevel)
+        return base * buildingYieldMultiplier * researchYieldMultiplier * petYieldMultiplier
     }
 
     var nextGridUnlock: Int {
@@ -47,6 +261,18 @@ final class GameStore {
 
     var farmName: String {
         settings.farmName
+    }
+
+    var widgetSnapshot: WidgetFarmSnapshot {
+        WidgetFarmSnapshot(
+            farmName: farmName,
+            day: save.world.day,
+            coins: save.player.coins,
+            level: playerLevel,
+            readyCrops: readyTileCount,
+            season: hudSeasonText,
+            timeText: hudTimeText
+        )
     }
 
     var readyTileCount: Int {
@@ -61,12 +287,70 @@ final class GameStore {
         save.world.tiles.count
     }
 
+    var buildingPlans: [BuildingPlan] {
+        buildingCatalog
+    }
+
+    var buildingSynergyPlans: [BuildingSynergy] {
+        buildingSynergies
+    }
+
+    var activeBuildingSynergies: [BuildingSynergy] {
+        buildingSynergies.filter { synergy in
+            synergy.buildingIDs.allSatisfy { buildingLevel(for: $0) > 0 }
+        }
+    }
+
+    var researchPlans: [ResearchPlan] {
+        researchCatalog
+    }
+
+    var geneticsRecipes: [GeneticsRecipe] {
+        geneticsCatalog
+    }
+
+    var livestockPlans: [LivestockTypePlan] {
+        livestockCatalog
+    }
+
+    var petPlans: [PetTypePlan] {
+        petCatalog
+    }
+
+    var fishPlans: [FishTypePlan] {
+        fishCatalog
+    }
+
+    var pondUpgrades: [PondUpgradePlan] {
+        pondUpgradeCatalog
+    }
+
+    var challengePlans: [ChallengePlan] {
+        challengeCatalog
+    }
+
+    var challengeStreak: Int {
+        max(0, save.meta.challengeStreak)
+    }
+
+    var expansionPlan: ExpansionPlan {
+        expansionConfig
+    }
+
+    var sellBonusMultiplier: Double {
+        buildingSellMultiplier * researchSellMultiplier * petSellMultiplier
+    }
+
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
         self.settings = Self.loadSettings(defaults: userDefaults)
         self.onboardingRequired = userDefaults.bool(forKey: Self.onboardingKey) == false
 
+        let contentLoadInterval = PerfTelemetry.begin("content_load")
+        let contentLoadStart = ContinuousClock.now
         let loadedContent = Self.loadContent()
+        let contentLoadDurationMs = PerfTelemetry.elapsedMs(since: contentLoadStart)
+        PerfTelemetry.end("content_load", contentLoadInterval)
         let sortedDefs = loadedContent.cropDefs.sorted { $0.id < $1.id }
         let firstSeed = sortedDefs.first?.id ?? ""
 
@@ -81,16 +365,33 @@ final class GameStore {
 
         let initialSave: SaveGame
         var loadError: String?
+        let saveLoadInterval = PerfTelemetry.begin("save_load")
+        let saveLoadStart = ContinuousClock.now
         do {
             initialSave = try saveStore.load() ?? fallbackSave
         } catch {
             initialSave = fallbackSave
             loadError = "Save load failed: \(error.localizedDescription)"
         }
+        let saveLoadDurationMs = PerfTelemetry.elapsedMs(since: saveLoadStart)
+        PerfTelemetry.end("save_load", saveLoadInterval)
 
-        let engine = GameCoreEngine(save: initialSave, cropDefs: sortedDefs, seed: initialSave.daySeed)
+        var engine = GameCoreEngine(save: initialSave, cropDefs: sortedDefs, seed: initialSave.daySeed)
+        var initialTimeState = initialSave.meta.time
+        initialTimeState.dayIndex = max(initialSave.world.day, initialTimeState.dayIndex)
+        var timeEngine = TimeEngine(config: Self.defaultTimeConfig, state: initialTimeState)
+        let nowTimestamp = Date().timeIntervalSince1970
+        let offlineCatchup = timeEngine.applyOfflineCatchup(now: nowTimestamp, maxCatchupDays: 14)
+        if offlineCatchup.dayDelta > 0 {
+            for _ in 0..<offlineCatchup.dayDelta {
+                engine.advanceDay()
+            }
+        }
+        timeEngine.setLastRealWorldTimestamp(nowTimestamp)
+        engine.setTimeState(timeEngine.state)
 
         self.saveStore = saveStore
+        self.timeEngine = timeEngine
         self.engine = engine
         self.save = engine.save
         self.renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
@@ -102,17 +403,38 @@ final class GameStore {
         self.minigameDefs = loadedContent.minigameDefs
         self.almanacEntries = loadedContent.almanacEntries
         self.strings = loadedContent.strings
+        self.buildingCatalog = loadedContent.buildingPlans.isEmpty ? Self.defaultBuildingCatalog : loadedContent.buildingPlans
+        self.buildingSynergies = loadedContent.buildingSynergies.isEmpty ? Self.defaultBuildingSynergyCatalog : loadedContent.buildingSynergies
+        self.researchCatalog = loadedContent.researchPlans.isEmpty ? Self.defaultResearchCatalog : loadedContent.researchPlans
+        self.geneticsCatalog = loadedContent.geneticsRecipes.isEmpty ? Self.defaultGeneticsCatalog : loadedContent.geneticsRecipes
+        self.livestockCatalog = loadedContent.livestockPlans.isEmpty ? Self.defaultLivestockCatalog : loadedContent.livestockPlans
+        self.petCatalog = loadedContent.petPlans.isEmpty ? Self.defaultPetCatalog : loadedContent.petPlans
+        self.fishCatalog = loadedContent.fishPlans.isEmpty ? Self.defaultFishCatalog : loadedContent.fishPlans
+        self.pondUpgradeCatalog = loadedContent.pondUpgrades.isEmpty ? Self.defaultPondUpgrades : loadedContent.pondUpgrades.sorted { $0.level < $1.level }
+        self.challengeCatalog = loadedContent.challengePlans.isEmpty ? Self.defaultChallengeCatalog : loadedContent.challengePlans
+        self.expansionConfig = Self.defaultExpansionConfig
 
         self.selectedSeedID = firstSeed
-        self.statusText = loadError ?? "Tap a tile to manage crops."
-        self.contentErrorMessage = loadedContent.contentErrorMessage
-
-        if let error = loadError {
-            self.statusText = error
+        let startupStatus: String?
+        if let loadError {
+            startupStatus = loadError
+        } else if offlineCatchup.dayDelta > 0 {
+            startupStatus = "Welcome back. \(offlineCatchup.dayDelta) day\(offlineCatchup.dayDelta == 1 ? "" : "s") advanced while away."
+        } else {
+            startupStatus = nil
         }
+        self.statusText = startupStatus ?? "Tap a tile to manage crops."
+        self.contentErrorMessage = loadedContent.contentErrorMessage
+        self.lastContentLoadDurationMs = contentLoadDurationMs
+        self.lastSaveLoadDurationMs = saveLoadDurationMs
 
         _ = applyProgressionUnlocksIfNeeded()
-        syncState(statusOverride: nil, emitHaptic: false, emitHarvest: false)
+        syncState(statusOverride: startupStatus, emitHaptic: false, emitHarvest: false)
+        refreshHUDTime(force: true, now: nowTimestamp)
+    }
+
+    deinit {
+        pendingSaveTask?.cancel()
     }
 
     func tileSheetState(for index: Int) -> TileSheetState? {
@@ -137,19 +459,73 @@ final class GameStore {
         statusText = "Selected \(cropName)."
     }
 
+    func stepAutoTime(now: TimeInterval = Date().timeIntervalSince1970) {
+        let tickInterval = PerfTelemetry.begin("sim_tick")
+        let tickStart = ContinuousClock.now
+        let pauseForMenu = timeEngine.config.pauseInMenus && menuPresented
+        let result = timeEngine.tick(now: now, isPaused: !appIsActive || pauseForMenu)
+        lastTickDurationMs = PerfTelemetry.elapsedMs(since: tickStart)
+        PerfTelemetry.end("sim_tick", tickInterval)
+
+        if result.dayDelta > 0 {
+            advanceSimulationDays(
+                result.dayDelta,
+                status: result.dayDelta == 1 ? "A new day begins." : "\(result.dayDelta) new days begin.",
+                emitHaptic: true,
+                triggerDayRollover: true
+            )
+        } else {
+            refreshHUDTime(force: false, now: now)
+        }
+    }
+
+    func setAppActive(_ active: Bool, now: TimeInterval = Date().timeIntervalSince1970) {
+        appIsActive = active
+        if active {
+            FarmNotifications.clearCropsReadyReminder()
+            let catchup = timeEngine.applyOfflineCatchup(now: now, maxCatchupDays: 14)
+            if catchup.dayDelta > 0 {
+                advanceSimulationDays(
+                    catchup.dayDelta,
+                    status: "Welcome back. \(catchup.dayDelta) day\(catchup.dayDelta == 1 ? "" : "s") passed on the farm.",
+                    emitHaptic: false,
+                    triggerDayRollover: false
+                )
+            } else {
+                refreshHUDTime(force: true, now: now)
+            }
+        } else {
+            timeEngine.setLastRealWorldTimestamp(now)
+            engine.setTimeState(timeEngine.state)
+            if settings.cropsReadyNotifications {
+                FarmNotifications.scheduleCropsReadyReminder(
+                    day: engine.save.world.day,
+                    readyCrops: readyTileCount,
+                    farmName: farmName
+                )
+            }
+        }
+    }
+
+    func setMenuPresented(_ presented: Bool) {
+        menuPresented = presented
+    }
+
+    // Legacy API kept for debug controls and compatibility with existing call sites.
     func advanceDay() {
         advanceDays(1)
     }
 
+    // Legacy API kept for debug controls and compatibility with existing call sites.
     func advanceDays(_ count: Int) {
         let safeCount = max(1, min(14, count))
-        for _ in 0..<safeCount {
-            engine.advanceDay()
-        }
-        let status = safeCount == 1
-            ? "Day \(engine.save.world.day)"
-            : "Advanced \(safeCount) days to Day \(engine.save.world.day)."
-        syncState(statusOverride: status, emitHaptic: safeCount > 1, emitHarvest: false)
+        let _ = timeEngine.fastForward(days: safeCount)
+        advanceSimulationDays(
+            safeCount,
+            status: safeCount == 1 ? "Fast-forwarded 1 day." : "Fast-forwarded \(safeCount) days.",
+            emitHaptic: safeCount > 1,
+            triggerDayRollover: true
+        )
     }
 
     func plantSelectedSeed(on tileIndex: Int) {
@@ -183,17 +559,34 @@ final class GameStore {
         syncState(statusOverride: status, emitHaptic: count > 0, emitHarvest: count > 0)
     }
 
-    func buySeed(cropID: String) -> Bool {
-        let bought = engine.buySeed(cropID: cropID)
-        let status = bought ? "Seed purchased." : "Not enough coins."
+    func buySeed(cropID: String, quantity: Int = 1) -> Bool {
+        guard let def = engine.cropDefsByID[cropID] else { return false }
+        let safeQuantity = max(1, quantity)
+        let discountedCost = discountedSeedCost(for: def.seedCost, cropID: cropID)
+        let result = engine.buy(
+            itemID: cropID,
+            quantity: safeQuantity,
+            pricing: MarketPricing(seedUnitCosts: [cropID: discountedCost])
+        )
+        let bought = result.success
+        let status = bought
+            ? "Purchased \(safeQuantity)x \(def.name) seed for \(result.totalPrice) coins."
+            : "Not enough coins."
         syncState(statusOverride: status, emitHaptic: bought, emitHarvest: false)
         return bought
     }
 
     func sellCrop(cropID: String, quantity: Int = 1) -> Bool {
-        let sold = engine.sellCrop(cropID: cropID, quantity: quantity)
+        guard let def = engine.cropDefsByID[cropID] else { return false }
+        let adjustedUnitPrice = max(1, Int((Double(def.sellPrice) * sellBonusMultiplier).rounded(.down)))
+        let result = engine.sell(
+            itemID: cropID,
+            quantity: quantity,
+            pricing: MarketPricing(cropUnitPrices: [cropID: adjustedUnitPrice])
+        )
+        let sold = result.success
         let cropName = engine.cropDefsByID[cropID]?.name ?? cropID
-        let status = sold ? "Sold \(cropName)." : "No crops to sell."
+        let status = sold ? "Sold \(result.quantity)x \(cropName) for \(result.totalPrice) coins." : "No crops to sell."
         syncState(statusOverride: status, emitHaptic: sold, emitHarvest: false)
         return sold
     }
@@ -206,7 +599,17 @@ final class GameStore {
 
     func canAfford(cropID: String) -> Bool {
         guard let def = engine.cropDefsByID[cropID] else { return false }
-        return save.player.coins >= def.seedCost
+        return save.player.coins >= discountedSeedCost(for: def.seedCost, cropID: cropID)
+    }
+
+    func seedPrice(for cropID: String) -> Int? {
+        guard let def = engine.cropDefsByID[cropID] else { return nil }
+        return discountedSeedCost(for: def.seedCost, cropID: cropID)
+    }
+
+    func sellUnitPrice(for cropID: String) -> Int? {
+        guard let def = engine.cropDefsByID[cropID] else { return nil }
+        return max(1, Int((Double(def.sellPrice) * sellBonusMultiplier).rounded(.down)))
     }
 
     func isUnlocked(cropID: String) -> Bool {
@@ -214,12 +617,504 @@ final class GameStore {
         return playerLevel >= requiredLevel
     }
 
+    func buildingLevel(for buildingID: String) -> Int {
+        max(0, save.meta.buildingLevels[buildingID] ?? 0)
+    }
+
+    func nextBuildingCost(for buildingID: String) -> Int? {
+        guard let plan = buildingPlans.first(where: { $0.id == buildingID }) else { return nil }
+        return plan.costForNextLevel(currentLevel: buildingLevel(for: buildingID))
+    }
+
+    @discardableResult
+    func upgradeBuilding(_ buildingID: String) -> Bool {
+        guard let plan = buildingPlans.first(where: { $0.id == buildingID }) else { return false }
+        guard playerLevel >= plan.requiredLevel else {
+            syncState(statusOverride: "Reach level \(plan.requiredLevel) to unlock \(plan.name).", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        let level = buildingLevel(for: buildingID)
+        guard level < plan.maxLevel else {
+            syncState(statusOverride: "\(plan.name) is already max level.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        guard let cost = plan.costForNextLevel(currentLevel: level), engine.spendCoins(cost) else {
+            syncState(statusOverride: "Not enough coins for \(plan.name).", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+
+        engine.setBuildingLevel(level + 1, for: buildingID)
+        let bonus = plan.bonusForLevel(level + 1)
+        syncState(statusOverride: "\(plan.name) upgraded to Lv \(level + 1). \(bonus)", emitHaptic: true, emitHarvest: false)
+        return true
+    }
+
+    func isResearchCompleted(_ researchID: String) -> Bool {
+        save.meta.completedResearch[researchID] ?? false
+    }
+
+    func canCompleteResearch(_ plan: ResearchPlan) -> Bool {
+        guard !isResearchCompleted(plan.id) else { return false }
+        guard save.player.coins >= plan.cost else { return false }
+        return plan.prerequisites.allSatisfy { isResearchCompleted($0) }
+    }
+
+    @discardableResult
+    func completeResearch(_ researchID: String) -> Bool {
+        guard let plan = researchPlans.first(where: { $0.id == researchID }) else { return false }
+        guard canCompleteResearch(plan) else {
+            syncState(statusOverride: "Research requirements not met for \(plan.name).", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        guard engine.spendCoins(plan.cost) else { return false }
+        engine.markResearchCompleted(plan.id)
+        engine.addXP(max(10, plan.cost / 2))
+        syncState(statusOverride: "Research complete: \(plan.name).", emitHaptic: true, emitHarvest: false)
+        return true
+    }
+
+    func canBreed(_ recipe: GeneticsRecipe) -> Bool {
+        guard isResearchCompleted("hybrid_crops") else { return false }
+        guard playerLevel >= recipe.levelRequirement else { return false }
+        return recipe.requiredParents().allSatisfy { pair in
+            seedCount(for: pair.key) >= pair.value
+        }
+    }
+
+    @discardableResult
+    func discoverHybrid(_ recipeID: String) -> Bool {
+        guard let recipe = geneticsRecipes.first(where: { $0.id == recipeID }) else { return false }
+        guard isResearchCompleted("hybrid_crops") else {
+            syncState(statusOverride: "Complete Hybrid Crops research first.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        guard playerLevel >= recipe.levelRequirement else {
+            syncState(statusOverride: "Reach level \(recipe.levelRequirement) to unlock \(recipe.name).", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        for (cropID, qty) in recipe.requiredParents() {
+            guard engine.consumeSeeds(cropID: cropID, quantity: qty) else {
+                syncState(statusOverride: "Not enough parent seeds for \(recipe.name).", emitHaptic: false, emitHarvest: false)
+                return false
+            }
+        }
+        engine.grantSeeds(cropID: recipe.outputCropID, quantity: 1)
+        engine.markHybridDiscovered(recipe.id)
+        engine.addXP(25)
+        syncState(statusOverride: "Discovered \(recipe.name). +1 \(cropName(for: recipe.outputCropID)) seed.", emitHaptic: true, emitHarvest: false)
+        return true
+    }
+
+    func livestockCount(for livestockID: String) -> Int {
+        max(0, save.meta.livestockCounts[livestockID] ?? 0)
+    }
+
+    var livestockCapacity: Int {
+        10 + max(0, buildingLevel(for: "barn")) * 2
+    }
+
+    var usedLivestockCapacity: Int {
+        livestockPlans.reduce(0) { partial, plan in
+            partial + (livestockCount(for: plan.id) * max(1, plan.spaceRequired))
+        }
+    }
+
+    func canBuyLivestock(_ livestockID: String) -> Bool {
+        guard let plan = livestockPlans.first(where: { $0.id == livestockID }) else { return false }
+        guard playerLevel >= plan.requiredLevel else { return false }
+        guard save.player.coins >= plan.cost else { return false }
+        return (usedLivestockCapacity + plan.spaceRequired) <= livestockCapacity
+    }
+
+    @discardableResult
+    func buyLivestock(_ livestockID: String) -> Bool {
+        guard let plan = livestockPlans.first(where: { $0.id == livestockID }) else { return false }
+        guard playerLevel >= plan.requiredLevel else {
+            syncState(statusOverride: "Reach level \(plan.requiredLevel) to unlock \(plan.name).", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        guard (usedLivestockCapacity + plan.spaceRequired) <= livestockCapacity else {
+            syncState(statusOverride: "Not enough barn space for \(plan.name).", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        guard engine.spendCoins(plan.cost) else {
+            syncState(statusOverride: "Not enough coins for \(plan.name).", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        engine.setLivestockCount(livestockCount(for: livestockID) + 1, for: livestockID)
+        engine.addXP(20)
+        syncState(statusOverride: "Added \(plan.name) to your farm.", emitHaptic: true, emitHarvest: false)
+        return true
+    }
+
+    @discardableResult
+    func collectLivestockProducts() -> Int {
+        var totalCoins = 0
+        for plan in livestockPlans {
+            let count = livestockCount(for: plan.id)
+            guard count > 0 else { continue }
+            let gross = count * max(1, plan.productAmount) * max(0, plan.productValue)
+            let maintenance = count * max(0, plan.maintenanceCost)
+            totalCoins += max(0, gross - maintenance)
+        }
+        guard totalCoins > 0 else {
+            syncState(statusOverride: "No livestock products ready.", emitHaptic: false, emitHarvest: false)
+            return 0
+        }
+        engine.addCoins(totalCoins)
+        engine.addXP(max(5, totalCoins / 10))
+        syncState(statusOverride: "Collected livestock goods for \(totalCoins) coins.", emitHaptic: true, emitHarvest: true)
+        return totalCoins
+    }
+
+    func petLevel(for petID: String) -> Int {
+        max(0, save.meta.petLevels[petID] ?? 0)
+    }
+
+    func canAdoptPet(_ petID: String) -> Bool {
+        guard let plan = petPlans.first(where: { $0.id == petID }) else { return false }
+        guard petLevel(for: petID) == 0 else { return false }
+        guard playerLevel >= plan.requiredLevel else { return false }
+        return save.player.coins >= plan.cost
+    }
+
+    @discardableResult
+    func adoptPet(_ petID: String) -> Bool {
+        guard let plan = petPlans.first(where: { $0.id == petID }) else { return false }
+        guard petLevel(for: petID) == 0 else {
+            syncState(statusOverride: "\(plan.name) already adopted.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        guard playerLevel >= plan.requiredLevel else {
+            syncState(statusOverride: "Reach level \(plan.requiredLevel) to adopt \(plan.name).", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        guard engine.spendCoins(plan.cost) else {
+            syncState(statusOverride: "Not enough coins for \(plan.name).", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        engine.setPetLevel(1, for: petID)
+        engine.addXP(20)
+        syncState(statusOverride: "Adopted \(plan.name).", emitHaptic: true, emitHarvest: false)
+        return true
+    }
+
+    @discardableResult
+    func trainPet(_ petID: String) -> Bool {
+        guard let plan = petPlans.first(where: { $0.id == petID }) else { return false }
+        let current = petLevel(for: petID)
+        guard current > 0 else {
+            syncState(statusOverride: "Adopt \(plan.name) first.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        guard current < plan.maxLevel else {
+            syncState(statusOverride: "\(plan.name) is already max level.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        let cost = max(25, plan.cost / 2) * current
+        guard engine.spendCoins(cost) else {
+            syncState(statusOverride: "Not enough coins to train \(plan.name).", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        engine.setPetLevel(current + 1, for: petID)
+        engine.addXP(10 + current * 5)
+        syncState(statusOverride: "\(plan.name) advanced to Lv \(current + 1).", emitHaptic: true, emitHarvest: false)
+        return true
+    }
+
+    var fishingPondLevel: Int {
+        max(1, save.meta.fishingPondLevel)
+    }
+
+    var currentPondUpgrade: PondUpgradePlan {
+        pondUpgrades
+            .sorted { $0.level < $1.level }
+            .last(where: { $0.level <= fishingPondLevel })
+            ?? PondUpgradePlan(id: "basic", level: 1, name: "Basic Pond", capacity: 3, regenRate: 1, cost: 0, rarityBonus: 1)
+    }
+
+    var nextPondUpgrade: PondUpgradePlan? {
+        pondUpgrades
+            .sorted { $0.level < $1.level }
+            .first(where: { $0.level == fishingPondLevel + 1 })
+    }
+
+    @discardableResult
+    func upgradePond() -> Bool {
+        guard let next = nextPondUpgrade else {
+            syncState(statusOverride: "Pond is already max level.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        guard engine.spendCoins(next.cost) else {
+            syncState(statusOverride: "Not enough coins to upgrade pond.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        engine.setFishingPondLevel(next.level)
+        syncState(statusOverride: "Pond upgraded to \(next.name).", emitHaptic: true, emitHarvest: false)
+        return true
+    }
+
+    func fishCaughtCount(for fishID: String) -> Int {
+        max(0, save.meta.fishCaughtCounts[fishID] ?? 0)
+    }
+
+    var totalFishCaught: Int {
+        save.meta.fishCaughtCounts.values.reduce(0, +)
+    }
+
+    @discardableResult
+    func castFishingLine() -> Bool {
+        guard !fishPlans.isEmpty else {
+            syncState(statusOverride: "No fish data loaded.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+
+        let rarityBonus = max(1.0, currentPondUpgrade.rarityBonus)
+        let roll = Double.random(in: 0...1)
+        let weighted = fishPlans
+            .map { fish in
+                let isRare = fish.rarity <= 0.1
+                let adjusted = isRare ? fish.rarity * rarityBonus : fish.rarity
+                return (fish: fish, weight: max(0.0001, adjusted))
+            }
+        let total = weighted.reduce(0.0) { $0 + $1.weight }
+        var cursor = roll * total
+        var chosen = weighted.first?.fish ?? fishPlans[0]
+        for entry in weighted {
+            cursor -= entry.weight
+            if cursor <= 0 {
+                chosen = entry.fish
+                break
+            }
+        }
+
+        let value = max(1, Int((Double(chosen.baseValue) * sellBonusMultiplier).rounded(.down)))
+        engine.addCoins(value)
+        engine.addXP(max(4, chosen.difficulty * 4))
+        engine.addFishCaught(for: chosen.id, quantity: 1)
+        syncState(statusOverride: "Caught \(chosen.name) for \(value) coins.", emitHaptic: true, emitHarvest: true)
+        return true
+    }
+
+    func challengeProgress(for challenge: ChallengePlan) -> Int {
+        switch challenge.metric {
+        case "total_crops_inventory":
+            return save.player.inventory.crops.values.reduce(0, +)
+        case "active_plots":
+            return plantedTileCount
+        case "built_structures":
+            return buildingPlans.reduce(0) { $0 + (buildingLevel(for: $1.id) > 0 ? 1 : 0) }
+        case "livestock_count":
+            return livestockPlans.reduce(0) { $0 + livestockCount(for: $1.id) }
+        case "coin_balance":
+            return save.player.coins
+        default:
+            return 0
+        }
+    }
+
+    func isChallengeClaimedToday(_ challengeID: String) -> Bool {
+        (save.meta.challengeClaims[challengeID] ?? -1) == save.world.day
+    }
+
+    func canClaimChallenge(_ challenge: ChallengePlan) -> Bool {
+        guard !isChallengeClaimedToday(challenge.id) else { return false }
+        return challengeProgress(for: challenge) >= challenge.target
+    }
+
+    @discardableResult
+    func claimChallenge(_ challengeID: String) -> Bool {
+        guard let challenge = challengePlans.first(where: { $0.id == challengeID }) else { return false }
+        guard canClaimChallenge(challenge) else {
+            syncState(statusOverride: "Challenge requirements not met.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+
+        let currentDay = save.world.day
+        let allClaimedBefore = challengePlans.allSatisfy { (save.meta.challengeClaims[$0.id] ?? -1) == currentDay }
+        engine.setChallengeClaimDay(currentDay, for: challenge.id)
+        engine.addCoins(challenge.rewardCoins)
+        engine.addXP(challenge.rewardXP)
+        let allClaimedAfter = challengePlans.allSatisfy { (engine.save.meta.challengeClaims[$0.id] ?? -1) == currentDay }
+        if !allClaimedBefore && allClaimedAfter {
+            engine.setChallengeStreak(engine.challengeStreak + 1)
+        }
+
+        syncState(statusOverride: "Challenge complete: \(challenge.name).", emitHaptic: true, emitHarvest: false)
+        return true
+    }
+
+    var dailyTasks: [DailyTaskModel] {
+        guard !cropDefs.isEmpty else { return [] }
+        let day = save.world.day
+        let chosenCrop = cropDefs[dailyTaskCropIndex(for: day)]
+        let coinTarget = 120 + ((day % 5) * 20)
+        let readyTarget = 2 + (day % 3)
+        let cropTarget = 3 + (day % 4)
+
+        return [
+            DailyTaskModel(
+                id: "coins_\(day)",
+                title: "Cash Flow",
+                detail: "Reach \(coinTarget) coins in your wallet.",
+                metric: .coins,
+                target: coinTarget,
+                cropID: nil,
+                rewardCoins: 20 + (day % 4) * 6,
+                rewardXP: 12 + (day % 3) * 4
+            ),
+            DailyTaskModel(
+                id: "ready_tiles_\(day)",
+                title: "Morning Harvest",
+                detail: "Have \(readyTarget) crops ready at once.",
+                metric: .readyTiles,
+                target: readyTarget,
+                cropID: nil,
+                rewardCoins: 24 + (day % 3) * 7,
+                rewardXP: 14 + (day % 2) * 5
+            ),
+            DailyTaskModel(
+                id: "crop_stock_\(chosenCrop.id)_\(day)",
+                title: "Stock \(chosenCrop.name)",
+                detail: "Store \(cropTarget)x \(chosenCrop.name) in inventory.",
+                metric: .cropInventory,
+                target: cropTarget,
+                cropID: chosenCrop.id,
+                rewardCoins: 26 + (day % 4) * 8,
+                rewardXP: 16 + (day % 3) * 5
+            ),
+        ]
+    }
+
+    func dailyTaskProgress(_ task: DailyTaskModel) -> Int {
+        switch task.metric {
+        case .coins:
+            return save.player.coins
+        case .cropInventory:
+            return cropCount(for: task.cropID ?? "")
+        case .readyTiles:
+            return readyTileCount
+        case .plantedTiles:
+            return plantedTileCount
+        }
+    }
+
+    func isDailyTaskClaimedToday(_ task: DailyTaskModel) -> Bool {
+        let key = "daily_task:\(task.id)"
+        return (save.meta.challengeClaims[key] ?? -1) == save.world.day
+    }
+
+    func canClaimDailyTask(_ task: DailyTaskModel) -> Bool {
+        guard !isDailyTaskClaimedToday(task) else { return false }
+        return dailyTaskProgress(task) >= task.target
+    }
+
+    @discardableResult
+    func claimDailyTask(_ task: DailyTaskModel) -> Bool {
+        guard canClaimDailyTask(task) else {
+            syncState(statusOverride: "Task requirements not met yet.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        let key = "daily_task:\(task.id)"
+        engine.setChallengeClaimDay(save.world.day, for: key)
+        engine.addCoins(task.rewardCoins)
+        engine.addXP(task.rewardXP)
+        syncState(statusOverride: "Task complete: \(task.title).", emitHaptic: true, emitHarvest: false)
+        return true
+    }
+
+    var dailySpecialSeedIDs: Set<String> {
+        let day = save.world.day
+        let ranked = cropDefs.map { crop in
+            (
+                crop.id,
+                stableHash("\(crop.id)#\(day)#\(save.daySeed)")
+            )
+        }
+        .sorted { lhs, rhs in
+            if lhs.1 == rhs.1 { return lhs.0 < rhs.0 }
+            return lhs.1 < rhs.1
+        }
+        let count = min(2, ranked.count)
+        return Set(ranked.prefix(count).map(\.0))
+    }
+
+    func isDailySpecialSeed(_ cropID: String) -> Bool {
+        dailySpecialSeedIDs.contains(cropID)
+    }
+
+    var dailySpecialSummary: String {
+        let names = cropDefs
+            .filter { dailySpecialSeedIDs.contains($0.id) }
+            .map(\.name)
+        guard !names.isEmpty else { return "No deals today." }
+        return names.joined(separator: ", ")
+    }
+
+    var canPurchaseExpansion: Bool {
+        guard save.world.gridWidth < expansionPlan.maxGrid else { return false }
+        guard let cost = expansionPlan.costsByGridSize[save.world.gridWidth] else { return false }
+        return save.player.coins >= cost
+    }
+
+    var nextExpansionCost: Int? {
+        expansionPlan.costsByGridSize[save.world.gridWidth]
+    }
+
+    @discardableResult
+    func purchaseExpansion() -> Bool {
+        let current = save.world.gridWidth
+        guard current < expansionPlan.maxGrid else {
+            syncState(statusOverride: "Farm is already at max size.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        guard let cost = nextExpansionCost else {
+            syncState(statusOverride: "No expansion upgrade available right now.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+        guard engine.spendCoins(cost) else {
+            syncState(statusOverride: "Not enough coins to expand farm.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
+
+        let next = min(expansionPlan.maxGrid, current + 1)
+        engine.resizeGrid(width: next, height: next)
+        engine.incrementExpansionPurchases()
+        syncState(statusOverride: "Farm expanded to \(next)x\(next).", emitHaptic: true, emitHarvest: false)
+        return true
+    }
+
     func seedCount(for cropID: String) -> Int {
         save.player.inventory.seeds[cropID] ?? 0
     }
 
+    func isHybridDiscovered(_ recipeID: String) -> Bool {
+        save.meta.discoveredHybrids[recipeID] ?? false
+    }
+
     func cropCount(for cropID: String) -> Int {
         save.player.inventory.crops[cropID] ?? 0
+    }
+
+    var favoriteItemIDs: Set<String> {
+        Set(save.meta.favoriteItems.compactMap { $0.value ? $0.key : nil })
+    }
+
+    func isFavorite(itemID: String) -> Bool {
+        save.meta.favoriteItems[itemID] ?? false
+    }
+
+    func setFavorite(itemID: String, isFavorite: Bool) {
+        engine.setFavoriteItem(isFavorite, for: itemID)
+        save = engine.save
+        schedulePersist()
+    }
+
+    func cropName(for cropID: String) -> String {
+        if let name = engine.cropDefsByID[cropID]?.name {
+            return name
+        }
+        return Self.displayName(forIdentifier: cropID)
     }
 
     func emoji(for cropID: String) -> String {
@@ -235,10 +1130,31 @@ final class GameStore {
     }
 
     func persistNow() {
+        pendingSaveTask?.cancel()
+        pendingSaveTask = nil
+
+        engine.setTimeState(timeEngine.state)
+        save.meta.time = timeEngine.state
+
+        let saveInterval = PerfTelemetry.begin("save_write")
+        let saveStart = ContinuousClock.now
         do {
             try saveStore.save(engine.save)
+            lastSaveDurationMs = PerfTelemetry.elapsedMs(since: saveStart)
         } catch {
+            lastSaveDurationMs = PerfTelemetry.elapsedMs(since: saveStart)
             statusText = "Save failed: \(error.localizedDescription)"
+        }
+        PerfTelemetry.end("save_write", saveInterval)
+    }
+
+    private func schedulePersist() {
+        pendingSaveTask?.cancel()
+        pendingSaveTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(nanoseconds: Self.saveDebounceNanoseconds)
+            if Task.isCancelled { return }
+            self.persistNow()
         }
     }
 
@@ -255,8 +1171,14 @@ final class GameStore {
             starterSeeds: starterSeeds,
             daySeed: 20260212
         )
+        var resetTimeState = fresh.meta.time
+        resetTimeState.dayIndex = fresh.world.day
+        resetTimeState.lastRealWorldTimestamp = Date().timeIntervalSince1970
+        timeEngine = TimeEngine(config: Self.defaultTimeConfig, state: resetTimeState)
         engine = GameCoreEngine(save: fresh, cropDefs: cropDefs, seed: fresh.daySeed)
+        engine.setTimeState(timeEngine.state)
         syncState(statusOverride: "Save reset.", emitHaptic: false, emitHarvest: false)
+        refreshHUDTime(force: true, now: Date().timeIntervalSince1970)
     }
 
     func setHapticsEnabled(_ enabled: Bool) {
@@ -276,6 +1198,11 @@ final class GameStore {
 
     func setVoiceOverHints(_ enabled: Bool) {
         settings.voiceOverHints = enabled
+        persistSettings()
+    }
+
+    func setCropsReadyNotifications(_ enabled: Bool) {
+        settings.cropsReadyNotifications = enabled
         persistSettings()
     }
 
@@ -305,9 +1232,224 @@ final class GameStore {
         persistSettings()
     }
 
+    private var buildingYieldMultiplier: Double {
+        let barn = levelMultiplier(level: buildingLevel(for: "barn"), values: [1.2, 1.35, 1.55, 1.8, 2.2])
+        let greenhouse = levelMultiplier(level: buildingLevel(for: "greenhouse"), values: [1.05, 1.1, 1.15, 1.2, 1.25])
+        let well = levelMultiplier(level: buildingLevel(for: "well"), values: [1.0, 1.0, 1.05, 1.1])
+        let workshop = levelMultiplier(level: buildingLevel(for: "workshop"), values: [1.0, 1.1, 1.25])
+        var multiplier = barn * greenhouse * well * workshop
+
+        let hasHydroGarden = buildingLevel(for: "well") > 0 && buildingLevel(for: "greenhouse") > 0
+        if hasHydroGarden {
+            multiplier *= 1.15
+        }
+
+        let hasFullFarm = hasHydroGarden && buildingLevel(for: "barn") > 0
+        if hasFullFarm {
+            multiplier *= 1.2
+        }
+
+        return min(8.0, max(1.0, multiplier))
+    }
+
+    private var researchYieldMultiplier: Double {
+        var multiplier = 1.0
+        if isResearchCompleted("hybrid_crops") {
+            multiplier *= 1.05
+        }
+        if isResearchCompleted("soil_enhancement") {
+            multiplier *= 1.15
+        }
+        if isResearchCompleted("pest_genetics") {
+            multiplier *= 1.1
+        }
+        if isResearchCompleted("automation_core") {
+            multiplier *= 1.1
+        }
+        if isResearchCompleted("climate_control") {
+            multiplier *= 1.1
+        }
+        return min(4.0, max(1.0, multiplier))
+    }
+
+    private var buildingSellMultiplier: Double {
+        let siloLevel = buildingLevel(for: "silo")
+        let siloMultiplier: Double
+        switch siloLevel {
+        case 4...:
+            siloMultiplier = 1.25
+        case 3:
+            siloMultiplier = 1.1
+        default:
+            siloMultiplier = 1.0
+        }
+
+        let windmill = levelMultiplier(level: buildingLevel(for: "windmill"), values: [2.0, 2.5, 3.0, 4.0, 6.0])
+        var multiplier = siloMultiplier * windmill
+
+        let hasSupplyChain = buildingLevel(for: "barn") > 0 && siloLevel > 0
+        if hasSupplyChain {
+            multiplier *= 1.1
+        }
+
+        return min(12.0, max(1.0, multiplier))
+    }
+
+    private var researchSellMultiplier: Double {
+        var multiplier = 1.0
+        if isResearchCompleted("market_analytics") {
+            multiplier *= 1.2
+        }
+        return multiplier
+    }
+
+    private var petYieldMultiplier: Double {
+        let total = petPlans.reduce(1.0) { partial, pet in
+            let level = max(0, petLevel(for: pet.id))
+            guard level > 0 else { return partial }
+            return partial * (1.0 + (pet.bonusPerLevel * Double(level)))
+        }
+        return min(2.0, max(1.0, total))
+    }
+
+    private var petSellMultiplier: Double {
+        let catLevel = max(0, petLevel(for: "cat"))
+        guard catLevel > 0 else { return 1.0 }
+        return min(1.4, 1.0 + (0.02 * Double(catLevel)))
+    }
+
+    private func discountedSeedCost(for baseCost: Int, cropID: String? = nil) -> Int {
+        var discount = 1.0
+        switch buildingLevel(for: "workshop") {
+        case 3...:
+            discount *= 0.75
+        case 2:
+            discount *= 0.9
+        default:
+            break
+        }
+
+        if isResearchCompleted("irrigation_system") {
+            discount *= 0.95
+        }
+        if isResearchCompleted("automation_core") {
+            discount *= 0.9
+        }
+        if isResearchCompleted("climate_control") {
+            discount *= 0.95
+        }
+
+        if let cropID, dailySpecialSeedIDs.contains(cropID) {
+            discount *= 0.8
+        }
+
+        return max(1, Int((Double(baseCost) * discount).rounded(.down)))
+    }
+
+    private func stableHash(_ input: String) -> UInt64 {
+        var hash: UInt64 = 1469598103934665603
+        for byte in input.utf8 {
+            hash ^= UInt64(byte)
+            hash = hash &* 1099511628211
+        }
+        return hash
+    }
+
+    private func dailyTaskCropIndex(for day: Int) -> Int {
+        guard !cropDefs.isEmpty else { return 0 }
+        let value = stableHash("daily-task-crop-\(day)-\(save.daySeed)")
+        return Int(value % UInt64(cropDefs.count))
+    }
+
+    private func levelMultiplier(level: Int, values: [Double]) -> Double {
+        guard level > 0 else { return 1.0 }
+        let index = min(level - 1, values.count - 1)
+        guard values.indices.contains(index) else { return 1.0 }
+        return max(1.0, values[index])
+    }
+
+    private static func displayName(forIdentifier identifier: String) -> String {
+        guard !identifier.isEmpty else { return "Unknown" }
+        var output: [Character] = []
+        for char in identifier {
+            if char == "_" || char == "-" {
+                output.append(" ")
+                continue
+            }
+            if char.isUppercase, let previous = output.last, previous != " " {
+                output.append(" ")
+            }
+            output.append(char)
+        }
+        return String(output)
+            .split(separator: " ")
+            .map { $0.capitalized }
+            .joined(separator: " ")
+    }
+
+    private func advanceSimulationDays(_ count: Int, status: String, emitHaptic: Bool, triggerDayRollover: Bool) {
+        let safeCount = max(0, count)
+        guard safeCount > 0 else { return }
+
+        for _ in 0..<safeCount {
+            engine.advanceDay()
+        }
+        engine.setTimeState(timeEngine.state)
+
+        if triggerDayRollover {
+            dayRolloverMessage = status
+            dayRolloverToken += 1
+        }
+
+        syncState(statusOverride: status, emitHaptic: emitHaptic, emitHarvest: false)
+        refreshHUDTime(force: true, now: Date().timeIntervalSince1970)
+    }
+
+    private func refreshHUDTime(force: Bool, now: TimeInterval) {
+        if !force && (now - lastHUDPublishTimestamp) < Self.hudPublishIntervalSeconds {
+            return
+        }
+        lastHUDPublishTimestamp = now
+
+        let secondsPerDay = max(60, timeEngine.config.secondsPerDay)
+        let clampedSeconds = max(0, min(secondsPerDay, timeEngine.secondsIntoDay))
+        let hourFraction = clampedSeconds / secondsPerDay * 24
+        let hour24 = Int(hourFraction) % 24
+        let minute = Int((hourFraction - floor(hourFraction)) * 60)
+
+        let hour12Raw = hour24 % 12
+        let hour12 = hour12Raw == 0 ? 12 : hour12Raw
+        let suffix = hour24 < 12 ? "AM" : "PM"
+
+        hudTimeText = "\(hour12):\(String(format: "%02d", minute)) \(suffix)"
+        hudTimeProgress = max(0, min(1, timeEngine.dayProgress))
+        hudClockSymbol = Self.clockSymbol(forHour24: hour24)
+        hudSeasonText = Self.seasonName(forDay: engine.save.world.day)
+    }
+
+    private static func seasonName(forDay day: Int) -> String {
+        let seasons = ["Spring", "Summer", "Autumn", "Winter"]
+        let index = ((max(0, day) / 7) % seasons.count)
+        return seasons[index]
+    }
+
+    private static func clockSymbol(forHour24 hour: Int) -> String {
+        switch hour {
+        case 5..<8:
+            return "sunrise.fill"
+        case 8..<18:
+            return "sun.max.fill"
+        case 18..<21:
+            return "sunset.fill"
+        default:
+            return "moon.stars.fill"
+        }
+    }
+
     private func syncState(statusOverride: String?, emitHaptic: Bool, emitHarvest: Bool) {
         let upgradeMessage = applyProgressionUnlocksIfNeeded()
 
+        engine.setTimeState(timeEngine.state)
         save = engine.save
         renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
 
@@ -321,7 +1463,7 @@ final class GameStore {
             statusText = upgradeMessage
         }
 
-        persistNow()
+        schedulePersist()
 
         if settings.hapticsEnabled, emitHaptic {
             hapticToken += 1
@@ -363,6 +1505,15 @@ final class GameStore {
         minigameDefs: [MinigameDef],
         almanacEntries: [AlmanacEntry],
         strings: [String: String],
+        buildingPlans: [BuildingPlan],
+        buildingSynergies: [BuildingSynergy],
+        researchPlans: [ResearchPlan],
+        geneticsRecipes: [GeneticsRecipe],
+        livestockPlans: [LivestockTypePlan],
+        petPlans: [PetTypePlan],
+        fishPlans: [FishTypePlan],
+        pondUpgrades: [PondUpgradePlan],
+        challengePlans: [ChallengePlan],
         contentErrorMessage: String?
     ) {
         do {
@@ -375,6 +1526,15 @@ final class GameStore {
                 minigameDefs: content.minigameDefs,
                 almanacEntries: content.almanacEntries,
                 strings: content.strings,
+                buildingPlans: content.buildingPlans,
+                buildingSynergies: content.buildingSynergies,
+                researchPlans: content.researchPlans,
+                geneticsRecipes: content.geneticsRecipes,
+                livestockPlans: content.livestockPlans,
+                petPlans: content.petPlans,
+                fishPlans: content.fishPlans,
+                pondUpgrades: content.pondUpgrades,
+                challengePlans: content.challengePlans,
                 contentErrorMessage: nil
             )
         } catch {
@@ -400,6 +1560,15 @@ final class GameStore {
                 minigameDefs: [],
                 almanacEntries: [],
                 strings: [:],
+                buildingPlans: [],
+                buildingSynergies: [],
+                researchPlans: [],
+                geneticsRecipes: [],
+                livestockPlans: [],
+                petPlans: [],
+                fishPlans: [],
+                pondUpgrades: [],
+                challengePlans: [],
                 contentErrorMessage: message
             )
         }

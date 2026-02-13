@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "super_carrot",
+      "name": "Super Carrot",
+      "emoji": "🥕✨",
+      "parentA": "carrot",
+      "parentB": "carrot",
+      "outputCropID": "super_carrot",
+      "levelRequirement": 12,
+      "notes": "Enhanced carrot with faster growth and higher value."
+    },
+    {
+      "id": "rainbow_corn",
+      "name": "Rainbow Corn",
+      "emoji": "🌽🌈",
+      "parentA": "corn",
+      "parentB": "wheat",
+      "outputCropID": "rainbow_corn",
+      "levelRequirement": 7,
+      "notes": "Colorful hybrid corn with premium market appeal."
+    },
+    {
+      "id": "golden_tomato",
+      "name": "Golden Tomato",
+      "emoji": "🍅✨",
+      "parentA": "tomato",
+      "parentB": "strawberry",
+      "outputCropID": "golden_tomato",
+      "levelRequirement": 9,
+      "notes": "Luxurious golden tomato with enhanced flavor."
+    },
+    {
+      "id": "frost_potato",
+      "name": "Frost Potato",
+      "emoji": "🥔❄️",
+      "parentA": "potato",
+      "parentB": "lettuce",
+      "outputCropID": "frost_potato",
+      "levelRequirement": 4,
+      "notes": "Cold-resistant potato that thrives in winter."
+    },
+    {
+      "id": "dragon_pepper",
+      "name": "Dragon Pepper",
+      "emoji": "🌶️🔥",
+      "parentA": "chili",
+      "parentB": "super_carrot",
+      "outputCropID": "dragon_pepper",
+      "levelRequirement": 16,
+      "notes": "Legendary spicy pepper with incredible value."
+    }
+  ]
+}

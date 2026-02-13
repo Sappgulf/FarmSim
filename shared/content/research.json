@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "hybrid_crops",
+      "name": "Hybrid Crops",
+      "emoji": "🧬",
+      "category": "genetics",
+      "cost": 100,
+      "durationSeconds": 300,
+      "description": "Develop superior crop varieties.",
+      "unlocks": ["premium_seeds"],
+      "prerequisites": []
+    },
+    {
+      "id": "irrigation_system",
+      "name": "Advanced Irrigation",
+      "emoji": "💧",
+      "category": "technology",
+      "cost": 150,
+      "durationSeconds": 480,
+      "description": "Automated watering systems.",
+      "unlocks": ["auto_irrigation"],
+      "prerequisites": ["hybrid_crops"]
+    },
+    {
+      "id": "pest_genetics",
+      "name": "Pest Genetics",
+      "emoji": "🧪",
+      "category": "genetics",
+      "cost": 200,
+      "durationSeconds": 600,
+      "description": "Genetic pest resistance.",
+      "unlocks": ["resistant_crops"],
+      "prerequisites": ["hybrid_crops"]
+    },
+    {
+      "id": "market_analytics",
+      "name": "Market Analytics",
+      "emoji": "📊",
+      "category": "economics",
+      "cost": 250,
+      "durationSeconds": 720,
+      "description": "Advanced market prediction AI.",
+      "unlocks": ["price_alerts", "trend_analysis"],
+      "prerequisites": []
+    },
+    {
+      "id": "climate_control",
+      "name": "Climate Control",
+      "emoji": "🌡️",
+      "category": "technology",
+      "cost": 400,
+      "durationSeconds": 900,
+      "description": "Weather-independent farming.",
+      "unlocks": ["weather_immunity"],
+      "prerequisites": ["irrigation_system", "pest_genetics"]
+    },
+    {
+      "id": "soil_enhancement",
+      "name": "Soil Enhancement",
+      "emoji": "🌱",
+      "category": "agriculture",
+      "cost": 180,
+      "durationSeconds": 540,
+      "description": "Advanced soil fertility techniques.",
+      "unlocks": ["fertility_boost"],
+      "prerequisites": []
+    },
+    {
+      "id": "automation_core",
+      "name": "Automation Core",
+      "emoji": "🤖",
+      "category": "technology",
+      "cost": 300,
+      "durationSeconds": 800,
+      "description": "Foundation for automated farming.",
+      "unlocks": ["basic_automation"],
+      "prerequisites": ["irrigation_system"]
+    }
+  ]
+}

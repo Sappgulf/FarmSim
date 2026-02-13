@@ -26,13 +26,295 @@ final class GameCoreTests: XCTestCase {
         let save = SaveGame(
             version: SaveCodec.currentVersion,
             player: PlayerState(coins: 10, xp: 2, inventory: Inventory(seeds: ["lettuce": 1], crops: [:])),
-            world: WorldState.makeEmpty(day: 3, gridWidth: 2, gridHeight: 2)
+            world: WorldState.makeEmpty(day: 3, gridWidth: 2, gridHeight: 2),
+            meta: MetaState(
+                buildingLevels: ["silo": 2],
+                completedResearch: ["hybrid_crops": true],
+                discoveredHybrids: ["super_carrot": true],
+                expansionPurchases: 1
+            )
         )
 
         let data = try SaveCodec.encode(save)
         let decoded = try SaveCodec.decode(data)
 
         XCTAssertEqual(decoded, save)
+    }
+
+    func testBuyFailsWhenCoinsInsufficient() {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 2, seedCost: 20, sellPrice: 24)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.player.coins = 10
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 1)
+
+        let result = engine.buy(itemID: "carrot", quantity: 1)
+
+        XCTAssertEqual(result.status, .insufficientCoins)
+        XCTAssertEqual(engine.save.player.coins, 10)
+        XCTAssertEqual(engine.save.player.inventory.seeds["carrot"], nil)
+    }
+
+    func testSellFailsWhenQuantityInsufficient() {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 2, seedCost: 10, sellPrice: 24)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.player.coins = 0
+        save.player.inventory.crops = ["carrot": 1]
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 1)
+
+        let result = engine.sell(itemID: "carrot", quantity: 2)
+
+        XCTAssertEqual(result.status, .insufficientQuantity)
+        XCTAssertEqual(engine.save.player.coins, 0)
+        XCTAssertEqual(engine.save.player.inventory.crops["carrot"], 1)
+    }
+
+    func testBuyAndSellUpdateStateCorrectly() {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 2, seedCost: 10, sellPrice: 30)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.player.coins = 100
+        save.player.inventory.crops = ["carrot": 3]
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 1)
+
+        let buyResult = engine.buy(itemID: "carrot", quantity: 2, pricing: MarketPricing(seedUnitCosts: ["carrot": 8]))
+        XCTAssertEqual(buyResult.status, .success)
+        XCTAssertEqual(buyResult.totalPrice, 16)
+        XCTAssertEqual(engine.save.player.coins, 84)
+        XCTAssertEqual(engine.save.player.inventory.seeds["carrot"], 2)
+
+        let sellResult = engine.sell(itemID: "carrot", quantity: 2, pricing: MarketPricing(cropUnitPrices: ["carrot": 25]))
+        XCTAssertEqual(sellResult.status, .success)
+        XCTAssertEqual(sellResult.totalPrice, 50)
+        XCTAssertEqual(engine.save.player.coins, 134)
+        XCTAssertEqual(engine.save.player.inventory.crops["carrot"], 1)
+    }
+
+    func testSaveCodecMigratesV1ToCurrentWithMetaDefaults() throws {
+        let v1JSON = """
+        {
+          "version": 1,
+          "daySeed": 99,
+          "player": {
+            "coins": 42,
+            "xp": 7,
+            "inventory": {
+              "seeds": { "carrot": 2 },
+              "crops": { "carrot": 1 }
+            }
+          },
+          "world": {
+            "day": 1,
+            "gridWidth": 2,
+            "gridHeight": 2,
+            "tiles": [
+              { "index": 0, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 1, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 2, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 3, "state": { "tilled": true, "watered": false }, "planted": null }
+            ]
+          }
+        }
+        """
+        let data = Data(v1JSON.utf8)
+        let migrated = try SaveCodec.decode(data)
+
+        XCTAssertEqual(migrated.version, SaveCodec.currentVersion)
+        XCTAssertEqual(migrated.meta.buildingLevels, [:])
+        XCTAssertEqual(migrated.meta.completedResearch, [:])
+        XCTAssertEqual(migrated.meta.discoveredHybrids, [:])
+        XCTAssertEqual(migrated.meta.expansionPurchases, 0)
+        XCTAssertEqual(migrated.meta.livestockCounts, [:])
+        XCTAssertEqual(migrated.meta.petLevels, [:])
+        XCTAssertEqual(migrated.meta.fishCaughtCounts, [:])
+        XCTAssertEqual(migrated.meta.fishingPondLevel, 1)
+        XCTAssertEqual(migrated.meta.challengeClaims, [:])
+        XCTAssertEqual(migrated.meta.challengeStreak, 0)
+        XCTAssertEqual(migrated.meta.favoriteItems, [:])
+        XCTAssertEqual(migrated.meta.time.dayIndex, 1)
+        XCTAssertEqual(migrated.meta.time.currentTimeSeconds, 0)
+    }
+
+    func testSaveCodecMigratesV2ToCurrent() throws {
+        let v2JSON = """
+        {
+          "version": 2,
+          "daySeed": 42,
+          "player": {
+            "coins": 12,
+            "xp": 3,
+            "inventory": {
+              "seeds": { "carrot": 1 },
+              "crops": {}
+            }
+          },
+          "world": {
+            "day": 2,
+            "gridWidth": 2,
+            "gridHeight": 2,
+            "tiles": [
+              { "index": 0, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 1, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 2, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 3, "state": { "tilled": true, "watered": false }, "planted": null }
+            ]
+          },
+          "meta": {
+            "buildingLevels": { "silo": 1 },
+            "completedResearch": {},
+            "discoveredHybrids": {},
+            "expansionPurchases": 0
+          }
+        }
+        """
+        let data = Data(v2JSON.utf8)
+        let migrated = try SaveCodec.decode(data)
+
+        XCTAssertEqual(migrated.version, SaveCodec.currentVersion)
+        XCTAssertEqual(migrated.meta.buildingLevels["silo"], 1)
+        XCTAssertEqual(migrated.meta.favoriteItems, [:])
+        XCTAssertEqual(migrated.meta.fishingPondLevel, 1)
+        XCTAssertEqual(migrated.meta.time.dayIndex, 2)
+    }
+
+    func testSaveCodecMigratesV3ToCurrentAndKeepsTimeDefaults() throws {
+        let v3JSON = """
+        {
+          "version": 3,
+          "daySeed": 77,
+          "player": {
+            "coins": 18,
+            "xp": 4,
+            "inventory": {
+              "seeds": { "carrot": 2 },
+              "crops": {}
+            }
+          },
+          "world": {
+            "day": 5,
+            "gridWidth": 2,
+            "gridHeight": 2,
+            "tiles": [
+              { "index": 0, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 1, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 2, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 3, "state": { "tilled": true, "watered": false }, "planted": null }
+            ]
+          },
+          "meta": {
+            "buildingLevels": {},
+            "completedResearch": {},
+            "discoveredHybrids": {},
+            "expansionPurchases": 0,
+            "livestockCounts": {},
+            "petLevels": {},
+            "fishCaughtCounts": {},
+            "fishingPondLevel": 1,
+            "challengeClaims": {},
+            "challengeStreak": 0
+          }
+        }
+        """
+        let data = Data(v3JSON.utf8)
+        let migrated = try SaveCodec.decode(data)
+
+        XCTAssertEqual(migrated.version, SaveCodec.currentVersion)
+        XCTAssertEqual(migrated.meta.favoriteItems, [:])
+        XCTAssertEqual(migrated.meta.time.dayIndex, 5)
+        XCTAssertEqual(migrated.meta.time.currentTimeSeconds, 0)
+        XCTAssertEqual(migrated.meta.time.lastRealWorldTimestamp, 0)
+    }
+
+    func testSaveCodecMigratesV4ToCurrentAndAddsFavoritesDefaults() throws {
+        let v4JSON = """
+        {
+          "version": 4,
+          "daySeed": 77,
+          "player": {
+            "coins": 18,
+            "xp": 4,
+            "inventory": {
+              "seeds": { "carrot": 2 },
+              "crops": {}
+            }
+          },
+          "world": {
+            "day": 5,
+            "gridWidth": 2,
+            "gridHeight": 2,
+            "tiles": [
+              { "index": 0, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 1, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 2, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 3, "state": { "tilled": true, "watered": false }, "planted": null }
+            ]
+          },
+          "meta": {
+            "buildingLevels": {},
+            "completedResearch": {},
+            "discoveredHybrids": {},
+            "expansionPurchases": 0,
+            "livestockCounts": {},
+            "petLevels": {},
+            "fishCaughtCounts": {},
+            "fishingPondLevel": 1,
+            "challengeClaims": {},
+            "challengeStreak": 0,
+            "time": {
+              "currentTimeSeconds": 2,
+              "dayIndex": 5,
+              "lastRealWorldTimestamp": 123
+            }
+          }
+        }
+        """
+        let data = Data(v4JSON.utf8)
+        let migrated = try SaveCodec.decode(data)
+
+        XCTAssertEqual(migrated.version, SaveCodec.currentVersion)
+        XCTAssertEqual(migrated.meta.favoriteItems, [:])
+        XCTAssertEqual(migrated.meta.time.dayIndex, 5)
+    }
+
+    func testTimeEngineTickAdvancesTimeAndRollsDay() {
+        var engine = TimeEngine(
+            config: TimeEngineConfig(secondsPerDay: 120, ticksPerSecond: 10, pauseInMenus: false, offlineCatchup: true),
+            state: TimeMetaState(currentTimeSeconds: 0, dayIndex: 3, lastRealWorldTimestamp: 1_000)
+        )
+
+        let first = engine.tick(now: 1_030, isPaused: false)
+        XCTAssertEqual(first.dayDelta, 0)
+        XCTAssertEqual(first.elapsedSeconds, 30, accuracy: 0.0001)
+        XCTAssertEqual(engine.state.dayIndex, 3)
+        XCTAssertEqual(engine.state.currentTimeSeconds, 30, accuracy: 0.0001)
+
+        let second = engine.tick(now: 1_120, isPaused: false)
+        XCTAssertEqual(second.dayDelta, 1)
+        XCTAssertEqual(second.elapsedSeconds, 90, accuracy: 0.0001)
+        XCTAssertEqual(engine.state.dayIndex, 4)
+        XCTAssertEqual(engine.state.currentTimeSeconds, 0, accuracy: 0.0001)
+    }
+
+    func testTimeEngineOfflineCatchupAdvancesExpectedDays() {
+        var engine = TimeEngine(
+            config: TimeEngineConfig(secondsPerDay: 60, ticksPerSecond: 10, pauseInMenus: false, offlineCatchup: true),
+            state: TimeMetaState(currentTimeSeconds: 15, dayIndex: 2, lastRealWorldTimestamp: 1_000)
+        )
+
+        let result = engine.applyOfflineCatchup(now: 1_250, maxCatchupDays: 10)
+        XCTAssertEqual(result.dayDelta, 4)
+        XCTAssertEqual(engine.state.dayIndex, 6)
+        XCTAssertEqual(engine.state.currentTimeSeconds, 25, accuracy: 0.0001)
+    }
+
+    func testTimeEnginePauseDoesNotAdvance() {
+        var engine = TimeEngine(
+            config: TimeEngineConfig(secondsPerDay: 300, ticksPerSecond: 10, pauseInMenus: true, offlineCatchup: true),
+            state: TimeMetaState(currentTimeSeconds: 100, dayIndex: 1, lastRealWorldTimestamp: 1_000)
+        )
+
+        let paused = engine.tick(now: 1_100, isPaused: true)
+        XCTAssertEqual(paused.dayDelta, 0)
+        XCTAssertEqual(engine.state.dayIndex, 1)
+        XCTAssertEqual(engine.state.currentTimeSeconds, 100, accuracy: 0.0001)
     }
 
     func testSharedVectorsMatchExpectedHashes() throws {
@@ -95,6 +377,29 @@ final class GameCoreTests: XCTestCase {
 
             XCTAssertEqual(hex, vector.expectedEndStateHash, "Vector \(vector.id) hash mismatch")
         }
+    }
+
+    func testSimTickPerformance20x20() {
+        let crop = CropDef(id: "carrot", name: "Carrot", daysToGrow: 3, seedCost: 1, sellPrice: 3)
+        var save = GameCoreEngine.defaultSave(gridWidth: 20, gridHeight: 20, starterSeeds: ["carrot": 400])
+        save.player.coins = 10_000
+        var engine = GameCoreEngine(save: save, cropDefs: [crop], seed: 999)
+
+        for tile in 0..<(20 * 20) {
+            XCTAssertTrue(engine.plant(tileIndex: tile, cropID: "carrot"))
+        }
+
+        let tickCount = 120
+        let start = ContinuousClock.now
+        for _ in 0..<tickCount {
+            engine.advanceDay()
+        }
+        let elapsed = start.duration(to: ContinuousClock.now)
+        let totalMs = (Double(elapsed.components.seconds) * 1000) + (Double(elapsed.components.attoseconds) / 1_000_000_000_000_000)
+        let avgTickMs = totalMs / Double(tickCount)
+        print(String(format: "[perf] GameCore 20x20 avg sim tick: %.3fms", avgTickMs))
+
+        XCTAssertLessThan(avgTickMs, 4.0, "Average sim tick exceeded budget: \(avgTickMs)ms")
     }
 
     private func sharedVectorsURL() throws -> URL {

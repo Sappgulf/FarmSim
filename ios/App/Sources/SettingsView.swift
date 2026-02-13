@@ -43,6 +43,11 @@ struct SettingsView: View {
                         get: { store.settings.hapticsEnabled },
                         set: { store.setHapticsEnabled($0) }
                     ))
+
+                    Toggle("Crops Ready Alerts", isOn: Binding(
+                        get: { store.settings.cropsReadyNotifications },
+                        set: { store.setCropsReadyNotifications($0) }
+                    ))
                 }
 
                 Section("Comfort & Ease") {
@@ -89,8 +94,17 @@ struct SettingsView: View {
                 Section("About Your Farm") {
                     LabeledContent("Save Version", value: "\(store.save.version)")
                     LabeledContent("Farm Size", value: "\(store.save.world.gridWidth)x\(store.save.world.gridHeight)")
+                    LabeledContent("Farm Clock", value: store.hudTimeText)
                     LabeledContent("Status", value: store.statusText)
                 }
+
+                #if DEBUG
+                Section("Debug Time") {
+                    Button("Fast-forward 1 Day") {
+                        store.advanceDays(1)
+                    }
+                }
+                #endif
 
                 Section {
                     Button("Back to Main Menu") {

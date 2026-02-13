@@ -5,6 +5,7 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
+import { getContentManager } from '../../../../content/ContentManager';
 
 // Mapping for unlock IDs to user-friendly names
 const UNLOCK_NAMES = {
@@ -18,131 +19,38 @@ const UNLOCK_NAMES = {
   basic_automation: 'Basic Automation'
 };
 
-// Mapping for research IDs to user-friendly names (for prerequisites)
-const RESEARCH_NAMES = {
-  hybrid_crops: 'Hybrid Crops',
-  irrigation_system: 'Advanced Irrigation',
-  pest_genetics: 'Pest Genetics',
-  market_analytics: 'Market Analytics',
-  climate_control: 'Climate Control',
-  soil_enhancement: 'Soil Enhancement',
-  automation_core: 'Automation Core'
-};
-
 // Helper function to format unlock names
 const formatUnlocks = (unlocks) => {
   return unlocks.map(id => UNLOCK_NAMES[id] || formatDisplayLabel(id)).join(', ');
 };
 
 // Helper function to format research names (for prerequisites)
-const formatResearchNames = (ids) => {
-  return ids.map(id => RESEARCH_NAMES[id] || formatDisplayLabel(id)).join(', ');
+const formatResearchNames = (ids, namesById = {}) => {
+  return ids.map(id => namesById[id] || formatDisplayLabel(id)).join(', ');
 };
 
-// Research projects from original system
-const RESEARCH_PROJECTS = {
-  hybrid_crops: {
-    id: 'hybrid_crops',
-    name: "Hybrid Crops",
-    emoji: "🧬",
-    description: "Develop superior crop varieties",
-    cost: 100,
-    time: 300, // 5 minutes
-    unlocks: ["premium_seeds"],
-    prerequisites: [],
-    category: "genetics",
-    completed: false,
-    progress: 0,
-    started: false
-  },
-  irrigation_system: {
-    id: 'irrigation_system',
-    name: "Advanced Irrigation",
-    emoji: "💧",
-    description: "Automated watering systems",
-    cost: 150,
-    time: 480,
-    unlocks: ["auto_irrigation"],
-    prerequisites: ["hybrid_crops"],
-    category: "technology",
-    completed: false,
-    progress: 0,
-    started: false
-  },
-  pest_genetics: {
-    id: 'pest_genetics',
-    name: "Pest Genetics",
-    emoji: "🧪",
-    description: "Genetic pest resistance",
-    cost: 200,
-    time: 600,
-    unlocks: ["resistant_crops"],
-    prerequisites: ["hybrid_crops"],
-    category: "genetics",
-    completed: false,
-    progress: 0,
-    started: false
-  },
-  market_analytics: {
-    id: 'market_analytics',
-    name: "Market Analytics",
-    emoji: "📊",
-    description: "Advanced market prediction AI",
-    cost: 250,
-    time: 720,
-    unlocks: ["price_alerts", "trend_analysis"],
-    prerequisites: [],
-    category: "economics",
-    completed: false,
-    progress: 0,
-    started: false
-  },
-  climate_control: {
-    id: 'climate_control',
-    name: "Climate Control",
-    emoji: "🌡️",
-    description: "Weather-independent farming",
-    cost: 400,
-    time: 900,
-    unlocks: ["weather_immunity"],
-    prerequisites: ["irrigation_system", "pest_genetics"],
-    category: "technology",
-    completed: false,
-    progress: 0,
-    started: false
-  },
-  soil_enhancement: {
-    id: 'soil_enhancement',
-    name: "Soil Enhancement",
-    emoji: "🌱",
-    description: "Advanced soil fertility techniques",
-    cost: 180,
-    time: 540,
-    unlocks: ["fertility_boost"],
-    prerequisites: [],
-    category: "agriculture",
-    completed: false,
-    progress: 0,
-    started: false
-  },
-  automation_core: {
-    id: 'automation_core',
-    name: "Automation Core",
-    emoji: "🤖",
-    description: "Foundation for automated farming",
-    cost: 300,
-    time: 800,
-    unlocks: ["basic_automation"],
-    prerequisites: ["irrigation_system"],
-    category: "technology",
-    completed: false,
-    progress: 0,
-    started: false
-  }
-};
+const buildResearchMap = (items = []) => (
+  Object.fromEntries(items.map((item) => [
+    item.id,
+    {
+      id: item.id,
+      name: item.name,
+      emoji: item.emoji || item.icon || '🔬',
+      description: item.description || '',
+      cost: Number(item.cost || 0),
+      time: Number(item.durationSeconds || 0),
+      unlocks: Array.isArray(item.unlocks) ? item.unlocks : [],
+      prerequisites: Array.isArray(item.prerequisites) ? item.prerequisites : [],
+      category: item.category || 'general',
+    }
+  ]))
+);
 
 const ResearchTab = memo(() => {
   const { state, actions } = useGame();
+  const content = getContentManager();
+  const RESEARCH_PROJECTS = buildResearchMap(content.research || []);
+  const RESEARCH_NAMES = Object.fromEntries(Object.values(RESEARCH_PROJECTS).map((entry) => [entry.id, entry.name]));
 
   // Use research state from global state
   const activeResearch = state.research?.active || null;
@@ -153,9 +61,11 @@ const ResearchTab = memo(() => {
     if (!activeResearch || !researchStartTime) return;
 
     const research = RESEARCH_PROJECTS[activeResearch];
+    if (!research) return;
     const interval = setInterval(() => {
       const elapsed = Date.now() - researchStartTime;
-      const progress = Math.min(100, (elapsed / (research.time * 10)) * 100); // Scale time for demo
+      const duration = Math.max(1, research.time);
+      const progress = Math.min(100, (elapsed / (duration * 10)) * 100); // Scale time for demo
 
       if (progress >= 100) {
         completeResearch(activeResearch);
@@ -168,6 +78,7 @@ const ResearchTab = memo(() => {
 
   const startResearch = (researchId) => {
     const research = RESEARCH_PROJECTS[researchId];
+    if (!research) return;
 
     // Check prerequisites
     const hasPrerequisites = research.prerequisites.every(prereq =>
@@ -210,6 +121,7 @@ const ResearchTab = memo(() => {
 
   const completeResearch = (researchId) => {
     const research = RESEARCH_PROJECTS[researchId];
+    if (!research) return;
 
     // Grant XP reward
     const xpReward = Math.floor(research.cost * 0.5);
@@ -235,12 +147,15 @@ const ResearchTab = memo(() => {
     if (activeResearch !== researchId || !researchStartTime) return 0;
 
     const research = RESEARCH_PROJECTS[researchId];
+    if (!research) return 0;
     const elapsed = Date.now() - researchStartTime;
-    return Math.min(100, (elapsed / (research.time * 10)) * 100);
+    const duration = Math.max(1, research.time);
+    return Math.min(100, (elapsed / (duration * 10)) * 100);
   };
 
   const canResearch = (researchId) => {
     const research = RESEARCH_PROJECTS[researchId];
+    if (!research) return false;
 
     // Check if already completed
     if (state.research?.completed?.includes(researchId)) return false;
@@ -263,8 +178,9 @@ const ResearchTab = memo(() => {
     if (!isResearching(researchId) || !researchStartTime) return '';
 
     const research = RESEARCH_PROJECTS[researchId];
+    if (!research) return '';
     const elapsed = Date.now() - researchStartTime;
-    const remaining = Math.max(0, (research.time * 10) - elapsed);
+    const remaining = Math.max(0, (Math.max(1, research.time) * 10) - elapsed);
     const minutes = Math.floor(remaining / 60000);
     const seconds = Math.floor((remaining % 60000) / 1000);
 
@@ -355,7 +271,7 @@ const ResearchTab = memo(() => {
                 {/* Prerequisites */}
                 {research.prerequisites.length > 0 && (
                   <div className="text-xs text-gray-600 mb-2">
-                    Requires: {formatResearchNames(research.prerequisites)}
+                    Requires: {formatResearchNames(research.prerequisites, RESEARCH_NAMES)}
                   </div>
                 )}
 

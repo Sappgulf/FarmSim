@@ -1,0 +1,247 @@
+# FarmSim Web -> iOS Parity Checklist
+
+Generated from current web source inventory on 2026-02-13.
+
+Legend:
+- `[x]` parity achieved in iOS
+- `[ ]` parity missing or partial in iOS
+- `Web:` and `iOS:` include source references
+
+## Navigation + Tabs
+- [x] Farm tab shell exists
+  - Web: `web/src/components/farm-sim/ui/tabs/FarmingTab.jsx`, `web/src/components/farm-sim/ui/GameSidebar.jsx`
+  - iOS: `ios/App/Sources/FarmView.swift`, `ios/App/Sources/GameShell.swift`
+- [x] Inventory tab exists
+  - Web: `web/src/components/farm-sim/ui/tabs/InventoryTab.jsx`
+  - iOS: `ios/App/Sources/InventoryView.swift`, `ios/App/Sources/GameShell.swift`
+- [x] Barn-themed inventory presentation + shelf sections
+  - Web: `web/src/components/farm-sim/ui/tabs/InventoryTab.jsx` (inventory grouped into crops/decor/utility sections)
+  - iOS: `ios/App/Sources/Inventory/Barn/BarnInventoryView.swift`, `ios/App/Sources/Inventory/Barn/ShelfSectionView.swift`, `ios/App/Sources/Inventory/Barn/BarnBackgroundView.swift`
+- [x] Market/Shop tab exists (basic)
+  - Web: `web/src/components/farm-sim/ui/tabs/ShopTab.jsx`, `web/src/components/farm-sim/ui/tabs/ProcessingTab.jsx`
+  - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameShell.swift`
+- [x] Shop entry points from inventory + dedicated market tab
+  - Web: `web/src/components/farm-sim/ui/tabs/InventoryTab.jsx`, `web/src/components/farm-sim/ui/tabs/ShopTab.jsx`
+  - iOS: `ios/App/Sources/Inventory/Barn/BarnHeaderHUD.swift`, `ios/App/Sources/Inventory/Barn/BarnInventoryView.swift`, `ios/App/Sources/TownMarketView.swift`
+- [x] Market sections (Buy / Sell / Upgrades) with quantity controls
+  - Web: `web/src/components/farm-sim/ui/tabs/ShopTab.jsx`, `web/src/components/farm-sim/ui/tabs/InventoryTab.jsx`
+  - iOS: `ios/App/Sources/TownMarketView.swift`
+- [x] Almanac tab exists (basic)
+  - Web: `web/src/components/farm-sim/ui/tabs/AlmanacTab.jsx`
+  - iOS: `ios/App/Sources/AlmanacView.swift`, `ios/App/Sources/GameShell.swift`
+- [x] Settings tab exists
+  - Web: `web/src/components/farm-sim/ui/tabs/SettingsTab.jsx`
+  - iOS: `ios/App/Sources/SettingsView.swift`, `ios/App/Sources/GameShell.swift`
+
+## Web Tabs Not Yet Ported End-to-End
+- [x] Buildings (integrated into Town flow)
+  - Web: `web/src/components/farm-sim/ui/tabs/BuildingsTab.jsx`
+  - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameStore.swift`
+- [x] Expand (integrated into Town flow)
+  - Web: `web/src/components/farm-sim/ui/tabs/ExpandTab.jsx`
+  - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameStore.swift`
+- [x] Research (integrated into Town flow)
+  - Web: `web/src/components/farm-sim/ui/tabs/ResearchTab.jsx`
+  - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameStore.swift`
+- [x] Genetics (integrated into Town flow)
+  - Web: `web/src/components/farm-sim/ui/tabs/GeneticsTab.jsx`
+  - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameStore.swift`
+- [x] Livestock (integrated into Town flow)
+  - Web: `web/src/components/farm-sim/ui/tabs/LivestockTab.jsx`
+  - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameStore.swift`
+- [x] Pets (integrated into Town flow)
+  - Web: `web/src/components/farm-sim/ui/tabs/PetsTab.jsx`
+  - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameStore.swift`
+- [x] Fishing (integrated into Town flow)
+  - Web: `web/src/components/farm-sim/ui/tabs/FishingTab.jsx`
+  - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameStore.swift`
+- [x] Challenges (integrated into Town flow)
+  - Web: `web/src/components/farm-sim/ui/tabs/ChallengesTab.jsx`
+  - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameStore.swift`
+- [ ] Daily Quests
+  - Web: `web/src/components/farm-sim/ui/tabs/DailyQuestsTab.jsx`
+  - iOS: partial task board in `ios/App/Sources/TownMarketView.swift` + `ios/App/Sources/GameStore.swift`; missing dedicated tab parity
+- [ ] Events/Town Board
+  - Web: `web/src/components/farm-sim/ui/tabs/EventsTab.jsx`
+  - iOS: partial seasonal panel only in `TownMarketView`
+- [ ] Weather tab
+  - Web: `web/src/components/farm-sim/ui/tabs/WeatherTab.jsx`
+  - iOS: missing dedicated tab/flow
+- [ ] Disease management
+  - Web: `web/src/components/farm-sim/ui/tabs/DiseaseManagementTab.jsx`
+  - iOS: missing dedicated tab/flow
+- [ ] Achievements tab
+  - Web: `web/src/components/farm-sim/ui/tabs/AchievementsTab.jsx`
+  - iOS: missing dedicated tab/flow
+- [ ] Analytics tab
+  - Web: `web/src/components/farm-sim/ui/tabs/AnalyticsTab.jsx`
+  - iOS: missing dedicated tab/flow
+- [ ] Social tab
+  - Web: `web/src/components/farm-sim/ui/tabs/SocialTab.jsx`
+  - iOS: missing dedicated tab/flow
+- [ ] Notification Center tab
+  - Web: `web/src/components/farm-sim/ui/tabs/NotificationCenterTab.jsx`
+  - iOS: missing dedicated tab/flow
+- [ ] Mystery Shop tab
+  - Web: `web/src/components/farm-sim/ui/tabs/MysteryShopTab.jsx`
+  - iOS: missing dedicated tab/flow
+- [ ] Processing tab (full queue/facilities gameplay)
+  - Web: `web/src/components/farm-sim/ui/tabs/ProcessingTab.jsx`
+  - iOS: missing dedicated tab/flow
+
+## Core Feature Parity
+- [x] Single iOS bridge store with snapshot + intents
+  - iOS: `ios/App/Sources/GameStore.swift`, `ios/App/Sources/AppModels.swift`
+  - Notes: tabs consume immutable state + intent methods; renderer gets snapshot diffs only.
+- [x] Plant / harvest / clear / water on farm tiles
+  - Web: `web/src/components/farm-sim/ui/FarmGrid.jsx`, `web/src/components/farm-sim/systems/FarmingSystem.js`
+  - iOS: `ios/App/Sources/FarmView.swift`, `ios/App/Sources/FarmScene.swift`, `ios/App/Sources/GameStore.swift`
+- [x] Automatic time/day progression (no production day button)
+  - Web: game loop and day rollover checks in `web/src/components/farm-sim/core/FarmSim.jsx`, `web/src/components/farm-sim/context/GameContext.jsx`
+  - iOS: `ios/App/Sources/GameLoopDriver.swift`, `ios/App/Sources/FarmSimApp.swift`, `ios/App/Sources/GameStore.swift`, `ios/App/Sources/FarmView.swift`
+- [x] Barn inventory favorites persisted in save
+  - Web: no equivalent persisted favorite inventory state
+  - iOS: `ios/App/Sources/Inventory/Barn/BarnInventoryView.swift`, `ios/App/Sources/GameStore.swift`, `ios/GameCore/Sources/GameCore/Models.swift`
+- [x] Buy seeds / sell crops basic economy
+  - Web: `web/src/components/farm-sim/ui/tabs/ShopTab.jsx`, `web/src/components/farm-sim/systems/EconomicSystem.js`
+  - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameStore.swift`, `ios/GameCore/Sources/GameCore/GameCoreEngine.swift`, `ios/GameCore/Sources/GameCore/EconomySystem.swift`
+- [x] Daily specials rotation in shop (deterministic by day/save seed)
+  - Web: partial via market focus and tab systems (`web/src/utils/dailyFocus.js`, shop tabs)
+  - iOS: `ios/App/Sources/GameStore.swift`, `ios/App/Sources/TownMarketView.swift`
+- [ ] Weather gameplay effects parity
+  - Web: `web/src/components/farm-sim/systems/WeatherSystem.js`, `web/src/components/farm-sim/ui/tabs/WeatherTab.jsx`
+  - iOS: no weather system surfaced in `GameCore`/UI
+- [ ] Season progression parity
+  - Web: `web/src/components/farm-sim/systems/SeasonSystem.js`
+  - iOS: simplified seasonal labels only (`TownMarketView`, `MainMenuView`)
+- [ ] Disease/disaster systems parity
+  - Web: `web/src/components/farm-sim/systems/DiseaseSystem.js`, `web/src/components/farm-sim/systems/DisasterSystem.js`
+  - iOS: missing
+- [x] Livestock/pets/fishing systems parity (core loops + Town intents integrated)
+  - Web: `web/src/components/farm-sim/systems/LivestockSystem.js`, `web/src/components/farm-sim/systems/FishingSystem.js`
+  - iOS: `ios/App/Sources/GameStore.swift`, `ios/App/Sources/TownMarketView.swift`
+- [ ] Processing facilities parity
+  - Web: `web/src/components/farm-sim/ui/tabs/ProcessingTab.jsx`
+  - iOS: missing
+- [x] Research/genetics parity (core loops + UI integrated in Town)
+  - Web: `web/src/components/farm-sim/ui/tabs/ResearchTab.jsx`, `web/src/components/farm-sim/ui/tabs/GeneticsTab.jsx`
+  - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameStore.swift`
+- [ ] Achievements/challenges/quest progression parity
+  - Web: `web/src/components/farm-sim/systems/AchievementSystem.js`, `web/src/components/farm-sim/systems/QuestSystem.js`, tab files listed above
+  - iOS: challenge slice implemented in `TownMarketView`/`GameStore`; achievements/quests still missing
+- [ ] Premium entitlements/cosmetic pack gating parity
+  - Web: `web/src/components/farm-sim/entitlements/EntitlementManager.js`
+  - iOS: missing
+
+## Item/Content Type Inventory
+- [x] Crops and seeds
+  - Web: `web/src/components/farm-sim/constants/cropData.js`, `shared/content/crops.json`
+  - iOS: `ios/App/Sources/ContentRepository.swift`, `ios/GameCore/Sources/GameCore/ContentLoader.swift`
+- [x] Decor definitions loaded
+  - Web: `web/src/components/farm-sim/constants/decorData.js`, `shared/content/decor.json`
+  - iOS: loaded in `ContentRepository`/`ContentLoader`, limited UI usage
+- [x] Festivals loaded
+  - Web: `shared/content/festivals.json`, `web/src/components/farm-sim/ui/tabs/EventsTab.jsx`
+  - iOS: loaded and surfaced in `TownMarketView`/`AlmanacView`
+- [x] Almanac content loaded
+  - Web: `shared/content/almanac.json`, `web/src/data/almanac.js`
+  - iOS: `ContentRepository.parseAlmanac`, `AlmanacView`
+- [x] Minigame definitions loaded
+  - Web: `shared/content/minigames.json`, `web/src/components/farm-sim/minigames/PerfectHarvestEngine.js`
+  - iOS: loaded and listed only (no game runtime)
+- [x] UI strings loaded
+  - Web: `shared/content/strings.json`
+  - iOS: `ContentRepository.parseStrings`
+- [x] Buildings content parity (canonical shared JSON)
+  - Web: `shared/content/buildings.json`, `web/src/content/ContentManager.js`, `web/src/components/farm-sim/ui/tabs/BuildingsTab.jsx`
+  - iOS: `shared/content/buildings.json`, `ios/App/Sources/ContentRepository.swift`, `ios/App/Sources/GameStore.swift`
+- [x] Research content parity (canonical shared JSON)
+  - Web: `shared/content/research.json`, `web/src/content/ContentManager.js`, `web/src/components/farm-sim/ui/tabs/ResearchTab.jsx`
+  - iOS: `shared/content/research.json`, `ios/App/Sources/ContentRepository.swift`, `ios/App/Sources/GameStore.swift`
+- [x] Genetics content parity (canonical shared JSON)
+  - Web: `shared/content/genetics.json`, `web/src/content/ContentManager.js`, `web/src/components/farm-sim/ui/tabs/GeneticsTab.jsx`
+  - iOS: `shared/content/genetics.json`, `ios/App/Sources/ContentRepository.swift`, `ios/App/Sources/GameStore.swift`
+- [x] Livestock/pets/fishing/challenges content loaded in iOS
+  - Shared: `shared/content/livestock.json`, `shared/content/pets.json`, `shared/content/fishing.json`, `shared/content/challenges.json`
+  - iOS: `ios/App/Sources/ContentRepository.swift`, `ios/App/Sources/GameStore.swift`
+- [ ] Achievement definitions parity (currently web-side constants)
+  - Web: `web/src/components/farm-sim/constants/achievementData.js`
+  - iOS: missing
+- [ ] Weather/disaster/disease datasets parity (currently web-side constants)
+  - Web: `web/src/components/farm-sim/constants/weatherData.js`, `web/src/components/farm-sim/constants/disasterData.js`, `web/src/components/farm-sim/constants/diseaseData.js`
+  - iOS: missing
+- [ ] Mystery seed tables parity (currently web-side constants)
+  - Web: `web/src/components/farm-sim/constants/mysterySeedData.js`
+  - iOS: missing
+- [ ] Prestige content parity (currently web-side constants)
+  - Web: `web/src/components/farm-sim/constants/prestigeData.js`
+  - iOS: missing
+
+## Shared Content Canonical Source
+- [x] Web uses `shared/content` as canonical source
+  - Web: `web/src/content/ContentManager.js`
+- [x] iOS bundles and decodes canonical files
+  - iOS: `ios/App/Sources/ContentRepository.swift`, `ios/project.yml`
+- [x] Required files present and loaded on both
+  - `shared/content/almanac.json`
+  - `shared/content/buildings.json`
+  - `shared/content/challenges.json`
+  - `shared/content/crops.json`
+  - `shared/content/decor.json`
+  - `shared/content/festivals.json`
+  - `shared/content/fishing.json`
+  - `shared/content/genetics.json`
+  - `shared/content/livestock.json`
+  - `shared/content/minigames.json`
+  - `shared/content/pets.json`
+  - `shared/content/research.json`
+  - `shared/content/strings.json`
+- [x] Pack content loading in iOS (`shared/content/packs/**`)
+  - Web: `web/src/content/ContentManager.js` (`import.meta.glob` packs)
+  - iOS: `ios/App/Sources/ContentRepository.swift` (`packResourceDirectories`, pack JSON merges)
+
+## Save Schema + Migration Parity
+- [ ] Save schema version parity
+  - Web: `saveVersion=16` and migrations in `web/src/components/farm-sim/context/GamePersistence.js`
+  - iOS: `version=5` in `ios/GameCore/Sources/GameCore/Persistence.swift`
+- [ ] Migration breadth parity
+  - Web: v0 -> v16 migration path in `GamePersistence.js`
+  - iOS: partial path (`v1/v2/v3/v4 -> v5`) in `SaveCodec.migrate`
+- [x] Save contract docs exist
+  - `shared/schema/save-contract.md`
+  - `shared/schema/save-example.v1.json`
+  - `shared/schema/save-example.v2.json`
+  - `shared/schema/save-example.v3.json`
+  - `shared/schema/save-example.v4.json`
+  - `shared/schema/save-example.v5.json`
+- [x] Time model documented from web runtime
+  - `shared/schema/time-model.md`
+
+## Render Loop + Performance Hotspots (Web Inventory)
+- [x] Core system loop uses `requestAnimationFrame`
+  - `web/src/components/farm-sim/core/FarmSim.jsx`
+- [x] Master game loop + autosave loop in context
+  - `web/src/components/farm-sim/context/GameContext.jsx`
+- [ ] Farm plot per-item timer churn risk
+  - `web/src/components/farm-sim/ui/FarmGrid.jsx` (local per-plot interval pattern)
+- [x] Dev overlays exist (FPS + PerformanceOverlay)
+  - `web/src/components/farm-sim/ui/FPSCounter.jsx`
+  - `web/src/components/farm-sim/ui/PerformanceOverlay.jsx`
+
+## Render Loop + Performance Hotspots (iOS Inventory)
+- [x] SpriteKit dirty tile updates in renderer
+  - `ios/App/Sources/FarmScene.swift` (`apply(snapshot:)` differential tile updates)
+- [x] Immutable render snapshot from store
+  - `ios/App/Sources/GameStore.swift`, `ios/App/Sources/AppModels.swift`
+- [x] Debug overlay parity (fps/node count/tick ms) in Debug builds
+  - iOS files: `ios/App/Sources/FarmView.swift`, `ios/App/Sources/FarmScene.swift`
+- [x] Signpost instrumentation around sim tick/content load/save load/save write
+  - iOS files: `ios/App/Sources/GameStore.swift`, `ios/App/Sources/PerfTelemetry.swift`
+
+## Quality Gate Matrix
+- [x] Web build/test currently green
+  - Commands: `npm run test`, `npm run build`
+- [x] iOS core tests/build currently green
+  - Commands: `npm run ios:test:core`, `npm run ios:build:small`, `npm run ios:build:large`
+- [ ] Full feature parity not yet complete
+  - Tracked by unchecked items above

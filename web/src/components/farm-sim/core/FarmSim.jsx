@@ -10,6 +10,7 @@ import NavBar, { NAV_SECTIONS } from '../ui/NavBar';
 import NotificationSystem from '../ui/NotificationSystem';
 import { ParticleEffectsManager } from '../ui/ParticleEffect';
 import FPSCounter from '../ui/FPSCounter';
+import PerfHud from '../ui/PerfHud';
 import Tutorial from '../ui/Tutorial';
 import WhatsNewModal from '../ui/WhatsNewModal';
 import PremiumLockModal from '../ui/PremiumLockModal';
@@ -567,6 +568,7 @@ export function FarmSimCore() {
 
       {/* FPS Overlay */}
       <FPSCounter />
+      <PerfHud />
 
       {debugToolsAllowed && (
         <Suspense fallback={null}>

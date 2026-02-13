@@ -4,6 +4,13 @@ import baseFestivals from '@content/festivals.json';
 import baseAlmanac from '@content/almanac.json';
 import baseMinigames from '@content/minigames.json';
 import baseStrings from '@content/strings.json';
+import baseBuildings from '@content/buildings.json';
+import baseResearch from '@content/research.json';
+import baseGenetics from '@content/genetics.json';
+import baseLivestock from '@content/livestock.json';
+import basePets from '@content/pets.json';
+import baseFishing from '@content/fishing.json';
+import baseChallenges from '@content/challenges.json';
 import { isDebugMode } from '../utils/debugTools';
 import { MILESTONE_DEFINITIONS } from '../data/milestones';
 import { SEED_CODE_VERSION, validateSeedPayload } from '../utils/seedCode';
@@ -16,6 +23,13 @@ const PACK_FESTIVAL_MODULES = import.meta.glob('@content/packs/**/festivals.json
 const PACK_ALMANAC_MODULES = import.meta.glob('@content/packs/**/almanac.json', { eager: true });
 const PACK_MINIGAME_MODULES = import.meta.glob('@content/packs/**/minigames.json', { eager: true });
 const PACK_STRING_MODULES = import.meta.glob('@content/packs/**/strings.json', { eager: true });
+const PACK_BUILDING_MODULES = import.meta.glob('@content/packs/**/buildings.json', { eager: true });
+const PACK_RESEARCH_MODULES = import.meta.glob('@content/packs/**/research.json', { eager: true });
+const PACK_GENETICS_MODULES = import.meta.glob('@content/packs/**/genetics.json', { eager: true });
+const PACK_LIVESTOCK_MODULES = import.meta.glob('@content/packs/**/livestock.json', { eager: true });
+const PACK_PETS_MODULES = import.meta.glob('@content/packs/**/pets.json', { eager: true });
+const PACK_FISHING_MODULES = import.meta.glob('@content/packs/**/fishing.json', { eager: true });
+const PACK_CHALLENGE_MODULES = import.meta.glob('@content/packs/**/challenges.json', { eager: true });
 
 const CONTENT_TYPES = ['crops', 'decor', 'festivals', 'minigames', 'almanac', 'strings'];
 const PACK_ACCESS_VALUES = new Set(['free', 'premium']);
@@ -96,6 +110,98 @@ const normalizeMinigame = (entry) => ({
   rewards: entry.rewards || {},
   theme: entry.theme || {},
   sfx: entry.sfx || {},
+});
+
+const normalizeBuilding = (entry) => ({
+  ...entry,
+  emoji: entry.emoji || entry.icon || '🏗️',
+  icon: entry.icon || entry.emoji || '🏗️',
+  requiredLevel: clampNumber(entry.requiredLevel, 1, { min: 1 }),
+  maxLevel: clampNumber(entry.maxLevel, 1, { min: 1 }),
+  costs: Array.isArray(entry.costs) ? entry.costs.map((cost) => clampNumber(cost, 0, { min: 0 })) : [],
+  bonuses: Array.isArray(entry.bonuses) ? entry.bonuses : [],
+});
+
+const normalizeBuildingSynergy = (entry) => ({
+  ...entry,
+  icon: entry.icon || '✨',
+  buildingIds: Array.isArray(entry.buildingIds) ? entry.buildingIds : [],
+  bonus: entry.bonus || '',
+});
+
+const normalizeResearch = (entry) => ({
+  ...entry,
+  emoji: entry.emoji || entry.icon || '🔬',
+  icon: entry.icon || entry.emoji || '🔬',
+  category: entry.category || 'general',
+  cost: clampNumber(entry.cost, 0, { min: 0 }),
+  durationSeconds: clampNumber(entry.durationSeconds, 0, { min: 0 }),
+  prerequisites: Array.isArray(entry.prerequisites) ? entry.prerequisites : [],
+  unlocks: Array.isArray(entry.unlocks) ? entry.unlocks : [],
+});
+
+const normalizeGenetics = (entry) => ({
+  ...entry,
+  emoji: entry.emoji || entry.icon || '🧬',
+  icon: entry.icon || entry.emoji || '🧬',
+  parentA: entry.parentA || '',
+  parentB: entry.parentB || '',
+  outputCropID: entry.outputCropID || '',
+  levelRequirement: clampNumber(entry.levelRequirement, 1, { min: 1 }),
+});
+
+const normalizeLivestock = (entry) => ({
+  ...entry,
+  emoji: entry.emoji || entry.icon || '🐄',
+  icon: entry.icon || entry.emoji || '🐄',
+  cost: clampNumber(entry.cost, 0, { min: 0 }),
+  requiredLevel: clampNumber(entry.requiredLevel, 1, { min: 1 }),
+  spaceRequired: clampNumber(entry.spaceRequired, 1, { min: 1 }),
+  maintenanceCost: clampNumber(entry.maintenanceCost, 0, { min: 0 }),
+  productionTimeSeconds: clampNumber(entry.productionTimeSeconds, 1, { min: 1 }),
+  productAmount: clampNumber(entry.productAmount, 1, { min: 1 }),
+  productValue: clampNumber(entry.productValue, 0, { min: 0 }),
+});
+
+const normalizePet = (entry) => ({
+  ...entry,
+  emoji: entry.emoji || entry.icon || '🐾',
+  icon: entry.icon || entry.emoji || '🐾',
+  cost: clampNumber(entry.cost, 0, { min: 0 }),
+  requiredLevel: clampNumber(entry.requiredLevel, 1, { min: 1 }),
+  maxLevel: clampNumber(entry.maxLevel, 1, { min: 1 }),
+  bonusPerLevel: clampNumber(entry.bonusPerLevel, 0, { min: 0 }),
+});
+
+const normalizeFish = (entry) => ({
+  ...entry,
+  emoji: entry.emoji || entry.icon || '🐟',
+  icon: entry.icon || entry.emoji || '🐟',
+  rarity: clampNumber(entry.rarity, 0.05, { min: 0.0001 }),
+  baseValue: clampNumber(entry.baseValue, 0, { min: 0 }),
+  difficulty: clampNumber(entry.difficulty, 1, { min: 1 }),
+  minSize: clampNumber(entry.minSize, 1, { min: 1 }),
+  maxSize: clampNumber(entry.maxSize, 1, { min: 1 }),
+});
+
+const normalizePondUpgrade = (entry) => ({
+  ...entry,
+  level: clampNumber(entry.level, 1, { min: 1 }),
+  capacity: clampNumber(entry.capacity, 1, { min: 1 }),
+  regenRate: clampNumber(entry.regenRate, 1, { min: 0.1 }),
+  cost: clampNumber(entry.cost, 0, { min: 0 }),
+  rarityBonus: clampNumber(entry.rarityBonus, 1, { min: 1 }),
+});
+
+const normalizeChallenge = (entry) => ({
+  ...entry,
+  emoji: entry.emoji || entry.icon || '🎯',
+  icon: entry.icon || entry.emoji || '🎯',
+  difficulty: entry.difficulty || 'easy',
+  metric: entry.metric || 'coin_balance',
+  target: clampNumber(entry.target, 1, { min: 1 }),
+  rewardCoins: clampNumber(entry.rewardCoins, 0, { min: 0 }),
+  rewardXP: clampNumber(entry.rewardXP, 0, { min: 0 }),
 });
 
 const buildMapById = (items = []) => {
@@ -396,6 +502,15 @@ const buildContent = () => {
       memoryLinks: baseAlmanac.memoryLinks || {},
     },
     strings: baseStrings || {},
+    buildings: (baseBuildings.items || []).map(normalizeBuilding),
+    buildingSynergies: (baseBuildings.synergies || []).map(normalizeBuildingSynergy),
+    research: (baseResearch.items || []).map(normalizeResearch),
+    genetics: (baseGenetics.items || []).map(normalizeGenetics),
+    livestock: (baseLivestock.items || []).map(normalizeLivestock),
+    pets: (basePets.items || []).map(normalizePet),
+    fish: (baseFishing.fish || []).map(normalizeFish),
+    pondUpgrades: (baseFishing.pondUpgrades || []).map(normalizePondUpgrade),
+    challenges: (baseChallenges.items || []).map(normalizeChallenge),
   };
 
   packs.forEach((pack) => {
@@ -462,6 +577,101 @@ const buildContent = () => {
         ...stringPayload,
       };
     }
+
+    const buildingPayload = getPackPayload(PACK_BUILDING_MODULES, basePath, 'buildings.json');
+    if (buildingPayload?.items?.length) {
+      base.buildings = mergeItems(
+        base.buildings,
+        buildingPayload.items.map(normalizeBuilding),
+        report,
+        'buildings',
+        pack.id
+      );
+      if (buildingPayload?.synergies?.length) {
+        base.buildingSynergies = mergeItems(
+          base.buildingSynergies,
+          buildingPayload.synergies.map(normalizeBuildingSynergy),
+          report,
+          'buildingSynergies',
+          pack.id
+        );
+      }
+    }
+
+    const researchPayload = getPackPayload(PACK_RESEARCH_MODULES, basePath, 'research.json');
+    if (researchPayload?.items?.length) {
+      base.research = mergeItems(
+        base.research,
+        researchPayload.items.map(normalizeResearch),
+        report,
+        'research',
+        pack.id
+      );
+    }
+
+    const geneticsPayload = getPackPayload(PACK_GENETICS_MODULES, basePath, 'genetics.json');
+    if (geneticsPayload?.items?.length) {
+      base.genetics = mergeItems(
+        base.genetics,
+        geneticsPayload.items.map(normalizeGenetics),
+        report,
+        'genetics',
+        pack.id
+      );
+    }
+
+    const livestockPayload = getPackPayload(PACK_LIVESTOCK_MODULES, basePath, 'livestock.json');
+    if (livestockPayload?.items?.length) {
+      base.livestock = mergeItems(
+        base.livestock,
+        livestockPayload.items.map(normalizeLivestock),
+        report,
+        'livestock',
+        pack.id
+      );
+    }
+
+    const petsPayload = getPackPayload(PACK_PETS_MODULES, basePath, 'pets.json');
+    if (petsPayload?.items?.length) {
+      base.pets = mergeItems(
+        base.pets,
+        petsPayload.items.map(normalizePet),
+        report,
+        'pets',
+        pack.id
+      );
+    }
+
+    const fishingPayload = getPackPayload(PACK_FISHING_MODULES, basePath, 'fishing.json');
+    if (fishingPayload?.fish?.length) {
+      base.fish = mergeItems(
+        base.fish,
+        fishingPayload.fish.map(normalizeFish),
+        report,
+        'fish',
+        pack.id
+      );
+    }
+    if (fishingPayload?.pondUpgrades?.length) {
+      base.pondUpgrades = mergeItems(
+        base.pondUpgrades,
+        fishingPayload.pondUpgrades.map(normalizePondUpgrade),
+        report,
+        'pondUpgrades',
+        pack.id
+      );
+    }
+
+    const challengePayload = getPackPayload(PACK_CHALLENGE_MODULES, basePath, 'challenges.json');
+    if (challengePayload?.items?.length) {
+      base.challenges = mergeItems(
+        base.challenges,
+        challengePayload.items.map(normalizeChallenge),
+        report,
+        'challenges',
+        pack.id
+      );
+    }
   });
 
   CONTENT_TYPES.forEach((type) => {
@@ -482,6 +692,14 @@ const buildContent = () => {
     almanacPageById: buildMapById(base.almanac.pages),
     almanacSectionById: buildMapById(base.almanac.sections),
     philosophyById: buildMapById(base.strings.philosophies || []),
+    buildingsById: buildMapById(base.buildings),
+    researchById: buildMapById(base.research),
+    geneticsById: buildMapById(base.genetics),
+    livestockById: buildMapById(base.livestock),
+    petsById: buildMapById(base.pets),
+    fishById: buildMapById(base.fish),
+    pondUpgradesById: buildMapById(base.pondUpgrades),
+    challengesById: buildMapById(base.challenges),
     report,
   };
 

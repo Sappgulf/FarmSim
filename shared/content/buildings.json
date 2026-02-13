@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "well",
+      "name": "Water Well",
+      "emoji": "💧",
+      "description": "Reduces water needs and protects crops.",
+      "category": "Utility",
+      "requiredLevel": 10,
+      "maxLevel": 4,
+      "costs": [180, 360, 720, 1440],
+      "bonuses": [
+        "-25% water needs",
+        "-50% water needs",
+        "-75% water needs + auto-water",
+        "No water needed + growth bonus"
+      ]
+    },
+    {
+      "id": "silo",
+      "name": "Silo",
+      "emoji": "🗼",
+      "description": "Storage and auto-sell capabilities.",
+      "category": "Storage",
+      "requiredLevel": 3,
+      "maxLevel": 4,
+      "costs": [150, 300, 600, 1200],
+      "bonuses": [
+        "Storage +50",
+        "Storage +100 + auto sell",
+        "Storage +200 + 10% sell bonus",
+        "Storage +400 + 25% sell bonus"
+      ]
+    },
+    {
+      "id": "barn",
+      "name": "Barn",
+      "emoji": "🏚️",
+      "description": "Increases harvest value and stability.",
+      "category": "Production",
+      "requiredLevel": 8,
+      "maxLevel": 5,
+      "costs": [200, 400, 800, 1600, 3200],
+      "bonuses": [
+        "+20% harvest value",
+        "+35% harvest value",
+        "+55% harvest value",
+        "+80% harvest value",
+        "+120% harvest value"
+      ]
+    },
+    {
+      "id": "workshop",
+      "name": "Workshop",
+      "emoji": "🔧",
+      "description": "Unlocks advanced tools and efficiency.",
+      "category": "Utility",
+      "requiredLevel": 5,
+      "maxLevel": 3,
+      "costs": [250, 500, 1000],
+      "bonuses": [
+        "Basic tools",
+        "Advanced tools + 10% efficiency",
+        "Master tools + 25% efficiency"
+      ]
+    },
+    {
+      "id": "greenhouse",
+      "name": "Greenhouse",
+      "emoji": "🏠",
+      "description": "Improves growth and weather resilience.",
+      "category": "Production",
+      "requiredLevel": 13,
+      "maxLevel": 5,
+      "costs": [350, 700, 1400, 2800, 5600],
+      "bonuses": [
+        "+30% growth support",
+        "+50% growth support",
+        "+75% growth support",
+        "+110% growth support",
+        "+150% growth support"
+      ]
+    },
+    {
+      "id": "windmill",
+      "name": "Windmill",
+      "emoji": "🏭",
+      "description": "Processes crops into premium value goods.",
+      "category": "Processing",
+      "requiredLevel": 16,
+      "maxLevel": 5,
+      "costs": [400, 800, 1600, 3200, 6400],
+      "bonuses": [
+        "Process crops +100% value",
+        "Process crops +150% value",
+        "Process crops +200% value",
+        "Process crops +300% value",
+        "Process crops +500% value"
+      ]
+    }
+  ],
+  "synergies": [
+    {
+      "id": "hydro_garden",
+      "name": "Hydro Garden",
+      "icon": "💦",
+      "bonus": "+15% growth speed",
+      "buildingIds": ["well", "greenhouse"]
+    },
+    {
+      "id": "supply_chain",
+      "name": "Supply Chain",
+      "icon": "📦",
+      "bonus": "+10% sell value",
+      "buildingIds": ["barn", "silo"]
+    },
+    {
+      "id": "industrial_hub",
+      "name": "Industrial Hub",
+      "icon": "⚙️",
+      "bonus": "-15% processing time",
+      "buildingIds": ["workshop", "windmill"]
+    },
+    {
+      "id": "full_farm",
+      "name": "Full Farm",
+      "icon": "🌾",
+      "bonus": "+20% all yields",
+      "buildingIds": ["well", "barn", "greenhouse"]
+    }
+  ]
+}

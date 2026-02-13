@@ -38,6 +38,7 @@ struct GameUserSettings: Codable, Sendable, Equatable {
     var soundEnabled: Bool = true
     var reducedMotion: Bool = false
     var voiceOverHints: Bool = true
+    var cropsReadyNotifications: Bool = false
     var farmName: String = "Willowbrook Farm"
     var palette: FarmPalette = .meadow
     var showTileCoordinates: Bool = false
@@ -49,6 +50,7 @@ struct GameUserSettings: Codable, Sendable, Equatable {
         case soundEnabled
         case reducedMotion
         case voiceOverHints
+        case cropsReadyNotifications
         case farmName
         case palette
         case showTileCoordinates
@@ -64,6 +66,7 @@ struct GameUserSettings: Codable, Sendable, Equatable {
         soundEnabled = try container.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? true
         reducedMotion = try container.decodeIfPresent(Bool.self, forKey: .reducedMotion) ?? false
         voiceOverHints = try container.decodeIfPresent(Bool.self, forKey: .voiceOverHints) ?? true
+        cropsReadyNotifications = try container.decodeIfPresent(Bool.self, forKey: .cropsReadyNotifications) ?? false
         farmName = (try container.decodeIfPresent(String.self, forKey: .farmName)?.trimmingCharacters(in: .whitespacesAndNewlines))
             .flatMap { $0.isEmpty ? nil : $0 } ?? "Willowbrook Farm"
         palette = try container.decodeIfPresent(FarmPalette.self, forKey: .palette) ?? .meadow
@@ -104,4 +107,160 @@ struct TileSheetState: Sendable {
     let isReady: Bool
     let progress: Double
     let watered: Bool
+}
+
+struct WidgetFarmSnapshot: Sendable, Equatable {
+    let farmName: String
+    let day: Int
+    let coins: Int
+    let level: Int
+    let readyCrops: Int
+    let season: String
+    let timeText: String
+}
+
+struct DailyTaskModel: Identifiable, Sendable, Equatable {
+    enum Metric: String, Sendable {
+        case coins
+        case cropInventory
+        case readyTiles
+        case plantedTiles
+    }
+
+    let id: String
+    let title: String
+    let detail: String
+    let metric: Metric
+    let target: Int
+    let cropID: String?
+    let rewardCoins: Int
+    let rewardXP: Int
+}
+
+struct BuildingPlan: Identifiable, Sendable, Equatable {
+    let id: String
+    let name: String
+    let icon: String
+    let description: String
+    let category: String
+    let requiredLevel: Int
+    let maxLevel: Int
+    let costs: [Int]
+    let bonuses: [String]
+
+    func costForNextLevel(currentLevel: Int) -> Int? {
+        let index = max(0, currentLevel)
+        guard index < costs.count else { return nil }
+        return costs[index]
+    }
+
+    func bonusForLevel(_ level: Int) -> String {
+        let index = max(0, min(maxLevel - 1, level - 1))
+        guard bonuses.indices.contains(index) else { return "No bonus" }
+        return bonuses[index]
+    }
+}
+
+struct ResearchPlan: Identifiable, Sendable, Equatable {
+    let id: String
+    let name: String
+    let icon: String
+    let category: String
+    let cost: Int
+    let durationSeconds: Int
+    let description: String
+    let unlocks: [String]
+    let prerequisites: [String]
+}
+
+struct GeneticsRecipe: Identifiable, Sendable, Equatable {
+    let id: String
+    let name: String
+    let icon: String
+    let parentA: String
+    let parentB: String
+    let outputCropID: String
+    let levelRequirement: Int
+    let notes: String
+
+    func requiredParents() -> [String: Int] {
+        if parentA == parentB {
+            return [parentA: 2]
+        }
+        return [parentA: 1, parentB: 1]
+    }
+}
+
+struct ExpansionPlan: Sendable, Equatable {
+    let maxGrid: Int
+    let costsByGridSize: [Int: Int]
+}
+
+struct BuildingSynergy: Identifiable, Sendable, Equatable {
+    let id: String
+    let name: String
+    let icon: String
+    let bonus: String
+    let buildingIDs: [String]
+}
+
+struct LivestockTypePlan: Identifiable, Sendable, Equatable {
+    let id: String
+    let name: String
+    let icon: String
+    let description: String
+    let cost: Int
+    let requiredLevel: Int
+    let spaceRequired: Int
+    let maintenanceCost: Int
+    let productionTimeSeconds: Int
+    let productID: String
+    let productAmount: Int
+    let productValue: Int
+}
+
+struct PetTypePlan: Identifiable, Sendable, Equatable {
+    let id: String
+    let name: String
+    let icon: String
+    let description: String
+    let cost: Int
+    let maxLevel: Int
+    let requiredLevel: Int
+    let bonusLabel: String
+    let bonusPerLevel: Double
+}
+
+struct FishTypePlan: Identifiable, Sendable, Equatable {
+    let id: String
+    let name: String
+    let icon: String
+    let rarity: Double
+    let baseValue: Int
+    let difficulty: Int
+    let minSize: Int
+    let maxSize: Int
+    let description: String
+}
+
+struct PondUpgradePlan: Identifiable, Sendable, Equatable {
+    let id: String
+    let level: Int
+    let name: String
+    let capacity: Int
+    let regenRate: Double
+    let cost: Int
+    let rarityBonus: Double
+}
+
+struct ChallengePlan: Identifiable, Sendable, Equatable {
+    let id: String
+    let name: String
+    let icon: String
+    let description: String
+    let difficulty: String
+    let metric: String
+    let target: Int
+    let rewardCoins: Int
+    let rewardXP: Int
 }

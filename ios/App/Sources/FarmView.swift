@@ -3,12 +3,16 @@ import SpriteKit
 import GameCore
 
 struct FarmView: View {
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
+
     @Bindable var store: GameStore
     @Bindable var appState: AppState
 
     @State private var scene = FarmScene(size: CGSize(width: 1200, height: 1200))
     @State private var zoom: CGFloat = 1.0
     @State private var pan: CGSize = .zero
+    @State private var sceneDebugStats = FarmSceneDebugStats()
+    @State private var showDayRolloverOverlay = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -34,9 +38,21 @@ struct FarmView: View {
                 .ignoresSafeArea()
             }
             .safeAreaInset(edge: .top) {
-                topHUD
-                    .padding(.horizontal, DS.Space.md)
-                    .padding(.top, DS.Space.xs)
+                VStack(spacing: DS.Space.xs) {
+                    topHUD
+                    #if DEBUG
+                    debugOverlay
+                    #endif
+                }
+                .padding(.horizontal, DS.Space.md)
+                .padding(.top, DS.Space.xs)
+            }
+            .overlay {
+                if showDayRolloverOverlay {
+                    dayRolloverOverlay
+                        .transition(.opacity)
+                        .zIndex(5)
+                }
             }
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: DS.Space.sm) {
@@ -51,12 +67,21 @@ struct FarmView: View {
                 scene.onTileTapped = { index in
                     appState.openTileSheet(for: index)
                 }
+                scene.onDebugStats = { stats in
+                    sceneDebugStats = stats
+                }
                 scene.setReducedMotion(store.settings.reducedMotion)
                 scene.setParticleEffectsEnabled(store.settings.particleEffects)
                 scene.setShowTileIndices(store.settings.showTileCoordinates)
                 scene.setPreferredFPS(store.settings.targetFPS)
+                scene.setTimeOfDayProgress(store.hudTimeProgress)
                 scene.apply(snapshot: store.renderSnapshot, cropDisplay: store.cropDisplay)
                 scene.setViewport(zoom: zoom, pan: pan)
+                store.setMenuPresented(appState.showingTileSheet)
+            }
+            .onDisappear {
+                scene.onDebugStats = nil
+                store.setMenuPresented(false)
             }
             .onChange(of: store.renderSnapshot) { _, snapshot in
                 scene.apply(snapshot: snapshot, cropDisplay: store.cropDisplay)
@@ -73,6 +98,9 @@ struct FarmView: View {
             .onChange(of: store.settings.targetFPS) { _, fps in
                 scene.setPreferredFPS(fps)
             }
+            .onChange(of: store.hudTimeProgress) { _, progress in
+                scene.setTimeOfDayProgress(progress)
+            }
             .sheet(isPresented: Binding(get: {
                 appState.showingTileSheet
             }, set: { appState.showingTileSheet = $0 })) {
@@ -80,8 +108,21 @@ struct FarmView: View {
                     .presentationDetents([.fraction(0.35), .medium])
                     .presentationDragIndicator(.visible)
             }
+            .onChange(of: appState.showingTileSheet) { _, showing in
+                store.setMenuPresented(showing)
+            }
+            .onChange(of: store.dayRolloverToken) { _, _ in
+                showDayRolloverOverlay = true
+                let dismissDelay = (store.settings.reducedMotion || accessibilityReduceMotion) ? 0.35 : 1.2
+                DispatchQueue.main.asyncAfter(deadline: .now() + dismissDelay) {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        showDayRolloverOverlay = false
+                    }
+                }
+            }
             .sensoryFeedback(.impact(weight: .light), trigger: store.hapticToken)
             .sensoryFeedback(.success, trigger: store.harvestToken)
+            .sensoryFeedback(.impact(weight: .light), trigger: store.dayRolloverToken)
         }
         .farmBackground(palette: store.settings.palette)
     }
@@ -141,14 +182,20 @@ struct FarmView: View {
 
                 ViewThatFits {
                     HStack {
-                        StatPill(icon: "sun.max.fill", value: "Day \(store.save.world.day)")
+                        StatPill(icon: "calendar", value: "Day \(store.save.world.day)")
+                        StatPill(icon: store.hudClockSymbol, value: store.hudTimeText)
+                        StatPill(icon: "leaf.fill", value: store.hudSeasonText)
                         Spacer()
                         StatPill(icon: "dollarsign.circle.fill", value: "\(store.save.player.coins)")
                         StatPill(icon: "star.fill", value: "Lv \(store.playerLevel)")
                     }
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
-                        StatPill(icon: "sun.max.fill", value: "Day \(store.save.world.day)")
                         HStack {
+                            StatPill(icon: "calendar", value: "Day \(store.save.world.day)")
+                            StatPill(icon: store.hudClockSymbol, value: store.hudTimeText)
+                        }
+                        HStack {
+                            StatPill(icon: "leaf.fill", value: store.hudSeasonText)
                             StatPill(icon: "dollarsign.circle.fill", value: "\(store.save.player.coins)")
                             StatPill(icon: "star.fill", value: "Lv \(store.playerLevel)")
                         }
@@ -158,6 +205,10 @@ struct FarmView: View {
                 ProgressView(value: Double(store.save.player.xp % ProgressionSystem.xpPerLevel), total: Double(ProgressionSystem.xpPerLevel))
                     .tint(DS.Color.xp)
                     .accessibilityLabel("Level progress")
+
+                ProgressView(value: store.hudTimeProgress, total: 1)
+                    .tint(DS.Color.money)
+                    .accessibilityLabel("Time of day")
             }
         }
     }
@@ -173,6 +224,21 @@ struct FarmView: View {
                 .accessibilityValue(store.statusText)
         }
     }
+
+    #if DEBUG
+    private var debugOverlay: some View {
+        CardContainer {
+            HStack(spacing: DS.Space.sm) {
+                Label("FPS \(sceneDebugStats.fps)", systemImage: "speedometer")
+                Label("Nodes \(sceneDebugStats.nodeCount)", systemImage: "square.grid.3x3.fill")
+                Label("Tick \(String(format: "%.2f", store.lastTickDurationMs))ms", systemImage: "timer")
+            }
+            .font(.caption2.monospacedDigit())
+            .foregroundStyle(.white.opacity(0.9))
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+    #endif
 
     private var seedTray: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -214,23 +280,6 @@ struct FarmView: View {
 
     private var actionBar: some View {
         HStack(spacing: DS.Space.sm) {
-            Menu {
-                Button("Wait 1 Day") {
-                    store.advanceDays(1)
-                }
-                Button("Wait 3 Days") {
-                    store.advanceDays(3)
-                }
-                Button("Wait a Week") {
-                    store.advanceDays(7)
-                }
-            } label: {
-                Text("Next Day")
-            }
-            .buttonStyle(PrimaryButtonStyle(tint: DS.Color.accent))
-            .accessibilityHint("Let time pass on the farm")
-            .lineLimit(1)
-
             Button("Gather Crops") {
                 store.harvestAll()
             }
@@ -238,7 +287,44 @@ struct FarmView: View {
             .disabled(store.readyTileCount == 0)
             .accessibilityLabel("Gather all ready crops")
             .lineLimit(1)
+
+            #if DEBUG
+            Button("Fast-forward Day") {
+                store.advanceDays(1)
+            }
+            .buttonStyle(PrimaryButtonStyle(tint: DS.Color.accent))
+            .lineLimit(1)
+            #endif
         }
+    }
+
+    private var dayRolloverOverlay: some View {
+        Button {
+            withAnimation(.easeOut(duration: 0.2)) {
+                showDayRolloverOverlay = false
+            }
+        } label: {
+            VStack(spacing: DS.Space.xs) {
+                Image(systemName: "sunrise.fill")
+                    .font(.system(size: 40, weight: .semibold))
+                    .foregroundStyle(DS.Color.money)
+                Text(store.dayRolloverMessage)
+                    .font(.headline.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                Text("Tap to dismiss")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(DS.Space.lg)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous)
+                    .stroke(DS.Color.cardStroke, lineWidth: 0.5)
+            )
+            .padding(.horizontal, DS.Space.lg)
+            .shadow(color: DS.shadow, radius: 12, y: 8)
+        }
+        .buttonStyle(.plain)
     }
 }
 
