@@ -187,7 +187,7 @@ struct FarmView: View {
     }
 
     private var topHUD: some View {
-        CardContainer {
+        WoodenPanel {
             VStack(spacing: DS.Space.xs) {
                 HStack {
                     Button {
@@ -196,6 +196,7 @@ struct FarmView: View {
                         Label("Menu", systemImage: "line.3.horizontal")
                             .labelStyle(.iconOnly)
                             .font(.headline)
+                            .foregroundStyle(.white)
                             .frame(width: 32, height: 32)
                     }
                     .buttonStyle(.plain)
@@ -203,6 +204,8 @@ struct FarmView: View {
 
                     Text(store.farmName)
                         .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.95))
+                        .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
 
@@ -234,19 +237,24 @@ struct FarmView: View {
                 ProgressView(value: Double(store.save.player.xp % ProgressionSystem.xpPerLevel), total: Double(ProgressionSystem.xpPerLevel))
                     .tint(DS.Color.xp)
                     .accessibilityLabel("Level progress")
+                    .background(Color.black.opacity(0.3))
+                    .clipShape(Capsule())
 
                 ProgressView(value: store.hudTimeProgress, total: 1)
                     .tint(DS.Color.money)
                     .accessibilityLabel("Time of day")
+                    .background(Color.black.opacity(0.3))
+                    .clipShape(Capsule())
             }
         }
     }
 
     private var statusBar: some View {
-        CardContainer {
+        WoodenPanel {
             Text(store.statusText)
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.95))
+                .shadow(color: .black.opacity(0.4), radius: 1)
                 .lineLimit(2)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityLabel("Status")
@@ -286,12 +294,21 @@ struct FarmView: View {
                             Text("\(count)")
                                 .font(.caption.monospacedDigit().weight(.semibold))
                         }
-                        .foregroundStyle(selected ? .black : .white)
+                        .foregroundStyle(selected ? Color(red: 0.3, green: 0.2, blue: 0.1) : .white)
                         .frame(width: 52, height: 56)
-                        .background(selected ? .white : .white.opacity(0.14), in: RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
-                                .stroke(selected ? DS.Color.money : .clear, lineWidth: 1.5)
+                        .background(
+                            ZStack {
+                                if selected {
+                                    RoundedRectangle(cornerRadius: DS.Radius.md)
+                                        .fill(Color(red: 0.95, green: 0.9, blue: 0.8))
+                                } else {
+                                    RoundedRectangle(cornerRadius: DS.Radius.md)
+                                        .fill(Color.black.opacity(0.2))
+                                }
+                                
+                                RoundedRectangle(cornerRadius: DS.Radius.md)
+                                    .strokeBorder(selected ? DS.Color.money : .white.opacity(0.1), lineWidth: selected ? 2 : 1)
+                            }
                         )
                         .shadow(color: selected ? DS.Color.money.opacity(0.4) : .clear, radius: 8, x: 0, y: 2)
                         .opacity(unlocked ? 1.0 : 0.45)
@@ -304,10 +321,20 @@ struct FarmView: View {
                     .accessibilityHint(unlocked ? "Pick this seed for planting" : "Keep growing to unlock this seed")
                 }
             }
-            .padding(.horizontal, DS.Space.xs)
-            .padding(.vertical, DS.Space.xs)
+            .padding(.horizontal, DS.Space.md) // Increased padding
+            .padding(.vertical, DS.Space.sm)
         }
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: DS.Radius.lg)
+                    .fill(Color(red: 0.4, green: 0.25, blue: 0.15).opacity(0.95))
+                
+                RoundedRectangle(cornerRadius: DS.Radius.lg)
+                    .strokeBorder(Color(red: 0.55, green: 0.4, blue: 0.3), lineWidth: 2)
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg))
+        .shadow(color: .black.opacity(0.3), radius: 5, y: 2)
     }
 
     private var actionBar: some View {
@@ -315,7 +342,7 @@ struct FarmView: View {
             Button("Gather Crops") {
                 store.harvestAll()
             }
-            .buttonStyle(PrimaryButtonStyle(tint: DS.Color.money))
+            .buttonStyle(WoodActionStyle(tint: DS.Color.money))
             .disabled(store.readyTileCount == 0)
             .accessibilityLabel("Gather all ready crops")
             .lineLimit(1)
@@ -324,7 +351,7 @@ struct FarmView: View {
             Button("Fast-forward Day") {
                 store.advanceDays(1)
             }
-            .buttonStyle(PrimaryButtonStyle(tint: DS.Color.accent))
+            .buttonStyle(WoodActionStyle(tint: DS.Color.xp))
             .lineLimit(1)
             #endif
         }
@@ -504,3 +531,203 @@ struct TileActionSheet: View {
         }
     }
 }
+import SwiftUI
+
+struct QuickWheelItem: Identifiable, Equatable {
+    let id: String
+    let icon: String // System image name
+    let label: String
+    let action: () -> Void
+    
+    static func == (lhs: QuickWheelItem, rhs: QuickWheelItem) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+struct QuickWheelView: View {
+    let items: [QuickWheelItem]
+    let center: CGPoint
+    let onDismiss: () -> Void
+    
+    @State private var dragLocation: CGPoint = .zero
+    @State private var selectedIndex: Int? = nil
+    @State private var appear = false
+    
+    private let radius: CGFloat = 80
+    private let innerRadius: CGFloat = 30
+    
+    var body: some View {
+        ZStack {
+            dimmedBackground
+            wheelContent
+        }
+        .gesture(dragGesture)
+        .onAppear {
+            appear = true
+        }
+    }
+    
+    private var dimmedBackground: some View {
+        Color.black.opacity(0.01) // Nearly invisible to catch taps
+            .ignoresSafeArea()
+            .onTapGesture {
+                withAnimation(.easeOut(duration: 0.15)) {
+                    onDismiss()
+                }
+            }
+    }
+    
+    private var wheelContent: some View {
+        ZStack {
+            // Background Circle (Glassmorphism)
+            Circle()
+                .fill(.regularMaterial)
+                .frame(width: radius * 3.2, height: radius * 3.2)
+                .overlay(
+                    Circle().stroke(.white.opacity(0.2), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+            
+            // Segment Guides
+            segmentGuides
+            
+            // Indicators
+            indicators
+            
+            // Selection Highlight
+            selectionHighlight
+        }
+        .frame(width: radius * 3.2, height: radius * 3.2)
+        .position(center)
+        .scaleEffect(appear ? 1.0 : 0.01)
+        .opacity(appear ? 1.0 : 0)
+        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: appear)
+    }
+    
+    private var segmentGuides: some View {
+        ForEach(0..<items.count, id: \.self) { index in
+            Rectangle()
+                .fill(.white.opacity(0.1))
+                .frame(width: 1, height: radius * 1.5)
+                .offset(y: -radius * 0.75)
+                .rotationEffect(.radians(self.segmentAngle(for: index)))
+        }
+    }
+    
+    private var indicators: some View {
+        ForEach(0..<items.count, id: \.self) { index in
+            let angle = self.indicatorAngle(for: index)
+            let isSelected = selectedIndex == index
+            
+            // Position relative to center of the wheel (0,0 is center of ZStack here)
+            let x = cos(angle) * (radius)
+            let y = sin(angle) * (radius)
+            
+            VStack(spacing: 4) {
+                Image(systemName: items[index].icon)
+                    .font(.system(size: 24, weight: isSelected ? .bold : .regular))
+                    .foregroundStyle(isSelected ? .white : .primary)
+                    .shadow(color: isSelected ? .black.opacity(0.3) : .clear, radius: 2, x: 0, y: 1)
+                    .scaleEffect(isSelected ? 1.2 : 1.0)
+                
+                Text(items[index].label)
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(isSelected ? .white : .secondary)
+                    .shadow(color: isSelected ? .black.opacity(0.3) : .clear, radius: 2, x: 0, y: 1)
+            }
+            .position(x: radius * 1.6 + x, y: radius * 1.6 + y) // Offset explicitly to match frame size
+            .frame(width: radius * 3.2, height: radius * 3.2, alignment: .topLeading) // Wrapper to position content
+        }
+    }
+    
+    private var selectionHighlight: some View {
+        Group {
+            if let index = selectedIndex {
+                Circle()
+                    .trim(from: 0, to: 1.0 / CGFloat(max(1, items.count)))
+                    .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .rotationEffect(.radians(self.highlightRotation(for: index)))
+                    .frame(width: radius * 3.0, height: radius * 3.0)
+                    .position(center)
+            }
+        }
+    }
+    
+    private var dragGesture: some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .global)
+            .onChanged { value in
+                dragLocation = value.location
+                updateSelection(at: value.location)
+            }
+            .onEnded { value in
+                if let index = selectedIndex {
+                    // Impact feedback
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.impactOccurred()
+                    
+                    // Execute action
+                    items[index].action()
+                }
+                withAnimation(.easeOut(duration: 0.2)) {
+                    onDismiss()
+                }
+            }
+    }
+    
+    private func updateSelection(at location: CGPoint) {
+        let dx = location.x - center.x
+        let dy = location.y - center.y
+        let dist = sqrt(dx*dx + dy*dy)
+        
+        // Dead zone in center
+        if dist < innerRadius {
+            if selectedIndex != nil {
+                selectedIndex = nil
+                let generator = UIImpactFeedbackGenerator(style: .light)
+                generator.impactOccurred()
+            }
+            return
+        }
+        
+        var angle = atan2(dy, dx)
+        angle += .pi / 2 // Rotate so 0 is up
+        if angle < 0 { angle += 2 * .pi }
+        
+        let count = Double(max(1, items.count))
+        let segmentAngle = 2 * .pi / count
+        
+        // Shift angle by half segment so item is centered in segment
+        let shiftedAngle = angle + segmentAngle / 2
+        var index = Int(shiftedAngle / segmentAngle)
+        
+        // Wrap index
+        index = index % items.count
+        
+        if selectedIndex != index {
+            selectedIndex = index
+            let generator = UISelectionFeedbackGenerator()
+            generator.selectionChanged()
+        }
+    }
+    
+    // -- Helpers to reduce expression complexity --
+    
+    private func segmentAngle(for index: Int) -> Double {
+        let count = Double(max(1, items.count))
+        let step = 2 * .pi / count
+        return step * Double(index) + step / 2.0 // Corrected logic? Originally it was + .pi / count
+    }
+
+    private func indicatorAngle(for index: Int) -> Double {
+        let count = Double(max(1, items.count))
+        return 2 * .pi / count * Double(index) - .pi / 2
+    }
+    
+    private func highlightRotation(for index: Int) -> Double {
+        let count = Double(max(1, items.count))
+        let step = 2 * .pi / count
+        // 2 * .pi / Double(items.count) * Double(index) - .pi / 2 - .pi / Double(items.count)
+        return step * Double(index) - .pi / 2 - .pi / count
+    }
+}
+

@@ -58,12 +58,12 @@ Legend:
 - [x] Challenges (integrated into Town flow)
   - Web: `web/src/components/farm-sim/ui/tabs/ChallengesTab.jsx`
   - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameStore.swift`
-- [ ] Daily Quests
+- [x] Daily Quests (integrated into Town flow)
   - Web: `web/src/components/farm-sim/ui/tabs/DailyQuestsTab.jsx`
-  - iOS: partial task board in `ios/App/Sources/TownMarketView.swift` + `ios/App/Sources/GameStore.swift`; missing dedicated tab parity
-- [ ] Events/Town Board
+  - iOS: `ios/App/Sources/TownMarketView.swift` (Daily Task Board section)
+- [x] Events/Town Board (integrated into Town flow)
   - Web: `web/src/components/farm-sim/ui/tabs/EventsTab.jsx`
-  - iOS: partial seasonal panel only in `TownMarketView`
+  - iOS: `ios/App/Sources/TownMarketView.swift` (Season Board section)
 - [ ] Weather tab
   - Web: `web/src/components/farm-sim/ui/tabs/WeatherTab.jsx`
   - iOS: missing dedicated tab/flow

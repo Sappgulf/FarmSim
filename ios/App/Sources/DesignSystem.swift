@@ -59,17 +59,102 @@ struct CardContainer<Content: View>: View {
 
     var body: some View {
         content
+            .environment(\.colorScheme, .dark) // Force dark text styles (white text) on dark wood
             .padding(DS.Space.md)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
-                    .stroke(DS.Color.cardStroke, lineWidth: 0.5)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: DS.Radius.lg)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    SwiftUI.Color(red: 0.55, green: 0.35, blue: 0.15),
+                                    SwiftUI.Color(red: 0.40, green: 0.20, blue: 0.05)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    
+                    RoundedRectangle(cornerRadius: DS.Radius.lg)
+                        .strokeBorder(SwiftUI.Color(red: 0.30, green: 0.15, blue: 0.05).opacity(0.8), lineWidth: 2)
+                        
+                    // Inner glow/highlight
+                    RoundedRectangle(cornerRadius: DS.Radius.lg)
+                        .strokeBorder(SwiftUI.Color.white.opacity(0.1), lineWidth: 1)
+                        .padding(2)
+                }
             )
-            .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
+            .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 3)
     }
 }
 
+// New Cozy/Wood styles
+struct WoodenPanel<Content: View>: View {
+    @ViewBuilder var content: Content
+    
+    var body: some View {
+        content
+            .environment(\.colorScheme, .dark)
+            .padding(DS.Space.md)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: DS.Radius.lg)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    SwiftUI.Color(red: 0.60, green: 0.40, blue: 0.20),
+                                    SwiftUI.Color(red: 0.45, green: 0.25, blue: 0.10)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    
+                    RoundedRectangle(cornerRadius: DS.Radius.lg)
+                        .strokeBorder(SwiftUI.Color(red: 0.35, green: 0.20, blue: 0.05), uniqueWidth: 3)
+                }
+            )
+            .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 3)
+    }
+}
 
+struct WoodActionStyle: ButtonStyle {
+    var tint: SwiftUI.Color = DS.Color.money // Default to gold/yellow for actions
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline.bold())
+            .foregroundStyle(SwiftUI.Color(red: 0.25, green: 0.15, blue: 0.05))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, DS.Space.sm)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: DS.Radius.md)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    tint.opacity(0.9),
+                                    tint.opacity(1.0).opacity(0.8) // Slightly darker bottom
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    
+                    RoundedRectangle(cornerRadius: DS.Radius.md)
+                        .stroke(SwiftUI.Color.black.opacity(0.2), lineWidth: 1)
+                    
+                    // Inner highlight
+                    RoundedRectangle(cornerRadius: DS.Radius.md)
+                        .stroke(SwiftUI.Color.white.opacity(0.3), lineWidth: 2)
+                        .padding(2)
+                }
+            )
+            .shadow(color: tint.opacity(0.3), radius: configuration.isPressed ? 2 : 4, x: 0, y: configuration.isPressed ? 1 : 3)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
 
 struct PrimaryButtonStyle: ButtonStyle {
     var tint: SwiftUI.Color = DS.Color.accent

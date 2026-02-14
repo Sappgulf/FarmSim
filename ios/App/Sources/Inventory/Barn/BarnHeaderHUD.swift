@@ -7,52 +7,53 @@ struct BarnHeaderHUD: View {
     let onOpenMarketTab: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DS.Space.sm) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Your Barn")
-                        .font(Typography.title)
-                        .foregroundStyle(DS.Color.textPrimary)
-                    Text("Stockroom shelves and cozy counter")
-                        .font(Typography.caption)
-                        .foregroundStyle(DS.Color.textSecondary)
-                }
-                Spacer()
-                HStack(spacing: DS.Space.xs) {
-                    Image(systemName: "dollarsign.circle.fill")
-                        .foregroundStyle(DS.Color.money)
-                    Text("\(coins)")
-                        .font(.headline.monospacedDigit())
-                        .foregroundStyle(DS.Color.textPrimary)
-                }
-                .padding(.horizontal, DS.Space.sm)
-                .padding(.vertical, DS.Space.xs)
-                .background(DS.Color.surface.opacity(0.75), in: Capsule())
-            }
-
-            HStack(spacing: DS.Space.sm) {
-                IconLabel(icon: "shippingbox.fill", text: "\(stockCount) crates", tint: DS.Color.textSecondary)
-                    .font(Typography.caption)
-
-                Spacer()
-
-                SecondaryButton(title: "Town Market", icon: "storefront.fill") {
-                    onOpenMarketTab()
+        WoodenPanel {
+            VStack(alignment: .leading, spacing: DS.Space.md) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Your Barn")
+                            .font(.title2.bold()) // Replaced Typography.title 
+                            .foregroundStyle(.white)
+                        Text("Stockroom shelves and cozy counter")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+                    Spacer()
+                    HStack(spacing: DS.Space.xs) {
+                        Image(systemName: "dollarsign.circle.fill")
+                            .foregroundStyle(DS.Color.money)
+                        Text("\(coins)")
+                            .font(.headline.monospacedDigit())
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, DS.Space.sm)
+                    .padding(.vertical, DS.Space.xs)
+                    .background(Color.black.opacity(0.3), in: Capsule())
                 }
 
-                PrimaryButton(title: "Visit Shop", icon: "cart.fill", tint: DS.Color.accent) {
-                    onVisitShop()
+                HStack(spacing: DS.Space.sm) {
+                    Label("\(stockCount) crates", systemImage: "shippingbox.fill")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.8))
+
+                    Spacer()
+
+                    Button {
+                        onOpenMarketTab()
+                    } label: {
+                        Label("Town Market", systemImage: "storefront.fill")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.brown)
+
+                    Button {
+                        onVisitShop()
+                    } label: {
+                        Label("Visit Shop", systemImage: "cart.fill")
+                    }
+                    .buttonStyle(WoodActionStyle(tint: DS.Color.accent))
                 }
             }
         }
-        .padding(DS.Space.md)
-        .background(
-            RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous)
-                .fill(DS.Color.surfaceElevated)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous)
-                .stroke(DS.Color.cardStroke, lineWidth: 0.6)
-        )
     }
 }

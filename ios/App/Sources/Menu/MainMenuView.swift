@@ -1,5 +1,4 @@
 import SwiftUI
-import SpriteKit
 import GameCore
 
 struct MainMenuView: View {
@@ -9,12 +8,12 @@ struct MainMenuView: View {
     let onContinue: () -> Void
     let onNewGame: () -> Void
 
-    @StateObject private var sceneHolder = HomesteadMenuSceneHolder()
     @State private var showSettings = false
     @State private var showCredits = false
     @State private var confirmNewGame = false
     @State private var titleAppeared = false
     @State private var buttonsAppeared = false
+    @State private var bgScale = 1.0
 
     private var hasSave: Bool {
         FileManager.default.fileExists(
@@ -25,108 +24,104 @@ struct MainMenuView: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                SpriteView(
-                    scene: sceneHolder.scene,
-                    options: [.ignoresSiblingOrder]
-                )
-                .ignoresSafeArea()
+                // Background Image
+                Image("menu_bg")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .scaleEffect(bgScale)
+                    .ignoresSafeArea()
+                    .onAppear {
+                        withAnimation(.easeInOut(duration: 20).repeatForever(autoreverses: true)) {
+                            bgScale = 1.05
+                        }
+                    }
 
-                // Cinematic Gradient Overlay
+                // Gradient Overlay for readability
                 LinearGradient(
                     colors: [
                         .black.opacity(0.1),
-                        .black.opacity(0.3),
-                        .black.opacity(0.7)
+                        .clear,
+                        .black.opacity(0.4)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
                 .ignoresSafeArea()
 
-                HStack {
-                    // Left Side: Title and Branding
-                    VStack(alignment: .leading, spacing: DS.Space.md) {
-                        Spacer()
-                        
-                        VStack(alignment: .leading, spacing: -8) {
-                            Text("FARM")
-                                .font(.system(size: 82, weight: .heavy, design: .rounded))
-                                .foregroundStyle(.white)
-                                .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
-                            
-                            Text("SIM")
-                                .font(.system(size: 82, weight: .black, design: .rounded))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [DS.Color.money, DS.Color.xp],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .shadow(color: DS.Color.money.opacity(0.5), radius: 20, x: 0, y: 10)
-                        }
-                        .scaleEffect(titleAppeared ? 1.0 : 0.9)
-                        .opacity(titleAppeared ? 1.0 : 0)
-                        
-                        Text("Build your legacy.")
-                            .font(Typography.section)
-                            .foregroundStyle(.white.opacity(0.9))
-                            .padding(.leading, 6)
-                            .opacity(titleAppeared ? 1.0 : 0)
-                        
-                        Spacer()
-                        Spacer()
-                        
-                        // Version / Copyright
-                        Text("v1.0.0 · Swift 5.10 · GameCore")
-                            .font(.caption2.monospaced())
-                            .foregroundStyle(.white.opacity(0.4))
-                    }
-                    .padding(.leading, DS.Space.xl * 1.5)
-                    
+                VStack {
                     Spacer()
                     
-                    // Right Side: Menu Card
-                    VStack {
-                        Spacer()
+                    // Title
+                    VStack(spacing: DS.Space.xs) {
+                        Text("FARM SIM")
+                            .font(.system(size: 80, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                            .shadow(color: Color(red: 0.4, green: 0.2, blue: 0.1), radius: 0, x: 2, y: 4)
+                            .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                            .scaleEffect(titleAppeared ? 1.0 : 0.8)
+                            .opacity(titleAppeared ? 1.0 : 0)
                         
-                        VStack(spacing: DS.Space.md) {
-                            MenuButtonsView(
-                                hasSave: hasSave,
-                                isBusy: false,
-                                onPrimaryAction: onContinue,
-                                onNewGameAction: { confirmNewGame = true },
-                                onSettingsAction: { appState.showingMenuSettings = true },
-                                onCreditsAction: { showCredits = true }
-                            )
-                        }
-                        .padding(DS.Space.xl)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .stroke(.white.opacity(0.15), lineWidth: 1)
-                        )
-                        .shadow(color: .black.opacity(0.25), radius: 30, x: 0, y: 15)
-                        .frame(width: 360)
-                        .offset(x: buttonsAppeared ? 0 : 50)
-                        .opacity(buttonsAppeared ? 1.0 : 0)
-                        
-                        Spacer()
+                        Text("Cozy Living")
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.9))
+                            .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
+                            .opacity(titleAppeared ? 1.0 : 0)
                     }
-                    .padding(.trailing, DS.Space.xl * 1.5)
+                    .padding(.top, 60)
+                    
+                    Spacer()
+
+                    // Menu Buttons in Wood Panel
+                    VStack(spacing: 16) {
+                        MenuButtonsView(
+                            hasSave: hasSave,
+                            isBusy: false,
+                            onPrimaryAction: onContinue,
+                            onNewGameAction: { confirmNewGame = true },
+                            onSettingsAction: { appState.showingMenuSettings = true },
+                            onCreditsAction: { showCredits = true }
+                        )
+                        .buttonStyle(WoodButtonStyle())
+                    }
+                    .padding(32)
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 32)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 0.60, green: 0.40, blue: 0.20),
+                                            Color(red: 0.45, green: 0.25, blue: 0.10)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                            
+                            RoundedRectangle(cornerRadius: 32)
+                                .strokeBorder(Color(red: 0.35, green: 0.20, blue: 0.05), uniqueWidth: 4)
+                        }
+                    )
+                    .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
+                    .frame(maxWidth: 400)
+                    .scaleEffect(buttonsAppeared ? 1.0 : 0.9)
+                    .opacity(buttonsAppeared ? 1.0 : 0)
+                    
+                    Text("v1.0.0 · Swift 5.10")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white.opacity(0.6))
+                        .padding(.top, 20)
+                        .padding(.bottom, 20)
                 }
             }
             .onAppear {
-                sceneHolder.resize(proxy.size)
-                withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
+                withAnimation(.spring(response: 0.8, dampingFraction: 0.7)) {
                     titleAppeared = true
                 }
-                withAnimation(.spring(response: 0.8, dampingFraction: 0.75).delay(0.4)) {
+                withAnimation(.spring(response: 0.8, dampingFraction: 0.75).delay(0.2)) {
                     buttonsAppeared = true
                 }
-            }
-            .onChange(of: proxy.size) { _, newSize in
-                sceneHolder.resize(newSize)
             }
         }
         .alert("Start a New Farm?", isPresented: $confirmNewGame) {
@@ -143,18 +138,36 @@ struct MainMenuView: View {
     }
 }
 
-final class HomesteadMenuSceneHolder: ObservableObject {
-    let scene: HomesteadMenuScene
-
-    init() {
-        let s = HomesteadMenuScene(size: CGSize(width: 1200, height: 800))
-        s.scaleMode = .aspectFill
-        scene = s
-    }
-
-    func resize(_ viewSize: CGSize) {
-        let scale: CGFloat = 1.5
-        scene.size = CGSize(width: viewSize.width * scale, height: viewSize.height * scale)
+// Custom Wood Button Style
+struct WoodButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 20, weight: .bold, design: .rounded))
+            .foregroundStyle(Color(red: 0.25, green: 0.15, blue: 0.05))
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.95, green: 0.85, blue: 0.65), // Light wood
+                                    Color(red: 0.85, green: 0.70, blue: 0.50)  // Darker wood
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color(red: 0.60, green: 0.45, blue: 0.25), lineWidth: 2)
+                        .opacity(0.6)
+                }
+            )
+            .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 2)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
@@ -170,26 +183,16 @@ struct CreditsView: View {
                     CardContainer {
                         VStack(alignment: .leading, spacing: DS.Space.sm) {
                             creditRow("Design & Code", value: "Austin Beatty")
-                            creditRow("Art Direction", value: "Vector-first, SpriteKit pipeline")
+                            creditRow("Art Direction", value: "Cozy Farm Aesthetic")
                             creditRow("Game Engine", value: "GameCore · Swift 5.10")
                             creditRow("UI Framework", value: "SwiftUI · SpriteKit")
                             creditRow("Minimum OS", value: "iOS 17.0")
                         }
                     }
-
-                    CardContainer {
-                        VStack(alignment: .leading, spacing: DS.Space.sm) {
-                            Text("Technology")
-                                .font(Typography.section)
-                            Text("Built with Swift, SpriteKit for rendering, SwiftUI for interface, and custom GameCore for simulation. Vector-first art pipeline rasterized into sprites for maximum performance.")
-                                .font(Typography.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
                 }
                 .padding(DS.Space.md)
             }
-            .farmBackground(palette: .meadow)
+            .background(Color(red: 0.98, green: 0.96, blue: 0.92)) // Cream background
             .navigationTitle("Credits")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -211,3 +214,10 @@ struct CreditsView: View {
         }
     }
 }
+
+extension Shape {
+    func strokeBorder(_ content: some ShapeStyle, uniqueWidth: CGFloat = 1) -> some View {
+        self.stroke(content, lineWidth: uniqueWidth)
+    }
+}
+

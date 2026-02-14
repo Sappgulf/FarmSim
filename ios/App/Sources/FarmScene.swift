@@ -251,24 +251,39 @@ final class FarmScene: SKScene {
     private func drawBackground() {
         backgroundNode.removeAllChildren()
 
-        let sky = SKSpriteNode(color: SKColor(red: 0.96, green: 0.83, blue: 0.62, alpha: 1), size: size)
-        sky.position = CGPoint(x: size.width / 2, y: size.height / 2)
-        sky.zPosition = -100
-        backgroundNode.addChild(sky)
-
-        let skyTint = SKSpriteNode(color: SKColor(red: 0.98, green: 0.94, blue: 0.78, alpha: 0.55), size: size)
-        skyTint.position = CGPoint(x: size.width / 2, y: size.height / 2)
-        skyTint.zPosition = -99
-        backgroundNode.addChild(skyTint)
+        // Background - Grass Texture
+        let grassTexture = SKTexture(imageNamed: "grass")
+        let tileSize = grassTexture.size()
+        
+        let cols = Int(ceil(size.width / tileSize.width)) + 1
+        let rows = Int(ceil(size.height / tileSize.height)) + 1
+        
+        for r in 0..<rows {
+            for c in 0..<cols {
+                let node = SKSpriteNode(texture: grassTexture)
+                node.anchorPoint = .zero
+                node.position = CGPoint(x: CGFloat(c) * tileSize.width, y: CGFloat(r) * tileSize.height)
+                node.zPosition = -100
+                backgroundNode.addChild(node)
+            }
+        }
+        
+        // Add a vignette/shadow overlay
+        let vignette = SKShapeNode(rect: CGRect(origin: .zero, size: size))
+        vignette.fillColor = .black
+        vignette.strokeColor = .clear
+        vignette.alpha = 0.1
+        vignette.zPosition = -99
+        backgroundNode.addChild(vignette)
 
         let ground = SKShapeNode(rect: CGRect(x: 0, y: 0, width: size.width, height: size.height * 0.26))
-        ground.fillColor = SKColor(red: 0.43, green: 0.64, blue: 0.36, alpha: 1)
+        ground.fillColor = SKColor(red: 0.13, green: 0.34, blue: 0.16, alpha: 0.4) // Darken bottom area
         ground.strokeColor = .clear
         ground.zPosition = -90
         backgroundNode.addChild(ground)
 
         let horizon = SKShapeNode(rect: CGRect(x: 0, y: size.height * 0.26, width: size.width, height: size.height * 0.08))
-        horizon.fillColor = SKColor(red: 0.80, green: 0.72, blue: 0.47, alpha: 0.35)
+        horizon.fillColor = SKColor(red: 0.80, green: 0.72, blue: 0.47, alpha: 0.25)
         horizon.strokeColor = .clear
         horizon.zPosition = -89
         backgroundNode.addChild(horizon)
@@ -280,7 +295,8 @@ final class FarmScene: SKScene {
         dayNightOverlayNode.zPosition = -88
         dayNightOverlayNode.alpha = nightOverlayAlpha(for: timeOfDayProgress)
         backgroundNode.addChild(dayNightOverlayNode)
-
+        
+        // Clouds
         for idx in 0..<3 {
             let cloud = SKShapeNode(ellipseOf: CGSize(width: 90 + CGFloat(idx * 24), height: 28 + CGFloat(idx * 8)))
             cloud.fillColor = SKColor.white.withAlphaComponent(0.28)
@@ -351,10 +367,21 @@ final class FarmScene: SKScene {
     }
 
     private func makeTile(index: Int, rect: CGRect) -> TileVisual {
-        let textureKey = "soil_\(index % 5)"
-        let tile = SKSpriteNode(texture: textureCache[textureKey])
+        // Use texture from asset catalog if available, fallback to generated.
+        let tex = SKTexture(imageNamed: "soil")
+        let tile = SKSpriteNode(texture: tex)
         tile.position = CGPoint(x: rect.midX, y: rect.midY)
         tile.size = rect.size
+        
+        // Slight randomization of rotation/color for natural look
+        let randomRot = CGFloat(Int(index * 13) % 4) * (.pi / 2)
+        tile.zRotation = randomRot
+        
+        // Subtle color variation
+        let colorVar = CGFloat((index % 7) - 3) * 0.02
+        tile.color = SKColor(white: 0.9 + colorVar, alpha: 1.0)
+        tile.colorBlendFactor = 0.1
+
         tile.name = "tile_\(index)"
         tile.zPosition = 5
         tileBaseColors[index] = soilColor(for: index)
@@ -367,7 +394,7 @@ final class FarmScene: SKScene {
         emoji.position = CGPoint(x: 0, y: 5)
         emoji.verticalAlignmentMode = .center
         emoji.horizontalAlignmentMode = .center
-        emoji.fontSize = max(16, rect.width * 0.38)
+        emoji.fontSize = max(16, rect.width * 0.45) // Larger emojis
         emoji.zPosition = 8
 
         let plus = SKLabelNode(text: "+")
@@ -392,20 +419,21 @@ final class FarmScene: SKScene {
         indexLabel.isHidden = !showTileIndices
 
         let barWidth = rect.width - 12
-        let track = SKSpriteNode(color: .black.withAlphaComponent(0.25), size: CGSize(width: barWidth, height: 4))
-        track.position = CGPoint(x: 0, y: -halfH + 8)
+        let track = SKSpriteNode(color: .black.withAlphaComponent(0.4), size: CGSize(width: barWidth, height: 6)) // Thicker, darker track
+        track.position = CGPoint(x: 0, y: -halfH + 10)
         track.zPosition = 6
 
-        let fill = SKSpriteNode(color: SKColor(red: 0.98, green: 0.82, blue: 0.30, alpha: 1), size: CGSize(width: barWidth, height: 4))
+        let fill = SKSpriteNode(color: SKColor(red: 0.98, green: 0.82, blue: 0.30, alpha: 1), size: CGSize(width: barWidth, height: 6))
         fill.anchorPoint = CGPoint(x: 0, y: 0.5)
-        fill.position = CGPoint(x: -barWidth / 2, y: -halfH + 8)
+        fill.position = CGPoint(x: -barWidth / 2, y: -halfH + 10)
         fill.xScale = 0
         fill.zPosition = 7
 
         let water = SKSpriteNode(texture: textureCache["water"])
-        water.size = CGSize(width: max(6, rect.width * 0.12), height: max(6, rect.width * 0.12))
-        water.position = CGPoint(x: -halfW + 10, y: halfH - 10)
+        water.size = CGSize(width: max(6, rect.width * 0.25), height: max(6, rect.width * 0.25)) // Larger water drop
+        water.position = CGPoint(x: -halfW + 12, y: halfH - 12)
         water.zPosition = 8
+        water.alpha = 0.8
         water.isHidden = true
 
         let readyBadge = SKLabelNode(text: "✦")
@@ -413,10 +441,18 @@ final class FarmScene: SKScene {
         readyBadge.verticalAlignmentMode = .center
         readyBadge.horizontalAlignmentMode = .center
         readyBadge.fontName = "AvenirNext-Bold"
-        readyBadge.fontSize = max(12, rect.width * 0.20)
-        readyBadge.fontColor = SKColor(red: 0.97, green: 0.88, blue: 0.33, alpha: 1)
+        readyBadge.fontSize = max(12, rect.width * 0.25)
+        readyBadge.fontColor = SKColor(red: 1.0, green: 0.95, blue: 0.6, alpha: 1)
         readyBadge.zPosition = 9
         readyBadge.isHidden = true
+        
+        // Add shadow for depth
+        let shadow = SKShapeNode(rect: CGRect(x: -rect.width/2 + 2, y: -rect.height/2 - 2, width: rect.width, height: rect.height), cornerRadius: 4)
+        shadow.fillColor = .black
+        shadow.alpha = 0.2
+        shadow.strokeColor = .clear
+        shadow.zPosition = -1
+        tile.addChild(shadow)
 
         tile.addChild(track)
         tile.addChild(fill)
@@ -458,19 +494,10 @@ final class FarmScene: SKScene {
 
             visual.progressFill.xScale = max(0, CGFloat(newTile.progress))
             
-            // Note: Sprites handle color tweening better via SKAction if needed, 
-            // but setting color directly is instant.
+            // Green progress when ready, yellow when growing
             visual.progressFill.color = newTile.isReady
-                ? SKColor(red: 0.35, green: 0.85, blue: 0.40, alpha: 1)
+                ? SKColor(red: 0.45, green: 0.85, blue: 0.50, alpha: 1)
                 : SKColor(red: 0.98, green: 0.82, blue: 0.30, alpha: 1)
-
-            let baseColorKey = "soil_\(newTile.index % 5)"
-            let matureColorKey = "soil_mature_\(newTile.index % 5)" // Optional optimization
-            
-            visual.tile.color = newTile.isReady
-                ? SKColor(red: 0.23, green: 0.62, blue: 0.30, alpha: 1)
-                : .white
-            visual.tile.colorBlendFactor = newTile.isReady ? 0.6 : 0.0
 
             visual.readyBadge.isHidden = !newTile.isReady
             if newTile.isReady, !reduceMotion, visual.readyBadge.action(forKey: "ready-bob") == nil {
@@ -487,12 +514,25 @@ final class FarmScene: SKScene {
             visual.emoji.isHidden = true
             visual.progressTrack.isHidden = true
             visual.progressFill.isHidden = true
-            visual.tile.colorBlendFactor = 0.0
+            
+            // Reset tile color
+            visual.tile.colorBlendFactor = 0.1
+            visual.tile.color = SKColor(white: 0.9 + CGFloat((newTile.index % 7) - 3) * 0.02, alpha: 1.0)
+            
             visual.readyBadge.isHidden = true
             visual.readyBadge.removeAction(forKey: "ready-bob")
         }
 
         visual.waterBadge.isHidden = !newTile.watered
+        if newTile.watered {
+            visual.tile.color = SKColor(red: 0.75, green: 0.68, blue: 0.60, alpha: 1.0) // Darker wet soil
+            visual.tile.colorBlendFactor = 0.5
+        } else if newTile.cropID == nil {
+             // Reset to dry variation if not watered and empty
+             let colorVar = CGFloat((newTile.index % 7) - 3) * 0.02
+             visual.tile.color = SKColor(white: 0.9 + colorVar, alpha: 1.0)
+             visual.tile.colorBlendFactor = 0.1
+        }
 
         if oldTile?.cropID == nil, newTile.cropID != nil {
             guard !reduceMotion else { return }
@@ -504,36 +544,20 @@ final class FarmScene: SKScene {
 
         if oldTile?.isReady == false, newTile.isReady {
             guard !reduceMotion else { return }
-            // Flash effect
             let flash = SKAction.sequence([
                 .colorize(with: SKColor(red: 0.98, green: 0.90, blue: 0.42, alpha: 1), colorBlendFactor: 0.4, duration: 0.12),
-                .colorize(withColorBlendFactor: 0.6, duration: 0.20) // Return to ready blend
+                .colorize(withColorBlendFactor: 0.1, duration: 0.20) 
             ])
             visual.tile.run(flash)
         }
 
         if oldTile?.cropID != nil, newTile.cropID == nil {
             guard !reduceMotion else { return }
-            // Position sparkle relative to board, not tile content
             spawnSparkle(at: visual.tile.position)
         }
     }
 
     private func generateTextures(in view: SKView) {
-        let size = CGSize(width: 64, height: 64)
-        let rect = CGRect(origin: .zero, size: size)
-        
-        // Generate Soil Variants
-        for i in 0..<5 {
-            let shape = SKShapeNode(rect: rect, cornerRadius: 8)
-            shape.fillColor = soilColor(for: i)
-            shape.strokeColor = .black.withAlphaComponent(0.2)
-            shape.lineWidth = 1
-            if let tex = view.texture(from: shape) {
-                textureCache["soil_\(i)"] = tex
-            }
-        }
-        
         // Water Badge
         let waterShape = SKShapeNode(circleOfRadius: 32)
         waterShape.fillColor = SKColor(red: 0.31, green: 0.65, blue: 0.95, alpha: 0.9)
