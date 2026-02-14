@@ -7,7 +7,7 @@ import UIKit
 @MainActor
 final class GameLoopDriver {
     private weak var store: GameStore?
-    private var timer: Timer?
+    private var task: Task<Void, Never>?
     private let tickInterval: TimeInterval
 
     init(store: GameStore, ticksPerSecond: Double = 12) {
@@ -16,30 +16,20 @@ final class GameLoopDriver {
     }
 
     func start() {
-        guard timer == nil else { return }
-        let timer = Timer(
-            timeInterval: tickInterval,
-            target: self,
-            selector: #selector(handleTick(_:)),
-            userInfo: nil,
-            repeats: true
-        )
-        timer.tolerance = min(0.04, tickInterval * 0.25)
-        self.timer = timer
-        RunLoop.main.add(timer, forMode: .common)
+        guard task == nil else { return }
+        let interval = tickInterval
+        task = Task { [weak self] in
+            let nanoseconds = UInt64(interval * 1_000_000_000)
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: nanoseconds)
+                await MainActor.run { self?.store?.stepAutoTime() }
+            }
+        }
     }
 
     func stop() {
-        timer?.invalidate()
-        timer = nil
-    }
-
-    deinit {
-        timer?.invalidate()
-    }
-
-    @objc private func handleTick(_ timer: Timer) {
-        store?.stepAutoTime()
+        task?.cancel()
+        task = nil
     }
 }
 

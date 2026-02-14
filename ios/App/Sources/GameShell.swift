@@ -47,6 +47,9 @@ struct GameShell: View {
     @Bindable var store: GameStore
     @Bindable var appState: AppState
 
+    /// Tab bar appearance is global UIKit state — configure exactly once per process lifetime.
+    private static var tabBarConfigured = false
+
     var body: some View {
         Group {
             if let message = store.contentErrorMessage {
@@ -56,7 +59,10 @@ struct GameShell: View {
             }
         }
         .onAppear {
-            configureTabBarAppearance()
+            if !Self.tabBarConfigured {
+                configureTabBarAppearance()
+                Self.tabBarConfigured = true
+            }
             if store.onboardingRequired {
                 appState.showingOnboarding = true
             }
@@ -76,15 +82,7 @@ struct GameShell: View {
     }
 
     private var tabShell: some View {
-        TabView(selection: Binding(
-            get: { appState.selectedTab },
-            set: { newTab in
-                if newTab != appState.selectedTab {
-                    SoundManager.shared.play(newTab.tapSound, haptic: .light)
-                }
-                appState.selectedTab = newTab
-            }
-        )) {
+        TabView(selection: $appState.selectedTab) {
             FarmView(store: store, appState: appState)
                 .tabItem { Label(GameTab.farm.title,      systemImage: GameTab.farm.icon) }
                 .tag(GameTab.farm)
@@ -106,6 +104,11 @@ struct GameShell: View {
                 .tag(GameTab.settings)
         }
         .tint(DS.Color.accent)
+        .onChange(of: appState.selectedTab) { old, new in
+            if old != new {
+                SoundManager.shared.play(new.tapSound, haptic: .light)
+            }
+        }
     }
 
     // MARK: - Tab Bar Appearance

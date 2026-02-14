@@ -570,7 +570,7 @@ private struct TownStreetBackground: View {
                     endPoint: .bottom
                 )
 
-                // Building facades + cobblestone street
+                // Building facades + cobblestone street (drawingGroup caches the composite)
                 Canvas { ctx, size in
                     // ── Left storefront ──────────────────────────────
                     var leftWall = Path()
@@ -684,6 +684,7 @@ private struct TownStreetBackground: View {
                 )
                 .allowsHitTesting(false)
             }
+            .drawingGroup()
             .ignoresSafeArea()
         }
     }
@@ -733,16 +734,16 @@ private struct TownMarketHeader: View {
                     .strokeBorder(Color(red: 0.24, green: 0.14, blue: 0.04).opacity(0.55), lineWidth: 1)
                     .padding(7)
 
-                // Plank texture
-                HStack(spacing: 0) {
-                    ForEach(0..<5, id: \.self) { i in
-                        Rectangle()
-                            .fill(i.isMultiple(of: 2)
-                                  ? Color.clear
-                                  : Color.white.opacity(0.04))
+                // Plank texture (Canvas — one draw call)
+                Canvas { ctx, size in
+                    let w = size.width / 5
+                    for i in stride(from: 1, through: 4, by: 2) {
+                        var plank = Path()
+                        plank.addRect(CGRect(x: CGFloat(i) * w, y: 0, width: w, height: size.height))
+                        ctx.fill(plank, with: .color(Color.white.opacity(0.04)))
                     }
                 }
-                .cornerRadius(DS.Radius.md)
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
 
                 VStack(spacing: 4) {
                     HStack(spacing: 8) {
@@ -784,13 +785,16 @@ private struct TownMarketHeader: View {
                 }
             }
 
-            // Awning stripes below the sign
-            HStack(spacing: 0) {
-                ForEach(0..<14, id: \.self) { i in
-                    Rectangle()
-                        .fill(i.isMultiple(of: 2)
-                              ? Color(red: 0.72, green: 0.16, blue: 0.10)
-                              : Color(red: 0.95, green: 0.93, blue: 0.88))
+            // Awning stripes (Canvas — single draw call instead of 14 Rectangle views)
+            Canvas { ctx, size in
+                let stripeW = size.width / 14
+                for i in 0..<14 {
+                    var stripe = Path()
+                    stripe.addRect(CGRect(x: CGFloat(i) * stripeW, y: 0, width: stripeW, height: size.height))
+                    let color: Color = i.isMultiple(of: 2)
+                        ? Color(red: 0.72, green: 0.16, blue: 0.10)
+                        : Color(red: 0.95, green: 0.93, blue: 0.88)
+                    ctx.fill(stripe, with: .color(color))
                 }
             }
             .frame(height: 16)

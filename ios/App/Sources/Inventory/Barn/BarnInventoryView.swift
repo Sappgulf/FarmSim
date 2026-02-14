@@ -9,6 +9,9 @@ struct BarnInventoryView: View {
     @State private var selectedItem: BarnInventoryItemModel?
     @State private var selectedSort: BarnItemSort = .name
     @State private var showingShopCounter = false
+    /// Cached result of the expensive shelf-build + filter pipeline.
+    /// Rebuilt only when store inventory, query, category, or sort actually changes.
+    @State private var displayedShelves: [BarnShelfModel] = []
 
     var body: some View {
         NavigationStack {
@@ -27,10 +30,10 @@ struct BarnInventoryView: View {
 
                         categoryChips
 
-                        if visibleShelves.isEmpty {
+                        if displayedShelves.isEmpty {
                             emptyBarnState
                         } else {
-                            ForEach(visibleShelves) { shelf in
+                            ForEach(displayedShelves) { shelf in
                                 ShelfSectionView(
                                     shelf: shelf,
                                     favorites: store.favoriteItemIDs,
@@ -49,6 +52,11 @@ struct BarnInventoryView: View {
             .toolbarBackground(Color(red: 0.38, green: 0.21, blue: 0.10), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .onAppear { displayedShelves = visibleShelves }
+            .onChange(of: query)            { _, _ in displayedShelves = visibleShelves }
+            .onChange(of: selectedCategory) { _, _ in displayedShelves = visibleShelves }
+            .onChange(of: selectedSort)     { _, _ in displayedShelves = visibleShelves }
+            .onChange(of: store.renderSnapshot) { _, _ in displayedShelves = visibleShelves }
         }
         .sheet(item: $selectedItem) { item in
             BarnItemDetailSheet(

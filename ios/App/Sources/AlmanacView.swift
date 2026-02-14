@@ -380,6 +380,7 @@ private struct BookPageBackground: View {
                 )
                 .allowsHitTesting(false)
             }
+            .drawingGroup()
         }
     }
 }
