@@ -60,3 +60,9 @@ temp/
 ios/FarmSim.xcodeproj/
 ios/GameCore/.build/
 *.xcresult
+
+# Build output logs
+build_output*.txt
+final_build_output.txt
+latest_build.txt
+xcode_err.txt

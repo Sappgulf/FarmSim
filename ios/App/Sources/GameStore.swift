@@ -186,6 +186,8 @@ final class GameStore {
     )
 
     private(set) var save: SaveGame
+    /// Render snapshot for the farm view. Updated when game state changes (actions, time ticks, etc).
+    /// Views should be lightweight since this updates during gameplay.
     private(set) var renderSnapshot: FarmRenderSnapshot
 
     private(set) var cropDefs: [CropDef]
@@ -258,6 +260,9 @@ final class GameStore {
 
     private static let settingsKey = "com.farmsim.settings.v1"
     private static let onboardingKey = "com.farmsim.onboarding.seen"
+    private static let milestoneStateKey = "com.farmsim.milestones.v1"
+    private static let dailyLoginKey = "com.farmsim.dailylogin.v1"
+    private static let claimedLevelsKey = "com.farmsim.claimedlevels.v1"
     private static let saveDebounceNanoseconds: UInt64 = 350_000_000
     private static let hudPublishIntervalSeconds: TimeInterval = 0.25
     private static let defaultTimeConfig = TimeEngineConfig(
@@ -267,6 +272,9 @@ final class GameStore {
         pauseInMenus: false,
         offlineCatchup: true
     )
+
+    let milestoneManager: MilestoneManager
+    private(set) var lastPlayerLevel: Int = 1
 
     var playerLevel: Int {
         ProgressionSystem.level(forXP: save.player.xp)
@@ -361,6 +369,22 @@ final class GameStore {
 
     var challengeStreak: Int {
         max(0, save.meta.challengeStreak)
+    }
+
+    var dailyLoginStreak: Int {
+        milestoneManager.dailyLogin.streak
+    }
+
+    var longestDailyStreak: Int {
+        milestoneManager.dailyLogin.longestStreak
+    }
+
+    var completedMilestones: [MilestoneType] {
+        MilestoneType.allCases.filter { milestoneManager.milestoneState.completedMilestones.contains($0.rawValue) }
+    }
+
+    var pendingCelebrations: [MilestoneEvent] {
+        milestoneManager.pendingCelebrations
     }
 
     var expansionPlan: ExpansionPlan {
@@ -462,7 +486,18 @@ final class GameStore {
         self.contentErrorMessage = loadedContent.contentErrorMessage
         self.lastContentLoadDurationMs = contentLoadDurationMs
         self.lastSaveLoadDurationMs = saveLoadDurationMs
-        
+
+        // Initialize milestone manager with saved state
+        let milestoneManager = MilestoneManager()
+        milestoneManager.loadMilestoneState(from: userDefaults.data(forKey: Self.milestoneStateKey))
+        milestoneManager.loadDailyLogin(from: userDefaults.data(forKey: Self.dailyLoginKey))
+        milestoneManager.loadClaimedLevels(from: userDefaults.data(forKey: Self.claimedLevelsKey))
+        self.milestoneManager = milestoneManager
+        self.lastPlayerLevel = ProgressionSystem.level(forXP: initialSave.player.xp)
+
+        // Process daily login
+        let loginResult = milestoneManager.processDailyLogin(now: nowTimestamp)
+
         if offlineCatchup.dayDelta > 0 {
             for _ in 0..<offlineCatchup.dayDelta {
                 self.engine.advanceDay(growthMultiplier: self.growthMultiplier)
@@ -472,15 +507,34 @@ final class GameStore {
             autoSellCrops()
         }
 
-        let startupStatus: String?
+        // Build startup status with welcome back info
+        var startupStatus: String?
         if let loadError {
             startupStatus = loadError
         } else if offlineCatchup.dayDelta > 0 {
-            startupStatus = "Welcome back. \(offlineCatchup.dayDelta) day\(offlineCatchup.dayDelta == 1 ? "" : "s") advanced while away."
-        } else {
-            startupStatus = nil
+            let hoursAway = Int((nowTimestamp - initialTimeState.lastRealWorldTimestamp) / 3600)
+            let welcomeInfo = WelcomeBackInfo(
+                daysAway: offlineCatchup.dayDelta,
+                hoursAway: hoursAway,
+                coinsEarned: 0,
+                xpEarned: offlineCatchup.dayDelta * 5,
+                cropsGrown: 0,
+                cropsReady: readyTileCount,
+                streakMaintained: !loginResult.streakBroken,
+                streakBonus: loginResult.streakIncreased ? min(100, loginResult.streak * 10) : 0
+            )
+            _ = milestoneManager.createWelcomeBackEvent(info: welcomeInfo)
+
+            if loginResult.streakIncreased, loginResult.streak > 1 {
+                _ = milestoneManager.createDailyStreakEvent(streak: loginResult.streak)
+            }
+
+            startupStatus = "Welcome back! \(offlineCatchup.dayDelta) day\(offlineCatchup.dayDelta == 1 ? "" : "s") passed."
+        } else if loginResult.streakIncreased, loginResult.streak > 1 {
+            _ = milestoneManager.createDailyStreakEvent(streak: loginResult.streak)
+            startupStatus = "\(loginResult.streak)-day streak! Keep it up!"
         }
-        
+
         self.statusText = startupStatus ?? "Tap a tile to manage crops."
 
         _ = applyProgressionUnlocksIfNeeded()
@@ -616,14 +670,14 @@ final class GameStore {
     func waterTile(index: Int) {
         let watered = engine.water(tileIndex: index)
         let status = watered ? "Tile watered." : "Nothing to water."
-        if watered { SoundManager.shared.play(.water) }
+        if watered { SoundManager.shared.play(.water, haptic: .soft) }
         syncState(statusOverride: status, emitHaptic: watered, emitHarvest: false)
     }
 
     func clearTile(index: Int) {
         let cleared = engine.clearTile(tileIndex: index)
         let status = cleared ? "Crop removed." : "Tile already empty."
-        if cleared { SoundManager.shared.play(.click) }
+        if cleared { SoundManager.shared.play(.click, haptic: .light) }
         syncState(statusOverride: status, emitHaptic: cleared, emitHarvest: false)
     }
 
@@ -633,6 +687,15 @@ final class GameStore {
         if harvested > 0 {
             status = "Harvested \(harvested) crops."
             SoundManager.shared.play(.harvest)
+
+            // Track first harvest milestone
+            if milestoneManager.checkMilestone(.firstHarvest) {
+                _ = milestoneManager.completeMilestone(.firstHarvest)
+            }
+
+            // Record harvest count
+            milestoneManager.recordHarvest(count: harvested)
+            let _ = milestoneManager.checkProgressiveMilestones(harvested: milestoneManager.milestoneState.totalHarvested)
         } else {
             status = isInventoryFull ? "Silo is full! Upgrade or sell crops." : "Nothing to harvest."
         }
@@ -645,6 +708,15 @@ final class GameStore {
         if count > 0 {
             status = "Harvested \(count) crops total."
             SoundManager.shared.play(.harvest)
+
+            // Track first harvest milestone
+            if milestoneManager.checkMilestone(.firstHarvest) {
+                _ = milestoneManager.completeMilestone(.firstHarvest)
+            }
+
+            // Record harvest count
+            milestoneManager.recordHarvest(count: count)
+            let _ = milestoneManager.checkProgressiveMilestones(harvested: milestoneManager.milestoneState.totalHarvested)
         } else {
             status = isInventoryFull ? "Silo is full! Cannot harvest more." : "No crops ready."
         }
@@ -681,6 +753,21 @@ final class GameStore {
         let sold = result.success
         let cropName = engine.cropDefsByID[cropID]?.name ?? cropID
         let status = sold ? "Sold \(result.quantity)x \(cropName) for \(result.totalPrice) coins." : "No crops to sell."
+
+        if sold {
+            // Track first sale milestone
+            if milestoneManager.checkMilestone(.firstSale) {
+                _ = milestoneManager.completeMilestone(.firstSale)
+            }
+
+            // Record sale count and value
+            milestoneManager.recordSale(count: result.quantity, value: result.totalPrice)
+            let _ = milestoneManager.checkProgressiveMilestones(
+                sold: milestoneManager.milestoneState.totalSold,
+                coinsEarned: milestoneManager.milestoneState.totalCoinsEarned
+            )
+        }
+
         syncState(statusOverride: status, emitHaptic: sold, emitHarvest: false)
         return sold
     }
@@ -739,6 +826,12 @@ final class GameStore {
 
         engine.setBuildingLevel(level + 1, for: buildingID)
         let bonus = plan.bonusForLevel(level + 1)
+
+        // Track first building milestone
+        if milestoneManager.checkMilestone(.firstBuilding) {
+            _ = milestoneManager.completeMilestone(.firstBuilding)
+        }
+
         SoundManager.shared.play(.levelUp)
         syncState(statusOverride: "\(plan.name) upgraded to Lv \(level + 1). \(bonus)", emitHaptic: true, emitHarvest: false)
         return true
@@ -764,6 +857,13 @@ final class GameStore {
         guard engine.spendCoins(plan.cost) else { return false }
         engine.markResearchCompleted(plan.id)
         engine.addXP(max(10, plan.cost / 2))
+
+        // Track first research milestone
+        if milestoneManager.checkMilestone(.firstResearch) {
+            _ = milestoneManager.completeMilestone(.firstResearch)
+        }
+
+        SoundManager.shared.play(.success, haptic: .success)
         syncState(statusOverride: "Research complete: \(plan.name).", emitHaptic: true, emitHarvest: false)
         return true
     }
@@ -796,6 +896,13 @@ final class GameStore {
         engine.grantSeeds(cropID: recipe.outputCropID, quantity: 1)
         engine.markHybridDiscovered(recipe.id)
         engine.addXP(25)
+
+        // Track first hybrid milestone
+        if milestoneManager.checkMilestone(.firstHybrid) {
+            _ = milestoneManager.completeMilestone(.firstHybrid)
+        }
+
+        SoundManager.shared.play(.success, haptic: .success)
         syncState(statusOverride: "Discovered \(recipe.name). +1 \(cropName(for: recipe.outputCropID)) seed.", emitHaptic: true, emitHarvest: false)
         return true
     }
@@ -836,6 +943,13 @@ final class GameStore {
         }
         engine.setLivestockCount(livestockCount(for: livestockID) + 1, for: livestockID)
         engine.addXP(20)
+
+        // Track first livestock milestone
+        if milestoneManager.checkMilestone(.firstLivestock) {
+            _ = milestoneManager.completeMilestone(.firstLivestock)
+        }
+
+        SoundManager.shared.play(.success, haptic: .medium)
         syncState(statusOverride: "Added \(plan.name) to your farm.", emitHaptic: true, emitHarvest: false)
         return true
     }
@@ -856,6 +970,7 @@ final class GameStore {
         }
         engine.addCoins(totalCoins)
         engine.addXP(max(5, totalCoins / 10))
+        SoundManager.shared.play(.sell, haptic: .medium)
         syncState(statusOverride: "Collected livestock goods for \(totalCoins) coins.", emitHaptic: true, emitHarvest: true)
         return totalCoins
     }
@@ -888,6 +1003,13 @@ final class GameStore {
         }
         engine.setPetLevel(1, for: petID)
         engine.addXP(20)
+
+        // Track first pet milestone
+        if milestoneManager.checkMilestone(.firstPet) {
+            _ = milestoneManager.completeMilestone(.firstPet)
+        }
+
+        SoundManager.shared.play(.success, haptic: .medium)
         syncState(statusOverride: "Adopted \(plan.name).", emitHaptic: true, emitHarvest: false)
         return true
     }
@@ -911,6 +1033,7 @@ final class GameStore {
         }
         engine.setPetLevel(current + 1, for: petID)
         engine.addXP(10 + current * 5)
+        SoundManager.shared.play(.success, haptic: .medium)
         syncState(statusOverride: "\(plan.name) advanced to Lv \(current + 1).", emitHaptic: true, emitHarvest: false)
         return true
     }
@@ -947,6 +1070,7 @@ final class GameStore {
             return false
         }
         engine.setFishingPondLevel(next.level)
+        SoundManager.shared.play(.purchase, haptic: .medium)
         syncState(statusOverride: "Pond upgraded to \(next.name).", emitHaptic: true, emitHarvest: false)
         return true
     }
@@ -988,6 +1112,13 @@ final class GameStore {
         engine.addCoins(value)
         engine.addXP(max(4, chosen.difficulty * 4))
         engine.addFishCaught(for: chosen.id, quantity: 1)
+
+        // Track first fish milestone
+        if milestoneManager.checkMilestone(.firstFish) {
+            _ = milestoneManager.completeMilestone(.firstFish)
+        }
+
+        SoundManager.shared.play(.success, haptic: .medium)
         syncState(statusOverride: "Caught \(chosen.name) for \(value) coins.", emitHaptic: true, emitHarvest: true)
         return true
     }
@@ -1116,6 +1247,7 @@ final class GameStore {
         engine.setChallengeClaimDay(save.world.day, for: key)
         engine.addCoins(task.rewardCoins)
         engine.addXP(task.rewardXP)
+        SoundManager.shared.play(.success, haptic: .success)
         syncState(statusOverride: "Task complete: \(task.title).", emitHaptic: true, emitHarvest: false)
         return true
     }
@@ -1185,8 +1317,14 @@ final class GameStore {
         let next = min(expansionPlan.maxGrid, current + 1)
         engine.resizeGrid(width: next, height: next)
         engine.incrementExpansionPurchases()
+
+        // Track first expansion milestone
+        if milestoneManager.checkMilestone(.firstExpansion) {
+            _ = milestoneManager.completeMilestone(.firstExpansion)
+        }
+
+        SoundManager.shared.play(.levelUp, haptic: .heavy)
         syncState(statusOverride: "Farm expanded to \(next)x\(next).", emitHaptic: true, emitHarvest: false)
-        SoundManager.shared.play(.levelUp)
         return true
     }
 
@@ -1234,6 +1372,34 @@ final class GameStore {
         return min(1.0, planted.growthProgress / Double(max(1, def.daysToGrow)))
     }
 
+    // MARK: - Celebration Management
+
+    func dismissNextCelebration() {
+        milestoneManager.dismissNextCelebration()
+    }
+
+    func dismissCelebration(id: UUID) {
+        milestoneManager.dismissCelebration(id: id)
+    }
+
+    func dismissAllCelebrations() {
+        milestoneManager.clearAllCelebrations()
+    }
+
+    func hasMilestone(_ type: MilestoneType) -> Bool {
+        milestoneManager.milestoneState.completedMilestones.contains(type.rawValue)
+    }
+
+    // MARK: - Progress Info
+
+    func xpProgressToNextLevel() -> Double {
+        ProgressionSystem.progressToNextLevel(currentXP: save.player.xp)
+    }
+
+    func xpNeededForNextLevel() -> Int {
+        ProgressionSystem.xpToNextLevel(currentXP: save.player.xp)
+    }
+
     func persistNow() {
         pendingSaveTask?.cancel()
         pendingSaveTask = nil
@@ -1251,6 +1417,17 @@ final class GameStore {
             statusText = "Save failed: \(error.localizedDescription)"
         }
         PerfTelemetry.end("save_write", saveInterval)
+
+        // Save milestone data to UserDefaults
+        if let milestoneData = milestoneManager.encodedState {
+            userDefaults.set(milestoneData, forKey: Self.milestoneStateKey)
+        }
+        if let dailyLoginData = milestoneManager.encodedDailyLogin {
+            userDefaults.set(dailyLoginData, forKey: Self.dailyLoginKey)
+        }
+        if let claimedLevelsData = milestoneManager.encodedClaimedLevels {
+            userDefaults.set(claimedLevelsData, forKey: Self.claimedLevelsKey)
+        }
     }
 
     private func schedulePersist() {
@@ -1597,6 +1774,29 @@ final class GameStore {
         save = engine.save
         recomputeDerivedStateCaches()
         renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
+
+        // Check for level up
+        let currentLevel = playerLevel
+        if currentLevel > lastPlayerLevel {
+            _ = milestoneManager.createLevelUpEvent(level: currentLevel)
+
+            // Check level milestones
+            let _ = milestoneManager.checkLevelMilestones(level: currentLevel)
+
+            // Check for unclaimed level milestone rewards
+            let unclaimed = milestoneManager.unclaimedLevelMilestones(currentLevel: currentLevel)
+            for milestone in unclaimed {
+                engine.addCoins(milestone.rewardCoins)
+                engine.addXP(milestone.rewardXP)
+                for (cropID, count) in milestone.rewardSeeds {
+                    engine.grantSeeds(cropID: cropID, quantity: count)
+                }
+                _ = milestoneManager.claimLevelMilestone(milestone)
+            }
+
+            lastPlayerLevel = currentLevel
+            SoundManager.shared.play(.levelUp, haptic: .heavy)
+        }
 
         if let statusOverride {
             if let upgradeMessage {

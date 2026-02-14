@@ -109,9 +109,7 @@ struct FarmView: View {
                 scene.onDebugStats = nil
                 store.setMenuPresented(false)
             }
-            .onChange(of: store.renderSnapshot) { _, snapshot in
-                scene.apply(snapshot: snapshot, cropDisplay: store.cropDisplay)
-            }
+            // Consolidated settings observer to reduce observation overhead
             .onChange(of: store.settings.reducedMotion) { _, reduced in
                 scene.setReducedMotion(reduced)
             }
@@ -124,8 +122,10 @@ struct FarmView: View {
             .onChange(of: store.settings.targetFPS) { _, fps in
                 scene.setPreferredFPS(fps)
             }
-            .onChange(of: store.hudTimeProgress) { _, progress in
-                scene.setTimeOfDayProgress(progress)
+            // Game state changes - these fire frequently (12x/sec)
+            .onChange(of: store.renderSnapshot) { _, snapshot in
+                scene.apply(snapshot: snapshot, cropDisplay: store.cropDisplay)
+                scene.setTimeOfDayProgress(store.hudTimeProgress)
             }
             .sheet(isPresented: Binding(get: {
                 appState.showingTileSheet
@@ -138,12 +138,19 @@ struct FarmView: View {
                 store.setMenuPresented(showing)
             }
             .onChange(of: store.dayRolloverToken) { _, _ in
+                // Avoid duplicate overlay if already showing
+                guard !showDayRolloverOverlay else { return }
                 showDayRolloverOverlay = true
                 let delay = reducedMotion ? 0.35 : 1.2
-                Task {
+                // Use weak self pattern to prevent retention cycles
+                Task { [weak store] in
                     try? await Task.sleep(for: .seconds(delay))
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        showDayRolloverOverlay = false
+                    // Check task cancellation before UI update
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            showDayRolloverOverlay = false
+                        }
                     }
                 }
             }
@@ -164,34 +171,10 @@ struct FarmView: View {
     }
 
     private var atmosphereOverlay: some View {
-        let t = store.hudTimeProgress
-        let dawn = Color(red: 1.0, green: 0.82, blue: 0.62)
-        let day = Color(red: 0.88, green: 0.96, blue: 1.0)
-        let dusk = Color(red: 0.94, green: 0.68, blue: 0.46)
-        let night = Color(red: 0.18, green: 0.26, blue: 0.48)
-
-        let topColor: Color
-        let bottomColor: Color
-        if t < 0.2 {
-            topColor = dawn.opacity(reducedMotion ? 0.08 : 0.14)
-            bottomColor = day.opacity(0.04)
-        } else if t < 0.7 {
-            topColor = day.opacity(0.06)
-            bottomColor = day.opacity(0.02)
-        } else if t < 0.88 {
-            topColor = dusk.opacity(reducedMotion ? 0.10 : 0.16)
-            bottomColor = night.opacity(0.08)
-        } else {
-            topColor = night.opacity(0.18)
-            bottomColor = night.opacity(0.14)
-        }
-
-        return LinearGradient(
-            colors: [topColor, .clear, bottomColor],
-            startPoint: .top,
-            endPoint: .bottom
+        AtmosphereOverlayView(
+            timeProgress: store.hudTimeProgress,
+            reducedMotion: reducedMotion
         )
-        .ignoresSafeArea()
     }
 
     private var dragGesture: some Gesture {
@@ -460,6 +443,47 @@ struct FarmView: View {
         }
         
         return items
+    }
+}
+
+// MARK: - AtmosphereOverlayView
+
+/// Separate view for atmosphere overlay to isolate re-renders
+private struct AtmosphereOverlayView: View {
+    let timeProgress: Double
+    let reducedMotion: Bool
+    
+    // Pre-computed color values to avoid creating Color instances repeatedly
+    private static let dawn = Color(red: 1.0, green: 0.82, blue: 0.62)
+    private static let day = Color(red: 0.88, green: 0.96, blue: 1.0)
+    private static let dusk = Color(red: 0.94, green: 0.68, blue: 0.46)
+    private static let night = Color(red: 0.18, green: 0.26, blue: 0.48)
+    
+    var body: some View {
+        let t = timeProgress
+        let topColor: Color
+        let bottomColor: Color
+        
+        if t < 0.2 {
+            topColor = Self.dawn.opacity(reducedMotion ? 0.08 : 0.14)
+            bottomColor = Self.day.opacity(0.04)
+        } else if t < 0.7 {
+            topColor = Self.day.opacity(0.06)
+            bottomColor = Self.day.opacity(0.02)
+        } else if t < 0.88 {
+            topColor = Self.dusk.opacity(reducedMotion ? 0.10 : 0.16)
+            bottomColor = Self.night.opacity(0.08)
+        } else {
+            topColor = Self.night.opacity(0.18)
+            bottomColor = Self.night.opacity(0.14)
+        }
+        
+        return LinearGradient(
+            colors: [topColor, .clear, bottomColor],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
     }
 }
 

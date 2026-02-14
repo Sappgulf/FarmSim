@@ -53,9 +53,10 @@ struct TownMarketView: View {
                     .ignoresSafeArea()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: DS.Space.lg) {
+                    LazyVStack(alignment: .leading, spacing: DS.Space.lg, pinnedViews: []) {
                         // Market stall awning header
                         TownMarketHeader(reducedMotion: reducedMotion)
+                            .id("header")
 
                         // Section Picker
                         WoodenPanel {
@@ -67,6 +68,7 @@ struct TownMarketView: View {
                                 }
                             }
                         }
+                        .id("picker")
 
                         // Section content with transition
                         Group {
@@ -562,11 +564,10 @@ private struct DealBadge: View {
             .padding(.vertical, 2)
             .background(DS.Color.money, in: Capsule())
             .scaleEffect(pulse ? 1.06 : 1.0)
+            .animation(reducedMotion ? nil : .easeInOut(duration: 1.1).repeatForever(autoreverses: true), value: pulse)
             .onAppear {
                 guard !reducedMotion else { return }
-                withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
-                    pulse = true
-                }
+                pulse = true
             }
     }
 }

@@ -1,6 +1,17 @@
 import SwiftUI
 import UIKit
 
+// MARK: - Namespace for Matched Geometry Effect
+
+enum Namespace {
+    static let settings = "settings"
+    static let inventory = "inventory"
+    static let market = "market"
+    static let almanac = "almanac"
+}
+
+// MARK: - Design System
+
 enum DS {
     enum Space {
         static let xxs: CGFloat = 4
@@ -10,6 +21,7 @@ enum DS {
         static let lg:  CGFloat = 20
         static let xl:  CGFloat = 24
         static let xxl: CGFloat = 32
+        static let xxxl: CGFloat = 48
     }
 
     enum Radius {
@@ -18,6 +30,7 @@ enum DS {
         static let lg:  CGFloat = 18
         static let xl:  CGFloat = 24
         static let xxl: CGFloat = 28
+        static let xxxl: CGFloat = 36
     }
 
     // MARK: - Animation Timing
@@ -32,6 +45,10 @@ enum DS {
         static let standard = SwiftUI.Animation.easeInOut(duration: 0.22)
         /// Slow ambient motion (background floats, pulses).
         static let ambient = SwiftUI.Animation.easeInOut(duration: 3.2)
+        /// Celebration animations
+        static let celebration = SwiftUI.Animation.spring(response: 0.55, dampingFraction: 0.55)
+        /// Number counting animation
+        static let count = SwiftUI.Animation.easeOut(duration: 0.4)
     }
 
     // MARK: - Shadow Presets
@@ -45,6 +62,8 @@ enum DS {
         static let card   = Config(color: .black.opacity(0.22), radius: 8,  x: 0, y: 4)
         static let button = Config(color: .black.opacity(0.18), radius: 4,  x: 0, y: 2)
         static let float  = Config(color: .black.opacity(0.28), radius: 14, x: 0, y: 6)
+        static let soft   = Config(color: .black.opacity(0.12), radius: 6,  x: 0, y: 2)
+        static let inner  = Config(color: .black.opacity(0.08), radius: 4,  x: 0, y: 2)
     }
 
     enum Color {
@@ -78,6 +97,12 @@ enum DS {
                                            dark:  UIColor(red: 0.32, green: 0.58, blue: 0.28, alpha: 0.95))
         static let chipInactive = adaptive(light: UIColor.white.withAlphaComponent(0.26),
                                            dark:  UIColor.black.withAlphaComponent(0.34))
+
+        // Semantic colors
+        static let success = SwiftUI.Color(red: 0.26, green: 0.72, blue: 0.38)
+        static let warning = SwiftUI.Color(red: 0.92, green: 0.68, blue: 0.18)
+        static let error   = SwiftUI.Color(red: 0.85, green: 0.25, blue: 0.25)
+        static let info    = SwiftUI.Color(red: 0.40, green: 0.62, blue: 0.92)
 
         private static func adaptive(light: UIColor, dark: UIColor) -> SwiftUI.Color {
             SwiftUI.Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? dark : light })
@@ -163,6 +188,358 @@ struct WoodenPanel<Content: View>: View {
                 x: DS.Shadow.card.x,
                 y: DS.Shadow.card.y
             )
+    }
+}
+
+// MARK: - SettingsSection
+
+struct SettingsSection<Content: View>: View {
+    let title: String
+    let icon: String
+    let iconColor: SwiftUI.Color
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DS.Space.sm) {
+            // Section Header
+            HStack(spacing: DS.Space.xs) {
+                Image(systemName: icon)
+                    .font(.system(.subheadline, weight: .semibold))
+                    .foregroundStyle(iconColor)
+                    .frame(width: 24, height: 24)
+                    .background(
+                        Circle()
+                            .fill(iconColor.opacity(0.15))
+                    )
+
+                Text(title)
+                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                    .foregroundStyle(DS.Color.textPrimary)
+            }
+            .padding(.horizontal, DS.Space.sm)
+
+            // Content Card
+            VStack(spacing: 0) {
+                content
+            }
+            .background(
+                RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                SwiftUI.Color.white.opacity(0.12),
+                                SwiftUI.Color.white.opacity(0.04)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
+                            .strokeBorder(SwiftUI.Color.white.opacity(0.10), lineWidth: 1)
+                    )
+            )
+            .shadow(
+                color: DS.Shadow.soft.color,
+                radius: DS.Shadow.soft.radius,
+                x: DS.Shadow.soft.x,
+                y: DS.Shadow.soft.y
+            )
+        }
+    }
+}
+
+// MARK: - SettingRow
+
+struct SettingRow<Control: View>: View {
+    let icon: String
+    let title: String
+    let subtitle: String?
+    let iconBackground: SwiftUI.Color
+    @ViewBuilder let control: Control
+
+    var body: some View {
+        HStack(spacing: DS.Space.md) {
+            // Icon
+            Image(systemName: icon)
+                .font(.system(.body, weight: .medium))
+                .foregroundStyle(.white)
+                .frame(width: 36, height: 36)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
+                        .fill(iconBackground)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
+                                .strokeBorder(SwiftUI.Color.white.opacity(0.20), lineWidth: 1)
+                        )
+                )
+                .shadow(color: iconBackground.opacity(0.4), radius: 4, x: 0, y: 2)
+
+            // Text
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(.body, design: .rounded, weight: .medium))
+                    .foregroundStyle(DS.Color.textPrimary)
+
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(DS.Color.textSecondary)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer()
+
+            // Control
+            control
+        }
+        .padding(.horizontal, DS.Space.md)
+        .padding(.vertical, DS.Space.sm)
+    }
+}
+
+// MARK: - CustomToggleStyle
+
+struct FarmToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack {
+            configuration.label
+            Spacer()
+            Button(action: { configuration.isOn.toggle() }) {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(configuration.isOn ? DS.Color.accent : SwiftUI.Color.white.opacity(0.15))
+                    .frame(width: 52, height: 32)
+                    .overlay(
+                        Circle()
+                            .fill(.white)
+                            .frame(width: 28, height: 28)
+                            .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 1)
+                            .offset(x: configuration.isOn ? 9 : -9)
+                            .animation(DS.Animation.spring, value: configuration.isOn)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(SwiftUI.Color.white.opacity(0.20), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
+// MARK: - AnimatedNumber
+
+struct AnimatedNumber: View {
+    let value: Int
+    let formatter: NumberFormatter?
+    let font: Font
+    let color: SwiftUI.Color
+
+    @State private var displayValue: Int = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    init(
+        value: Int,
+        formatter: NumberFormatter? = nil,
+        font: Font = .system(.title2, design: .rounded, weight: .bold),
+        color: SwiftUI.Color = DS.Color.money
+    ) {
+        self.value = value
+        self.formatter = formatter
+        self.font = font
+        self.color = color
+    }
+
+    var body: some View {
+        Text(formattedValue)
+            .font(font)
+            .foregroundStyle(color)
+            .onAppear {
+                displayValue = value
+            }
+            .onChange(of: value) { oldValue, newValue in
+                if reduceMotion {
+                    displayValue = newValue
+                } else {
+                    withAnimation(DS.Animation.count) {
+                        displayValue = newValue
+                    }
+                }
+            }
+    }
+
+    private var formattedValue: String {
+        if let formatter = formatter {
+            return formatter.string(from: NSNumber(value: displayValue)) ?? "\(displayValue)"
+        }
+        return "\(displayValue)"
+    }
+}
+
+// MARK: - CelebrationOverlay
+
+struct CelebrationOverlay: View {
+    let title: String
+    let subtitle: String?
+    let icon: String
+    let isPresented: Bool
+    let onComplete: (() -> Void)?
+
+    @State private var showContent = false
+    @State private var particles: [CelebrationParticle] = []
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack {
+            if isPresented {
+                // Backdrop
+                SwiftUI.Color.black
+                    .opacity(0.6)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+
+                // Particles
+                if !reduceMotion {
+                    ForEach(particles) { particle in
+                        CelebrationParticleView(particle: particle)
+                    }
+                }
+
+                // Content
+                VStack(spacing: DS.Space.md) {
+                    Image(systemName: icon)
+                        .font(.system(size: 72, weight: .bold))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [DS.Color.money, Theme.wheatGold],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: DS.Color.money.opacity(0.5), radius: 20, x: 0, y: 0)
+                        .scaleEffect(showContent ? 1.0 : 0.5)
+                        .rotationEffect(.degrees(showContent ? 0 : -10))
+
+                    Text(title)
+                        .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .opacity(showContent ? 1 : 0)
+                        .offset(y: showContent ? 0 : 20)
+
+                    if let subtitle = subtitle {
+                        Text(subtitle)
+                            .font(.system(.title3, design: .rounded))
+                            .foregroundStyle(DS.Color.textSecondary)
+                            .multilineTextAlignment(.center)
+                            .opacity(showContent ? 1 : 0)
+                            .offset(y: showContent ? 0 : 15)
+                    }
+                }
+                .padding(DS.Space.xl)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.Radius.xxl, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    SwiftUI.Color(red: 0.25, green: 0.15, blue: 0.08),
+                                    SwiftUI.Color(red: 0.15, green: 0.08, blue: 0.04)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DS.Radius.xxl, style: .continuous)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [DS.Color.money.opacity(0.5), Theme.wheatGold.opacity(0.3)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 2
+                                )
+                        )
+                )
+                .shadow(color: .black.opacity(0.4), radius: 30, x: 0, y: 15)
+                .scaleEffect(showContent ? 1.0 : 0.8)
+                .onAppear {
+                    if !reduceMotion {
+                        generateParticles()
+                    }
+                    withAnimation(DS.Animation.celebration.delay(0.1)) {
+                        showContent = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            onComplete?()
+                        }
+                    }
+                }
+                .onDisappear {
+                    showContent = false
+                    particles.removeAll()
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: isPresented)
+    }
+
+    private func generateParticles() {
+        let colors: [SwiftUI.Color] = [DS.Color.money, Theme.wheatGold, Theme.success, Theme.xpBlue, Theme.seasonSpring]
+        for _ in 0..<30 {
+            let particle = CelebrationParticle(
+                color: colors.randomElement()!,
+                position: CGPoint(
+                    x: CGFloat.random(in: 0...UIScreen.main.bounds.width),
+                    y: CGFloat.random(in: UIScreen.main.bounds.height * 0.3...UIScreen.main.bounds.height * 0.7)
+                ),
+                size: CGFloat.random(in: 8...20),
+                delay: Double.random(in: 0...0.5)
+            )
+            particles.append(particle)
+        }
+    }
+}
+
+// MARK: - CelebrationParticle
+
+private struct CelebrationParticle: Identifiable {
+    let id = UUID()
+    let color: Color
+    let position: CGPoint
+    let size: CGFloat
+    let delay: Double
+}
+
+// MARK: - CelebrationParticleView
+
+private struct CelebrationParticleView: View {
+    let particle: CelebrationParticle
+    @State private var offset: CGFloat = 0
+    @State private var opacity: Double = 1
+    @State private var scale: CGFloat = 0
+
+    var body: some View {
+        Circle()
+            .fill(particle.color)
+            .frame(width: particle.size, height: particle.size)
+            .position(particle.position)
+            .offset(y: offset)
+            .opacity(opacity)
+            .scaleEffect(scale)
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + particle.delay) {
+                    withAnimation(.easeOut(duration: 1.2)) {
+                        offset = -200
+                        opacity = 0
+                    }
+                    withAnimation(DS.Animation.springBounce.delay(particle.delay)) {
+                        scale = 1
+                    }
+                }
+            }
     }
 }
 

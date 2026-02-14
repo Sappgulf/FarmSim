@@ -22,7 +22,9 @@ final class GameLoopDriver {
             let nanoseconds = UInt64(interval * 1_000_000_000)
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: nanoseconds)
-                await MainActor.run { self?.store?.stepAutoTime() }
+                guard let self = self, !Task.isCancelled else { break }
+                // Direct call since we're already in the right context
+                self.store?.stepAutoTime()
             }
         }
     }
@@ -49,6 +51,9 @@ final class SoundManager {
     private var hapticGenerators: [UIImpactFeedbackGenerator.FeedbackStyle: UIImpactFeedbackGenerator] = [:]
     private var buffers: [SoundEffect: AVAudioPCMBuffer] = [:]
     private let sampleRate: Double = 44100
+    // Node pool to reduce allocation overhead
+    private var availableNodes: [AVAudioPlayerNode] = []
+    private let maxPooledNodes = 5
 
     enum SoundEffect: CaseIterable {
         case click
@@ -61,6 +66,9 @@ final class SoundManager {
         case levelUp
         case pageTurn
         case water
+        case notification
+        case streak
+        case welcome
     }
 
     private init() {
@@ -101,7 +109,7 @@ final class SoundManager {
     private func setupEngine() {
         engine.attach(mixerNode)
         engine.connect(mixerNode, to: engine.mainMixerNode, format: nil)
-        mixerNode.outputVolume = 0.55
+        mixerNode.outputVolume = 0.70
         do {
             try engine.start()
         } catch {
@@ -110,13 +118,26 @@ final class SoundManager {
     }
 
     private func scheduleBuffer(_ buffer: AVAudioPCMBuffer) {
-        let playerNode = AVAudioPlayerNode()
-        engine.attach(playerNode)
-        let format = buffer.format
-        engine.connect(playerNode, to: mixerNode, format: format)
+        // Use node pooling to reduce allocation overhead
+        let playerNode: AVAudioPlayerNode
+        if let pooled = availableNodes.popLast() {
+            playerNode = pooled
+        } else {
+            playerNode = AVAudioPlayerNode()
+            engine.attach(playerNode)
+            engine.connect(playerNode, to: mixerNode, format: buffer.format)
+        }
+        
         playerNode.scheduleBuffer(buffer, at: nil, options: .interrupts) { [weak self] in
             Task { @MainActor [weak self] in
-                self?.engine.detach(playerNode)
+                guard let self = self else { return }
+                playerNode.stop()
+                // Return to pool if under limit, otherwise detach
+                if self.availableNodes.count < self.maxPooledNodes {
+                    self.availableNodes.append(playerNode)
+                } else {
+                    self.engine.detach(playerNode)
+                }
             }
         }
         if !engine.isRunning { try? engine.start() }
@@ -164,6 +185,18 @@ final class SoundManager {
         buffers[.levelUp]  = arpeggio(
             notes: [(C5, 0.00, 0.12), (E5, 0.11, 0.12), (G5, 0.22, 0.12), (C6, 0.33, 0.28)],
             totalDuration: 0.70, gain: 0.34, sr: sr
+        )
+        buffers[.notification] = arpeggio(
+            notes: [(E5, 0.00, 0.10), (A5, 0.08, 0.18)],
+            totalDuration: 0.30, gain: 0.32, sr: sr
+        )
+        buffers[.streak] = arpeggio(
+            notes: [(G4, 0.00, 0.10), (C5, 0.08, 0.10), (E5, 0.16, 0.14), (G5, 0.26, 0.20)],
+            totalDuration: 0.52, gain: 0.34, sr: sr
+        )
+        buffers[.welcome] = arpeggio(
+            notes: [(C5, 0.00, 0.14), (E5, 0.12, 0.14), (G5, 0.24, 0.18), (C6, 0.38, 0.32)],
+            totalDuration: 0.78, gain: 0.32, sr: sr
         )
     }
 

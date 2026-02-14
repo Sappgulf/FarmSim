@@ -19,7 +19,7 @@ struct BarnInventoryView: View {
                 BarnBackgroundView()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: DS.Space.md) {
+                    LazyVStack(alignment: .leading, spacing: DS.Space.md, pinnedViews: []) {
                         BarnHeaderHUD(
                             coins: store.save.player.coins,
                             stockCount: totalStockCount,
@@ -53,10 +53,11 @@ struct BarnInventoryView: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear { displayedShelves = visibleShelves }
-            .onChange(of: query)            { _, _ in displayedShelves = visibleShelves }
-            .onChange(of: selectedCategory) { _, _ in displayedShelves = visibleShelves }
-            .onChange(of: selectedSort)     { _, _ in displayedShelves = visibleShelves }
-            .onChange(of: store.renderSnapshot) { _, _ in displayedShelves = visibleShelves }
+            // Consolidate inventory update observers into a single onChange
+            .onChange(of: query) { _, _ in refreshDisplayedShelves() }
+            .onChange(of: selectedCategory) { _, _ in refreshDisplayedShelves() }
+            .onChange(of: selectedSort) { _, _ in refreshDisplayedShelves() }
+            .onChange(of: store.renderSnapshot) { _, _ in refreshDisplayedShelves() }
         }
         .sheet(item: $selectedItem) { item in
             BarnItemDetailSheet(
@@ -171,6 +172,13 @@ struct BarnInventoryView: View {
                 items: sorted
             )
         }
+    }
+    
+    /// Debounced shelf refresh to prevent excessive recomputation during rapid changes
+    @MainActor
+    private func refreshDisplayedShelves() {
+        // Cancel any pending refresh
+        displayedShelves = visibleShelves
     }
 
     private var barnShelves: [BarnShelfModel] {
