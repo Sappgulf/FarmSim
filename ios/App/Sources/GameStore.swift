@@ -254,6 +254,7 @@ final class GameStore {
     @ObservationIgnored private var cachedDailySpecials: Set<String> = []
     @ObservationIgnored private var cachedDailySpecialDay: Int = -1
     @ObservationIgnored private var cachedDailySpecialSeed: UInt64 = 0
+    @ObservationIgnored private var cachedDailySpecialSummary: String = "No deals today."
 
     private static let settingsKey = "com.farmsim.settings.v1"
     private static let onboardingKey = "com.farmsim.onboarding.seen"
@@ -1136,10 +1137,13 @@ final class GameStore {
             return lhs.1 < rhs.1
         }
         let count = min(2, ranked.count)
-        let specials = Set(ranked.prefix(count).map(\.0))
+        let featuredIDs = ranked.prefix(count).map(\.0)
+        let specials = Set(featuredIDs)
+        let featuredNames = featuredIDs.compactMap { engine.cropDefsByID[$0]?.name }
         cachedDailySpecialDay = day
         cachedDailySpecialSeed = daySeed
         cachedDailySpecials = specials
+        cachedDailySpecialSummary = featuredNames.isEmpty ? "No deals today." : featuredNames.joined(separator: ", ")
         return specials
     }
 
@@ -1148,11 +1152,8 @@ final class GameStore {
     }
 
     var dailySpecialSummary: String {
-        let names = cropDefs
-            .filter { dailySpecialSeedIDs.contains($0.id) }
-            .map(\.name)
-        guard !names.isEmpty else { return "No deals today." }
-        return names.joined(separator: ", ")
+        _ = dailySpecialSeedIDs
+        return cachedDailySpecialSummary
     }
 
     var canPurchaseExpansion: Bool {

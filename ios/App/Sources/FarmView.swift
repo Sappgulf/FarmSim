@@ -19,6 +19,9 @@ struct FarmView: View {
     @State private var quickWheelItems: [QuickWheelItem] = []
     @State private var quickWheelLocation: CGPoint = .zero
     
+    private var reducedMotion: Bool {
+        store.settings.reducedMotion || accessibilityReduceMotion
+    }
 
 
     var body: some View {
@@ -27,6 +30,10 @@ struct FarmView: View {
                 .ignoresSafeArea()
                 .simultaneousGesture(dragGesture)
                 .simultaneousGesture(magnificationGesture)
+                .overlay {
+                    atmosphereOverlay
+                        .allowsHitTesting(false)
+                }
 
             VStack {
                     Spacer()
@@ -94,10 +101,7 @@ struct FarmView: View {
                         quickWheelItems = items
                         quickWheelLocation = location
                         showQuickWheel = true
-                        
-                        // Haptic feedback
-                        let generator = UIImpactFeedbackGenerator(style: .medium)
-                        generator.impactOccurred()
+                        SoundManager.shared.play(.click, haptic: .medium)
                     }
                 }
             }
@@ -135,7 +139,7 @@ struct FarmView: View {
             }
             .onChange(of: store.dayRolloverToken) { _, _ in
                 showDayRolloverOverlay = true
-                let delay = (store.settings.reducedMotion || accessibilityReduceMotion) ? 0.35 : 1.2
+                let delay = reducedMotion ? 0.35 : 1.2
                 Task {
                     try? await Task.sleep(for: .seconds(delay))
                     withAnimation(.easeOut(duration: 0.2)) {
@@ -157,6 +161,37 @@ struct FarmView: View {
                 }
             }
         .farmBackground(palette: store.settings.palette)
+    }
+
+    private var atmosphereOverlay: some View {
+        let t = store.hudTimeProgress
+        let dawn = Color(red: 1.0, green: 0.82, blue: 0.62)
+        let day = Color(red: 0.88, green: 0.96, blue: 1.0)
+        let dusk = Color(red: 0.94, green: 0.68, blue: 0.46)
+        let night = Color(red: 0.18, green: 0.26, blue: 0.48)
+
+        let topColor: Color
+        let bottomColor: Color
+        if t < 0.2 {
+            topColor = dawn.opacity(reducedMotion ? 0.08 : 0.14)
+            bottomColor = day.opacity(0.04)
+        } else if t < 0.7 {
+            topColor = day.opacity(0.06)
+            bottomColor = day.opacity(0.02)
+        } else if t < 0.88 {
+            topColor = dusk.opacity(reducedMotion ? 0.10 : 0.16)
+            bottomColor = night.opacity(0.08)
+        } else {
+            topColor = night.opacity(0.18)
+            bottomColor = night.opacity(0.14)
+        }
+
+        return LinearGradient(
+            colors: [topColor, .clear, bottomColor],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
     }
 
     private var dragGesture: some Gesture {
@@ -521,5 +556,4 @@ struct TileActionSheet: View {
         }
     }
 }
-
 

@@ -4,6 +4,8 @@ import GameCore
 // MARK: - MainMenuView
 
 struct MainMenuView: View {
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
+
     @Bindable var appState: AppState
     @Bindable var store: GameStore
 
@@ -18,6 +20,10 @@ struct MainMenuView: View {
     @State private var glowPulse = false
     @State private var subtitleAppeared = false
 
+    private var reducedMotion: Bool {
+        accessibilityReduceMotion || store.settings.reducedMotion
+    }
+
     private var hasSave: Bool {
         FileManager.default.fileExists(
             atPath: GameCore.SavePaths.defaultSaveURL(appName: "FarmSim").path
@@ -28,7 +34,7 @@ struct MainMenuView: View {
         GeometryReader { proxy in
             ZStack {
                 backgroundLayer(proxy: proxy)
-                AmbientParticleLayer(size: proxy.size)
+                AmbientParticleLayer(size: proxy.size, reducedMotion: reducedMotion)
                     .allowsHitTesting(false)
 
                 VStack(spacing: 0) {
@@ -64,6 +70,7 @@ struct MainMenuView: View {
                 .scaleEffect(bgScale)
                 .ignoresSafeArea()
                 .onAppear {
+                    guard !reducedMotion else { return }
                     withAnimation(.easeInOut(duration: 22).repeatForever(autoreverses: true)) {
                         bgScale = 1.06
                     }
@@ -119,7 +126,7 @@ struct MainMenuView: View {
                     )
                     .frame(width: 310, height: 220)
                     .animation(
-                        .easeInOut(duration: 2.8).repeatForever(autoreverses: true),
+                        reducedMotion ? nil : .easeInOut(duration: 2.8).repeatForever(autoreverses: true),
                         value: glowPulse
                     )
 
@@ -203,15 +210,16 @@ struct MainMenuView: View {
     // MARK: - Entrance Sequence
 
     private func runEntranceSequence() {
-        withAnimation(DS.Animation.springBounce) {
+        withAnimation(reducedMotion ? .easeOut(duration: 0.15) : DS.Animation.springBounce) {
             titleAppeared = true
         }
-        withAnimation(DS.Animation.standard.delay(0.20)) {
+        withAnimation((reducedMotion ? .easeOut(duration: 0.15) : DS.Animation.standard).delay(reducedMotion ? 0.05 : 0.20)) {
             subtitleAppeared = true
         }
-        withAnimation(DS.Animation.springBounce.delay(0.28)) {
+        withAnimation((reducedMotion ? .easeOut(duration: 0.15) : DS.Animation.springBounce).delay(reducedMotion ? 0.08 : 0.28)) {
             buttonsAppeared = true
         }
+        guard !reducedMotion else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
             glowPulse = true
         }
@@ -223,6 +231,7 @@ struct MainMenuView: View {
 /// Floating leaf/speck layer rendered in Canvas for zero per-frame view overhead.
 private struct AmbientParticleLayer: View {
     let size: CGSize
+    let reducedMotion: Bool
 
     private struct Particle {
         let xFrac: Double
@@ -250,21 +259,27 @@ private struct AmbientParticleLayer: View {
     }
 
     var body: some View {
-        TimelineView(.animation) { tl in
-            Canvas { ctx, canvasSize in
-                let t = tl.date.timeIntervalSinceReferenceDate
-                for p in particles {
-                    let rawY = canvasSize.height * p.yStartFrac
-                        - t * p.speed * canvasSize.height
-                    let y = rawY.truncatingRemainder(dividingBy: canvasSize.height + 50)
-                    let yFinal = y < -30 ? y + canvasSize.height + 50 : y
-                    let x = canvasSize.width * p.xFrac
-                        + sin(t * p.driftFreq + p.xFrac * .pi * 2) * p.driftAmp
+        Group {
+            if reducedMotion {
+                Color.clear
+            } else {
+                TimelineView(.periodic(from: .now, by: 1.0 / 30.0)) { tl in
+                    Canvas { ctx, canvasSize in
+                        let t = tl.date.timeIntervalSinceReferenceDate
+                        for p in particles {
+                            let rawY = canvasSize.height * p.yStartFrac
+                                - t * p.speed * canvasSize.height
+                            let y = rawY.truncatingRemainder(dividingBy: canvasSize.height + 50)
+                            let yFinal = y < -30 ? y + canvasSize.height + 50 : y
+                            let x = canvasSize.width * p.xFrac
+                                + sin(t * p.driftFreq + p.xFrac * .pi * 2) * p.driftAmp
 
-                    var str = AttributedString(p.symbol)
-                    str.font = .system(size: p.fontSize)
-                    ctx.opacity = p.opacity
-                    ctx.draw(Text(str), at: CGPoint(x: x, y: yFinal))
+                            var str = AttributedString(p.symbol)
+                            str.font = .system(size: p.fontSize)
+                            ctx.opacity = p.opacity
+                            ctx.draw(Text(str), at: CGPoint(x: x, y: yFinal))
+                        }
+                    }
                 }
             }
         }

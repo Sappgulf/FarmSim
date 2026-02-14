@@ -33,11 +33,17 @@ private enum MarketSection: String, CaseIterable, Identifiable {
 // MARK: - TownMarketView
 
 struct TownMarketView: View {
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
+
     let store: GameStore
     @State private var section: MarketSection = .buy
     @State private var buyQuantities: [String: Int] = [:]
     @State private var sellQuantities: [String: Int] = [:]
     @State private var pendingSellAllCropID: String?
+
+    private var reducedMotion: Bool {
+        accessibilityReduceMotion || store.settings.reducedMotion
+    }
 
     var body: some View {
         NavigationStack {
@@ -49,7 +55,7 @@ struct TownMarketView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: DS.Space.lg) {
                         // Market stall awning header
-                        TownMarketHeader()
+                        TownMarketHeader(reducedMotion: reducedMotion)
 
                         // Section Picker
                         WoodenPanel {
@@ -74,7 +80,7 @@ struct TownMarketView: View {
                             }
                         }
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
-                        .animation(DS.Animation.standard, value: section)
+                        .animation(reducedMotion ? nil : DS.Animation.standard, value: section)
                     }
                     .padding(DS.Space.md)
                     .padding(.bottom, DS.Space.xxl)
@@ -99,7 +105,11 @@ struct TownMarketView: View {
         let isSelected = section == option
         return Button {
             SoundManager.shared.play(.click, haptic: .light)
-            withAnimation(DS.Animation.standard) { section = option }
+            if reducedMotion {
+                section = option
+            } else {
+                withAnimation(DS.Animation.standard) { section = option }
+            }
         } label: {
             Label(option.title, systemImage: option.symbol)
                 .font(Typography.caption.weight(.semibold))
@@ -112,7 +122,7 @@ struct TownMarketView: View {
                 .foregroundStyle(isSelected ? DS.Color.textPrimary : DS.Color.textSecondary)
         }
         .buttonStyle(.plain)
-        .animation(DS.Animation.spring, value: isSelected)
+        .animation(reducedMotion ? nil : DS.Animation.spring, value: isSelected)
     }
 
     // MARK: - Coins Toolbar Badge
@@ -177,7 +187,7 @@ struct TownMarketView: View {
                                         .foregroundStyle(.white)
 
                                     if store.isDailySpecialSeed(crop.id) {
-                                        DealBadge()
+                                        DealBadge(reducedMotion: reducedMotion)
                                     }
                                 }
 
@@ -514,7 +524,7 @@ struct TownMarketView: View {
                                                 )
                                             )
                                             .frame(width: g.size.width * pct)
-                                            .animation(DS.Animation.standard, value: pct)
+                                            .animation(reducedMotion ? nil : DS.Animation.standard, value: pct)
                                     }
                                 }
                                 .frame(height: 7)
@@ -541,6 +551,7 @@ struct TownMarketView: View {
 // MARK: - DealBadge
 
 private struct DealBadge: View {
+    let reducedMotion: Bool
     @State private var pulse = false
 
     var body: some View {
@@ -552,6 +563,7 @@ private struct DealBadge: View {
             .background(DS.Color.money, in: Capsule())
             .scaleEffect(pulse ? 1.06 : 1.0)
             .onAppear {
+                guard !reducedMotion else { return }
                 withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
                     pulse = true
                 }
@@ -699,6 +711,7 @@ private struct TownStreetBackground: View {
 // MARK: - TownMarketHeader
 
 private struct TownMarketHeader: View {
+    let reducedMotion: Bool
     @State private var sway = false
 
     var body: some View {
@@ -784,8 +797,9 @@ private struct TownMarketHeader: View {
             }
             .frame(maxWidth: 300)
             .shadow(color: .black.opacity(0.28), radius: 6, y: 3)
-            .rotationEffect(.degrees(sway ? 1.4 : -1.4))
+            .rotationEffect(.degrees(reducedMotion ? 0 : (sway ? 1.4 : -1.4)))
             .onAppear {
+                guard !reducedMotion else { return }
                 withAnimation(.easeInOut(duration: 3.8).repeatForever(autoreverses: true)) {
                     sway = true
                 }

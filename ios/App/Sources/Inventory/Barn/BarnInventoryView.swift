@@ -97,7 +97,14 @@ struct BarnInventoryView: View {
                 ForEach(BarnShelfCategory.allCases) { category in
                     let selected = selectedCategory == category
                     Button {
-                        selectedCategory = category
+                        SoundManager.shared.play(.click, haptic: .light)
+                        if store.settings.reducedMotion {
+                            selectedCategory = category
+                        } else {
+                            withAnimation(DS.Animation.standard) {
+                                selectedCategory = category
+                            }
+                        }
                     } label: {
                         Label(category.title, systemImage: category.symbol)
                             .font(.caption.weight(.semibold))

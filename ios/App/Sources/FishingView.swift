@@ -495,7 +495,7 @@ struct FishingSection: View {
         tickTask = nil
 
         let message: String
-        if caught, let fish = currentFish {
+        if caught, currentFish != nil {
             store.castFishingLine()  // GameStore handles reward + XP + fish count
             let lastStatus = store.statusText
             SoundManager.shared.play(.harvest, haptic: .medium)
