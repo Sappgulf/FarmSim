@@ -1,7 +1,8 @@
 import Foundation
-import AVFoundation
-import AudioToolbox
+@preconcurrency import AVFoundation
 import UIKit
+
+// MARK: - GameLoopDriver
 
 @MainActor
 final class GameLoopDriver {
@@ -42,9 +43,10 @@ final class GameLoopDriver {
     }
 }
 
-/// Manages audio playback and haptic feedback.
-/// Currently uses system sounds and `UIImpactFeedbackGenerator` as a robust fallback
-/// since no custom audio assets are available yet.
+// MARK: - SoundManager
+
+/// Synthesizes short musical tones via AVAudioEngine — no audio asset files required.
+/// Each effect maps to a distinct musical phrase to give the game a unique, cozy audio identity.
 @MainActor
 final class SoundManager {
     static let shared = SoundManager()
@@ -52,12 +54,13 @@ final class SoundManager {
     var soundEnabled: Bool = true
     var hapticsEnabled: Bool = true
 
-    private var audioPlayer: AVAudioPlayer?
+    private let engine = AVAudioEngine()
+    private let mixerNode = AVAudioMixerNode()
     private var hapticGenerators: [UIImpactFeedbackGenerator.FeedbackStyle: UIImpactFeedbackGenerator] = [:]
+    private var buffers: [SoundEffect: AVAudioPCMBuffer] = [:]
+    private let sampleRate: Double = 44100
 
-    private init() {}
-
-    enum SoundEffect {
+    enum SoundEffect: CaseIterable {
         case click
         case success
         case error
@@ -70,72 +73,201 @@ final class SoundManager {
         case water
     }
 
+    private init() {
+        configureAudioSession()
+        setupEngine()
+        prerenderBuffers()
+    }
+
+    // MARK: - Public API
+
     func play(_ effect: SoundEffect, haptic: UIImpactFeedbackGenerator.FeedbackStyle? = nil) {
         if let haptic, hapticsEnabled {
-            let generator = impactGenerator(for: haptic)
-            generator.prepare()
-            generator.impactOccurred()
+            let gen = impactGenerator(for: haptic)
+            gen.prepare()
+            gen.impactOccurred()
         }
-
-        guard soundEnabled else { return }
-
-        // System Sound ID mappings (approximate standard iOS sounds)
-        // 1104: Tock
-        // 1103: Tink
-        // 1057: PIN entry
-        // 1052: Shutter
-        // 1001: Mail Sent
-        // 1000: Mail Received
-        // 1111: Menu
-        // 1157: Beep
-        
-        let systemSoundID: SystemSoundID
-        switch effect {
-        case .click:
-            systemSoundID = 1104 // Tock
-        case .success, .purchase, .sell:
-            systemSoundID = 1057 // PIN key (pleasant tick)
-        case .error:
-            systemSoundID = 1053 // System error
-        case .plant:
-            systemSoundID = 1103 // Tink
-        case .harvest:
-            systemSoundID = 1001 // Mail sent (whoosh/chime)
-        case .levelUp:
-            systemSoundID = 1000 // Mail received (chime)
-        case .pageTurn:
-            systemSoundID = 1105 // Tock
-        case .water:
-            systemSoundID = 1103 // Tink
-        }
-
-        AudioServicesPlaySystemSound(systemSoundID)
+        guard soundEnabled, let buffer = buffers[effect] else { return }
+        scheduleBuffer(buffer)
     }
 
-    func playMusic(filename: String) {
-        guard soundEnabled else { return }
-        // Placeholder for future music implementation
-        print("[Audio] Music playback requested for \(filename), but no assets are present.")
-    }
-    
-    func stopMusic() {
-        audioPlayer?.stop()
-    }
-    
     func updateSettings(sound: Bool, haptics: Bool) {
-        self.soundEnabled = sound
-        self.hapticsEnabled = haptics
-        if !sound {
-            stopMusic()
+        soundEnabled = sound
+        hapticsEnabled = haptics
+    }
+
+    // MARK: - Engine Setup
+
+    private func configureAudioSession() {
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+            try session.setActive(true)
+        } catch {
+            // Silently continue — audio is non-critical
         }
     }
+
+    private func setupEngine() {
+        engine.attach(mixerNode)
+        engine.connect(mixerNode, to: engine.mainMixerNode, format: nil)
+        mixerNode.outputVolume = 0.55
+        do {
+            try engine.start()
+        } catch {
+            // Silently continue
+        }
+    }
+
+    private func scheduleBuffer(_ buffer: AVAudioPCMBuffer) {
+        let playerNode = AVAudioPlayerNode()
+        engine.attach(playerNode)
+        let format = buffer.format
+        engine.connect(playerNode, to: mixerNode, format: format)
+        playerNode.scheduleBuffer(buffer, at: nil, options: .interrupts) { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.engine.detach(playerNode)
+            }
+        }
+        if !engine.isRunning { try? engine.start() }
+        playerNode.play()
+    }
+
+    // MARK: - Buffer Pre-rendering
+
+    private func prerenderBuffers() {
+        let sr = sampleRate
+        // Musical note frequencies (Hz)
+        let C5:  Float = 523.25
+        let E5:  Float = 659.25
+        let G5:  Float = 783.99
+        let A4:  Float = 440.00
+        let B4:  Float = 493.88
+        let G4:  Float = 392.00
+        let C6:  Float = 1046.50
+        let Eb5: Float = 622.25
+
+        buffers[.click]    = tone(freq: A4, duration: 0.055, gain: 0.30, sr: sr)
+        buffers[.pageTurn] = tone(freq: B4, duration: 0.075, gain: 0.28, sr: sr)
+        buffers[.plant]    = tone(freq: C5, duration: 0.130, gain: 0.32, sr: sr)
+        buffers[.water]    = chord(freqs: [C5, E5], duration: 0.200, gain: 0.26, sr: sr)
+        buffers[.sell]     = arpeggio(
+            notes: [(G4, 0.00, 0.12), (C5, 0.10, 0.14)],
+            totalDuration: 0.26, gain: 0.32, sr: sr
+        )
+        buffers[.purchase] = arpeggio(
+            notes: [(C5, 0.00, 0.12), (E5, 0.10, 0.14)],
+            totalDuration: 0.26, gain: 0.32, sr: sr
+        )
+        buffers[.success]  = arpeggio(
+            notes: [(E5, 0.00, 0.12), (G5, 0.10, 0.16)],
+            totalDuration: 0.28, gain: 0.30, sr: sr
+        )
+        buffers[.harvest]  = arpeggio(
+            notes: [(C5, 0.00, 0.12), (E5, 0.10, 0.12), (G5, 0.20, 0.18)],
+            totalDuration: 0.42, gain: 0.32, sr: sr
+        )
+        buffers[.error]    = arpeggio(
+            notes: [(Eb5, 0.00, 0.10), (C5, 0.09, 0.14)],
+            totalDuration: 0.26, gain: 0.28, sr: sr, descending: true
+        )
+        buffers[.levelUp]  = arpeggio(
+            notes: [(C5, 0.00, 0.12), (E5, 0.11, 0.12), (G5, 0.22, 0.12), (C6, 0.33, 0.28)],
+            totalDuration: 0.70, gain: 0.34, sr: sr
+        )
+    }
+
+    // MARK: - Synthesis Primitives
+
+    /// Single sine tone with smooth ADSR envelope.
+    private func tone(freq: Float, duration: Float, gain: Float, sr: Double) -> AVAudioPCMBuffer? {
+        return chord(freqs: [freq], duration: duration, gain: gain, sr: sr)
+    }
+
+    /// Simultaneous chord (mix of sine tones).
+    private func chord(freqs: [Float], duration: Float, gain: Float, sr: Double) -> AVAudioPCMBuffer? {
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sr, channels: 1) else { return nil }
+        let frameCount = AVAudioFrameCount(sr * Double(duration))
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { return nil }
+        buffer.frameLength = frameCount
+        guard let data = buffer.floatChannelData?[0] else { return nil }
+
+        let attackFrames  = Int(sr * 0.012)
+        let releaseFrames = Int(sr * 0.040)
+        let total         = Int(frameCount)
+
+        for i in 0..<total {
+            let t = Float(i) / Float(sr)
+            var sample: Float = 0
+            for freq in freqs {
+                sample += sinf(2.0 * .pi * freq * t)
+            }
+            sample /= Float(freqs.count)
+            sample *= gain
+            sample *= envelope(i: i, total: total, attack: attackFrames, release: releaseFrames)
+            data[i] = sample
+        }
+        return buffer
+    }
+
+    /// Sequential arpeggio — notes are layered into a single buffer.
+    private func arpeggio(
+        notes: [(freq: Float, startFrac: Float, dur: Float)],
+        totalDuration: Float,
+        gain: Float,
+        sr: Double,
+        descending: Bool = false
+    ) -> AVAudioPCMBuffer? {
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sr, channels: 1) else { return nil }
+        let totalFrames = AVAudioFrameCount(sr * Double(totalDuration))
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: totalFrames) else { return nil }
+        buffer.frameLength = totalFrames
+        guard let data = buffer.floatChannelData?[0] else { return nil }
+
+        for i in 0..<Int(totalFrames) { data[i] = 0 }
+
+        let attackFrames  = Int(sr * 0.010)
+        let releaseFrames = Int(sr * 0.030)
+
+        for note in notes {
+            let startFrame = Int(Float(totalFrames) * note.startFrac)
+            let noteFrames = Int(sr * Double(note.dur))
+            let endFrame   = min(startFrame + noteFrames, Int(totalFrames))
+
+            for i in startFrame..<endFrame {
+                let local = i - startFrame
+                let t = Float(local) / Float(sr)
+                var sample = sinf(2.0 * .pi * note.freq * t) * gain
+                sample *= envelope(i: local, total: noteFrames, attack: attackFrames, release: releaseFrames)
+                if descending { sample *= max(0, 1.0 - Float(local) / Float(noteFrames)) }
+                data[i] += sample
+            }
+        }
+        // Normalize to prevent clipping
+        let peak = (0..<Int(totalFrames)).map { fabsf(data[$0]) }.max() ?? 1
+        if peak > 0.9 {
+            let scale = 0.9 / peak
+            for i in 0..<Int(totalFrames) { data[i] *= scale }
+        }
+        return buffer
+    }
+
+    /// Smooth ADSR envelope value at frame index `i` within `total` frames.
+    private func envelope(i: Int, total: Int, attack: Int, release: Int) -> Float {
+        if i < attack {
+            return Float(i) / Float(max(1, attack))
+        } else if i > total - release {
+            return Float(total - i) / Float(max(1, release))
+        }
+        return 1.0
+    }
+
+    // MARK: - Haptics
 
     private func impactGenerator(for style: UIImpactFeedbackGenerator.FeedbackStyle) -> UIImpactFeedbackGenerator {
-        if let generator = hapticGenerators[style] {
-            return generator
-        }
-        let generator = UIImpactFeedbackGenerator(style: style)
-        hapticGenerators[style] = generator
-        return generator
+        if let gen = hapticGenerators[style] { return gen }
+        let gen = UIImpactFeedbackGenerator(style: style)
+        hapticGenerators[style] = gen
+        return gen
     }
 }

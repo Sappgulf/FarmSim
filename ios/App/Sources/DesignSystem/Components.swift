@@ -31,19 +31,21 @@ struct SecondaryButton: View {
         Button(action: action) {
             HStack(spacing: DS.Space.xs) {
                 if let icon = icon {
-                    Image(systemName: icon)
-                        .font(.body)
+                    Image(systemName: icon).font(.body)
                 }
                 Text(title)
             }
-            .font(.headline)
+            .font(Typography.section)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, DS.Space.sm)
             .padding(.horizontal, DS.Space.md)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
+            .background(
+                .ultraThinMaterial,
+                in: RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
-                    .stroke(DS.Color.cardStroke, lineWidth: 0.5)
+                    .strokeBorder(DS.Color.cardStroke, lineWidth: 0.5)
             )
             .foregroundStyle(.white)
         }
@@ -59,7 +61,7 @@ struct AppBadge: View {
 
     var body: some View {
         Text(label)
-            .font(.caption2.weight(.semibold))
+            .font(Typography.small.weight(.semibold))
             .foregroundStyle(.white)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -69,37 +71,37 @@ struct AppBadge: View {
 
 struct SeasonBadge: View {
     let season: String
-    
+
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: seasonIcon)
                 .font(.caption2)
             Text(season.capitalized)
-                .font(.caption2.weight(.semibold))
+                .font(Typography.small.weight(.semibold))
         }
         .foregroundStyle(.white)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(seasonColor.opacity(0.85), in: Capsule())
     }
-    
+
     private var seasonIcon: String {
         switch season.lowercased() {
-        case "spring": return "leaf.fill"
-        case "summer": return "sun.max.fill"
-        case "autumn", "fall": return "wind"
-        case "winter": return "snowflake"
-        default: return "calendar"
+        case "spring":          return "leaf.fill"
+        case "summer":          return "sun.max.fill"
+        case "autumn", "fall":  return "wind"
+        case "winter":          return "snowflake"
+        default:                return "calendar"
         }
     }
-    
+
     private var seasonColor: Color {
         switch season.lowercased() {
-        case "spring": return Theme.seasonSpring
-        case "summer": return Theme.seasonSummer
-        case "autumn", "fall": return Theme.seasonFall
-        case "winter": return Theme.seasonWinter
-        default: return DS.Color.accent
+        case "spring":          return Theme.seasonSpring
+        case "summer":          return Theme.seasonSummer
+        case "autumn", "fall":  return Theme.seasonFall
+        case "winter":          return Theme.seasonWinter
+        default:                return DS.Color.accent
         }
     }
 }
@@ -114,10 +116,14 @@ struct EmptyStateView: View {
     var body: some View {
         VStack(spacing: DS.Space.sm) {
             Image(systemName: icon)
-                .font(.system(size: 36, weight: .semibold))
+                .font(.system(size: 38, weight: .semibold))
                 .foregroundStyle(.secondary)
+                .padding(.bottom, DS.Space.xxs)
+
             Text(title)
                 .font(Typography.section)
+                .multilineTextAlignment(.center)
+
             Text(subtitle)
                 .font(Typography.caption)
                 .foregroundStyle(.secondary)
@@ -138,10 +144,10 @@ struct IconLabel: View {
     var body: some View {
         HStack(spacing: DS.Space.xxs) {
             Image(systemName: icon)
-                .font(.caption)
+                .font(Typography.caption)
                 .foregroundStyle(tint)
             Text(text)
-                .font(.caption)
+                .font(Typography.caption)
                 .foregroundStyle(.secondary)
         }
     }
@@ -180,10 +186,10 @@ struct StatPill: View {
     var body: some View {
         HStack(spacing: DS.Space.xxs) {
             Image(systemName: icon)
-                .font(.caption2)
+                .font(Typography.small)
             Text(value)
-                .font(.caption.monospacedDigit())
+                .font(Typography.metricSmall)
         }
-        .foregroundStyle(.white.opacity(0.9))
+        .foregroundStyle(.white.opacity(0.90))
     }
 }

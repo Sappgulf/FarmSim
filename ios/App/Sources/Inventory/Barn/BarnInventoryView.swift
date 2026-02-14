@@ -419,76 +419,108 @@ private struct BarnItemDetailSheet: View {
     let onSellAll: () -> Void
     let onUse: () -> Void
 
+    @State private var appeared = false
+
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: DS.Space.md) {
-                    HStack(alignment: .top, spacing: DS.Space.sm) {
+                VStack(alignment: .leading, spacing: DS.Space.lg) {
+                    // Hero header
+                    HStack(alignment: .center, spacing: DS.Space.md) {
                         Text(item.emoji)
-                            .font(.system(size: 44))
+                            .font(.system(size: 52))
                             .accessibilityHidden(true)
+                            .scaleEffect(appeared ? 1.0 : 0.7)
+                            .animation(DS.Animation.springBounce.delay(0.06), value: appeared)
 
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text(item.title)
-                                .font(.title3.weight(.bold))
+                                .font(Typography.title)
                             Text(item.subtitle)
-                                .font(.subheadline)
+                                .font(Typography.label)
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: appeared ? 0 : 12)
+                    .animation(DS.Animation.springBounce, value: appeared)
 
-
+                    // Description
                     Text(item.detail)
-                        .font(.body)
+                        .font(Typography.body)
                         .foregroundStyle(.secondary)
+                        .opacity(appeared ? 1 : 0)
+                        .animation(DS.Animation.standard.delay(0.10), value: appeared)
 
+                    // Stats card
                     CardContainer {
-                        VStack(alignment: .leading, spacing: DS.Space.xs) {
+                        VStack(alignment: .leading, spacing: DS.Space.sm) {
                             Label("Owned: \(item.count)", systemImage: "shippingbox.fill")
-                                .font(.subheadline.weight(.semibold))
+                                .font(Typography.bodyStrong)
                             if let unitSellPrice = item.unitSellPrice {
-                                Label("Sell price: \(unitSellPrice) coins", systemImage: "dollarsign.circle.fill")
-                                    .font(.subheadline.weight(.semibold))
+                                Label("\(unitSellPrice) coins each", systemImage: "dollarsign.circle.fill")
+                                    .font(Typography.bodyStrong)
+                                    .foregroundStyle(DS.Color.money)
                             }
                         }
                     }
+                    .opacity(appeared ? 1 : 0)
+                    .animation(DS.Animation.standard.delay(0.15), value: appeared)
 
+                    // Action buttons
                     VStack(spacing: DS.Space.sm) {
                         if item.canSell {
                             HStack(spacing: DS.Space.sm) {
                                 Button("Sell 1") {
+                                    SoundManager.shared.play(.sell, haptic: .medium)
                                     onSellOne()
                                 }
-                                .buttonStyle(.bordered)
+                                .buttonStyle(GlassButtonStyle(tint: DS.Color.accent))
                                 .disabled(item.count <= 0)
 
-                                Button("Sell All") {
+                                Button("Sell All (\(item.count))") {
+                                    SoundManager.shared.play(.sell, haptic: .heavy)
                                     onSellAll()
                                 }
-                                .buttonStyle(.borderedProminent)
+                                .buttonStyle(GlassButtonStyle(tint: DS.Color.accent, isDestructive: false))
                                 .disabled(item.count <= 0)
                             }
                         }
 
                         if item.canUse {
-                            Button("Use / Plant on Farm", systemImage: "leaf.fill") {
+                            Button {
+                                SoundManager.shared.play(.plant, haptic: .medium)
                                 onUse()
+                            } label: {
+                                Label("Use / Plant on Farm", systemImage: "leaf.fill")
                             }
-                            .buttonStyle(.borderedProminent)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .buttonStyle(PrimaryButtonStyle(tint: DS.Color.accent))
                         }
 
-                        Button(isFavorite ? "Unfavorite" : "Favorite", systemImage: isFavorite ? "heart.slash.fill" : "heart.fill") {
+                        Button {
+                            SoundManager.shared.play(.click, haptic: .light)
                             onToggleFavorite()
+                        } label: {
+                            Label(
+                                isFavorite ? "Remove Favourite" : "Add to Favourites",
+                                systemImage: isFavorite ? "heart.slash.fill" : "heart.fill"
+                            )
                         }
-                        .buttonStyle(.bordered)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .buttonStyle(GlassButtonStyle(
+                            tint: isFavorite ? .pink : DS.Color.xp,
+                            isDestructive: false
+                        ))
                     }
+                    .opacity(appeared ? 1 : 0)
+                    .animation(DS.Animation.standard.delay(0.20), value: appeared)
                 }
                 .padding(DS.Space.md)
             }
             .navigationTitle("Item Details")
             .navigationBarTitleDisplayMode(.inline)
+        }
+        .onAppear {
+            appeared = true
         }
     }
 }
