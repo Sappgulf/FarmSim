@@ -121,36 +121,35 @@ public struct GameCoreEngine: Sendable {
         return true
     }
 
-    public mutating func advanceDay() {
-        lastDailyRoll = SimTickSystem.advanceDay(world: &save.world, rng: &rng)
+    public mutating func advanceDay(growthMultiplier: Double = 1.0) {
+        lastDailyRoll = SimTickSystem.advanceDay(world: &save.world, rng: &rng, growthMultiplier: growthMultiplier)
         save.daySeed = rng.currentState
         if save.meta.time.dayIndex < save.world.day {
             save.meta.time.dayIndex = save.world.day
         }
     }
 
-    @discardableResult
-    public mutating func harvest(tileIndex: Int) -> Bool {
-        harvestYield(tileIndex: tileIndex, yieldMultiplier: 1.0) > 0
-    }
-
-    public mutating func harvestYield(tileIndex: Int, yieldMultiplier: Double) -> Int {
+    public mutating func harvest(tileIndex: Int, yieldMultiplier: Double = 1.0, maxCapacity: Int? = nil) -> Int {
         guard save.world.tiles.indices.contains(tileIndex) else { return 0 }
-        guard let planted = save.world.tiles[tileIndex].planted else { return 0 }
-        guard let cropDef = cropDefsByID[planted.cropID] else { return 0 }
+        guard let planted = save.world.tiles[tileIndex].planted,
+              let cropDef = cropDefsByID[planted.cropID] else { return 0 }
 
         let quantity = resolvedYieldQuantity(multiplier: yieldMultiplier)
-        let harvested = HarvestSystem.harvest(
+        let success = HarvestSystem.harvest(
             world: &save.world,
             inventory: &save.player.inventory,
             tileIndex: tileIndex,
             cropDef: cropDef,
             currentDay: save.world.day,
-            quantity: quantity
+            quantity: quantity,
+            maxCapacity: maxCapacity
         )
-
-        guard harvested else { return 0 }
-        EconomySystem.applyHarvestSale(player: &save.player, crop: cropDef, quantity: quantity)
+        
+        guard success else { return 0 }
+        
+        // Note: applyHarvestSale is legacy if we want to auto-sell, but usually 
+        // crops go to inventory first. However, the original code called both.
+        // I'll keep it consistent with the original intent but ensure it matches inventory logic.
         XPSystem.applyHarvestXP(player: &save.player, crop: cropDef, quantity: quantity)
         return quantity
     }
@@ -276,14 +275,17 @@ public struct GameCoreEngine: Sendable {
         )
     }
 
-    public mutating func harvestAll(yieldMultiplier: Double = 1.0) -> Int {
-        var harvestedTiles = 0
-        for i in save.world.tiles.indices {
-            if harvestYield(tileIndex: i, yieldMultiplier: yieldMultiplier) > 0 {
-                harvestedTiles += 1
+    @discardableResult
+    public mutating func harvestAll(yieldMultiplier: Double = 1.0, maxCapacity: Int? = nil) -> Int {
+        var count = 0
+        for i in 0..<save.world.tiles.count {
+            if isTileReady(i) {
+                if harvest(tileIndex: i, yieldMultiplier: yieldMultiplier, maxCapacity: maxCapacity) > 0 {
+                    count += 1
+                }
             }
         }
-        return harvestedTiles
+        return count
     }
 
     public mutating func resizeGrid(width: Int, height: Int) {

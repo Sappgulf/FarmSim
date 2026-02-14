@@ -17,7 +17,9 @@ final class GameLoopDriver {
     func start() {
         guard timer == nil else { return }
         let timer = Timer(timeInterval: tickInterval, repeats: true) { [weak self] _ in
-            self?.store?.stepAutoTime()
+            Task { @MainActor [weak self] in
+                self?.store?.stepAutoTime()
+            }
         }
         timer.tolerance = min(0.04, tickInterval * 0.25)
         self.timer = timer

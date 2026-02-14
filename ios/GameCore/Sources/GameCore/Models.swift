@@ -1,6 +1,6 @@
 import Foundation
 
-public struct CropDef: Codable, Hashable, Sendable {
+public struct CropDef: Codable, Hashable, Sendable, Identifiable {
     public let id: String
     public let name: String
     public let daysToGrow: Int
@@ -16,7 +16,7 @@ public struct CropDef: Codable, Hashable, Sendable {
     }
 }
 
-public struct DecorDef: Codable, Hashable, Sendable {
+public struct DecorDef: Codable, Hashable, Sendable, Identifiable {
     public let id: String
     public let name: String
     public let cost: Int
@@ -65,7 +65,7 @@ public struct DecorDef: Codable, Hashable, Sendable {
     }
 }
 
-public struct FestivalDef: Codable, Hashable, Sendable {
+public struct FestivalDef: Codable, Hashable, Sendable, Identifiable {
     public let id: String
     public let name: String
     public let season: String
@@ -114,7 +114,7 @@ public struct FestivalDef: Codable, Hashable, Sendable {
     }
 }
 
-public struct MinigameDef: Codable, Hashable, Sendable {
+public struct MinigameDef: Codable, Hashable, Sendable, Identifiable {
     public let id: String
     public let title: String
     public let rounds: Int
@@ -156,10 +156,23 @@ public struct MinigameDef: Codable, Hashable, Sendable {
 public struct PlantedCrop: Codable, Hashable, Sendable {
     public let cropID: String
     public let plantedDay: Int
+    public var growthProgress: Double
 
-    public init(cropID: String, plantedDay: Int) {
+    public init(cropID: String, plantedDay: Int, growthProgress: Double = 0.0) {
         self.cropID = cropID
         self.plantedDay = max(0, plantedDay)
+        self.growthProgress = max(0, growthProgress)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case cropID, plantedDay, growthProgress
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        cropID = try container.decode(String.self, forKey: .cropID)
+        plantedDay = try container.decode(Int.self, forKey: .plantedDay)
+        growthProgress = try container.decodeIfPresent(Double.self, forKey: .growthProgress) ?? 0.0
     }
 }
 

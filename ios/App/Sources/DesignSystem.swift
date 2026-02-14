@@ -111,7 +111,7 @@ struct WoodenPanel<Content: View>: View {
                         )
                     
                     RoundedRectangle(cornerRadius: DS.Radius.lg)
-                        .strokeBorder(SwiftUI.Color(red: 0.35, green: 0.20, blue: 0.05), uniqueWidth: 3)
+                        .strokeBorder(SwiftUI.Color(red: 0.35, green: 0.20, blue: 0.05), lineWidth: 3)
                 }
             )
             .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 3)

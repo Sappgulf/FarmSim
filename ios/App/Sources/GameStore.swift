@@ -171,10 +171,17 @@ final class GameStore {
     ]
 
     private static let defaultExpansionConfig = ExpansionPlan(
-        maxGrid: 5,
+        maxGrid: 12,
         costsByGridSize: [
-            3: 60,
-            4: 180,
+            3: 150,
+            4: 450,
+            5: 1200,
+            6: 3000,
+            7: 7500,
+            8: 15000,
+            9: 30000,
+            10: 60000,
+            11: 120000
         ]
     )
 
@@ -382,11 +389,7 @@ final class GameStore {
         var timeEngine = TimeEngine(config: Self.defaultTimeConfig, state: initialTimeState)
         let nowTimestamp = Date().timeIntervalSince1970
         let offlineCatchup = timeEngine.applyOfflineCatchup(now: nowTimestamp, maxCatchupDays: 14)
-        if offlineCatchup.dayDelta > 0 {
-            for _ in 0..<offlineCatchup.dayDelta {
-                engine.advanceDay()
-            }
-        }
+        
         timeEngine.setLastRealWorldTimestamp(nowTimestamp)
         engine.setTimeState(timeEngine.state)
 
@@ -415,6 +418,20 @@ final class GameStore {
         self.expansionConfig = Self.defaultExpansionConfig
 
         self.selectedSeedID = firstSeed
+        self.statusText = ""
+        self.contentErrorMessage = loadedContent.contentErrorMessage
+        self.lastContentLoadDurationMs = contentLoadDurationMs
+        self.lastSaveLoadDurationMs = saveLoadDurationMs
+        
+        if offlineCatchup.dayDelta > 0 {
+            for _ in 0..<offlineCatchup.dayDelta {
+                self.engine.advanceDay(growthMultiplier: self.growthMultiplier)
+            }
+            self.save = self.engine.save
+            self.renderSnapshot = Self.makeSnapshot(save: self.save, cropDefsByID: self.engine.cropDefsByID)
+            autoSellCrops()
+        }
+
         let startupStatus: String?
         if let loadError {
             startupStatus = loadError
@@ -423,10 +440,8 @@ final class GameStore {
         } else {
             startupStatus = nil
         }
+        
         self.statusText = startupStatus ?? "Tap a tile to manage crops."
-        self.contentErrorMessage = loadedContent.contentErrorMessage
-        self.lastContentLoadDurationMs = contentLoadDurationMs
-        self.lastSaveLoadDurationMs = saveLoadDurationMs
 
         _ = applyProgressionUnlocksIfNeeded()
         syncState(statusOverride: startupStatus, emitHaptic: false, emitHarvest: false)
@@ -528,36 +543,71 @@ final class GameStore {
         )
     }
 
+    func advanceSimulationDays(_ count: Int, status: String, emitHaptic: Bool, triggerDayRollover: Bool) {
+        let safeCount = max(0, count)
+        guard safeCount > 0 else { return }
+
+        for _ in 0..<safeCount {
+            engine.advanceDay(growthMultiplier: growthMultiplier)
+        }
+        autoSellCrops()
+        engine.setTimeState(timeEngine.state)
+
+        if triggerDayRollover {
+            dayRolloverMessage = status
+            dayRolloverToken += 1
+            SoundManager.shared.play(.success)
+        }
+
+        syncState(statusOverride: status, emitHaptic: emitHaptic, emitHarvest: false)
+        refreshHUDTime(force: true, now: Date().timeIntervalSince1970)
+    }
+
+
+
     func plantSelectedSeed(on tileIndex: Int) {
         let planted = engine.plant(tileIndex: tileIndex, cropID: selectedSeedID)
         let cropName = engine.cropDefsByID[selectedSeedID]?.name ?? selectedSeedID
         let status = planted ? "Planted \(cropName)." : "Cannot plant here."
+        if planted { SoundManager.shared.play(.plant) }
         syncState(statusOverride: status, emitHaptic: planted, emitHarvest: false)
     }
 
     func waterTile(index: Int) {
         let watered = engine.water(tileIndex: index)
         let status = watered ? "Tile watered." : "Nothing to water."
+        if watered { SoundManager.shared.play(.water) }
         syncState(statusOverride: status, emitHaptic: watered, emitHarvest: false)
     }
 
     func clearTile(index: Int) {
         let cleared = engine.clearTile(tileIndex: index)
         let status = cleared ? "Crop removed." : "Tile already empty."
+        if cleared { SoundManager.shared.play(.click) }
         syncState(statusOverride: status, emitHaptic: cleared, emitHarvest: false)
     }
 
     func harvestTile(index: Int) {
-        let harvested = engine.harvestYield(tileIndex: index, yieldMultiplier: yieldMultiplier)
-        let status = harvested > 0 ? "Harvested x\(harvested)." : "Not ready yet."
-        if harvested > 0 { SoundManager.shared.play(.harvest) }
+        let harvested = engine.harvest(tileIndex: index, yieldMultiplier: yieldMultiplier, maxCapacity: maxInventoryCapacity)
+        let status: String
+        if harvested > 0 {
+            status = "Harvested \(harvested) crops."
+            SoundManager.shared.play(.harvest)
+        } else {
+            status = isInventoryFull ? "Silo is full! Upgrade or sell crops." : "Nothing to harvest."
+        }
         syncState(statusOverride: status, emitHaptic: harvested > 0, emitHarvest: harvested > 0)
     }
 
     func harvestAll() {
-        let count = engine.harvestAll(yieldMultiplier: yieldMultiplier)
-        let status = count > 0 ? "Harvested \(count) tile\(count == 1 ? "" : "s")." : "No ready crops."
-        if count > 0 { SoundManager.shared.play(.harvest) }
+        let count = engine.harvestAll(yieldMultiplier: yieldMultiplier, maxCapacity: maxInventoryCapacity)
+        let status: String
+        if count > 0 {
+            status = "Harvested \(count) crops total."
+            SoundManager.shared.play(.harvest)
+        } else {
+            status = isInventoryFull ? "Silo is full! Cannot harvest more." : "No crops ready."
+        }
         syncState(statusOverride: status, emitHaptic: count > 0, emitHarvest: count > 0)
     }
 
@@ -1132,8 +1182,7 @@ final class GameStore {
         guard save.world.tiles.indices.contains(tileIndex),
               let planted = save.world.tiles[tileIndex].planted,
               let def = engine.cropDefsByID[planted.cropID] else { return 0 }
-        let grown = max(0, save.world.day - planted.plantedDay)
-        return min(1.0, Double(grown) / Double(max(1, def.daysToGrow)))
+        return min(1.0, planted.growthProgress / Double(max(1, def.daysToGrow)))
     }
 
     func persistNow() {
@@ -1243,22 +1292,40 @@ final class GameStore {
 
     private var buildingYieldMultiplier: Double {
         let barn = levelMultiplier(level: buildingLevel(for: "barn"), values: [1.2, 1.35, 1.55, 1.8, 2.2])
-        let greenhouse = levelMultiplier(level: buildingLevel(for: "greenhouse"), values: [1.05, 1.1, 1.15, 1.2, 1.25])
         let well = levelMultiplier(level: buildingLevel(for: "well"), values: [1.0, 1.0, 1.05, 1.1])
         let workshop = levelMultiplier(level: buildingLevel(for: "workshop"), values: [1.0, 1.1, 1.25])
-        var multiplier = barn * greenhouse * well * workshop
+        var multiplier = barn * well * workshop
 
-        let hasHydroGarden = buildingLevel(for: "well") > 0 && buildingLevel(for: "greenhouse") > 0
-        if hasHydroGarden {
-            multiplier *= 1.15
-        }
-
-        let hasFullFarm = hasHydroGarden && buildingLevel(for: "barn") > 0
+        let hasFullFarm = buildingLevel(for: "well") > 0 && buildingLevel(for: "greenhouse") > 0 && buildingLevel(for: "barn") > 0
         if hasFullFarm {
             multiplier *= 1.2
         }
 
         return min(8.0, max(1.0, multiplier))
+    }
+
+    private var buildingGrowthMultiplier: Double {
+        let greenhouse = levelMultiplier(level: buildingLevel(for: "greenhouse"), values: [1.3, 1.5, 1.75, 2.1, 2.5])
+        var multiplier = greenhouse
+        
+        let hasHydroGarden = buildingLevel(for: "well") > 0 && buildingLevel(for: "greenhouse") > 0
+        if hasHydroGarden {
+            multiplier *= 1.15
+        }
+        
+        return min(5.0, max(1.0, multiplier))
+    }
+
+    var growthMultiplier: Double {
+        buildingGrowthMultiplier * researchGrowthMultiplier
+    }
+
+    private var researchGrowthMultiplier: Double {
+        var multiplier = 1.0
+        if isResearchCompleted("climate_control") {
+            multiplier *= 1.15
+        }
+        return multiplier
     }
 
     private var researchYieldMultiplier: Double {
@@ -1279,6 +1346,28 @@ final class GameStore {
             multiplier *= 1.1
         }
         return min(4.0, max(1.0, multiplier))
+    }
+
+    var maxInventoryCapacity: Int {
+        let base = 50
+        let silo = buildingLevel(for: "silo")
+        let bonuses = [0, 50, 150, 400, 1000]
+        let index = max(0, min(bonuses.count - 1, silo))
+        return base + bonuses[index]
+    }
+
+    var isInventoryFull: Bool {
+        save.player.inventory.crops.values.reduce(0, +) >= maxInventoryCapacity
+    }
+
+    private func autoSellCrops() {
+        guard buildingLevel(for: "silo") >= 2 else { return }
+        // Auto-sell 10% of stock every day
+        for (cropID, count) in save.player.inventory.crops {
+            guard count > 0 else { continue }
+            let toSell = max(1, Int(Double(count) * 0.1))
+            _ = sellCrop(cropID: cropID, quantity: min(count, toSell))
+        }
     }
 
     private var buildingSellMultiplier: Double {
@@ -1396,23 +1485,7 @@ final class GameStore {
             .joined(separator: " ")
     }
 
-    private func advanceSimulationDays(_ count: Int, status: String, emitHaptic: Bool, triggerDayRollover: Bool) {
-        let safeCount = max(0, count)
-        guard safeCount > 0 else { return }
 
-        for _ in 0..<safeCount {
-            engine.advanceDay()
-        }
-        engine.setTimeState(timeEngine.state)
-
-        if triggerDayRollover {
-            dayRolloverMessage = status
-            dayRolloverToken += 1
-        }
-
-        syncState(statusOverride: status, emitHaptic: emitHaptic, emitHarvest: false)
-        refreshHUDTime(force: true, now: Date().timeIntervalSince1970)
-    }
 
     private func refreshHUDTime(force: Bool, now: TimeInterval) {
         if !force && (now - lastHUDPublishTimestamp) < Self.hudPublishIntervalSeconds {

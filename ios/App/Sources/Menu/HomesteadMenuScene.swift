@@ -79,7 +79,7 @@ final class HomesteadMenuScene: SKScene {
     // MARK: - Scene Building
     
     private func buildVectorScene() {
-        guard let view = view else { return }
+        guard view != nil else { return }
 
         // 1. Sky — warm gradient via layered fills
         skyNode.zPosition = Z.sky.rawValue

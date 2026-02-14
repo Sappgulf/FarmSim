@@ -1,6 +1,18 @@
 # Changelog
 
-## 2026-02-13
+## [4.2.1] - 2026-02-13
+### Added
+- New **Premium App Icon**: "Friendly Barn" (text-free, high-quality 3D style).
+- **Wooden Barn Theme**: Comprehensive UI overhaul for `TownMarketView`, `AlmanacView`, and `BarnInventoryView` using cohesive wooden panel aesthetics.
+- **Paper Label Aesthetics**: Redesigned `ItemCardView` to look like organic paper labels on crates.
+- Organic rotation effects to inventory items for a hand-crafted look.
+
+### Changed
+- Refactored `TownMarketView` to use a cleaner, more readable market-board layout.
+- Optimized `DesignSystem` with better shadows and premium wooden gradients.
+- Updated `project.yml` with improved asset catalog management.
+
+## [4.2.0] - 2026-02-13
 
 - **Implemented**
   - **Scope:** iOS cozy animated homestead main menu + boot navigation flow

@@ -50,69 +50,89 @@ struct MainMenuView: View {
                 .ignoresSafeArea()
 
                 VStack {
+                    HStack {
+                        Spacer()
+                        Button {
+                            appState.showingMenuSettings = true
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .font(.title3)
+                                .foregroundStyle(.white.opacity(0.8))
+                                .padding(DS.Space.sm)
+                                .background(.ultraThinMaterial, in: Circle())
+                                .shadow(color: .black.opacity(0.2), radius: 4)
+                        }
+                        .padding(DS.Space.md)
+                    }
+                    
                     Spacer()
                     
                     // Title
-                    VStack(spacing: DS.Space.xs) {
-                        Text("FARM SIM")
-                            .font(.system(size: 80, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
-                            .shadow(color: Color(red: 0.4, green: 0.2, blue: 0.1), radius: 0, x: 2, y: 4)
-                            .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
-                            .scaleEffect(titleAppeared ? 1.0 : 0.8)
-                            .opacity(titleAppeared ? 1.0 : 0)
-                        
-                        Text("Cozy Living")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.9))
-                            .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
-                            .opacity(titleAppeared ? 1.0 : 0)
-                    }
-                    .padding(.top, 60)
-                    
-                    Spacer()
-
-                    // Menu Buttons in Wood Panel
-                    VStack(spacing: 16) {
-                        MenuButtonsView(
-                            hasSave: hasSave,
-                            isBusy: false,
-                            onPrimaryAction: onContinue,
-                            onNewGameAction: { confirmNewGame = true },
-                            onSettingsAction: { appState.showingMenuSettings = true },
-                            onCreditsAction: { showCredits = true }
-                        )
-                        .buttonStyle(WoodButtonStyle())
-                    }
-                    .padding(32)
-                    .background(
+                    VStack(spacing: -DS.Space.xs) {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 32)
-                                .fill(
+                            // Bottom Shadow/Depth
+                            Text("FARM SIM")
+                                .font(.system(size: 82, weight: .black, design: .rounded))
+                                .foregroundStyle(Color(red: 0.3, green: 0.15, blue: 0.05))
+                                .offset(y: 6)
+                            
+                            // Middle Depth
+                            Text("FARM SIM")
+                                .font(.system(size: 82, weight: .black, design: .rounded))
+                                .foregroundStyle(Color(red: 0.45, green: 0.25, blue: 0.1))
+                                .offset(y: 3)
+
+                            // Top Layer (Wood Gradient)
+                            Text("FARM SIM")
+                                .font(.system(size: 82, weight: .black, design: .rounded))
+                                .foregroundStyle(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 0.60, green: 0.40, blue: 0.20),
-                                            Color(red: 0.45, green: 0.25, blue: 0.10)
+                                            Color(red: 0.95, green: 0.8, blue: 0.5),
+                                            Color(red: 0.7, green: 0.45, blue: 0.2)
                                         ],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
                                 )
-                            
-                            RoundedRectangle(cornerRadius: 32)
-                                .strokeBorder(Color(red: 0.35, green: 0.20, blue: 0.05), uniqueWidth: 4)
+                                .shadow(color: Color(red: 0.25, green: 0.15, blue: 0.05).opacity(0.8), radius: 1, x: 0, y: 1)
+                                .shadow(color: Color(red: 0.25, green: 0.15, blue: 0.05).opacity(0.8), radius: 1, x: 0, y: -1)
+                                .shadow(color: Color(red: 0.25, green: 0.15, blue: 0.05).opacity(0.8), radius: 1, x: 1, y: 0)
+                                .shadow(color: Color(red: 0.25, green: 0.15, blue: 0.05).opacity(0.8), radius: 1, x: -1, y: 0)
                         }
+                        .scaleEffect(titleAppeared ? 1.0 : 0.8)
+                        .opacity(titleAppeared ? 1.0 : 0)
+                        
+                        Text("Cozy Living")
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .shadow(color: .black.opacity(0.5), radius: 4, x: 0, y: 2)
+                            .padding(.top, DS.Space.sm)
+                            .opacity(titleAppeared ? 1.0 : 0)
+                    }
+                    .padding(.top, 40)
+                    
+                    Spacer()
+
+                    // Menu Buttons (No panel, just clean)
+                    MenuButtonsView(
+                        hasSave: hasSave,
+                        isBusy: false,
+                        onPrimaryAction: onContinue,
+                        onNewGameAction: { confirmNewGame = true },
+                        onSettingsAction: { appState.showingMenuSettings = true },
+                        onCreditsAction: { showCredits = true }
                     )
-                    .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
-                    .frame(maxWidth: 400)
+                    .buttonStyle(WoodButtonStyle())
+                    .frame(maxWidth: 300)
+                    .padding(.bottom, 60)
                     .scaleEffect(buttonsAppeared ? 1.0 : 0.9)
                     .opacity(buttonsAppeared ? 1.0 : 0)
                     
                     Text("v1.0.0 · Swift 5.10")
                         .font(.caption.bold())
-                        .foregroundStyle(.white.opacity(0.6))
-                        .padding(.top, 20)
-                        .padding(.bottom, 20)
+                        .foregroundStyle(.white.opacity(0.4))
+                        .padding(.bottom, 12)
                 }
             }
             .onAppear {

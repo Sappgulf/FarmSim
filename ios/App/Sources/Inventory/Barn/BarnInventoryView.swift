@@ -20,6 +20,7 @@ struct BarnInventoryView: View {
                         BarnHeaderHUD(
                             coins: store.save.player.coins,
                             stockCount: totalStockCount,
+                            maxCapacity: store.maxInventoryCapacity,
                             onVisitShop: { showingShopCounter = true },
                             onOpenMarketTab: { appState.selectedTab = .market }
                         )
@@ -435,6 +436,7 @@ private struct BarnItemDetailSheet: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+
 
                     Text(item.detail)
                         .font(.body)

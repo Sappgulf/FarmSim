@@ -3,6 +3,7 @@ import SwiftUI
 struct BarnHeaderHUD: View {
     let coins: Int
     let stockCount: Int
+    let maxCapacity: Int
     let onVisitShop: () -> Void
     let onOpenMarketTab: () -> Void
 
@@ -32,9 +33,10 @@ struct BarnHeaderHUD: View {
                 }
 
                 HStack(spacing: DS.Space.sm) {
-                    Label("\(stockCount) crates", systemImage: "shippingbox.fill")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.8))
+                    let isFull = stockCount >= maxCapacity
+                    Label("\(stockCount) / \(maxCapacity) crates", systemImage: isFull ? "exclamationmark.triangle.fill" : "shippingbox.fill")
+                        .font(.caption.bold())
+                        .foregroundStyle(isFull ? DS.Color.accent : .white.opacity(0.8))
 
                     Spacer()
 
