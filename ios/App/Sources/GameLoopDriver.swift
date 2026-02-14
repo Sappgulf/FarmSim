@@ -16,11 +16,13 @@ final class GameLoopDriver {
 
     func start() {
         guard timer == nil else { return }
-        let timer = Timer(timeInterval: tickInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.store?.stepAutoTime()
-            }
-        }
+        let timer = Timer(
+            timeInterval: tickInterval,
+            target: self,
+            selector: #selector(handleTick(_:)),
+            userInfo: nil,
+            repeats: true
+        )
         timer.tolerance = min(0.04, tickInterval * 0.25)
         self.timer = timer
         RunLoop.main.add(timer, forMode: .common)
@@ -33,6 +35,10 @@ final class GameLoopDriver {
 
     deinit {
         timer?.invalidate()
+    }
+
+    @objc private func handleTick(_ timer: Timer) {
+        store?.stepAutoTime()
     }
 }
 
@@ -47,6 +53,7 @@ final class SoundManager {
     var hapticsEnabled: Bool = true
 
     private var audioPlayer: AVAudioPlayer?
+    private var hapticGenerators: [UIImpactFeedbackGenerator.FeedbackStyle: UIImpactFeedbackGenerator] = [:]
 
     private init() {}
 
@@ -65,7 +72,7 @@ final class SoundManager {
 
     func play(_ effect: SoundEffect, haptic: UIImpactFeedbackGenerator.FeedbackStyle? = nil) {
         if let haptic, hapticsEnabled {
-            let generator = UIImpactFeedbackGenerator(style: haptic)
+            let generator = impactGenerator(for: haptic)
             generator.prepare()
             generator.impactOccurred()
         }
@@ -121,5 +128,14 @@ final class SoundManager {
         if !sound {
             stopMusic()
         }
+    }
+
+    private func impactGenerator(for style: UIImpactFeedbackGenerator.FeedbackStyle) -> UIImpactFeedbackGenerator {
+        if let generator = hapticGenerators[style] {
+            return generator
+        }
+        let generator = UIImpactFeedbackGenerator(style: style)
+        hapticGenerators[style] = generator
+        return generator
     }
 }

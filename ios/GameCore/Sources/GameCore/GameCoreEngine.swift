@@ -278,11 +278,22 @@ public struct GameCoreEngine: Sendable {
     @discardableResult
     public mutating func harvestAll(yieldMultiplier: Double = 1.0, maxCapacity: Int? = nil) -> Int {
         var count = 0
-        for i in 0..<save.world.tiles.count {
-            if isTileReady(i) {
-                if harvest(tileIndex: i, yieldMultiplier: yieldMultiplier, maxCapacity: maxCapacity) > 0 {
+        if let maxCapacity {
+            var totalCrops = save.player.inventory.crops.values.reduce(0, +)
+            for i in 0..<save.world.tiles.count {
+                guard totalCrops < maxCapacity else { break }
+                let harvested = harvest(tileIndex: i, yieldMultiplier: yieldMultiplier, maxCapacity: nil)
+                if harvested > 0 {
                     count += 1
+                    totalCrops += harvested
                 }
+            }
+            return count
+        }
+
+        for i in 0..<save.world.tiles.count {
+            if harvest(tileIndex: i, yieldMultiplier: yieldMultiplier, maxCapacity: nil) > 0 {
+                count += 1
             }
         }
         return count

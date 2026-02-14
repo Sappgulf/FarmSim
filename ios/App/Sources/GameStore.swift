@@ -236,6 +236,24 @@ final class GameStore {
     @ObservationIgnored private var appIsActive: Bool = true
     @ObservationIgnored private var menuPresented: Bool = false
     @ObservationIgnored private var lastHUDPublishTimestamp: TimeInterval = 0
+    @ObservationIgnored private var buildingPlansByID: [String: BuildingPlan] = [:]
+    @ObservationIgnored private var researchPlansByID: [String: ResearchPlan] = [:]
+    @ObservationIgnored private var geneticsRecipesByID: [String: GeneticsRecipe] = [:]
+    @ObservationIgnored private var livestockPlansByID: [String: LivestockTypePlan] = [:]
+    @ObservationIgnored private var petPlansByID: [String: PetTypePlan] = [:]
+    @ObservationIgnored private var challengePlansByID: [String: ChallengePlan] = [:]
+    @ObservationIgnored private var pondUpgradesByLevel: [Int: PondUpgradePlan] = [:]
+    @ObservationIgnored private var cachedReadyTileCount: Int = 0
+    @ObservationIgnored private var cachedPlantedTileCount: Int = 0
+    @ObservationIgnored private var cachedSeedInventoryCount: Int = 0
+    @ObservationIgnored private var cachedCropInventoryCount: Int = 0
+    @ObservationIgnored private var cachedBuiltStructureCount: Int = 0
+    @ObservationIgnored private var cachedLivestockCount: Int = 0
+    @ObservationIgnored private var cachedUsedLivestockCapacity: Int = 0
+    @ObservationIgnored private var cachedTotalFishCaught: Int = 0
+    @ObservationIgnored private var cachedDailySpecials: Set<String> = []
+    @ObservationIgnored private var cachedDailySpecialDay: Int = -1
+    @ObservationIgnored private var cachedDailySpecialSeed: UInt64 = 0
 
     private static let settingsKey = "com.farmsim.settings.v1"
     private static let onboardingKey = "com.farmsim.onboarding.seen"
@@ -283,11 +301,15 @@ final class GameStore {
     }
 
     var readyTileCount: Int {
-        save.world.tiles.indices.reduce(0) { $0 + (engine.isTileReady($1) ? 1 : 0) }
+        cachedReadyTileCount
     }
 
     var plantedTileCount: Int {
-        save.world.tiles.reduce(0) { $0 + ($1.planted != nil ? 1 : 0) }
+        cachedPlantedTileCount
+    }
+
+    var totalInventoryCount: Int {
+        cachedSeedInventoryCount + cachedCropInventoryCount
     }
 
     var totalTileCount: Int {
@@ -399,6 +421,16 @@ final class GameStore {
         self.save = engine.save
         self.renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
 
+        let resolvedBuildingCatalog = loadedContent.buildingPlans.isEmpty ? Self.defaultBuildingCatalog : loadedContent.buildingPlans
+        let resolvedBuildingSynergies = loadedContent.buildingSynergies.isEmpty ? Self.defaultBuildingSynergyCatalog : loadedContent.buildingSynergies
+        let resolvedResearchCatalog = loadedContent.researchPlans.isEmpty ? Self.defaultResearchCatalog : loadedContent.researchPlans
+        let resolvedGeneticsCatalog = loadedContent.geneticsRecipes.isEmpty ? Self.defaultGeneticsCatalog : loadedContent.geneticsRecipes
+        let resolvedLivestockCatalog = loadedContent.livestockPlans.isEmpty ? Self.defaultLivestockCatalog : loadedContent.livestockPlans
+        let resolvedPetCatalog = loadedContent.petPlans.isEmpty ? Self.defaultPetCatalog : loadedContent.petPlans
+        let resolvedFishCatalog = loadedContent.fishPlans.isEmpty ? Self.defaultFishCatalog : loadedContent.fishPlans
+        let resolvedPondUpgradeCatalog = loadedContent.pondUpgrades.isEmpty ? Self.defaultPondUpgrades : loadedContent.pondUpgrades.sorted { $0.level < $1.level }
+        let resolvedChallengeCatalog = loadedContent.challengePlans.isEmpty ? Self.defaultChallengeCatalog : loadedContent.challengePlans
+
         self.cropDefs = sortedDefs
         self.cropDisplay = loadedContent.cropDisplay
         self.decorDefs = loadedContent.decorDefs
@@ -406,16 +438,23 @@ final class GameStore {
         self.minigameDefs = loadedContent.minigameDefs
         self.almanacEntries = loadedContent.almanacEntries
         self.strings = loadedContent.strings
-        self.buildingCatalog = loadedContent.buildingPlans.isEmpty ? Self.defaultBuildingCatalog : loadedContent.buildingPlans
-        self.buildingSynergies = loadedContent.buildingSynergies.isEmpty ? Self.defaultBuildingSynergyCatalog : loadedContent.buildingSynergies
-        self.researchCatalog = loadedContent.researchPlans.isEmpty ? Self.defaultResearchCatalog : loadedContent.researchPlans
-        self.geneticsCatalog = loadedContent.geneticsRecipes.isEmpty ? Self.defaultGeneticsCatalog : loadedContent.geneticsRecipes
-        self.livestockCatalog = loadedContent.livestockPlans.isEmpty ? Self.defaultLivestockCatalog : loadedContent.livestockPlans
-        self.petCatalog = loadedContent.petPlans.isEmpty ? Self.defaultPetCatalog : loadedContent.petPlans
-        self.fishCatalog = loadedContent.fishPlans.isEmpty ? Self.defaultFishCatalog : loadedContent.fishPlans
-        self.pondUpgradeCatalog = loadedContent.pondUpgrades.isEmpty ? Self.defaultPondUpgrades : loadedContent.pondUpgrades.sorted { $0.level < $1.level }
-        self.challengeCatalog = loadedContent.challengePlans.isEmpty ? Self.defaultChallengeCatalog : loadedContent.challengePlans
+        self.buildingCatalog = resolvedBuildingCatalog
+        self.buildingSynergies = resolvedBuildingSynergies
+        self.researchCatalog = resolvedResearchCatalog
+        self.geneticsCatalog = resolvedGeneticsCatalog
+        self.livestockCatalog = resolvedLivestockCatalog
+        self.petCatalog = resolvedPetCatalog
+        self.fishCatalog = resolvedFishCatalog
+        self.pondUpgradeCatalog = resolvedPondUpgradeCatalog
+        self.challengeCatalog = resolvedChallengeCatalog
         self.expansionConfig = Self.defaultExpansionConfig
+        self.buildingPlansByID = Dictionary(uniqueKeysWithValues: resolvedBuildingCatalog.map { ($0.id, $0) })
+        self.researchPlansByID = Dictionary(uniqueKeysWithValues: resolvedResearchCatalog.map { ($0.id, $0) })
+        self.geneticsRecipesByID = Dictionary(uniqueKeysWithValues: resolvedGeneticsCatalog.map { ($0.id, $0) })
+        self.livestockPlansByID = Dictionary(uniqueKeysWithValues: resolvedLivestockCatalog.map { ($0.id, $0) })
+        self.petPlansByID = Dictionary(uniqueKeysWithValues: resolvedPetCatalog.map { ($0.id, $0) })
+        self.challengePlansByID = Dictionary(uniqueKeysWithValues: resolvedChallengeCatalog.map { ($0.id, $0) })
+        self.pondUpgradesByLevel = Dictionary(uniqueKeysWithValues: resolvedPondUpgradeCatalog.map { ($0.level, $0) })
 
         self.selectedSeedID = firstSeed
         self.statusText = ""
@@ -676,13 +715,13 @@ final class GameStore {
     }
 
     func nextBuildingCost(for buildingID: String) -> Int? {
-        guard let plan = buildingPlans.first(where: { $0.id == buildingID }) else { return nil }
+        guard let plan = buildingPlansByID[buildingID] else { return nil }
         return plan.costForNextLevel(currentLevel: buildingLevel(for: buildingID))
     }
 
     @discardableResult
     func upgradeBuilding(_ buildingID: String) -> Bool {
-        guard let plan = buildingPlans.first(where: { $0.id == buildingID }) else { return false }
+        guard let plan = buildingPlansByID[buildingID] else { return false }
         guard playerLevel >= plan.requiredLevel else {
             syncState(statusOverride: "Reach level \(plan.requiredLevel) to unlock \(plan.name).", emitHaptic: false, emitHarvest: false)
             return false
@@ -716,7 +755,7 @@ final class GameStore {
 
     @discardableResult
     func completeResearch(_ researchID: String) -> Bool {
-        guard let plan = researchPlans.first(where: { $0.id == researchID }) else { return false }
+        guard let plan = researchPlansByID[researchID] else { return false }
         guard canCompleteResearch(plan) else {
             syncState(statusOverride: "Research requirements not met for \(plan.name).", emitHaptic: false, emitHarvest: false)
             return false
@@ -738,7 +777,7 @@ final class GameStore {
 
     @discardableResult
     func discoverHybrid(_ recipeID: String) -> Bool {
-        guard let recipe = geneticsRecipes.first(where: { $0.id == recipeID }) else { return false }
+        guard let recipe = geneticsRecipesByID[recipeID] else { return false }
         guard isResearchCompleted("hybrid_crops") else {
             syncState(statusOverride: "Complete Hybrid Crops research first.", emitHaptic: false, emitHarvest: false)
             return false
@@ -769,13 +808,11 @@ final class GameStore {
     }
 
     var usedLivestockCapacity: Int {
-        livestockPlans.reduce(0) { partial, plan in
-            partial + (livestockCount(for: plan.id) * max(1, plan.spaceRequired))
-        }
+        cachedUsedLivestockCapacity
     }
 
     func canBuyLivestock(_ livestockID: String) -> Bool {
-        guard let plan = livestockPlans.first(where: { $0.id == livestockID }) else { return false }
+        guard let plan = livestockPlansByID[livestockID] else { return false }
         guard playerLevel >= plan.requiredLevel else { return false }
         guard save.player.coins >= plan.cost else { return false }
         return (usedLivestockCapacity + plan.spaceRequired) <= livestockCapacity
@@ -783,7 +820,7 @@ final class GameStore {
 
     @discardableResult
     func buyLivestock(_ livestockID: String) -> Bool {
-        guard let plan = livestockPlans.first(where: { $0.id == livestockID }) else { return false }
+        guard let plan = livestockPlansByID[livestockID] else { return false }
         guard playerLevel >= plan.requiredLevel else {
             syncState(statusOverride: "Reach level \(plan.requiredLevel) to unlock \(plan.name).", emitHaptic: false, emitHarvest: false)
             return false
@@ -827,7 +864,7 @@ final class GameStore {
     }
 
     func canAdoptPet(_ petID: String) -> Bool {
-        guard let plan = petPlans.first(where: { $0.id == petID }) else { return false }
+        guard let plan = petPlansByID[petID] else { return false }
         guard petLevel(for: petID) == 0 else { return false }
         guard playerLevel >= plan.requiredLevel else { return false }
         return save.player.coins >= plan.cost
@@ -835,7 +872,7 @@ final class GameStore {
 
     @discardableResult
     func adoptPet(_ petID: String) -> Bool {
-        guard let plan = petPlans.first(where: { $0.id == petID }) else { return false }
+        guard let plan = petPlansByID[petID] else { return false }
         guard petLevel(for: petID) == 0 else {
             syncState(statusOverride: "\(plan.name) already adopted.", emitHaptic: false, emitHarvest: false)
             return false
@@ -856,7 +893,7 @@ final class GameStore {
 
     @discardableResult
     func trainPet(_ petID: String) -> Bool {
-        guard let plan = petPlans.first(where: { $0.id == petID }) else { return false }
+        guard let plan = petPlansByID[petID] else { return false }
         let current = petLevel(for: petID)
         guard current > 0 else {
             syncState(statusOverride: "Adopt \(plan.name) first.", emitHaptic: false, emitHarvest: false)
@@ -882,16 +919,20 @@ final class GameStore {
     }
 
     var currentPondUpgrade: PondUpgradePlan {
-        pondUpgrades
-            .sorted { $0.level < $1.level }
-            .last(where: { $0.level <= fishingPondLevel })
-            ?? PondUpgradePlan(id: "basic", level: 1, name: "Basic Pond", capacity: 3, regenRate: 1, cost: 0, rarityBonus: 1)
+        let level = fishingPondLevel
+        if let direct = pondUpgradesByLevel[level] {
+            return direct
+        }
+        for fallbackLevel in stride(from: level - 1, through: 1, by: -1) {
+            if let plan = pondUpgradesByLevel[fallbackLevel] {
+                return plan
+            }
+        }
+        return PondUpgradePlan(id: "basic", level: 1, name: "Basic Pond", capacity: 3, regenRate: 1, cost: 0, rarityBonus: 1)
     }
 
     var nextPondUpgrade: PondUpgradePlan? {
-        pondUpgrades
-            .sorted { $0.level < $1.level }
-            .first(where: { $0.level == fishingPondLevel + 1 })
+        pondUpgradesByLevel[fishingPondLevel + 1]
     }
 
     @discardableResult
@@ -914,7 +955,7 @@ final class GameStore {
     }
 
     var totalFishCaught: Int {
-        save.meta.fishCaughtCounts.values.reduce(0, +)
+        cachedTotalFishCaught
     }
 
     @discardableResult
@@ -925,20 +966,19 @@ final class GameStore {
         }
 
         let rarityBonus = max(1.0, currentPondUpgrade.rarityBonus)
-        let roll = Double.random(in: 0...1)
-        let weighted = fishPlans
-            .map { fish in
-                let isRare = fish.rarity <= 0.1
-                let adjusted = isRare ? fish.rarity * rarityBonus : fish.rarity
-                return (fish: fish, weight: max(0.0001, adjusted))
-            }
-        let total = weighted.reduce(0.0) { $0 + $1.weight }
-        var cursor = roll * total
-        var chosen = weighted.first?.fish ?? fishPlans[0]
-        for entry in weighted {
-            cursor -= entry.weight
+        var totalWeight = 0.0
+        for fish in fishPlans {
+            let adjusted = fish.rarity <= 0.1 ? fish.rarity * rarityBonus : fish.rarity
+            totalWeight += max(0.0001, adjusted)
+        }
+
+        var cursor = Double.random(in: 0...1) * totalWeight
+        var chosen = fishPlans[0]
+        for fish in fishPlans {
+            let adjusted = fish.rarity <= 0.1 ? fish.rarity * rarityBonus : fish.rarity
+            cursor -= max(0.0001, adjusted)
             if cursor <= 0 {
-                chosen = entry.fish
+                chosen = fish
                 break
             }
         }
@@ -954,13 +994,13 @@ final class GameStore {
     func challengeProgress(for challenge: ChallengePlan) -> Int {
         switch challenge.metric {
         case "total_crops_inventory":
-            return save.player.inventory.crops.values.reduce(0, +)
+            return cachedCropInventoryCount
         case "active_plots":
             return plantedTileCount
         case "built_structures":
-            return buildingPlans.reduce(0) { $0 + (buildingLevel(for: $1.id) > 0 ? 1 : 0) }
+            return cachedBuiltStructureCount
         case "livestock_count":
-            return livestockPlans.reduce(0) { $0 + livestockCount(for: $1.id) }
+            return cachedLivestockCount
         case "coin_balance":
             return save.player.coins
         default:
@@ -979,7 +1019,7 @@ final class GameStore {
 
     @discardableResult
     func claimChallenge(_ challengeID: String) -> Bool {
-        guard let challenge = challengePlans.first(where: { $0.id == challengeID }) else { return false }
+        guard let challenge = challengePlansByID[challengeID] else { return false }
         guard canClaimChallenge(challenge) else {
             syncState(statusOverride: "Challenge requirements not met.", emitHaptic: false, emitHarvest: false)
             return false
@@ -1081,10 +1121,14 @@ final class GameStore {
 
     var dailySpecialSeedIDs: Set<String> {
         let day = save.world.day
+        let daySeed = save.daySeed
+        if cachedDailySpecialDay == day && cachedDailySpecialSeed == daySeed {
+            return cachedDailySpecials
+        }
         let ranked = cropDefs.map { crop in
             (
                 crop.id,
-                stableHash("\(crop.id)#\(day)#\(save.daySeed)")
+                stableHash("\(crop.id)#\(day)#\(daySeed)")
             )
         }
         .sorted { lhs, rhs in
@@ -1092,7 +1136,11 @@ final class GameStore {
             return lhs.1 < rhs.1
         }
         let count = min(2, ranked.count)
-        return Set(ranked.prefix(count).map(\.0))
+        let specials = Set(ranked.prefix(count).map(\.0))
+        cachedDailySpecialDay = day
+        cachedDailySpecialSeed = daySeed
+        cachedDailySpecials = specials
+        return specials
     }
 
     func isDailySpecialSeed(_ cropID: String) -> Bool {
@@ -1357,16 +1405,29 @@ final class GameStore {
     }
 
     var isInventoryFull: Bool {
-        save.player.inventory.crops.values.reduce(0, +) >= maxInventoryCapacity
+        cachedCropInventoryCount >= maxInventoryCapacity
     }
 
     private func autoSellCrops() {
         guard buildingLevel(for: "silo") >= 2 else { return }
-        // Auto-sell 10% of stock every day
-        for (cropID, count) in save.player.inventory.crops {
+        var soldAnything = false
+        let currentSellMultiplier = sellBonusMultiplier
+        let cropDefsByID = engine.cropDefsByID
+        // Auto-sell 10% of stock every day without emitting per-item sync/haptics.
+        for (cropID, count) in engine.save.player.inventory.crops {
             guard count > 0 else { continue }
             let toSell = max(1, Int(Double(count) * 0.1))
-            _ = sellCrop(cropID: cropID, quantity: min(count, toSell))
+            guard let def = cropDefsByID[cropID] else { continue }
+            let unitPrice = max(1, Int((Double(def.sellPrice) * currentSellMultiplier).rounded(.down)))
+            let result = engine.sell(
+                itemID: cropID,
+                quantity: min(count, toSell),
+                pricing: MarketPricing(cropUnitPrices: [cropID: unitPrice])
+            )
+            soldAnything = soldAnything || result.success
+        }
+        if soldAnything {
+            save = engine.save
         }
     }
 
@@ -1533,6 +1594,7 @@ final class GameStore {
 
         engine.setTimeState(timeEngine.state)
         save = engine.save
+        recomputeDerivedStateCaches()
         renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
 
         if let statusOverride {
@@ -1553,6 +1615,36 @@ final class GameStore {
         if settings.hapticsEnabled, emitHarvest {
             harvestToken += 1
         }
+    }
+
+    private func recomputeDerivedStateCaches() {
+        var planted = 0
+        var ready = 0
+        let defsByID = engine.cropDefsByID
+
+        for tile in save.world.tiles {
+            guard let plantedCrop = tile.planted else { continue }
+            planted += 1
+            if let def = defsByID[plantedCrop.cropID],
+               plantedCrop.growthProgress >= Double(def.daysToGrow) {
+                ready += 1
+            }
+        }
+
+        cachedPlantedTileCount = planted
+        cachedReadyTileCount = ready
+        cachedSeedInventoryCount = save.player.inventory.seeds.values.reduce(0, +)
+        cachedCropInventoryCount = save.player.inventory.crops.values.reduce(0, +)
+        cachedBuiltStructureCount = buildingCatalog.reduce(0) { partial, plan in
+            partial + ((save.meta.buildingLevels[plan.id] ?? 0) > 0 ? 1 : 0)
+        }
+        cachedLivestockCount = livestockCatalog.reduce(0) { partial, plan in
+            partial + max(0, save.meta.livestockCounts[plan.id] ?? 0)
+        }
+        cachedUsedLivestockCapacity = livestockCatalog.reduce(0) { partial, plan in
+            partial + (max(0, save.meta.livestockCounts[plan.id] ?? 0) * max(1, plan.spaceRequired))
+        }
+        cachedTotalFishCaught = save.meta.fishCaughtCounts.values.reduce(0, +)
     }
 
     @discardableResult
@@ -1663,9 +1755,10 @@ final class GameStore {
 
             if let planted = tile.planted,
                let def = cropDefsByID[planted.cropID] {
-                let grown = max(0, save.world.day - planted.plantedDay)
-                progress = min(1.0, Double(grown) / Double(max(1, def.daysToGrow)))
-                isReady = grown >= def.daysToGrow
+                let growth = max(0, planted.growthProgress)
+                let needed = Double(max(1, def.daysToGrow))
+                progress = min(1.0, growth / needed)
+                isReady = growth >= needed
             } else {
                 progress = 0
                 isReady = false

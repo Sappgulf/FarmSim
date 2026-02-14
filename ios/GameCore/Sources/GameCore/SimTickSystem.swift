@@ -8,23 +8,21 @@ public enum SimTickSystem {
         growthMultiplier: Double = 1.0
     ) -> Int {
         world.day += 1
+        let safeGrowthMultiplier = max(0.1, growthMultiplier)
+        let wateredIncrement = 1.5 * safeGrowthMultiplier
+        let dryIncrement = 0.5 * safeGrowthMultiplier
 
         for index in world.tiles.indices {
-            let isWatered = world.tiles[index].state.watered
-            
-            if var planted = world.tiles[index].planted {
-                // Base growth is 1 day. 
-                // We add a bonus for water, and multiply by global growth multipliers (buildings/research).
-                let waterBonus = isWatered ? 0.5 : 0.0 // Water gives 50% extra growth
-                let baseInc = isWatered ? 1.0 : 0.5   // Dry soil grows at 50% speed
-                
-                let increment = (baseInc + waterBonus) * max(0.1, growthMultiplier)
-                planted.growthProgress += increment
-                world.tiles[index].planted = planted
+            var tile = world.tiles[index]
+            if var planted = tile.planted {
+                let isWatered = tile.state.watered
+                planted.growthProgress += isWatered ? wateredIncrement : dryIncrement
+                tile.planted = planted
             }
             
             // Tiles dry out every day
-            world.tiles[index].state.watered = false
+            tile.state.watered = false
+            world.tiles[index] = tile
         }
 
         return Int.random(in: 0..<10_000, using: &rng)

@@ -349,7 +349,7 @@ struct BarnInventoryView: View {
     }
 
     private var totalStockCount: Int {
-        seedItems.reduce(0) { $0 + $1.count } + harvestItems.reduce(0) { $0 + $1.count }
+        store.totalInventoryCount
     }
 
     private func toggleFavorite(_ itemID: String) {
