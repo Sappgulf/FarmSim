@@ -46,6 +46,9 @@ struct BarnInventoryView: View {
             .navigationTitle("Barn")
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $query, prompt: "Search stockroom")
+            .toolbarBackground(Color(red: 0.38, green: 0.21, blue: 0.10), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .sheet(item: $selectedItem) { item in
             BarnItemDetailSheet(

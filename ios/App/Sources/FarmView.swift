@@ -32,6 +32,11 @@ struct FarmView: View {
                         scene.setViewport(zoom: zoom, pan: pan)
                     }
 
+                // Wandering farm animals — Canvas layer, no view overhead
+                FarmAnimalLayer()
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+
                 VStack {
                     Spacer()
                     LinearGradient(
@@ -419,6 +424,56 @@ struct FarmView: View {
         }
         
         return items
+    }
+}
+
+// MARK: - FarmAnimalLayer
+
+/// Lightweight Canvas layer rendering emoji animals wandering across the farm.
+/// Uses TimelineView for smooth animation with zero SwiftUI view overhead.
+private struct FarmAnimalLayer: View {
+
+    private struct Animal {
+        let emoji: String
+        let yFrac: Double        // 0–1 vertical lane
+        let speed: Double        // screen widths / second (positive = right, negative = left)
+        let xOffset: Double      // initial x phase (0–1)
+        let baseSize: Double
+        let opacity: Double
+        let bobAmp: Double       // vertical bob amplitude in pts
+        let bobFreq: Double      // bob cycles per second
+    }
+
+    private let animals: [Animal] = [
+        Animal(emoji: "🐄", yFrac: 0.30, speed:  0.040, xOffset: 0.10, baseSize: 28, opacity: 0.82, bobAmp: 3, bobFreq: 1.1),
+        Animal(emoji: "🐔", yFrac: 0.58, speed:  0.065, xOffset: 0.45, baseSize: 20, opacity: 0.80, bobAmp: 5, bobFreq: 2.4),
+        Animal(emoji: "🐑", yFrac: 0.42, speed: -0.035, xOffset: 0.75, baseSize: 24, opacity: 0.78, bobAmp: 2, bobFreq: 0.9),
+        Animal(emoji: "🐔", yFrac: 0.65, speed: -0.055, xOffset: 0.20, baseSize: 18, opacity: 0.72, bobAmp: 4, bobFreq: 2.6),
+        Animal(emoji: "🐄", yFrac: 0.22, speed:  0.028, xOffset: 0.60, baseSize: 26, opacity: 0.70, bobAmp: 2, bobFreq: 1.0),
+        Animal(emoji: "🐇", yFrac: 0.50, speed:  0.090, xOffset: 0.33, baseSize: 16, opacity: 0.75, bobAmp: 6, bobFreq: 3.2),
+        Animal(emoji: "🦆", yFrac: 0.72, speed: -0.045, xOffset: 0.85, baseSize: 18, opacity: 0.68, bobAmp: 3, bobFreq: 1.8),
+    ]
+
+    var body: some View {
+        TimelineView(.animation) { tl in
+            Canvas { (ctx: inout GraphicsContext, size: CGSize) in
+                let t = tl.date.timeIntervalSinceReferenceDate
+                for a in animals {
+                    // x scrolls continuously, wraps at ±100% screen width
+                    let rawX = (a.xOffset + t * a.speed).truncatingRemainder(dividingBy: 1.0)
+                    let xFrac = rawX < 0 ? rawX + 1.0 : rawX
+                    let x = xFrac * size.width
+                    let y = a.yFrac * size.height + sin(t * a.bobFreq * .pi * 2) * a.bobAmp
+
+                    ctx.opacity = a.opacity
+                    ctx.draw(
+                        Text(a.emoji).font(.system(size: a.baseSize)),
+                        at: CGPoint(x: x, y: y)
+                    )
+                }
+            }
+        }
+        .allowsHitTesting(false)
     }
 }
 

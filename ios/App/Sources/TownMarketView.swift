@@ -38,23 +38,14 @@ struct TownMarketView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Consistent warm background
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.97, green: 0.92, blue: 0.82),
-                        Color(red: 0.88, green: 0.78, blue: 0.62)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                // Cobblestone street base
+                TownStreetBackground()
+                    .ignoresSafeArea()
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: DS.Space.lg) {
-                        SectionHeader(
-                            "Town Market",
-                            subtitle: "Trade harvests, buy supplies, and expand your legacy"
-                        )
+                        // Market stall awning header
+                        TownMarketHeader()
 
                         // Section Picker
                         WoodenPanel {
@@ -85,6 +76,9 @@ struct TownMarketView: View {
             }
             .navigationTitle("Market")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color(red: 0.38, green: 0.26, blue: 0.14), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     coinsBadge
@@ -556,5 +550,256 @@ private struct DealBadge: View {
                     pulse = true
                 }
             }
+    }
+}
+
+// MARK: - TownStreetBackground
+
+private struct TownStreetBackground: View {
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                // Late-afternoon warm sky
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.97, green: 0.88, blue: 0.68),
+                        Color(red: 0.92, green: 0.76, blue: 0.52),
+                        Color(red: 0.80, green: 0.62, blue: 0.42)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+
+                // Building facades + cobblestone street
+                Canvas { ctx, size in
+                    // ── Left storefront ──────────────────────────────
+                    var leftWall = Path()
+                    leftWall.addRect(CGRect(
+                        x: 0, y: size.height * 0.18,
+                        width: size.width * 0.21, height: size.height))
+                    ctx.fill(leftWall, with: .color(Color(red: 0.54, green: 0.40, blue: 0.26).opacity(0.90)))
+
+                    // Left: wooden trim at top of facade
+                    var leftTrim = Path()
+                    leftTrim.addRect(CGRect(
+                        x: 0, y: size.height * 0.18,
+                        width: size.width * 0.21, height: 10))
+                    ctx.fill(leftTrim, with: .color(Color(red: 0.34, green: 0.22, blue: 0.10)))
+
+                    // Left windows (2×2 grid)
+                    for row in 0..<2 {
+                        for col in 0..<2 {
+                            var win = Path()
+                            let wx = 10.0 + Double(col) * 42
+                            let wy = size.height * 0.26 + Double(row) * 52
+                            win.addRoundedRect(
+                                in: CGRect(x: wx, y: wy, width: 26, height: 32),
+                                cornerSize: CGSize(width: 3, height: 3))
+                            ctx.fill(win, with: .color(Color(red: 1.0, green: 0.87, blue: 0.58).opacity(0.80)))
+                            // Window frame
+                            ctx.stroke(win, with: .color(Color(red: 0.30, green: 0.18, blue: 0.06)), lineWidth: 1.5)
+                        }
+                    }
+
+                    // ── Right storefront ──────────────────────────────
+                    var rightWall = Path()
+                    rightWall.addRect(CGRect(
+                        x: size.width * 0.79, y: size.height * 0.14,
+                        width: size.width * 0.21, height: size.height))
+                    ctx.fill(rightWall, with: .color(Color(red: 0.50, green: 0.36, blue: 0.22).opacity(0.90)))
+
+                    var rightTrim = Path()
+                    rightTrim.addRect(CGRect(
+                        x: size.width * 0.79, y: size.height * 0.14,
+                        width: size.width * 0.21, height: 10))
+                    ctx.fill(rightTrim, with: .color(Color(red: 0.30, green: 0.20, blue: 0.08)))
+
+                    for row in 0..<2 {
+                        for col in 0..<2 {
+                            var win = Path()
+                            let wx = size.width * 0.81 + Double(col) * 42
+                            let wy = size.height * 0.22 + Double(row) * 52
+                            win.addRoundedRect(
+                                in: CGRect(x: wx, y: wy, width: 26, height: 32),
+                                cornerSize: CGSize(width: 3, height: 3))
+                            ctx.fill(win, with: .color(Color(red: 1.0, green: 0.87, blue: 0.58).opacity(0.80)))
+                            ctx.stroke(win, with: .color(Color(red: 0.30, green: 0.18, blue: 0.06)), lineWidth: 1.5)
+                        }
+                    }
+
+                    // ── Cobblestone street (bottom 35%) ──────────────
+                    let streetY = size.height * 0.65
+                    var street = Path()
+                    street.addRect(CGRect(x: 0, y: streetY, width: size.width, height: size.height - streetY))
+                    ctx.fill(street, with: .color(Color(red: 0.56, green: 0.48, blue: 0.38)))
+
+                    let stoneW: CGFloat = 30
+                    let stoneH: CGFloat = 18
+                    let cols = Int(size.width / stoneW) + 2
+                    let rows = Int((size.height - streetY) / stoneH) + 2
+                    for row in 0..<rows {
+                        let offset: CGFloat = row.isMultiple(of: 2) ? 0 : stoneW * 0.5
+                        for col in 0..<cols {
+                            var stone = Path()
+                            let sx = offset + CGFloat(col) * stoneW
+                            let sy = streetY + CGFloat(row) * stoneH
+                            stone.addRoundedRect(
+                                in: CGRect(x: sx + 1.5, y: sy + 1.5, width: stoneW - 3, height: stoneH - 3),
+                                cornerSize: CGSize(width: 4, height: 4))
+                            let lightness = row.isMultiple(of: 2) ? 0.06 : -0.02
+                            ctx.fill(stone, with: .color(
+                                Color(red: 0.60 + lightness, green: 0.52 + lightness, blue: 0.41 + lightness)
+                            ))
+                            ctx.stroke(stone, with: .color(Color(red: 0.40, green: 0.34, blue: 0.26).opacity(0.40)), lineWidth: 0.5)
+                        }
+                    }
+                }
+
+                // Warm lantern bloom (top-center)
+                RadialGradient(
+                    colors: [
+                        Color(red: 1.0, green: 0.85, blue: 0.52).opacity(0.30),
+                        Color(red: 1.0, green: 0.72, blue: 0.36).opacity(0.10),
+                        .clear
+                    ],
+                    center: .init(x: 0.5, y: 0.05),
+                    startRadius: 8,
+                    endRadius: geo.size.width * 0.70
+                )
+                .blendMode(.multiply)
+
+                // Street-level warm fill (dust & golden light)
+                LinearGradient(
+                    colors: [.clear, Color(red: 0.90, green: 0.74, blue: 0.50).opacity(0.18)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .allowsHitTesting(false)
+
+                // Vignette
+                LinearGradient(
+                    colors: [.black.opacity(0.10), .clear, .black.opacity(0.24)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .allowsHitTesting(false)
+            }
+            .ignoresSafeArea()
+        }
+    }
+}
+
+// MARK: - TownMarketHeader
+
+private struct TownMarketHeader: View {
+    @State private var sway = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Hanging rope lines
+            Canvas { ctx, size in
+                for xFrac in [0.32, 0.68] as [Double] {
+                    var rope = Path()
+                    rope.move(to: CGPoint(x: size.width * xFrac, y: 0))
+                    rope.addLine(to: CGPoint(x: size.width * xFrac, y: size.height))
+                    ctx.stroke(
+                        rope,
+                        with: .color(Color(red: 0.34, green: 0.22, blue: 0.08)),
+                        style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
+                    )
+                }
+            }
+            .frame(height: 24)
+
+            // Wooden sign board
+            ZStack {
+                // Base wood
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                    .fill(LinearGradient(
+                        colors: [
+                            Color(red: 0.54, green: 0.36, blue: 0.16),
+                            Color(red: 0.40, green: 0.26, blue: 0.10)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ))
+
+                // Outer border
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                    .strokeBorder(Color(red: 0.65, green: 0.46, blue: 0.22).opacity(0.65), lineWidth: 1.5)
+
+                // Inner carved inset
+                RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
+                    .strokeBorder(Color(red: 0.24, green: 0.14, blue: 0.04).opacity(0.55), lineWidth: 1)
+                    .padding(7)
+
+                // Plank texture
+                HStack(spacing: 0) {
+                    ForEach(0..<5, id: \.self) { i in
+                        Rectangle()
+                            .fill(i.isMultiple(of: 2)
+                                  ? Color.clear
+                                  : Color.white.opacity(0.04))
+                    }
+                }
+                .cornerRadius(DS.Radius.md)
+
+                VStack(spacing: 4) {
+                    HStack(spacing: 8) {
+                        Text("🏪").font(.system(size: 20))
+                        Text("TOWN MARKET")
+                            .font(.system(.title3, design: .serif).weight(.bold))
+                            .foregroundStyle(Color(red: 1.0, green: 0.90, blue: 0.68))
+                            .tracking(1.5)
+                        Text("🏪").font(.system(size: 20))
+                    }
+
+                    // Decorative serif rule
+                    HStack(spacing: 6) {
+                        Rectangle()
+                            .fill(Color(red: 1.0, green: 0.82, blue: 0.52).opacity(0.50))
+                            .frame(height: 0.5)
+                        Text("✦")
+                            .font(.system(size: 8))
+                            .foregroundStyle(Color(red: 1.0, green: 0.82, blue: 0.52).opacity(0.70))
+                        Rectangle()
+                            .fill(Color(red: 1.0, green: 0.82, blue: 0.52).opacity(0.50))
+                            .frame(height: 0.5)
+                    }
+                    .padding(.horizontal, 20)
+
+                    Text("Est. Year One  ·  Open Daily")
+                        .font(.system(.caption2, design: .serif).italic())
+                        .foregroundStyle(Color(red: 1.0, green: 0.84, blue: 0.62).opacity(0.78))
+                }
+                .padding(.horizontal, DS.Space.md)
+                .padding(.vertical, DS.Space.sm)
+            }
+            .frame(maxWidth: 300)
+            .shadow(color: .black.opacity(0.28), radius: 6, y: 3)
+            .rotationEffect(.degrees(sway ? 1.4 : -1.4))
+            .onAppear {
+                withAnimation(.easeInOut(duration: 3.8).repeatForever(autoreverses: true)) {
+                    sway = true
+                }
+            }
+
+            // Awning stripes below the sign
+            HStack(spacing: 0) {
+                ForEach(0..<14, id: \.self) { i in
+                    Rectangle()
+                        .fill(i.isMultiple(of: 2)
+                              ? Color(red: 0.72, green: 0.16, blue: 0.10)
+                              : Color(red: 0.95, green: 0.93, blue: 0.88))
+                }
+            }
+            .frame(height: 16)
+            .frame(maxWidth: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+            .shadow(color: .black.opacity(0.22), radius: 4, y: 3)
+            .padding(.top, 8)
+            .padding(.horizontal, -DS.Space.md)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
