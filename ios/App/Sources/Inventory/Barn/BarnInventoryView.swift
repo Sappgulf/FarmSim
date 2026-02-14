@@ -145,8 +145,10 @@ struct BarnInventoryView: View {
     private var emptyBarnState: some View {
         EmptyStateView(
             icon: "shippingbox",
-            title: "Your shelves are quiet right now.",
-            subtitle: "Try harvesting crops or visit the shop counter for supplies."
+            title: query.isEmpty ? "Your shelves are quiet right now." : "No items match \"\(query)\".",
+            subtitle: query.isEmpty
+                ? "Harvest crops on your farm or visit the Shop Counter to stock up."
+                : "Try a different search term or clear the filter."
         )
     }
 
@@ -206,8 +208,8 @@ struct BarnInventoryView: View {
             ),
             BarnShelfModel(
                 category: .decor,
-                title: "Decor Loft",
-                subtitle: "Catalog from shared decor content",
+                title: "Decor Catalog",
+                subtitle: "Shop Counter items available to purchase",
                 symbol: "paintpalette.fill",
                 items: decorItems
             ),

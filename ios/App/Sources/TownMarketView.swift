@@ -321,12 +321,14 @@ struct TownMarketView: View {
             ),
             presenting: pendingSellAllCropID
         ) { cropID in
-            Button("Sell All \(store.cropCount(for: cropID))", role: .destructive) {
+            let cropName = store.cropDefs.first(where: { $0.id == cropID })?.name ?? cropID
+            Button("Sell All \(store.cropCount(for: cropID)) \(cropName)", role: .destructive) {
                 SoundManager.shared.play(.sell, haptic: .heavy)
                 _ = store.sellCrop(cropID: cropID, quantity: store.cropCount(for: cropID))
             }
         } message: { cropID in
-            Text("Sell all your \(cropID) harvest?")
+            let cropName = store.cropDefs.first(where: { $0.id == cropID })?.name ?? cropID
+            Text("Sell your entire \(cropName) harvest?")
         }
     }
 
@@ -415,7 +417,7 @@ struct TownMarketView: View {
                                 Text("Expand Fields")
                                     .font(Typography.bodyStrong)
                                     .foregroundStyle(.white)
-                                Text("Current: \(store.save.world.gridWidth)×\(store.save.world.gridWidth) tiles")
+                                Text("Current: \(store.save.world.gridWidth)×\(store.save.world.gridHeight) tiles")
                                     .font(Typography.caption)
                                     .foregroundStyle(.white.opacity(0.65))
                             }

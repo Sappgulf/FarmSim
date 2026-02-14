@@ -90,7 +90,8 @@ struct GameShell: View {
                         withAnimation(.easeOut(duration: 0.3)) {
                             showingCelebration = false
                         }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .seconds(0.3))
                             store.dismissCelebration(id: celebration.id)
                             showNextCelebration()
                         }
@@ -184,14 +185,14 @@ struct GameShell: View {
         }
 
         // Auto-dismiss after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2.5))
             withAnimation(.easeIn(duration: 0.3)) {
                 dayRolloverScale = 1.1
                 dayRolloverOpacity = 0.0
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                showingDayRollover = false
-            }
+            try? await Task.sleep(for: .seconds(0.3))
+            showingDayRollover = false
         }
     }
 
@@ -473,13 +474,13 @@ struct ToastNotification: View {
             }
 
             // Auto-dismiss after delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(4.0))
                 withAnimation(.easeIn(duration: 0.2)) {
                     isVisible = false
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    onDismiss()
-                }
+                try? await Task.sleep(for: .seconds(0.2))
+                onDismiss()
             }
         }
     }

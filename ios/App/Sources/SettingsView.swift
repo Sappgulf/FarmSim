@@ -7,10 +7,6 @@ struct SettingsView: View {
 
     @State private var confirmReset = false
     @State private var farmNameInput = ""
-    @State private var showCelebration = false
-    @State private var celebrationTitle = ""
-    @State private var celebrationSubtitle: String? = nil
-    @Namespace private var animationNamespace
 
     var body: some View {
         NavigationStack {
@@ -23,24 +19,31 @@ struct SettingsView: View {
                     SettingsSection(
                         title: "Your Farm",
                         icon: "leaf.fill",
-                        iconColor: DS.Color.seasonSpring
+                        iconColor: Theme.seasonSpring
                     ) {
                         VStack(spacing: 0) {
                             SettingRow(
                                 icon: "textformat.abc",
                                 title: "Farm Name",
-                                subtitle: "What should we call your homestead?",
+                                subtitle: farmNameInput.count > 24
+                                    ? "\(farmNameInput.count)/32 characters"
+                                    : "What should we call your homestead?",
                                 iconBackground: Theme.leafGreen
                             ) {
                                 TextField("Name", text: $farmNameInput)
                                     .textInputAutocapitalization(.words)
                                     .multilineTextAlignment(.trailing)
                                     .font(.system(.body, design: .rounded))
-                                    .foregroundStyle(DS.Color.textPrimary)
-                                    .frame(width: 120)
+                                    .foregroundStyle(farmNameInput.count > 28 ? DS.Color.money : DS.Color.textPrimary)
+                                    .frame(width: 130)
                                     .onSubmit {
-                                        store.setFarmName(farmNameInput)
-                                        triggerCelebration(title: "Farm Named!", subtitle: "Welcome to \(farmNameInput)")
+                                        let trimmed = farmNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        if !trimmed.isEmpty {
+                                            store.setFarmName(trimmed)
+                                            farmNameInput = trimmed
+                                        } else {
+                                            farmNameInput = store.farmName
+                                        }
                                     }
                                     .onChange(of: farmNameInput) { _, value in
                                         if value.count > 32 {
@@ -354,19 +357,13 @@ struct SettingsView: View {
                 farmNameInput = store.farmName
             }
             .onDisappear {
-                store.setFarmName(farmNameInput)
+                let trimmed = farmNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty {
+                    store.setFarmName(trimmed)
+                }
             }
             .scrollContentBackground(.hidden)
             .farmBackground(palette: store.settings.palette)
-            .overlay {
-                CelebrationOverlay(
-                    title: celebrationTitle,
-                    subtitle: celebrationSubtitle,
-                    icon: "star.fill",
-                    isPresented: showCelebration,
-                    onComplete: { showCelebration = false }
-                )
-            }
         }
     }
 
@@ -456,18 +453,12 @@ struct SettingsView: View {
     private func paletteColor(_ palette: FarmPalette) -> SwiftUI.Color {
         switch palette {
         case .meadow:
-            return DS.Color.seasonSpring
+            return Theme.seasonSpring
         case .sunrise:
             return Theme.seasonSummer
         case .twilight:
             return Theme.seasonWinter
         }
-    }
-
-    private func triggerCelebration(title: String, subtitle: String? = nil) {
-        celebrationTitle = title
-        celebrationSubtitle = subtitle
-        showCelebration = true
     }
 }
 

@@ -23,7 +23,7 @@ struct AlmanacView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         // Masthead
-                        AlmanacMasthead()
+                        AlmanacMasthead(seasonText: store.hudSeasonText)
                             .padding(.horizontal, DS.Space.md)
                             .padding(.top, DS.Space.sm)
 
@@ -388,6 +388,8 @@ private struct BookPageBackground: View {
 // MARK: - AlmanacMasthead
 
 private struct AlmanacMasthead: View {
+    let seasonText: String
+
     var body: some View {
         VStack(spacing: 0) {
             // Top hairline rule
@@ -402,7 +404,7 @@ private struct AlmanacMasthead: View {
 
             // Volume / date line
             HStack {
-                Text("Vol. I  —  Spring Edition")
+                Text("Vol. I  —  \(seasonText) Edition")
                     .font(.system(size: 9, design: .serif).italic())
                     .foregroundStyle(Color(red: 0.38, green: 0.26, blue: 0.10).opacity(0.75))
                 Spacer()
