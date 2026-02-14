@@ -50,6 +50,26 @@
       "outputCropID": "dragon_pepper",
       "levelRequirement": 16,
       "notes": "Legendary spicy pepper with incredible value."
+    },
+    {
+      "id": "golden_wheat_recipe",
+      "name": "Golden Wheat",
+      "emoji": "✨",
+      "parentA": "wheat",
+      "parentB": "corn",
+      "outputCropID": "golden_wheat",
+      "levelRequirement": 6,
+      "notes": "A radiant hybrid grain loved by millers across the valley."
+    },
+    {
+      "id": "moonberry_recipe",
+      "name": "Moonberry",
+      "emoji": "🫐🌙",
+      "parentA": "blueberry",
+      "parentB": "cranberry",
+      "outputCropID": "moonberry",
+      "levelRequirement": 11,
+      "notes": "An otherworldly berry that ripens under autumn moonlight."
     }
   ]
 }

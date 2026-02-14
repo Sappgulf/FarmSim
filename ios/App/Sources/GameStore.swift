@@ -863,7 +863,7 @@ final class GameStore {
             _ = milestoneManager.completeMilestone(.firstResearch)
         }
 
-        SoundManager.shared.play(.success, haptic: .success)
+        SoundManager.shared.play(.success, haptic: .medium)
         syncState(statusOverride: "Research complete: \(plan.name).", emitHaptic: true, emitHarvest: false)
         return true
     }
@@ -902,7 +902,7 @@ final class GameStore {
             _ = milestoneManager.completeMilestone(.firstHybrid)
         }
 
-        SoundManager.shared.play(.success, haptic: .success)
+        SoundManager.shared.play(.success, haptic: .medium)
         syncState(statusOverride: "Discovered \(recipe.name). +1 \(cropName(for: recipe.outputCropID)) seed.", emitHaptic: true, emitHarvest: false)
         return true
     }
@@ -1135,6 +1135,18 @@ final class GameStore {
             return cachedLivestockCount
         case "coin_balance":
             return save.player.coins
+        case "total_fish_caught":
+            return totalFishCaught
+        case "seed_inventory":
+            return cachedSeedInventoryCount
+        case "player_level":
+            return playerLevel
+        case "pet_count":
+            return save.meta.petLevels.values.filter { $0 > 0 }.count
+        case "challenge_streak":
+            return challengeStreak
+        case "research_completed":
+            return save.meta.completedResearch.values.filter { $0 }.count
         default:
             return 0
         }
@@ -1247,7 +1259,7 @@ final class GameStore {
         engine.setChallengeClaimDay(save.world.day, for: key)
         engine.addCoins(task.rewardCoins)
         engine.addXP(task.rewardXP)
-        SoundManager.shared.play(.success, haptic: .success)
+        SoundManager.shared.play(.success, haptic: .medium)
         syncState(statusOverride: "Task complete: \(task.title).", emitHaptic: true, emitHarvest: false)
         return true
     }

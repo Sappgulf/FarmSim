@@ -13,9 +13,7 @@
       "category": "vegetable",
       "season": "spring",
       "level": 1,
-      "seasonTags": [
-        "spring"
-      ],
+      "seasonTags": ["spring"],
       "icon": "🥕"
     },
     {
@@ -30,9 +28,7 @@
       "category": "vegetable",
       "season": "fall",
       "level": 1,
-      "seasonTags": [
-        "fall"
-      ],
+      "seasonTags": ["fall"],
       "icon": "🥔"
     },
     {
@@ -47,9 +43,7 @@
       "category": "vegetable",
       "season": "spring",
       "level": 1,
-      "seasonTags": [
-        "spring"
-      ],
+      "seasonTags": ["spring"],
       "icon": "🥬"
     },
     {
@@ -64,9 +58,7 @@
       "category": "vegetable",
       "season": "spring",
       "level": 1,
-      "seasonTags": [
-        "spring"
-      ],
+      "seasonTags": ["spring"],
       "icon": "🥕"
     },
     {
@@ -81,9 +73,7 @@
       "category": "vegetable",
       "season": "fall",
       "level": 2,
-      "seasonTags": [
-        "fall"
-      ],
+      "seasonTags": ["fall"],
       "icon": "🥬"
     },
     {
@@ -98,9 +88,7 @@
       "category": "vegetable",
       "season": "summer",
       "level": 3,
-      "seasonTags": [
-        "summer"
-      ],
+      "seasonTags": ["summer"],
       "icon": "🍆"
     },
     {
@@ -115,9 +103,7 @@
       "category": "vegetable",
       "season": "summer",
       "level": 2,
-      "seasonTags": [
-        "summer"
-      ],
+      "seasonTags": ["summer"],
       "icon": "🫛"
     },
     {
@@ -132,9 +118,7 @@
       "category": "grain",
       "season": "summer",
       "level": 2,
-      "seasonTags": [
-        "summer"
-      ],
+      "seasonTags": ["summer"],
       "icon": "🌽"
     },
     {
@@ -149,9 +133,7 @@
       "category": "grain",
       "season": "summer",
       "level": 1,
-      "seasonTags": [
-        "summer"
-      ],
+      "seasonTags": ["summer"],
       "icon": "🌾"
     },
     {
@@ -166,9 +148,7 @@
       "category": "grain",
       "season": "summer",
       "level": 3,
-      "seasonTags": [
-        "summer"
-      ],
+      "seasonTags": ["summer"],
       "icon": "🍚"
     },
     {
@@ -183,9 +163,7 @@
       "category": "fruit",
       "season": "summer",
       "level": 2,
-      "seasonTags": [
-        "summer"
-      ],
+      "seasonTags": ["summer"],
       "icon": "🍅"
     },
     {
@@ -200,9 +178,7 @@
       "category": "fruit",
       "season": "spring",
       "level": 3,
-      "seasonTags": [
-        "spring"
-      ],
+      "seasonTags": ["spring"],
       "icon": "🍓"
     },
     {
@@ -217,9 +193,7 @@
       "category": "fruit",
       "season": "summer",
       "level": 4,
-      "seasonTags": [
-        "summer"
-      ],
+      "seasonTags": ["summer"],
       "icon": "🍉"
     },
     {
@@ -234,9 +208,7 @@
       "category": "fruit",
       "season": "summer",
       "level": 3,
-      "seasonTags": [
-        "summer"
-      ],
+      "seasonTags": ["summer"],
       "icon": "🫐"
     },
     {
@@ -251,9 +223,7 @@
       "category": "fruit",
       "season": "fall",
       "level": 3,
-      "seasonTags": [
-        "fall"
-      ],
+      "seasonTags": ["fall"],
       "icon": "🫐"
     },
     {
@@ -268,9 +238,7 @@
       "category": "specialty",
       "season": "fall",
       "level": 4,
-      "seasonTags": [
-        "fall"
-      ],
+      "seasonTags": ["fall"],
       "icon": "🎃"
     },
     {
@@ -285,9 +253,7 @@
       "category": "specialty",
       "season": "summer",
       "level": 2,
-      "seasonTags": [
-        "summer"
-      ],
+      "seasonTags": ["summer"],
       "icon": "🌶️"
     },
     {
@@ -302,9 +268,7 @@
       "category": "specialty",
       "season": "spring",
       "level": 2,
-      "seasonTags": [
-        "spring"
-      ],
+      "seasonTags": ["spring"],
       "icon": "🧄"
     },
     {
@@ -319,9 +283,7 @@
       "category": "specialty",
       "season": "spring",
       "level": 1,
-      "seasonTags": [
-        "spring"
-      ],
+      "seasonTags": ["spring"],
       "icon": "🧅"
     },
     {
@@ -336,10 +298,113 @@
       "category": "vegetable",
       "season": "spring",
       "level": 2,
-      "seasonTags": [
-        "spring"
-      ],
+      "seasonTags": ["spring"],
       "icon": "🥦"
+    },
+    {
+      "id": "cherry",
+      "name": "Cherry",
+      "emoji": "🍒",
+      "cost": 50,
+      "baseValue": 115,
+      "growthTime": 130,
+      "stages": 4,
+      "description": "Delicate spring cherries with a sweet, tart flavour.",
+      "category": "fruit",
+      "season": "spring",
+      "level": 4,
+      "seasonTags": ["spring"],
+      "icon": "🍒"
+    },
+    {
+      "id": "artichoke",
+      "name": "Artichoke",
+      "emoji": "🌿",
+      "cost": 34,
+      "baseValue": 72,
+      "growthTime": 108,
+      "stages": 4,
+      "description": "A prized autumn vegetable with earthy depth.",
+      "category": "vegetable",
+      "season": "fall",
+      "level": 3,
+      "seasonTags": ["fall"],
+      "icon": "🌿"
+    },
+    {
+      "id": "mango",
+      "name": "Mango",
+      "emoji": "🥭",
+      "cost": 75,
+      "baseValue": 170,
+      "growthTime": 200,
+      "stages": 5,
+      "description": "A tropical luxury fruit that commands a premium at market.",
+      "category": "fruit",
+      "season": "summer",
+      "level": 6,
+      "seasonTags": ["summer"],
+      "icon": "🥭"
+    },
+    {
+      "id": "leek",
+      "name": "Leek",
+      "emoji": "🧅",
+      "cost": 20,
+      "baseValue": 42,
+      "growthTime": 90,
+      "stages": 3,
+      "description": "A mild winter allium, steady and dependable.",
+      "category": "vegetable",
+      "season": "winter",
+      "level": 2,
+      "seasonTags": ["winter"],
+      "icon": "🧅"
+    },
+    {
+      "id": "parsley",
+      "name": "Parsley",
+      "emoji": "🌱",
+      "cost": 12,
+      "baseValue": 25,
+      "growthTime": 52,
+      "stages": 3,
+      "description": "A fast-growing herb with year-round demand.",
+      "category": "specialty",
+      "season": "spring",
+      "level": 1,
+      "seasonTags": ["spring"],
+      "icon": "🌱"
+    },
+    {
+      "id": "golden_wheat",
+      "name": "Golden Wheat",
+      "emoji": "✨",
+      "cost": 45,
+      "baseValue": 105,
+      "growthTime": 110,
+      "stages": 4,
+      "description": "A hybrid grain that gleams golden at harvest.",
+      "category": "grain",
+      "season": "summer",
+      "level": 6,
+      "seasonTags": ["summer"],
+      "icon": "✨"
+    },
+    {
+      "id": "moonberry",
+      "name": "Moonberry",
+      "emoji": "🫐🌙",
+      "cost": 70,
+      "baseValue": 158,
+      "growthTime": 165,
+      "stages": 5,
+      "description": "A luminous hybrid berry said to absorb starlight.",
+      "category": "fruit",
+      "season": "fall",
+      "level": 11,
+      "seasonTags": ["fall"],
+      "icon": "🫐🌙"
     }
   ]
 }

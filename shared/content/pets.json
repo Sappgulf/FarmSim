@@ -33,6 +33,28 @@
       "requiredLevel": 1,
       "bonusLabel": "Daily resources",
       "bonusPerLevel": 0.02
+    },
+    {
+      "id": "rabbit",
+      "name": "Lucky Rabbit",
+      "emoji": "🐰",
+      "description": "A quick-footed companion that brings extra XP from every harvest.",
+      "cost": 180,
+      "maxLevel": 4,
+      "requiredLevel": 4,
+      "bonusLabel": "XP boost",
+      "bonusPerLevel": 0.05
+    },
+    {
+      "id": "bee_hive",
+      "name": "Honeybee Hive",
+      "emoji": "🐝",
+      "description": "A thriving hive that pollinates crops and drips passive honey income.",
+      "cost": 250,
+      "maxLevel": 4,
+      "requiredLevel": 6,
+      "bonusLabel": "Honey income",
+      "bonusPerLevel": 0.04
     }
   ]
 }

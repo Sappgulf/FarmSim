@@ -77,6 +77,39 @@
       "description": "Foundation for automated farming.",
       "unlocks": ["basic_automation"],
       "prerequisites": ["irrigation_system"]
+    },
+    {
+      "id": "composting",
+      "name": "Composting",
+      "emoji": "♻️",
+      "category": "agriculture",
+      "cost": 120,
+      "durationSeconds": 420,
+      "description": "Turn waste into rich compost, reducing seed costs.",
+      "unlocks": ["seed_discount"],
+      "prerequisites": ["soil_enhancement"]
+    },
+    {
+      "id": "beekeeping",
+      "name": "Beekeeping",
+      "emoji": "🍯",
+      "category": "economics",
+      "cost": 200,
+      "durationSeconds": 600,
+      "description": "Managed hives bring passive honey income and improve yields.",
+      "unlocks": ["honey_income", "pollination_boost"],
+      "prerequisites": []
+    },
+    {
+      "id": "aquaponics",
+      "name": "Aquaponics",
+      "emoji": "🐟",
+      "category": "technology",
+      "cost": 350,
+      "durationSeconds": 750,
+      "description": "Integrate the pond and farm for mutual growth bonuses.",
+      "unlocks": ["fish_farming_bonus"],
+      "prerequisites": ["irrigation_system"]
     }
   ]
 }

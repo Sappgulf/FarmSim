@@ -55,6 +55,116 @@
       "target": 600,
       "rewardCoins": 180,
       "rewardXP": 70
+    },
+    {
+      "id": "gone_fishing",
+      "name": "Gone Fishing",
+      "emoji": "🎣",
+      "description": "Catch fish at the pond.",
+      "difficulty": "easy",
+      "metric": "total_fish_caught",
+      "target": 5,
+      "rewardCoins": 90,
+      "rewardXP": 40
+    },
+    {
+      "id": "seed_vault",
+      "name": "Seed Vault",
+      "emoji": "🌱",
+      "description": "Stock up on seeds for planting.",
+      "difficulty": "easy",
+      "metric": "seed_inventory",
+      "target": 25,
+      "rewardCoins": 75,
+      "rewardXP": 32
+    },
+    {
+      "id": "rising_star",
+      "name": "Rising Star",
+      "emoji": "⭐",
+      "description": "Level up your farming skills.",
+      "difficulty": "medium",
+      "metric": "player_level",
+      "target": 5,
+      "rewardCoins": 150,
+      "rewardXP": 60
+    },
+    {
+      "id": "pet_lover",
+      "name": "Pet Lover",
+      "emoji": "🐾",
+      "description": "Adopt companions to help around the farm.",
+      "difficulty": "medium",
+      "metric": "pet_count",
+      "target": 2,
+      "rewardCoins": 140,
+      "rewardXP": 55
+    },
+    {
+      "id": "daily_devotion",
+      "name": "Daily Devotion",
+      "emoji": "🔥",
+      "description": "Complete challenges for multiple days in a row.",
+      "difficulty": "hard",
+      "metric": "challenge_streak",
+      "target": 3,
+      "rewardCoins": 200,
+      "rewardXP": 80
+    },
+    {
+      "id": "scholar",
+      "name": "Scholar",
+      "emoji": "🔬",
+      "description": "Complete research projects at the workshop.",
+      "difficulty": "hard",
+      "metric": "research_completed",
+      "target": 2,
+      "rewardCoins": 175,
+      "rewardXP": 75
+    },
+    {
+      "id": "bumper_harvest",
+      "name": "Bumper Harvest",
+      "emoji": "🧺",
+      "description": "Fill the barn with a massive harvest.",
+      "difficulty": "hard",
+      "metric": "total_crops_inventory",
+      "target": 60,
+      "rewardCoins": 220,
+      "rewardXP": 85
+    },
+    {
+      "id": "coin_vault",
+      "name": "Coin Vault",
+      "emoji": "🏦",
+      "description": "Amass serious coin wealth.",
+      "difficulty": "hard",
+      "metric": "coin_balance",
+      "target": 2000,
+      "rewardCoins": 300,
+      "rewardXP": 100
+    },
+    {
+      "id": "master_planter",
+      "name": "Master Planter",
+      "emoji": "🌿",
+      "description": "Keep many plots growing at once.",
+      "difficulty": "medium",
+      "metric": "active_plots",
+      "target": 16,
+      "rewardCoins": 160,
+      "rewardXP": 65
+    },
+    {
+      "id": "angler_pro",
+      "name": "Angler Pro",
+      "emoji": "🏆",
+      "description": "Become a seasoned fisherman.",
+      "difficulty": "hard",
+      "metric": "total_fish_caught",
+      "target": 25,
+      "rewardCoins": 250,
+      "rewardXP": 90
     }
   ]
 }

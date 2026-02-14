@@ -2,6 +2,17 @@
   "schemaVersion": 1,
   "fish": [
     {
+      "id": "sunfish",
+      "name": "Sunfish",
+      "emoji": "☀️",
+      "rarity": 0.50,
+      "baseValue": 12,
+      "difficulty": 1,
+      "minSize": 4,
+      "maxSize": 10,
+      "description": "A small, cheerful fish that loves warm shallows."
+    },
+    {
       "id": "common",
       "name": "Common Fish",
       "emoji": "🐟",
@@ -24,6 +35,17 @@
       "description": "A feisty bass."
     },
     {
+      "id": "catfish",
+      "name": "Catfish",
+      "emoji": "😸",
+      "rarity": 0.18,
+      "baseValue": 55,
+      "difficulty": 2,
+      "minSize": 18,
+      "maxSize": 38,
+      "description": "A whiskered bottom-dweller with steady value."
+    },
+    {
       "id": "rare",
       "name": "Trout",
       "emoji": "🎣",
@@ -33,6 +55,17 @@
       "minSize": 20,
       "maxSize": 40,
       "description": "A beautiful trout."
+    },
+    {
+      "id": "rainbow_perch",
+      "name": "Rainbow Perch",
+      "emoji": "🌈",
+      "rarity": 0.08,
+      "baseValue": 95,
+      "difficulty": 3,
+      "minSize": 22,
+      "maxSize": 42,
+      "description": "A vivid, iridescent perch prized for its colours."
     },
     {
       "id": "koi",
@@ -77,6 +110,17 @@
       "minSize": 55,
       "maxSize": 120,
       "description": "A mythic eel seen only under calm moonlight."
+    },
+    {
+      "id": "crystal_sturgeon",
+      "name": "Crystal Sturgeon",
+      "emoji": "💎",
+      "rarity": 0.006,
+      "baseValue": 1200,
+      "difficulty": 5,
+      "minSize": 60,
+      "maxSize": 130,
+      "description": "An ancient, near-mythical fish with crystalline scales."
     }
   ],
   "pondUpgrades": [
