@@ -8,12 +8,18 @@ struct FarmSceneDebugStats: Equatable, Sendable {
 
 final class FarmScene: SKScene {
     var onTileTapped: ((Int) -> Void)?
+    var onTileLongPressed: ((Int, CGPoint) -> Void)?
     var onDebugStats: ((FarmSceneDebugStats) -> Void)?
+    
+    // Internal state for long press
+    private var longPressTask: DispatchWorkItem?
+    private var touchStartLocation: CGPoint?
 
     private var currentSnapshot: FarmRenderSnapshot?
     private var tileVisuals: [Int: TileVisual] = [:]
     private var tileBaseColors: [Int: SKColor] = [:]
     private var cropEmojiByID: [String: String] = [:]
+    private var textureCache: [String: SKTexture] = [:]
 
     private let boardNode = SKNode()
     private let backgroundNode = SKNode()
@@ -63,6 +69,7 @@ final class FarmScene: SKScene {
         applyRendererPreferences()
 
         shouldEnableEffects = false
+        generateTextures(in: view)
         drawBackground()
         if let snapshot = currentSnapshot {
             rebuildGrid(for: snapshot)
@@ -80,20 +87,80 @@ final class FarmScene: SKScene {
         applyViewport()
     }
 
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: boardNode)
-
-        for node in boardNode.nodes(at: location) {
-            if let index = tileIndex(from: node) {
+        touchStartLocation = touch.location(in: self)
+        
+        // Check if we touched a tile
+        let index = tileIndex(at: location)
+        
+        if let index = index {
+            // Schedule long press
+            let task = DispatchWorkItem { [weak self] in
+                guard let self = self else { return }
+                guard let view = self.view else { return }
+                
+                // Convert to view coordinates for SwiftUI overlay
+                // touch.location(in: view) is in UIKit coordinates (Y down).
+                let viewLoc = touch.location(in: view)
+                
+                self.onTileLongPressed?(index, viewLoc)
+                self.longPressTask = nil
+                
+                // Haptic Feedback for Long Press
+                let impact = UIImpactFeedbackGenerator(style: .medium)
+                impact.impactOccurred()
+            }
+            self.longPressTask = task
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: task)
+        }
+    }
+    
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first, let start = touchStartLocation else { return }
+        let current = touch.location(in: self)
+        let distance = hypot(current.x - start.x, current.y - start.y)
+        
+        if distance > 20 { // 20pt tolerance
+            longPressTask?.cancel()
+            longPressTask = nil
+        }
+    }
+    
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        // If long press task is still pending, it means we tapped (short press)
+        if let task = longPressTask {
+            task.cancel()
+            longPressTask = nil
+            
+            guard let touch = touches.first else { return }
+            let location = touch.location(in: boardNode)
+            if let index = tileIndex(at: location) {
                 if touch.tapCount >= 2 {
                     focusCamera(on: index)
                 }
                 animateTap(on: index)
                 onTileTapped?(index)
-                return
             }
         }
+        touchStartLocation = nil
+    }
+    
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        longPressTask?.cancel()
+        longPressTask = nil
+        touchStartLocation = nil
+    }
+    
+    private func tileIndex(at location: CGPoint) -> Int? {
+        // Helper to find tile index at generic location
+        for node in boardNode.nodes(at: location) {
+            if let index = tileIndex(from: node) {
+                return index
+            }
+        }
+        return nil
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -284,20 +351,20 @@ final class FarmScene: SKScene {
     }
 
     private func makeTile(index: Int, rect: CGRect) -> TileVisual {
-        let corner = max(8, rect.width * 0.12)
-
-        let tile = SKShapeNode(rect: rect, cornerRadius: corner)
+        let textureKey = "soil_\(index % 5)"
+        let tile = SKSpriteNode(texture: textureCache[textureKey])
+        tile.position = CGPoint(x: rect.midX, y: rect.midY)
+        tile.size = rect.size
         tile.name = "tile_\(index)"
-        let baseColor = soilColor(for: index)
-        tile.fillColor = baseColor
-        tile.strokeColor = SKColor.black.withAlphaComponent(0.2)
-        tile.lineWidth = 1
         tile.zPosition = 5
-        tileBaseColors[index] = baseColor
+        tileBaseColors[index] = soilColor(for: index)
+
+        let halfW = rect.width / 2
+        let halfH = rect.height / 2
 
         let emoji = SKLabelNode(text: "")
         emoji.name = "tile_\(index)"
-        emoji.position = CGPoint(x: rect.midX, y: rect.midY + 5)
+        emoji.position = CGPoint(x: 0, y: 5)
         emoji.verticalAlignmentMode = .center
         emoji.horizontalAlignmentMode = .center
         emoji.fontSize = max(16, rect.width * 0.38)
@@ -305,7 +372,7 @@ final class FarmScene: SKScene {
 
         let plus = SKLabelNode(text: "+")
         plus.name = "tile_\(index)"
-        plus.position = CGPoint(x: rect.midX, y: rect.midY - 2)
+        plus.position = CGPoint(x: 0, y: -2)
         plus.verticalAlignmentMode = .center
         plus.horizontalAlignmentMode = .center
         plus.fontName = "AvenirNext-Bold"
@@ -315,7 +382,7 @@ final class FarmScene: SKScene {
 
         let indexLabel = SKLabelNode(text: "\(index + 1)")
         indexLabel.name = "tile_\(index)"
-        indexLabel.position = CGPoint(x: rect.maxX - 8, y: rect.maxY - 16)
+        indexLabel.position = CGPoint(x: halfW - 8, y: halfH - 16)
         indexLabel.verticalAlignmentMode = .center
         indexLabel.horizontalAlignmentMode = .right
         indexLabel.fontName = "AvenirNext-DemiBold"
@@ -325,27 +392,24 @@ final class FarmScene: SKScene {
         indexLabel.isHidden = !showTileIndices
 
         let barWidth = rect.width - 12
-        let barRect = CGRect(x: rect.minX + 6, y: rect.minY + 6, width: barWidth, height: 4)
-
-        let track = SKShapeNode(rect: barRect, cornerRadius: 2)
-        track.fillColor = SKColor.black.withAlphaComponent(0.25)
-        track.strokeColor = .clear
+        let track = SKSpriteNode(color: .black.withAlphaComponent(0.25), size: CGSize(width: barWidth, height: 4))
+        track.position = CGPoint(x: 0, y: -halfH + 8)
         track.zPosition = 6
 
-        let fill = SKShapeNode(rect: CGRect(x: barRect.minX, y: barRect.minY, width: 0, height: barRect.height), cornerRadius: 2)
-        fill.fillColor = SKColor(red: 0.98, green: 0.82, blue: 0.30, alpha: 1)
-        fill.strokeColor = .clear
+        let fill = SKSpriteNode(color: SKColor(red: 0.98, green: 0.82, blue: 0.30, alpha: 1), size: CGSize(width: barWidth, height: 4))
+        fill.anchorPoint = CGPoint(x: 0, y: 0.5)
+        fill.position = CGPoint(x: -barWidth / 2, y: -halfH + 8)
+        fill.xScale = 0
         fill.zPosition = 7
 
-        let water = SKShapeNode(circleOfRadius: max(3, rect.width * 0.06))
-        water.position = CGPoint(x: rect.minX + 10, y: rect.maxY - 10)
-        water.fillColor = SKColor(red: 0.31, green: 0.65, blue: 0.95, alpha: 0.9)
-        water.strokeColor = .clear
+        let water = SKSpriteNode(texture: textureCache["water"])
+        water.size = CGSize(width: max(6, rect.width * 0.12), height: max(6, rect.width * 0.12))
+        water.position = CGPoint(x: -halfW + 10, y: halfH - 10)
         water.zPosition = 8
         water.isHidden = true
 
         let readyBadge = SKLabelNode(text: "✦")
-        readyBadge.position = CGPoint(x: rect.maxX - 12, y: rect.minY + 12)
+        readyBadge.position = CGPoint(x: halfW - 12, y: -halfH + 12)
         readyBadge.verticalAlignmentMode = .center
         readyBadge.horizontalAlignmentMode = .center
         readyBadge.fontName = "AvenirNext-Bold"
@@ -372,7 +436,7 @@ final class FarmScene: SKScene {
             progressFill: fill,
             waterBadge: water,
             readyBadge: readyBadge,
-            progressRect: barRect
+            barWidth: barWidth
         )
     }
 
@@ -392,25 +456,21 @@ final class FarmScene: SKScene {
             visual.progressTrack.isHidden = false
             visual.progressFill.isHidden = false
 
-            let fillWidth = max(0, visual.progressRect.width * CGFloat(newTile.progress))
-            visual.progressFill.path = CGPath(
-                roundedRect: CGRect(
-                    x: visual.progressRect.minX,
-                    y: visual.progressRect.minY,
-                    width: fillWidth,
-                    height: visual.progressRect.height
-                ),
-                cornerWidth: 2,
-                cornerHeight: 2,
-                transform: nil
-            )
-            visual.progressFill.fillColor = newTile.isReady
+            visual.progressFill.xScale = max(0, CGFloat(newTile.progress))
+            
+            // Note: Sprites handle color tweening better via SKAction if needed, 
+            // but setting color directly is instant.
+            visual.progressFill.color = newTile.isReady
                 ? SKColor(red: 0.35, green: 0.85, blue: 0.40, alpha: 1)
                 : SKColor(red: 0.98, green: 0.82, blue: 0.30, alpha: 1)
 
-            visual.tile.fillColor = newTile.isReady
+            let baseColorKey = "soil_\(newTile.index % 5)"
+            let matureColorKey = "soil_mature_\(newTile.index % 5)" // Optional optimization
+            
+            visual.tile.color = newTile.isReady
                 ? SKColor(red: 0.23, green: 0.62, blue: 0.30, alpha: 1)
-                : SKColor(red: 0.69, green: 0.52, blue: 0.25, alpha: 1)
+                : .white
+            visual.tile.colorBlendFactor = newTile.isReady ? 0.6 : 0.0
 
             visual.readyBadge.isHidden = !newTile.isReady
             if newTile.isReady, !reduceMotion, visual.readyBadge.action(forKey: "ready-bob") == nil {
@@ -427,7 +487,7 @@ final class FarmScene: SKScene {
             visual.emoji.isHidden = true
             visual.progressTrack.isHidden = true
             visual.progressFill.isHidden = true
-            visual.tile.fillColor = tileBaseColors[newTile.index] ?? SKColor(red: 0.58, green: 0.40, blue: 0.24, alpha: 1)
+            visual.tile.colorBlendFactor = 0.0
             visual.readyBadge.isHidden = true
             visual.readyBadge.removeAction(forKey: "ready-bob")
         }
@@ -444,36 +504,87 @@ final class FarmScene: SKScene {
 
         if oldTile?.isReady == false, newTile.isReady {
             guard !reduceMotion else { return }
-            visual.tile.run(.sequence([
-                .colorize(with: SKColor(red: 0.98, green: 0.90, blue: 0.42, alpha: 1), colorBlendFactor: 0.18, duration: 0.12),
-                .colorize(withColorBlendFactor: 0.0, duration: 0.20),
-            ]))
+            // Flash effect
+            let flash = SKAction.sequence([
+                .colorize(with: SKColor(red: 0.98, green: 0.90, blue: 0.42, alpha: 1), colorBlendFactor: 0.4, duration: 0.12),
+                .colorize(withColorBlendFactor: 0.6, duration: 0.20) // Return to ready blend
+            ])
+            visual.tile.run(flash)
         }
 
         if oldTile?.cropID != nil, newTile.cropID == nil {
             guard !reduceMotion else { return }
-            spawnSparkle(at: visual.tile.frame.center)
+            // Position sparkle relative to board, not tile content
+            spawnSparkle(at: visual.tile.position)
+        }
+    }
+
+    private func generateTextures(in view: SKView) {
+        let size = CGSize(width: 64, height: 64)
+        let rect = CGRect(origin: .zero, size: size)
+        
+        // Generate Soil Variants
+        for i in 0..<5 {
+            let shape = SKShapeNode(rect: rect, cornerRadius: 8)
+            shape.fillColor = soilColor(for: i)
+            shape.strokeColor = .black.withAlphaComponent(0.2)
+            shape.lineWidth = 1
+            if let tex = view.texture(from: shape) {
+                textureCache["soil_\(i)"] = tex
+            }
+        }
+        
+        // Water Badge
+        let waterShape = SKShapeNode(circleOfRadius: 32)
+        waterShape.fillColor = SKColor(red: 0.31, green: 0.65, blue: 0.95, alpha: 0.9)
+        waterShape.strokeColor = .clear
+        if let tex = view.texture(from: waterShape) {
+            textureCache["water"] = tex
+        }
+        
+        // Sparkle
+        let sparkleShape = SKShapeNode(rect: CGRect(x: 0, y: 0, width: 8, height: 8), cornerRadius: 1)
+        sparkleShape.fillColor = .white
+        sparkleShape.strokeColor = .clear
+        sparkleShape.zRotation = .pi / 4
+        if let tex = view.texture(from: sparkleShape) {
+            textureCache["sparkle"] = tex
         }
     }
 
     private func spawnSparkle(at position: CGPoint) {
         guard particleEffectsEnabled else { return }
-        let sparkle = SKLabelNode(text: "✦")
-        sparkle.fontColor = SKColor(red: 1.0, green: 0.95, blue: 0.55, alpha: 1)
-        sparkle.fontSize = 16
-        sparkle.position = position
-        sparkle.zPosition = 10
-        boardNode.addChild(sparkle)
-
-        sparkle.run(.sequence([
-            .group([
-                .moveBy(x: 0, y: 16, duration: 0.25),
-                .fadeOut(withDuration: 0.25),
-                .scale(to: 1.4, duration: 0.25),
-            ]),
-            .removeFromParent(),
+        
+        let emitter = SKEmitterNode()
+        emitter.particleTexture = textureCache["sparkle"]
+        emitter.particleBirthRate = 0 // Burst mode
+        emitter.numParticlesToEmit = 12
+        emitter.particleLifetime = 0.6
+        emitter.particleLifetimeRange = 0.2
+        emitter.particlePositionRange = CGVector(dx: 12, dy: 12)
+        emitter.particleSpeed = 50
+        emitter.particleSpeedRange = 25
+        emitter.emissionAngle = 0
+        emitter.emissionAngleRange = 2 * .pi
+        emitter.particleAlpha = 1.0
+        emitter.particleAlphaSpeed = -1.5
+        emitter.particleScale = 0.4
+        emitter.particleScaleRange = 0.1
+        emitter.particleScaleSpeed = -0.4
+        emitter.particleColor = SKColor(red: 1.0, green: 0.85, blue: 0.30, alpha: 1)
+        emitter.particleColorBlendFactor = 1.0
+        emitter.particleBlendMode = .add
+        
+        emitter.position = position
+        emitter.zPosition = 100
+        boardNode.addChild(emitter)
+        
+        emitter.run(.sequence([
+            .wait(forDuration: 1.0),
+            .removeFromParent()
         ]))
     }
+
 
     private func tileIndex(from node: SKNode) -> Int? {
         var current: SKNode? = node
@@ -564,15 +675,15 @@ final class FarmScene: SKScene {
 }
 
 private struct TileVisual {
-    let tile: SKShapeNode
+    let tile: SKSpriteNode
     let emoji: SKLabelNode
     let plus: SKLabelNode
     let indexLabel: SKLabelNode
-    let progressTrack: SKShapeNode
-    let progressFill: SKShapeNode
-    let waterBadge: SKShapeNode
+    let progressTrack: SKSpriteNode
+    let progressFill: SKSpriteNode
+    let waterBadge: SKSpriteNode
     let readyBadge: SKLabelNode
-    let progressRect: CGRect
+    let barWidth: CGFloat
 }
 
 private extension CGRect {

@@ -31,64 +31,97 @@ struct MainMenuView: View {
                 )
                 .ignoresSafeArea()
 
-                // Bottom gradient for contrast
-                VStack {
-                    Spacer()
-                    LinearGradient(
-                        colors: [.clear, .black.opacity(0.45)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: proxy.size.height * 0.5)
-                    .allowsHitTesting(false)
-                }
+                // Cinematic Gradient Overlay
+                LinearGradient(
+                    colors: [
+                        .black.opacity(0.1),
+                        .black.opacity(0.3),
+                        .black.opacity(0.7)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
                 .ignoresSafeArea()
 
-                VStack {
-                    Spacer()
-
-                    // Title
-                    VStack(spacing: DS.Space.xs) {
-                        Text("FarmSim")
-                            .font(Typography.display)
-                            .foregroundStyle(.white)
-                            .shadow(color: DS.Color.money.opacity(0.55), radius: 18, x: 0, y: 4)
-                            .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
-                            .scaleEffect(titleAppeared ? 1.0 : 0.88)
-                            .opacity(titleAppeared ? 1.0 : 0)
-
-                        Text("Grow your homestead")
+                HStack {
+                    // Left Side: Title and Branding
+                    VStack(alignment: .leading, spacing: DS.Space.md) {
+                        Spacer()
+                        
+                        VStack(alignment: .leading, spacing: -8) {
+                            Text("FARM")
+                                .font(.system(size: 82, weight: .heavy, design: .rounded))
+                                .foregroundStyle(.white)
+                                .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                            
+                            Text("SIM")
+                                .font(.system(size: 82, weight: .black, design: .rounded))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [DS.Color.money, DS.Color.xp],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .shadow(color: DS.Color.money.opacity(0.5), radius: 20, x: 0, y: 10)
+                        }
+                        .scaleEffect(titleAppeared ? 1.0 : 0.9)
+                        .opacity(titleAppeared ? 1.0 : 0)
+                        
+                        Text("Build your legacy.")
                             .font(Typography.section)
-                            .foregroundStyle(.white.opacity(0.8))
-                            .scaleEffect(titleAppeared ? 1.0 : 0.95)
+                            .foregroundStyle(.white.opacity(0.9))
+                            .padding(.leading, 6)
                             .opacity(titleAppeared ? 1.0 : 0)
+                        
+                        Spacer()
+                        Spacer()
+                        
+                        // Version / Copyright
+                        Text("v1.0.0 · Swift 5.10 · GameCore")
+                            .font(.caption2.monospaced())
+                            .foregroundStyle(.white.opacity(0.4))
                     }
-                    .padding(.bottom, DS.Space.lg)
-
-                    // Buttons
-                    VStack(spacing: DS.Space.sm) {
-                        MenuButtonsView(
-                            hasSave: hasSave,
-                            isBusy: false,
-                            onPrimaryAction: onContinue,
-                            onNewGameAction: { confirmNewGame = true },
-                            onSettingsAction: { appState.showingMenuSettings = true },
-                            onCreditsAction: { showCredits = true }
+                    .padding(.leading, DS.Space.xl * 1.5)
+                    
+                    Spacer()
+                    
+                    // Right Side: Menu Card
+                    VStack {
+                        Spacer()
+                        
+                        VStack(spacing: DS.Space.md) {
+                            MenuButtonsView(
+                                hasSave: hasSave,
+                                isBusy: false,
+                                onPrimaryAction: onContinue,
+                                onNewGameAction: { confirmNewGame = true },
+                                onSettingsAction: { appState.showingMenuSettings = true },
+                                onCreditsAction: { showCredits = true }
+                            )
+                        }
+                        .padding(DS.Space.xl)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                .stroke(.white.opacity(0.15), lineWidth: 1)
                         )
+                        .shadow(color: .black.opacity(0.25), radius: 30, x: 0, y: 15)
+                        .frame(width: 360)
+                        .offset(x: buttonsAppeared ? 0 : 50)
+                        .opacity(buttonsAppeared ? 1.0 : 0)
+                        
+                        Spacer()
                     }
-                    .padding(.horizontal, DS.Space.xl)
-                    .padding(.bottom, DS.Space.xl)
-                    .offset(y: buttonsAppeared ? 0 : 30)
-                    .opacity(buttonsAppeared ? 1.0 : 0)
+                    .padding(.trailing, DS.Space.xl * 1.5)
                 }
-                .padding(.bottom, proxy.safeAreaInsets.bottom > 0 ? 0 : DS.Space.md)
             }
             .onAppear {
                 sceneHolder.resize(proxy.size)
-                withAnimation(.spring(response: 0.7, dampingFraction: 0.65).delay(0.15)) {
+                withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
                     titleAppeared = true
                 }
-                withAnimation(.easeOut(duration: 0.5).delay(0.35)) {
+                withAnimation(.spring(response: 0.8, dampingFraction: 0.75).delay(0.4)) {
                     buttonsAppeared = true
                 }
             }

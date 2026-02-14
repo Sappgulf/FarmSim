@@ -13,6 +13,13 @@ struct FarmView: View {
     @State private var pan: CGSize = .zero
     @State private var sceneDebugStats = FarmSceneDebugStats()
     @State private var showDayRolloverOverlay = false
+    
+    // Quick Wheel State
+    @State private var showQuickWheel = false
+    @State private var quickWheelItems: [QuickWheelItem] = []
+    @State private var quickWheelLocation: CGPoint = .zero
+    
+
 
     var body: some View {
         GeometryReader { proxy in
@@ -53,6 +60,15 @@ struct FarmView: View {
                         .transition(.opacity)
                         .zIndex(5)
                 }
+                
+                if showQuickWheel {
+                    QuickWheelView(
+                        items: quickWheelItems,
+                        center: quickWheelLocation,
+                        onDismiss: { showQuickWheel = false }
+                    )
+                    .zIndex(10)
+                }
             }
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: DS.Space.sm) {
@@ -78,6 +94,19 @@ struct FarmView: View {
                 scene.apply(snapshot: store.renderSnapshot, cropDisplay: store.cropDisplay)
                 scene.setViewport(zoom: zoom, pan: pan)
                 store.setMenuPresented(appState.showingTileSheet)
+                
+                scene.onTileLongPressed = { index, location in
+                    let items = generateWheelItems(for: index)
+                    if !items.isEmpty {
+                        quickWheelItems = items
+                        quickWheelLocation = location
+                        showQuickWheel = true
+                        
+                        // Haptic feedback
+                        let generator = UIImpactFeedbackGenerator(style: .medium)
+                        generator.impactOccurred()
+                    }
+                }
             }
             .onDisappear {
                 scene.onDebugStats = nil
@@ -330,6 +359,56 @@ struct FarmView: View {
         }
         .buttonStyle(.plain)
         .transition(.scale(scale: 0.92).combined(with: .opacity))
+    }
+
+    private func generateWheelItems(for index: Int) -> [QuickWheelItem] {
+        var items = [QuickWheelItem]()
+        guard let tile = store.tileSheetState(for: index) else { return [] }
+        
+        // 1. Water (Always available if not fully watered? Or just always action)
+        items.append(QuickWheelItem(id: "water", icon: "drop.fill", label: "Water") {
+            store.waterTile(index: index)
+        })
+        
+        if tile.cropID == nil {
+            // Empty Tile Options
+            
+            // Catalogue shortcut
+            items.append(QuickWheelItem(id: "catalog", icon: "book.fill", label: "Catalog") {
+                appState.openTileSheet(for: index)
+            })
+            
+            // Quick Plant (Top 3 Unlocked)
+            let quickSeeds = store.cropDefs
+                .filter { store.isUnlocked(cropID: $0.id) }
+                .sorted { $0.seedCost < $1.seedCost } // Sort by cheapness or level? Just cost for now
+                .prefix(3)
+            
+            for seed in quickSeeds {
+                items.append(QuickWheelItem(id: "seed_\(seed.id)", icon: "leaf.fill", label: seed.name) {
+                    store.selectSeed(id: seed.id)
+                    store.plantSelectedSeed(on: index)
+                })
+            }
+            
+        } else {
+            // Crop Options
+            if tile.isReady {
+                items.append(QuickWheelItem(id: "harvest", icon: "arrow.up.circle.fill", label: "Harvest") {
+                    store.harvestTile(index: index)
+                })
+            } else {
+                items.append(QuickWheelItem(id: "info", icon: "info.circle", label: "Info") {
+                    appState.openTileSheet(for: index)
+                })
+            }
+            
+            items.append(QuickWheelItem(id: "clear", icon: "trash.fill", label: "Clear") {
+                store.clearTile(index: index)
+            })
+        }
+        
+        return items
     }
 }
 

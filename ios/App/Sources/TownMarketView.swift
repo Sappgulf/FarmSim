@@ -456,25 +456,41 @@ struct TownMarketView: View {
                                 .buttonStyle(.borderedProminent)
                             }
 
-                            ForEach(store.livestockPlans, id: \.id) { plan in
-                                let count = store.livestockCount(for: plan.id)
-                                let canBuy = store.canBuyLivestock(plan.id)
-                                HStack {
-                                    Text(plan.icon)
-                                        .font(.title3)
-                                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: DS.Space.sm)], spacing: DS.Space.sm) {
+                                ForEach(store.livestockPlans, id: \.id) { plan in
+                                    let count = store.livestockCount(for: plan.id)
+                                    let canBuy = store.canBuyLivestock(plan.id)
+                                    
+                                    VStack(alignment: .center, spacing: DS.Space.xs) {
+                                        Text(plan.icon)
+                                            .font(.system(size: 32))
                                         Text(plan.name)
-                                            .font(.body.weight(.semibold))
-                                        Text("Owned: \(count) • Cost: \(plan.cost) • Lv \(plan.requiredLevel)+")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
+                                            .font(.headline)
+                                            .multilineTextAlignment(.center)
+                                        
+                                        if count > 0 {
+                                            Text("Owned: \(count)")
+                                                .font(.caption.weight(.semibold))
+                                                .foregroundStyle(DS.Color.accent)
+                                        } else {
+                                            Text("Lv \(plan.requiredLevel)+")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        
+                                        Button(action: {
+                                            _ = store.buyLivestock(plan.id)
+                                        }) {
+                                            Text("\(plan.cost)")
+                                                .font(.caption.monospacedDigit().weight(.bold))
+                                                .frame(maxWidth: .infinity)
+                                        }
+                                        .buttonStyle(.borderedProminent)
+                                        .disabled(!canBuy)
+                                        .controlSize(.small)
                                     }
-                                    Spacer()
-                                    Button("Buy") {
-                                        _ = store.buyLivestock(plan.id)
-                                    }
-                                    .buttonStyle(.borderedProminent)
-                                    .disabled(!canBuy)
+                                    .padding(DS.Space.sm)
+                                    .background(DS.Color.surfaceElevated, in: RoundedRectangle(cornerRadius: DS.Radius.md))
                                 }
                             }
                         }
@@ -484,32 +500,44 @@ struct TownMarketView: View {
                         VStack(alignment: .leading, spacing: DS.Space.sm) {
                             SectionHeader("Pets")
 
-                            ForEach(store.petPlans, id: \.id) { plan in
-                                let level = store.petLevel(for: plan.id)
-                                HStack {
-                                    Text(plan.icon)
-                                        .font(.title3)
-                                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: DS.Space.sm)], spacing: DS.Space.sm) {
+                                ForEach(store.petPlans, id: \.id) { plan in
+                                    let level = store.petLevel(for: plan.id)
+                                    
+                                    VStack(alignment: .center, spacing: DS.Space.xs) {
+                                        Text(plan.icon)
+                                            .font(.system(size: 32))
                                         Text(plan.name)
-                                            .font(.body.weight(.semibold))
-                                        Text("Lv \(level)/\(plan.maxLevel) • \(plan.bonusLabel)")
-                                            .font(.caption)
+                                            .font(.headline)
+                                        
+                                        Text(plan.bonusLabel)
+                                            .font(.caption2)
                                             .foregroundStyle(.secondary)
-                                    }
-                                    Spacer()
-                                    if level == 0 {
-                                        Button("Adopt \(plan.cost)") {
-                                            _ = store.adoptPet(plan.id)
+                                            .multilineTextAlignment(.center)
+                                            .lineLimit(2)
+                                            .frame(height: 32)
+                                        
+                                        if level == 0 {
+                                            Button("Adopt \(plan.cost)") {
+                                                _ = store.adoptPet(plan.id)
+                                            }
+                                            .buttonStyle(.borderedProminent)
+                                            .disabled(!store.canAdoptPet(plan.id))
+                                            .controlSize(.small)
+                                        } else {
+                                            Text("Lv \(level)/\(plan.maxLevel)")
+                                                .font(.caption.monospacedDigit().weight(.semibold))
+                                            
+                                            Button("Train") {
+                                                _ = store.trainPet(plan.id)
+                                            }
+                                            .buttonStyle(.bordered)
+                                            .disabled(level >= plan.maxLevel)
+                                            .controlSize(.small)
                                         }
-                                        .buttonStyle(.borderedProminent)
-                                        .disabled(!store.canAdoptPet(plan.id))
-                                    } else {
-                                        Button("Train") {
-                                            _ = store.trainPet(plan.id)
-                                        }
-                                        .buttonStyle(.bordered)
-                                        .disabled(level >= plan.maxLevel)
                                     }
+                                    .padding(DS.Space.sm)
+                                    .background(DS.Color.surfaceElevated, in: RoundedRectangle(cornerRadius: DS.Radius.md))
                                 }
                             }
                         }
@@ -519,20 +547,53 @@ struct TownMarketView: View {
                         VStack(alignment: .leading, spacing: DS.Space.sm) {
                             SectionHeader("Fishing")
 
-                            HStack {
-                                VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                                    Text("\(store.currentPondUpgrade.name)")
-                                        .font(.body.weight(.semibold))
-                                    Text("Pond Lv \(store.fishingPondLevel) • Total caught: \(store.totalFishCaught)")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                            // Stylized Pond Card
+                            VStack(spacing: DS.Space.md) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                                        Text("\(store.currentPondUpgrade.name)")
+                                            .font(.title3.weight(.bold))
+                                            .foregroundStyle(.white)
+                                        Text("Level \(store.fishingPondLevel)")
+                                            .font(.caption.weight(.semibold))
+                                            .foregroundStyle(.white.opacity(0.8))
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 2)
+                                            .background(.black.opacity(0.3), in: Capsule())
+                                    }
+                                    Spacer()
+                                    VStack(alignment: .trailing, spacing: 0) {
+                                        Text("\(store.totalFishCaught)")
+                                            .font(.title2.monospacedDigit().weight(.bold))
+                                            .foregroundStyle(.white)
+                                        Text("Caught")
+                                            .font(.caption)
+                                            .foregroundStyle(.white.opacity(0.8))
+                                    }
                                 }
-                                Spacer()
-                                Button("Cast Line") {
+                                
+                                Button(action: {
                                     _ = store.castFishingLine()
+                                }) {
+                                    Label("Cast Line", systemImage: "figure.fishing")
+                                        .font(.headline)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, DS.Space.xs)
                                 }
                                 .buttonStyle(.borderedProminent)
+                                .tint(.white)
+                                .foregroundStyle(Color(red: 0.2, green: 0.5, blue: 0.8))
                             }
+                            .padding(DS.Space.md)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color(red: 0.2, green: 0.5, blue: 0.8), Color(red: 0.1, green: 0.3, blue: 0.6)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg))
+                            .shadow(color: Color(red: 0.2, green: 0.5, blue: 0.8).opacity(0.3), radius: 8, x: 0, y: 4)
 
                             if let next = store.nextPondUpgrade {
                                 HStack {

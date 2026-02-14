@@ -550,12 +550,14 @@ final class GameStore {
     func harvestTile(index: Int) {
         let harvested = engine.harvestYield(tileIndex: index, yieldMultiplier: yieldMultiplier)
         let status = harvested > 0 ? "Harvested x\(harvested)." : "Not ready yet."
+        if harvested > 0 { SoundManager.shared.play(.harvest) }
         syncState(statusOverride: status, emitHaptic: harvested > 0, emitHarvest: harvested > 0)
     }
 
     func harvestAll() {
         let count = engine.harvestAll(yieldMultiplier: yieldMultiplier)
         let status = count > 0 ? "Harvested \(count) tile\(count == 1 ? "" : "s")." : "No ready crops."
+        if count > 0 { SoundManager.shared.play(.harvest) }
         syncState(statusOverride: status, emitHaptic: count > 0, emitHarvest: count > 0)
     }
 
@@ -572,6 +574,7 @@ final class GameStore {
         let status = bought
             ? "Purchased \(safeQuantity)x \(def.name) seed for \(result.totalPrice) coins."
             : "Not enough coins."
+        SoundManager.shared.play(bought ? .purchase : .error)
         syncState(statusOverride: status, emitHaptic: bought, emitHarvest: false)
         return bought
     }
@@ -584,6 +587,7 @@ final class GameStore {
             quantity: quantity,
             pricing: MarketPricing(cropUnitPrices: [cropID: adjustedUnitPrice])
         )
+        if result.success { SoundManager.shared.play(.sell) }
         let sold = result.success
         let cropName = engine.cropDefsByID[cropID]?.name ?? cropID
         let status = sold ? "Sold \(result.quantity)x \(cropName) for \(result.totalPrice) coins." : "No crops to sell."
@@ -645,6 +649,7 @@ final class GameStore {
 
         engine.setBuildingLevel(level + 1, for: buildingID)
         let bonus = plan.bonusForLevel(level + 1)
+        SoundManager.shared.play(.levelUp)
         syncState(statusOverride: "\(plan.name) upgraded to Lv \(level + 1). \(bonus)", emitHaptic: true, emitHarvest: false)
         return true
     }
@@ -941,6 +946,7 @@ final class GameStore {
         }
 
         syncState(statusOverride: "Challenge complete: \(challenge.name).", emitHaptic: true, emitHarvest: false)
+        SoundManager.shared.play(.success)
         return true
     }
 
@@ -1081,6 +1087,7 @@ final class GameStore {
         engine.resizeGrid(width: next, height: next)
         engine.incrementExpansionPurchases()
         syncState(statusOverride: "Farm expanded to \(next)x\(next).", emitHaptic: true, emitHarvest: false)
+        SoundManager.shared.play(.levelUp)
         return true
     }
 
@@ -1183,11 +1190,13 @@ final class GameStore {
 
     func setHapticsEnabled(_ enabled: Bool) {
         settings.hapticsEnabled = enabled
+        SoundManager.shared.updateSettings(sound: settings.soundEnabled, haptics: enabled)
         persistSettings()
     }
 
     func setSoundEnabled(_ enabled: Bool) {
         settings.soundEnabled = enabled
+        SoundManager.shared.updateSettings(sound: enabled, haptics: settings.hapticsEnabled)
         persistSettings()
     }
 
