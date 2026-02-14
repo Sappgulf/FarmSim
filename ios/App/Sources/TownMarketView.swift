@@ -4,7 +4,7 @@ import GameCore
 // MARK: - MarketSection
 
 private enum MarketSection: String, CaseIterable, Identifiable {
-    case buy, sell, upgrades, challenges
+    case buy, sell, upgrades, challenges, fishing, pets
     var id: String { rawValue }
 
     var title: String {
@@ -13,6 +13,8 @@ private enum MarketSection: String, CaseIterable, Identifiable {
         case .sell:       return "Sell"
         case .upgrades:   return "Upgrades"
         case .challenges: return "Work Orders"
+        case .fishing:    return "Fishing"
+        case .pets:       return "Pets"
         }
     }
 
@@ -22,6 +24,8 @@ private enum MarketSection: String, CaseIterable, Identifiable {
         case .sell:       return "dollarsign.circle.fill"
         case .upgrades:   return "hammer.fill"
         case .challenges: return "checklist"
+        case .fishing:    return "fish.fill"
+        case .pets:       return "pawprint.fill"
         }
     }
 }
@@ -65,6 +69,8 @@ struct TownMarketView: View {
                             case .sell:       sellSection
                             case .upgrades:   upgradesSection
                             case .challenges: challengesSection
+                            case .fishing:    FishingSection(store: store)
+                            case .pets:       PetsSection(store: store)
                             }
                         }
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
