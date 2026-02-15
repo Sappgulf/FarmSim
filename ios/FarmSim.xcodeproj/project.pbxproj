@@ -17,6 +17,7 @@
 		2B814C2BC30CEF916FA04D19 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7023B05D13E79F0132D0DF /* Components.swift */; };
 		2EFBE9C9B90EBE949D07FAAD /* QuickWheelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4ED1CB1D4830BFFA01057C5 /* QuickWheelView.swift */; };
 		40B2359985F0B8E802AD2C0C /* GameShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB528E9FEB712A68D8FA8333 /* GameShell.swift */; };
+		472D3F62B16941CB3E0608C3 /* HapticPatterns.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F476801E42B938075DC89E3 /* HapticPatterns.swift */; };
 		4ABA4A4DEB2B0AC8A87FDBE3 /* FarmNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0592929B9C2CCD4116EC7BFD /* FarmNotifications.swift */; };
 		4CE8B5DCDD4AAD2E9EF89C97 /* PerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002A049D3593253C90EE88F1 /* PerformanceMonitor.swift */; };
 		4D4453BC4033E28BF4900048 /* FarmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 088F4123377BE584FF514CA7 /* FarmView.swift */; };
@@ -35,7 +36,10 @@
 		873E3E2C4DC5A0D52232AF88 /* PetsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AF4540AEFAE2A913FDA5F20 /* PetsView.swift */; };
 		87902432CFFB44D1724A1DF5 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 948D0B52C7D687974340E421 /* AppState.swift */; };
 		A156DE1AADBF34780D3EB898 /* BootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CF307E5307009A22F64FD47 /* BootView.swift */; };
+		A51E8CBA1A83F44471CD26D8 /* WeatherSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D8064B56ACF2B12E03AA544 /* WeatherSystem.swift */; };
 		AF26274D3FF4CD79B1217925 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15D3EA798EEF785C1EDDBDD /* DesignSystem.swift */; };
+		AF6488D033C8BDFD4F5CBE9C /* EnhancedMarketUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 240722FDC0F1B1671F1FC88B /* EnhancedMarketUI.swift */; };
+		B2315368BE01BE42BDCA4942 /* LoadingStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC55114B3A2EE1183D3130AB /* LoadingStates.swift */; };
 		B256A6E29E90580B8267F881 /* ContentRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DF65BF944352692FEA98F08 /* ContentRepository.swift */; };
 		B6085B4D94FBD7E944782B8B /* MenuButtonsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29480BE67F50123EE0BBA2AA /* MenuButtonsView.swift */; };
 		BD1071B837FA760B6CA8D7B3 /* GameLoopDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98E2E231238BA1E32D1C2A3D /* GameLoopDriver.swift */; };
@@ -56,6 +60,7 @@
 		09CA1F9DE3EAA892ACBD1B03 /* ShopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShopView.swift; sourceTree = "<group>"; };
 		1AF4540AEFAE2A913FDA5F20 /* PetsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetsView.swift; sourceTree = "<group>"; };
 		1DFCB78AF03811ED2DDB3C7B /* FishingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FishingView.swift; sourceTree = "<group>"; };
+		240722FDC0F1B1671F1FC88B /* EnhancedMarketUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedMarketUI.swift; sourceTree = "<group>"; };
 		29480BE67F50123EE0BBA2AA /* MenuButtonsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuButtonsView.swift; sourceTree = "<group>"; };
 		345E94AFFE7C60BF2AAE9257 /* BarnInventoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarnInventoryView.swift; sourceTree = "<group>"; };
 		357FD8606D9DB4A8A31939CC /* TownMarketView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TownMarketView.swift; sourceTree = "<group>"; };
@@ -63,10 +68,12 @@
 		3DF65BF944352692FEA98F08 /* ContentRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentRepository.swift; sourceTree = "<group>"; };
 		414AA71CAEFFBAA225B675E5 /* GameShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameShellView.swift; sourceTree = "<group>"; };
 		4D6A7C0DAA792D766130B984 /* BarnHeaderHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarnHeaderHUD.swift; sourceTree = "<group>"; };
+		4D8064B56ACF2B12E03AA544 /* WeatherSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherSystem.swift; sourceTree = "<group>"; };
 		4F250470263ED5C3F70263CD /* AlmanacView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlmanacView.swift; sourceTree = "<group>"; };
 		529A3BABC16B676703CB42AC /* MilestoneManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneManager.swift; sourceTree = "<group>"; };
 		5B6F55374C2DE85213E57E4F /* PerfTelemetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerfTelemetry.swift; sourceTree = "<group>"; };
 		5D533857D71E8DF3CAA8B83F /* BarnInventoryModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarnInventoryModels.swift; sourceTree = "<group>"; };
+		5F476801E42B938075DC89E3 /* HapticPatterns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticPatterns.swift; sourceTree = "<group>"; };
 		606F6628867A4DAEE9A09B5A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6C47BCE186C8445BFD350779 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		6FCB4A1DCA2BDFCB990FBB40 /* ItemCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemCardView.swift; sourceTree = "<group>"; };
@@ -79,6 +86,7 @@
 		98E2E231238BA1E32D1C2A3D /* GameLoopDriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameLoopDriver.swift; sourceTree = "<group>"; };
 		9D42EF966A07393C213649E6 /* HomesteadMenuScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomesteadMenuScene.swift; sourceTree = "<group>"; };
 		A15D3EA798EEF785C1EDDBDD /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		AC55114B3A2EE1183D3130AB /* LoadingStates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingStates.swift; sourceTree = "<group>"; };
 		B4ED1CB1D4830BFFA01057C5 /* QuickWheelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickWheelView.swift; sourceTree = "<group>"; };
 		B9E09E2A7A1B6C7A408ED0E4 /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
 		BC85027D49EBD255ADF02D94 /* FarmSimApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FarmSimApp.swift; sourceTree = "<group>"; };
@@ -168,6 +176,7 @@
 				948D0B52C7D687974340E421 /* AppState.swift */,
 				3DF65BF944352692FEA98F08 /* ContentRepository.swift */,
 				A15D3EA798EEF785C1EDDBDD /* DesignSystem.swift */,
+				240722FDC0F1B1671F1FC88B /* EnhancedMarketUI.swift */,
 				0592929B9C2CCD4116EC7BFD /* FarmNotifications.swift */,
 				FFDABDF51EE7D2E47B9DE59D /* FarmScene.swift */,
 				BC85027D49EBD255ADF02D94 /* FarmSimApp.swift */,
@@ -177,7 +186,9 @@
 				CB528E9FEB712A68D8FA8333 /* GameShell.swift */,
 				414AA71CAEFFBAA225B675E5 /* GameShellView.swift */,
 				B9E09E2A7A1B6C7A408ED0E4 /* GameStore.swift */,
+				5F476801E42B938075DC89E3 /* HapticPatterns.swift */,
 				FB8CCE7C8FFEB4774FA2F358 /* InventoryView.swift */,
+				AC55114B3A2EE1183D3130AB /* LoadingStates.swift */,
 				529A3BABC16B676703CB42AC /* MilestoneManager.swift */,
 				5B6F55374C2DE85213E57E4F /* PerfTelemetry.swift */,
 				1AF4540AEFAE2A913FDA5F20 /* PetsView.swift */,
@@ -185,6 +196,7 @@
 				09CA1F9DE3EAA892ACBD1B03 /* ShopView.swift */,
 				F40F33DFB7D52F84EBDFA060 /* Theme.swift */,
 				357FD8606D9DB4A8A31939CC /* TownMarketView.swift */,
+				4D8064B56ACF2B12E03AA544 /* WeatherSystem.swift */,
 				5F6302FCDCC76BDA02E2AF48 /* Components */,
 				84E1579D6D7BAD1C47D05737 /* DesignSystem */,
 				85CDE8C1AD9613FEF9BCA5AE /* Inventory */,
@@ -312,6 +324,7 @@
 				2B814C2BC30CEF916FA04D19 /* Components.swift in Sources */,
 				B256A6E29E90580B8267F881 /* ContentRepository.swift in Sources */,
 				AF26274D3FF4CD79B1217925 /* DesignSystem.swift in Sources */,
+				AF6488D033C8BDFD4F5CBE9C /* EnhancedMarketUI.swift in Sources */,
 				4ABA4A4DEB2B0AC8A87FDBE3 /* FarmNotifications.swift in Sources */,
 				1F53A35004EFB2458DE650E2 /* FarmScene.swift in Sources */,
 				2B5AE1A45B2CE1593793A12C /* FarmSimApp.swift in Sources */,
@@ -321,9 +334,11 @@
 				40B2359985F0B8E802AD2C0C /* GameShell.swift in Sources */,
 				D3528B9C2C04B9FAD0BBE372 /* GameShellView.swift in Sources */,
 				7BB126C46508EF02697A5063 /* GameStore.swift in Sources */,
+				472D3F62B16941CB3E0608C3 /* HapticPatterns.swift in Sources */,
 				73276090F48C2C38C49DAF36 /* HomesteadMenuScene.swift in Sources */,
 				7CE2A4E64FBBC71784C706A9 /* InventoryView.swift in Sources */,
 				24AB3B11A27B45088259F442 /* ItemCardView.swift in Sources */,
+				B2315368BE01BE42BDCA4942 /* LoadingStates.swift in Sources */,
 				DC5113D6517A95ECEB16FC60 /* MainMenuView.swift in Sources */,
 				B6085B4D94FBD7E944782B8B /* MenuButtonsView.swift in Sources */,
 				7E5CC87A2A7AA0F88803FA7F /* MilestoneManager.swift in Sources */,
@@ -337,6 +352,7 @@
 				7C1AEC85EBD0F3B7B75F3390 /* Theme.swift in Sources */,
 				520B728AA102563E6021A877 /* TownMarketView.swift in Sources */,
 				826467693FB60315143C88F0 /* Typography.swift in Sources */,
+				A51E8CBA1A83F44471CD26D8 /* WeatherSystem.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

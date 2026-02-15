@@ -234,9 +234,9 @@ class WeatherScene: SKScene {
         setupRain(intensity: intensity * 1.5)
         
         // Add dark clouds
-        for i in 0..<3 {
+        for index in 0..<3 {
             let cloud = SKSpriteNode(color: SKColor(red: 0.2, green: 0.2, blue: 0.25, alpha: 0.7), size: CGSize(width: 200, height: 100))
-            cloud.position = CGPoint(x: CGFloat(i) * size.width / 2, y: size.height - 100)
+            cloud.position = CGPoint(x: CGFloat(index) * size.width / 2, y: size.height - 100)
             cloud.alpha = 0
             addChild(cloud)
             cloudNodes.append(cloud)

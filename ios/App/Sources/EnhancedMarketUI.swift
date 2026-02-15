@@ -220,7 +220,7 @@ struct EnhancedCropCard: View {
                         .font(.system(.callout, weight: .bold))
                         .foregroundStyle(Theme.coinGold)
                     
-                    if let trend = trend, trend.data.count > 1 {
+                    if let trend = trend, trend.history.count > 1 {
                         PriceSparkline(data: trend.history, color: trend.trend.color)
                             .frame(height: 20)
                     }
@@ -334,38 +334,6 @@ struct BulkSellOverlay: View {
             )
             .padding(40)
         }
-    }
-}
-
-// MARK: - Button Styles
-
-struct PrimaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(.headline, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Theme.coinGold)
-            )
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-    }
-}
-
-struct SecondaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(.headline, weight: .semibold))
-            .foregroundStyle(.primary)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.gray.opacity(0.2))
-            )
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
     }
 }
 

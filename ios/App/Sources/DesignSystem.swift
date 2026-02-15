@@ -463,6 +463,28 @@ struct GlassButtonStyle: ButtonStyle {
     }
 }
 
+// MARK: - SecondaryButtonStyle
+
+struct SecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(.headline, design: .rounded, weight: .semibold))
+            .foregroundStyle(DS.Color.textPrimary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, DS.Space.sm)
+            .background(
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                    .fill(SwiftUI.Color.white.opacity(configuration.isPressed ? 0.10 : 0.15))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                    .strokeBorder(SwiftUI.Color.white.opacity(0.20), lineWidth: 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(DS.Animation.micro, value: configuration.isPressed)
+    }
+}
+
 // MARK: - Background
 
 extension View {
