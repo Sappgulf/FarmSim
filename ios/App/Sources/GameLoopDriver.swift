@@ -153,6 +153,7 @@ final class SoundManager {
         let E5:  Float = 659.25
         let G5:  Float = 783.99
         let A4:  Float = 440.00
+        let A5:  Float = 880.00
         let B4:  Float = 493.88
         let G4:  Float = 392.00
         let C6:  Float = 1046.50
