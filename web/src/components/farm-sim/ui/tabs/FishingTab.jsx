@@ -5,6 +5,7 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { FISH_TYPES, POND_UPGRADES } from '../../systems/FishingSystem';
+import { TabHero, MetricTile } from './TabSurface';
 
 const FishingTab = memo(() => {
   const { state, actions, systems } = useGame();
@@ -237,42 +238,58 @@ const FishingTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Header Stats */}
-      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-cyan-50/40 p-4 shadow-md transition-all hover:shadow-lg">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600">Fishing</div>
-          <Badge variant="outline" className="ml-auto bg-white/80 text-slate-600 text-xs">
+      <TabHero
+        icon="🎣"
+        tone="sky"
+        title="Fishing Dock"
+        description="Cast, reel, and keep the line in the safe zone for a clean catch."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-sky-700 border-sky-200">
             Level {pondLevel}
           </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <MetricTile
+            tone="sky"
+            label="Fish Caught"
+            value={stats.totalCaught}
+            hint="All-time catches"
+            icon="🐟"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Total Value"
+            value={`$${stats.totalValue}`}
+            hint="Converted from catches"
+            icon="💰"
+          />
+          <MetricTile
+            tone="violet"
+            label="Biggest Fish"
+            value={`${stats.largestFish}cm`}
+            hint="Best single catch"
+            icon="🏅"
+          />
+          <MetricTile
+            tone="amber"
+            label="Population"
+            value={Math.floor(fishing.pond.population)}
+            hint="Pond regeneration"
+            icon="🌊"
+          />
+          <MetricTile
+            tone="rose"
+            label="Catch Streak"
+            value={stats.streak || 0}
+            hint="Consecutive successful runs"
+            icon="🔥"
+          />
         </div>
-        <h3 className="mb-4 text-xl font-semibold text-slate-900">Fishing pond</h3>
-
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
-            <div className="text-2xl font-bold text-blue-700">{stats.totalCaught}</div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">Fish caught</div>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
-            <div className="text-2xl font-bold text-green-600">${stats.totalValue}</div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">Total value</div>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
-            <div className="text-2xl font-bold text-purple-600">{stats.largestFish}cm</div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">Biggest fish</div>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
-            <div className="text-2xl font-bold text-cyan-600">{Math.floor(fishing.pond.population)}</div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">Population</div>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
-            <div className="text-2xl font-bold text-amber-600">{stats.streak || 0}</div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">Catch streak</div>
-          </div>
-        </div>
-      </Card>
+      </TabHero>
 
       {/* Pond Upgrade */}
-      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-green-50/40 p-4 shadow-md transition-all hover:shadow-lg">
+      <Card className="overflow-hidden border-emerald-200/70 bg-slate-50/80 p-4 shadow-sm transition-all hover:shadow-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1">
             <div className="text-4xl">🏞️</div>
@@ -312,11 +329,11 @@ const FishingTab = memo(() => {
 
       {/* Mini-Game */}
       {!isPlaying ? (
-        <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/40 to-cyan-50/50 p-8 shadow-lg transition-all hover:shadow-xl">
+        <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-slate-950 via-sky-950 to-cyan-900 p-8 shadow-xl transition-all">
           <div className="text-center">
             <div className="text-7xl mb-4 animate-bounce-slow">🎣</div>
-            <h3 className="mb-2 text-2xl font-semibold text-slate-900">Ready to fish?</h3>
-            <p className="mb-6 text-sm text-slate-600">
+            <h3 className="mb-2 text-2xl font-semibold text-white">Ready to fish?</h3>
+            <p className="mb-6 text-sm text-sky-100/80">
               Cast your line and catch rare species! Use A/D keys or hold controls to reel with precision.
             </p>
             <Button
@@ -324,34 +341,34 @@ const FishingTab = memo(() => {
               variant="primary"
               size="lg"
               disabled={fishing.pond.population < 10}
-              className="hover:scale-110 transition-transform text-lg px-8 py-6"
+              className="hover:scale-110 transition-transform text-lg px-8 py-6 shadow-lg"
             >
               🎣 Cast Line
             </Button>
             {fishing.pond.population < 10 && (
-              <p className="mt-3 text-xs font-semibold text-red-600">
+              <p className="mt-3 text-xs font-semibold text-red-300">
                 ⚠️ Not enough fish in pond. Wait for population to recover ({Math.floor(fishing.pond.population)}/10).
               </p>
             )}
           </div>
         </Card>
       ) : (
-        <Card className="relative overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/40 to-cyan-50/60 p-4 sm:p-6">
+        <Card className="relative overflow-hidden border-sky-200/70 bg-gradient-to-br from-slate-950 via-sky-950 to-cyan-900 p-4 sm:p-6 shadow-2xl">
           {/* Mini-game UI */}
           <div className="relative z-10">
             <div className="text-center mb-4">
               <div className="text-5xl mb-2">{gameState?.fish.emoji}</div>
-              <div className="text-xl font-semibold text-slate-900">
+              <div className="text-xl font-semibold text-white">
                 {gameState?.fish.name} Hooked!
               </div>
-              <div className="text-sm text-slate-600">
+              <div className="text-sm text-sky-100/80">
                 Size: {gameState?.size}cm • Base Value: ${gameState?.fish.baseValue}
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               <div>
-                <div className="text-center text-sm font-bold mb-2">
+                <div className="text-center text-sm font-bold mb-2 text-white">
                   Catch Progress: {Math.floor((gameState?.progress || 0) * 100)}%
                 </div>
                 <Progress
@@ -361,7 +378,7 @@ const FishingTab = memo(() => {
                 />
               </div>
               <div>
-                <div className="text-center text-sm font-bold mb-2">
+                <div className="text-center text-sm font-bold mb-2 text-white">
                   Line Tension: {tensionPercent}%
                 </div>
                 <Progress
@@ -373,20 +390,20 @@ const FishingTab = memo(() => {
             </div>
 
             {/* Fishing Bar */}
-            <div className="relative h-28 sm:h-32 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-900 rounded-lg overflow-hidden mb-4 border-4 border-blue-600 shadow-2xl">
+            <div className="relative h-28 sm:h-32 bg-gradient-to-r from-blue-950 via-cyan-900 to-blue-950 rounded-2xl overflow-hidden mb-4 border border-white/20 shadow-2xl">
               <div className="absolute inset-0 opacity-30">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent animate-pulse"></div>
                 <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-blue-800/50 to-transparent"></div>
               </div>
 
               <div
-                className="absolute top-0 bottom-0 bg-gradient-to-r from-green-400/80 via-green-300/70 to-green-400/80 border-x-2 border-green-200 shadow-lg transition-all duration-100"
+                className="absolute top-0 bottom-0 bg-gradient-to-r from-emerald-400/80 via-green-300/70 to-emerald-400/80 border-x-2 border-emerald-200 shadow-lg transition-all duration-100"
                 style={{
                   left: `${((gameState?.fishPosition || 0.5) * 100) - (safeZoneWidth / 2)}%`,
                   width: `${safeZoneWidth}%`
                 }}
               >
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-green-300 font-bold text-xs">
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-emerald-200 font-bold text-xs">
                   SAFE ZONE
                 </div>
               </div>
@@ -402,7 +419,7 @@ const FishingTab = memo(() => {
               </div>
 
               <div
-                className="absolute bottom-2 w-9 h-16 sm:w-10 sm:h-20 bg-gradient-to-b from-yellow-300 to-yellow-500 rounded-lg border-4 border-yellow-600 transition-all duration-75 shadow-xl"
+                className="absolute bottom-2 w-9 h-16 sm:w-10 sm:h-20 bg-gradient-to-b from-amber-300 to-yellow-500 rounded-lg border-4 border-amber-600 transition-all duration-75 shadow-xl"
                 style={{
                   left: `${reelPosition * 100}%`,
                   transform: `translateX(-50%) ${gameState?.inZone ? 'rotate(0deg)' : 'rotate(-4deg)'}`
@@ -412,7 +429,7 @@ const FishingTab = memo(() => {
                 <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-0.5 h-8 bg-gray-300 opacity-80"></div>
               </div>
 
-              <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs text-white font-bold bg-black/50 px-2 py-1 rounded">
+              <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs text-white font-bold bg-black/50 px-2 py-1 rounded-full">
                 {gameState?.inZone ? '✅ CONTROLLED' : '⚠️ OUT OF ZONE'}
               </div>
             </div>
@@ -432,7 +449,7 @@ const FishingTab = memo(() => {
                   onTouchCancel={stopReelHold}
                   variant="default"
                   size="lg"
-                  className="flex-1 max-w-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 sm:px-6 transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl touch-manipulation"
+                  className="flex-1 max-w-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 sm:px-6 transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl touch-manipulation border border-white/10"
                   disabled={!isPlaying}
                 >
                   <div className="flex items-center gap-2">
@@ -454,7 +471,7 @@ const FishingTab = memo(() => {
                   onTouchCancel={stopReelHold}
                   variant="default"
                   size="lg"
-                  className="flex-1 max-w-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 sm:px-6 transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl touch-manipulation"
+                  className="flex-1 max-w-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 sm:px-6 transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl touch-manipulation border border-white/10"
                   disabled={!isPlaying}
                 >
                   <div className="flex items-center gap-2">
@@ -465,7 +482,7 @@ const FishingTab = memo(() => {
                 </Button>
               </div>
 
-              <div className="flex justify-between items-center text-sm bg-white/10 rounded-lg p-3 backdrop-blur-sm">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm bg-white/10 rounded-2xl p-3 backdrop-blur-sm border border-white/10">
                 <div className="text-white font-semibold">
                   Quality Window: <span className="text-emerald-300">{Math.floor(((gameState?.qualityWindowMs || 0) / Math.max(1, gameState?.elapsedMs || 1)) * 100)}%</span>
                 </div>
@@ -475,10 +492,10 @@ const FishingTab = memo(() => {
               </div>
 
               <div className="text-center space-y-2">
-                <p className="text-sm text-blue-200 font-semibold">
+                <p className="text-sm text-sky-100 font-semibold">
                   🎯 Track the fish and stay inside the safe zone.
                 </p>
-                <p className="text-xs text-blue-300">
+                <p className="text-xs text-sky-200/80">
                   Hold buttons for smooth mobile control. High tension can snap the line.
                 </p>
               </div>
@@ -493,7 +510,7 @@ const FishingTab = memo(() => {
       )}
 
       {/* Fish Collection */}
-      <Card className="p-4 shadow-md">
+      <Card className="p-4 bg-slate-50/80 shadow-sm">
         <h4 className="font-bold mb-4 flex items-center gap-2 text-lg">
           🐟 Fish Encyclopedia
           <span className="text-xs text-gray-500 font-normal ml-2">
