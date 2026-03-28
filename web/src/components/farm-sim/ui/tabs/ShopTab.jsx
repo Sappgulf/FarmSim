@@ -4,6 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { DECORATION_DATA } from '../../constants/decorData';
+import { TabHero, MetricTile } from './TabSurface';
 import {
   getItemEntitlementInfo,
   isItemUnlocked,
@@ -151,23 +152,44 @@ const ShopTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Player Balance */}
-      <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-orange-50/40 p-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-600">Shop</div>
-            <h3 className="text-lg font-semibold text-slate-900">Farm shop</h3>
-            <p className="text-sm text-slate-600">Your one-stop shop for farming needs</p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-emerald-600">{state.coins}</div>
-            <div className="text-xs text-slate-500">Available</div>
-          </div>
+      <TabHero
+        icon="🛒"
+        tone="amber"
+        title="Farm Shop"
+        description="Buy supplies, tools, upgrades, and decor without bouncing between screens."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
+            {state.coins}🪙
+          </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="amber"
+            label="Balance"
+            value={`${state.coins}🪙`}
+            hint="Spendable coins"
+            icon="💰"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Supplies"
+            value={shopItems.supplies.length}
+            hint="Consumables available"
+            icon="🌱"
+          />
+          <MetricTile
+            tone="violet"
+            label="Decor Items"
+            value={filteredDecor.length}
+            hint="Catalog currently shown"
+            icon="🪴"
+          />
         </div>
-      </Card>
+      </TabHero>
 
       {/* Supplies */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
         <h4 className="mb-3 font-semibold text-slate-900">Farming supplies</h4>
         <div className="space-y-2">
           {shopItems.supplies.map((item) => renderShopItem(item, 'bg-green-50 hover:bg-green-100'))}
@@ -175,7 +197,7 @@ const ShopTab = memo(() => {
       </Card>
 
       {/* Decor Catalog */}
-      <Card className="overflow-hidden border-rose-200/70 bg-gradient-to-br from-white via-rose-50/30 to-orange-50/30 p-4">
+      <Card className="overflow-hidden border-rose-200/70 bg-slate-50/80 p-4">
         <div className="flex items-center justify-between mb-2">
           <h4 className="font-semibold text-slate-900">Decor catalog</h4>
           <span className="text-xs text-slate-500">{filteredDecor.length} items</span>
@@ -184,13 +206,13 @@ const ShopTab = memo(() => {
         {/* Category Filter */}
         <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1 -mx-1 px-1">
           {DECOR_CATEGORIES.map((cat) => (
-            <button
+              <button
               key={cat.id}
               onClick={() => setDecorCategory(cat.id)}
               className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                 decorCategory === cat.id
                   ? 'bg-rose-600 text-white'
-                  : 'bg-white text-rose-600 hover:bg-rose-100'
+                  : 'bg-white/90 text-rose-600 hover:bg-rose-100'
               }`}
             >
               {cat.label}
@@ -205,7 +227,7 @@ const ShopTab = memo(() => {
             const entitlementInfo = getItemEntitlementInfo(item.id, 'decor');
             const isPremium = premiumModeEnabled && entitlementInfo?.access === 'premium';
             return (
-                <div key={item.id} className={`flex items-center justify-between rounded-2xl border border-white/80 bg-white/80 p-3 transition-all hover:bg-white ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}>
+                <div key={item.id} className={`flex items-center justify-between rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm transition-all hover:bg-white ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}>
                   <div className="flex items-center gap-3 flex-1">
                     <span className="text-2xl">{item.emoji}</span>
                     <div className="flex-1">
@@ -246,7 +268,7 @@ const ShopTab = memo(() => {
       </Card>
 
       {/* Tools */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
         <h4 className="mb-3 font-semibold text-slate-900">Tools & equipment</h4>
         <div className="space-y-2">
           {shopItems.tools.map((item) => renderShopItem(item, 'bg-blue-50 hover:bg-blue-100'))}
@@ -254,7 +276,7 @@ const ShopTab = memo(() => {
       </Card>
 
       {/* Upgrades */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
         <h4 className="mb-3 font-semibold text-slate-900">Premium upgrades</h4>
         <div className="space-y-2">
           {shopItems.upgrades.map((item) => renderShopItem(item, 'bg-purple-50 hover:bg-purple-100'))}

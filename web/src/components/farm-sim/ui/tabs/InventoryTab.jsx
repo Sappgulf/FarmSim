@@ -5,6 +5,7 @@ import { Badge } from '../../../ui/badge';
 import { Button } from '../../../ui/button';
 import { DECORATION_DATA } from '../../constants/decorData';
 import { CROP_DATA } from '../../constants/cropData';
+import { TabHero, MetricTile } from './TabSurface';
 import {
   getItemEntitlementInfo,
   isItemUnlocked,
@@ -140,31 +141,44 @@ const InventoryTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Inventory Overview */}
-      <Card className="overflow-hidden border-blue-200/70 bg-gradient-to-br from-white via-blue-50/30 to-violet-50/40 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">Inventory</div>
-            <h3 className="text-lg font-semibold text-slate-900">Your storage</h3>
-          </div>
-          <Badge variant="outline" className="bg-white/80 text-slate-600">
+      <TabHero
+        icon="📦"
+        tone="sky"
+        title="Inventory Storage"
+        description="Track stored crops, supplies, and decor before deciding what to sell or place."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-sky-700 border-sky-200">
             {totalItems} items
           </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="sky"
+            label="Total Items"
+            value={totalItems}
+            hint="All stored inventory"
+            icon="📦"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Est. Value"
+            value={`${totalValue}🪙`}
+            hint="Approximate liquidation value"
+            icon="💰"
+          />
+          <MetricTile
+            tone="violet"
+            label="Crop Types"
+            value={cropItems.length}
+            hint="Distinct harvests stored"
+            icon="🌾"
+          />
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
-            <div className="font-bold text-blue-600">{totalItems}</div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">Total items</div>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
-            <div className="font-bold text-green-600">{totalValue}🪙</div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">Est. value</div>
-          </div>
-        </div>
-      </Card>
+      </TabHero>
 
       {dailyFocus?.crop && (
-        <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-orange-50/40 p-4">
+        <Card className="overflow-hidden border-amber-200/70 bg-slate-50/80 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h4 className="font-semibold text-slate-900">Daily market focus</h4>
@@ -180,7 +194,7 @@ const InventoryTab = memo(() => {
       )}
 
       {/* Crops & Quick Sell */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
         <div className="flex items-center justify-between gap-2 mb-3">
           <h4 className="font-semibold text-slate-900">Crops</h4>
           <Button
@@ -213,7 +227,7 @@ const InventoryTab = memo(() => {
               const bulkSellCount = Math.min(5, qty);
 
               return (
-                <div key={itemId} className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 shadow-sm transition-colors hover:bg-slate-50">
+                <div key={itemId} className="rounded-2xl border border-slate-200/70 bg-white/90 p-3 shadow-sm transition-colors hover:bg-slate-50">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{itemEmojis[itemId] || '📦'}</span>
@@ -273,7 +287,7 @@ const InventoryTab = memo(() => {
       </Card>
 
       {/* Supplies & Upgrades */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
         <h4 className="font-semibold text-slate-900">Supplies & upgrades</h4>
         <p className="mt-1 mb-3 text-xs text-slate-500">Fresh saves start with a small starter kit so you can plant immediately.</p>
 
@@ -286,7 +300,7 @@ const InventoryTab = memo(() => {
         ) : (
           <div className="space-y-2">
             {utilityItems.map(([itemId, quantity]) => (
-              <div key={itemId} className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 transition-colors hover:bg-slate-50">
+              <div key={itemId} className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-white/90 p-3 shadow-sm transition-colors hover:bg-slate-50">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{itemEmojis[itemId] || '📦'}</span>
                   <span className="font-medium">{formatDisplayLabel(itemId)}</span>
@@ -301,7 +315,7 @@ const InventoryTab = memo(() => {
       </Card>
 
       {/* Decorations */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
         <h4 className="mb-3 font-semibold text-slate-900">Decorations</h4>
 
         {decorationItems.length === 0 ? (
@@ -318,7 +332,7 @@ const InventoryTab = memo(() => {
               const isPremium = premiumModeEnabled && entitlementInfo?.access === 'premium';
               const isUnlocked = isItemUnlocked(state, itemId, 'decor');
               return (
-                <div key={itemId} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-rose-200/70 bg-rose-50/80 p-3 transition-colors hover:bg-rose-50">
+                <div key={itemId} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-rose-200/70 bg-white/90 p-3 shadow-sm transition-colors hover:bg-rose-50">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{decor?.emoji || '🪴'}</span>
                     <div>
@@ -370,7 +384,7 @@ const InventoryTab = memo(() => {
 
       {/* Tips */}
       {inventoryItems.length > 0 && (
-        <Card className="overflow-hidden border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-emerald-50/30 p-4">
+        <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
           <h4 className="font-semibold text-slate-900">Tips</h4>
           <ul className="mt-2 space-y-1 text-sm text-slate-700">
             <li>• Use quick-sell to free storage and reinvest into seeds</li>

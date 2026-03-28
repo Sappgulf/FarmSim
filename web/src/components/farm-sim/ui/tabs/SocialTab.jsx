@@ -5,6 +5,7 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import FarmCardShareButton from '../FarmCardShareButton';
+import { TabHero, MetricTile } from './TabSurface';
 import { decodeSeed, encodeSeed, SEED_CODE_VERSION } from '../../../../utils/seedCode';
 import { exportFarmSnapshot, hydrateSnapshotPlots, validateSnapshotPayload } from '../../../../utils/farmSnapshot';
 import { MILESTONE_DEFINITIONS } from '../../../../data/milestones';
@@ -246,22 +247,42 @@ const SocialTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Social Overview with Reputation Tiers */}
-      <Card className="overflow-hidden border-indigo-200/70 bg-gradient-to-br from-white via-blue-50/30 to-purple-50/40 p-4">
-        <div className="flex justify-between items-center mb-3">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo-600">Community</div>
-            <h3 className="text-lg font-semibold text-slate-900">Social hub</h3>
-            <p className="text-sm text-slate-600">
-              {currentTier.emoji} {currentTier.name} • {reputation} Reputation
-            </p>
-          </div>
-          <Badge variant="outline" className="bg-white/80 text-slate-600">
+      <TabHero
+        icon="🤝"
+        tone="violet"
+        title="Social Hub"
+        description="Trade with visitors, share snapshots, and grow your reputation."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-violet-700 border-violet-200">
             Tier {currentTier.tier}
           </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="violet"
+            label="Reputation"
+            value={reputation}
+            hint={`${currentTier.emoji} ${currentTier.name}`}
+            icon="⭐"
+          />
+          <MetricTile
+            tone="sky"
+            label="Visitors"
+            value={visitors.length}
+            hint="Today’s trading contacts"
+            icon="🚶"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Next Tier"
+            value={nextTier ? nextTier.name : 'Max'}
+            hint={nextTier ? `${nextTier.minRep} rep needed` : 'Highest reputation reached'}
+            icon="🏆"
+          />
         </div>
         {nextTier && (
-          <div>
+          <div className="mt-3">
             <div className="mb-1 flex justify-between text-xs text-slate-500">
               <span>{currentTier.name}</span>
               <span>{nextTier.name} ({nextTier.minRep} rep)</span>
@@ -270,29 +291,29 @@ const SocialTab = memo(() => {
           </div>
         )}
         {currentTier.perk && (
-          <div className="mt-2 rounded-2xl border border-purple-200/70 bg-purple-50/80 px-3 py-2 text-xs text-purple-700">
+          <div className="mt-3 rounded-2xl border border-violet-200/70 bg-violet-50/80 px-3 py-2 text-xs text-violet-700">
             Active Perk: {currentTier.perk}
           </div>
         )}
-      </Card>
+      </TabHero>
 
       {/* Your Profile */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
         <h4 className="mb-3 font-semibold text-slate-900">Your profile</h4>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-2xl border border-white/80 bg-green-50/80 p-3 text-center shadow-sm">
+          <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
             <div className="font-bold text-green-600">{state.level}</div>
             <div className="text-xs uppercase tracking-wide text-green-700">Farm level</div>
           </div>
-          <div className="rounded-2xl border border-white/80 bg-blue-50/80 p-3 text-center shadow-sm">
+          <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
             <div className="font-bold text-blue-600">{reputation}</div>
             <div className="text-xs uppercase tracking-wide text-blue-700">Reputation</div>
           </div>
-          <div className="rounded-2xl border border-white/80 bg-yellow-50/80 p-3 text-center shadow-sm">
+          <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
             <div className="font-bold text-yellow-600">{state.coins}🪙</div>
             <div className="text-xs uppercase tracking-wide text-yellow-700">Coins</div>
           </div>
-          <div className="rounded-2xl border border-white/80 bg-purple-50/80 p-3 text-center shadow-sm">
+          <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
             <div className="font-bold text-purple-600">{state.xp} XP</div>
             <div className="text-xs uppercase tracking-wide text-purple-700">Experience</div>
           </div>
@@ -300,12 +321,12 @@ const SocialTab = memo(() => {
       </Card>
 
       {/* Today's Visitors */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
         <h4 className="mb-3 font-semibold text-slate-900">Today's visitors</h4>
         <p className="mb-3 text-xs text-slate-500">Visitors rotate daily. Higher reputation attracts more traders.</p>
         <div className="space-y-3">
           {visitors.map(visitor => (
-            <Card key={visitor.id} className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 p-3">
+            <Card key={visitor.id} className="overflow-hidden border-amber-200/70 bg-white/90 p-3 shadow-sm">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-3xl">{visitor.emoji}</span>
                 <div>
@@ -339,13 +360,13 @@ const SocialTab = memo(() => {
       </Card>
 
       {/* Community Challenges */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
         <h4 className="mb-3 font-semibold text-slate-900">Community challenges</h4>
         <div className="space-y-3">
           {challenges.map(challenge => {
             const claimed = !!claimedChallenges[challenge.id];
             return (
-              <Card key={challenge.id} className={`overflow-hidden p-3 ${challenge.complete ? 'border-emerald-200/70 bg-emerald-50/80' : 'border-slate-200/70 bg-slate-50/80'}`}>
+              <Card key={challenge.id} className={`overflow-hidden p-3 shadow-sm ${challenge.complete ? 'border-emerald-200/70 bg-emerald-50/80' : 'border-slate-200/70 bg-white/90'}`}>
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <div className="font-medium">{challenge.title}</div>
@@ -368,7 +389,7 @@ const SocialTab = memo(() => {
       </Card>
 
       {/* Seed Codes */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4 space-y-2">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4 space-y-2">
         <h4 className="font-semibold text-slate-900">Seed codes</h4>
         <div className="flex gap-2">
           <Button onClick={handleShareSeedCode} variant="outline" size="sm" className="flex-1">Share Seed Code</Button>
@@ -378,7 +399,7 @@ const SocialTab = memo(() => {
       </Card>
 
       {/* Ghost Visits */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4 space-y-2">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4 space-y-2">
         <h4 className="font-semibold text-slate-900">Ghost visits</h4>
         <div className="flex gap-2">
           <Button onClick={handleExportSnapshot} variant="outline" size="sm" className="flex-1">Export Farm Snapshot</Button>
@@ -390,7 +411,7 @@ const SocialTab = memo(() => {
       </Card>
 
       {/* Milestones */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4 space-y-2">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4 space-y-2">
         <h4 className="font-semibold text-slate-900">Milestones</h4>
         {(milestones.recent || []).slice(-3).reverse().map((id) => {
           const def = MILESTONE_DEFINITIONS.find((entry) => entry.id === id);
@@ -409,7 +430,7 @@ const SocialTab = memo(() => {
       </Card>
 
       {/* Reputation Tiers */}
-      <Card className="overflow-hidden border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-indigo-50/40 p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
         <h4 className="mb-3 font-semibold text-slate-900">Reputation tiers</h4>
         <div className="space-y-2">
           {REPUTATION_TIERS.map(tier => {
