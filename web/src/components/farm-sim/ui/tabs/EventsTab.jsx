@@ -16,6 +16,7 @@ import { getWeekKey } from '../../../../utils/retention';
 import { getDifficultyModifier, getProgressionBand } from '../../systems/progression';
 import PerfectHarvestModal from '../minigames/PerfectHarvestModal';
 import FarmCardShareButton from '../FarmCardShareButton';
+import { TabHero, MetricTile } from './TabSurface';
 
 const FALLBACK_RULE_SET = {
   id: 'fallback_rule',
@@ -427,6 +428,42 @@ const EventsTab = memo(() => {
 
   return (
     <div className="space-y-4">
+      <TabHero
+        icon="🏮"
+        tone="amber"
+        title="Events Board"
+        description="Seasonal events, town-board prompts, and small daily reasons to return."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
+            {seasonEvents.length} seasonal events
+          </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="amber"
+            label="Season"
+            value={currentSeason}
+            hint={vibeLine}
+            icon={currentSeason === 'spring' ? '🌸' : currentSeason === 'summer' ? '☀️' : currentSeason === 'autumn' ? '🍂' : '❄️'}
+          />
+          <MetricTile
+            tone="emerald"
+            label="Ready Crops"
+            value={readyCropsCount}
+            hint="Best quick-win signal"
+            icon="🌾"
+          />
+          <MetricTile
+            tone="violet"
+            label="Plan Hints"
+            value={planSuggestions.length}
+            hint="Town-board guidance"
+            icon="📌"
+          />
+        </div>
+      </TabHero>
+
       {newPackHighlights.length > 0 && (
         <Card className="overflow-hidden border-rose-200/70 bg-gradient-to-br from-white via-rose-50/30 to-amber-50/40 p-4" data-qa="whats-new-card">
           <div className="flex items-start justify-between gap-3">
@@ -532,7 +569,7 @@ const EventsTab = memo(() => {
         </div>
       </Card>
 
-      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-emerald-50/40 p-4" data-qa="weekly-visits-card">
+      <Card className="overflow-hidden border-sky-200/70 bg-slate-50/80 p-4" data-qa="weekly-visits-card">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">Weekly visits</h3>
@@ -574,7 +611,7 @@ const EventsTab = memo(() => {
       </Card>
 
       {(onboardingActive || isFirstDay) && (
-        <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+        <Card className="p-4 bg-slate-50/80 border-amber-200">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-amber-800">📌 Town Board</h3>
@@ -611,7 +648,7 @@ const EventsTab = memo(() => {
       )}
 
       {cozyGoals.length > 0 && (
-        <Card className="p-4 bg-gradient-to-r from-amber-50 to-rose-50 border-amber-200">
+        <Card className="p-4 bg-slate-50/80 border-amber-200">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-amber-800">🧺 Cozy Goals</h3>
@@ -643,7 +680,7 @@ const EventsTab = memo(() => {
       )}
 
       {weeklySpecialToday && (
-        <Card className="p-4 bg-gradient-to-r from-rose-50 to-amber-50 border-rose-200">
+        <Card className="p-4 bg-slate-50/80 border-rose-200">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-rose-800">✨ Weekly Special Day</h3>
@@ -655,7 +692,7 @@ const EventsTab = memo(() => {
       )}
 
       {/* Town Board Insight */}
-      <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+      <Card className="p-4 bg-slate-50/80 border-amber-200">
         <div className="flex justify-between items-center">
           <div>
             <h3 className="text-lg font-semibold text-amber-800">📖 Almanac Insight</h3>

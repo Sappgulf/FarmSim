@@ -6,6 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs';
 import { getContentManager } from '../../../../content/ContentManager';
+import { TabHero, MetricTile } from './TabSurface';
 
 const buildBreedingRecipes = (items = []) => (
   Object.fromEntries(items.map((item) => [
@@ -143,21 +144,44 @@ const GeneticsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Lab Status */}
-      <Card className="p-4 bg-gradient-to-r from-purple-50 to-blue-50">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-purple-800">🧬 Genetics Laboratory</h3>
-            <p className="text-sm text-purple-600">Level {Math.floor(state.level / 2) + 1} • XP: {state.xp}</p>
-          </div>
-          <Badge variant="outline" className="bg-purple-100 text-purple-700">
-            {discoveredHybridCount} Hybrids Discovered
+      <TabHero
+        icon="🧬"
+        tone="violet"
+        title="Genetics Laboratory"
+        description="Breed crops, reveal hybrids, and preview trait combinations."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-violet-700 border-violet-200">
+            {discoveredHybridCount} hybrids
           </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="violet"
+            label="Lab Level"
+            value={Math.floor(state.level / 2) + 1}
+            hint="Progression gates hybrid tiers"
+            icon="🧪"
+          />
+          <MetricTile
+            tone="sky"
+            label="XP"
+            value={state.xp}
+            hint="Overall progression"
+            icon="✨"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Discovered"
+            value={discoveredHybridCount}
+            hint="Hybrids found so far"
+            icon="🌱"
+          />
         </div>
-      </Card>
+      </TabHero>
 
       <Tabs defaultValue="breeding" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-3 rounded-2xl bg-slate-50/80 p-1.5">
           <TabsTrigger value="breeding">🧪 Breeding</TabsTrigger>
           <TabsTrigger value="hybrids">🌱 Hybrids</TabsTrigger>
           <TabsTrigger value="traits">⚡ Traits</TabsTrigger>
@@ -165,7 +189,7 @@ const GeneticsTab = memo(() => {
 
         {/* Breeding Tab */}
         <TabsContent value="breeding" className="space-y-4">
-          <Card className="p-4">
+          <Card className="p-4 bg-slate-50/80">
             <h4 className="font-semibold mb-3">Select Parent Crops</h4>
 
             {/* Parent Selection */}
@@ -215,7 +239,7 @@ const GeneticsTab = memo(() => {
 
             {/* Breeding Preview */}
             {selectedParent1 && selectedParent2 && (
-              <Card className="p-3 bg-yellow-50 border-yellow-200">
+              <Card className="p-3 bg-white/90 border border-amber-100 shadow-sm">
                 <div className="text-center">
                   <div className="text-lg mb-2">
                     {formatDisplayLabel(selectedParent1)} + {formatDisplayLabel(selectedParent2)}
@@ -270,7 +294,7 @@ const GeneticsTab = memo(() => {
 
         {/* Hybrids Tab */}
         <TabsContent value="hybrids" className="space-y-4">
-          <Card className="p-4">
+          <Card className="p-4 bg-slate-50/80">
             <h4 className="font-semibold mb-3">🌱 Discovered Hybrids</h4>
 
             <div className="grid grid-cols-1 gap-3">
@@ -324,7 +348,7 @@ const GeneticsTab = memo(() => {
 
         {/* Traits Tab */}
         <TabsContent value="traits" className="space-y-4">
-          <Card className="p-4">
+          <Card className="p-4 bg-slate-50/80">
             <h4 className="font-semibold mb-3">⚡ Genetic Traits</h4>
 
             <div className="space-y-3">
