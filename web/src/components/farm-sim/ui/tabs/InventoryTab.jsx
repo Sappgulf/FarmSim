@@ -5,7 +5,7 @@ import { Badge } from '../../../ui/badge';
 import { Button } from '../../../ui/button';
 import { DECORATION_DATA } from '../../constants/decorData';
 import { CROP_DATA } from '../../constants/cropData';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 import {
   getItemEntitlementInfo,
   isItemUnlocked,
@@ -178,7 +178,7 @@ const InventoryTab = memo(() => {
       </TabHero>
 
       {dailyFocus?.crop && (
-        <Card className="overflow-hidden border-amber-200/70 bg-slate-50/80 p-4">
+        <Card className="overflow-hidden border-amber-200/70 bg-slate-50/80 p-4 shadow-sm animate-fade-in">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h4 className="font-semibold text-slate-900">Daily market focus</h4>
@@ -194,9 +194,11 @@ const InventoryTab = memo(() => {
       )}
 
       {/* Crops & Quick Sell */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <h4 className="font-semibold text-slate-900">Crops</h4>
+      <TabSection
+        title="Crops"
+        description="Sell stored harvests or clear space for fresh planting."
+        tone="emerald"
+        action={(
           <Button
             size="sm"
             variant="outline"
@@ -206,17 +208,18 @@ const InventoryTab = memo(() => {
           >
             Sell All ({cropSellSummary.totalEarnings}🪙)
           </Button>
-        </div>
-
+        )}
+      >
         {cropItems.length === 0 ? (
-          <div className="text-center py-6">
-            <div className="text-3xl mb-2">🌾</div>
-            <p className="text-slate-500">No crops stored</p>
-            <p className="text-sm text-slate-400 mt-1">Harvest to stock up on produce.</p>
-          </div>
+          <TabEmptyState
+            icon="🌾"
+            tone="emerald"
+            title="No crops stored"
+            description="Harvest to stock up on produce."
+          />
         ) : (
           <div className="space-y-2">
-            {cropItems.map(([itemId, quantity]) => {
+            {cropItems.map(([itemId, quantity], index) => {
               const unitPrice = getUnitSellPriceForCrop(state, itemId);
               const isDailyFocusCrop = dailyFocus?.cropId === itemId;
               const bonusMultiplier = isDailyFocusCrop
@@ -227,7 +230,11 @@ const InventoryTab = memo(() => {
               const bulkSellCount = Math.min(5, qty);
 
               return (
-                <div key={itemId} className="rounded-2xl border border-slate-200/70 bg-white/90 p-3 shadow-sm transition-colors hover:bg-slate-50">
+                <div
+                  key={itemId}
+                  className="rounded-2xl border border-slate-200/70 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50"
+                  style={{ animationDelay: `${Math.min(index, 6) * 40}ms` }}
+                >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{itemEmojis[itemId] || '📦'}</span>
@@ -284,23 +291,29 @@ const InventoryTab = memo(() => {
             })}
           </div>
         )}
-      </Card>
+      </TabSection>
 
       {/* Supplies & Upgrades */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-        <h4 className="font-semibold text-slate-900">Supplies & upgrades</h4>
-        <p className="mt-1 mb-3 text-xs text-slate-500">Fresh saves start with a small starter kit so you can plant immediately.</p>
-
+      <TabSection
+        title="Supplies & upgrades"
+        description="Track utility items, tools, and one-off upgrades."
+        tone="sky"
+      >
         {utilityItems.length === 0 ? (
-          <div className="text-center py-6">
-            <div className="text-3xl mb-2">🧰</div>
-            <p className="text-slate-500">No supplies in storage</p>
-            <p className="text-sm text-slate-400 mt-1">Visit the Shop to stock up.</p>
-          </div>
+          <TabEmptyState
+            icon="🧰"
+            tone="sky"
+            title="No supplies in storage"
+            description="Visit the Shop to stock up."
+          />
         ) : (
           <div className="space-y-2">
-            {utilityItems.map(([itemId, quantity]) => (
-              <div key={itemId} className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-white/90 p-3 shadow-sm transition-colors hover:bg-slate-50">
+            {utilityItems.map(([itemId, quantity], index) => (
+              <div
+                key={itemId}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50"
+                style={{ animationDelay: `${Math.min(index, 6) * 40}ms` }}
+              >
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{itemEmojis[itemId] || '📦'}</span>
                   <span className="font-medium">{formatDisplayLabel(itemId)}</span>
@@ -312,27 +325,34 @@ const InventoryTab = memo(() => {
             ))}
           </div>
         )}
-      </Card>
+      </TabSection>
 
       {/* Decorations */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Decorations</h4>
-
+      <TabSection
+        title="Decorations"
+        description="Hold onto decor pieces until you’re ready to place them."
+        tone="rose"
+      >
         {decorationItems.length === 0 ? (
-          <div className="text-center py-6">
-            <div className="text-3xl mb-2">🧺</div>
-            <p className="text-slate-500">No decorations yet</p>
-            <p className="text-sm text-slate-400 mt-1">Visit the Shop for cozy decor.</p>
-          </div>
+          <TabEmptyState
+            icon="🧺"
+            tone="rose"
+            title="No decorations yet"
+            description="Visit the Shop for cozy decor."
+          />
         ) : (
           <div className="space-y-2">
-            {decorationItems.map(([itemId, quantity]) => {
+            {decorationItems.map(([itemId, quantity], index) => {
               const decor = DECORATION_DATA[itemId];
               const entitlementInfo = getItemEntitlementInfo(itemId, 'decor');
               const isPremium = premiumModeEnabled && entitlementInfo?.access === 'premium';
               const isUnlocked = isItemUnlocked(state, itemId, 'decor');
               return (
-                <div key={itemId} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-rose-200/70 bg-white/90 p-3 shadow-sm transition-colors hover:bg-rose-50">
+                <div
+                  key={itemId}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-rose-200/70 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-rose-50"
+                  style={{ animationDelay: `${Math.min(index, 6) * 40}ms` }}
+                >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{decor?.emoji || '🪴'}</span>
                     <div>
@@ -380,18 +400,17 @@ const InventoryTab = memo(() => {
             })}
           </div>
         )}
-      </Card>
+      </TabSection>
 
       {/* Tips */}
       {inventoryItems.length > 0 && (
-        <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-          <h4 className="font-semibold text-slate-900">Tips</h4>
-          <ul className="mt-2 space-y-1 text-sm text-slate-700">
+        <TabSection title="Tips" description="Small reminders for keeping storage efficient." tone="slate">
+          <ul className="space-y-1 text-sm text-slate-700">
             <li>• Use quick-sell to free storage and reinvest into seeds</li>
             <li>• Market prices update over time, so selling windows can vary</li>
             <li>• Build processing facilities to increase crop value</li>
           </ul>
-        </Card>
+        </TabSection>
       )}
     </div>
   );

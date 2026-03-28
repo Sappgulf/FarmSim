@@ -4,7 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { DECORATION_DATA } from '../../constants/decorData';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 import {
   getItemEntitlementInfo,
   isItemUnlocked,
@@ -70,8 +70,6 @@ const ShopTab = memo(() => {
     ],
   }), []);
 
-  const getOwnedCount = useCallback((itemId) => state.inventory[itemId] || 0, [state.inventory]);
-
   const triggerHighlight = useCallback((itemId) => {
     if (highlightTimerRef.current) {
       clearTimeout(highlightTimerRef.current);
@@ -122,16 +120,19 @@ const ShopTab = memo(() => {
     const isOwned = item.unique && ownedCount > 0;
     const isHighlighted = highlightedItemId === item.id;
     return (
-      <div key={item.id} className={`flex justify-between items-center p-3 ${bgClass} rounded-lg transition-all ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}>
-        <div className="flex items-center gap-3 flex-1">
+      <div
+        key={item.id}
+        className={`flex flex-col gap-3 rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white sm:flex-row sm:items-center sm:justify-between ${bgClass} ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}
+      >
+        <div className="flex items-start gap-3 flex-1">
           <span className="text-2xl">{item.emoji}</span>
           <div className="flex-1">
-            <div className="font-medium">{item.name}</div>
+            <div className="font-medium text-slate-900">{item.name}</div>
             <div className="text-xs text-gray-600">{item.description}</div>
             {item.effect && <div className="text-xs text-green-600 font-medium mt-0.5">{item.effect}</div>}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2 sm:justify-end">
           {ownedCount > 0 && (
             <Badge variant="outline" className="text-[10px]">
               {item.unique ? 'Owned' : `x${ownedCount}`}
@@ -141,7 +142,7 @@ const ShopTab = memo(() => {
             onClick={() => handlePurchase(item)}
             size="sm"
             disabled={state.coins < item.cost || isOwned}
-            className="ml-2 min-w-[72px]"
+            className="min-w-[72px] shrink-0"
           >
             {isOwned ? 'Owned' : `${item.cost}`}
           </Button>
@@ -189,27 +190,29 @@ const ShopTab = memo(() => {
       </TabHero>
 
       {/* Supplies */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Farming supplies</h4>
+      <TabSection
+        title="Farming supplies"
+        description="Consumables and support items for active farm work."
+        tone="emerald"
+      >
         <div className="space-y-2">
-          {shopItems.supplies.map((item) => renderShopItem(item, 'bg-green-50 hover:bg-green-100'))}
+          {shopItems.supplies.map((item) => renderShopItem(item, 'bg-green-50'))}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Decor Catalog */}
-      <Card className="overflow-hidden border-rose-200/70 bg-slate-50/80 p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="font-semibold text-slate-900">Decor catalog</h4>
-          <span className="text-xs text-slate-500">{filteredDecor.length} items</span>
-        </div>
-
-        {/* Category Filter */}
-        <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1 -mx-1 px-1">
+      <TabSection
+        title="Decor catalog"
+        description="Filter by style and place the pieces that fit your farm."
+        tone="rose"
+        action={<span className="text-xs text-slate-500">{filteredDecor.length} items</span>}
+      >
+        <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-smart scrollbar-gutter-stable">
           {DECOR_CATEGORIES.map((cat) => (
-              <button
+            <button
               key={cat.id}
               onClick={() => setDecorCategory(cat.id)}
-              className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors min-h-[34px] ${
                 decorCategory === cat.id
                   ? 'bg-rose-600 text-white'
                   : 'bg-white/90 text-rose-600 hover:bg-rose-100'
@@ -220,15 +223,26 @@ const ShopTab = memo(() => {
           ))}
         </div>
 
-        <div className="space-y-2 max-h-[400px] overflow-y-auto">
-          {filteredDecor.map((item) => {
+        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 scrollbar-smart">
+          {filteredDecor.length === 0 ? (
+            <TabEmptyState
+              icon="🪴"
+              tone="rose"
+              title="No decor in this category"
+              description="Try a different filter or keep shopping."
+            />
+          ) : filteredDecor.map((item, index) => {
             const ownedCount = state.inventory[item.id] || 0;
             const isHighlighted = highlightedItemId === item.id;
             const entitlementInfo = getItemEntitlementInfo(item.id, 'decor');
             const isPremium = premiumModeEnabled && entitlementInfo?.access === 'premium';
             return (
-                <div key={item.id} className={`flex items-center justify-between rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm transition-all hover:bg-white ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}>
-                  <div className="flex items-center gap-3 flex-1">
+              <div
+                key={item.id}
+                className={`flex flex-col gap-3 rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white sm:flex-row sm:items-center sm:justify-between ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}
+                style={{ animationDelay: `${Math.min(index, 6) * 40}ms` }}
+              >
+                <div className="flex items-start gap-3 flex-1">
                     <span className="text-2xl">{item.emoji}</span>
                     <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -245,7 +259,7 @@ const ShopTab = memo(() => {
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-row flex-wrap items-center justify-between gap-2 sm:flex-col sm:items-end sm:justify-start">
                   {ownedCount > 0 && (
                     <Badge variant="outline" className="text-[10px]">x{ownedCount}</Badge>
                   )}
@@ -261,27 +275,30 @@ const ShopTab = memo(() => {
               </div>
             );
           })}
-          {filteredDecor.length === 0 && (
-            <div className="text-center text-sm text-gray-500 py-4">No decor in this category.</div>
-          )}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Tools */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Tools & equipment</h4>
+      <TabSection
+        title="Tools & equipment"
+        description="One-off tools and automation upgrades for the field."
+        tone="sky"
+      >
         <div className="space-y-2">
-          {shopItems.tools.map((item) => renderShopItem(item, 'bg-blue-50 hover:bg-blue-100'))}
+          {shopItems.tools.map((item) => renderShopItem(item, 'bg-blue-50'))}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Upgrades */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Premium upgrades</h4>
+      <TabSection
+        title="Premium upgrades"
+        description="Late-game systems that quietly widen the farm’s ceiling."
+        tone="violet"
+      >
         <div className="space-y-2">
-          {shopItems.upgrades.map((item) => renderShopItem(item, 'bg-purple-50 hover:bg-purple-100'))}
+          {shopItems.upgrades.map((item) => renderShopItem(item, 'bg-purple-50'))}
         </div>
-      </Card>
+      </TabSection>
     </div>
   );
 });

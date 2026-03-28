@@ -7,7 +7,7 @@ import { Progress } from '../../../ui/progress';
 import { Target, Gift, Flame, Calendar, Trophy } from 'lucide-react';
 import { generateDailyQuests, shouldResetDaily, getStreakBonus } from '../../systems/QuestSystem';
 import { logDebugAction } from '../../../../utils/debugTools';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 /**
  * Daily Quests Tab - Provides daily goals and rewards
@@ -141,7 +141,7 @@ const DailyQuestsTab = memo(() => {
 
       {/* Streak Bonus Info */}
       {streakBonus > 1 && (
-        <Card className="p-3 bg-gradient-to-r from-orange-50 to-red-50 border-orange-300">
+        <Card className="p-3 bg-gradient-to-r from-orange-50 to-red-50 border-orange-300 shadow-sm animate-fade-in">
           <div className="flex items-center gap-3">
             <Flame className="w-8 h-8 text-orange-500" />
             <div>
@@ -161,7 +161,7 @@ const DailyQuestsTab = memo(() => {
 
       {/* All Quests Complete */}
       {allQuestsCompleted && (
-        <Card className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 text-center">
+        <Card className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 text-center shadow-sm animate-fade-in">
           <div className="text-5xl mb-3">🎉</div>
           <div className="text-xl font-bold text-green-800 mb-2">
             All Daily Quests Complete!
@@ -172,17 +172,18 @@ const DailyQuestsTab = memo(() => {
         </Card>
       )}
 
-      <Card className="p-4 bg-slate-50/80">
-        <h4 className="font-semibold mb-3 flex items-center gap-2">
-          <Gift className="w-4 h-4" />
-          Today's Quests
-        </h4>
-        
+      <TabSection
+        title="Today's Quests"
+        description="Claim rewards as you finish each daily goal."
+        tone="violet"
+      >
         {quests.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <Target className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>Generating today's quests...</p>
-          </div>
+          <TabEmptyState
+            icon={<Target className="w-5 h-5" />}
+            tone="violet"
+            title="Generating today’s quests"
+            description="The board refreshes automatically when ready."
+          />
         ) : (
           <div className="space-y-3">
             {quests.map((quest) => {
@@ -192,7 +193,7 @@ const DailyQuestsTab = memo(() => {
               return (
                 <Card
                   key={quest.id}
-                  className={`p-4 border-2 transition-all ${
+                  className={`p-4 border-2 shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${
                     quest.claimed
                       ? 'bg-gray-50 border-gray-300 opacity-60'
                       : quest.completed
@@ -252,7 +253,7 @@ const DailyQuestsTab = memo(() => {
                       <Button
                         data-quest-id={quest.id}
                         onClick={() => handleClaimReward(quest.id)}
-                        className="w-full bg-green-600 hover:bg-green-700"
+                        className="w-full min-h-[44px] bg-green-600 hover:bg-green-700"
                       >
                         🎁 Claim Reward
                       </Button>
@@ -267,11 +268,14 @@ const DailyQuestsTab = memo(() => {
             })}
           </div>
         )}
-      </Card>
+      </TabSection>
 
       {/* Streak Milestones */}
-      <Card className="p-4 bg-gray-50">
-        <h4 className="font-semibold mb-3">🔥 Streak Milestones</h4>
+      <TabSection
+        title="Streak Milestones"
+        description="The more consecutive days you finish, the better the rewards."
+        tone="amber"
+      >
         <div className="space-y-2 text-sm">
           <div className={`flex justify-between p-2 rounded ${streak >= 3 ? 'bg-green-100' : ''}`}>
             <span>3 Days</span>
@@ -290,18 +294,21 @@ const DailyQuestsTab = memo(() => {
             <span className="font-semibold">+100% Rewards {streak >= 30 && '✓'}</span>
           </div>
         </div>
-      </Card>
+      </TabSection>
 
       {/* Tips */}
-      <Card className="p-4 bg-blue-50 border-blue-200">
-        <h4 className="font-semibold mb-2 text-blue-800">💡 Quest Tips</h4>
+      <TabSection
+        title="Quest Tips"
+        description="Quick reminders for keeping the streak alive."
+        tone="sky"
+      >
         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
           <li>Complete all quests each day to build your streak!</li>
           <li>Longer streaks = bigger rewards!</li>
           <li>Quests reset daily at midnight</li>
           <li>Quest difficulty scales with your level</li>
         </ul>
-      </Card>
+      </TabSection>
     </div>
   );
 });

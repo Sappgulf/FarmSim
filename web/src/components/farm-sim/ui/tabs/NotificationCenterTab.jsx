@@ -1,11 +1,10 @@
 import React, { memo, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useTick } from '../../context/TickContext';
-import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Button } from '../../../ui/button';
 import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 const FILTERS = ['all', 'success', 'info', 'warning', 'error'];
 
@@ -121,11 +120,12 @@ const NotificationCenterTab = memo(() => {
         </div>
       </TabHero>
 
-      <Card className="p-4 bg-slate-50/80">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <h4 className="font-semibold">Filters</h4>
-          <span className="text-xs text-gray-500">{filteredHistory.length} shown</span>
-        </div>
+      <TabSection
+        title="Filters"
+        description="Narrow the timeline by event type."
+        tone="sky"
+        action={<span className="text-xs text-gray-500">{filteredHistory.length} shown</span>}
+      >
         <div className="flex flex-wrap gap-2">
           {FILTERS.map((filter) => (
             <Button
@@ -139,15 +139,20 @@ const NotificationCenterTab = memo(() => {
             </Button>
           ))}
         </div>
-      </Card>
+      </TabSection>
 
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">History</h4>
+      <TabSection
+        title="History"
+        description="A running log of recent farm messages."
+        tone="slate"
+      >
         {filteredHistory.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-3xl mb-2">📭</div>
-            <p className="text-gray-500">No notifications for this filter yet.</p>
-          </div>
+          <TabEmptyState
+            icon="📭"
+            tone="slate"
+            title="No notifications for this filter yet"
+            description="Try another filter or wait for new activity."
+          />
         ) : (
           <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
             {filteredHistory.map((entry) => {
@@ -177,7 +182,7 @@ const NotificationCenterTab = memo(() => {
             })}
           </div>
         )}
-      </Card>
+      </TabSection>
     </div>
   );
 });

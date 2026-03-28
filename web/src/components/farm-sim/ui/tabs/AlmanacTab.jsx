@@ -11,7 +11,7 @@ import { FARM_THEMES, getFarmTheme } from '../../../../data/farmThemes';
 import { buildFarmCardData, getSpotlightSelection } from '../../../../utils/farmCard';
 import { CROP_TRAITS, FARM_TITLES } from '../../../../data/cozyExpansion';
 import FarmCardShareButton from '../FarmCardShareButton';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 const AlmanacTab = memo(() => {
   const { state, actions } = useGame();
@@ -96,16 +96,14 @@ const AlmanacTab = memo(() => {
         </div>
       </TabHero>
 
-      <Card className="p-4 bg-slate-50/80">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h4 className="font-semibold text-gray-800">Farm Title</h4>
-            <p className="text-sm text-gray-600">Cosmetic title for your Farm Card and Town Board.</p>
-          </div>
-        </div>
-        <div className="mt-3">
+      <TabSection
+        title="Farm Title"
+        description="Cosmetic title for your Farm Card and Town Board."
+        tone="slate"
+      >
+        <div>
           <select
-            className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+            className="w-full min-h-[44px] rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
             value={state.cozyExpansion?.farmTitles?.activeId || 'home_grower'}
             onChange={(event) => actions.setActiveFarmTitle(event.target.value)}
           >
@@ -114,21 +112,19 @@ const AlmanacTab = memo(() => {
             ))}
           </select>
         </div>
-      </Card>
+      </TabSection>
 
-      <Card className="p-4 bg-slate-50/80">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h4 className="font-semibold text-gray-800">Farm Philosophy</h4>
-            <p className="text-sm text-gray-600">Almanac voice shifts with your guiding outlook.</p>
-          </div>
-          {state.philosophy && (
-            <Badge className="bg-amber-100 text-amber-700">
-              {PHILOSOPHIES.find(p => p.id === state.philosophy)?.name || 'Chosen'}
-            </Badge>
-          )}
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+      <TabSection
+        title="Farm Philosophy"
+        description="Almanac voice shifts with your guiding outlook."
+        tone="amber"
+        action={state.philosophy ? (
+          <Badge className="bg-amber-100 text-amber-700">
+            {PHILOSOPHIES.find(p => p.id === state.philosophy)?.name || 'Chosen'}
+          </Badge>
+        ) : null}
+      >
+        <div className="flex flex-wrap gap-2">
           {PHILOSOPHIES.map((philosophy) => (
             <Button
               key={philosophy.id}
@@ -140,19 +136,19 @@ const AlmanacTab = memo(() => {
             </Button>
           ))}
         </div>
-      </Card>
+      </TabSection>
 
-      <Card className="p-4 theme-card-surface border theme-accent-border shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h4 className="font-semibold">Farm Identity</h4>
-            <p className="text-sm text-gray-600">Set a name and theme for your Farm Card.</p>
-          </div>
+      <TabSection
+        title="Farm Identity"
+        description="Set a name and theme for your Farm Card."
+        tone="emerald"
+        action={(
           <Badge variant="outline" className="theme-accent-bg theme-accent-border border theme-accent-text">
             {activeTheme.name}
           </Badge>
-        </div>
-        <div className="mt-3 space-y-3">
+        )}
+      >
+        <div className="space-y-3">
           <div className="rounded-lg border theme-accent-border theme-accent-bg px-3 py-2">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Live Farm Card Identity</div>
             <div className="text-sm font-semibold">{(state.farmName || 'Willowbrook Farm').trim() || 'Willowbrook Farm'}</div>
@@ -183,17 +179,15 @@ const AlmanacTab = memo(() => {
             <div className="mt-2 text-xs text-gray-500">{activeTheme.description}</div>
           </div>
         </div>
-      </Card>
+      </TabSection>
 
-      <Card className="p-4 bg-slate-50/80">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h4 className="font-semibold text-gray-800">Farm Card Spotlight</h4>
-            <p className="text-sm text-gray-600">Choose what the Farm Card highlights.</p>
-          </div>
-          <FarmCardShareButton size="sm" variant="outline" />
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+      <TabSection
+        title="Farm Card Spotlight"
+        description="Choose what the Farm Card highlights."
+        tone="violet"
+        action={<FarmCardShareButton size="sm" variant="outline" />}
+      >
+        <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
             variant={spotlight.mode === 'latest' ? 'default' : 'outline'}
@@ -234,14 +228,21 @@ const AlmanacTab = memo(() => {
           <div className="mt-1 font-semibold">{farmCardSpotlight.title}</div>
           <div className="text-sm text-gray-600">{farmCardSpotlight.text}</div>
         </div>
-      </Card>
+      </TabSection>
 
-      <Card className="p-4 bg-slate-50/80">
-        <h4 className="font-semibold text-gray-800">Crop Trait Discoveries</h4>
-        <p className="text-sm text-gray-600">Discovered passively on harvest. Cosmetic only.</p>
-        <div className="mt-3 grid grid-cols-1 gap-2">
+      <TabSection
+        title="Crop Trait Discoveries"
+        description="Discovered passively on harvest. Cosmetic only."
+        tone="sky"
+      >
+        <div className="mt-1 grid grid-cols-1 gap-2">
           {Object.entries(state.cozyExpansion?.cropTraits?.discoveredByCrop || {}).length === 0 && (
-            <div className="text-sm text-gray-500">No traits discovered yet.</div>
+            <TabEmptyState
+              icon="🌿"
+              tone="sky"
+              title="No traits discovered yet"
+              description="Harvest more crops to reveal flavor traits."
+            />
           )}
           {Object.entries(state.cozyExpansion?.cropTraits?.discoveredByCrop || {}).map(([cropId, traitId]) => {
             const trait = CROP_TRAITS[traitId];
@@ -253,7 +254,7 @@ const AlmanacTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
 
       {ALMANAC_SECTIONS.map((section) => {
         const sectionPages = pagesBySection[section.id] || [];

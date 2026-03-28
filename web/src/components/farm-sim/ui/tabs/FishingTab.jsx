@@ -5,7 +5,7 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { FISH_TYPES, POND_UPGRADES } from '../../systems/FishingSystem';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection } from './TabSurface';
 
 const FishingTab = memo(() => {
   const { state, actions, systems } = useGame();
@@ -509,15 +509,11 @@ const FishingTab = memo(() => {
         </Card>
       )}
 
-      {/* Fish Collection */}
-      <Card className="p-4 bg-slate-50/80 shadow-sm">
-        <h4 className="font-bold mb-4 flex items-center gap-2 text-lg">
-          🐟 Fish Encyclopedia
-          <span className="text-xs text-gray-500 font-normal ml-2">
-            Caught: {Object.keys(stats.byType).length}/{Object.keys(FISH_TYPES).length} species
-          </span>
-        </h4>
-
+      <TabSection
+        title="Fish Encyclopedia"
+        description={`Caught: ${Object.keys(stats.byType).length}/${Object.keys(FISH_TYPES).length} species`}
+        tone="sky"
+      >
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {Object.values(FISH_TYPES).map(fish => {
             const caughtCount = stats.byType[fish.id] || 0;
@@ -578,13 +574,14 @@ const FishingTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Tips */}
-      <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 p-4">
-        <h4 className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
-          Fishing tips
-        </h4>
+      <TabSection
+        title="Fishing tips"
+        description="A few practical reminders for the dock."
+        tone="amber"
+      >
         <ul className="space-y-1 text-sm text-slate-700">
           <li>• Keep your 🎣 rod near the fish to build catch progress and quality</li>
           <li>• Keep line tension low or the line can snap</li>
@@ -593,7 +590,7 @@ const FishingTab = memo(() => {
           <li>• Upgrade your pond for wider safe zones and better rare fish odds</li>
           <li>• Hold controls on mobile for smooth tracking</li>
         </ul>
-      </Card>
+      </TabSection>
     </div>
   );
 });

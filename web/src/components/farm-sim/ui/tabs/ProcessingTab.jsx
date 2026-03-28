@@ -6,7 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { CROP_DATA } from '../../constants/cropData';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 // Facility upgrade tiers: each level reduces time and boosts value
 const FACILITY_LEVELS = {
@@ -430,14 +430,17 @@ const ProcessingTab = memo(() => {
       </TabHero>
 
       {/* Available Facilities */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Available facilities</h4>
+      <TabSection
+        title="Available facilities"
+        description="Buy a processor when the recipe is worth the footprint."
+        tone="amber"
+      >
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {Object.entries(PROCESSING_FACILITIES).map(([id, facility]) => {
             const owned = ownedFacilities.some(f => f.id === id);
             const isChain = !!facility.inputSource;
             return (
-              <Card key={id} className={`overflow-hidden p-3 shadow-sm ${owned ? 'border-emerald-200/70 bg-emerald-50/60' : 'border-slate-200/70 bg-white/90'}`}>
+              <Card key={id} className={`overflow-hidden p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${owned ? 'border-emerald-200/70 bg-emerald-50/60' : 'border-slate-200/70 bg-white/90'}`}>
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{facility.emoji}</span>
@@ -474,12 +477,15 @@ const ProcessingTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Owned Facilities */}
-      {ownedFacilities.length > 0 && (
-        <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-          <h4 className="mb-3 font-semibold text-slate-900">Your facilities</h4>
+      {ownedFacilities.length > 0 ? (
+        <TabSection
+          title="Your facilities"
+          description="Manage queues, upgrades, and the next batch."
+          tone="sky"
+        >
           <div className="space-y-3">
             {ownedFacilities.map(facility => {
               const status = getFacilityStatus(facility);
@@ -565,13 +571,23 @@ const ProcessingTab = memo(() => {
               );
             })}
           </div>
-        </Card>
+        </TabSection>
+      ) : (
+        <TabEmptyState
+          icon="🏭"
+          tone="sky"
+          title="No facilities owned yet"
+          description="Buy a processor above to start building out your production line."
+        />
       )}
 
       {/* Processing Queue */}
-      {processingQueue.length > 0 && (
-        <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-          <h4 className="mb-3 font-semibold text-slate-900">Processing queue</h4>
+      {processingQueue.length > 0 ? (
+        <TabSection
+          title="Processing queue"
+          description="Ready batches waiting for collection."
+          tone="violet"
+        >
           <div className="space-y-2">
             {processingQueue.map(item => (
               <Card key={item.id} className="border-slate-200/70 bg-white/90 p-2 shadow-sm">
@@ -591,13 +607,23 @@ const ProcessingTab = memo(() => {
               </Card>
             ))}
           </div>
-        </Card>
+        </TabSection>
+      ) : (
+        <TabEmptyState
+          icon="⏳"
+          tone="violet"
+          title="Queue is empty"
+          description="Start a batch once you have the right input stock."
+        />
       )}
 
       {/* Processed Products Inventory */}
-      {Object.keys(processedInventory).some(k => (processedInventory[k] || 0) > 0) && (
-        <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-          <h4 className="mb-3 font-semibold text-slate-900">Processed products</h4>
+      {Object.keys(processedInventory).some(k => (processedInventory[k] || 0) > 0) ? (
+        <TabSection
+          title="Processed products"
+          description="Finished stock ready to sell."
+          tone="emerald"
+        >
           <div className="space-y-2">
             {Object.entries(processedInventory).map(([product, quantity]) => {
               if (quantity <= 0) return null;
@@ -634,12 +660,22 @@ const ProcessingTab = memo(() => {
               );
             })}
           </div>
-        </Card>
+        </TabSection>
+      ) : (
+        <TabEmptyState
+          icon="📦"
+          tone="emerald"
+          title="No processed goods yet"
+          description="Completed batches will appear here for quick selling."
+        />
       )}
 
       {/* Processing Statistics */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Processing statistics</h4>
+      <TabSection
+        title="Processing statistics"
+        description="The current shape of your processing layer."
+        tone="slate"
+      >
         <div className="grid grid-cols-3 gap-3 text-sm">
           <MetricTile
             tone="amber"
@@ -663,7 +699,7 @@ const ProcessingTab = memo(() => {
             icon="⬆️"
           />
         </div>
-      </Card>
+      </TabSection>
     </div>
   );
 });

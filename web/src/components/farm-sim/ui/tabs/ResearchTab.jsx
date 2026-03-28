@@ -6,7 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { getContentManager } from '../../../../content/ContentManager';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection } from './TabSurface';
 
 // Mapping for unlock IDs to user-friendly names
 const UNLOCK_NAMES = {
@@ -238,13 +238,15 @@ const ResearchTab = memo(() => {
 
       {/* Active Research */}
       {activeResearch && (
-        <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
-          <h4 className="font-semibold mb-3">⚡ Active Research</h4>
-
+        <TabSection
+          title="Active Research"
+          description="The current project is still running."
+          tone="amber"
+        >
           <div className="flex items-center gap-3 mb-3">
             <span className="text-2xl">{RESEARCH_PROJECTS[activeResearch].emoji}</span>
             <div className="flex-1">
-              <div className="font-semibold">{RESEARCH_PROJECTS[activeResearch].name}</div>
+              <div className="font-semibold text-slate-900">{RESEARCH_PROJECTS[activeResearch].name}</div>
               <div className="text-sm text-gray-600">
                 Time Left: {getTimeLeft(activeResearch)}
               </div>
@@ -255,13 +257,15 @@ const ResearchTab = memo(() => {
           <div className="text-xs text-center text-gray-600">
             {Math.round(getResearchProgress(activeResearch))}% Complete
           </div>
-        </Card>
+        </TabSection>
       )}
 
       {/* Research Projects */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">📚 Research Projects</h4>
-
+      <TabSection
+        title="Research Projects"
+        description="Pick the next project that matters most to your farm."
+        tone="sky"
+      >
         <div className="space-y-3">
           {Object.entries(RESEARCH_PROJECTS).map(([id, research]) => {
             const available = canResearch(id);
@@ -269,11 +273,11 @@ const ResearchTab = memo(() => {
             const researching = isResearching(id);
 
             return (
-              <Card key={id} className={`p-3 ${getCategoryColor(research.category)}`}>
-                <div className="flex justify-between items-start mb-2">
+              <Card key={id} className={`p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${getCategoryColor(research.category)}`}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">{research.emoji}</span>
-                    <span className="font-medium">{research.name}</span>
+                    <span className="font-medium text-slate-900">{research.name}</span>
                   </div>
 
                   <div className="flex gap-1">
@@ -309,7 +313,7 @@ const ResearchTab = memo(() => {
                     onClick={() => startResearch(id)}
                     size="sm"
                     disabled={!available || state.coins < research.cost}
-                    className="w-full"
+                    className="w-full min-h-[44px]"
                   >
                     {available ? 'Start Research' : 'Prerequisites Required'}
                   </Button>
@@ -324,10 +328,13 @@ const ResearchTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
 
-      <Card className="p-4 bg-slate-50/80">
-        <h4 className="font-semibold mb-3">Research Snapshot</h4>
+      <TabSection
+        title="Research Snapshot"
+        description="A quick readout of the lab’s progress."
+        tone="slate"
+      >
         <div className="grid gap-3 sm:grid-cols-2">
           <MetricTile
             tone="sky"
@@ -344,7 +351,7 @@ const ResearchTab = memo(() => {
             icon="📚"
           />
         </div>
-      </Card>
+      </TabSection>
     </div>
   );
 });

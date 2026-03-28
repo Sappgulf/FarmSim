@@ -5,7 +5,7 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import FarmCardShareButton from '../FarmCardShareButton';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 import { decodeSeed, encodeSeed, SEED_CODE_VERSION } from '../../../../utils/seedCode';
 import { exportFarmSnapshot, hydrateSnapshotPlots, validateSnapshotPayload } from '../../../../utils/farmSnapshot';
 import { MILESTONE_DEFINITIONS } from '../../../../data/milestones';
@@ -298,8 +298,11 @@ const SocialTab = memo(() => {
       </TabHero>
 
       {/* Your Profile */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Your profile</h4>
+      <TabSection
+        title="Your profile"
+        description="Quick stats from the social layer."
+        tone="slate"
+      >
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
             <div className="font-bold text-green-600">{state.level}</div>
@@ -318,12 +321,14 @@ const SocialTab = memo(() => {
             <div className="text-xs uppercase tracking-wide text-purple-700">Experience</div>
           </div>
         </div>
-      </Card>
+      </TabSection>
 
       {/* Today's Visitors */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Today's visitors</h4>
-        <p className="mb-3 text-xs text-slate-500">Visitors rotate daily. Higher reputation attracts more traders.</p>
+      <TabSection
+        title="Today's visitors"
+        description="Visitors rotate daily. Higher reputation attracts more traders."
+        tone="amber"
+      >
         <div className="space-y-3">
           {visitors.map(visitor => (
             <Card key={visitor.id} className="overflow-hidden border-amber-200/70 bg-white/90 p-3 shadow-sm">
@@ -357,11 +362,14 @@ const SocialTab = memo(() => {
             </Card>
           ))}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Community Challenges */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Community challenges</h4>
+      <TabSection
+        title="Community challenges"
+        description="Earn reputation by hitting shared farm milestones."
+        tone="emerald"
+      >
         <div className="space-y-3">
           {challenges.map(challenge => {
             const claimed = !!claimedChallenges[challenge.id];
@@ -386,52 +394,73 @@ const SocialTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Seed Codes */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4 space-y-2">
-        <h4 className="font-semibold text-slate-900">Seed codes</h4>
+      <TabSection
+        title="Seed codes"
+        description="Copy a lightweight farm identity or paste one back in."
+        tone="violet"
+      >
         <div className="flex gap-2">
-          <Button onClick={handleShareSeedCode} variant="outline" size="sm" className="flex-1">Share Seed Code</Button>
-          <Button onClick={handleStartFromSeed} variant="outline" size="sm" className="flex-1">Start from Seed Code</Button>
+          <Button onClick={handleShareSeedCode} variant="outline" size="sm" className="flex-1 min-h-[44px]">Share Seed Code</Button>
+          <Button onClick={handleStartFromSeed} variant="outline" size="sm" className="flex-1 min-h-[44px]">Start from Seed Code</Button>
         </div>
-        <textarea value={seedCodeInput} onChange={(e) => setSeedCodeInput(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white/90 p-3 text-xs shadow-sm focus:border-emerald-300 focus:outline-none" rows={3} placeholder="Paste Seed Code or Snapshot JSON" />
-      </Card>
+        <textarea value={seedCodeInput} onChange={(e) => setSeedCodeInput(e.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/90 p-3 text-xs shadow-sm focus:border-emerald-300 focus:outline-none" rows={3} placeholder="Paste Seed Code or Snapshot JSON" />
+      </TabSection>
 
       {/* Ghost Visits */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4 space-y-2">
-        <h4 className="font-semibold text-slate-900">Ghost visits</h4>
+      <TabSection
+        title="Ghost visits"
+        description="Export or import a snapshot for a seasonal replay."
+        tone="sky"
+      >
         <div className="flex gap-2">
-          <Button onClick={handleExportSnapshot} variant="outline" size="sm" className="flex-1">Export Farm Snapshot</Button>
-          <Button onClick={handleImportSnapshot} variant="outline" size="sm" className="flex-1">Import Snapshot</Button>
+          <Button onClick={handleExportSnapshot} variant="outline" size="sm" className="flex-1 min-h-[44px]">Export Farm Snapshot</Button>
+          <Button onClick={handleImportSnapshot} variant="outline" size="sm" className="flex-1 min-h-[44px]">Import Snapshot</Button>
         </div>
         {state.ghostVisit?.active && (
-          <Button onClick={actions.exitGhostVisit} size="sm" className="w-full">Exit Ghost Visit</Button>
+          <Button onClick={actions.exitGhostVisit} size="sm" className="w-full min-h-[44px]">Exit Ghost Visit</Button>
         )}
-      </Card>
+      </TabSection>
 
       {/* Milestones */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4 space-y-2">
-        <h4 className="font-semibold text-slate-900">Milestones</h4>
-        {(milestones.recent || []).slice(-3).reverse().map((id) => {
-          const def = MILESTONE_DEFINITIONS.find((entry) => entry.id === id);
-          return <div key={id} className="text-xs text-emerald-700">Unlocked: {def?.name || id}</div>;
-        })}
-        {nextMilestones.map((definition) => {
-          const value = milestones.progress?.[definition.type] || 0;
-          const pct = Math.min(100, Math.round((value / definition.target) * 100));
-          return (
-            <div key={definition.id}>
-              <div className="text-xs text-gray-700">{definition.name} ({value}/{definition.target})</div>
-              <Progress value={pct} className="h-2" />
-            </div>
-          );
-        })}
-      </Card>
+      <TabSection
+        title="Milestones"
+        description="Recent unlocks and the next few goals ahead."
+        tone="emerald"
+      >
+        <div className="space-y-2">
+          {(milestones.recent || []).slice(-3).reverse().length === 0 ? (
+            <TabEmptyState
+              icon="🏁"
+              tone="emerald"
+              title="No milestones yet"
+              description="Keep farming to unlock your first milestone."
+            />
+          ) : (milestones.recent || []).slice(-3).reverse().map((id) => {
+            const def = MILESTONE_DEFINITIONS.find((entry) => entry.id === id);
+            return <div key={id} className="text-xs text-emerald-700">Unlocked: {def?.name || id}</div>;
+          })}
+          {nextMilestones.map((definition) => {
+            const value = milestones.progress?.[definition.type] || 0;
+            const pct = Math.min(100, Math.round((value / definition.target) * 100));
+            return (
+              <div key={definition.id}>
+                <div className="text-xs text-gray-700">{definition.name} ({value}/{definition.target})</div>
+                <Progress value={pct} className="h-2" />
+              </div>
+            );
+          })}
+        </div>
+      </TabSection>
 
       {/* Reputation Tiers */}
-      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Reputation tiers</h4>
+      <TabSection
+        title="Reputation tiers"
+        description="See the full ladder and what each tier unlocks."
+        tone="slate"
+      >
         <div className="space-y-2">
           {REPUTATION_TIERS.map(tier => {
             const unlocked = reputation >= tier.minRep;
@@ -449,7 +478,7 @@ const SocialTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
 
       <FarmCardShareButton className="w-full" label="📸 Share Farm Card" />
     </div>
