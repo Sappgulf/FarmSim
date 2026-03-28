@@ -121,6 +121,8 @@ struct ShopView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(affordable ? Color(red: 0.22, green: 0.58, blue: 0.32) : Color.gray)
                 .disabled(!affordable)
+                .accessibilityLabel("Buy \(def.name)")
+                .accessibilityHint(affordable ? "Purchase one seed packet" : "You do not have enough coins")
             } else {
                 Text("Reach Lv\(display.level) to unlock")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))

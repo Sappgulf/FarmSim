@@ -10,7 +10,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest",
-    "lint": "echo 'Lint check completed'",
+    "lint": "node ../scripts/lint.mjs",
     "qa:full": "npm run test && npm run build",
     "smoke-test": "vitest --run src/test/smoke.test.jsx"
   },

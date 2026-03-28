@@ -73,6 +73,8 @@ struct AlmanacView: View {
                     }
                 }
             }
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Almanac")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color(red: 0.88, green: 0.80, blue: 0.66), for: .navigationBar)

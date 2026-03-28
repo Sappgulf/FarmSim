@@ -32,10 +32,14 @@ struct SettingsView: View {
                             ) {
                                 TextField("Name", text: $farmNameInput)
                                     .textInputAutocapitalization(.words)
+                                    .autocorrectionDisabled()
+                                    .submitLabel(.done)
                                     .multilineTextAlignment(.trailing)
                                     .font(.system(.body, design: .rounded))
                                     .foregroundStyle(farmNameInput.count > 28 ? DS.Color.money : DS.Color.textPrimary)
                                     .frame(width: 130)
+                                    .accessibilityLabel("Farm name")
+                                    .accessibilityHint("Rename your homestead")
                                     .onSubmit {
                                         let trimmed = farmNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
                                         if !trimmed.isEmpty {
@@ -79,6 +83,8 @@ struct SettingsView: View {
                                 }
                                 .pickerStyle(.menu)
                                 .tint(DS.Color.textPrimary)
+                                .accessibilityLabel("Farm colors")
+                                .accessibilityValue(store.settings.palette.title)
                             }
                             .padding(.vertical, DS.Space.xs)
                         }
@@ -246,6 +252,8 @@ struct SettingsView: View {
                             }
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Reset save")
+                        .accessibilityHint("Clear all progress and start fresh")
                         .padding(.vertical, DS.Space.xs)
                     }
 
@@ -284,6 +292,8 @@ struct SettingsView: View {
                             }
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Fast-forward one day")
+                        .accessibilityHint("Debug tool for skipping ahead 24 hours")
                         .padding(.vertical, DS.Space.xs)
                     }
                     #endif
@@ -316,6 +326,8 @@ struct SettingsView: View {
                             .shadow(color: DS.Color.accent.opacity(0.4), radius: 8, x: 0, y: 4)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Back to main menu")
+                        .accessibilityHint("Leave settings and return to the main menu")
 
                         VStack(spacing: DS.Space.xs) {
                             Text("Happy farming! May your fields be ever green.")
@@ -333,6 +345,8 @@ struct SettingsView: View {
                 .padding(.horizontal, DS.Space.md)
                 .padding(.vertical, DS.Space.sm)
             }
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -348,6 +362,8 @@ struct SettingsView: View {
             .alert("Start a Fresh Farm?", isPresented: $confirmReset) {
                 Button("Start Fresh", role: .destructive) {
                     store.resetSave()
+                    store.persistNow()
+                    appState.showingOnboarding = true
                 }
                 Button("Keep My Farm", role: .cancel) { }
             } message: {
@@ -478,11 +494,15 @@ private struct ToggleRow: View {
             subtitle: subtitle,
             iconBackground: iconBackground
         ) {
-            Toggle("", isOn: $isOn)
+            Toggle(title, isOn: $isOn)
                 .toggleStyle(FarmToggleStyle())
                 .labelsHidden()
         }
         .padding(.vertical, DS.Space.xs)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityValue(isOn ? "On" : "Off")
+        .accessibilityHint(subtitle ?? "Double tap to toggle")
     }
 }
 
@@ -514,5 +534,8 @@ private struct InfoRow: View {
         }
         .padding(.horizontal, DS.Space.md)
         .padding(.vertical, DS.Space.xs)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityValue(value)
     }
 }

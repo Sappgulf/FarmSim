@@ -105,6 +105,8 @@ struct MainMenuView: View {
                     .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 2)
             }
             .padding(DS.Space.md)
+            .accessibilityLabel("Open settings")
+            .accessibilityHint("Adjust game settings and accessibility options")
         }
     }
 

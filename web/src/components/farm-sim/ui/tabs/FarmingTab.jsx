@@ -293,11 +293,11 @@ const FarmingTab = memo(() => {
 
       {/* Daily Focus */}
       {dailyFocus?.crop && (
-        <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+        <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-orange-50/40 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="font-semibold text-amber-800">📈 Daily Market Focus</h3>
-              <p className="text-sm text-amber-700">
+              <h3 className="font-semibold text-slate-900">Daily market focus</h3>
+              <p className="text-sm text-slate-600">
                 Today, {dailyFocus.crop.emoji} {dailyFocus.crop.name} sells for +{Math.round((dailyFocus.bonusMultiplier - 1) * 100)}%.
               </p>
             </div>
@@ -318,8 +318,8 @@ const FarmingTab = memo(() => {
       )}
 
       {/* Category Filter */}
-      <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50">
-        <h3 className="font-semibold mb-2 text-green-800">🌱 Crop Categories</h3>
+      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-green-50/40 p-4">
+        <h3 className="mb-2 font-semibold text-slate-900">Crop categories</h3>
         <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
@@ -347,8 +347,8 @@ const FarmingTab = memo(() => {
         </div>
       </Card>
       {/* Quick Actions */}
-      <Card className="p-4">
-        <h3 className="font-semibold mb-3">⚡ Quick Actions</h3>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <h3 className="mb-3 font-semibold text-slate-900">Quick actions</h3>
         <div className="grid grid-cols-2 gap-2">
           <Button
             onClick={() => handleBulkAction('Water All')}
@@ -386,24 +386,24 @@ const FarmingTab = memo(() => {
             🐛 Treat ({plotInsights.diseasedPlots})
           </Button>
         </div>
-        <div className="mt-3 text-[11px] text-gray-500">
+        <div className="mt-3 text-[11px] text-slate-500">
           Hotkeys: <kbd className="px-1 py-0.5 bg-gray-100 rounded">W</kbd> water, <kbd className="px-1 py-0.5 bg-gray-100 rounded">H</kbd> harvest, <kbd className="px-1 py-0.5 bg-gray-100 rounded">F</kbd> fertilize, <kbd className="px-1 py-0.5 bg-gray-100 rounded">T</kbd> treat
         </div>
       </Card>
 
       {/* Available Crops */}
-      <Card className="p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="font-semibold">🌱 Select Crop to Plant</h3>
-          <Badge variant="outline">{cropList.length} available</Badge>
+          <h3 className="font-semibold text-slate-900">Select crop to plant</h3>
+          <Badge variant="outline" className="bg-white/80 text-slate-600">{cropList.length} available</Badge>
         </div>
-        <p className="text-xs text-gray-600 mb-3">Click a crop, then click empty plots on your farm</p>
+        <p className="mb-3 text-xs text-slate-600">Click a crop, then click empty plots on your farm</p>
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {cropList.length === 0 ? (
             <div className="text-center py-10">
               <div className="text-4xl mb-2">🌱</div>
-              <p className="text-sm text-gray-600">No crops unlocked for this category yet.</p>
-              <p className="text-xs text-gray-500 mt-1">Level up to discover new seeds.</p>
+              <p className="text-sm text-slate-600">No crops unlocked for this category yet.</p>
+              <p className="text-xs text-slate-500 mt-1">Level up to discover new seeds.</p>
             </div>
           ) : (
             cropList.map(crop => {
@@ -413,12 +413,12 @@ const FarmingTab = memo(() => {
                 <div 
                   key={crop.id} 
                   className={`
-                    flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
+                    flex items-center justify-between rounded-2xl border p-3 cursor-pointer transition-all
                     ${isSelected 
-                      ? 'bg-green-100 border-2 border-green-500 shadow-md' 
+                      ? 'bg-green-50 border-green-500 shadow-md' 
                       : isDailyFocusCrop
-                        ? 'bg-amber-50 border-2 border-amber-200 hover:bg-amber-100'
-                        : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                        ? 'bg-amber-50 border-amber-200 hover:bg-amber-100'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                     }
                   `}
                   onClick={() => handleSelectCrop(crop.id)}
@@ -439,10 +439,10 @@ const FarmingTab = memo(() => {
                           </Badge>
                         )}
                       </div>
-                      <div className="text-xs text-gray-600">
+                      <div className="text-xs text-slate-600">
                         Cost: {crop.cost}🪙 • Time: {crop.time}s • Sell: {crop.value}🪙
                       </div>
-                      <div className="text-[10px] text-gray-500 italic mt-0.5">
+                      <div className="mt-0.5 text-[10px] italic text-slate-500">
                         {crop.description}
                       </div>
                     </div>
@@ -458,8 +458,8 @@ const FarmingTab = memo(() => {
       </Card>
 
       {/* Farm Statistics */}
-      <Card className="p-4">
-        <h3 className="font-semibold mb-3">📊 Farm Statistics</h3>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <h3 className="mb-3 font-semibold text-slate-900">Farm statistics</h3>
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm">Active Plots</span>
@@ -499,9 +499,9 @@ const FarmingTab = memo(() => {
       </Card>
 
       {/* Farming Tips */}
-      <Card className="p-4 bg-blue-50">
-        <h3 className="font-semibold mb-2 text-blue-800">💡 Farming Tips</h3>
-        <ul className="text-sm text-blue-700 space-y-1">
+      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-blue-50/40 p-4">
+        <h3 className="mb-2 font-semibold text-slate-900">Farming tips</h3>
+        <ul className="space-y-1 text-sm text-slate-700">
           <li>• Plant crops during optimal seasons for bonus yields</li>
           <li>• Water crops regularly to prevent withering</li>
           <li>• Use fertilizers to speed up growth</li>

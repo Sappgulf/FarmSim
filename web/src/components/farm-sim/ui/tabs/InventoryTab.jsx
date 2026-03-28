@@ -141,30 +141,38 @@ const InventoryTab = memo(() => {
   return (
     <div className="space-y-4">
       {/* Inventory Overview */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50">
-        <h3 className="text-lg font-semibold text-blue-800 mb-2">🎒 Your Inventory</h3>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="text-center p-2 bg-white rounded">
-            <div className="font-bold text-blue-600">{totalItems}</div>
-            <div className="text-blue-700">Total Items</div>
+      <Card className="overflow-hidden border-blue-200/70 bg-gradient-to-br from-white via-blue-50/30 to-violet-50/40 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">Inventory</div>
+            <h3 className="text-lg font-semibold text-slate-900">Your storage</h3>
           </div>
-          <div className="text-center p-2 bg-white rounded">
+          <Badge variant="outline" className="bg-white/80 text-slate-600">
+            {totalItems} items
+          </Badge>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
+            <div className="font-bold text-blue-600">{totalItems}</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">Total items</div>
+          </div>
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
             <div className="font-bold text-green-600">{totalValue}🪙</div>
-            <div className="text-green-700">Est. Value</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">Est. value</div>
           </div>
         </div>
       </Card>
 
       {dailyFocus?.crop && (
-        <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+        <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-orange-50/40 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h4 className="font-semibold text-amber-800">📈 Daily Market Focus</h4>
-              <p className="text-sm text-amber-700">
+              <h4 className="font-semibold text-slate-900">Daily market focus</h4>
+              <p className="text-sm text-slate-600">
                 Sell {dailyFocus.crop.emoji} {dailyFocus.crop.name} for +{Math.round((dailyFocus.bonusMultiplier - 1) * 100)}% today.
               </p>
             </div>
-            <Badge className="bg-amber-600">
+            <Badge className="bg-amber-600 text-white">
               +{Math.round((dailyFocus.bonusMultiplier - 1) * 100)}%
             </Badge>
           </div>
@@ -172,9 +180,9 @@ const InventoryTab = memo(() => {
       )}
 
       {/* Crops & Quick Sell */}
-      <Card className="p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
         <div className="flex items-center justify-between gap-2 mb-3">
-          <h4 className="font-semibold">🌾 Crops</h4>
+          <h4 className="font-semibold text-slate-900">Crops</h4>
           <Button
             size="sm"
             variant="outline"
@@ -189,8 +197,8 @@ const InventoryTab = memo(() => {
         {cropItems.length === 0 ? (
           <div className="text-center py-6">
             <div className="text-3xl mb-2">🌾</div>
-            <p className="text-gray-500">No crops stored</p>
-            <p className="text-sm text-gray-400 mt-1">Harvest to stock up on produce.</p>
+            <p className="text-slate-500">No crops stored</p>
+            <p className="text-sm text-slate-400 mt-1">Harvest to stock up on produce.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -205,7 +213,7 @@ const InventoryTab = memo(() => {
               const bulkSellCount = Math.min(5, qty);
 
               return (
-                <div key={itemId} className="p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                <div key={itemId} className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 shadow-sm transition-colors hover:bg-slate-50">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{itemEmojis[itemId] || '📦'}</span>
@@ -216,7 +224,7 @@ const InventoryTab = memo(() => {
                             <Badge className="text-[10px] bg-amber-600">Daily Focus</Badge>
                           )}
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-slate-600">
                           {effectiveSellPrice}🪙 each
                           {isDailyFocusCrop && (
                             <span className="text-amber-700 font-medium"> ({unitPrice} base)</span>
@@ -265,20 +273,20 @@ const InventoryTab = memo(() => {
       </Card>
 
       {/* Supplies & Upgrades */}
-      <Card className="p-4">
-        <h4 className="font-semibold">📦 Supplies & Upgrades</h4>
-        <p className="text-xs text-gray-500 mt-1 mb-3">Fresh saves start with a small starter kit so you can plant immediately.</p>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <h4 className="font-semibold text-slate-900">Supplies & upgrades</h4>
+        <p className="mt-1 mb-3 text-xs text-slate-500">Fresh saves start with a small starter kit so you can plant immediately.</p>
 
         {utilityItems.length === 0 ? (
           <div className="text-center py-6">
             <div className="text-3xl mb-2">🧰</div>
-            <p className="text-gray-500">No supplies in storage</p>
-            <p className="text-sm text-gray-400 mt-1">Visit the Shop to stock up.</p>
+            <p className="text-slate-500">No supplies in storage</p>
+            <p className="text-sm text-slate-400 mt-1">Visit the Shop to stock up.</p>
           </div>
         ) : (
           <div className="space-y-2">
             {utilityItems.map(([itemId, quantity]) => (
-              <div key={itemId} className="flex justify-between items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+              <div key={itemId} className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 transition-colors hover:bg-slate-50">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{itemEmojis[itemId] || '📦'}</span>
                   <span className="font-medium">{formatDisplayLabel(itemId)}</span>
@@ -293,14 +301,14 @@ const InventoryTab = memo(() => {
       </Card>
 
       {/* Decorations */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">🪴 Decorations</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <h4 className="mb-3 font-semibold text-slate-900">Decorations</h4>
 
         {decorationItems.length === 0 ? (
           <div className="text-center py-6">
             <div className="text-3xl mb-2">🧺</div>
-            <p className="text-gray-500">No decorations yet</p>
-            <p className="text-sm text-gray-400 mt-1">Visit the Shop for cozy decor.</p>
+            <p className="text-slate-500">No decorations yet</p>
+            <p className="text-sm text-slate-400 mt-1">Visit the Shop for cozy decor.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -310,7 +318,7 @@ const InventoryTab = memo(() => {
               const isPremium = premiumModeEnabled && entitlementInfo?.access === 'premium';
               const isUnlocked = isItemUnlocked(state, itemId, 'decor');
               return (
-                <div key={itemId} className="flex flex-wrap items-center justify-between gap-2 p-3 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors">
+                <div key={itemId} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-rose-200/70 bg-rose-50/80 p-3 transition-colors hover:bg-rose-50">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{decor?.emoji || '🪴'}</span>
                     <div>
@@ -362,9 +370,9 @@ const InventoryTab = memo(() => {
 
       {/* Tips */}
       {inventoryItems.length > 0 && (
-        <Card className="p-4 bg-gray-50">
-          <h4 className="font-semibold mb-2">💡 Tips</h4>
-          <ul className="text-sm text-gray-700 space-y-1">
+        <Card className="overflow-hidden border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-emerald-50/30 p-4">
+          <h4 className="font-semibold text-slate-900">Tips</h4>
+          <ul className="mt-2 space-y-1 text-sm text-slate-700">
             <li>• Use quick-sell to free storage and reinvest into seeds</li>
             <li>• Market prices update over time, so selling windows can vary</li>
             <li>• Build processing facilities to increase crop value</li>

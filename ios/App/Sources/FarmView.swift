@@ -23,6 +23,14 @@ struct FarmView: View {
         store.settings.reducedMotion || accessibilityReduceMotion
     }
 
+    private var weatherSnapshot: FarmWeatherSnapshot {
+        FarmWeatherModel.resolve(
+            day: store.save.world.day,
+            timeProgress: store.hudTimeProgress,
+            season: store.hudSeasonText
+        )
+    }
+
 
     var body: some View {
         ZStack {
@@ -31,8 +39,14 @@ struct FarmView: View {
                 .simultaneousGesture(dragGesture)
                 .simultaneousGesture(magnificationGesture)
                 .overlay {
-                    atmosphereOverlay
-                        .allowsHitTesting(false)
+                    ZStack {
+                        atmosphereOverlay
+                        WeatherFieldOverlay(
+                            snapshot: weatherSnapshot,
+                            reducedMotion: reducedMotion
+                        )
+                    }
+                    .allowsHitTesting(false)
                 }
 
             VStack {
@@ -142,8 +156,7 @@ struct FarmView: View {
                 guard !showDayRolloverOverlay else { return }
                 showDayRolloverOverlay = true
                 let delay = reducedMotion ? 0.35 : 1.2
-                // Use weak self pattern to prevent retention cycles
-                Task { [weak store] in
+                Task {
                     try? await Task.sleep(for: .seconds(delay))
                     // Check task cancellation before UI update
                     guard !Task.isCancelled else { return }
@@ -173,6 +186,7 @@ struct FarmView: View {
     private var atmosphereOverlay: some View {
         AtmosphereOverlayView(
             timeProgress: store.hudTimeProgress,
+            snapshot: weatherSnapshot,
             reducedMotion: reducedMotion
         )
     }
@@ -222,6 +236,7 @@ struct FarmView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Open game menu")
+                    .accessibilityHint("Return to the main menu or change app-wide settings")
 
                     Text(store.farmName)
                         .font(.subheadline.weight(.semibold))
@@ -229,6 +244,7 @@ struct FarmView: View {
                         .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
+                        .accessibilityAddTraits(.isHeader)
 
                     Spacer()
                 }
@@ -238,6 +254,11 @@ struct FarmView: View {
                         StatPill(icon: "calendar", value: "Day \(store.save.world.day)")
                         StatPill(icon: store.hudClockSymbol, value: store.hudTimeText)
                         StatPill(icon: "leaf.fill", value: store.hudSeasonText)
+                        WeatherPill(
+                            weather: weatherSnapshot.weather,
+                            intensity: weatherSnapshot.intensity,
+                            subtitle: weatherSnapshot.windowTitle
+                        )
                         Spacer()
                         StatPill(icon: "dollarsign.circle.fill", value: "\(store.save.player.coins)")
                         StatPill(icon: "star.fill", value: "Lv \(store.playerLevel)")
@@ -246,6 +267,11 @@ struct FarmView: View {
                         HStack {
                             StatPill(icon: "calendar", value: "Day \(store.save.world.day)")
                             StatPill(icon: store.hudClockSymbol, value: store.hudTimeText)
+                            WeatherPill(
+                                weather: weatherSnapshot.weather,
+                                intensity: weatherSnapshot.intensity,
+                                subtitle: weatherSnapshot.windowTitle
+                            )
                         }
                         HStack {
                             StatPill(icon: "leaf.fill", value: store.hudSeasonText)
@@ -352,6 +378,7 @@ struct FarmView: View {
             .buttonStyle(WoodActionStyle(tint: DS.Color.money))
             .disabled(store.readyTileCount == 0)
             .accessibilityLabel("Gather all ready crops")
+            .accessibilityHint("Collect every plot that is ready to harvest")
             .lineLimit(1)
 
             #if DEBUG
@@ -359,6 +386,8 @@ struct FarmView: View {
                 store.advanceDays(1)
             }
             .buttonStyle(WoodActionStyle(tint: DS.Color.xp))
+            .accessibilityLabel("Fast-forward one day")
+            .accessibilityHint("Debug tool for skipping ahead 24 hours")
             .lineLimit(1)
             #endif
         }
@@ -392,6 +421,9 @@ struct FarmView: View {
             .shadow(color: DS.shadow, radius: 16, y: 8)
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(store.dayRolloverMessage)
+        .accessibilityHint("Tap to dismiss the day rollover message")
         .transition(.scale(scale: 0.92).combined(with: .opacity))
     }
 
@@ -451,6 +483,7 @@ struct FarmView: View {
 /// Separate view for atmosphere overlay to isolate re-renders
 private struct AtmosphereOverlayView: View {
     let timeProgress: Double
+    let snapshot: FarmWeatherSnapshot
     let reducedMotion: Bool
     
     // Pre-computed color values to avoid creating Color instances repeatedly
@@ -477,13 +510,127 @@ private struct AtmosphereOverlayView: View {
             topColor = Self.night.opacity(0.18)
             bottomColor = Self.night.opacity(0.14)
         }
-        
-        return LinearGradient(
-            colors: [topColor, .clear, bottomColor],
-            startPoint: .top,
-            endPoint: .bottom
-        )
+
+        let weatherOpacity = snapshot.weather.overlayOpacity * (reducedMotion ? 0.45 : 0.75) * snapshot.intensity
+
+        return ZStack {
+            LinearGradient(
+                colors: [topColor, .clear, bottomColor],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            LinearGradient(
+                colors: [
+                    snapshot.weather.overlayBlend.opacity(weatherOpacity),
+                    snapshot.weather.overlayBlend.opacity(weatherOpacity * 0.35),
+                    .clear
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .blendMode(.plusLighter)
+
+            if snapshot.weather == .stormy {
+                RadialGradient(
+                    colors: [
+                        Color.white.opacity(reducedMotion ? 0.02 : 0.06),
+                        .clear
+                    ],
+                    center: .topTrailing,
+                    startRadius: 10,
+                    endRadius: 260
+                )
+                .opacity(snapshot.intensity)
+            }
+        }
         .ignoresSafeArea()
+    }
+}
+
+private struct WeatherFieldOverlay: View {
+    let snapshot: FarmWeatherSnapshot
+    let reducedMotion: Bool
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                cloudBands(in: geo.size)
+
+                if snapshot.weather == .rainy || snapshot.weather == .stormy {
+                    precipitationStreaks(in: geo.size, color: Color.white.opacity(snapshot.weather == .stormy ? 0.42 : 0.26))
+                }
+
+                if snapshot.weather == .snowy {
+                    snowDots(in: geo.size)
+                }
+            }
+            .ignoresSafeArea()
+        }
+    }
+
+    @ViewBuilder
+    private func cloudBands(in size: CGSize) -> some View {
+        let opacity = max(0.06, snapshot.weather.overlayOpacity * 0.32 * snapshot.intensity)
+        let tint = snapshot.weather == .sunny ? Color.white : snapshot.weather.tintColor
+
+        if snapshot.weather != .sunny {
+            VStack(spacing: reducedMotion ? 18 : 12) {
+                ForEach(0..<3, id: \.self) { index in
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    tint.opacity(opacity * (index == 0 ? 1.0 : 0.72)),
+                                    tint.opacity(opacity * 0.18)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: size.width * (0.62 + (CGFloat(index) * 0.08)), height: 26 + CGFloat(index * 8))
+                        .blur(radius: reducedMotion ? 12 : 18)
+                        .offset(
+                            x: CGFloat(index - 1) * size.width * 0.14,
+                            y: -size.height * (0.28 - CGFloat(index) * 0.05)
+                        )
+                }
+            }
+        }
+    }
+
+    private func precipitationStreaks(in size: CGSize, color: Color) -> some View {
+        let count = reducedMotion ? 18 : Int(28 * snapshot.intensity)
+        return ZStack {
+            ForEach(0..<count, id: \.self) { index in
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(color)
+                    .frame(width: 2, height: 18 + CGFloat(index % 4) * 8)
+                    .rotationEffect(.degrees(snapshot.weather == .stormy ? 18 : 12))
+                    .blur(radius: 0.5)
+                    .offset(
+                        x: CGFloat((index * 37) % max(1, Int(size.width))) - (size.width / 2),
+                        y: CGFloat((index * 83) % max(1, Int(size.height))) - (size.height / 2)
+                    )
+                    .opacity(index % 3 == 0 ? 0.55 : 0.32)
+            }
+        }
+    }
+
+    private func snowDots(in size: CGSize) -> some View {
+        let count = reducedMotion ? 14 : Int(22 * snapshot.intensity)
+        return ZStack {
+            ForEach(0..<count, id: \.self) { index in
+                Circle()
+                    .fill(Color.white.opacity(index % 2 == 0 ? 0.34 : 0.22))
+                    .frame(width: 4 + CGFloat(index % 3), height: 4 + CGFloat(index % 3))
+                    .blur(radius: 0.5)
+                    .offset(
+                        x: CGFloat((index * 53) % max(1, Int(size.width))) - (size.width / 2),
+                        y: CGFloat((index * 97) % max(1, Int(size.height))) - (size.height / 2)
+                    )
+            }
+        }
     }
 }
 
@@ -580,4 +727,3 @@ struct TileActionSheet: View {
         }
     }
 }
-

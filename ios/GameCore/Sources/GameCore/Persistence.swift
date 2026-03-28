@@ -12,7 +12,7 @@ public enum SaveMigrationError: Error, LocalizedError {
 }
 
 public enum SaveCodec {
-    public static let currentVersion = 5
+    public static let currentVersion = 16
 
     public static func encode(_ save: SaveGame) throws -> Data {
         let encoder = JSONEncoder()
@@ -29,7 +29,7 @@ public enum SaveCodec {
     public static func migrate(_ save: SaveGame) throws -> SaveGame {
         if save.version == currentVersion { return save }
 
-        if save.version == 1 || save.version == 2 || save.version == 3 || save.version == 4 {
+        if (1..<currentVersion).contains(save.version) {
             var migrated = save
             migrated.version = currentVersion
             if migrated.meta.expansionPurchases < 0 {

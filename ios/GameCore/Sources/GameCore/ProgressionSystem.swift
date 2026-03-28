@@ -35,7 +35,6 @@ public enum ProgressionSystem {
 
     public static func xpToNextLevel(currentXP: Int) -> Int {
         let currentLevel = level(forXP: currentXP)
-        let xpForCurrentLevel = (currentLevel - 1) * xpPerLevel
         let xpForNextLevel = currentLevel * xpPerLevel
         return xpForNextLevel - currentXP
     }
@@ -375,20 +374,5 @@ public struct WelcomeBackInfo: Sendable {
         self.cropsReady = max(0, cropsReady)
         self.streakMaintained = streakMaintained
         self.streakBonus = max(0, streakBonus)
-    }
-}
-
-// MARK: - Codable Conformance for Set<String>
-
-extension Set: Codable where Element == String {
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let array = try container.decode([String].self)
-        self.init(array)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(Array(self))
     }
 }

@@ -140,34 +140,35 @@ const WeatherTab = memo(() => {
   return (
     <div className="space-y-4">
       {/* Current Weather Status */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50">
+      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-cyan-50/40 p-4">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold text-blue-800">🌤️ Current Weather</h3>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600">Weather</div>
+            <h3 className="text-lg font-semibold text-slate-900">Current weather</h3>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-3xl">{getWeatherEmoji(state.weather)}</span>
               <span className="text-lg font-medium">{currentWeatherMeta.label}</span>
             </div>
           </div>
-          <Badge variant="outline" className="bg-blue-100 text-blue-700">
+          <Badge variant="outline" className="bg-white/80 text-slate-600">
             {weatherEffects.growth} Growth
           </Badge>
         </div>
       </Card>
 
       {/* Weather Effects */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">📊 Weather Effects</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <h4 className="mb-3 font-semibold text-slate-900">Weather effects</h4>
         <div className="grid grid-cols-3 gap-4 text-sm">
-          <div className="text-center p-2 bg-green-50 rounded">
+          <div className="rounded-2xl border border-white/80 bg-green-50/80 p-3 text-center shadow-sm">
             <div className="font-medium text-green-800">Growth Rate</div>
             <div className="text-green-600">{weatherEffects.growth}</div>
           </div>
-          <div className="text-center p-2 bg-blue-50 rounded">
+          <div className="rounded-2xl border border-white/80 bg-blue-50/80 p-3 text-center shadow-sm">
             <div className="font-medium text-blue-800">Water Usage</div>
             <div className="text-blue-600">{weatherEffects.water}</div>
           </div>
-          <div className="text-center p-2 bg-red-50 rounded">
+          <div className="rounded-2xl border border-white/80 bg-red-50/80 p-3 text-center shadow-sm">
             <div className="font-medium text-red-800">Disease Risk</div>
             <div className="text-red-600">{weatherEffects.disease}</div>
           </div>
@@ -176,14 +177,14 @@ const WeatherTab = memo(() => {
 
       {/* Weather Forecast */}
       {state.weatherForecast && state.weatherForecast.length > 0 && (
-        <Card className="p-4">
-          <h4 className="font-semibold mb-3">🔮 3-Day Forecast</h4>
+        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+          <h4 className="mb-3 font-semibold text-slate-900">3-day forecast</h4>
           <div className="flex gap-2">
             {state.weatherForecast.slice(0, 3).map((forecast, index) => (
-              <div key={index} className="flex-1 text-center p-2 bg-gray-50 rounded">
+              <div key={index} className="flex-1 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-center shadow-sm">
                 <div className="text-lg">{getWeatherEmoji(forecast.type)}</div>
-                <div className="text-xs text-gray-600 capitalize">{forecast.type}</div>
-                <div className="text-xs text-gray-500">{forecast.duration}s</div>
+                <div className="text-xs capitalize text-slate-600">{forecast.type}</div>
+                <div className="text-xs text-slate-500">{forecast.duration}s</div>
               </div>
             ))}
           </div>
@@ -191,30 +192,33 @@ const WeatherTab = memo(() => {
       )}
 
       {/* Weather Prediction Game */}
-      <Card className="p-4 bg-gradient-to-r from-purple-50 to-pink-50">
-        <h4 className="font-semibold mb-3 text-purple-800">🎮 Weather Prediction Challenge</h4>
+      <Card className="overflow-hidden border-violet-200/70 bg-gradient-to-br from-white via-violet-50/30 to-pink-50/40 p-4">
+        <div className="mb-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-600">Challenge</div>
+          <h4 className="font-semibold text-slate-900">Weather prediction</h4>
+        </div>
 
         {predictionGame.active ? (
           <div className="space-y-4">
             <div className="text-center">
-              <div className="text-sm text-purple-700 mb-2">🔮 Predict Next Weather</div>
+              <div className="mb-2 text-sm text-violet-700">Predict the next weather pattern</div>
 
               {/* Pattern Display */}
               <div className="flex justify-center gap-2 mb-4">
                 {predictionGame.currentPattern.map((weather, index) => (
                   <div key={index} className="flex flex-col items-center">
                     <span className="text-2xl">{getWeatherEmoji(weather)}</span>
-                    <span className="text-xs text-gray-600 capitalize">{weather}</span>
+                    <span className="text-xs capitalize text-slate-600">{weather}</span>
                   </div>
                 ))}
                 <div className="flex flex-col items-center">
                   <span className="text-2xl">→</span>
-                  <span className="text-xs text-gray-600">?</span>
+                  <span className="text-xs text-slate-600">?</span>
                 </div>
               </div>
 
               {/* Hint */}
-              <div className="text-xs text-gray-600 mb-4 italic">
+              <div className="mb-4 text-xs italic text-slate-600">
                 💡 {predictionGame.hint}
               </div>
 
@@ -237,7 +241,7 @@ const WeatherTab = memo(() => {
 
               {/* Result */}
               {predictionGame.result && (
-                <div className={`p-3 rounded ${predictionGame.result.correct ? 'bg-green-50' : 'bg-red-50'}`}>
+                <div className={`rounded-2xl border p-3 ${predictionGame.result.correct ? 'border-green-200 bg-green-50/80' : 'border-red-200 bg-red-50/80'}`}>
                   <div className="text-lg mb-1">
                     {predictionGame.result.correct ? '✅' : '❌'} {predictionGame.result.correct ? 'Correct!' : 'Wrong!'}
                   </div>
@@ -261,7 +265,7 @@ const WeatherTab = memo(() => {
               🎮 Start Prediction Game
             </Button>
             {(!state.weatherForecast || state.weatherForecast.length < 3) && (
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-slate-500">
                 Need 3+ weather history entries to play
               </div>
             )}
@@ -270,22 +274,22 @@ const WeatherTab = memo(() => {
       </Card>
 
       {/* Weather Statistics */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">📊 Weather Statistics</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <h4 className="mb-3 font-semibold text-slate-900">Weather statistics</h4>
         <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="text-center p-2 bg-gray-50 rounded">
+          <div className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-center shadow-sm">
             <div className="font-semibold text-gray-800">
               {state.weatherForecast?.length || 0}
             </div>
-            <div className="text-gray-600">Forecasts Seen</div>
+            <div className="text-slate-600">Forecasts seen</div>
           </div>
-          <div className="text-center p-2 bg-gray-50 rounded">
+          <div className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-center shadow-sm">
             <div className="font-semibold text-gray-800">
               {state.weatherForecast
                 ? state.weatherForecast.filter((f) => normalizeWeatherType(f.type) === normalizeWeatherType(state.weather)).length
                 : 0}
             </div>
-            <div className="text-gray-600">Current Streak</div>
+            <div className="text-slate-600">Current streak</div>
           </div>
         </div>
       </Card>

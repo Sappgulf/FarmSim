@@ -4,12 +4,70 @@ import {
   QA_BACKUP_SAVE_KEY,
   QA_SAVE_KEY,
   SAVE_KEY,
+  SAVE_VERSION,
   clearFarmCache,
+  createSavePayload,
+  importSaveDataToStorage,
 } from '../components/farm-sim/context/GamePersistence';
 
 describe('clearFarmCache', () => {
   beforeEach(() => {
     localStorage.clear();
+  });
+
+  it('creates an export payload with the current save version and timestamp', () => {
+    const payload = createSavePayload({
+      coins: 250,
+      gameLoop: { paused: false },
+      notifications: [{ id: 'n1', message: 'hello' }],
+    }, 12345);
+
+    expect(payload.saveVersion).toBe(SAVE_VERSION);
+    expect(payload.notifications).toEqual([]);
+    expect(payload.gameLoop.lastSaveTime).toBe(12345);
+    expect(payload.coins).toBe(250);
+  });
+
+  it('imports migrated save data and preserves the previous save as a backup', () => {
+    localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        saveVersion: 16,
+        coins: 42,
+        farmName: 'Old Oak Farm',
+        gameLoop: { lastSaveTime: 1000 },
+        notifications: [],
+      })
+    );
+
+    const result = importSaveDataToStorage({
+      saveVersion: 5,
+      coins: 777,
+      xp: 1500,
+      level: 3,
+      gridSize: 3,
+      plots: [],
+      gameLoop: {},
+    });
+
+    expect(result.success).toBe(true);
+
+    const saved = JSON.parse(localStorage.getItem(SAVE_KEY));
+    const backup = JSON.parse(localStorage.getItem(BACKUP_SAVE_KEY));
+
+    expect(saved.saveVersion).toBeGreaterThanOrEqual(16);
+    expect(saved.coins).toBe(777);
+    expect(saved.notifications).toEqual([]);
+    expect(saved.gameLoop.lastSaveTime).toBeGreaterThan(0);
+    expect(backup.coins).toBe(42);
+    expect(backup.farmName).toBe('Old Oak Farm');
+  });
+
+  it('rejects invalid imported save data', () => {
+    const result = importSaveDataToStorage(null);
+
+    expect(result.success).toBe(false);
+    expect(localStorage.getItem(SAVE_KEY)).toBeNull();
   });
 
   it('clears FarmSim cache keys without touching unrelated storage', () => {

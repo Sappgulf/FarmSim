@@ -16,10 +16,30 @@ final class GameCoreTests: XCTestCase {
         XCTAssertFalse(engine.isTileReady(0))
         engine.advanceDay()
         XCTAssertTrue(engine.isTileReady(0))
-        XCTAssertTrue(engine.harvest(tileIndex: 0))
+        XCTAssertEqual(engine.harvest(tileIndex: 0), 1)
 
         XCTAssertEqual(engine.save.player.coins, 24)
         XCTAssertEqual(engine.save.player.inventory.crops["carrot"], 1)
+    }
+
+    func testHarvestAllRespectsMaxCapacity() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 2, seedCost: 1, sellPrice: 24)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 1, starterSeeds: ["carrot": 2])
+        save.player.coins = 0
+
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
+
+        XCTAssertTrue(engine.plant(tileIndex: 0, cropID: "carrot"))
+        XCTAssertTrue(engine.plant(tileIndex: 1, cropID: "carrot"))
+        engine.advanceDay()
+        engine.advanceDay()
+
+        let harvested = engine.harvestAll(maxCapacity: 1)
+
+        XCTAssertEqual(harvested, 1)
+        XCTAssertEqual(engine.save.player.coins, 24)
+        XCTAssertEqual(engine.save.player.inventory.crops["carrot"], 1)
+        XCTAssertEqual(engine.save.world.tiles.filter { $0.planted != nil }.count, 1)
     }
 
     func testSaveCodecRoundTrip() throws {
@@ -272,6 +292,116 @@ final class GameCoreTests: XCTestCase {
         XCTAssertEqual(migrated.version, SaveCodec.currentVersion)
         XCTAssertEqual(migrated.meta.favoriteItems, [:])
         XCTAssertEqual(migrated.meta.time.dayIndex, 5)
+    }
+
+    func testSaveCodecCurrentVersionMatchesSharedSchemaBridge() {
+        XCTAssertEqual(SaveCodec.currentVersion, 16)
+    }
+
+    func testContentLoaderAcceptsMatchingSchemaVersion() throws {
+        let validJSON = """
+        {
+          "schemaVersion": 1,
+          "items": [
+            {
+              "id": "radish",
+              "name": "Radish",
+              "cost": 7,
+              "baseValue": 14,
+              "growthTime": 60
+            }
+          ]
+        }
+        """
+
+        let defs = try ContentLoader.loadCropDefs(from: Data(validJSON.utf8))
+
+        XCTAssertEqual(defs.count, 1)
+        XCTAssertEqual(defs.first?.id, "radish")
+        XCTAssertEqual(defs.first?.daysToGrow, 1)
+    }
+
+    func testContentLoaderRejectsMismatchedSchemaVersion() {
+        let invalidJSON = """
+        {
+          "schemaVersion": 2,
+          "items": [
+            {
+              "id": "radish",
+              "name": "Radish",
+              "cost": 7,
+              "baseValue": 14,
+              "growthTime": 60
+            }
+          ]
+        }
+        """
+
+        XCTAssertThrowsError(try ContentLoader.loadCropDefs(from: Data(invalidJSON.utf8))) { error in
+            guard case ContentLoaderError.invalidContent(let message) = error else {
+                return XCTFail("Expected invalidContent error, got \(error)")
+            }
+            XCTAssertTrue(message.contains("crops.json schemaVersion 2 is unsupported"))
+            XCTAssertTrue(message.contains("expected 1"))
+        }
+    }
+
+    func testSaveCodecMigratesV5ToCurrentAndPreservesKnownFields() throws {
+        let v5JSON = """
+        {
+          "version": 5,
+          "daySeed": 88,
+          "player": {
+            "coins": 64,
+            "xp": 9,
+            "inventory": {
+              "seeds": { "carrot": 3 },
+              "crops": { "carrot": 2 }
+            }
+          },
+          "world": {
+            "day": 7,
+            "gridWidth": 2,
+            "gridHeight": 2,
+            "tiles": [
+              { "index": 0, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 1, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 2, "state": { "tilled": true, "watered": false }, "planted": null },
+              { "index": 3, "state": { "tilled": true, "watered": false }, "planted": null }
+            ]
+          },
+          "meta": {
+            "buildingLevels": { "silo": 2 },
+            "completedResearch": { "hybrid_crops": true },
+            "discoveredHybrids": { "super_carrot": true },
+            "expansionPurchases": 1,
+            "livestockCounts": { "chicken": 2 },
+            "petLevels": { "dog": 1 },
+            "fishCaughtCounts": { "common": 4 },
+            "fishingPondLevel": 2,
+            "challengeClaims": { "daily_task:test": 7 },
+            "challengeStreak": 3,
+            "favoriteItems": { "carrot": true, "junk": false },
+            "time": {
+              "currentTimeSeconds": 120,
+              "dayIndex": 7,
+              "lastRealWorldTimestamp": 5000
+            }
+          }
+        }
+        """
+        let data = Data(v5JSON.utf8)
+        let migrated = try SaveCodec.decode(data)
+
+        XCTAssertEqual(migrated.version, SaveCodec.currentVersion)
+        XCTAssertEqual(migrated.player.coins, 64)
+        XCTAssertEqual(migrated.meta.buildingLevels["silo"], 2)
+        XCTAssertEqual(migrated.meta.completedResearch["hybrid_crops"], true)
+        XCTAssertEqual(migrated.meta.discoveredHybrids["super_carrot"], true)
+        XCTAssertEqual(migrated.meta.favoriteItems, ["carrot": true])
+        XCTAssertEqual(migrated.meta.time.currentTimeSeconds, 120)
+        XCTAssertEqual(migrated.meta.time.dayIndex, 7)
+        XCTAssertEqual(migrated.meta.time.lastRealWorldTimestamp, 5000)
     }
 
     func testTimeEngineTickAdvancesTimeAndRollsDay() {

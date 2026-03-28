@@ -28,19 +28,18 @@ struct BarnInventoryView: View {
                             onOpenMarketTab: { appState.selectedTab = .market }
                         )
 
-                        categoryChips
+                        BarnCategoryBar(
+                            selectedCategory: $selectedCategory,
+                            selectedSort: $selectedSort,
+                            reducedMotion: store.settings.reducedMotion
+                        )
 
-                        if displayedShelves.isEmpty {
-                            emptyBarnState
-                        } else {
-                            ForEach(displayedShelves) { shelf in
-                                ShelfSectionView(
-                                    shelf: shelf,
-                                    favorites: store.favoriteItemIDs,
-                                    onSelect: { selectedItem = $0 }
-                                )
-                            }
-                        }
+                        BarnShelfContent(
+                            displayedShelves: displayedShelves,
+                            query: query,
+                            favorites: store.favoriteItemIDs,
+                            onSelect: { selectedItem = $0 }
+                        )
                     }
                     .padding(DS.Space.md)
                     .padding(.bottom, DS.Space.xl)
@@ -49,6 +48,8 @@ struct BarnInventoryView: View {
             .navigationTitle("Barn")
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $query, prompt: "Search stockroom")
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
             .toolbarBackground(Color(red: 0.38, green: 0.21, blue: 0.10), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
@@ -87,7 +88,104 @@ struct BarnInventoryView: View {
                                 appState.selectedTab = .market
                             }
                         }
+                }
+            }
+        }
+    }
+
+    // MARK: - Helper Subviews
+
+    private struct BarnCategoryBar: View {
+        @Binding var selectedCategory: BarnShelfCategory
+        @Binding var selectedSort: BarnItemSort
+        let reducedMotion: Bool
+
+        var body: some View {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DS.Space.xs) {
+                    ForEach(BarnShelfCategory.allCases) { category in
+                        categoryChip(category)
                     }
+
+                    sortMenu
+                }
+                .padding(.horizontal, 1)
+            }
+        }
+
+        private func categoryChip(_ category: BarnShelfCategory) -> some View {
+            let selected = selectedCategory == category
+            return Button {
+                SoundManager.shared.play(.click, haptic: .light)
+                if reducedMotion {
+                    selectedCategory = category
+                } else {
+                    withAnimation(DS.Animation.standard) {
+                        selectedCategory = category
+                    }
+                }
+            } label: {
+                Label(category.title, systemImage: category.symbol)
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, DS.Space.sm)
+                    .padding(.vertical, DS.Space.xs)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(selected ? DS.Color.chipActive : DS.Color.chipInactive)
+                    )
+                    .foregroundStyle(selected ? DS.Color.textPrimary : DS.Color.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(category.title) category")
+            .accessibilityHint(selected ? "Currently selected" : "Filter the barn by this category")
+        }
+
+        private var sortMenu: some View {
+            Menu {
+                Picker("Sort", selection: $selectedSort) {
+                    ForEach(BarnItemSort.allCases) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+            } label: {
+                Label(selectedSort.title, systemImage: "arrow.up.arrow.down.circle.fill")
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, DS.Space.sm)
+                    .padding(.vertical, DS.Space.xs)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(DS.Color.chipInactive)
+                    )
+                    .foregroundStyle(DS.Color.textSecondary)
+            }
+            .accessibilityLabel("Sort stockroom")
+            .accessibilityHint("Change how items are ordered")
+        }
+    }
+
+    private struct BarnShelfContent: View {
+        let displayedShelves: [BarnShelfModel]
+        let query: String
+        let favorites: Set<String>
+        let onSelect: (BarnInventoryItemModel) -> Void
+
+        var body: some View {
+            if displayedShelves.isEmpty {
+                EmptyStateView(
+                    icon: "shippingbox",
+                    title: query.isEmpty ? "Your shelves are quiet right now." : "No items match \"\(query)\".",
+                    subtitle: query.isEmpty
+                        ? "Harvest crops on your farm or visit the Shop Counter to stock up."
+                        : "Try a different search term or clear the filter."
+                )
+            } else {
+                ForEach(displayedShelves) { shelf in
+                    ShelfSectionView(
+                        shelf: shelf,
+                        favorites: favorites,
+                        onSelect: onSelect
+                    )
+                }
             }
         }
     }
@@ -118,6 +216,8 @@ struct BarnInventoryView: View {
                             .foregroundStyle(selected ? DS.Color.textPrimary : DS.Color.textSecondary)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("\(category.title) category")
+                    .accessibilityHint(selected ? "Currently selected" : "Filter the barn by this category")
                 }
 
                 Menu {
@@ -137,6 +237,8 @@ struct BarnInventoryView: View {
                         )
                         .foregroundStyle(DS.Color.textSecondary)
                 }
+                .accessibilityLabel("Sort stockroom")
+                .accessibilityHint("Change how items are ordered")
             }
             .padding(.horizontal, 1)
         }

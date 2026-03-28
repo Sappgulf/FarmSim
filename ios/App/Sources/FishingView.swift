@@ -108,6 +108,8 @@ struct FishingSection: View {
                     }
                 }
                 .buttonStyle(PrimaryButtonStyle())
+                .accessibilityLabel("Cast line")
+                .accessibilityHint("Start a fishing attempt")
             }
         }
     }
@@ -199,6 +201,8 @@ struct FishingSection: View {
                             .foregroundStyle(DS.Color.accent)
                     }
                     .buttonRepeatBehavior(.enabled)
+                    .accessibilityLabel("Move hook left")
+                    .accessibilityHint("Slide the hook toward the left side of the pond")
 
                     VStack(spacing: 2) {
                         Text("DRAG TRACK")
@@ -216,6 +220,8 @@ struct FishingSection: View {
                             .foregroundStyle(DS.Color.accent)
                     }
                     .buttonRepeatBehavior(.enabled)
+                    .accessibilityLabel("Move hook right")
+                    .accessibilityHint("Slide the hook toward the right side of the pond")
                 }
             }
         }
@@ -289,6 +295,7 @@ struct FishingSection: View {
                     withAnimation(DS.Animation.standard) { phase = .idle }
                 }
                 .buttonStyle(PrimaryButtonStyle())
+                .accessibilityHint("Return to the pond and try again")
             }
             .frame(maxWidth: .infinity)
         }
@@ -374,6 +381,8 @@ struct FishingSection: View {
                         .buttonStyle(PrimaryButtonStyle())
                         .disabled(store.save.player.coins < next.cost)
                         .opacity(store.save.player.coins < next.cost ? 0.5 : 1)
+                        .accessibilityLabel("Upgrade pond")
+                        .accessibilityHint("Spend coins to increase fishing capacity")
                     }
                 }
             }

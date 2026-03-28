@@ -1458,6 +1458,9 @@ final class GameStore {
     }
 
     func resetSave() {
+        pendingSaveTask?.cancel()
+        pendingSaveTask = nil
+
         let starterSeeds = Dictionary(uniqueKeysWithValues: cropDefs.prefix(4).map { ($0.id, 4) })
         let fresh = GameCoreEngine.defaultSave(
             gridWidth: 4,
@@ -1465,12 +1468,19 @@ final class GameStore {
             starterSeeds: starterSeeds,
             daySeed: 20260212
         )
+
+        resetPersistentProgress()
+
         var resetTimeState = fresh.meta.time
         resetTimeState.dayIndex = fresh.world.day
         resetTimeState.lastRealWorldTimestamp = Date().timeIntervalSince1970
         timeEngine = TimeEngine(config: Self.defaultTimeConfig, state: resetTimeState)
         engine = GameCoreEngine(save: fresh, cropDefs: cropDefs, seed: fresh.daySeed)
         engine.setTimeState(timeEngine.state)
+        save = engine.save
+        renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
+        selectedSeedID = cropDefs.first?.id ?? selectedSeedID
+        lastPlayerLevel = ProgressionSystem.level(forXP: fresh.player.xp)
         syncState(statusOverride: "Save reset.", emitHaptic: false, emitHarvest: false)
         refreshHUDTime(force: true, now: Date().timeIntervalSince1970)
     }
@@ -1874,6 +1884,20 @@ final class GameStore {
         if let encoded = try? JSONEncoder().encode(settings) {
             userDefaults.set(encoded, forKey: Self.settingsKey)
         }
+    }
+
+    private func resetPersistentProgress() {
+        let encoder = JSONEncoder()
+        milestoneManager.clearAllCelebrations()
+        milestoneManager.loadMilestoneState(from: try? encoder.encode(MilestoneState()))
+        milestoneManager.loadDailyLogin(from: try? encoder.encode(DailyLoginState()))
+        milestoneManager.loadClaimedLevels(from: try? encoder.encode([Int]()))
+
+        userDefaults.removeObject(forKey: Self.milestoneStateKey)
+        userDefaults.removeObject(forKey: Self.dailyLoginKey)
+        userDefaults.removeObject(forKey: Self.claimedLevelsKey)
+        userDefaults.removeObject(forKey: Self.onboardingKey)
+        onboardingRequired = true
     }
 
     private static func loadSettings(defaults: UserDefaults) -> GameUserSettings {

@@ -238,56 +238,57 @@ const FishingTab = memo(() => {
   return (
     <div className="space-y-4">
       {/* Header Stats */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50 shadow-md hover:shadow-lg transition-all">
-        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-blue-800">
-          🎣 Fishing Pond
-          <Badge variant="outline" className="ml-auto text-xs">
+      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-cyan-50/40 p-4 shadow-md transition-all hover:shadow-lg">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600">Fishing</div>
+          <Badge variant="outline" className="ml-auto bg-white/80 text-slate-600 text-xs">
             Level {pondLevel}
           </Badge>
-        </h3>
+        </div>
+        <h3 className="mb-4 text-xl font-semibold text-slate-900">Fishing pond</h3>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <div className="text-center">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
             <div className="text-2xl font-bold text-blue-700">{stats.totalCaught}</div>
-            <div className="text-xs text-gray-600">Fish Caught</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">Fish caught</div>
           </div>
-          <div className="text-center">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
             <div className="text-2xl font-bold text-green-600">${stats.totalValue}</div>
-            <div className="text-xs text-gray-600">Total Value</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">Total value</div>
           </div>
-          <div className="text-center">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
             <div className="text-2xl font-bold text-purple-600">{stats.largestFish}cm</div>
-            <div className="text-xs text-gray-600">Biggest Fish</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">Biggest fish</div>
           </div>
-          <div className="text-center">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
             <div className="text-2xl font-bold text-cyan-600">{Math.floor(fishing.pond.population)}</div>
-            <div className="text-xs text-gray-600">Population</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">Population</div>
           </div>
-          <div className="text-center">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-3 text-center shadow-sm">
             <div className="text-2xl font-bold text-amber-600">{stats.streak || 0}</div>
-            <div className="text-xs text-gray-600">Catch Streak</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">Catch streak</div>
           </div>
         </div>
       </Card>
 
       {/* Pond Upgrade */}
-      <Card className="p-4 bg-gradient-to-r from-green-50 via-emerald-50 to-green-50 shadow-md hover:shadow-lg transition-all">
+      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-green-50/40 p-4 shadow-md transition-all hover:shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1">
             <div className="text-4xl">🏞️</div>
             <div className="flex-1">
-              <h4 className="font-bold text-gray-800">{currentUpgrade.name}</h4>
+              <h4 className="font-semibold text-slate-900">{currentUpgrade.name}</h4>
               <div className="flex items-center gap-2 mt-1">
                 <Progress
                   value={(fishing.pond.population / fishing.pond.maxPopulation) * 100}
                   className="h-2 flex-1 max-w-xs"
                   variant="growth"
                 />
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-slate-600">
                   {Math.floor(fishing.pond.population)}/{fishing.pond.maxPopulation}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="mt-1 text-xs text-slate-500">
                 Regen Rate: {currentUpgrade.regenRate}x • Better fish quality
               </p>
             </div>
@@ -311,11 +312,11 @@ const FishingTab = memo(() => {
 
       {/* Mini-Game */}
       {!isPlaying ? (
-        <Card className="p-8 bg-gradient-to-br from-blue-100 via-cyan-100 to-blue-200 shadow-lg hover:shadow-xl transition-all">
+        <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/40 to-cyan-50/50 p-8 shadow-lg transition-all hover:shadow-xl">
           <div className="text-center">
             <div className="text-7xl mb-4 animate-bounce-slow">🎣</div>
-            <h3 className="text-2xl font-bold mb-2 text-blue-900">Ready to Fish?</h3>
-            <p className="text-sm text-gray-700 mb-6">
+            <h3 className="mb-2 text-2xl font-semibold text-slate-900">Ready to fish?</h3>
+            <p className="mb-6 text-sm text-slate-600">
               Cast your line and catch rare species! Use A/D keys or hold controls to reel with precision.
             </p>
             <Button
@@ -328,22 +329,22 @@ const FishingTab = memo(() => {
               🎣 Cast Line
             </Button>
             {fishing.pond.population < 10 && (
-              <p className="text-xs text-red-600 mt-3 font-semibold">
+              <p className="mt-3 text-xs font-semibold text-red-600">
                 ⚠️ Not enough fish in pond. Wait for population to recover ({Math.floor(fishing.pond.population)}/10).
               </p>
             )}
           </div>
         </Card>
       ) : (
-        <Card className="p-4 sm:p-6 bg-gradient-to-br from-blue-200 via-cyan-200 to-blue-300 relative overflow-hidden">
+        <Card className="relative overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/40 to-cyan-50/60 p-4 sm:p-6">
           {/* Mini-game UI */}
           <div className="relative z-10">
             <div className="text-center mb-4">
               <div className="text-5xl mb-2">{gameState?.fish.emoji}</div>
-              <div className="font-bold text-xl text-gray-800">
+              <div className="text-xl font-semibold text-slate-900">
                 {gameState?.fish.name} Hooked!
               </div>
-              <div className="text-sm text-gray-700">
+              <div className="text-sm text-slate-600">
                 Size: {gameState?.size}cm • Base Value: ${gameState?.fish.baseValue}
               </div>
             </div>
@@ -563,11 +564,11 @@ const FishingTab = memo(() => {
       </Card>
 
       {/* Tips */}
-      <Card className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50">
-        <h4 className="font-bold mb-2 flex items-center gap-2">
-          💡 Fishing Tips
+      <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 p-4">
+        <h4 className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
+          Fishing tips
         </h4>
-        <ul className="text-sm text-gray-700 space-y-1">
+        <ul className="space-y-1 text-sm text-slate-700">
           <li>• Keep your 🎣 rod near the fish to build catch progress and quality</li>
           <li>• Keep line tension low or the line can snap</li>
           <li>• Pond population regenerates over time</li>

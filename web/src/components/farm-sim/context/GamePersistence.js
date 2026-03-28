@@ -730,6 +730,25 @@ export const saveStateToStorage = (state, { key = SAVE_KEY, backupKey = BACKUP_S
     }
 };
 
+export const importSaveDataToStorage = (
+    rawSaveData,
+    { key = SAVE_KEY, backupKey = BACKUP_SAVE_KEY } = {}
+) => {
+    try {
+        const migratedData = migrateSaveData(rawSaveData);
+        if (!migratedData) {
+            return {
+                success: false,
+                error: new Error('Invalid save file format'),
+            };
+        }
+        return saveStateToStorage(migratedData, { key, backupKey });
+    } catch (error) {
+        console.error('[farm]', 'Failed to import save data', error);
+        return { success: false, error };
+    }
+};
+
 export const loadSavedStateFromKey = (key) => {
     try {
         const savedDataString = localStorage.getItem(key);

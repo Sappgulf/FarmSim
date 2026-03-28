@@ -9,14 +9,13 @@ public enum SimTickSystem {
     ) -> Int {
         world.day += 1
         let safeGrowthMultiplier = max(0.1, growthMultiplier)
-        let wateredIncrement = 1.5 * safeGrowthMultiplier
-        let dryIncrement = 0.5 * safeGrowthMultiplier
+        let dayGrowthIncrement = 1.0 * safeGrowthMultiplier
 
         for index in world.tiles.indices {
             var tile = world.tiles[index]
             if var planted = tile.planted {
-                let isWatered = tile.state.watered
-                planted.growthProgress += isWatered ? wateredIncrement : dryIncrement
+                // Keep crop readiness aligned with the shared day-based vector contract.
+                planted.growthProgress += dayGrowthIncrement
                 tile.planted = planted
             }
             

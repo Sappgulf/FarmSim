@@ -12,6 +12,8 @@ enum WeatherType: String, CaseIterable, Identifiable {
     case stormy = "Stormy"
     
     var id: String { rawValue }
+
+    var key: String { rawValue.lowercased() }
     
     var icon: String {
         switch self {
@@ -51,6 +53,152 @@ enum WeatherType: String, CaseIterable, Identifiable {
         case .snowy: return 0.5 // Winter slows growth
         case .stormy: return 0.7 // Storms stress crops
         }
+    }
+
+    var ambianceLabel: String {
+        switch self {
+        case .sunny: return "Bright skies"
+        case .cloudy: return "Cool cover"
+        case .rainy: return "Soft rain"
+        case .snowy: return "Quiet frost"
+        case .stormy: return "Wild front"
+        }
+    }
+
+    var tintColor: Color {
+        switch self {
+        case .sunny: return Color(red: 1.00, green: 0.78, blue: 0.28)
+        case .cloudy: return Color(red: 0.63, green: 0.68, blue: 0.75)
+        case .rainy: return Color(red: 0.43, green: 0.66, blue: 0.92)
+        case .snowy: return Color(red: 0.78, green: 0.90, blue: 1.00)
+        case .stormy: return Color(red: 0.45, green: 0.46, blue: 0.76)
+        }
+    }
+
+    var overlayBlend: Color {
+        switch self {
+        case .sunny: return Color(red: 1.00, green: 0.84, blue: 0.43)
+        case .cloudy: return Color(red: 0.48, green: 0.54, blue: 0.64)
+        case .rainy: return Color(red: 0.25, green: 0.42, blue: 0.62)
+        case .snowy: return Color(red: 0.76, green: 0.87, blue: 0.97)
+        case .stormy: return Color(red: 0.20, green: 0.24, blue: 0.34)
+        }
+    }
+}
+
+struct FarmWeatherSnapshot: Equatable, Sendable {
+    let weather: WeatherType
+    let intensity: Double
+    let nextWeather: WeatherType
+    let nextTransitionProgress: Double
+    let windowTitle: String
+
+    var intensityPercent: Int {
+        Int((max(0.55, min(1.0, intensity)) * 100).rounded())
+    }
+}
+
+enum FarmWeatherModel {
+    private static let dayWindows: [(title: String, start: Double, end: Double)] = [
+        ("Dawn", 0.00, 0.22),
+        ("Late Morning", 0.22, 0.50),
+        ("Afternoon", 0.50, 0.78),
+        ("Nightfall", 0.78, 1.01),
+    ]
+
+    static func resolve(day: Int, timeProgress: Double, season: String) -> FarmWeatherSnapshot {
+        let normalizedProgress = max(0, min(0.999, timeProgress))
+        let seasonKey = normalizeSeason(season)
+        let windowIndex = currentWindowIndex(for: normalizedProgress)
+        let currentWindow = dayWindows[windowIndex]
+        let nextWindowIndex = (windowIndex + 1) % dayWindows.count
+        let nextWindow = dayWindows[nextWindowIndex]
+        let effectiveDay = day + (nextWindowIndex == 0 ? 1 : 0)
+
+        let weather = resolveWeather(day: day, windowIndex: windowIndex, seasonKey: seasonKey)
+        let nextWeather = resolveWeather(day: effectiveDay, windowIndex: nextWindowIndex, seasonKey: seasonKey)
+        let intensity = resolveIntensity(day: day, windowIndex: windowIndex, weather: weather, seasonKey: seasonKey)
+
+        return FarmWeatherSnapshot(
+            weather: weather,
+            intensity: intensity,
+            nextWeather: nextWeather,
+            nextTransitionProgress: min(1.0, max(0.0, nextWindow.start)),
+            windowTitle: currentWindow.title
+        )
+    }
+
+    private static func currentWindowIndex(for progress: Double) -> Int {
+        dayWindows.firstIndex { progress >= $0.start && progress < $0.end } ?? 0
+    }
+
+    private static func resolveWeather(day: Int, windowIndex: Int, seasonKey: String) -> WeatherType {
+        let roll = stableHash(for: "weather|\(seasonKey)|\(day)|\(windowIndex)") % 100
+        switch seasonKey {
+        case "winter":
+            switch roll {
+            case 0..<35: return .snowy
+            case 35..<65: return .cloudy
+            case 65..<80: return .sunny
+            case 80..<92: return .rainy
+            default: return .stormy
+            }
+        case "autumn", "fall":
+            switch roll {
+            case 0..<28: return .cloudy
+            case 28..<50: return .rainy
+            case 50..<72: return .sunny
+            case 72..<88: return .stormy
+            default: return .snowy
+            }
+        case "summer":
+            switch roll {
+            case 0..<46: return .sunny
+            case 46..<66: return .cloudy
+            case 66..<82: return .rainy
+            case 82..<94: return .stormy
+            default: return .snowy
+            }
+        default:
+            switch roll {
+            case 0..<38: return .sunny
+            case 38..<60: return .cloudy
+            case 60..<80: return .rainy
+            case 80..<90: return .stormy
+            default: return .snowy
+            }
+        }
+    }
+
+    private static func resolveIntensity(day: Int, windowIndex: Int, weather: WeatherType, seasonKey: String) -> Double {
+        let base = Double((stableHash(for: "intensity|\(seasonKey)|\(weather.key)|\(day)|\(windowIndex)") % 38) + 62) / 100.0
+        switch weather {
+        case .sunny:
+            return min(0.95, max(0.62, base))
+        case .cloudy:
+            return min(0.9, max(0.58, base - 0.06))
+        case .rainy:
+            return min(1.0, max(0.68, base + 0.04))
+        case .snowy:
+            return min(0.96, max(0.66, base))
+        case .stormy:
+            return min(1.0, max(0.78, base + 0.08))
+        }
+    }
+
+    private static func normalizeSeason(_ season: String) -> String {
+        let lowered = season.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if lowered == "fall" { return "autumn" }
+        return lowered.isEmpty ? "spring" : lowered
+    }
+
+    private static func stableHash(for string: String) -> UInt64 {
+        var hash: UInt64 = 1_469_598_103_934_665_603
+        for byte in string.utf8 {
+            hash ^= UInt64(byte)
+            hash &*= 1_099_511_628_211
+        }
+        return hash
     }
 }
 
@@ -272,7 +420,7 @@ class WeatherScene: SKScene {
     private func setupClouds(intensity: CGFloat) {
         let cloudColor = SKColor(red: 0.9, green: 0.9, blue: 0.95, alpha: 0.6)
         
-        for i in 0..<5 {
+        for _ in 0..<5 {
             let cloud = SKSpriteNode(color: cloudColor, size: CGSize(width: 150 + CGFloat.random(in: 0...100), height: 60 + CGFloat.random(in: 0...40)))
             cloud.position = CGPoint(
                 x: CGFloat.random(in: 0...size.width),
@@ -360,18 +508,31 @@ struct WeatherOverlay: View {
 struct WeatherPill: View {
     let weather: WeatherType
     let intensity: Double
+    var subtitle: String? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: weather.icon)
-                .font(.system(.title3, weight: .semibold))
-                .foregroundStyle(weather.color)
-                .symbolEffect(.pulse, options: .repeating, value: weather)
+            if reduceMotion {
+                Image(systemName: weather.icon)
+                    .font(.system(.title3, weight: .semibold))
+                    .foregroundStyle(weather.color)
+            } else {
+                Image(systemName: weather.icon)
+                    .font(.system(.title3, weight: .semibold))
+                    .foregroundStyle(weather.color)
+                    .symbolEffect(.pulse, options: .repeating, value: weather)
+            }
             
             Text(weather.rawValue)
                 .font(.system(.subheadline, weight: .medium))
                 .foregroundStyle(.white)
+
+            if let subtitle, !subtitle.isEmpty {
+                Text(subtitle)
+                    .font(.system(.caption2, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.72))
+            }
             
             if intensity < 1.0 {
                 Text("\(Int(intensity * 100))%")
@@ -386,7 +547,7 @@ struct WeatherPill: View {
                 .fill(.ultraThinMaterial)
                 .overlay(
                     Capsule()
-                        .stroke(weather.color.opacity(0.3), lineWidth: 1)
+                        .stroke(weather.tintColor.opacity(0.38), lineWidth: 1)
                 )
         )
     }

@@ -592,13 +592,25 @@ export function gameReducer(state, action) {
             return { ...state, pets: action.payload };
 
         case GAME_ACTIONS.UPDATE_PROCESSING_FACILITIES:
-            return { ...state, processingFacilities: action.payload };
+            const nextProcessingFacilities = typeof action.payload === 'function'
+                ? action.payload(state.processingFacilities)
+                : action.payload;
+            if (nextProcessingFacilities === state.processingFacilities) return state;
+            return { ...state, processingFacilities: nextProcessingFacilities };
 
         case GAME_ACTIONS.UPDATE_PROCESSING_QUEUE:
-            return { ...state, processingQueue: action.payload };
+            const nextProcessingQueue = typeof action.payload === 'function'
+                ? action.payload(state.processingQueue)
+                : action.payload;
+            if (nextProcessingQueue === state.processingQueue) return state;
+            return { ...state, processingQueue: nextProcessingQueue };
 
         case GAME_ACTIONS.UPDATE_PROCESSED_INVENTORY:
-            return { ...state, processedInventory: action.payload };
+            const nextProcessedInventory = typeof action.payload === 'function'
+                ? action.payload(state.processedInventory)
+                : action.payload;
+            if (nextProcessedInventory === state.processedInventory) return state;
+            return { ...state, processedInventory: nextProcessedInventory };
 
         case GAME_ACTIONS.LOAD_GAME:
             return {

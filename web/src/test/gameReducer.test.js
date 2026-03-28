@@ -110,6 +110,56 @@ describe('gameReducer economy guards', () => {
     expect(next).toBe(seeded);
   });
 
+  it('supports functional payloads for processing state slices', () => {
+    const seeded = {
+      ...initialState,
+      processingFacilities: [{ id: 'flour_mill', level: 1, isProcessing: false }],
+      processingQueue: [{ id: 1, facilityId: 'flour_mill', output: 'flour', quantity: 1 }],
+      processedInventory: { flour: 2 },
+    };
+
+    const nextFacilities = gameReducer(seeded, {
+      type: GAME_ACTIONS.UPDATE_PROCESSING_FACILITIES,
+      payload: (current) => [
+        ...(current || []),
+        { id: 'juice_press', level: 1, isProcessing: false },
+      ],
+    });
+
+    expect(nextFacilities.processingFacilities).toHaveLength(2);
+    expect(nextFacilities.processingFacilities[1].id).toBe('juice_press');
+
+    const nextQueue = gameReducer(nextFacilities, {
+      type: GAME_ACTIONS.UPDATE_PROCESSING_QUEUE,
+      payload: (current) => (current || []).filter((item) => item.id !== 1),
+    });
+
+    expect(nextQueue.processingQueue).toEqual([]);
+
+    const nextInventory = gameReducer(nextQueue, {
+      type: GAME_ACTIONS.UPDATE_PROCESSED_INVENTORY,
+      payload: (current) => ({
+        ...(current || {}),
+        flour: Number(current?.flour || 0) + 3,
+      }),
+    });
+
+    expect(nextInventory.processedInventory.flour).toBe(5);
+  });
+
+  it('returns same state reference for no-op processing inventory merges', () => {
+    const seeded = {
+      ...initialState,
+      processedInventory: { flour: 2 },
+    };
+    const next = gameReducer(seeded, {
+      type: GAME_ACTIONS.UPDATE_PROCESSED_INVENTORY,
+      payload: (current) => current,
+    });
+
+    expect(next).toBe(seeded);
+  });
+
   it('keeps prestige initialized when PRESTIGE_RESET has no payload', () => {
     const seeded = {
       ...initialState,

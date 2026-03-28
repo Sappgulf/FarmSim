@@ -24,9 +24,20 @@ struct MenuButtonsView: View {
                     action: onNewGameAction
                 )
             }
+
+            SecondaryButton(
+                title: "Settings",
+                icon: "gearshape.fill",
+                action: onSettingsAction
+            )
+
+            SecondaryButton(
+                title: "Credits",
+                icon: "sparkles",
+                action: onCreditsAction
+            )
         }
         .frame(maxWidth: .infinity)
-        .disabled(isBusy)
         .disabled(isBusy)
     }
 }

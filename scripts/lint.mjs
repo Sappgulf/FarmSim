@@ -2,8 +2,8 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 const patterns = [
-  { re: /<<<<<<<|>>>>>>>|=======/g, label: 'merge conflict marker' },
-  { re: /\bdebugger\b/g, label: 'debugger statement' },
+  { re: /^\s*(<<<<<<<|=======|>>>>>>>)\s*$/m, label: 'merge conflict marker' },
+  { re: /\bdebugger\b/m, label: 'debugger statement' },
 ];
 
 let files = [];

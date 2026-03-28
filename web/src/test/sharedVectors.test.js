@@ -1,5 +1,7 @@
 import { createHash } from 'crypto';
 import { describe, expect, it } from 'vitest';
+import cropsDoc from '@shared/content/crops.json';
+import geneticsDoc from '@shared/content/genetics.json';
 import vectorsDoc from '@shared/vectors/sim_vectors.json';
 
 const cloneState = (value) => JSON.parse(JSON.stringify(value));
@@ -66,5 +68,14 @@ describe('Shared sim vectors', () => {
       const endState = simulateVector(vector);
       expect(stateHash(endState)).toBe(vector.expectedEndStateHash);
     });
+  });
+
+  it('keeps genetics outputs backed by crop definitions', () => {
+    const cropIds = new Set((cropsDoc.items || []).map((crop) => crop.id));
+    const missingOutputs = (geneticsDoc.items || [])
+      .map((recipe) => recipe.outputCropID)
+      .filter((outputCropID) => !cropIds.has(outputCropID));
+
+    expect(missingOutputs).toEqual([]);
   });
 });

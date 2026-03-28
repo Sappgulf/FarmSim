@@ -146,10 +146,8 @@ public struct GameCoreEngine: Sendable {
         )
         
         guard success else { return 0 }
-        
-        // Note: applyHarvestSale is legacy if we want to auto-sell, but usually 
-        // crops go to inventory first. However, the original code called both.
-        // I'll keep it consistent with the original intent but ensure it matches inventory logic.
+
+        EconomySystem.applyHarvestSale(player: &save.player, crop: cropDef, quantity: quantity)
         XPSystem.applyHarvestXP(player: &save.player, crop: cropDef, quantity: quantity)
         return quantity
     }
@@ -277,26 +275,26 @@ public struct GameCoreEngine: Sendable {
 
     @discardableResult
     public mutating func harvestAll(yieldMultiplier: Double = 1.0, maxCapacity: Int? = nil) -> Int {
-        var count = 0
+        var totalHarvested = 0
         if let maxCapacity {
-            var totalCrops = save.player.inventory.crops.values.reduce(0, +)
             for i in 0..<save.world.tiles.count {
-                guard totalCrops < maxCapacity else { break }
-                let harvested = harvest(tileIndex: i, yieldMultiplier: yieldMultiplier, maxCapacity: nil)
-                if harvested > 0 {
-                    count += 1
-                    totalCrops += harvested
-                }
+                let remainingCapacity = maxCapacity - totalHarvested
+                guard remainingCapacity > 0 else { break }
+                guard isTileReady(i) else { continue }
+                let harvested = harvest(tileIndex: i, yieldMultiplier: yieldMultiplier, maxCapacity: remainingCapacity)
+                guard harvested > 0 else { break }
+                totalHarvested += harvested
             }
-            return count
+            return totalHarvested
         }
 
         for i in 0..<save.world.tiles.count {
-            if harvest(tileIndex: i, yieldMultiplier: yieldMultiplier, maxCapacity: nil) > 0 {
-                count += 1
+            let harvested = harvest(tileIndex: i, yieldMultiplier: yieldMultiplier, maxCapacity: nil)
+            if harvested > 0 {
+                totalHarvested += harvested
             }
         }
-        return count
+        return totalHarvested
     }
 
     public mutating func resizeGrid(width: Int, height: Int) {

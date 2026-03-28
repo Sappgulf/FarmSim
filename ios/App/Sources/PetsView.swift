@@ -191,6 +191,8 @@ struct PetsSection: View {
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(!canAfford || !levelOK)
                     .opacity((!canAfford || !levelOK) ? 0.5 : 1)
+                    .accessibilityLabel("Adopt \(pet.name)")
+                    .accessibilityHint(levelOK ? "Spend coins to adopt this companion" : "Reach the required level first")
 
                     if !levelOK {
                         Text("Requires level \(pet.requiredLevel)")
@@ -230,6 +232,8 @@ struct PetsSection: View {
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(!canAfford)
                     .opacity(canAfford ? 1 : 0.5)
+                    .accessibilityLabel("Train \(pet.name)")
+                    .accessibilityHint(isMaxLevel ? "This companion is already fully trained" : "Spend coins to increase this pet's bonus")
 
                     if !canAfford {
                         Text("Need \(trainCost - store.save.player.coins) more coins")

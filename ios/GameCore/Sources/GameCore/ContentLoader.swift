@@ -62,6 +62,10 @@ private struct MinigameTheme: Decodable {
     let icon: String?
 }
 
+private enum ContentSchema {
+    static let expectedVersion = 1
+}
+
 public enum ContentLoaderError: Error, LocalizedError {
     case missingFile(String)
     case decodeFailure(String)
@@ -80,6 +84,17 @@ public enum ContentLoaderError: Error, LocalizedError {
 }
 
 public enum ContentLoader {
+    private static func validateSchemaVersion(_ schemaVersion: Int?, fileName: String) throws {
+        guard let schemaVersion else {
+            throw ContentLoaderError.invalidContent("\(fileName) is missing schemaVersion")
+        }
+        guard schemaVersion == ContentSchema.expectedVersion else {
+            throw ContentLoaderError.invalidContent(
+                "\(fileName) schemaVersion \(schemaVersion) is unsupported; expected \(ContentSchema.expectedVersion)"
+            )
+        }
+    }
+
     public static func loadCropDefs(from url: URL) throws -> [CropDef] {
         let data: Data
         do {
@@ -97,6 +112,7 @@ public enum ContentLoader {
         } catch {
             throw ContentLoaderError.decodeFailure("Failed to decode crops.json: \(error.localizedDescription)")
         }
+        try validateSchemaVersion(decoded.schemaVersion, fileName: "crops.json")
 
         guard !decoded.items.isEmpty else {
             throw ContentLoaderError.invalidContent("crops.json contains no crop entries")
@@ -121,6 +137,7 @@ public enum ContentLoader {
         } catch {
             throw ContentLoaderError.decodeFailure("Failed to decode decor.json: \(error.localizedDescription)")
         }
+        try validateSchemaVersion(decoded.schemaVersion, fileName: "decor.json")
 
         return decoded.items.map { item in
             DecorDef(
@@ -142,6 +159,7 @@ public enum ContentLoader {
         } catch {
             throw ContentLoaderError.decodeFailure("Failed to decode festivals.json: \(error.localizedDescription)")
         }
+        try validateSchemaVersion(decoded.schemaVersion, fileName: "festivals.json")
 
         return decoded.items.map { item in
             FestivalDef(
@@ -163,6 +181,7 @@ public enum ContentLoader {
         } catch {
             throw ContentLoaderError.decodeFailure("Failed to decode minigames.json: \(error.localizedDescription)")
         }
+        try validateSchemaVersion(decoded.schemaVersion, fileName: "minigames.json")
 
         return decoded.items.map { item in
             MinigameDef(

@@ -247,21 +247,22 @@ const SocialTab = memo(() => {
   return (
     <div className="space-y-4">
       {/* Social Overview with Reputation Tiers */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50">
+      <Card className="overflow-hidden border-indigo-200/70 bg-gradient-to-br from-white via-blue-50/30 to-purple-50/40 p-4">
         <div className="flex justify-between items-center mb-3">
           <div>
-            <h3 className="text-lg font-semibold text-blue-800">👥 Social Hub</h3>
-            <p className="text-sm text-blue-700">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo-600">Community</div>
+            <h3 className="text-lg font-semibold text-slate-900">Social hub</h3>
+            <p className="text-sm text-slate-600">
               {currentTier.emoji} {currentTier.name} • {reputation} Reputation
             </p>
           </div>
-          <Badge variant="outline" className="bg-blue-100 text-blue-700">
+          <Badge variant="outline" className="bg-white/80 text-slate-600">
             Tier {currentTier.tier}
           </Badge>
         </div>
         {nextTier && (
           <div>
-            <div className="flex justify-between text-xs text-blue-600 mb-1">
+            <div className="mb-1 flex justify-between text-xs text-slate-500">
               <span>{currentTier.name}</span>
               <span>{nextTier.name} ({nextTier.minRep} rep)</span>
             </div>
@@ -269,47 +270,47 @@ const SocialTab = memo(() => {
           </div>
         )}
         {currentTier.perk && (
-          <div className="mt-2 text-xs text-purple-700 bg-purple-50 rounded px-2 py-1">
+          <div className="mt-2 rounded-2xl border border-purple-200/70 bg-purple-50/80 px-3 py-2 text-xs text-purple-700">
             Active Perk: {currentTier.perk}
           </div>
         )}
       </Card>
 
       {/* Your Profile */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">📋 Your Profile</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <h4 className="mb-3 font-semibold text-slate-900">Your profile</h4>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="text-center p-2 bg-green-50 rounded">
+          <div className="rounded-2xl border border-white/80 bg-green-50/80 p-3 text-center shadow-sm">
             <div className="font-bold text-green-600">{state.level}</div>
-            <div className="text-green-700 text-xs">Farm Level</div>
+            <div className="text-xs uppercase tracking-wide text-green-700">Farm level</div>
           </div>
-          <div className="text-center p-2 bg-blue-50 rounded">
+          <div className="rounded-2xl border border-white/80 bg-blue-50/80 p-3 text-center shadow-sm">
             <div className="font-bold text-blue-600">{reputation}</div>
-            <div className="text-blue-700 text-xs">Reputation</div>
+            <div className="text-xs uppercase tracking-wide text-blue-700">Reputation</div>
           </div>
-          <div className="text-center p-2 bg-yellow-50 rounded">
+          <div className="rounded-2xl border border-white/80 bg-yellow-50/80 p-3 text-center shadow-sm">
             <div className="font-bold text-yellow-600">{state.coins}🪙</div>
-            <div className="text-yellow-700 text-xs">Coins</div>
+            <div className="text-xs uppercase tracking-wide text-yellow-700">Coins</div>
           </div>
-          <div className="text-center p-2 bg-purple-50 rounded">
+          <div className="rounded-2xl border border-white/80 bg-purple-50/80 p-3 text-center shadow-sm">
             <div className="font-bold text-purple-600">{state.xp} XP</div>
-            <div className="text-purple-700 text-xs">Experience</div>
+            <div className="text-xs uppercase tracking-wide text-purple-700">Experience</div>
           </div>
         </div>
       </Card>
 
       {/* Today's Visitors */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">🚪 Today's Visitors</h4>
-        <p className="text-xs text-gray-500 mb-3">Visitors rotate daily. Higher reputation attracts more traders.</p>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <h4 className="mb-3 font-semibold text-slate-900">Today's visitors</h4>
+        <p className="mb-3 text-xs text-slate-500">Visitors rotate daily. Higher reputation attracts more traders.</p>
         <div className="space-y-3">
           {visitors.map(visitor => (
-            <Card key={visitor.id} className="p-3 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-100">
+            <Card key={visitor.id} className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 p-3">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-3xl">{visitor.emoji}</span>
                 <div>
-                  <div className="font-medium text-gray-900">{visitor.name}</div>
-                  <div className="text-xs text-gray-500">Wants to trade with you</div>
+                  <div className="font-medium text-slate-900">{visitor.name}</div>
+                  <div className="text-xs text-slate-500">Wants to trade with you</div>
                 </div>
               </div>
               <div className="space-y-2">
@@ -318,12 +319,12 @@ const SocialTab = memo(() => {
                   const done = !!completedTrades[tradeKey];
                   const hasEnough = (state.inventory[offer.want] || 0) >= offer.wantAmount;
                   return (
-                    <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 bg-white rounded border">
+                    <div key={idx} className="flex flex-col justify-between gap-2 rounded-2xl border border-white/80 bg-white/85 p-2 shadow-sm sm:flex-row sm:items-center">
                       <div className="text-sm">
                         <span className="font-medium">{offer.giveAmount}🪙</span>
-                        <span className="text-gray-500"> for </span>
+                        <span className="text-slate-500"> for </span>
                         <span className="font-medium">{offer.wantAmount} {formatDisplayLabel(offer.want)}</span>
-                        <span className="text-xs text-gray-400 ml-1">(have {state.inventory[offer.want] || 0})</span>
+                        <span className="ml-1 text-xs text-slate-400">(have {state.inventory[offer.want] || 0})</span>
                       </div>
                       <Button onClick={() => handleTrade(visitor, offer)} size="sm" disabled={done || !hasEnough} className="shrink-0">
                         {done ? '✓ Done' : 'Trade'}
@@ -338,17 +339,17 @@ const SocialTab = memo(() => {
       </Card>
 
       {/* Community Challenges */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">🎯 Community Challenges</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <h4 className="mb-3 font-semibold text-slate-900">Community challenges</h4>
         <div className="space-y-3">
           {challenges.map(challenge => {
             const claimed = !!claimedChallenges[challenge.id];
             return (
-              <Card key={challenge.id} className={`p-3 ${challenge.complete ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
+              <Card key={challenge.id} className={`overflow-hidden p-3 ${challenge.complete ? 'border-emerald-200/70 bg-emerald-50/80' : 'border-slate-200/70 bg-slate-50/80'}`}>
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <div className="font-medium">{challenge.title}</div>
-                    <div className="text-sm text-gray-600">{challenge.description}</div>
+                    <div className="text-sm text-slate-600">{challenge.description}</div>
                   </div>
                   {challenge.reward.amount > 0 && (
                     <Badge variant="outline" className="shrink-0">+{challenge.reward.amount} rep</Badge>
@@ -367,18 +368,18 @@ const SocialTab = memo(() => {
       </Card>
 
       {/* Seed Codes */}
-      <Card className="p-4 space-y-2">
-        <h4 className="font-semibold">🌱 Seed Codes</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4 space-y-2">
+        <h4 className="font-semibold text-slate-900">Seed codes</h4>
         <div className="flex gap-2">
           <Button onClick={handleShareSeedCode} variant="outline" size="sm" className="flex-1">Share Seed Code</Button>
           <Button onClick={handleStartFromSeed} variant="outline" size="sm" className="flex-1">Start from Seed Code</Button>
         </div>
-        <textarea value={seedCodeInput} onChange={(e) => setSeedCodeInput(e.target.value)} className="w-full rounded border p-2 text-xs" rows={3} placeholder="Paste Seed Code or Snapshot JSON" />
+        <textarea value={seedCodeInput} onChange={(e) => setSeedCodeInput(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white/90 p-3 text-xs shadow-sm focus:border-emerald-300 focus:outline-none" rows={3} placeholder="Paste Seed Code or Snapshot JSON" />
       </Card>
 
       {/* Ghost Visits */}
-      <Card className="p-4 space-y-2">
-        <h4 className="font-semibold">👻 Ghost Visits</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4 space-y-2">
+        <h4 className="font-semibold text-slate-900">Ghost visits</h4>
         <div className="flex gap-2">
           <Button onClick={handleExportSnapshot} variant="outline" size="sm" className="flex-1">Export Farm Snapshot</Button>
           <Button onClick={handleImportSnapshot} variant="outline" size="sm" className="flex-1">Import Snapshot</Button>
@@ -389,8 +390,8 @@ const SocialTab = memo(() => {
       </Card>
 
       {/* Milestones */}
-      <Card className="p-4 space-y-2">
-        <h4 className="font-semibold">🏁 Milestones</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4 space-y-2">
+        <h4 className="font-semibold text-slate-900">Milestones</h4>
         {(milestones.recent || []).slice(-3).reverse().map((id) => {
           const def = MILESTONE_DEFINITIONS.find((entry) => entry.id === id);
           return <div key={id} className="text-xs text-emerald-700">Unlocked: {def?.name || id}</div>;
@@ -408,21 +409,21 @@ const SocialTab = memo(() => {
       </Card>
 
       {/* Reputation Tiers */}
-      <Card className="p-4 bg-gray-50">
-        <h4 className="font-semibold mb-3">🏅 Reputation Tiers</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-indigo-50/40 p-4">
+        <h4 className="mb-3 font-semibold text-slate-900">Reputation tiers</h4>
         <div className="space-y-2">
           {REPUTATION_TIERS.map(tier => {
             const unlocked = reputation >= tier.minRep;
             return (
-              <div key={tier.tier} className={`flex items-center justify-between p-2 rounded ${unlocked ? 'bg-white' : 'bg-gray-100 opacity-60'}`}>
+              <div key={tier.tier} className={`flex items-center justify-between rounded-2xl border p-2 ${unlocked ? 'border-slate-200/70 bg-white/90 shadow-sm' : 'border-slate-200/60 bg-slate-100/70 opacity-60'}`}>
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{tier.emoji}</span>
                   <div>
                     <div className="text-sm font-medium">{tier.name}</div>
-                    {tier.perk && <div className="text-xs text-gray-500">{tier.perk}</div>}
+                    {tier.perk && <div className="text-xs text-slate-500">{tier.perk}</div>}
                   </div>
                 </div>
-                <span className="text-xs text-gray-500">{tier.minRep} rep</span>
+                <span className="text-xs text-slate-500">{tier.minRep} rep</span>
               </div>
             );
           })}

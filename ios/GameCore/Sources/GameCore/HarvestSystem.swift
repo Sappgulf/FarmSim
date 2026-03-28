@@ -23,7 +23,7 @@ public enum HarvestSystem {
 
         if let cap = maxCapacity {
             let total = inventory.crops.values.reduce(0, +)
-            guard total < cap else { return false }
+            guard total + max(1, quantity) <= cap else { return false }
         }
 
         world.tiles[tileIndex].planted = nil
