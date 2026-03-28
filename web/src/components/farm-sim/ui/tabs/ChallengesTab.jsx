@@ -269,28 +269,28 @@ const ChallengesTab = memo(() => {
             return (
               <Card
                 key={challenge.id}
-                className={`p-4 border ${challenge.claimed ? 'bg-gray-50 border-gray-200 opacity-70' : `${styles.panel} ${styles.border}`}`}
+                className={`p-4 border shadow-sm transition-all ${challenge.claimed ? 'bg-slate-50 border-slate-200 opacity-70' : `${styles.panel} ${styles.border}`}`}
               >
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="flex items-start gap-2">
                     <span className="text-2xl">{challenge.emoji}</span>
                     <div>
-                      <h4 className="font-semibold text-gray-900">{challenge.name}</h4>
-                      <p className="text-sm text-gray-700">{challenge.description}</p>
+                      <h4 className="font-semibold text-slate-900">{challenge.name}</h4>
+                      <p className="text-sm text-slate-700">{challenge.description}</p>
                     </div>
                   </div>
 
                   <Badge className={`${styles.badge} text-white`}>{challenge.difficulty}</Badge>
                 </div>
 
-                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                <div className="flex justify-between text-xs text-slate-600 mb-1">
                   <span>Progress: {challenge.progress}/{challenge.target}</span>
                   <span>{progressPercent}%</span>
                 </div>
                 <Progress value={progressPercent} className="mb-3" />
 
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-sm font-medium text-gray-700">
+                  <div className="text-sm font-medium text-slate-700">
                     Reward: +{challenge.reward?.coins || 0}🪙 +{challenge.reward?.xp || 0} XP
                   </div>
 
@@ -312,23 +312,23 @@ const ChallengesTab = memo(() => {
         </div>
       )}
 
-      <Card className="p-4 bg-gray-50">
+      <Card className="p-4 bg-slate-50/80">
         <h4 className="font-semibold mb-2">📊 Progress Snapshot</h4>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="p-2 bg-white rounded text-center">
+          <div className="p-2 bg-white rounded-2xl text-center shadow-sm">
             <div className="font-bold text-emerald-700">{claimedCount}/{challengesWithProgress.length}</div>
             <div className="text-gray-600">Claimed Today</div>
           </div>
-          <div className="p-2 bg-white rounded text-center">
+          <div className="p-2 bg-white rounded-2xl text-center shadow-sm">
             <div className="font-bold text-orange-700">{state.challengeStreak || 0}</div>
             <div className="text-gray-600">Current Streak</div>
           </div>
         </div>
       </Card>
 
-      <Card className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50">
-        <h4 className="font-semibold mb-2 text-indigo-800">🗓️ Weekly Operations Milestones</h4>
-        <p className="text-xs text-indigo-700 mb-3">
+      <Card className="p-4 bg-slate-50/80">
+        <h4 className="font-semibold mb-2 text-slate-900">🗓️ Weekly Operations Milestones</h4>
+        <p className="text-xs text-slate-600 mb-3">
           Clear all daily operations on multiple days this week to unlock milestone rewards.
         </p>
         <div className="space-y-2">
@@ -336,13 +336,13 @@ const ChallengesTab = memo(() => {
             const reached = weeklyOpsState.completedDays.length >= milestone.days;
             const claimed = weeklyOpsState.claimedTiers.includes(milestone.days);
             return (
-              <div key={milestone.days} className="p-3 rounded-lg bg-white border border-indigo-100">
+              <div key={milestone.days} className="p-3 rounded-2xl bg-white border border-slate-200 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <div className="font-medium text-sm text-indigo-900">
+                    <div className="font-medium text-sm text-slate-900">
                       {milestone.days} completion days this week
                     </div>
-                    <div className="text-xs text-indigo-700">
+                    <div className="text-xs text-slate-600">
                       Reward: +{milestone.coins}🪙 +{milestone.xp} XP
                     </div>
                   </div>

@@ -6,6 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { CROP_DATA } from '../../constants/cropData';
+import { TabHero, MetricTile } from './TabSurface';
 
 // Facility upgrade tiers: each level reduces time and boosts value
 const FACILITY_LEVELS = {
@@ -392,30 +393,51 @@ const ProcessingTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Processing Overview */}
-      <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-orange-50/40 p-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">Processing facilities</h3>
-            <p className="text-sm text-slate-600">
-              Facilities: {ownedFacilities.length} • Queue: {processingQueue.length}
-            </p>
-          </div>
-          <Badge variant="outline" className="bg-white/80 text-slate-600">
-            {Object.values(processedInventory).reduce((s, q) => s + (q > 0 ? 1 : 0), 0)} Products
+      <TabHero
+        icon="🏭"
+        tone="amber"
+        title="Processing Hub"
+        description="Turn crops into higher-value goods, manage the queue, and sell the finished stock."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
+            {ownedFacilities.length} facilities
           </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="amber"
+            label="Facilities"
+            value={ownedFacilities.length}
+            hint="Owned processors"
+            icon="🏭"
+          />
+          <MetricTile
+            tone="sky"
+            label="Queue"
+            value={processingQueue.length}
+            hint="In-progress batches"
+            icon="⏳"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Products"
+            value={Object.values(processedInventory).reduce((s, q) => s + (q > 0 ? 1 : 0), 0)}
+            hint="Different finished goods"
+            icon="📦"
+          />
         </div>
-      </Card>
+      </TabHero>
 
       {/* Available Facilities */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
         <h4 className="mb-3 font-semibold text-slate-900">Available facilities</h4>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {Object.entries(PROCESSING_FACILITIES).map(([id, facility]) => {
             const owned = ownedFacilities.some(f => f.id === id);
             const isChain = !!facility.inputSource;
             return (
-              <Card key={id} className={`overflow-hidden p-3 ${owned ? 'border-emerald-200/70 bg-emerald-50/60' : 'border-slate-200/70 bg-white/85'}`}>
+              <Card key={id} className={`overflow-hidden p-3 shadow-sm ${owned ? 'border-emerald-200/70 bg-emerald-50/60' : 'border-slate-200/70 bg-white/90'}`}>
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{facility.emoji}</span>
@@ -456,7 +478,7 @@ const ProcessingTab = memo(() => {
 
       {/* Owned Facilities */}
       {ownedFacilities.length > 0 && (
-        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
           <h4 className="mb-3 font-semibold text-slate-900">Your facilities</h4>
           <div className="space-y-3">
             {ownedFacilities.map(facility => {
@@ -478,7 +500,7 @@ const ProcessingTab = memo(() => {
                   : facilityData.input === 'any' ? 'crop' : facilityData.input;
 
               return (
-                <Card key={facility.id} className={`overflow-hidden p-3 ${status.bgColor}`}>
+                <Card key={facility.id} className={`overflow-hidden p-3 shadow-sm ${status.bgColor}`}>
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{facilityData.emoji}</span>
@@ -548,11 +570,11 @@ const ProcessingTab = memo(() => {
 
       {/* Processing Queue */}
       {processingQueue.length > 0 && (
-        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
           <h4 className="mb-3 font-semibold text-slate-900">Processing queue</h4>
           <div className="space-y-2">
             {processingQueue.map(item => (
-              <Card key={item.id} className="border-slate-200/70 bg-slate-50/80 p-2">
+              <Card key={item.id} className="border-slate-200/70 bg-white/90 p-2 shadow-sm">
                 <div className="flex justify-between items-center">
                   <div>
                     <span className="font-medium text-slate-900">{formatDisplayLabel(item.output)}</span>
@@ -574,7 +596,7 @@ const ProcessingTab = memo(() => {
 
       {/* Processed Products Inventory */}
       {Object.keys(processedInventory).some(k => (processedInventory[k] || 0) > 0) && (
-        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
           <h4 className="mb-3 font-semibold text-slate-900">Processed products</h4>
           <div className="space-y-2">
             {Object.entries(processedInventory).map(([product, quantity]) => {
@@ -586,7 +608,7 @@ const ProcessingTab = memo(() => {
               const sellPrice = Math.floor(basePrice * (FACILITY_LEVELS[level]?.valueMultiplier || 1));
 
               return (
-                <Card key={product} className="border-slate-200/70 bg-slate-50/80 p-3">
+                <Card key={product} className="border-slate-200/70 bg-white/90 p-3 shadow-sm">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div>
                       <span className="font-medium text-slate-900">{formatDisplayLabel(product)}</span>
@@ -616,25 +638,30 @@ const ProcessingTab = memo(() => {
       )}
 
       {/* Processing Statistics */}
-      <Card className="overflow-hidden border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-emerald-50/40 p-4">
+      <Card className="overflow-hidden border-slate-200/70 bg-slate-50/80 p-4">
         <h4 className="mb-3 font-semibold text-slate-900">Processing statistics</h4>
         <div className="grid grid-cols-3 gap-3 text-sm">
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-2 text-center shadow-sm">
-            <div className="font-bold text-blue-600">{ownedFacilities.length}</div>
-            <div className="text-xs text-blue-700">Facilities</div>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-2 text-center shadow-sm">
-            <div className="font-bold text-green-600">
-              {Object.values(processedInventory).reduce((sum, qty) => sum + Math.max(0, qty || 0), 0)}
-            </div>
-            <div className="text-xs text-green-700">In Stock</div>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-2 text-center shadow-sm">
-            <div className="font-bold text-purple-600">
-              {ownedFacilities.reduce((sum, f) => sum + ((f.level || 1) - 1), 0)}
-            </div>
-            <div className="text-xs text-purple-700">Upgrades</div>
-          </div>
+          <MetricTile
+            tone="amber"
+            label="Facilities"
+            value={ownedFacilities.length}
+            hint="Owned processors"
+            icon="🏭"
+          />
+          <MetricTile
+            tone="emerald"
+            label="In Stock"
+            value={Object.values(processedInventory).reduce((sum, qty) => sum + Math.max(0, qty || 0), 0)}
+            hint="Finished quantity"
+            icon="📦"
+          />
+          <MetricTile
+            tone="violet"
+            label="Upgrades"
+            value={ownedFacilities.reduce((sum, f) => sum + ((f.level || 1) - 1), 0)}
+            hint="Total tiers gained"
+            icon="⬆️"
+          />
         </div>
       </Card>
     </div>
