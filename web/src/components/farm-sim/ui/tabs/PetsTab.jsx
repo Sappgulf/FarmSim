@@ -5,6 +5,7 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
+import { TabHero, MetricTile } from './TabSurface';
 
 // Pet types from original system
 const PET_TYPES = {
@@ -261,21 +262,45 @@ const PetsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      <Card className="p-4 bg-white/80 border border-gray-100 shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">🐾 Farm Companions</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Adopt loyal helpers, keep them happy, and earn cozy farm bonuses.
-            </p>
-          </div>
-          <Badge variant="secondary" className="shrink-0">{state.pets.length} Pets</Badge>
+      <TabHero
+        icon="🐾"
+        tone="violet"
+        title="Farm Companions"
+        description="Adopt loyal helpers, keep them happy, and earn cozy farm bonuses."
+        badge={(
+          <Badge variant="secondary" className="shrink-0 bg-white/80 text-violet-700">
+            {state.pets.length} Pets
+          </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="violet"
+            label="Pets"
+            value={state.pets.length}
+            hint="Currently adopted"
+            icon="🐾"
+          />
+          <MetricTile
+            tone="amber"
+            label="Bonuses"
+            value={Object.keys(activeBonuses).length}
+            hint="Active pet perks"
+            icon="✨"
+          />
+          <MetricTile
+            tone="sky"
+            label="Supplies"
+            value={Object.values(petSupplies).reduce((sum, value) => sum + value, 0)}
+            hint="Combined stock"
+            icon="🛍️"
+          />
         </div>
-      </Card>
+      </TabHero>
 
       {/* Active Bonuses Summary */}
       {hasBonuses && (
-        <Card className="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-amber-100">
+        <Card className="p-4 bg-slate-50/80 border border-amber-100">
           <h3 className="font-semibold mb-2 text-amber-800">⚡ Active Pet Bonuses</h3>
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(activeBonuses).map(([key, value]) => {
@@ -452,21 +477,12 @@ const PetsTab = memo(() => {
           </Card>
 
           {/* Pet Supplies */}
-          <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <Card className="p-4 bg-slate-50/80">
             <h3 className="font-semibold mb-3 text-blue-800">🛍️ Pet Supplies</h3>
             <div className="grid grid-cols-3 gap-3 mb-4 text-sm">
-              <div className="text-center p-2 bg-white rounded">
-                <div className="font-medium">🍖 Food</div>
-                <div className="text-lg font-bold text-blue-600">{petSupplies.pet_food}</div>
-              </div>
-              <div className="text-center p-2 bg-white rounded">
-                <div className="font-medium">❤️ Attention</div>
-                <div className="text-lg font-bold text-blue-600">{petSupplies.attention}</div>
-              </div>
-              <div className="text-center p-2 bg-white rounded">
-                <div className="font-medium">🏥 Vet Care</div>
-                <div className="text-lg font-bold text-blue-600">{petSupplies.vet_care}</div>
-              </div>
+              <MetricTile tone="amber" label="Food" value={petSupplies.pet_food} hint="Feed the pack" icon="🍖" />
+              <MetricTile tone="rose" label="Attention" value={petSupplies.attention} hint="Play sessions" icon="❤️" />
+              <MetricTile tone="sky" label="Vet Care" value={petSupplies.vet_care} hint="Health visits" icon="🏥" />
             </div>
             <div className="flex gap-2">
               <Button
@@ -494,7 +510,7 @@ const PetsTab = memo(() => {
           </Card>
 
           {/* Adopt More Pets */}
-          <Card className="p-4 bg-gradient-to-r from-purple-50 to-pink-50">
+          <Card className="p-4 bg-slate-50/80">
             <h3 className="font-semibold mb-3 text-purple-800">➕ Adopt More Pets</h3>
             <div className="grid grid-cols-1 gap-2">
               {Object.entries(PET_TYPES).map(([petType, pet]) => (

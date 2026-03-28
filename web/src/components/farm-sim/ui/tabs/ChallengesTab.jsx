@@ -13,6 +13,7 @@ import {
   getResetCountdownLabel,
 } from '../../../../utils/challengesBoard';
 import { logDebugAction } from '../../../../utils/debugTools';
+import { TabHero, MetricTile } from './TabSurface';
 
 const REFRESH_COST = 90;
 const WEEKLY_MILESTONES = [
@@ -214,33 +215,45 @@ const ChallengesTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      <Card className="p-4 bg-gradient-to-r from-orange-50 to-amber-50">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div>
-            <h3 className="text-lg font-semibold text-orange-800">🎯 Daily Operations</h3>
-            <p className="text-sm text-orange-700">Rotating goals that reward planning, growth, and consistency.</p>
-          </div>
-          <Badge variant="outline" className="bg-white text-orange-700">
+      <TabHero
+        icon="🎯"
+        tone="amber"
+        title="Daily Operations"
+        description="Rotating goals that reward planning, growth, and consistency."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
             🔥 Streak: {state.challengeStreak || 0}
           </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="amber"
+            label="Resets In"
+            value={getResetCountdownLabel(state.lastChallengeReset || Date.now())}
+            hint="Daily board refresh"
+            icon="⏱️"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Reward Boost"
+            value={`+${Math.round((streakMultiplier - 1) * 100)}%`}
+            hint="Streak multiplier"
+            icon="🔥"
+          />
+          <div className="flex items-center justify-center">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={!canRefresh}
+              className="min-h-[44px] w-full sm:w-auto"
+            >
+              Refresh ({REFRESH_COST}🪙)
+            </Button>
+          </div>
         </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
-          <span>Resets in: {getResetCountdownLabel(state.lastChallengeReset || Date.now())}</span>
-          <span className="font-medium text-orange-700">
-            Reward Boost: +{Math.round((streakMultiplier - 1) * 100)}%
-          </span>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={!canRefresh}
-            className="min-h-[38px]"
-          >
-            Refresh ({REFRESH_COST}🪙)
-          </Button>
-        </div>
-      </Card>
+      </TabHero>
 
       {challengesWithProgress.length === 0 ? (
         <Card className="p-6 text-center">

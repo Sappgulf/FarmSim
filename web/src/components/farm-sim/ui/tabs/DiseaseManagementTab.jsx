@@ -6,6 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { AlertTriangle, Shield, Droplet, Bug } from 'lucide-react';
 import { DISEASE_TYPES, CURE_ITEMS } from '../../constants/diseaseData';
+import { TabHero, MetricTile } from './TabSurface';
 
 /**
  * Disease Management Tab - Handle crop diseases and pests
@@ -144,33 +145,48 @@ const DiseaseManagementTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <Card className="p-4 bg-gradient-to-r from-red-50 to-orange-50">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-lg font-semibold text-red-800 flex items-center gap-2">
-              <Bug className="w-5 h-5" />
-              🐛 Disease Management
-            </h3>
-            <p className="text-sm text-red-600 mt-1">Protect your crops from diseases and pests!</p>
-            <p className="text-xs text-red-500 mt-1">Infection checks are now randomized and less frequent for smoother pacing.</p>
-          </div>
-          <div className="text-right">
-            <div className={`text-3xl font-bold ${getHealthColor(diseaseStats.healthPercent)}`}>
-              {Math.round(diseaseStats.healthPercent)}%
-            </div>
-            <div className="text-xs text-gray-600">Farm Health</div>
-          </div>
+      <TabHero
+        icon={<Bug className="w-5 h-5" />}
+        tone="rose"
+        title="Disease Management"
+        description="Protect crops from infections, cure outbreaks, and keep the farm healthy."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-rose-700 border-rose-200">
+            {Math.round(diseaseStats.healthPercent)}% healthy
+          </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="emerald"
+            label="Healthy"
+            value={diseaseStats.healthyPlots}
+            hint="Plots in good shape"
+            icon="🌱"
+          />
+          <MetricTile
+            tone="rose"
+            label="Diseased"
+            value={diseaseStats.totalDiseased}
+            hint="Active infections"
+            icon="🦠"
+          />
+          <MetricTile
+            tone="amber"
+            label="Health"
+            value={`${Math.round(diseaseStats.healthPercent)}%`}
+            hint="Farm-wide condition"
+            icon="🛡️"
+          />
         </div>
-
         <div className="mt-3">
           <Progress value={diseaseStats.healthPercent} className="h-2" />
-          <div className="flex justify-between text-xs text-gray-600 mt-1">
+          <div className="mt-1 flex justify-between text-xs text-gray-600">
             <span>🌱 Healthy: {diseaseStats.healthyPlots}</span>
             <span>🦠 Diseased: {diseaseStats.totalDiseased}</span>
           </div>
         </div>
-      </Card>
+      </TabHero>
 
       {/* Active Diseases Alert / Healthy Farm State */}
       {diseaseStats.totalDiseased === 0 ? (
@@ -228,7 +244,7 @@ const DiseaseManagementTab = memo(() => {
       )}
 
       {/* Cure Items Shop */}
-      <Card className="p-4">
+      <Card className="p-4 bg-slate-50/80">
         <h4 className="font-semibold mb-3 flex items-center gap-2">
           <Droplet className="w-4 h-4" />
           Treatment Shop

@@ -4,6 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { getContentManager } from '../../../../content/ContentManager';
+import { TabHero, MetricTile } from './TabSurface';
 
 const toBuildingDefs = (items = []) => (
   items.map((item) => {
@@ -121,19 +122,41 @@ const BuildingsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Farm Overview */}
-      <Card className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-amber-800">Farm Buildings</h3>
-            <p className="text-sm text-amber-600">Construct and upgrade buildings</p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-green-600">{builtCount}/{BUILDING_DEFS.length}</div>
-            <div className="text-xs text-gray-600">Constructed</div>
-          </div>
+      <TabHero
+        icon="🏗️"
+        tone="amber"
+        title="Farm Buildings"
+        description="Construct, upgrade, and stack synergies across your farm."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
+            {builtCount}/{BUILDING_DEFS.length} built
+          </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="amber"
+            label="Constructed"
+            value={`${builtCount}/${BUILDING_DEFS.length}`}
+            hint="Finished structures"
+            icon="🏠"
+          />
+          <MetricTile
+            tone="sky"
+            label="Player Level"
+            value={state.level}
+            hint="Unlocks more builds"
+            icon="⭐"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Synergies"
+            value={activeSynergies.length}
+            hint="Passive bonuses live"
+            icon="✨"
+          />
         </div>
-      </Card>
+      </TabHero>
 
       {/* Active Synergies */}
       {activeSynergies.length > 0 && (
@@ -152,7 +175,7 @@ const BuildingsTab = memo(() => {
       )}
 
       {/* Available Buildings */}
-      <Card className="p-4">
+      <Card className="p-4 bg-slate-50/80">
         <h4 className="font-semibold mb-3">Available Buildings</h4>
         <div className="space-y-3">
           {BUILDING_DEFS.map((building) => {

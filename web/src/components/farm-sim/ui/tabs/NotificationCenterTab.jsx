@@ -5,6 +5,7 @@ import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Button } from '../../../ui/button';
 import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { TabHero, MetricTile } from './TabSurface';
 
 const FILTERS = ['all', 'success', 'info', 'warning', 'error'];
 
@@ -68,41 +69,63 @@ const NotificationCenterTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      <Card className="p-4 bg-gradient-to-r from-indigo-50 to-sky-50">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div>
-            <h3 className="text-lg font-semibold text-indigo-900">🔔 Notification Center</h3>
-            <p className="text-sm text-indigo-700">Recent updates and alerts from your farm</p>
-          </div>
-          <Badge variant="outline" className="bg-white">
+      <TabHero
+        icon="🔔"
+        tone="sky"
+        title="Notification Center"
+        description="Recent updates, alerts, and the full event trail from your farm."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-sky-700 border-sky-200">
             {history.length} saved
           </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="sky"
+            label="Saved"
+            value={history.length}
+            hint="Stored notifications"
+            icon="🗂️"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Active"
+            value={activeNotifications.length}
+            hint="Currently visible"
+            icon="✨"
+          />
+          <div className="flex flex-col gap-2 rounded-2xl border border-white/70 bg-white/90 px-3 py-3 shadow-sm">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Actions</div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearActiveNotifications}
+                disabled={activeNotifications.length === 0}
+                className="min-h-[44px]"
+              >
+                Clear Active ({activeNotifications.length})
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => actions.clearNotificationHistory()}
+                disabled={history.length === 0}
+                className="min-h-[44px]"
+              >
+                Clear History
+              </Button>
+            </div>
+          </div>
         </div>
+      </TabHero>
 
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={clearActiveNotifications}
-            disabled={activeNotifications.length === 0}
-            className="min-h-[44px]"
-          >
-            Clear Active ({activeNotifications.length})
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => actions.clearNotificationHistory()}
-            disabled={history.length === 0}
-            className="min-h-[44px]"
-          >
-            Clear History
-          </Button>
+      <Card className="p-4 bg-slate-50/80">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h4 className="font-semibold">Filters</h4>
+          <span className="text-xs text-gray-500">{filteredHistory.length} shown</span>
         </div>
-      </Card>
-
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">Filters</h4>
         <div className="flex flex-wrap gap-2">
           {FILTERS.map((filter) => (
             <Button

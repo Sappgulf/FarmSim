@@ -6,6 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { LIVESTOCK_TYPES } from '../../systems/LivestockSystem';
 import { isDevelopmentMode } from '../../../../config/release';
+import { TabHero, MetricTile } from './TabSurface';
 
 const LivestockTab = memo(() => {
   const { state, actions, systems } = useGame();
@@ -161,43 +162,56 @@ const LivestockTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Header Stats */}
-      <Card className="p-4 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 shadow-md hover:shadow-lg transition-all">
-        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-amber-800">
-          🐄 Livestock Management
-          <Badge variant="outline" className="ml-auto text-xs">
-            {stats.totalAnimals} Animals
+      <TabHero
+        icon="🐄"
+        tone="amber"
+        title="Livestock Management"
+        description="Raise animals, manage capacity, and keep production moving."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
+            {stats.totalAnimals} animals
           </Badge>
-        </h3>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-amber-700">{stats.totalAnimals}/{stats.capacity}</div>
-            <div className="text-xs text-gray-600">Animals</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{Math.floor(stats.avgHealth)}%</div>
-            <div className="text-xs text-gray-600">Avg Health</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{Math.floor(stats.avgHappiness)}%</div>
-            <div className="text-xs text-gray-600">Avg Happiness</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">{stats.readyProducts}</div>
-            <div className="text-xs text-gray-600">Ready to Collect</div>
-          </div>
+        )}
+      >
+        <div className="grid gap-3 md:grid-cols-4">
+          <MetricTile
+            tone="amber"
+            label="Animals"
+            value={`${stats.totalAnimals}/${stats.capacity}`}
+            hint="Current barn occupancy"
+            icon="🐄"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Avg Health"
+            value={`${Math.floor(stats.avgHealth)}%`}
+            hint="Herd condition"
+            icon="💚"
+          />
+          <MetricTile
+            tone="sky"
+            label="Avg Happiness"
+            value={`${Math.floor(stats.avgHappiness)}%`}
+            hint="Animal mood"
+            icon="😊"
+          />
+          <MetricTile
+            tone="violet"
+            label="Ready"
+            value={stats.readyProducts}
+            hint="Products ready to collect"
+            icon="🥛"
+          />
         </div>
-
         {stats.dailyCost > 0 && (
           <div className="mt-3 text-center text-sm text-gray-600">
             Daily Maintenance: ${stats.dailyCost}
           </div>
         )}
-      </Card>
+      </TabHero>
 
       {/* Barn Upgrade */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 shadow-md hover:shadow-lg transition-all">
+      <Card className="p-4 bg-slate-50/80 shadow-sm hover:shadow-md transition-all">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="text-4xl">🏚️</div>
@@ -231,7 +245,7 @@ const LivestockTab = memo(() => {
       </Card>
 
       {/* Buy Animals */}
-      <Card className="p-4 shadow-md">
+      <Card className="p-4 bg-white/90 shadow-sm">
         <h4 className="font-bold mb-4 flex items-center gap-2 text-lg">
           🛒 Buy Animals
           <span className="text-xs text-gray-500 font-normal ml-2">Click to purchase</span>

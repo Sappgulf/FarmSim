@@ -7,6 +7,7 @@ import { Progress } from '../../../ui/progress';
 import { Target, Gift, Flame, Calendar, Trophy } from 'lucide-react';
 import { generateDailyQuests, shouldResetDaily, getStreakBonus } from '../../systems/QuestSystem';
 import { logDebugAction } from '../../../../utils/debugTools';
+import { TabHero, MetricTile } from './TabSurface';
 
 /**
  * Daily Quests Tab - Provides daily goals and rewards
@@ -102,36 +103,41 @@ const DailyQuestsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <Card className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-lg font-semibold text-indigo-800 flex items-center gap-2">
-              <Target className="w-5 h-5" />
-              📋 Daily Quests
-            </h3>
-            <p className="text-sm text-indigo-600 mt-1">Complete daily goals for rewards!</p>
-          </div>
-          <div className="text-right">
-            <div className="flex items-center gap-1 text-orange-600 mb-1">
-              <Flame className="w-4 h-4" />
-              <span className="text-xl font-bold">{streak}</span>
-            </div>
-            <div className="text-xs text-gray-600">Day Streak</div>
-          </div>
+      <TabHero
+        icon={<Target className="w-5 h-5" />}
+        tone="violet"
+        title="Daily Quests"
+        description="Complete today’s goals, keep the streak alive, and bank the bonus."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-violet-700 border-violet-200">
+            {quests.length} queued
+          </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="amber"
+            label="Day Streak"
+            value={streak}
+            hint="Consecutive completions"
+            icon={<Flame className="w-4 h-4" />}
+          />
+          <MetricTile
+            tone="violet"
+            label="Resets In"
+            value={getTimeUntilReset()}
+            hint="Daily quest refresh"
+            icon={<Calendar className="w-4 h-4" />}
+          />
+          <MetricTile
+            tone="emerald"
+            label="Total Complete"
+            value={totalCompleted}
+            hint="All-time claims"
+            icon={<Trophy className="w-4 h-4" />}
+          />
         </div>
-        
-        <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
-          <div className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            <span>Resets in: {getTimeUntilReset()}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Trophy className="w-3 h-3" />
-            <span>{totalCompleted} total completed</span>
-          </div>
-        </div>
-      </Card>
+      </TabHero>
 
       {/* Streak Bonus Info */}
       {streakBonus > 1 && (
@@ -166,8 +172,7 @@ const DailyQuestsTab = memo(() => {
         </Card>
       )}
 
-      {/* Quest List */}
-      <Card className="p-4">
+      <Card className="p-4 bg-slate-50/80">
         <h4 className="font-semibold mb-3 flex items-center gap-2">
           <Gift className="w-4 h-4" />
           Today's Quests

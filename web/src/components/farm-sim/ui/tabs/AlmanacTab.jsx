@@ -11,6 +11,7 @@ import { FARM_THEMES, getFarmTheme } from '../../../../data/farmThemes';
 import { buildFarmCardData, getSpotlightSelection } from '../../../../utils/farmCard';
 import { CROP_TRAITS, FARM_TITLES } from '../../../../data/cozyExpansion';
 import FarmCardShareButton from '../FarmCardShareButton';
+import { TabHero, MetricTile } from './TabSurface';
 
 const AlmanacTab = memo(() => {
   const { state, actions } = useGame();
@@ -59,21 +60,43 @@ const AlmanacTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      <Card className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-emerald-800">📖 Farm Almanac</h3>
-            <p className="text-sm text-emerald-700">
-              A living journal of what your farm has learned.
-            </p>
-          </div>
-          <Badge variant="outline" className="bg-emerald-100 text-emerald-700">
+      <TabHero
+        icon="📖"
+        tone="emerald"
+        title="Farm Almanac"
+        description="A living journal of what your farm has learned."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-emerald-700 border-emerald-200">
             {totalUnlocked}/{ALMANAC_PAGES.length} pages
           </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="emerald"
+            label="Unlocked"
+            value={`${totalUnlocked}/${ALMANAC_PAGES.length}`}
+            hint="Pages discovered so far"
+            icon="📖"
+          />
+          <MetricTile
+            tone="amber"
+            label="Theme"
+            value={activeTheme.name}
+            hint={activeTheme.description}
+            icon="🎨"
+          />
+          <MetricTile
+            tone="violet"
+            label="Philosophy"
+            value={state.philosophy ? PHILOSOPHIES.find((p) => p.id === state.philosophy)?.name || 'Chosen' : 'Unset'}
+            hint="Guides the almanac voice"
+            icon="🧭"
+          />
         </div>
-      </Card>
+      </TabHero>
 
-      <Card className="p-4">
+      <Card className="p-4 bg-slate-50/80">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h4 className="font-semibold text-gray-800">Farm Title</h4>
@@ -93,7 +116,7 @@ const AlmanacTab = memo(() => {
         </div>
       </Card>
 
-      <Card className="p-4">
+      <Card className="p-4 bg-slate-50/80">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h4 className="font-semibold text-gray-800">Farm Philosophy</h4>
@@ -119,7 +142,7 @@ const AlmanacTab = memo(() => {
         </div>
       </Card>
 
-      <Card className="p-4 theme-card-surface border theme-accent-border">
+      <Card className="p-4 theme-card-surface border theme-accent-border shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h4 className="font-semibold">Farm Identity</h4>
@@ -162,7 +185,7 @@ const AlmanacTab = memo(() => {
         </div>
       </Card>
 
-      <Card className="p-4">
+      <Card className="p-4 bg-slate-50/80">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h4 className="font-semibold text-gray-800">Farm Card Spotlight</h4>
@@ -213,7 +236,7 @@ const AlmanacTab = memo(() => {
         </div>
       </Card>
 
-      <Card className="p-4">
+      <Card className="p-4 bg-slate-50/80">
         <h4 className="font-semibold text-gray-800">Crop Trait Discoveries</h4>
         <p className="text-sm text-gray-600">Discovered passively on harvest. Cosmetic only.</p>
         <div className="mt-3 grid grid-cols-1 gap-2">

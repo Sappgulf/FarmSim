@@ -6,6 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Sparkles, Gift, TrendingUp } from 'lucide-react';
 import { MYSTERY_SEED_PACKS, rollMysterySeed, rollMysterySeedWithGuarantee, getRarityColor } from '../../constants/mysterySeedData';
 import { CROP_DATA } from '../../constants/cropData';
+import { TabHero, MetricTile } from './TabSurface';
 
 /**
  * Mystery Shop Tab - Gambling mechanics with mystery seed packs
@@ -15,6 +16,7 @@ const MysteryShopTab = memo(() => {
   const [lastReveals, setLastReveals] = useState([]);
   const [isRevealing, setIsRevealing] = useState(false);
   const [revealAnimation, setRevealAnimation] = useState(null);
+  const guaranteedPackCount = Object.values(MYSTERY_SEED_PACKS).filter((pack) => pack.guaranteedRarity).length;
 
   const handleBuyPack = (pack) => {
     if (state.coins < pack.cost) {
@@ -89,22 +91,41 @@ const MysteryShopTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <Card className="p-4 bg-gradient-to-r from-purple-50 to-pink-50">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-purple-800 flex items-center gap-2">
-              <Sparkles className="w-5 h-5" />
-              🎰 Mystery Seed Shop
-            </h3>
-            <p className="text-sm text-purple-600 mt-1">Test your luck! Rare seeds await...</p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-purple-600">{lastReveals.length}</div>
-            <div className="text-xs text-gray-600">Seeds Revealed</div>
-          </div>
+      <TabHero
+        icon={<Sparkles className="w-5 h-5" />}
+        tone="violet"
+        title="Mystery Seed Shop"
+        description="Open packs, chase rarities, and let the reveal animation do the work."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-violet-700 border-violet-200">
+            {lastReveals.length} revealed
+          </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="violet"
+            label="Revealed"
+            value={lastReveals.length}
+            hint="Recent opens"
+            icon="📦"
+          />
+          <MetricTile
+            tone="amber"
+            label="Balance"
+            value={`${state.coins}🪙`}
+            hint="Current buying power"
+            icon="💰"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Guaranteed Packs"
+            value={guaranteedPackCount}
+            hint="Minimum rarity options"
+            icon="✨"
+          />
         </div>
-      </Card>
+      </TabHero>
 
       {/* Reveal Animation */}
       {isRevealing && revealAnimation && (
@@ -118,7 +139,7 @@ const MysteryShopTab = memo(() => {
       )}
 
       {/* Mystery Packs */}
-      <Card className="p-4">
+      <Card className="p-4 bg-slate-50/80">
         <h4 className="font-semibold mb-3 flex items-center gap-2">
           <Gift className="w-4 h-4" />
           🎁 Available Packs
@@ -127,7 +148,7 @@ const MysteryShopTab = memo(() => {
           {Object.values(MYSTERY_SEED_PACKS).map((pack) => (
             <Card
               key={pack.id}
-              className="p-4 border-2 hover:shadow-lg transition-all"
+              className="p-4 border-2 bg-white/90 shadow-sm hover:shadow-lg transition-all"
               style={{
                 borderColor: pack.guaranteedRarity ? getRarityColor(pack.guaranteedRarity) : '#9ca3af',
               }}
@@ -172,7 +193,7 @@ const MysteryShopTab = memo(() => {
       </Card>
 
       {/* Drop Rate Information */}
-      <Card className="p-4 bg-gray-50">
+      <Card className="p-4 bg-slate-50/80">
         <h4 className="font-semibold mb-3">📊 Drop Rates</h4>
         <div className="space-y-2">
           <div className="flex justify-between items-center">

@@ -6,6 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { getContentManager } from '../../../../content/ContentManager';
+import { TabHero, MetricTile } from './TabSurface';
 
 // Mapping for unlock IDs to user-friendly names
 const UNLOCK_NAMES = {
@@ -199,20 +200,41 @@ const ResearchTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Research Lab Status */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-blue-800">🔬 Research Laboratory</h3>
-            <p className="text-sm text-blue-700">
-              Completed: {state.research?.completed?.length || 0}/{Object.keys(RESEARCH_PROJECTS).length}
-            </p>
-          </div>
-          <Badge variant="outline" className="bg-blue-100 text-blue-700">
+      <TabHero
+        icon="🔬"
+        tone="sky"
+        title="Research Laboratory"
+        description="Track projects, unlock upgrades, and keep the lab moving."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-sky-700 border-sky-200">
             {activeResearch ? '🔄 Researching' : '⏸️ Idle'}
           </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="sky"
+            label="Completed"
+            value={`${state.research?.completed?.length || 0}/${Object.keys(RESEARCH_PROJECTS).length}`}
+            hint="Finished projects"
+            icon="✓"
+          />
+          <MetricTile
+            tone="violet"
+            label="Active"
+            value={activeResearch ? RESEARCH_PROJECTS[activeResearch]?.name || 'Working' : 'Idle'}
+            hint={activeResearch ? 'Current project' : 'No project running'}
+            icon="⚙️"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Remaining"
+            value={Object.keys(RESEARCH_PROJECTS).length - (state.research?.completed?.length || 0)}
+            hint="Ready to discover"
+            icon="📚"
+          />
         </div>
-      </Card>
+      </TabHero>
 
       {/* Active Research */}
       {activeResearch && (
@@ -304,24 +326,23 @@ const ResearchTab = memo(() => {
         </div>
       </Card>
 
-      {/* Research Statistics */}
-      <Card className="p-4 bg-gray-50">
-        <h4 className="font-semibold mb-3">📊 Research Statistics</h4>
-
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="text-center p-2 bg-white rounded">
-            <div className="font-bold text-blue-600">
-              {state.research?.completed?.length || 0}
-            </div>
-            <div className="text-blue-700">Projects Completed</div>
-          </div>
-
-          <div className="text-center p-2 bg-white rounded">
-            <div className="font-bold text-green-600">
-              {Object.keys(RESEARCH_PROJECTS).length - (state.research?.completed?.length || 0)}
-            </div>
-            <div className="text-green-700">Projects Remaining</div>
-          </div>
+      <Card className="p-4 bg-slate-50/80">
+        <h4 className="font-semibold mb-3">Research Snapshot</h4>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <MetricTile
+            tone="sky"
+            label="Projects Completed"
+            value={state.research?.completed?.length || 0}
+            hint="Unlocked by progress"
+            icon="✓"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Projects Remaining"
+            value={Object.keys(RESEARCH_PROJECTS).length - (state.research?.completed?.length || 0)}
+            hint="Still waiting in the queue"
+            icon="📚"
+          />
         </div>
       </Card>
     </div>

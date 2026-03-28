@@ -5,10 +5,11 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '../../../ui/tabs';
 import { ScrapbookPanel } from '../../../panels/ScrapbookPanel';
 import { MEMORIES, MEMORY_CHAPTERS } from '../../../../data/identity';
 import { ALMANAC_MEMORY_LINKS } from '../../../../data/almanac';
+import { TabHero, MetricTile } from './TabSurface';
 
 // Achievement data from original system
 const ACHIEVEMENTS = [
@@ -202,30 +203,51 @@ const AchievementsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Achievement Overview */}
-      <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-orange-800">🏆 Achievements</h3>
-            <p className="text-sm text-orange-700">
-              {achievementStats.unlocked}/{achievementStats.total} Unlocked ({achievementStats.completionRate}%)
-            </p>
-          </div>
-          <Badge variant="outline" className="bg-orange-100 text-orange-700">
+      <TabHero
+        icon="🏆"
+        tone="amber"
+        title="Achievements"
+        description="Track milestones, unlock rewards, and feed the scrapbook."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
             {achievementStats.unlocked} / {achievementStats.total}
           </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="amber"
+            label="Unlocked"
+            value={`${achievementStats.unlocked}/${achievementStats.total}`}
+            hint="Claimed achievements"
+            icon="✓"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Completion"
+            value={`${achievementStats.completionRate}%`}
+            hint="Overall progress"
+            icon="📈"
+          />
+          <MetricTile
+            tone="violet"
+            label="Categories"
+            value={Object.keys(achievementStats.categories).length}
+            hint="Achievement families"
+            icon="🗂️"
+          />
         </div>
-      </Card>
+      </TabHero>
 
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 gap-1 p-1 h-auto">
+        <TabsList className="grid w-full grid-cols-4 gap-1 rounded-2xl bg-slate-50/80 p-1.5 h-auto">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="farming">🌾 Farming</TabsTrigger>
           <TabsTrigger value="economy">💰 Economy</TabsTrigger>
           <TabsTrigger value="progression">📈 Progression</TabsTrigger>
         </TabsList>
 
-        <TabsList className="grid w-full grid-cols-4 gap-1 p-1 h-auto">
+        <TabsList className="grid w-full grid-cols-4 gap-1 rounded-2xl bg-slate-50/80 p-1.5 h-auto">
           <TabsTrigger value="environment">🌱 Environment</TabsTrigger>
           <TabsTrigger value="challenge">🎯 Challenge</TabsTrigger>
           <TabsTrigger value="social">👥 Social</TabsTrigger>
@@ -294,22 +316,22 @@ const AchievementsTab = memo(() => {
       </Tabs>
 
       {/* Achievement Statistics */}
-      <Card className="p-4 bg-gray-50">
+      <Card className="p-4 bg-slate-50/80">
         <h4 className="font-semibold mb-3">📊 Achievement Statistics</h4>
 
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
           {Object.entries(achievementStats.categories).map(([category, total]) => {
             const unlocked = ACHIEVEMENTS.filter(a => a.category === category && state.achievements.find(ua => ua.id === a.id)?.unlocked).length;
 
             return (
-              <div key={category} className="text-center p-2 bg-white rounded">
-                <div className="font-bold text-blue-600">
-                  {unlocked}/{total}
-                </div>
-                <div className="text-blue-700">
-                  {getCategoryIcon(category)} {getCategoryName(category)}
-                </div>
-              </div>
+              <MetricTile
+                key={category}
+                tone="sky"
+                label={getCategoryName(category)}
+                value={`${unlocked}/${total}`}
+                hint={`${getCategoryIcon(category)} category progress`}
+                icon={getCategoryIcon(category)}
+              />
             );
           })}
         </div>
@@ -326,7 +348,7 @@ const AchievementsTab = memo(() => {
 
       {/* Recent Achievements */}
       {state.achievements.filter(a => a.unlocked).length > 0 && (
-        <Card className="p-4">
+        <Card className="p-4 bg-white/90">
           <h4 className="font-semibold mb-3">🎉 Recent Achievements</h4>
 
           <div className="space-y-2">

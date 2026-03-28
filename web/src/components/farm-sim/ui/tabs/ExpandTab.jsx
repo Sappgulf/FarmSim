@@ -3,6 +3,7 @@ import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
+import { TabHero, MetricTile } from './TabSurface';
 
 const EXPANSION_COSTS = { 3: 60, 4: 180 };
 const MAX_SIZE = 5;
@@ -56,42 +57,50 @@ const ExpandTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Current Farm Status */}
-      <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-green-800">Farm Expansion</h3>
-            <p className="text-sm text-green-700">Grow your farm and specialize plots</p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-green-600">
-              {state.gridSize}x{state.gridSize}
-            </div>
-            <div className="text-xs text-gray-600">{currentPlots} Plots</div>
-          </div>
+      <TabHero
+        icon="🗺️"
+        tone="emerald"
+        title="Farm Expansion"
+        description="Grow the grid, unlock zones, and shape how each plot behaves."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-emerald-700 border-emerald-200">
+            {state.gridSize}x{state.gridSize}
+          </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="emerald"
+            label="Current Plots"
+            value={currentPlots}
+            hint="Live buildable spaces"
+            icon="◫"
+          />
+          <MetricTile
+            tone="sky"
+            label="Next Size"
+            value={state.gridSize < MAX_SIZE ? `${state.gridSize + 1}x${state.gridSize + 1}` : 'Max'}
+            hint={state.gridSize < MAX_SIZE ? `${nextPlots - currentPlots} more plots` : 'Fully expanded'}
+            icon="➜"
+          />
+          <MetricTile
+            tone="amber"
+            label="Milestones"
+            value={completedMilestones.length}
+            hint="Expansion goals complete"
+            icon="🏆"
+          />
         </div>
-      </Card>
+      </TabHero>
 
       {/* Plot Usage Overview */}
-      <Card className="p-4">
+      <Card className="p-4 bg-slate-50/80">
         <h4 className="font-semibold mb-3">Plot Usage</h4>
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div className="p-2 bg-green-50 rounded-lg text-center">
-            <div className="text-lg font-bold text-green-700">{plotStats.planted}</div>
-            <div className="text-xs text-green-600">Growing</div>
-          </div>
-          <div className="p-2 bg-amber-50 rounded-lg text-center">
-            <div className="text-lg font-bold text-amber-700">{plotStats.ready}</div>
-            <div className="text-xs text-amber-600">Ready</div>
-          </div>
-          <div className="p-2 bg-rose-50 rounded-lg text-center">
-            <div className="text-lg font-bold text-rose-700">{plotStats.decor}</div>
-            <div className="text-xs text-rose-600">Decor</div>
-          </div>
-          <div className="p-2 bg-gray-50 rounded-lg text-center">
-            <div className="text-lg font-bold text-gray-700">{plotStats.empty}</div>
-            <div className="text-xs text-gray-600">Empty</div>
-          </div>
+        <div className="grid grid-cols-2 gap-3 mb-3 md:grid-cols-4">
+          <MetricTile tone="emerald" label="Growing" value={plotStats.planted} hint="In progress" icon="🌱" />
+          <MetricTile tone="amber" label="Ready" value={plotStats.ready} hint="Harvest now" icon="⏱️" />
+          <MetricTile tone="rose" label="Decor" value={plotStats.decor} hint="Style plots" icon="🪴" />
+          <MetricTile tone="slate" label="Empty" value={plotStats.empty} hint="Open slots" icon="◌" />
         </div>
         {/* Usage bar */}
         {plotStats.total > 0 && (
