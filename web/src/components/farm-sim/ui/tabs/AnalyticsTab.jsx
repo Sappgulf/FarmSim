@@ -1,17 +1,57 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useGame } from '../../context/GameContext';
+import { CROP_DATA } from '../../constants/cropData';
 import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
-import { Button } from '../../../ui/button';
-import { TrendingUp, TrendingDown, DollarSign, Zap, Target, Award, BarChart3, PieChart } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Zap, Award, BarChart3, PieChart } from 'lucide-react';
 
 /**
  * Farm Analytics Dashboard
  * Provides detailed statistics, insights, and performance metrics
  */
+const COLOR_CLASSES = {
+  blue:   { border: 'border-blue-500',   bg: 'bg-blue-100',   text: 'text-blue-600' },
+  green:  { border: 'border-green-500',  bg: 'bg-green-100',  text: 'text-green-600' },
+  yellow: { border: 'border-yellow-500', bg: 'bg-yellow-100', text: 'text-yellow-600' },
+  purple: { border: 'border-purple-500', bg: 'bg-purple-100', text: 'text-purple-600' },
+  red:    { border: 'border-red-500',    bg: 'bg-red-100',    text: 'text-red-600' },
+};
+
+const StatCard = memo(({ icon: Icon, label, value, change, trend, color = 'blue' }) => {
+  const cls = COLOR_CLASSES[color] || COLOR_CLASSES.blue;
+  return (
+    <Card className={`p-4 border-l-4 ${cls.border}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`p-2 ${cls.bg} rounded-lg`}>
+            <Icon className={`w-5 h-5 ${cls.text}`} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">{label}</p>
+            <p className="text-2xl font-bold text-gray-900 tabular-nums">{value}</p>
+            {change !== undefined && (
+              <div className="flex items-center gap-1 mt-1">
+                {trend === 'up' ? (
+                  <TrendingUp className="w-3 h-3 text-green-600" />
+                ) : (
+                  <TrendingDown className="w-3 h-3 text-red-600" />
+                )}
+                <span className={`text-xs ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                  {change}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+});
+
+StatCard.displayName = 'StatCard';
+
 const AnalyticsTab = memo(() => {
   const { state } = useGame();
-  const [timeRange, setTimeRange] = useState('session'); // session, today, week, allTime
 
   // Calculate comprehensive stats
   const analytics = useMemo(() => {
@@ -19,32 +59,59 @@ const AnalyticsTab = memo(() => {
     const readyPlots = (state.plots || []).filter(p => p.state === 'ready');
     const growingPlots = (state.plots || []).filter(p => p.state === 'growing' || p.state === 'planted');
     const witheredPlots = (state.plots || []).filter(p => p.state === 'withered');
-    
-    // Calculate total harvests and earnings
-    const totalHarvests = state.inventory ? Object.values(state.inventory).reduce((sum, count) => sum + count, 0) : 0;
-    const estimatedEarnings = totalHarvests * 15; // Rough estimate based on average crop value
-    
+
+    const cropInventoryEntries = Object.entries(state.inventory || {})
+      .filter(([itemId, quantity]) => CROP_DATA[itemId] && Number(quantity) > 0);
+    const processedInventoryEntries = Object.entries(state.processedInventory || {})
+      .filter(([, quantity]) => Number(quantity) > 0);
+
+    const processedProductValues = {
+      flour: 28,
+      apple_juice: 25,
+      sunflower_oil: 32,
+      preserved: 20,
+      bread: 45,
+      jam: 38,
+    };
+
+    const totalHarvests = Number(state.milestones?.progress?.totalHarvests || 0);
+    const daysPlayed = Number(
+      state.milestones?.progress?.daysPlayed
+      || state.almanac?.counters?.dayCount
+      || 0
+    );
+    const cropStockValue = cropInventoryEntries.reduce((sum, [cropId, quantity]) => {
+      const marketPrice = Number(state.inventory?.[`${cropId}_price`]);
+      const fallbackPrice = Number(CROP_DATA[cropId]?.sellPrice || 0);
+      const unitPrice = Number.isFinite(marketPrice) && marketPrice > 0 ? marketPrice : fallbackPrice;
+      return sum + (Math.max(0, Number(quantity) || 0) * unitPrice);
+    }, 0);
+    const processedStockValue = processedInventoryEntries.reduce((sum, [productId, quantity]) => (
+      sum + (Math.max(0, Number(quantity) || 0) * (processedProductValues[productId] || 0))
+    ), 0);
+    const totalStockValue = cropStockValue + processedStockValue;
+    const totalStockUnits = cropInventoryEntries.reduce(
+      (sum, [, quantity]) => sum + Math.max(0, Number(quantity) || 0),
+      0
+    ) + processedInventoryEntries.reduce(
+      (sum, [, quantity]) => sum + Math.max(0, Number(quantity) || 0),
+      0
+    );
+    const stockTypeCount = cropInventoryEntries.length + processedInventoryEntries.length;
+
     // Calculate efficiency metrics
     const plotUtilization = state.plots.length > 0 ? (activePlots.length / state.plots.length) * 100 : 0;
-    const harvestReadiness = readyPlots.length > 0 ? (readyPlots.length / activePlots.length) * 100 : 0;
+    const harvestReadiness = activePlots.length > 0 ? (readyPlots.length / activePlots.length) * 100 : 0;
     const healthRate = activePlots.length > 0 ? ((activePlots.length - witheredPlots.length) / activePlots.length) * 100 : 100;
-    
-    // Calculate ROI
-    const totalSpent = state.coins < 100 ? (100 - state.coins) : 0; // Coins spent from starting 100
-    const roi = totalSpent > 0 ? ((state.coins - 100) / totalSpent) * 100 : 0;
-    
+
     // Crop diversity
     const uniqueCrops = new Set(activePlots.map(p => p.crop?.id).filter(Boolean));
     const diversityScore = (uniqueCrops.size / 17) * 100; // Out of 17 total crops
-    
+
     // Building efficiency
     const buildingsOwned = Object.keys(state.buildings).filter(id => state.buildings[id]?.built).length;
     const buildingScore = (buildingsOwned / 6) * 100; // Out of 6 total buildings
-    
-    // XP per hour estimate (rough)
-    const sessionTime = (Date.now() - (state.gameLoop?.lastUpdate || Date.now())) / 1000 / 3600 || 0.1;
-    const xpPerHour = sessionTime > 0 ? state.xp / sessionTime : 0;
-    
+
     return {
       plots: {
         total: state.plots.length,
@@ -56,9 +123,11 @@ const AnalyticsTab = memo(() => {
       },
       performance: {
         totalHarvests,
-        estimatedEarnings,
-        roi,
-        xpPerHour: Math.round(xpPerHour),
+        daysPlayed,
+        totalStockUnits,
+        totalStockValue,
+        stockTypeCount,
+        queuedBatches: (state.processingQueue || []).length,
         harvestReadiness,
         healthRate,
       },
@@ -81,10 +150,27 @@ const AnalyticsTab = memo(() => {
   const topCrops = useMemo(() => {
     if (!state.inventory) return [];
     return Object.entries(state.inventory)
+      .filter(([cropId, count]) => CROP_DATA[cropId] && Number(count) > 0)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
-      .map(([cropId, count]) => ({ id: cropId, count }));
+      .map(([cropId, count]) => ({ id: cropId, count: Number(count) || 0 }));
   }, [state.inventory]);
+
+  const overallScore = useMemo(() => (
+    Math.round((
+      analytics.plots.utilization * 0.3 +
+      analytics.performance.healthRate * 0.3 +
+      analytics.efficiency.diversityScore * 0.2 +
+      analytics.efficiency.buildingScore * 0.2
+    ))
+  ), [analytics]);
+
+  const overallStatus = useMemo(() => {
+    if (overallScore >= 80) return 'Outstanding! 🎉';
+    if (overallScore >= 60) return 'Great Work! 👍';
+    if (overallScore >= 40) return 'Keep Going! 🌱';
+    return 'Room for Improvement 💪';
+  }, [overallScore]);
 
   // Insights and recommendations
   const insights = useMemo(() => {
@@ -110,8 +196,8 @@ const AnalyticsTab = memo(() => {
       tips.push({ type: 'success', message: '🏗️ You can afford a building! Water Well provides weather protection.', priority: 'high' });
     }
     
-    if (analytics.performance.roi > 200) {
-      tips.push({ type: 'success', message: '💰 Excellent ROI! You\'re managing your farm efficiently.', priority: 'low' });
+    if (analytics.performance.totalHarvests >= 50) {
+      tips.push({ type: 'success', message: '📦 Harvest volume is climbing. Keep the sell queue moving to avoid idle stock.', priority: 'low' });
     }
     
     if (state.weather === 'stormy' && !state.buildings?.greenhouse?.built) {
@@ -124,71 +210,44 @@ const AnalyticsTab = memo(() => {
     });
   }, [analytics, state]);
 
-  // Static color class mapping (dynamic Tailwind classes get purged in production)
-  const colorClasses = {
-    blue:   { border: 'border-blue-500',   bg: 'bg-blue-100',   text: 'text-blue-600' },
-    green:  { border: 'border-green-500',  bg: 'bg-green-100',  text: 'text-green-600' },
-    yellow: { border: 'border-yellow-500', bg: 'bg-yellow-100', text: 'text-yellow-600' },
-    purple: { border: 'border-purple-500', bg: 'bg-purple-100', text: 'text-purple-600' },
-    red:    { border: 'border-red-500',    bg: 'bg-red-100',    text: 'text-red-600' },
-  };
-
-  // Stat card component
-  const StatCard = ({ icon: Icon, label, value, change, trend, color = 'blue' }) => {
-    const cls = colorClasses[color] || colorClasses.blue;
-    return (
-    <Card className={`p-4 border-l-4 ${cls.border}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 ${cls.bg} rounded-lg`}>
-            <Icon className={`w-5 h-5 ${cls.text}`} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">{label}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-            {change !== undefined && (
-              <div className="flex items-center gap-1 mt-1">
-                {trend === 'up' ? (
-                  <TrendingUp className="w-3 h-3 text-green-600" />
-                ) : (
-                  <TrendingDown className="w-3 h-3 text-red-600" />
-                )}
-                <span className={`text-xs ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                  {change}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </Card>
-    );
-  };
-
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-blue-800 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              📊 Farm Analytics Dashboard
-            </h3>
-            <p className="text-sm text-blue-600 mt-1">Real-time performance metrics and insights</p>
+      <Card className="overflow-hidden border-slate-900/10 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 p-5 text-white shadow-2xl">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
+              <BarChart3 className="h-3.5 w-3.5" />
+              Analytics
+            </div>
+            <div>
+              <h3 className="text-2xl font-semibold tracking-tight text-white">
+                Farm performance dashboard
+              </h3>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/70">
+                Real-time metrics, stock value, and recommendations drawn directly from the live farm state.
+              </p>
+            </div>
           </div>
-          <div className="flex gap-2">
-            {['session', 'today', 'week', 'allTime'].map((range) => (
-              <Button
-                key={range}
-                size="sm"
-                variant={timeRange === range ? 'default' : 'outline'}
-                onClick={() => setTimeRange(range)}
-                className="text-xs"
-              >
-                {range === 'session' ? 'Session' : range === 'today' ? 'Today' : range === 'week' ? 'Week' : 'All Time'}
-              </Button>
-            ))}
+
+          <div className="grid gap-2 sm:grid-cols-2 lg:min-w-[280px] lg:grid-cols-1">
+            <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-white/60">Live snapshot</div>
+              <div className="mt-1 flex items-end justify-between gap-3">
+                <div>
+                  <div className="text-3xl font-bold tabular-nums text-white">{overallScore}</div>
+                  <div className="text-sm text-white/70">{overallStatus}</div>
+                </div>
+                <Badge variant="outline" className="border-white/20 bg-white/10 text-white">
+                  Current
+                </Badge>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-white/60">Snapshot note</div>
+              <p className="mt-1 text-sm leading-relaxed text-white/75">
+                Plot usage, stock health, diversity, and buildings are weighted into the overall score.
+              </p>
+            </div>
           </div>
         </div>
       </Card>
@@ -202,40 +261,37 @@ const AnalyticsTab = memo(() => {
           color="green"
         />
         <StatCard
-          icon={Zap}
-          label="XP Per Hour"
-          value={analytics.performance.xpPerHour}
+          icon={Award}
+          label="Harvested"
+          value={analytics.performance.totalHarvests.toLocaleString()}
           color="yellow"
         />
         <StatCard
-          icon={Target}
-          label="Plot Utilization"
-          value={`${Math.round(analytics.plots.utilization)}%`}
-          change={analytics.plots.utilization > 70 ? '+5%' : '-3%'}
-          trend={analytics.plots.utilization > 70 ? 'up' : 'down'}
+          icon={PieChart}
+          label="Stock Value"
+          value={`${analytics.performance.totalStockValue.toLocaleString()}🪙`}
           color="blue"
         />
         <StatCard
-          icon={Award}
-          label="Health Rate"
-          value={`${Math.round(analytics.performance.healthRate)}%`}
-          change={analytics.performance.healthRate > 90 ? '+2%' : '-8%'}
-          trend={analytics.performance.healthRate > 90 ? 'up' : 'down'}
+          icon={Zap}
+          label="Days Played"
+          value={analytics.performance.daysPlayed.toLocaleString()}
           color="purple"
         />
       </div>
 
       {/* Insights & Recommendations */}
       {insights.length > 0 && (
-        <Card className="p-4">
-          <h4 className="font-semibold mb-3 flex items-center gap-2">
-            💡 Insights & Recommendations
+        <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-rose-50/30 p-4">
+          <h4 className="mb-3 flex items-center gap-2 font-semibold text-slate-900">
+            <Award className="h-4 w-4 text-amber-600" />
+            Insights and recommendations
           </h4>
           <div className="space-y-2">
             {insights.map((insight, idx) => (
               <div
                 key={idx}
-                className={`p-3 rounded-lg border-l-4 ${
+                className={`rounded-2xl border p-3 shadow-sm ${
                   insight.type === 'success' ? 'bg-green-50 border-green-500' :
                   insight.type === 'warning' ? 'bg-yellow-50 border-yellow-500' :
                   insight.type === 'error' ? 'bg-red-50 border-red-500' :
@@ -252,10 +308,10 @@ const AnalyticsTab = memo(() => {
       {/* Detailed Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Plot Statistics */}
-        <Card className="p-4">
-          <h4 className="font-semibold mb-3 flex items-center gap-2">
+        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+          <h4 className="mb-3 flex items-center gap-2 font-semibold text-slate-900">
             <PieChart className="w-4 h-4" />
-            🌱 Plot Statistics
+            Plot statistics
           </h4>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
@@ -304,26 +360,34 @@ const AnalyticsTab = memo(() => {
         </Card>
 
         {/* Performance Metrics */}
-        <Card className="p-4">
-          <h4 className="font-semibold mb-3">📈 Performance Metrics</h4>
+        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+          <h4 className="mb-3 font-semibold text-slate-900">Performance metrics</h4>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Total Harvests</span>
               <span className="font-semibold">{analytics.performance.totalHarvests}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Estimated Earnings</span>
-              <span className="font-semibold">{analytics.performance.estimatedEarnings.toLocaleString()}🪙</span>
+              <span className="text-sm text-gray-600">Stored Item Types</span>
+              <span className="font-semibold">{analytics.performance.stockTypeCount}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">ROI</span>
-              <span className="font-semibold text-green-600">
-                {analytics.performance.roi > 0 ? '+' : ''}{Math.round(analytics.performance.roi)}%
-              </span>
+              <span className="text-sm text-gray-600">Stored Units</span>
+              <span className="font-semibold">{analytics.performance.totalStockUnits.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Stock Value</span>
+              <span className="font-semibold">{analytics.performance.totalStockValue.toLocaleString()}🪙</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Queued Batches</span>
+              <span className="font-semibold">{analytics.performance.queuedBatches}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Harvest Readiness</span>
-              <span className="font-semibold">{Math.round(analytics.performance.harvestReadiness)}%</span>
+              <span className={`font-semibold ${analytics.performance.harvestReadiness > 70 ? 'text-green-600' : 'text-yellow-600'}`}>
+                {Math.round(analytics.performance.harvestReadiness)}%
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Crop Health Rate</span>
@@ -335,17 +399,17 @@ const AnalyticsTab = memo(() => {
         </Card>
 
         {/* Top Performing Crops */}
-        <Card className="p-4">
-          <h4 className="font-semibold mb-3">🏆 Top Crops</h4>
+        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+          <h4 className="mb-3 font-semibold text-slate-900">Stored crops</h4>
           {topCrops.length > 0 ? (
             <div className="space-y-2">
               {topCrops.map((crop, idx) => (
-                <div key={crop.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div key={crop.id} className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-slate-50/80 p-2">
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-amber-600">{idx + 1}</Badge>
+                    <Badge className="bg-amber-600 text-white">{idx + 1}</Badge>
                     <span className="text-sm capitalize">{crop.id}</span>
                   </div>
-                  <span className="font-semibold">{crop.count} harvested</span>
+                  <span className="font-semibold">{crop.count} in stock</span>
                 </div>
               ))}
             </div>
@@ -355,8 +419,8 @@ const AnalyticsTab = memo(() => {
         </Card>
 
         {/* Efficiency Scores */}
-        <Card className="p-4">
-          <h4 className="font-semibold mb-3">⚡ Efficiency Scores</h4>
+        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+          <h4 className="mb-3 font-semibold text-slate-900">Efficiency scores</h4>
           <div className="space-y-3">
             <div>
               <div className="flex justify-between mb-1">
@@ -400,23 +464,11 @@ const AnalyticsTab = memo(() => {
       </div>
 
       {/* Overall Farm Score */}
-      <Card className="p-6 bg-gradient-to-r from-amber-50 to-orange-50">
+      <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-6">
         <div className="text-center">
-          <h4 className="text-lg font-semibold mb-2">🌟 Overall Farm Score</h4>
-          <div className="text-5xl font-bold text-amber-600 mb-2">
-            {Math.round((
-              analytics.plots.utilization * 0.3 +
-              analytics.performance.healthRate * 0.3 +
-              analytics.efficiency.diversityScore * 0.2 +
-              analytics.efficiency.buildingScore * 0.2
-            ))}
-          </div>
-          <p className="text-sm text-gray-600">
-            {Math.round((analytics.plots.utilization * 0.3 + analytics.performance.healthRate * 0.3 + analytics.efficiency.diversityScore * 0.2 + analytics.efficiency.buildingScore * 0.2)) >= 80 ? 'Outstanding! 🎉' :
-             Math.round((analytics.plots.utilization * 0.3 + analytics.performance.healthRate * 0.3 + analytics.efficiency.diversityScore * 0.2 + analytics.efficiency.buildingScore * 0.2)) >= 60 ? 'Great Work! 👍' :
-             Math.round((analytics.plots.utilization * 0.3 + analytics.performance.healthRate * 0.3 + analytics.efficiency.diversityScore * 0.2 + analytics.efficiency.buildingScore * 0.2)) >= 40 ? 'Keep Going! 🌱' :
-             'Room for Improvement 💪'}
-          </p>
+          <h4 className="mb-2 text-lg font-semibold text-slate-900">Overall farm score</h4>
+          <div className="text-5xl font-bold text-amber-600 mb-2 tabular-nums">{overallScore}</div>
+          <p className="text-sm text-gray-600">{overallStatus}</p>
           <div className="mt-4 text-xs text-gray-500">
             Based on: Plot Utilization (30%), Health Rate (30%), Diversity (20%), Buildings (20%)
           </div>
@@ -428,4 +480,3 @@ const AnalyticsTab = memo(() => {
 
 AnalyticsTab.displayName = 'AnalyticsTab';
 export default AnalyticsTab;
-

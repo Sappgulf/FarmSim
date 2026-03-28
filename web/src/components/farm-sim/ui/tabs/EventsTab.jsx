@@ -42,6 +42,7 @@ const WEEKLY_VISIT_TIERS = [
   { visits: 4, reward: { decorId: 'birdbath' }, label: 'Birdbath' },
   { visits: 6, reward: { decorId: 'stone_path' }, label: 'Stone Path' },
 ];
+const VALID_SEASONS = new Set(['spring', 'summer', 'autumn', 'winter']);
 
 const selectFestivalRuleSet = (rules = [], activeEvent, season) => {
   const list = Array.isArray(rules) ? rules : [];
@@ -68,6 +69,20 @@ const getPlayLimitLabel = (ruleSet, activeEvent) => {
   if (limit === 'festival_day') return '1 play per festival day';
   if (limit === 'festival') return '1 play per festival';
   return '1 play per day';
+};
+
+export const deriveActiveSeason = (state = {}) => {
+  const currentSeason = state?.season?.current;
+  if (typeof currentSeason === 'string' && VALID_SEASONS.has(currentSeason)) {
+    return currentSeason;
+  }
+
+  const lastSeenSeason = state?.retention?.lastSeenSeason;
+  if (typeof lastSeenSeason === 'string' && VALID_SEASONS.has(lastSeenSeason)) {
+    return lastSeenSeason;
+  }
+
+  return 'spring';
 };
 
 const EventsTab = memo(() => {
@@ -115,17 +130,8 @@ const EventsTab = memo(() => {
       eventTimersRef.current.clear();
     };
   }, []);
-  
-  // Get current season
-  const getCurrentSeason = () => {
-    const month = new Date().getMonth();
-    if (month >= 2 && month <= 4) return 'spring';
-    if (month >= 5 && month <= 7) return 'summer';
-    if (month >= 8 && month <= 10) return 'autumn';
-    return 'winter';
-  };
 
-  const currentSeason = getCurrentSeason();
+  const currentSeason = deriveActiveSeason(state);
   const seasonEvents = content.festivals.filter((event) =>
     event.season === currentSeason || event.seasonTags?.includes(currentSeason)
   );
@@ -422,14 +428,14 @@ const EventsTab = memo(() => {
   return (
     <div className="space-y-4">
       {newPackHighlights.length > 0 && (
-        <Card className="p-4 bg-gradient-to-r from-rose-50 to-amber-50 border-rose-200" data-qa="whats-new-card">
+        <Card className="overflow-hidden border-rose-200/70 bg-gradient-to-br from-white via-rose-50/30 to-amber-50/40 p-4" data-qa="whats-new-card">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-lg font-semibold text-rose-800">✨ {whatsNewTitle}</h3>
-              <p className="text-sm text-rose-700">Season packs just landed on the Town Board.</p>
+              <h3 className="text-lg font-semibold text-slate-900">{whatsNewTitle}</h3>
+              <p className="text-sm text-slate-600">Season packs just landed on the Town Board.</p>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <Badge variant="outline" className="bg-rose-100 text-rose-700">
+              <Badge variant="outline" className="bg-white/80 text-slate-600">
                 {newPackHighlights.length} Pack{newPackHighlights.length > 1 ? 's' : ''}
               </Badge>
               <Button
@@ -442,7 +448,7 @@ const EventsTab = memo(() => {
               </Button>
             </div>
           </div>
-          <div className="mt-3 space-y-3 text-sm text-gray-700">
+          <div className="mt-3 space-y-3 text-sm text-slate-700">
             {newPackHighlights.map((highlight, index) => (
               <div key={`${highlight.packName}-${index}`}>
                 <div className="font-semibold text-rose-700">{highlight.packName}</div>
@@ -458,11 +464,11 @@ const EventsTab = memo(() => {
       )}
 
       {showWelcomeBack && (
-        <Card className="p-4 bg-gradient-to-r from-amber-50 to-rose-50 border-amber-200" data-qa="welcome-back-card">
+        <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-rose-50/40 p-4" data-qa="welcome-back-card">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-lg font-semibold text-amber-800">🌤️ Welcome Back</h3>
-              <p className="text-sm text-amber-700">
+              <h3 className="text-lg font-semibold text-slate-900">Welcome back</h3>
+              <p className="text-sm text-slate-600">
                 Last time: Day {lastSeenDayCount}, {lastSeenSeason.charAt(0).toUpperCase() + lastSeenSeason.slice(1)}
               </p>
             </div>
@@ -476,7 +482,7 @@ const EventsTab = memo(() => {
               Dismiss
             </Button>
           </div>
-          <div className="mt-3 space-y-2 text-sm text-gray-700">
+          <div className="mt-3 space-y-2 text-sm text-slate-700">
             <div>
               <div className="text-[11px] uppercase tracking-wide text-amber-600">Since then</div>
               {sinceThenHighlights.length > 0 ? (
@@ -499,17 +505,17 @@ const EventsTab = memo(() => {
         </Card>
       )}
 
-      <Card className="p-4 bg-gradient-to-r from-amber-50 to-emerald-50 border-amber-200" data-qa="daily-delight-card">
+      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-amber-50/20 to-emerald-50/40 p-4" data-qa="daily-delight-card">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold text-emerald-800">🍵 Daily Delight</h3>
-            <p className="text-sm text-emerald-700">A tiny thank-you for stopping by.</p>
+            <h3 className="text-lg font-semibold text-slate-900">Daily delight</h3>
+            <p className="text-sm text-slate-600">A tiny thank-you for stopping by.</p>
           </div>
-          <Badge variant="outline" className="bg-emerald-100 text-emerald-700">
+          <Badge variant="outline" className="bg-white/80 text-slate-600">
             +{DAILY_DELIGHT_COINS}🪙
           </Badge>
         </div>
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-gray-700">
+        <div className="mt-3 flex flex-col gap-2 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between">
           <div>
             {dailyDelightClaimed
               ? 'Claimed for today. Come back tomorrow!'
@@ -526,20 +532,20 @@ const EventsTab = memo(() => {
         </div>
       </Card>
 
-      <Card className="p-4 bg-gradient-to-r from-sky-50 to-emerald-50 border-sky-200" data-qa="weekly-visits-card">
+      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-emerald-50/40 p-4" data-qa="weekly-visits-card">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold text-sky-800">🗓️ Weekly Visits</h3>
-            <p className="text-sm text-sky-700">Cosmetic-only thank-yous for gentle consistency.</p>
+            <h3 className="text-lg font-semibold text-slate-900">Weekly visits</h3>
+            <p className="text-sm text-slate-600">Cosmetic-only thank-yous for gentle consistency.</p>
           </div>
-          <Badge variant="outline" className="bg-sky-100 text-sky-700">
+          <Badge variant="outline" className="bg-white/80 text-slate-600">
             {weeklyVisitCount} visit{weeklyVisitCount === 1 ? '' : 's'}
           </Badge>
         </div>
-        <div className="mt-3 text-xs text-sky-700">
+        <div className="mt-3 text-xs text-slate-600">
           Week window: {weeklyVisits.weekKey || currentWeekKey}
         </div>
-        <div className="mt-3 space-y-2 text-sm text-gray-700">
+        <div className="mt-3 space-y-2 text-sm text-slate-700">
           {WEEKLY_VISIT_TIERS.map((tier) => {
             const decor = content.decorById?.[tier.reward.decorId];
             const rewardLabel = decor ? `${decor.emoji} ${decor.name}` : tier.label;
@@ -738,17 +744,17 @@ const EventsTab = memo(() => {
       </Card>
 
       {/* Season Header */}
-      <Card className="p-4 bg-gradient-to-r from-green-50 to-blue-50">
+      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-sky-50/40 p-4">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold text-green-800">🎉 Seasonal Events</h3>
-            <p className="text-sm text-green-700 capitalize">
+            <h3 className="text-lg font-semibold text-slate-900">Seasonal events</h3>
+            <p className="text-sm capitalize text-slate-600">
               Current Season: {currentSeason} {currentSeason === 'spring' ? '🌸' :
                                               currentSeason === 'summer' ? '☀️' :
                                               currentSeason === 'autumn' ? '🍂' : '❄️'}
             </p>
           </div>
-          <Badge variant="outline" className="bg-green-100 text-green-700">
+          <Badge variant="outline" className="bg-white/80 text-slate-600">
             {seasonEvents.length} Events Available
           </Badge>
         </div>
@@ -767,13 +773,13 @@ const EventsTab = memo(() => {
 
       {/* Active Event */}
       {activeEvent && (
-        <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+        <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-orange-50/40 p-4">
           <div className="flex justify-between items-start mb-3">
             <div className="flex items-center gap-3">
               <span className="text-3xl">{activeEvent.emoji}</span>
               <div>
-                <h4 className="font-semibold text-lg">{activeEvent.name}</h4>
-                <p className="text-sm text-gray-600">{activeEvent.description}</p>
+                <h4 className="text-lg font-semibold text-slate-900">{activeEvent.name}</h4>
+                <p className="text-sm text-slate-600">{activeEvent.description}</p>
               </div>
             </div>
             <Badge className={getRarityColor(activeEvent.rarity)}>
@@ -795,7 +801,7 @@ const EventsTab = memo(() => {
           {/* Event Effects */}
           <div className="grid grid-cols-2 gap-2 text-sm">
             {Object.entries(activeEvent.effects).map(([effect, value]) => (
-              <div key={effect} className="flex justify-between p-2 bg-white rounded">
+              <div key={effect} className="flex justify-between rounded-2xl border border-white/80 bg-white/85 p-2 shadow-sm">
                 <span className="capitalize">{formatDisplayLabel(effect)}:</span>
                 <span className="font-semibold">
                   {typeof value === 'boolean' ? (value ? '✓' : '✗') :
@@ -810,9 +816,9 @@ const EventsTab = memo(() => {
 
       {/* Trigger Event */}
       {!activeEvent && (
-        <Card className="p-4">
+        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
           <div className="text-center">
-            <div className="text-gray-500 mb-4">
+            <div className="mb-4 text-slate-500">
               <div className="text-4xl mb-2">🎲</div>
               <p>No active seasonal events</p>
               <p className="text-sm">Trigger a random event to earn rewards!</p>
@@ -834,12 +840,12 @@ const EventsTab = memo(() => {
       )}
 
       {/* Available Events */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">📅 Available {currentSeason} Events</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <h4 className="mb-3 font-semibold text-slate-900">Available {currentSeason} events</h4>
 
         <div className="space-y-3">
           {seasonEvents.map(event => (
-            <div key={event.id} className="p-3 border rounded">
+            <div key={event.id} className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 shadow-sm">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">{event.emoji}</span>
@@ -862,15 +868,15 @@ const EventsTab = memo(() => {
       </Card>
 
       {/* Event History */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">📜 Recent Events</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <h4 className="mb-3 font-semibold text-slate-900">Recent events</h4>
 
         {eventHistory.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">No completed events yet</p>
+          <p className="py-4 text-center text-slate-500">No completed events yet</p>
         ) : (
           <div className="space-y-2">
             {eventHistory.slice(0, 5).map((event, index) => (
-              <div key={index} className="p-2 bg-gray-50 rounded text-sm">
+              <div key={index} className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-2 text-sm shadow-sm">
                 <div className="flex justify-between items-center">
                   <span>{event.emoji} {event.name}</span>
                   <span className="text-green-600 font-semibold">+{event.rewards.coins}🪙</span>
@@ -885,9 +891,9 @@ const EventsTab = memo(() => {
       </Card>
 
       {/* Season Info */}
-      <Card className="p-4 bg-gray-50">
-        <h4 className="font-semibold mb-2">🌸 Season Information</h4>
-        <div className="text-sm text-gray-700 space-y-1">
+      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-indigo-50/40 p-4">
+        <h4 className="mb-2 font-semibold text-slate-900">Season information</h4>
+        <div className="space-y-1 text-sm text-slate-700">
           <p><strong>Spring (Mar-May):</strong> Focus on planting and growth bonuses</p>
           <p><strong>Summer (Jun-Aug):</strong> Harvest festivals and heat events</p>
           <p><strong>Autumn (Sep-Nov):</strong> Epic festivals and crop bonuses</p>

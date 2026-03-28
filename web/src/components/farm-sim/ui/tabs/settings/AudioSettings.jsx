@@ -1,114 +1,130 @@
 import React, { memo } from 'react';
 import { Card } from '../../../../ui/card';
+import { SettingToggleRow } from './SettingToggleRow';
 
 export const AudioSettings = memo(({
-    soundEnabled,
-    musicEnabled,
-    handleToggleSound,
-    handleToggleMusic,
-    handleSoundVolumeChange,
-    handleMusicVolumeChange,
-    soundVolume,
-    musicVolume
+  soundEnabled,
+  musicEnabled,
+  handleToggleSound,
+  handleToggleMusic,
+  handleSoundVolumeChange,
+  handleMusicVolumeChange,
+  soundVolume,
+  musicVolume
 }) => {
-    return (
-        <>
-            <Card className="p-4">
-                <h4 className="font-semibold mb-3">🎛️ Audio Settings</h4>
+  const rows = [
+    {
+      key: 'sound',
+      title: 'Sound Effects',
+      description: 'Action feedback for harvests, clicks, and rewards.',
+      enabled: soundEnabled,
+      onToggle: handleToggleSound,
+    },
+    {
+      key: 'music',
+      title: 'Background Music',
+      description: 'Seasonal themes that follow the farm rhythm.',
+      enabled: musicEnabled,
+      onToggle: handleToggleMusic,
+    },
+  ];
 
-                <div className="space-y-3">
-                    {/* Sound Toggle */}
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                        <div>
-                            <div className="font-medium">Sound Effects</div>
-                            <div className="text-sm text-gray-600">Enable game sounds</div>
-                        </div>
-                        <button
-                            onClick={handleToggleSound}
-                            className={`
-                relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${soundEnabled ? 'bg-green-600' : 'bg-gray-300'}
-              `}
-                        >
-                            <span
-                                className={`
-                  inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${soundEnabled ? 'translate-x-6' : 'translate-x-1'}
-                `}
-                            />
-                        </button>
-                    </div>
+  return (
+    <>
+      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-slate-50 p-4">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600">
+              Audio
+            </div>
+            <h4 className="text-base font-semibold text-slate-900">Sound and music</h4>
+          </div>
+        </div>
 
-                    {/* Music Toggle */}
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                        <div>
-                            <div className="font-medium">Background Music</div>
-                            <div className="text-sm text-gray-600">Seasonal music themes</div>
-                        </div>
-                        <button
-                            onClick={handleToggleMusic}
-                            className={`
-                relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${musicEnabled ? 'bg-green-600' : 'bg-gray-300'}
-              `}
-                        >
-                            <span
-                                className={`
-                  inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${musicEnabled ? 'translate-x-6' : 'translate-x-1'}
-                `}
-                            />
-                        </button>
-                    </div>
-                </div>
-            </Card>
+        <div className="space-y-3">
+          {rows.map((row) => (
+            <SettingToggleRow
+              key={row.key}
+              title={row.title}
+              description={row.description}
+              enabled={row.enabled}
+              onToggle={row.onToggle}
+              label={`${row.title} ${row.enabled ? 'on' : 'off'}`}
+            />
+          ))}
+        </div>
+      </Card>
 
-            <Card className="p-4">
-                <h4 className="font-semibold mb-3">🔊 Volume Controls</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-emerald-50/40 p-4">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+              Volume
+            </div>
+            <h4 className="text-base font-semibold text-slate-900">Fine-tune the mix</h4>
+          </div>
+        </div>
 
-                <div className="space-y-4">
-                    {/* Sound Volume */}
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                            <span className="font-medium">Sound Effects Volume</span>
-                            <span className="text-gray-600">{Math.round(soundVolume * 100)}%</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.05"
-                            value={soundVolume}
-                            onChange={handleSoundVolumeChange}
-                            disabled={!soundEnabled}
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                        />
-                    </div>
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <label htmlFor="sound-effects-volume" className="font-medium text-slate-800">
+                Sound Effects
+              </label>
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                {Math.round(soundVolume * 100)}%
+              </span>
+            </div>
+            <input
+              id="sound-effects-volume"
+              name="soundEffectsVolume"
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={soundVolume}
+              onChange={handleSoundVolumeChange}
+              disabled={!soundEnabled}
+              aria-describedby="sound-effects-volume-help"
+              aria-label="Sound effects volume"
+              className="w-full cursor-pointer accent-emerald-500"
+            />
+            <p id="sound-effects-volume-help" className="text-xs leading-relaxed text-slate-500">
+              Sets the mix for clicks, harvests, and other direct action sounds.
+            </p>
+          </div>
 
-                    {/* Music Volume */}
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                            <span className="font-medium">Music Volume</span>
-                            <span className="text-gray-600">{Math.round(musicVolume * 100)}%</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="0"
-                            max="0.5"
-                            step="0.025"
-                            value={musicVolume}
-                            onChange={handleMusicVolumeChange}
-                            disabled={!musicEnabled}
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                        />
-                        <div className="text-xs text-gray-500">
-                            🎵 Music theme changes with seasons
-                        </div>
-                    </div>
-                </div>
-            </Card>
-        </>
-    );
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <label htmlFor="music-volume" className="font-medium text-slate-800">
+                Music
+              </label>
+              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700">
+                {Math.round(musicVolume * 100)}%
+              </span>
+            </div>
+            <input
+              id="music-volume"
+              name="musicVolume"
+              type="range"
+              min="0"
+              max="0.5"
+              step="0.025"
+              value={musicVolume}
+              onChange={handleMusicVolumeChange}
+              disabled={!musicEnabled}
+              aria-describedby="music-volume-help"
+              aria-label="Music volume"
+              className="w-full cursor-pointer accent-sky-500"
+            />
+            <p id="music-volume-help" className="text-xs leading-relaxed text-slate-500">
+              Seasonal background tracks stay softer so they support, not compete.
+            </p>
+          </div>
+        </div>
+      </Card>
+    </>
+  );
 });
 
 AudioSettings.displayName = 'AudioSettings';

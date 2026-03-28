@@ -123,11 +123,22 @@ const getEffectiveValueMultiplier = (baseMultiplier, level) => {
   return baseMultiplier * tier.valueMultiplier;
 };
 
+const mergeCompletedProducts = (inventory, completedItems) => {
+  const nextInventory = { ...(inventory || {}) };
+  completedItems.forEach((item) => {
+    const quantity = Math.max(0, Number(item?.quantity) || 0);
+    if (quantity <= 0 || !item?.output) return;
+    nextInventory[item.output] = Math.max(0, Number(nextInventory[item.output] || 0)) + quantity;
+  });
+  return nextInventory;
+};
+
 const ProcessingTab = memo(() => {
   const { state, actions } = useGame();
 
   const processingQueue = state.processingQueue || [];
   const processedInventory = state.processedInventory || {};
+  const processingFacilities = state.processingFacilities || [];
 
   // Process completed items
   useEffect(() => {
@@ -138,40 +149,40 @@ const ProcessingTab = memo(() => {
       );
 
       if (completedItems.length > 0) {
+        const completedIds = new Set(completedItems.map((item) => item.id));
+        const completedFacilityIds = new Set(completedItems.map((item) => item.facilityId));
+
+        actions.updateProcessedInventory((currentInventory) => (
+          mergeCompletedProducts(currentInventory, completedItems)
+        ));
+
+        actions.updateProcessingQueue((currentQueue) => (
+          (currentQueue || []).filter((item) => !completedIds.has(item.id))
+        ));
+
+        actions.updateProcessingFacilities((currentFacilities) => (
+          (currentFacilities || []).map((facility) => (
+            completedFacilityIds.has(facility.id)
+              ? { ...facility, isProcessing: false, currentRecipe: null, finishTime: null }
+              : facility
+          ))
+        ));
+
         completedItems.forEach(item => {
-          const currentProcessed = state.processedInventory[item.output] || 0;
-          actions.updateProcessedInventory({
-            ...state.processedInventory,
-            [item.output]: currentProcessed + item.quantity
-          });
           actions.addNotification({
             message: `Processing complete! Produced ${item.quantity} ${formatDisplayLabel(item.output)}`,
             type: 'success'
           });
         });
-
-        const updatedQueue = processingQueue.filter(item =>
-          !completedItems.some(completed => completed.id === item.id)
-        );
-        actions.updateProcessingQueue(updatedQueue);
-
-        const updatedFacilities = (state.processingFacilities || []).map(facility => {
-          const completedItem = completedItems.find(item => item.facilityId === facility.id);
-          if (completedItem) {
-            return { ...facility, isProcessing: false, currentRecipe: null, finishTime: null };
-          }
-          return facility;
-        });
-        actions.updateProcessingFacilities(updatedFacilities);
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [processingQueue, state.processedInventory]);
+  }, [actions, processingQueue]);
 
   const buyProcessingFacility = (facilityId) => {
     const facility = PROCESSING_FACILITIES[facilityId];
-    if ((state.processingFacilities || []).some(f => f.id === facilityId)) {
+    if (processingFacilities.some(f => f.id === facilityId)) {
       actions.addNotification({ message: 'You already own this facility!', type: 'warning' });
       return;
     }
@@ -189,14 +200,16 @@ const ProcessingTab = memo(() => {
       finishTime: null,
       level: 1
     };
-    actions.updateProcessingFacilities([...(state.processingFacilities || []), newFacility]);
+    actions.updateProcessingFacilities((currentFacilities) => [
+      ...((currentFacilities || [])),
+      newFacility,
+    ]);
     actions.addNotification({ message: `Purchased ${facility.name}!`, type: 'success' });
     actions.addXP(15);
   };
 
   const upgradeFacility = (facilityId) => {
-    const facilities = state.processingFacilities || [];
-    const facility = facilities.find(f => f.id === facilityId);
+    const facility = processingFacilities.find(f => f.id === facilityId);
     if (!facility) return;
 
     const currentLevel = facility.level || 1;
@@ -213,7 +226,7 @@ const ProcessingTab = memo(() => {
     }
 
     actions.spendMoney(cost);
-    const updatedFacilities = facilities.map(f =>
+    const updatedFacilities = processingFacilities.map(f =>
       f.id === facilityId ? { ...f, level: currentLevel + 1 } : f
     );
     actions.updateProcessingFacilities(updatedFacilities);
@@ -253,8 +266,7 @@ const ProcessingTab = memo(() => {
   };
 
   const startProcessing = (facilityId) => {
-    const facilities = state.processingFacilities || [];
-    const facility = facilities.find(f => f.id === facilityId);
+    const facility = processingFacilities.find(f => f.id === facilityId);
     if (!facility || facility.isProcessing) {
       if (facility?.isProcessing) {
         actions.addNotification({ message: 'Facility is already processing!', type: 'warning' });
@@ -281,11 +293,10 @@ const ProcessingTab = memo(() => {
 
     // Consume input
     if (resolved.source === 'processed') {
-      const current = processedInventory[resolved.cropId] || 0;
-      actions.updateProcessedInventory({
-        ...processedInventory,
-        [resolved.cropId]: current - facilityData.ratio
-      });
+      actions.updateProcessedInventory((currentInventory) => ({
+        ...(currentInventory || {}),
+        [resolved.cropId]: Math.max(0, Number(currentInventory?.[resolved.cropId] || 0) - facilityData.ratio),
+      }));
     } else {
       actions.updateInventory({
         ...state.inventory,
@@ -307,13 +318,13 @@ const ProcessingTab = memo(() => {
       effectiveTime
     };
 
-    const updatedFacilities = facilities.map(f =>
+    const updatedFacilities = processingFacilities.map(f =>
       f.id === facilityId ? {
         ...f, isProcessing: true, currentRecipe: facilityData.output, finishTime
       } : f
     );
     actions.updateProcessingFacilities(updatedFacilities);
-    actions.updateProcessingQueue([...processingQueue, processingItem]);
+    actions.updateProcessingQueue((currentQueue) => [...(currentQueue || []), processingItem]);
     actions.addNotification({
       message: `Started processing ${formatDisplayLabel(facilityData.output)} in ${facilityData.name}`,
       type: 'info'
@@ -323,13 +334,13 @@ const ProcessingTab = memo(() => {
   const collectProcessedItem = (itemId) => {
     const item = processingQueue.find(p => p.id === itemId);
     if (!item) return;
-    const currentProcessed = processedInventory[item.output] || 0;
-    actions.updateProcessedInventory({
-      ...processedInventory,
-      [item.output]: currentProcessed + item.quantity
-    });
-    const updatedQueue = processingQueue.filter(p => p.id !== itemId);
-    actions.updateProcessingQueue(updatedQueue);
+    actions.updateProcessedInventory((currentInventory) => ({
+      ...(currentInventory || {}),
+      [item.output]: Math.max(0, Number(currentInventory?.[item.output] || 0)) + item.quantity,
+    }));
+    actions.updateProcessingQueue((currentQueue) => (
+      (currentQueue || []).filter((queueItem) => queueItem.id !== itemId)
+    ));
     actions.addNotification({
       message: `Collected ${item.quantity} ${formatDisplayLabel(item.output)}`,
       type: 'success'
@@ -350,10 +361,10 @@ const ProcessingTab = memo(() => {
     const effectivePrice = Math.floor(basePrice * (FACILITY_LEVELS[level]?.valueMultiplier || 1));
     const totalValue = effectivePrice * quantity;
 
-    actions.updateProcessedInventory({
-      ...processedInventory,
-      [itemType]: currentStock - quantity
-    });
+    actions.updateProcessedInventory((currentInventory) => ({
+      ...(currentInventory || {}),
+      [itemType]: Math.max(0, Number(currentInventory?.[itemType] || 0) - quantity),
+    }));
     actions.earnMoney(totalValue);
     actions.addXP(Math.floor(totalValue * 0.05));
     actions.addNotification({
@@ -377,48 +388,48 @@ const ProcessingTab = memo(() => {
     return { status: 'Idle', color: 'text-gray-600', bgColor: 'bg-gray-50' };
   };
 
-  const ownedFacilities = state.processingFacilities || [];
+  const ownedFacilities = processingFacilities;
 
   return (
     <div className="space-y-4">
       {/* Processing Overview */}
-      <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50">
+      <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-orange-50/40 p-4">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold text-amber-800">🏭 Processing Facilities</h3>
-            <p className="text-sm text-amber-700">
+            <h3 className="text-lg font-semibold text-slate-900">Processing facilities</h3>
+            <p className="text-sm text-slate-600">
               Facilities: {ownedFacilities.length} • Queue: {processingQueue.length}
             </p>
           </div>
-          <Badge variant="outline" className="bg-amber-100 text-amber-700">
+          <Badge variant="outline" className="bg-white/80 text-slate-600">
             {Object.values(processedInventory).reduce((s, q) => s + (q > 0 ? 1 : 0), 0)} Products
           </Badge>
         </div>
       </Card>
 
       {/* Available Facilities */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">🏗️ Available Facilities</h4>
-        <div className="grid grid-cols-1 gap-3">
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <h4 className="mb-3 font-semibold text-slate-900">Available facilities</h4>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {Object.entries(PROCESSING_FACILITIES).map(([id, facility]) => {
             const owned = ownedFacilities.some(f => f.id === id);
             const isChain = !!facility.inputSource;
             return (
-              <Card key={id} className={`p-3 ${owned ? 'bg-green-50 border-green-200' : 'bg-white'}`}>
+              <Card key={id} className={`overflow-hidden p-3 ${owned ? 'border-emerald-200/70 bg-emerald-50/60' : 'border-slate-200/70 bg-white/85'}`}>
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{facility.emoji}</span>
                     <div>
-                      <span className="font-medium">{facility.name}</span>
+                      <span className="font-medium text-slate-900">{facility.name}</span>
                       {isChain && (
                         <Badge variant="outline" className="ml-2 text-[10px] bg-purple-50 text-purple-700">Chain</Badge>
                       )}
                     </div>
                   </div>
-                  {owned && <Badge className="bg-green-500">Owned</Badge>}
+                  {owned && <Badge className="bg-emerald-600 text-white">Owned</Badge>}
                 </div>
-                <p className="text-sm text-gray-600 mb-2">{facility.description}</p>
-                <div className="flex flex-wrap justify-between items-center text-xs text-gray-500 mb-2 gap-1">
+                <p className="mb-2 text-sm text-slate-600">{facility.description}</p>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                   <span>Input: {facility.input === 'any' ? 'Any crop' : facility.input === 'any_fruit' ? 'Any fruit' : formatDisplayLabel(facility.input)}{isChain ? ' (processed)' : ''}</span>
                   <span>Output: {formatDisplayLabel(facility.output)}</span>
                   <span>Ratio: {facility.ratio}:1</span>
@@ -433,7 +444,7 @@ const ProcessingTab = memo(() => {
                     Buy ({facility.cost}🪙)
                   </Button>
                 ) : (
-                  <div className="text-center text-sm text-green-600 font-medium">
+                  <div className="text-center text-sm font-medium text-emerald-700">
                     ✓ Facility Owned
                   </div>
                 )}
@@ -445,8 +456,8 @@ const ProcessingTab = memo(() => {
 
       {/* Owned Facilities */}
       {ownedFacilities.length > 0 && (
-        <Card className="p-4">
-          <h4 className="font-semibold mb-3">⚙️ Your Facilities</h4>
+        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+          <h4 className="mb-3 font-semibold text-slate-900">Your facilities</h4>
           <div className="space-y-3">
             {ownedFacilities.map(facility => {
               const status = getFacilityStatus(facility);
@@ -467,13 +478,13 @@ const ProcessingTab = memo(() => {
                   : facilityData.input === 'any' ? 'crop' : facilityData.input;
 
               return (
-                <Card key={facility.id} className={`p-3 ${status.bgColor}`}>
+                <Card key={facility.id} className={`overflow-hidden p-3 ${status.bgColor}`}>
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{facilityData.emoji}</span>
                       <div>
-                        <span className="font-medium">{facilityData.name}</span>
-                        <Badge variant="outline" className="ml-2 text-[10px]">
+                        <span className="font-medium text-slate-900">{facilityData.name}</span>
+                        <Badge variant="outline" className="ml-2 text-[10px] bg-white/80">
                           Lv.{level} {tier.label}
                         </Badge>
                       </div>
@@ -484,7 +495,7 @@ const ProcessingTab = memo(() => {
                   </div>
 
                   {/* Level info */}
-                  <div className="text-xs text-gray-500 mb-2 flex flex-wrap gap-2">
+                  <div className="mb-2 flex flex-wrap gap-2 text-xs text-slate-500">
                     <span>Time: {effectiveTime}s</span>
                     <span>Value: x{getEffectiveValueMultiplier(facilityData.value_multiplier, level).toFixed(1)}</span>
                   </div>
@@ -537,15 +548,15 @@ const ProcessingTab = memo(() => {
 
       {/* Processing Queue */}
       {processingQueue.length > 0 && (
-        <Card className="p-4">
-          <h4 className="font-semibold mb-3">⏳ Processing Queue</h4>
+        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+          <h4 className="mb-3 font-semibold text-slate-900">Processing queue</h4>
           <div className="space-y-2">
             {processingQueue.map(item => (
-              <Card key={item.id} className="p-2">
+              <Card key={item.id} className="border-slate-200/70 bg-slate-50/80 p-2">
                 <div className="flex justify-between items-center">
                   <div>
-                    <span className="font-medium">{formatDisplayLabel(item.output)}</span>
-                    <span className="text-sm text-gray-600 ml-2">(x{item.quantity})</span>
+                    <span className="font-medium text-slate-900">{formatDisplayLabel(item.output)}</span>
+                    <span className="ml-2 text-sm text-slate-600">(x{item.quantity})</span>
                   </div>
                   {Date.now() >= item.finishTime ? (
                     <Button onClick={() => collectProcessedItem(item.id)} size="sm">
@@ -563,8 +574,8 @@ const ProcessingTab = memo(() => {
 
       {/* Processed Products Inventory */}
       {Object.keys(processedInventory).some(k => (processedInventory[k] || 0) > 0) && (
-        <Card className="p-4">
-          <h4 className="font-semibold mb-3">📦 Processed Products</h4>
+        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+          <h4 className="mb-3 font-semibold text-slate-900">Processed products</h4>
           <div className="space-y-2">
             {Object.entries(processedInventory).map(([product, quantity]) => {
               if (quantity <= 0) return null;
@@ -575,11 +586,11 @@ const ProcessingTab = memo(() => {
               const sellPrice = Math.floor(basePrice * (FACILITY_LEVELS[level]?.valueMultiplier || 1));
 
               return (
-                <Card key={product} className="p-3">
+                <Card key={product} className="border-slate-200/70 bg-slate-50/80 p-3">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div>
-                      <span className="font-medium">{formatDisplayLabel(product)}</span>
-                      <span className="text-sm text-gray-600 ml-2">
+                      <span className="font-medium text-slate-900">{formatDisplayLabel(product)}</span>
+                      <span className="ml-2 text-sm text-slate-600">
                         Stock: {quantity} • {sellPrice}🪙/ea
                       </span>
                     </div>
@@ -605,24 +616,24 @@ const ProcessingTab = memo(() => {
       )}
 
       {/* Processing Statistics */}
-      <Card className="p-4 bg-gray-50">
-        <h4 className="font-semibold mb-3">📊 Processing Statistics</h4>
+      <Card className="overflow-hidden border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-emerald-50/40 p-4">
+        <h4 className="mb-3 font-semibold text-slate-900">Processing statistics</h4>
         <div className="grid grid-cols-3 gap-3 text-sm">
-          <div className="text-center p-2 bg-white rounded">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-2 text-center shadow-sm">
             <div className="font-bold text-blue-600">{ownedFacilities.length}</div>
-            <div className="text-blue-700 text-xs">Facilities</div>
+            <div className="text-xs text-blue-700">Facilities</div>
           </div>
-          <div className="text-center p-2 bg-white rounded">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-2 text-center shadow-sm">
             <div className="font-bold text-green-600">
               {Object.values(processedInventory).reduce((sum, qty) => sum + Math.max(0, qty || 0), 0)}
             </div>
-            <div className="text-green-700 text-xs">In Stock</div>
+            <div className="text-xs text-green-700">In Stock</div>
           </div>
-          <div className="text-center p-2 bg-white rounded">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-2 text-center shadow-sm">
             <div className="font-bold text-purple-600">
               {ownedFacilities.reduce((sum, f) => sum + ((f.level || 1) - 1), 0)}
             </div>
-            <div className="text-purple-700 text-xs">Upgrades</div>
+            <div className="text-xs text-purple-700">Upgrades</div>
           </div>
         </div>
       </Card>

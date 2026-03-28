@@ -1,6 +1,12 @@
-import React, { memo, useCallback, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { useGameActions, useGameSelector, useGameStore } from '../../context/GameContext';
-import { SAVE_KEY, clearFarmCache } from '../../context/GamePersistence';
+import {
+  BACKUP_SAVE_KEY,
+  SAVE_KEY,
+  clearFarmCache,
+  createSavePayload,
+  importSaveDataToStorage,
+} from '../../context/GamePersistence';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
@@ -12,14 +18,26 @@ import { SaveLoadSettings } from './settings/SaveLoadSettings';
 import { GameplaySettings } from './settings/GameplaySettings';
 import { GameStats } from './settings/GameStats';
 
+const SOUND_VOLUME_KEY = 'farmlife_settings_sound_volume';
+const MUSIC_VOLUME_KEY = 'farmlife_settings_music_volume';
+const DEFAULT_SOUND_VOLUME = 0.3;
+const DEFAULT_MUSIC_VOLUME = 0.15;
+
+const readStoredVolume = (key, fallback, max = 1) => {
+  if (typeof window === 'undefined') return fallback;
+  const stored = Number(window.localStorage.getItem(key));
+  if (!Number.isFinite(stored)) return fallback;
+  return Math.max(0, Math.min(max, stored));
+};
+
 const SettingsTab = memo(() => {
   const actions = useGameActions();
   const store = useGameStore();
   const settings = useGameSelector((state) => state.settings || {});
   const paused = useGameSelector((state) => Boolean(state.gameLoop?.paused));
   const fps = useGameSelector((state) => state.gameLoop?.fps || 0);
-  const [soundVolume, setSoundVolume] = useState(0.3);
-  const [musicVolume, setMusicVolume] = useState(0.15);
+  const [soundVolume, setSoundVolume] = useState(() => readStoredVolume(SOUND_VOLUME_KEY, DEFAULT_SOUND_VOLUME));
+  const [musicVolume, setMusicVolume] = useState(() => readStoredVolume(MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME, 0.5));
 
   const soundEnabled = settings.soundEnabled !== false;
   const musicEnabled = settings.musicEnabled !== false;
@@ -37,6 +55,30 @@ const SettingsTab = memo(() => {
   const addNotification = useCallback((message, type) => {
     actions.addNotification({ message, type });
   }, [actions]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(SOUND_VOLUME_KEY, String(soundVolume));
+    } catch (error) {
+      // Ignore storage failures in restrictive browsers or private mode.
+    }
+    if (window.soundSystem) {
+      window.soundSystem.setVolume(soundVolume);
+    }
+  }, [soundVolume]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(MUSIC_VOLUME_KEY, String(musicVolume));
+    } catch (error) {
+      // Ignore storage failures in restrictive browsers or private mode.
+    }
+    if (window.musicSystem) {
+      window.musicSystem.setVolume(musicVolume);
+    }
+  }, [musicVolume]);
 
   const handleToggleSound = useCallback(() => {
     const newState = !soundEnabled;
@@ -200,7 +242,7 @@ const SettingsTab = memo(() => {
 
   const handleExportSave = useCallback(() => {
     try {
-      const saveData = JSON.stringify(store.getState(), null, 2);
+      const saveData = JSON.stringify(createSavePayload(store.getState()), null, 2);
       const blob = new Blob([saveData], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -226,7 +268,14 @@ const SettingsTab = memo(() => {
       reader.onload = (event) => {
         try {
           const importedData = JSON.parse(event.target.result);
-          localStorage.setItem(SAVE_KEY, JSON.stringify(importedData));
+          const result = importSaveDataToStorage(importedData, {
+            key: SAVE_KEY,
+            backupKey: BACKUP_SAVE_KEY,
+          });
+          if (!result.success) {
+            addNotification('Invalid save file format', 'error');
+            return;
+          }
           addNotification('📥 Save imported! Reloading...', 'success');
           setTimeout(() => window.location.reload(), 1500);
         } catch (error) {
@@ -275,36 +324,65 @@ const SettingsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Game Controls Header (Kept inline as it's simple) */}
-      <Card className="p-4 bg-gradient-to-r from-purple-50 to-blue-50">
-        <h3 className="text-lg font-semibold text-purple-800 mb-3">⚙️ Game Settings</h3>
-
-        <div className="space-y-3">
-          {/* Pause/Resume */}
-          <div className="flex justify-between items-center p-3 bg-white rounded">
-            <div>
-              <div className="font-medium">Game Status</div>
-              <div className="text-sm text-gray-600">
-                {paused ? 'Game is paused' : 'Game is running'}
-              </div>
+      <Card className="overflow-hidden border-violet-200/70 bg-gradient-to-br from-violet-50 via-white to-sky-50 p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-600">
+              Settings
             </div>
-            <Button
-              onClick={handleTogglePause}
-              variant={paused ? 'default' : 'outline'}
-            >
-              {paused ? '▶️ Resume' : '⏸️ Pause'}
-            </Button>
+            <h3 className="text-lg font-semibold text-slate-900">Game controls</h3>
+            <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
+              Save routines, runtime controls, audio, and accessibility preferences all live in one place.
+            </p>
           </div>
 
-          {/* FPS Display */}
-          <div className="flex justify-between items-center p-3 bg-white rounded">
-            <div>
-              <div className="font-medium">Performance</div>
-              <div className="text-sm text-gray-600">Current frame rate</div>
-            </div>
-            <Badge variant="outline" className="text-lg">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="bg-white/80 text-slate-600">
+              {paused ? 'Paused' : 'Running'}
+            </Badge>
+            <Badge variant="outline" className="bg-white/80 text-slate-600">
               {fps} FPS
             </Badge>
+            <Badge variant="outline" className="bg-white/80 text-slate-600">
+              Auto-save {autoSaveEnabled ? 'On' : 'Off'}
+            </Badge>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Runtime
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <div>
+                <div className="font-medium text-slate-900">Game status</div>
+                <div className="text-sm text-slate-600">
+                  {paused ? 'Game is paused' : 'Game is running'}
+                </div>
+              </div>
+              <Button
+                onClick={handleTogglePause}
+                variant={paused ? 'default' : 'outline'}
+              >
+                {paused ? 'Resume' : 'Pause'}
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Performance
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <div>
+                <div className="font-medium text-slate-900">Frame rate</div>
+                <div className="text-sm text-slate-600">Current simulation speed</div>
+              </div>
+              <Badge variant="outline" className="bg-slate-50/80 text-slate-700">
+                {fps} FPS
+              </Badge>
+            </div>
           </div>
         </div>
       </Card>
@@ -352,10 +430,14 @@ const SettingsTab = memo(() => {
 
       <GameStats />
 
-      {/* Keyboard Shortcuts */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="font-semibold">⌨️ Keyboard Shortcuts</h4>
+      <Card className="overflow-hidden border-blue-200/70 bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
+              Controls
+            </div>
+            <h4 className="text-base font-semibold text-slate-900">Keyboard shortcuts</h4>
+          </div>
           <Button
             onClick={handleToggleKeyboardShortcuts}
             variant={keyboardShortcutsEnabled ? 'default' : 'outline'}
@@ -365,73 +447,56 @@ const SettingsTab = memo(() => {
           </Button>
         </div>
 
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700">Switch Tabs</span>
-            <Badge variant="outline" className="font-mono">1 – 9</Badge>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700">Pause/Resume Game</span>
-            <Badge variant="outline" className="font-mono">Space</Badge>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700">Fishing Controls</span>
-            <Badge variant="outline" className="font-mono">A / D</Badge>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700">Select Multiple Plots</span>
-            <Badge variant="outline" className="font-mono">Shift + Click</Badge>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700">Quick Save</span>
-            <Badge variant="outline" className="font-mono">Ctrl + S</Badge>
-          </div>
-          <div className="border-t border-blue-100 my-2" />
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700">Water All</span>
-            <Badge variant="outline" className="font-mono">W</Badge>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700">Harvest All</span>
-            <Badge variant="outline" className="font-mono">H</Badge>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700">Fertilize All</span>
-            <Badge variant="outline" className="font-mono">F</Badge>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700">Treat Diseases</span>
-            <Badge variant="outline" className="font-mono">T</Badge>
-          </div>
-
+        <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+          {[
+            ['Switch Tabs', '1 – 9'],
+            ['Pause/Resume Game', 'Space'],
+            ['Fishing Controls', 'A / D'],
+            ['Select Multiple Plots', 'Shift + Click'],
+            ['Quick Save', 'Ctrl + S'],
+            ['Water All', 'W'],
+            ['Harvest All', 'H'],
+            ['Fertilize All', 'F'],
+            ['Treat Diseases', 'T'],
+          ].map(([label, shortcut]) => (
+            <div key={label} className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-sm">
+              <span className="text-slate-700">{label}</span>
+              <Badge variant="outline" className="font-mono bg-slate-50/80 text-slate-600">
+                {shortcut}
+              </Badge>
+            </div>
+          ))}
         </div>
       </Card>
 
-      {/* Tutorial Settings */}
-      <Card className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50">
-        <h4 className="font-semibold mb-3">🎓 Tutorial</h4>
-        <div className="flex justify-between items-center">
+      <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/50 p-4">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="font-medium">Reset Tutorial</div>
-            <div className="text-sm text-gray-600">Show the onboarding tutorial again</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-600">
+              Onboarding
+            </div>
+            <h4 className="text-base font-semibold text-slate-900">Tutorial reset</h4>
           </div>
           <Button
             onClick={handleResetTutorial}
             variant="outline"
             size="sm"
           >
-            Reset Tutorial
+            Reset
           </Button>
         </div>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          Show the onboarding tutorial again if you want a fresh walkthrough.
+        </p>
       </Card>
 
-      {/* Install App */}
-      <Card className="p-4 bg-gradient-to-r from-sky-50 to-indigo-50">
-        <h4 className="font-semibold mb-3">📲 Install App</h4>
-        <div className="flex justify-between items-center">
+      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-indigo-50/40 p-4">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="font-medium">Add to Home Screen</div>
-            <div className="text-sm text-gray-600">Install FarmSim as a standalone app</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600">
+              Install
+            </div>
+            <h4 className="text-base font-semibold text-slate-900">Add to home screen</h4>
           </div>
           <Button
             onClick={handleInstallApp}
@@ -441,29 +506,47 @@ const SettingsTab = memo(() => {
             Install
           </Button>
         </div>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          Install FarmSim as a standalone app for a more immersive feel.
+        </p>
       </Card>
 
-      {/* About (Static) */}
-      <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50">
-        <h4 className="font-semibold mb-2 text-green-800">🌾 About FarmSim</h4>
-        <div className="text-sm text-green-700 space-y-1">
-          <p><strong>Version:</strong> {APP_VERSION}</p>
-          <p><strong>Mode:</strong> {getReleaseModeLabel()}</p>
-          <p><strong>Made with:</strong> React + Vite + Tailwind CSS</p>
-          <p className="pt-2">A comprehensive farm simulation game with modular architecture, sound effects, background music, livestock management, fishing, and endless possibilities!</p>
-
-          <div className="pt-3 border-t border-green-200 mt-3">
-            <p className="font-semibold">✨ Recent upgrades:</p>
-            <ul className="list-disc list-inside text-xs space-y-0.5 mt-1">
-              <li>🗓️ Weekly Operations milestone rewards</li>
-              <li>🔥 Streak-based challenge reward boosts</li>
-              <li>📈 Daily Market Focus bonus crop loop</li>
-              <li>🎯 Reworked Daily Operations board with reroll</li>
-              <li>🚀 Sidebar now mounts only active tab content</li>
-              <li>🔔 Notification Center with saved history</li>
-              <li>🌾 Inventory quick-sell actions for crops</li>
-            </ul>
+      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-green-50/40 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600">
+              About
+            </div>
+            <h4 className="text-base font-semibold text-slate-900">FarmSim</h4>
           </div>
+          <Badge variant="outline" className="bg-white/80 text-slate-600">
+            {getReleaseModeLabel()}
+          </Badge>
+        </div>
+        <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+          <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-sm">
+            <div className="text-xs uppercase tracking-wide text-slate-500">Version</div>
+            <div className="font-medium text-slate-900">{APP_VERSION}</div>
+          </div>
+          <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-sm">
+            <div className="text-xs uppercase tracking-wide text-slate-500">Stack</div>
+            <div className="font-medium text-slate-900">React + Vite + Tailwind CSS</div>
+          </div>
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          A modular farm simulation with sound, background music, livestock, fishing, and a growing set of systems that can be tuned without losing the cozy feel.
+        </p>
+
+        <div className="mt-4 border-t border-emerald-100 pt-4">
+          <p className="text-sm font-semibold text-emerald-800">Recent upgrades</p>
+          <ul className="mt-2 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
+            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Weekly Operations milestone rewards</li>
+            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Streak-based challenge reward boosts</li>
+            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Daily Market Focus bonus crop loop</li>
+            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Reworked Daily Operations board with reroll</li>
+            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Sidebar mounts only active tab content</li>
+            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Notification Center with saved history</li>
+          </ul>
         </div>
       </Card>
 
