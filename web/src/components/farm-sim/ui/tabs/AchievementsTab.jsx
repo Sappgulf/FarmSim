@@ -1,6 +1,5 @@
 import React, { memo, useEffect, useState } from 'react';
 import { useGame } from '../../context/GameContext';
-import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
@@ -9,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from '../../../ui/tabs';
 import { ScrapbookPanel } from '../../../panels/ScrapbookPanel';
 import { MEMORIES, MEMORY_CHAPTERS } from '../../../../data/identity';
 import { ALMANAC_MEMORY_LINKS } from '../../../../data/almanac';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection } from './TabSurface';
 
 // Achievement data from original system
 const ACHIEVEMENTS = [
@@ -239,86 +238,73 @@ const AchievementsTab = memo(() => {
         </div>
       </TabHero>
 
-      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 gap-1 rounded-2xl bg-slate-50/80 p-1.5 h-auto">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="farming">🌾 Farming</TabsTrigger>
-          <TabsTrigger value="economy">💰 Economy</TabsTrigger>
-          <TabsTrigger value="progression">📈 Progression</TabsTrigger>
-        </TabsList>
+      <TabSection title="Browse achievements" description="Switch categories, then claim what you have already earned." tone="slate">
+        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 gap-1 rounded-2xl bg-slate-50/80 p-1.5 h-auto">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="farming">🌾 Farming</TabsTrigger>
+            <TabsTrigger value="economy">💰 Economy</TabsTrigger>
+            <TabsTrigger value="progression">📈 Progression</TabsTrigger>
+          </TabsList>
 
-        <TabsList className="grid w-full grid-cols-4 gap-1 rounded-2xl bg-slate-50/80 p-1.5 h-auto">
-          <TabsTrigger value="environment">🌱 Environment</TabsTrigger>
-          <TabsTrigger value="challenge">🎯 Challenge</TabsTrigger>
-          <TabsTrigger value="social">👥 Social</TabsTrigger>
-          <TabsTrigger value="milestone">🏆 Milestone</TabsTrigger>
-        </TabsList>
+          <TabsList className="grid w-full grid-cols-4 gap-1 rounded-2xl bg-slate-50/80 p-1.5 h-auto">
+            <TabsTrigger value="environment">🌱 Environment</TabsTrigger>
+            <TabsTrigger value="challenge">🎯 Challenge</TabsTrigger>
+            <TabsTrigger value="social">👥 Social</TabsTrigger>
+            <TabsTrigger value="milestone">🏆 Milestone</TabsTrigger>
+          </TabsList>
 
-        {/* Achievement List */}
-        <div className="mt-4 space-y-3 max-h-96 overflow-y-auto">
-          {filteredAchievements.map(achievement => {
-            const isUnlocked = state.achievements.find(a => a.id === achievement.id)?.unlocked;
-            const progress = getAchievementProgress(achievement);
-            const canClaim = progress >= 100 && !isUnlocked;
+          <div className="mt-4 max-h-96 space-y-2 overflow-y-auto">
+            {filteredAchievements.map(achievement => {
+              const isUnlocked = state.achievements.find(a => a.id === achievement.id)?.unlocked;
+              const progress = getAchievementProgress(achievement);
+              const canClaim = progress >= 100 && !isUnlocked;
 
-            return (
-              <Card key={achievement.id} className={`p-3 ${isUnlocked ? 'bg-green-50 border-green-200' : 'bg-white'}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{achievement.icon}</span>
-                    <div>
-                      <h4 className="font-semibold">{achievement.name}</h4>
-                      <p className="text-sm text-gray-600">{achievement.desc}</p>
+              return (
+                <div key={achievement.id} className={`rounded-[20px] border px-3 py-3 ${isUnlocked ? 'border-green-200 bg-green-50/70' : 'border-slate-200/60 bg-white/72'}`}>
+                  <div className="mb-2 flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{achievement.icon}</span>
+                      <div>
+                        <h4 className="font-semibold text-slate-900">{achievement.name}</h4>
+                        <p className="text-sm text-slate-600">{achievement.desc}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      {isUnlocked ? <Badge className="bg-green-500">✓ Unlocked</Badge> : null}
+                      <Badge variant="outline" className="text-xs">{getCategoryIcon(achievement.category)}</Badge>
                     </div>
                   </div>
 
-                  <div className="flex gap-1">
-                    {isUnlocked && <Badge className="bg-green-500">✓ Unlocked</Badge>}
-                    <Badge variant="outline" className="text-xs">
-                      {getCategoryIcon(achievement.category)}
-                    </Badge>
+                  {!isUnlocked ? (
+                    <>
+                      <div className="mb-1 flex justify-between text-sm">
+                        <span>Progress</span>
+                        <span>{Math.round(progress)}%</span>
+                      </div>
+                      <Progress value={progress} className="mb-2" />
+                      <div className="mb-2 text-xs text-slate-500">
+                        Requirement: {formatDisplayLabel(achievement.requirement.type)} ({achievement.requirement.value})
+                      </div>
+                    </>
+                  ) : null}
+
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-medium text-green-600">Reward: Memory + Almanac depth</div>
+                    {canClaim ? (
+                      <Button onClick={() => claimAchievement(achievement.id)} size="sm">
+                        Claim
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        </Tabs>
+      </TabSection>
 
-                {!isUnlocked && (
-                  <>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Progress</span>
-                      <span>{Math.round(progress)}%</span>
-                    </div>
-
-                    <Progress value={progress} className="mb-2" />
-
-                    <div className="text-xs text-gray-500 mb-2">
-                      Requirement: {formatDisplayLabel(achievement.requirement.type)} ({achievement.requirement.value})
-                    </div>
-                  </>
-                )}
-
-                <div className="flex justify-between items-center">
-                  <div className="text-sm text-green-600 font-medium">
-                    Reward: Memory + Almanac depth
-                  </div>
-
-                  {canClaim && (
-                    <Button
-                      onClick={() => claimAchievement(achievement.id)}
-                      size="sm"
-                    >
-                      Claim
-                    </Button>
-                  )}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </Tabs>
-
-      {/* Achievement Statistics */}
-      <Card className="p-4 bg-slate-50/80">
-        <h4 className="font-semibold mb-3">📊 Achievement Statistics</h4>
-
+      <TabSection title="Achievement statistics" description="Category coverage and completion depth." tone="sky">
         <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
           {Object.entries(achievementStats.categories).map(([category, total]) => {
             const unlocked = ACHIEVEMENTS.filter(a => a.category === category && state.achievements.find(ua => ua.id === a.id)?.unlocked).length;
@@ -340,17 +326,14 @@ const AchievementsTab = memo(() => {
           <div className="text-lg font-bold text-orange-600">
             {achievementStats.completionRate}% Complete
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-slate-600">
             Keep playing to unlock more achievements!
           </div>
         </div>
-      </Card>
+      </TabSection>
 
-      {/* Recent Achievements */}
-      {state.achievements.filter(a => a.unlocked).length > 0 && (
-        <Card className="p-4 bg-white/90">
-          <h4 className="font-semibold mb-3">🎉 Recent Achievements</h4>
-
+      {state.achievements.filter(a => a.unlocked).length > 0 ? (
+        <TabSection title="Recent achievements" description="The latest milestones you have already locked in." tone="emerald">
           <div className="space-y-2">
             {state.achievements
               .filter(a => a.unlocked)
@@ -361,18 +344,18 @@ const AchievementsTab = memo(() => {
                 if (!achievementData) return null;
 
                 return (
-                  <div key={achievement.id} className="flex justify-between items-center p-2 bg-green-50 rounded">
+                  <div key={achievement.id} className="flex items-center justify-between rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5">
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{achievementData.icon}</span>
-                      <span className="font-medium">{achievementData.name}</span>
+                      <span className="font-medium text-slate-900">{achievementData.name}</span>
                     </div>
                     <span className="text-sm text-green-600">Memory + Almanac</span>
                   </div>
                 );
               })}
           </div>
-        </Card>
-      )}
+        </TabSection>
+      ) : null}
 
       <ScrapbookPanel
         chapters={MEMORY_CHAPTERS}

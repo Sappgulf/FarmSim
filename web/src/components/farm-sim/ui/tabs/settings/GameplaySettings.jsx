@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
-import { Card } from '../../../../ui/card';
 import { SettingToggleRow } from './SettingToggleRow';
+import { TabSection } from '../TabSurface';
 
 export const GameplaySettings = memo(({
   autoSaveEnabled,
@@ -93,16 +93,7 @@ export const GameplaySettings = memo(({
 
   return (
     <>
-      <Card className="overflow-hidden border-violet-200/70 bg-gradient-to-br from-white via-violet-50/30 to-slate-50 p-4">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-600">
-              Core
-            </div>
-            <h4 className="text-base font-semibold text-slate-900">Gameplay preferences</h4>
-          </div>
-        </div>
-
+      <TabSection title="Gameplay preferences" description="Core simulation and comfort settings." tone="violet" bodyClassName="space-y-3">
         <div className="space-y-3">
           {experienceRows.map((row) => (
             <SettingToggleRow
@@ -115,18 +106,9 @@ export const GameplaySettings = memo(({
             />
           ))}
         </div>
-      </Card>
+      </TabSection>
 
-      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-emerald-50/40 p-4">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600">
-              Guidance
-            </div>
-            <h4 className="text-base font-semibold text-slate-900">Assistance and polish</h4>
-          </div>
-        </div>
-
+      <TabSection title="Assistance and polish" description="Hints, overlays, and other supporting affordances." tone="sky" bodyClassName="space-y-3">
         <div className="space-y-3">
           {guidanceRows.map((row) => (
             <SettingToggleRow
@@ -139,7 +121,7 @@ export const GameplaySettings = memo(({
             />
           ))}
         </div>
-      </Card>
+      </TabSection>
     </>
   );
 });

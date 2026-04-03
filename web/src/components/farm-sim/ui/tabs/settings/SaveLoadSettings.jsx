@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
-import { Card } from '../../../../ui/card';
 import { Button } from '../../../../ui/button';
 import { Badge } from '../../../../ui/badge';
+import { TabSection } from '../TabSurface';
 
 export const SaveLoadSettings = memo(({
   handleSaveGame,
@@ -19,19 +19,12 @@ export const SaveLoadSettings = memo(({
   ];
 
   return (
-    <Card className="overflow-hidden border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-amber-50/30 p-4">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Save
-          </div>
-          <h4 className="text-base font-semibold text-slate-900">Save and load tools</h4>
-        </div>
-        <Badge variant="outline" className="bg-white/80 text-slate-600">
-          Safe
-        </Badge>
-      </div>
-
+    <TabSection
+      title="Save and load tools"
+      description="Move game state in and out without losing progress."
+      tone="slate"
+      action={<Badge variant="outline" className="bg-white/80 text-slate-600">Safe</Badge>}
+    >
       <div className="grid gap-2 sm:grid-cols-2">
         {actions.map((action) => (
           <Button
@@ -66,7 +59,7 @@ export const SaveLoadSettings = memo(({
           </div>
         </div>
       </div>
-    </Card>
+    </TabSection>
   );
 });
 

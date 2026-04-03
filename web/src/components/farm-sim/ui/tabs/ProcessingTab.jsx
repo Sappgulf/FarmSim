@@ -1,6 +1,5 @@
 import React, { memo, useState, useEffect } from 'react';
 import { useGame } from '../../context/GameContext';
-import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
@@ -440,40 +439,43 @@ const ProcessingTab = memo(() => {
             const owned = ownedFacilities.some(f => f.id === id);
             const isChain = !!facility.inputSource;
             return (
-              <Card key={id} className={`overflow-hidden p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${owned ? 'border-emerald-200/70 bg-emerald-50/60' : 'border-slate-200/70 bg-white/90'}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
+              <div
+                key={id}
+                className={`rounded-[24px] border p-4 transition-all duration-200 hover:-translate-y-0.5 ${owned ? 'border-emerald-200/70 bg-emerald-50/60' : 'border-slate-200/70 bg-white/90'}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
                     <span className="text-2xl">{facility.emoji}</span>
-                    <div>
-                      <span className="font-medium text-slate-900">{facility.name}</span>
-                      {isChain && (
-                        <Badge variant="outline" className="ml-2 text-[10px] bg-purple-50 text-purple-700">Chain</Badge>
-                      )}
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium text-slate-900">{facility.name}</span>
+                        {isChain ? <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-700">Chain</Badge> : null}
+                      </div>
+                      <p className="text-sm text-slate-600">{facility.description}</p>
                     </div>
                   </div>
-                  {owned && <Badge className="bg-emerald-600 text-white">Owned</Badge>}
+                  {owned ? <Badge className="bg-emerald-600 text-white">Owned</Badge> : null}
                 </div>
-                <p className="mb-2 text-sm text-slate-600">{facility.description}</p>
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                <div className="mt-3 grid gap-2 text-xs text-slate-500 sm:grid-cols-3">
                   <span>Input: {facility.input === 'any' ? 'Any crop' : facility.input === 'any_fruit' ? 'Any fruit' : formatDisplayLabel(facility.input)}{isChain ? ' (processed)' : ''}</span>
                   <span>Output: {formatDisplayLabel(facility.output)}</span>
                   <span>Ratio: {facility.ratio}:1</span>
                 </div>
-                {!owned ? (
-                  <Button
-                    onClick={() => buyProcessingFacility(id)}
-                    size="sm"
-                    disabled={state.coins < facility.cost}
-                    className="w-full"
-                  >
-                    Buy ({facility.cost}🪙)
-                  </Button>
-                ) : (
-                  <div className="text-center text-sm font-medium text-emerald-700">
-                    ✓ Facility Owned
-                  </div>
-                )}
-              </Card>
+                <div className="mt-3">
+                  {!owned ? (
+                    <Button
+                      onClick={() => buyProcessingFacility(id)}
+                      size="sm"
+                      disabled={state.coins < facility.cost}
+                      className="w-full"
+                    >
+                      Buy ({facility.cost}🪙)
+                    </Button>
+                  ) : (
+                    <div className="text-center text-sm font-medium text-emerald-700">✓ Facility Owned</div>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
@@ -506,31 +508,30 @@ const ProcessingTab = memo(() => {
                   : facilityData.input === 'any' ? 'crop' : facilityData.input;
 
               return (
-                <Card key={facility.id} className={`overflow-hidden p-3 shadow-sm ${status.bgColor}`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
+                <div key={facility.id} className={`rounded-[24px] border p-4 ${status.bgColor}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
                       <span className="text-xl">{facilityData.emoji}</span>
-                      <div>
-                        <span className="font-medium text-slate-900">{facilityData.name}</span>
-                        <Badge variant="outline" className="ml-2 text-[10px] bg-white/80">
-                          Lv.{level} {tier.label}
-                        </Badge>
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium text-slate-900">{facilityData.name}</span>
+                          <Badge variant="outline" className="text-[10px] bg-white/80">
+                            Lv.{level} {tier.label}
+                          </Badge>
+                        </div>
+                        <div className={`text-xs font-medium ${status.color}`}>{status.status}</div>
                       </div>
                     </div>
-                    <Badge className={status.color}>
-                      {status.status}
-                    </Badge>
                   </div>
 
-                  {/* Level info */}
-                  <div className="mb-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
                     <span>Time: {effectiveTime}s</span>
                     <span>Value: x{getEffectiveValueMultiplier(facilityData.value_multiplier, level).toFixed(1)}</span>
                   </div>
 
-                  {facility.isProcessing && (
-                    <div className="mb-3">
-                      <div className="flex justify-between text-sm mb-1">
+                  {facility.isProcessing ? (
+                    <div className="mt-3">
+                      <div className="mb-1 flex justify-between text-sm">
                         <span>Processing: {formatDisplayLabel(facility.currentRecipe)}</span>
                         <span>{getTimeLeft(facility.finishTime)}</span>
                       </div>
@@ -539,22 +540,17 @@ const ProcessingTab = memo(() => {
                         className="h-2"
                       />
                     </div>
-                  )}
-
-                  {!facility.isProcessing && (
-                    <div className="flex gap-2">
+                  ) : (
+                    <div className="mt-3 flex gap-2">
                       <Button
                         onClick={() => startProcessing(facility.id)}
                         size="sm"
                         disabled={!canStartProcessing}
                         className="flex-1"
                       >
-                        {!canStartProcessing
-                          ? `Need ${facilityData.ratio} ${inputLabel}`
-                          : 'Start Processing'
-                        }
+                        {!canStartProcessing ? `Need ${facilityData.ratio} ${inputLabel}` : 'Start Processing'}
                       </Button>
-                      {canUpgrade && (
+                      {canUpgrade ? (
                         <Button
                           onClick={() => upgradeFacility(facility.id)}
                           size="sm"
@@ -564,10 +560,10 @@ const ProcessingTab = memo(() => {
                         >
                           ⬆ Upgrade ({upgradeCost}🪙)
                         </Button>
-                      )}
+                      ) : null}
                     </div>
                   )}
-                </Card>
+                </div>
               );
             })}
           </div>
@@ -590,21 +586,19 @@ const ProcessingTab = memo(() => {
         >
           <div className="space-y-2">
             {processingQueue.map(item => (
-              <Card key={item.id} className="border-slate-200/70 bg-white/90 p-2 shadow-sm">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <span className="font-medium text-slate-900">{formatDisplayLabel(item.output)}</span>
-                    <span className="ml-2 text-sm text-slate-600">(x{item.quantity})</span>
-                  </div>
-                  {Date.now() >= item.finishTime ? (
-                    <Button onClick={() => collectProcessedItem(item.id)} size="sm">
-                      Collect
-                    </Button>
-                  ) : (
-                    <span className="text-sm text-gray-500">{getTimeLeft(item.finishTime)}</span>
-                  )}
+              <div key={item.id} className="flex items-center justify-between gap-3 rounded-[20px] border border-slate-200/70 bg-white/90 px-3 py-2.5">
+                <div>
+                  <span className="font-medium text-slate-900">{formatDisplayLabel(item.output)}</span>
+                  <span className="ml-2 text-sm text-slate-600">(x{item.quantity})</span>
                 </div>
-              </Card>
+                {Date.now() >= item.finishTime ? (
+                  <Button onClick={() => collectProcessedItem(item.id)} size="sm">
+                    Collect
+                  </Button>
+                ) : (
+                  <span className="text-sm text-gray-500">{getTimeLeft(item.finishTime)}</span>
+                )}
+              </div>
             ))}
           </div>
         </TabSection>
@@ -634,31 +628,27 @@ const ProcessingTab = memo(() => {
               const sellPrice = Math.floor(basePrice * (FACILITY_LEVELS[level]?.valueMultiplier || 1));
 
               return (
-                <Card key={product} className="border-slate-200/70 bg-white/90 p-3 shadow-sm">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                    <div>
-                      <span className="font-medium text-slate-900">{formatDisplayLabel(product)}</span>
-                      <span className="ml-2 text-sm text-slate-600">
-                        Stock: {quantity} • {sellPrice}🪙/ea
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={() => sellProcessedItem(product, 1)} size="sm" variant="outline">
-                        Sell 1
-                      </Button>
-                      <Button onClick={() => sellProcessedItem(product, Math.min(quantity, 5))} size="sm" variant="outline">
-                        Sell {Math.min(quantity, 5)}
-                      </Button>
-                      {quantity > 5 && (
-                        <Button onClick={() => sellProcessedItem(product, quantity)} size="sm" variant="outline">
-                          Sell All
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+              <div key={product} className="flex flex-col gap-3 rounded-[20px] border border-slate-200/70 bg-white/90 p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <span className="font-medium text-slate-900">{formatDisplayLabel(product)}</span>
+                  <span className="ml-2 text-sm text-slate-600">Stock: {quantity} • {sellPrice}🪙/ea</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={() => sellProcessedItem(product, 1)} size="sm" variant="outline">
+                    Sell 1
+                  </Button>
+                  <Button onClick={() => sellProcessedItem(product, Math.min(quantity, 5))} size="sm" variant="outline">
+                    Sell {Math.min(quantity, 5)}
+                  </Button>
+                  {quantity > 5 ? (
+                    <Button onClick={() => sellProcessedItem(product, quantity)} size="sm" variant="outline">
+                      Sell All
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
           </div>
         </TabSection>
       ) : (

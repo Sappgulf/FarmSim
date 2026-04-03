@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
-import { Card } from '../../../../ui/card';
 import { SettingToggleRow } from './SettingToggleRow';
+import { TabSection } from '../TabSurface';
 
 export const AudioSettings = memo(({
   soundEnabled,
@@ -31,16 +31,12 @@ export const AudioSettings = memo(({
 
   return (
     <>
-      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-slate-50 p-4">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600">
-              Audio
-            </div>
-            <h4 className="text-base font-semibold text-slate-900">Sound and music</h4>
-          </div>
-        </div>
-
+      <TabSection
+        title="Sound and music"
+        description="Action feedback, seasonal music, and mix levels."
+        tone="emerald"
+        bodyClassName="space-y-4"
+      >
         <div className="space-y-3">
           {rows.map((row) => (
             <SettingToggleRow
@@ -53,19 +49,8 @@ export const AudioSettings = memo(({
             />
           ))}
         </div>
-      </Card>
 
-      <Card className="overflow-hidden border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-emerald-50/40 p-4">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Volume
-            </div>
-            <h4 className="text-base font-semibold text-slate-900">Fine-tune the mix</h4>
-          </div>
-        </div>
-
-        <div className="space-y-5">
+        <div className="space-y-5 border-t border-slate-200/70 pt-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <label htmlFor="sound-effects-volume" className="font-medium text-slate-800">
@@ -122,7 +107,7 @@ export const AudioSettings = memo(({
             </p>
           </div>
         </div>
-      </Card>
+      </TabSection>
     </>
   );
 });

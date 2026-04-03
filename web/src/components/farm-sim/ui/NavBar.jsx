@@ -182,18 +182,19 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
     }, [onSectionChange, onTabChange, showSubTabs]);
 
     return (
-        <nav className="bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-2xl mobile-scroll relative">
+        <nav className="relative overflow-hidden border-t border-white/70 bg-white/92 shadow-[0_-18px_42px_-28px_rgba(15,23,42,0.42)] backdrop-blur-xl mobile-scroll">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-300/70 to-transparent" />
             {activeSectionHasMultipleTabs && (
-                <div className="px-3 pt-2 pb-1 border-b border-gray-100/80 bg-gradient-to-r from-emerald-50/70 to-teal-50/60">
+                <div className="border-b border-white/70 bg-gradient-to-r from-emerald-50/80 via-white/70 to-teal-50/70 px-3 pt-2 pb-1">
                     <button
                         type="button"
                         onClick={() => setShowSubTabs((value) => !value)}
-                        className="w-full flex items-center justify-between gap-2 text-left rounded-lg px-2 py-1.5 hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60"
+                        className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left transition-colors hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60"
                         aria-expanded={showSubTabs}
                         aria-controls={`subtabs-${activeSection}`}
                         aria-label={`${activeSectionConfig.label} tabs: ${showSubTabs ? 'hide options' : 'show options'}`}
                     >
-                        <span className="text-[11px] text-emerald-900/90 font-semibold">
+                        <span className="text-[11px] font-semibold tracking-[0.12em] text-emerald-900/90 uppercase">
                             {activeSectionConfig.label} section: {activeTabInfo?.label || activeTab} ({activeSectionConfig.tabs.length} tabs)
                         </span>
                         <ChevronDown className={`icon-16 text-emerald-700 transition-transform ${showSubTabs ? 'rotate-180' : ''}`} aria-hidden="true" />
@@ -205,9 +206,9 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
             {showSubTabs && activeSectionHasMultipleTabs && (
                 <div
                     id={`subtabs-${activeSection}`}
-                    className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 px-2 py-2.5 animate-tab-slide-in"
+                    className="border-b border-white/70 bg-gradient-to-r from-slate-50 via-white to-emerald-50/60 px-2 py-2.5 animate-tab-slide-in"
                 >
-                    <div className="flex gap-1.5 overflow-x-auto scrollbar-smart scrollbar-gutter-stable">
+                    <div className="flex gap-1.5 overflow-x-auto rounded-2xl scrollbar-smart scrollbar-gutter-stable">
                         {activeSectionConfig.tabs.map(tabId => {
                             const tabInfo = TAB_INFO[tabId];
                             const isActive = activeTab === tabId;
@@ -221,11 +222,11 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                     aria-current={isActive ? 'page' : undefined}
                                     aria-label={tabInfo?.label || tabId}
                                     className={`
-                    flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold
+                    flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold
                     whitespace-nowrap transition-[transform,color,background-color,box-shadow,border-color] duration-200 touch-manipulation
                     ${isActive
-                                            ? 'bg-white text-emerald-700 shadow-md ring-1 ring-emerald-100'
-                                            : 'text-gray-600 hover:bg-white/70 hover:text-gray-800 active:scale-95'
+                                            ? 'border-emerald-100 bg-white text-emerald-700 shadow-[0_12px_24px_-18px_rgba(16,185,129,0.45)] ring-1 ring-emerald-100'
+                                            : 'border-transparent bg-white/50 text-gray-600 hover:bg-white/80 hover:text-gray-800 active:scale-95'
                                         }
                   `}
                                 >
@@ -244,7 +245,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
             )}
 
             {/* Main section buttons */}
-            <div className="flex justify-around items-center px-2 py-2 safe-area-pb">
+            <div className="flex items-stretch justify-around gap-1 px-2 py-2 safe-area-pb">
                 {sections.map(section => {
                     const isActive = activeSection === section.id;
                     const notifCount = getNotificationCount(section.id);
@@ -263,12 +264,11 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                             aria-controls={sectionHasMultipleTabs ? sectionSubTabsId : undefined}
                             aria-label={`${section.label}. ${section.description}${sectionHasMultipleTabs ? `, ${section.tabs.length} tabs` : ''}`}
                             className={`
-                relative flex flex-col items-center justify-center
-                min-w-[64px] min-h-[60px] px-2 py-1.5 rounded-2xl
+                relative flex min-w-[64px] flex-1 flex-col items-center justify-center rounded-[1.35rem] px-2 py-2
                 transition-[transform,color,background-color,box-shadow,border-color] duration-200 touch-manipulation
                 ${isActive
-                                    ? 'text-emerald-700 bg-gradient-to-br from-emerald-50 to-green-100 shadow-lg scale-105'
-                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 active:scale-95'
+                                    ? 'text-emerald-700 bg-gradient-to-br from-emerald-50 via-white to-green-100 shadow-[0_14px_30px_-20px_rgba(16,185,129,0.5)] ring-1 ring-emerald-100 scale-[1.02]'
+                                    : 'text-gray-500 hover:bg-slate-50 hover:text-gray-700 active:scale-95'
                                 }
               `}
                         >
@@ -280,11 +280,11 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                     fallbackEmoji={section.emoji}
                                 />
                             </span>
-                            <span className={`text-[11px] mt-0.5 font-semibold ${isActive ? 'text-emerald-700' : 'text-gray-500'}`}>
+                            <span className={`mt-0.5 text-[11px] font-semibold ${isActive ? 'text-emerald-700' : 'text-gray-500'}`}>
                                 {section.label}
                             </span>
                             {sectionHasMultipleTabs && (
-                                <span className={`text-[9px] leading-none mt-0.5 ${isActive ? 'text-emerald-600' : 'text-gray-400'}`}>
+                                <span className={`mt-0.5 text-[9px] leading-none ${isActive ? 'text-emerald-600' : 'text-gray-400'}`}>
                                     {sectionSubTabsVisible ? 'Hide' : `${section.tabs.length} tabs`}
                                 </span>
                             )}

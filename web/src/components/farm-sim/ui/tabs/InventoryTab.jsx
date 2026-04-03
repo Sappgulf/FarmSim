@@ -1,6 +1,5 @@
 import React, { memo, useMemo } from 'react';
 import { useGame } from '../../context/GameContext';
-import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Button } from '../../../ui/button';
 import { DECORATION_DATA } from '../../constants/decorData';
@@ -178,19 +177,12 @@ const InventoryTab = memo(() => {
       </TabHero>
 
       {dailyFocus?.crop && (
-        <Card className="overflow-hidden border-amber-200/70 bg-slate-50/80 p-4 shadow-sm animate-fade-in">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h4 className="font-semibold text-slate-900">Daily market focus</h4>
-              <p className="text-sm text-slate-600">
-                Sell {dailyFocus.crop.emoji} {dailyFocus.crop.name} for +{Math.round((dailyFocus.bonusMultiplier - 1) * 100)}% today.
-              </p>
-            </div>
-            <Badge className="bg-amber-600 text-white">
-              +{Math.round((dailyFocus.bonusMultiplier - 1) * 100)}%
-            </Badge>
-          </div>
-        </Card>
+        <TabSection
+          title="Daily market focus"
+          description={`Sell ${dailyFocus.crop.emoji} ${dailyFocus.crop.name} for +${Math.round((dailyFocus.bonusMultiplier - 1) * 100)}% today.`}
+          tone="amber"
+          action={<Badge className="bg-amber-600 text-white">+{Math.round((dailyFocus.bonusMultiplier - 1) * 100)}%</Badge>}
+        />
       )}
 
       {/* Crops & Quick Sell */}

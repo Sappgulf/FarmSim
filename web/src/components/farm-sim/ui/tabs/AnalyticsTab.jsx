@@ -1,9 +1,9 @@
 import React, { memo, useMemo } from 'react';
 import { useGame } from '../../context/GameContext';
 import { CROP_DATA } from '../../constants/cropData';
-import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
-import { TrendingUp, TrendingDown, DollarSign, Zap, Award, BarChart3, PieChart } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Zap, Award, PieChart } from 'lucide-react';
+import { TabHero, TabSection } from './TabSurface';
 
 /**
  * Farm Analytics Dashboard
@@ -20,31 +20,25 @@ const COLOR_CLASSES = {
 const StatCard = memo(({ icon: Icon, label, value, change, trend, color = 'blue' }) => {
   const cls = COLOR_CLASSES[color] || COLOR_CLASSES.blue;
   return (
-    <Card className={`p-4 border-l-4 ${cls.border}`}>
-      <div className="flex items-center justify-between">
+    <div className={`rounded-[24px] border border-slate-200/60 bg-white/82 p-4 shadow-[0_8px_18px_-20px_rgba(15,23,42,0.18)] ${cls.border}`}>
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className={`p-2 ${cls.bg} rounded-lg`}>
-            <Icon className={`w-5 h-5 ${cls.text}`} />
+          <div className={`rounded-[16px] p-2 ${cls.bg}`}>
+            <Icon className={`h-5 w-5 ${cls.text}`} />
           </div>
           <div>
-            <p className="text-sm text-gray-600">{label}</p>
-            <p className="text-2xl font-bold text-gray-900 tabular-nums">{value}</p>
-            {change !== undefined && (
-              <div className="flex items-center gap-1 mt-1">
-                {trend === 'up' ? (
-                  <TrendingUp className="w-3 h-3 text-green-600" />
-                ) : (
-                  <TrendingDown className="w-3 h-3 text-red-600" />
-                )}
-                <span className={`text-xs ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                  {change}
-                </span>
+            <p className="text-sm text-slate-600">{label}</p>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">{value}</p>
+            {change !== undefined ? (
+              <div className="mt-1 flex items-center gap-1">
+                {trend === 'up' ? <TrendingUp className="h-3 w-3 text-green-600" /> : <TrendingDown className="h-3 w-3 text-red-600" />}
+                <span className={`text-xs ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>{change}</span>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 });
 
@@ -212,268 +206,145 @@ const AnalyticsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      <Card className="overflow-hidden border-slate-900/10 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 p-5 text-white shadow-2xl">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
-              <BarChart3 className="h-3.5 w-3.5" />
-              Analytics
-            </div>
-            <div>
-              <h3 className="text-2xl font-semibold tracking-tight text-white">
-                Farm performance dashboard
-              </h3>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/70">
-                Real-time metrics, stock value, and recommendations drawn directly from the live farm state.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-2 lg:min-w-[280px] lg:grid-cols-1">
-            <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-white/60">Live snapshot</div>
-              <div className="mt-1 flex items-end justify-between gap-3">
-                <div>
-                  <div className="text-3xl font-bold tabular-nums text-white">{overallScore}</div>
-                  <div className="text-sm text-white/70">{overallStatus}</div>
-                </div>
-                <Badge variant="outline" className="border-white/20 bg-white/10 text-white">
-                  Current
-                </Badge>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-white/60">Snapshot note</div>
-              <p className="mt-1 text-sm leading-relaxed text-white/75">
-                Plot usage, stock health, diversity, and buildings are weighted into the overall score.
-              </p>
-            </div>
-          </div>
+      <TabHero
+        icon="📊"
+        tone="emerald"
+        title="Farm performance"
+        description="Live metrics, stock value, and directional notes from the active save."
+        badge={<Badge variant="outline" className="border-white/20 bg-white/10 text-white">{overallScore} score</Badge>}
+      >
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard icon={DollarSign} label="Total Coins" value={analytics.progression.coins.toLocaleString()} color="green" />
+          <StatCard icon={Award} label="Harvested" value={analytics.performance.totalHarvests.toLocaleString()} color="yellow" />
+          <StatCard icon={PieChart} label="Stock Value" value={`${analytics.performance.totalStockValue.toLocaleString()}🪙`} color="blue" />
+          <StatCard icon={Zap} label="Days Played" value={analytics.performance.daysPlayed.toLocaleString()} color="purple" />
         </div>
-      </Card>
+      </TabHero>
 
-      {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={DollarSign}
-          label="Total Coins"
-          value={analytics.progression.coins.toLocaleString()}
-          color="green"
-        />
-        <StatCard
-          icon={Award}
-          label="Harvested"
-          value={analytics.performance.totalHarvests.toLocaleString()}
-          color="yellow"
-        />
-        <StatCard
-          icon={PieChart}
-          label="Stock Value"
-          value={`${analytics.performance.totalStockValue.toLocaleString()}🪙`}
-          color="blue"
-        />
-        <StatCard
-          icon={Zap}
-          label="Days Played"
-          value={analytics.performance.daysPlayed.toLocaleString()}
-          color="purple"
-        />
-      </div>
-
-      {/* Insights & Recommendations */}
-      {insights.length > 0 && (
-        <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-rose-50/30 p-4">
-          <h4 className="mb-3 flex items-center gap-2 font-semibold text-slate-900">
-            <Award className="h-4 w-4 text-amber-600" />
-            Insights and recommendations
-          </h4>
+      {insights.length > 0 ? (
+        <TabSection title="Insights and recommendations" description="The fastest ways to improve the farm right now." tone="amber">
           <div className="space-y-2">
             {insights.map((insight, idx) => (
               <div
                 key={idx}
-                className={`rounded-2xl border p-3 shadow-sm ${
-                  insight.type === 'success' ? 'bg-green-50 border-green-500' :
-                  insight.type === 'warning' ? 'bg-yellow-50 border-yellow-500' :
-                  insight.type === 'error' ? 'bg-red-50 border-red-500' :
-                  'bg-blue-50 border-blue-500'
+                className={`rounded-[20px] border px-3 py-2.5 text-sm ${
+                  insight.type === 'success' ? 'border-green-200 bg-green-50/70'
+                    : insight.type === 'warning' ? 'border-yellow-200 bg-yellow-50/70'
+                      : insight.type === 'error' ? 'border-red-200 bg-red-50/70'
+                        : 'border-blue-200 bg-blue-50/70'
                 }`}
               >
-                <p className="text-sm">{insight.message}</p>
+                {insight.message}
               </div>
             ))}
           </div>
-        </Card>
-      )}
+        </TabSection>
+      ) : null}
 
-      {/* Detailed Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Plot Statistics */}
-        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-          <h4 className="mb-3 flex items-center gap-2 font-semibold text-slate-900">
-            <PieChart className="w-4 h-4" />
-            Plot statistics
-          </h4>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <TabSection title="Plot statistics" description="What the field layout looks like right now." tone="sky">
           <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Total Plots</span>
-              <Badge>{analytics.plots.total}</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Active Plots</span>
-              <Badge className="bg-green-600">{analytics.plots.active}</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Ready to Harvest</span>
-              <Badge className="bg-yellow-600">{analytics.plots.ready}</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Growing</span>
-              <Badge className="bg-blue-600">{analytics.plots.growing}</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Withered</span>
-              <Badge className="bg-red-600">{analytics.plots.withered}</Badge>
-            </div>
-            
-            {/* Visual Progress Bar */}
-            <div className="mt-4">
-              <div className="text-xs text-gray-600 mb-1">Plot Status Distribution</div>
-              <div className="h-4 bg-gray-200 rounded-full overflow-hidden flex">
-                <div 
-                  className="bg-yellow-500" 
-                  style={{ width: `${(analytics.plots.ready / analytics.plots.total) * 100}%` }}
-                  title="Ready"
-                />
-                <div 
-                  className="bg-green-500" 
-                  style={{ width: `${(analytics.plots.growing / analytics.plots.total) * 100}%` }}
-                  title="Growing"
-                />
-                <div 
-                  className="bg-red-500" 
-                  style={{ width: `${(analytics.plots.withered / analytics.plots.total) * 100}%` }}
-                  title="Withered"
-                />
+            {[
+              ['Total Plots', analytics.plots.total],
+              ['Active Plots', analytics.plots.active],
+              ['Ready to Harvest', analytics.plots.ready],
+              ['Growing', analytics.plots.growing],
+              ['Withered', analytics.plots.withered],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5">
+                <span className="text-sm text-slate-700">{label}</span>
+                <Badge className="bg-slate-900 text-white">{value}</Badge>
+              </div>
+            ))}
+            <div className="pt-1">
+              <div className="mb-1 text-xs text-slate-600">Plot Status Distribution</div>
+              <div className="flex h-4 overflow-hidden rounded-full bg-slate-200">
+                <div className="bg-yellow-500" style={{ width: `${(analytics.plots.ready / analytics.plots.total) * 100}%` }} title="Ready" />
+                <div className="bg-green-500" style={{ width: `${(analytics.plots.growing / analytics.plots.total) * 100}%` }} title="Growing" />
+                <div className="bg-red-500" style={{ width: `${(analytics.plots.withered / analytics.plots.total) * 100}%` }} title="Withered" />
               </div>
             </div>
           </div>
-        </Card>
+        </TabSection>
 
-        {/* Performance Metrics */}
-        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-          <h4 className="mb-3 font-semibold text-slate-900">Performance metrics</h4>
+        <TabSection title="Performance metrics" description="Stock and activity signals from the core loop." tone="slate">
           <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Total Harvests</span>
-              <span className="font-semibold">{analytics.performance.totalHarvests}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Stored Item Types</span>
-              <span className="font-semibold">{analytics.performance.stockTypeCount}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Stored Units</span>
-              <span className="font-semibold">{analytics.performance.totalStockUnits.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Stock Value</span>
-              <span className="font-semibold">{analytics.performance.totalStockValue.toLocaleString()}🪙</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Queued Batches</span>
-              <span className="font-semibold">{analytics.performance.queuedBatches}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Harvest Readiness</span>
-              <span className={`font-semibold ${analytics.performance.harvestReadiness > 70 ? 'text-green-600' : 'text-yellow-600'}`}>
-                {Math.round(analytics.performance.harvestReadiness)}%
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Crop Health Rate</span>
-              <span className={`font-semibold ${analytics.performance.healthRate > 90 ? 'text-green-600' : 'text-yellow-600'}`}>
-                {Math.round(analytics.performance.healthRate)}%
-              </span>
-            </div>
+            {[
+              ['Total Harvests', analytics.performance.totalHarvests],
+              ['Stored Item Types', analytics.performance.stockTypeCount],
+              ['Stored Units', analytics.performance.totalStockUnits.toLocaleString()],
+              ['Stock Value', `${analytics.performance.totalStockValue.toLocaleString()}🪙`],
+              ['Queued Batches', analytics.performance.queuedBatches],
+              ['Harvest Readiness', `${Math.round(analytics.performance.harvestReadiness)}%`],
+              ['Crop Health Rate', `${Math.round(analytics.performance.healthRate)}%`],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5">
+                <span className="text-sm text-slate-700">{label}</span>
+                <span className="font-semibold text-slate-900">{value}</span>
+              </div>
+            ))}
           </div>
-        </Card>
+        </TabSection>
+      </div>
 
-        {/* Top Performing Crops */}
-        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-          <h4 className="mb-3 font-semibold text-slate-900">Stored crops</h4>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <TabSection title="Stored crops" description="The biggest items currently in the bin." tone="emerald">
           {topCrops.length > 0 ? (
             <div className="space-y-2">
               {topCrops.map((crop, idx) => (
-                <div key={crop.id} className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-slate-50/80 p-2">
+                <div key={crop.id} className="flex items-center justify-between rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5">
                   <div className="flex items-center gap-2">
                     <Badge className="bg-amber-600 text-white">{idx + 1}</Badge>
-                    <span className="text-sm capitalize">{crop.id}</span>
+                    <span className="text-sm capitalize text-slate-700">{crop.id}</span>
                   </div>
-                  <span className="font-semibold">{crop.count} in stock</span>
+                  <span className="font-semibold text-slate-900">{crop.count} in stock</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500">No crops harvested yet. Start farming to see your top performers!</p>
+            <p className="text-sm text-slate-600">No crops harvested yet. Start farming to see your top performers.</p>
           )}
-        </Card>
+        </TabSection>
 
-        {/* Efficiency Scores */}
-        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-          <h4 className="mb-3 font-semibold text-slate-900">Efficiency scores</h4>
+        <TabSection title="Efficiency scores" description="Diversity, buildout, and weather pressure." tone="violet">
           <div className="space-y-3">
             <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm text-gray-600">Crop Diversity</span>
+              <div className="mb-1 flex justify-between">
+                <span className="text-sm text-slate-600">Crop Diversity</span>
                 <span className="text-sm font-semibold">{Math.round(analytics.efficiency.diversityScore)}%</span>
               </div>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
-                  style={{ width: `${analytics.efficiency.diversityScore}%` }}
-                />
+              <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500" style={{ width: `${analytics.efficiency.diversityScore}%` }} />
               </div>
             </div>
-            
             <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm text-gray-600">Building Progress</span>
+              <div className="mb-1 flex justify-between">
+                <span className="text-sm text-slate-600">Building Progress</span>
                 <span className="text-sm font-semibold">{Math.round(analytics.efficiency.buildingScore)}%</span>
               </div>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-500"
-                  style={{ width: `${analytics.efficiency.buildingScore}%` }}
-                />
+              <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                <div className="h-full bg-gradient-to-r from-green-500 to-emerald-500" style={{ width: `${analytics.efficiency.buildingScore}%` }} />
               </div>
             </div>
-            
-            <div className="pt-2 border-t">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Current Weather Impact</span>
-                <Badge className={
-                  analytics.efficiency.weatherImpact > 0 ? 'bg-green-600' :
-                  analytics.efficiency.weatherImpact < 0 ? 'bg-red-600' : 'bg-gray-600'
-                }>
-                  {analytics.efficiency.weatherImpact > 0 ? '+' : ''}{analytics.efficiency.weatherImpact}%
-                </Badge>
-              </div>
+            <div className="flex items-center justify-between rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5">
+              <span className="text-sm text-slate-600">Current Weather Impact</span>
+              <Badge className={analytics.efficiency.weatherImpact > 0 ? 'bg-green-600' : analytics.efficiency.weatherImpact < 0 ? 'bg-red-600' : 'bg-gray-600'}>
+                {analytics.efficiency.weatherImpact > 0 ? '+' : ''}{analytics.efficiency.weatherImpact}%
+              </Badge>
             </div>
           </div>
-        </Card>
+        </TabSection>
       </div>
 
-      {/* Overall Farm Score */}
-      <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-6">
+      <TabSection title="Overall farm score" description="A weighted view of utilization, health, diversity, and buildings." tone="amber">
         <div className="text-center">
-          <h4 className="mb-2 text-lg font-semibold text-slate-900">Overall farm score</h4>
-          <div className="text-5xl font-bold text-amber-600 mb-2 tabular-nums">{overallScore}</div>
-          <p className="text-sm text-gray-600">{overallStatus}</p>
-          <div className="mt-4 text-xs text-gray-500">
+          <div className="mb-2 text-5xl font-bold tabular-nums text-amber-600">{overallScore}</div>
+          <p className="text-sm text-slate-600">{overallStatus}</p>
+          <div className="mt-4 text-xs text-slate-500">
             Based on: Plot Utilization (30%), Health Rate (30%), Diversity (20%), Buildings (20%)
           </div>
         </div>
-      </Card>
+      </TabSection>
     </div>
   );
 });

@@ -7,10 +7,11 @@ import {
   createSavePayload,
   importSaveDataToStorage,
 } from '../../context/GamePersistence';
-import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { APP_VERSION, getReleaseModeLabel } from '../../../../config/release';
+import { START_SCREEN_STORAGE_KEY } from '../StartScreen';
+import { TabHero, TabSection, MetricTile } from './TabSurface';
 
 // Subcomponents
 import { AudioSettings } from './settings/AudioSettings';
@@ -307,6 +308,16 @@ const SettingsTab = memo(() => {
     addNotification('🎓 Tutorial reset! It will show again shortly.', 'success');
   }, [actions, addNotification]);
 
+  const handleResetStartScreen = useCallback(() => {
+    try {
+      window.localStorage.removeItem(START_SCREEN_STORAGE_KEY);
+      addNotification('🌱 Start screen will show again on the next reload.', 'success');
+      setTimeout(() => window.location.reload(), 900);
+    } catch (error) {
+      addNotification('Failed to reset start screen', 'error');
+    }
+  }, [addNotification]);
+
   const handleInstallApp = useCallback(() => {
     const prompt = window.__pwaInstallPrompt;
     if (prompt) {
@@ -324,18 +335,12 @@ const SettingsTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      <Card className="overflow-hidden border-violet-200/70 bg-gradient-to-br from-violet-50 via-white to-sky-50 p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-600">
-              Settings
-            </div>
-            <h3 className="text-lg font-semibold text-slate-900">Game controls</h3>
-            <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
-              Save routines, runtime controls, audio, and accessibility preferences all live in one place.
-            </p>
-          </div>
-
+      <TabHero
+        icon="⚙️"
+        tone="violet"
+        title="Game controls"
+        description="Save routines, runtime controls, audio, and accessibility live in one place."
+        badge={(
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="bg-white/80 text-slate-600">
               {paused ? 'Paused' : 'Running'}
@@ -347,45 +352,23 @@ const SettingsTab = memo(() => {
               Auto-save {autoSaveEnabled ? 'On' : 'Off'}
             </Badge>
           </div>
+        )}
+        actions={(
+          <Button
+            onClick={handleTogglePause}
+            variant={paused ? 'default' : 'outline'}
+            size="sm"
+          >
+            {paused ? 'Resume game' : 'Pause game'}
+          </Button>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile tone="violet" label="Status" value={paused ? 'Paused' : 'Live'} hint="Simulation state" icon={paused ? '⏸️' : '▶️'} />
+          <MetricTile tone="sky" label="Frame rate" value={fps} hint="Current simulation speed" icon="◌" />
+          <MetricTile tone="emerald" label="Autosave" value={autoSaveEnabled ? 'On' : 'Off'} hint="Background persistence" icon="💾" />
         </div>
-
-        <div className="mt-5 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Runtime
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <div>
-                <div className="font-medium text-slate-900">Game status</div>
-                <div className="text-sm text-slate-600">
-                  {paused ? 'Game is paused' : 'Game is running'}
-                </div>
-              </div>
-              <Button
-                onClick={handleTogglePause}
-                variant={paused ? 'default' : 'outline'}
-              >
-                {paused ? 'Resume' : 'Pause'}
-              </Button>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Performance
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <div>
-                <div className="font-medium text-slate-900">Frame rate</div>
-                <div className="text-sm text-slate-600">Current simulation speed</div>
-              </div>
-              <Badge variant="outline" className="bg-slate-50/80 text-slate-700">
-                {fps} FPS
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </Card>
+      </TabHero>
 
       <SaveLoadSettings
         handleSaveGame={handleSaveGame}
@@ -430,14 +413,11 @@ const SettingsTab = memo(() => {
 
       <GameStats />
 
-      <Card className="overflow-hidden border-blue-200/70 bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
-              Controls
-            </div>
-            <h4 className="text-base font-semibold text-slate-900">Keyboard shortcuts</h4>
-          </div>
+      <TabSection
+        title="Keyboard shortcuts"
+        description="Quick keys for the most common farm actions."
+        tone="sky"
+        action={(
           <Button
             onClick={handleToggleKeyboardShortcuts}
             variant={keyboardShortcutsEnabled ? 'default' : 'outline'}
@@ -445,12 +425,13 @@ const SettingsTab = memo(() => {
           >
             {keyboardShortcutsEnabled ? 'On' : 'Off'}
           </Button>
-        </div>
-
-        <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+        )}
+        bodyClassName="pt-4"
+      >
+        <div className="overflow-hidden rounded-[24px] border border-slate-200/60 bg-white/72">
           {[
             ['Switch Tabs', '1 – 9'],
-            ['Pause/Resume Game', 'Space'],
+            ['Pause / Resume', 'Space'],
             ['Fishing Controls', 'A / D'],
             ['Select Multiple Plots', 'Shift + Click'],
             ['Quick Save', 'Ctrl + S'],
@@ -458,25 +439,27 @@ const SettingsTab = memo(() => {
             ['Harvest All', 'H'],
             ['Fertilize All', 'F'],
             ['Treat Diseases', 'T'],
-          ].map(([label, shortcut]) => (
-            <div key={label} className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-sm">
+          ].map(([label, shortcut], index) => (
+            <div
+              key={label}
+              className={`flex items-center justify-between gap-3 px-3 py-2.5 text-sm ${
+                index !== 0 ? 'border-t border-slate-200/60' : ''
+              }`}
+            >
               <span className="text-slate-700">{label}</span>
-              <Badge variant="outline" className="font-mono bg-slate-50/80 text-slate-600">
+              <Badge variant="outline" className="font-mono bg-white/80 text-slate-600">
                 {shortcut}
               </Badge>
             </div>
           ))}
         </div>
-      </Card>
+      </TabSection>
 
-      <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/50 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-600">
-              Onboarding
-            </div>
-            <h4 className="text-base font-semibold text-slate-900">Tutorial reset</h4>
-          </div>
+      <TabSection
+        title="Tutorial reset"
+        description="Show the onboarding tutorial again if you want a fresh walkthrough."
+        tone="amber"
+        action={(
           <Button
             onClick={handleResetTutorial}
             variant="outline"
@@ -484,20 +467,29 @@ const SettingsTab = memo(() => {
           >
             Reset
           </Button>
-        </div>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">
-          Show the onboarding tutorial again if you want a fresh walkthrough.
-        </p>
-      </Card>
+        )}
+      />
 
-      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-indigo-50/40 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600">
-              Install
-            </div>
-            <h4 className="text-base font-semibold text-slate-900">Add to home screen</h4>
-          </div>
+      <TabSection
+        title="Start screen"
+        description="Clear the launch gate so the intro screen appears again on the next refresh."
+        tone="emerald"
+        action={(
+          <Button
+            onClick={handleResetStartScreen}
+            variant="outline"
+            size="sm"
+          >
+            Replay
+          </Button>
+        )}
+      />
+
+      <TabSection
+        title="Install"
+        description="Install FarmSim as a standalone app for a more immersive feel."
+        tone="sky"
+        action={(
           <Button
             onClick={handleInstallApp}
             variant="outline"
@@ -505,50 +497,45 @@ const SettingsTab = memo(() => {
           >
             Install
           </Button>
-        </div>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">
-          Install FarmSim as a standalone app for a more immersive feel.
-        </p>
-      </Card>
+        )}
+      />
 
-      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-green-50/40 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600">
-              About
-            </div>
-            <h4 className="text-base font-semibold text-slate-900">FarmSim</h4>
-          </div>
+      <TabSection
+        title="FarmSim"
+        description="A modular farm simulation with sound, background music, livestock, fishing, and a growing set of systems that can be tuned without losing the cozy feel."
+        tone="emerald"
+        action={(
           <Badge variant="outline" className="bg-white/80 text-slate-600">
             {getReleaseModeLabel()}
           </Badge>
-        </div>
-        <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-          <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-sm">
+        )}
+      >
+        <div className="grid gap-2 text-sm sm:grid-cols-2">
+          <div className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5">
             <div className="text-xs uppercase tracking-wide text-slate-500">Version</div>
             <div className="font-medium text-slate-900">{APP_VERSION}</div>
           </div>
-          <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-sm">
+          <div className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5">
             <div className="text-xs uppercase tracking-wide text-slate-500">Stack</div>
             <div className="font-medium text-slate-900">React + Vite + Tailwind CSS</div>
           </div>
         </div>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          A modular farm simulation with sound, background music, livestock, fishing, and a growing set of systems that can be tuned without losing the cozy feel.
+          Built to stay cozy while supporting sound, music, livestock, fishing, and systems that can keep expanding without losing the mood.
         </p>
 
-        <div className="mt-4 border-t border-emerald-100 pt-4">
+        <div className="mt-4 border-t border-slate-200/70 pt-4">
           <p className="text-sm font-semibold text-emerald-800">Recent upgrades</p>
           <ul className="mt-2 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Weekly Operations milestone rewards</li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Streak-based challenge reward boosts</li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Daily Market Focus bonus crop loop</li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Reworked Daily Operations board with reroll</li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Sidebar mounts only active tab content</li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Notification Center with saved history</li>
+            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2">Weekly Operations milestone rewards</li>
+            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2">Streak-based challenge reward boosts</li>
+            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2">Daily Market Focus bonus crop loop</li>
+            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2">Reworked Daily Operations board with reroll</li>
+            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2">Sidebar mounts only active tab content</li>
+            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2">Notification Center with saved history</li>
           </ul>
         </div>
-      </Card>
+      </TabSection>
 
     </div>
   );

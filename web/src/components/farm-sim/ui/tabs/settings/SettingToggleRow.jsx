@@ -35,20 +35,16 @@ export const SettingToggleRow = memo(({
   className = '',
 }) => {
   return (
-    <div className={`flex items-start justify-between gap-4 rounded-2xl border border-slate-200/70 bg-white/75 px-4 py-3 shadow-sm ${className}`}>
-      <div className="min-w-0">
-        <div className="font-medium text-slate-900">{title}</div>
+    <div className={`group flex items-start justify-between gap-4 rounded-[20px] border border-slate-200/60 bg-white/66 px-4 py-3 transition-colors hover:bg-white/80 ${className}`}>
+      <div className="min-w-0 border-l-2 border-emerald-200 pl-3">
+        <div className="font-medium text-slate-950">{title}</div>
         {description && (
           <div className="text-sm leading-snug text-slate-600">
             {description}
           </div>
         )}
       </div>
-      <ToggleSwitch
-        enabled={enabled}
-        label={label || title}
-        onToggle={onToggle}
-      />
+      <ToggleSwitch enabled={enabled} label={label || title} onToggle={onToggle} />
     </div>
   );
 });

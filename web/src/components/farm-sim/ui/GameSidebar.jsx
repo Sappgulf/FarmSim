@@ -185,36 +185,58 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   const ActiveTabComponent = activeConfig.component;
 
   return (
-    <Card className="h-fit rounded-2xl shadow-lg border border-gray-100/50 overflow-hidden">
+    <Card className="h-fit overflow-hidden border border-white/70 bg-white/90 shadow-[0_20px_54px_-30px_rgba(15,23,42,0.48)]">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        {/* Tab Navigation - Premium styled scrollable grid */}
-        <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 p-2.5">
-          <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-smart scrollbar-gutter-stable">
-            {TAB_CONFIGS.map(tab => (
+        <div className="border-b border-white/70 bg-gradient-to-b from-slate-50/90 to-white px-3 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-emerald-700/70">
+                Section
+              </div>
+              <div className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
+                {activeConfig.label}
+              </div>
+              <div className="mt-1 text-sm leading-6 text-slate-600">
+                Use the grid below, or jump with keyboard shortcuts 1-9.
+              </div>
+            </div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-right shadow-sm">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-700/70">
+                Active tab
+              </div>
+              <div className="mt-1 text-sm font-semibold text-emerald-900">
+                {TAB_INFO[activeTab]?.label || activeConfig.label}
+              </div>
+            </div>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="mt-4 grid max-h-56 grid-cols-2 gap-1.5 overflow-y-auto rounded-2xl bg-white/60 p-1.5 scrollbar-smart scrollbar-gutter-stable">
+            {TAB_CONFIGS.map((tab) => (
               <button
                 type="button"
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 data-onboard={tab.id === 'events' ? 'events-tab' : undefined}
                 className={`
-                  text-xs px-2.5 py-2 rounded-lg transition-[transform,color,background-color,box-shadow,border-color] duration-200 text-left touch-manipulation
+                  flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-[transform,color,background-color,box-shadow,border-color] duration-200 touch-manipulation
                   ${activeTab === tab.id
-                    ? 'bg-white text-emerald-700 font-semibold shadow-md ring-1 ring-emerald-100 scale-[1.02]'
-                    : 'bg-transparent text-gray-600 hover:bg-white/70 hover:text-gray-900 active:scale-95'
+                    ? 'border-emerald-100 bg-white text-emerald-700 shadow-[0_10px_24px_-18px_rgba(16,185,129,0.45)] ring-1 ring-emerald-100 scale-[1.01]'
+                    : 'border-transparent bg-white/50 text-gray-600 hover:bg-white hover:text-gray-900 active:scale-95'
                   }
                 `}
               >
-                <span className="flex items-center gap-2">
+                <span className="flex-shrink-0">
                   {renderIcon(TAB_INFO[tab.id]?.icon, TAB_INFO[tab.id]?.emoji)}
-                  <span>{TAB_INFO[tab.id]?.label || tab.label}</span>
                 </span>
+                <span className="truncate">{TAB_INFO[tab.id]?.label || tab.label}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Active tab only: avoids creating all tab panels on each render. */}
-        <TabsContent key={activeConfig.id} value={activeConfig.id} className="mt-4">
+        <TabsContent key={activeConfig.id} value={activeConfig.id} className="mt-4 px-3">
           <Suspense fallback={<TabLoader />}>
             <TabWrapper>
               <ActiveTabComponent />
@@ -223,33 +245,24 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         </TabsContent>
       </Tabs>
 
-      {/* Quick Stats Footer - Premium styled */}
-      <div className="mt-4 p-3 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border border-gray-100/50">
-        <div className="grid grid-cols-4 gap-2 text-xs">
-          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
-            <div className="font-bold text-emerald-700 text-sm">
-              {inventoryCount}
-            </div>
+      <div className="mt-4 border-t border-white/70 bg-gradient-to-r from-slate-50/90 via-white to-emerald-50/70 p-3">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 text-xs">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm">
+            <div className="font-bold text-emerald-700 text-sm">{inventoryCount}</div>
             <div className="text-gray-500 text-xs font-medium">Items</div>
           </div>
-          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
-            <div className="font-bold text-amber-600 text-sm">
-              {builtCount}
-            </div>
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm">
+            <div className="font-bold text-amber-600 text-sm">{builtCount}</div>
             <div className="text-gray-500 text-xs font-medium">Built</div>
           </div>
-	          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
-	            <div className="font-bold text-blue-600 text-sm">
-	              {animalCount}
-	            </div>
-	            <div className="text-gray-500 text-xs font-medium">Animals</div>
-	          </div>
-	          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
-	            <div className="font-bold text-purple-600 text-sm">
-	              {reputation}
-	            </div>
-	            <div className="text-gray-500 text-xs font-medium">Rep</div>
-	          </div>
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm">
+            <div className="font-bold text-blue-600 text-sm">{animalCount}</div>
+            <div className="text-gray-500 text-xs font-medium">Animals</div>
+          </div>
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm">
+            <div className="font-bold text-purple-600 text-sm">{reputation}</div>
+            <div className="text-gray-500 text-xs font-medium">Rep</div>
+          </div>
         </div>
       </div>
     </Card>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 import FarmSim from '../components/farm-sim/core/FarmSim';
 import { GameProvider } from '../components/farm-sim/context/GameContext';
@@ -33,16 +33,15 @@ describe('FarmSim Smoke Test', () => {
             </GameProvider>
         );
 
-        // Check for main game elements
-        // We expect the Header, Grid, and Sidebar to be present
-        // Using simple text matchers for things likely to be in the UI
+        expect(screen.getByTestId('start-screen')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: /start farming/i }));
 
-        // Header usually shows coins/level
-        expect(screen.getByText(/Level 1/i)).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText(/Level 1/i)).toBeInTheDocument();
+        });
 
-        // Sidebar usually has tabs
-        expect(screen.getByText(/Farming/i)).toBeInTheDocument();
-        expect(screen.getByText(/Shop/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/Farming/i).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/Shop/i).length).toBeGreaterThan(0);
 
         // Check if plot grid rendered (might be harder to text-match, so we check existence)
         // Assuming plots have some identifiable role or class, or we just trust the text checks for now.

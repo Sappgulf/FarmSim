@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { GameProvider, useGameActions, useGameSelector, useGameStore } from '../context/GameContext';
 import { TickProvider } from '../context/TickContext';
 
@@ -15,6 +15,7 @@ import Tutorial from '../ui/Tutorial';
 import WhatsNewModal from '../ui/WhatsNewModal';
 import PremiumLockModal from '../ui/PremiumLockModal';
 import WeatherEffects from '../ui/WeatherEffects';
+import { StartScreen, START_SCREEN_STORAGE_KEY } from '../ui/StartScreen';
 import { logDebugAction } from '../../../utils/debugTools';
 import { getFarmTheme, getFarmThemeVars } from '../../../data/farmThemes';
 import { isDevelopmentMode, shouldShowDebugTools } from '../../../config/release';
@@ -70,6 +71,10 @@ export function FarmSimCore() {
   const [activeSection, setActiveSection] = useState('farm');
   const [activeTab, setActiveTab] = useState('farming');
   const [timePeriod, setTimePeriod] = useState('day');
+  const [showStartScreen, setShowStartScreen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(START_SCREEN_STORAGE_KEY) !== 'true';
+  });
 
   const computeTimePeriod = () => {
     const hour = new Date().getHours();
@@ -79,12 +84,12 @@ export function FarmSimCore() {
     return 'day';
   };
 
-  const findSectionForTab = (tabId) => (
+  const findSectionForTab = useCallback((tabId) => (
     Object.values(NAV_SECTIONS).find((section) => section.tabs.includes(tabId))?.id || null
-  );
+  ), []);
 
   // Handle section change
-  const handleSectionChange = (sectionId) => {
+  const handleSectionChange = useCallback((sectionId) => {
     setActiveSection(sectionId);
     logDebugAction('nav_section_change', { sectionId });
     // Auto-select first tab of section if not already in that section
@@ -92,10 +97,10 @@ export function FarmSimCore() {
     if (section && !section.tabs.includes(activeTab)) {
       setActiveTab(section.tabs[0]);
     }
-  };
+  }, [activeTab]);
 
   // Handle tab change
-  const handleTabChange = (tabId) => {
+  const handleTabChange = useCallback((tabId) => {
     setActiveTab(tabId);
     const sectionId = findSectionForTab(tabId);
     if (sectionId) {
@@ -105,7 +110,14 @@ export function FarmSimCore() {
     if (tabId === 'events') {
       actions.recordOnboardingEvent('board_open');
     }
-  };
+  }, [actions, findSectionForTab]);
+
+  const dismissStartScreen = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(START_SCREEN_STORAGE_KEY, 'true');
+    }
+    setShowStartScreen(false);
+  }, []);
 
   // Initialize systems ONCE - don't recreate on state changes!
   // We pass current state to update() method, so no need to recreate
@@ -509,6 +521,12 @@ export function FarmSimCore() {
       data-farm-theme={activeTheme.id}
       style={{ ...themeVars, filter: TIME_OF_DAY_VISUALS[timePeriod]?.filter || 'none' }}
     >
+      {showStartScreen && (
+        <StartScreen
+          onStart={dismissStartScreen}
+        />
+      )}
+
       <div
         className="pointer-events-none absolute inset-0 z-[1] transition-colors duration-700"
         style={{ backgroundColor: TIME_OF_DAY_VISUALS[timePeriod]?.tint || 'transparent' }}
@@ -586,8 +604,8 @@ export function FarmSimCore() {
       {/* Onboarding Tutorial (auto-shows for new players) */}
       <Tutorial />
 
-      {/* What's New modal (once per app version) */}
-      <WhatsNewModal />
+      {/* What's New should not interrupt the launch screen on first load. */}
+      {!showStartScreen && <WhatsNewModal />}
 
       {/* Premium lock modal (premium mode only) */}
       <PremiumLockModal />

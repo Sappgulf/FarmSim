@@ -1,10 +1,10 @@
 import React, { memo, useState, useEffect } from 'react';
 import { useGame } from '../../context/GameContext';
-import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { getWeatherMeta, normalizeWeatherType } from '../../constants/weatherData';
+import { TabHero, MetricTile, TabSection } from './TabSurface';
 
 // Weather prediction patterns from original system
 const WEATHER_PATTERNS = [
@@ -139,72 +139,40 @@ const WeatherTab = memo(() => {
 
   return (
     <div className="space-y-4">
-      {/* Current Weather Status */}
-      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-cyan-50/40 p-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600">Weather</div>
-            <h3 className="text-lg font-semibold text-slate-900">Current weather</h3>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-3xl">{getWeatherEmoji(state.weather)}</span>
-              <span className="text-lg font-medium">{currentWeatherMeta.label}</span>
-            </div>
-          </div>
-          <Badge variant="outline" className="bg-white/80 text-slate-600">
-            {weatherEffects.growth} Growth
-          </Badge>
+      <TabHero
+        icon={getWeatherEmoji(state.weather)}
+        tone="sky"
+        title="Current weather"
+        description={`Right now the farm reads as ${currentWeatherMeta.label.toLowerCase()}.`}
+        badge={<Badge variant="outline" className="bg-white/80 text-slate-600">{weatherEffects.growth} Growth</Badge>}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile tone="emerald" label="Growth Rate" value={weatherEffects.growth} hint="Crop speed effect" icon="🌿" />
+          <MetricTile tone="sky" label="Water Usage" value={weatherEffects.water} hint="Water demand shift" icon="💧" />
+          <MetricTile tone="rose" label="Disease Risk" value={weatherEffects.disease} hint="Health pressure" icon="⚠️" />
         </div>
-      </Card>
+      </TabHero>
 
-      {/* Weather Effects */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Weather effects</h4>
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div className="rounded-2xl border border-white/80 bg-green-50/80 p-3 text-center shadow-sm">
-            <div className="font-medium text-green-800">Growth Rate</div>
-            <div className="text-green-600">{weatherEffects.growth}</div>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-blue-50/80 p-3 text-center shadow-sm">
-            <div className="font-medium text-blue-800">Water Usage</div>
-            <div className="text-blue-600">{weatherEffects.water}</div>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-red-50/80 p-3 text-center shadow-sm">
-            <div className="font-medium text-red-800">Disease Risk</div>
-            <div className="text-red-600">{weatherEffects.disease}</div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Weather Forecast */}
-      {state.weatherForecast && state.weatherForecast.length > 0 && (
-        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-          <h4 className="mb-3 font-semibold text-slate-900">3-day forecast</h4>
-          <div className="flex gap-2">
+      {state.weatherForecast && state.weatherForecast.length > 0 ? (
+        <TabSection title="3-day forecast" description="The next few weather beats." tone="slate">
+          <div className="grid gap-2 sm:grid-cols-3">
             {state.weatherForecast.slice(0, 3).map((forecast, index) => (
-              <div key={index} className="flex-1 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-center shadow-sm">
+              <div key={index} className="rounded-[20px] border border-slate-200/60 bg-white/72 p-3 text-center">
                 <div className="text-lg">{getWeatherEmoji(forecast.type)}</div>
                 <div className="text-xs capitalize text-slate-600">{forecast.type}</div>
                 <div className="text-xs text-slate-500">{forecast.duration}s</div>
               </div>
             ))}
           </div>
-        </Card>
-      )}
+        </TabSection>
+      ) : null}
 
-      {/* Weather Prediction Game */}
-      <Card className="overflow-hidden border-violet-200/70 bg-gradient-to-br from-white via-violet-50/30 to-pink-50/40 p-4">
-        <div className="mb-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-600">Challenge</div>
-          <h4 className="font-semibold text-slate-900">Weather prediction</h4>
-        </div>
-
+      <TabSection title="Weather prediction" description="Read the pattern and call the next turn." tone="violet">
         {predictionGame.active ? (
           <div className="space-y-4">
             <div className="text-center">
               <div className="mb-2 text-sm text-violet-700">Predict the next weather pattern</div>
-
-              {/* Pattern Display */}
-              <div className="flex justify-center gap-2 mb-4">
+              <div className="mb-4 flex justify-center gap-2">
                 {predictionGame.currentPattern.map((weather, index) => (
                   <div key={index} className="flex flex-col items-center">
                     <span className="text-2xl">{getWeatherEmoji(weather)}</span>
@@ -216,15 +184,9 @@ const WeatherTab = memo(() => {
                   <span className="text-xs text-slate-600">?</span>
                 </div>
               </div>
-
-              {/* Hint */}
-              <div className="mb-4 text-xs italic text-slate-600">
-                💡 {predictionGame.hint}
-              </div>
-
-              {/* Prediction Buttons */}
-              {!predictionGame.result && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="mb-4 text-xs italic text-slate-600">💡 {predictionGame.hint}</div>
+              {!predictionGame.result ? (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {PREDICTION_OPTIONS.map(weather => (
                     <Button
                       key={weather}
@@ -237,12 +199,9 @@ const WeatherTab = memo(() => {
                     </Button>
                   ))}
                 </div>
-              )}
-
-              {/* Result */}
-              {predictionGame.result && (
-                <div className={`rounded-2xl border p-3 ${predictionGame.result.correct ? 'border-green-200 bg-green-50/80' : 'border-red-200 bg-red-50/80'}`}>
-                  <div className="text-lg mb-1">
+              ) : (
+                <div className={`rounded-[20px] border p-3 ${predictionGame.result.correct ? 'border-green-200 bg-green-50/80' : 'border-red-200 bg-red-50/80'}`}>
+                  <div className="mb-1 text-lg">
                     {predictionGame.result.correct ? '✅' : '❌'} {predictionGame.result.correct ? 'Correct!' : 'Wrong!'}
                   </div>
                   <div className="text-sm">
@@ -264,35 +223,33 @@ const WeatherTab = memo(() => {
             >
               🎮 Start Prediction Game
             </Button>
-            {(!state.weatherForecast || state.weatherForecast.length < 3) && (
-              <div className="text-xs text-slate-500">
-                Need 3+ weather history entries to play
-              </div>
-            )}
+            {(!state.weatherForecast || state.weatherForecast.length < 3) ? (
+              <div className="text-xs text-slate-500">Need 3+ weather history entries to play</div>
+            ) : null}
           </div>
         )}
-      </Card>
+      </TabSection>
 
-      {/* Weather Statistics */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Weather statistics</h4>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-center shadow-sm">
-            <div className="font-semibold text-gray-800">
-              {state.weatherForecast?.length || 0}
-            </div>
-            <div className="text-slate-600">Forecasts seen</div>
-          </div>
-          <div className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-center shadow-sm">
-            <div className="font-semibold text-gray-800">
-              {state.weatherForecast
-                ? state.weatherForecast.filter((f) => normalizeWeatherType(f.type) === normalizeWeatherType(state.weather)).length
-                : 0}
-            </div>
-            <div className="text-slate-600">Current streak</div>
-          </div>
+      <TabSection title="Weather statistics" description="A compact read on forecast familiarity." tone="slate">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <MetricTile
+            tone="sky"
+            label="Forecasts Seen"
+            value={state.weatherForecast?.length || 0}
+            hint="Weather history count"
+            icon="🛰️"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Current Streak"
+            value={state.weatherForecast
+              ? state.weatherForecast.filter((f) => normalizeWeatherType(f.type) === normalizeWeatherType(state.weather)).length
+              : 0}
+            hint="Matching forecast entries"
+            icon="🔥"
+          />
         </div>
-      </Card>
+      </TabSection>
     </div>
   );
 });

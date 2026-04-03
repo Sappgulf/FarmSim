@@ -1,53 +1,52 @@
 import React, { memo } from 'react';
-import { Card } from '../../../ui/card';
 
 const TONES = {
   emerald: {
-    shell: 'from-emerald-50 to-teal-50',
-    border: 'border-emerald-100',
+    shell: 'from-emerald-300 via-emerald-200 to-teal-200',
+    border: 'border-emerald-100/90',
     iconBg: 'bg-emerald-100',
     iconText: 'text-emerald-700',
-    title: 'text-emerald-900',
+    title: 'text-emerald-950',
     description: 'text-emerald-700',
   },
   sky: {
-    shell: 'from-sky-50 to-indigo-50',
-    border: 'border-sky-100',
+    shell: 'from-sky-300 via-sky-200 to-indigo-200',
+    border: 'border-sky-100/90',
     iconBg: 'bg-sky-100',
     iconText: 'text-sky-700',
-    title: 'text-sky-900',
+    title: 'text-sky-950',
     description: 'text-sky-700',
   },
   amber: {
-    shell: 'from-amber-50 to-orange-50',
-    border: 'border-amber-100',
+    shell: 'from-amber-300 via-amber-200 to-orange-200',
+    border: 'border-amber-100/90',
     iconBg: 'bg-amber-100',
     iconText: 'text-amber-700',
-    title: 'text-amber-900',
+    title: 'text-amber-950',
     description: 'text-amber-700',
   },
   violet: {
-    shell: 'from-violet-50 to-fuchsia-50',
-    border: 'border-violet-100',
+    shell: 'from-violet-300 via-violet-200 to-fuchsia-200',
+    border: 'border-violet-100/90',
     iconBg: 'bg-violet-100',
     iconText: 'text-violet-700',
-    title: 'text-violet-900',
+    title: 'text-violet-950',
     description: 'text-violet-700',
   },
   rose: {
-    shell: 'from-rose-50 to-pink-50',
-    border: 'border-rose-100',
+    shell: 'from-rose-300 via-rose-200 to-pink-200',
+    border: 'border-rose-100/90',
     iconBg: 'bg-rose-100',
     iconText: 'text-rose-700',
-    title: 'text-rose-900',
+    title: 'text-rose-950',
     description: 'text-rose-700',
   },
   slate: {
-    shell: 'from-slate-50 to-zinc-50',
-    border: 'border-slate-100',
+    shell: 'from-slate-300 via-slate-200 to-zinc-200',
+    border: 'border-slate-200/80',
     iconBg: 'bg-slate-100',
     iconText: 'text-slate-700',
-    title: 'text-slate-900',
+    title: 'text-slate-950',
     description: 'text-slate-700',
   },
 };
@@ -87,31 +86,35 @@ const METRIC_TONES = {
 
 const getTone = (tone, palette) => palette[tone] || palette.slate;
 
-export const TabSection = memo(({ title, description, tone = 'slate', action, children, className = '', bodyClassName = '' }) => {
+export const TabSection = memo(({ title, description, tone = 'slate', action, children, className = '', bodyClassName = '', ...props }) => {
   const theme = getTone(tone, TONES);
 
   return (
-    <Card className={`overflow-hidden border ${theme.border} bg-white/90 shadow-sm transition-shadow duration-200 hover:shadow-md animate-fade-in ${className}`}>
-      <div className={`flex flex-wrap items-start justify-between gap-3 border-b border-white/70 bg-gradient-to-r ${theme.shell} px-4 py-3`}>
+    <section className={`relative overflow-hidden rounded-[30px] border ${theme.border} bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,250,252,0.82))] shadow-[0_10px_26px_-24px_rgba(15,23,42,0.22)] animate-fade-in ${className}`} {...props}>
+      <div className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${theme.shell}`} />
+      <div className="pointer-events-none absolute -right-16 -top-12 h-32 w-32 rounded-full bg-white/40 blur-3xl" />
+      <div className={`flex flex-wrap items-start justify-between gap-3 border-b border-white/80 px-5 py-4`}>
         <div className="space-y-1">
-          <h4 className={`text-base font-semibold ${theme.title}`}>{title}</h4>
-          {description ? <p className={`text-sm ${theme.description}`}>{description}</p> : null}
+          <div className={`text-[10px] font-semibold uppercase tracking-[0.34em] ${theme.description} opacity-80`}>Section</div>
+          <h4 className={`text-base font-semibold tracking-tight ${theme.title}`}>{title}</h4>
+          {description ? <p className={`max-w-3xl text-sm leading-6 ${theme.description}`}>{description}</p> : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
-      <div className={`px-4 py-4 ${bodyClassName}`}>{children}</div>
-    </Card>
+      <div className={`px-5 py-5 ${bodyClassName}`}>{children}</div>
+    </section>
   );
 });
 
 TabSection.displayName = 'TabSection';
 
-export const TabEmptyState = memo(({ icon = '📭', title, description, tone = 'slate', action, className = '' }) => {
+export const TabEmptyState = memo(({ icon = '📭', title, description, tone = 'slate', action, className = '', ...props }) => {
   const theme = getTone(tone, TONES);
 
   return (
-    <div className={`rounded-2xl border ${theme.border} bg-white/90 px-4 py-5 text-center shadow-sm transition-transform duration-200 animate-fade-in ${className}`}>
-      <div className={`mx-auto grid h-12 w-12 place-items-center rounded-2xl ${theme.iconBg} ${theme.iconText} shadow-sm`}>
+    <div className={`relative overflow-hidden rounded-[24px] border ${theme.border} bg-white/82 px-4 py-5 text-center shadow-[0_8px_20px_-20px_rgba(15,23,42,0.2)] animate-fade-in ${className}`} {...props}>
+      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${theme.shell}`} />
+      <div className={`mx-auto grid h-12 w-12 place-items-center rounded-[18px] ${theme.iconBg} ${theme.iconText}`}>
         <span className="text-xl leading-none">{icon}</span>
       </div>
       <div className={`mt-3 text-base font-semibold ${theme.title}`}>{title}</div>
@@ -123,50 +126,52 @@ export const TabEmptyState = memo(({ icon = '📭', title, description, tone = '
 
 TabEmptyState.displayName = 'TabEmptyState';
 
-export const TabHero = memo(({ icon, title, description, tone = 'slate', badge, actions, children, className = '' }) => {
+export const TabHero = memo(({ icon, title, description, tone = 'slate', badge, actions, children, className = '', ...props }) => {
   const theme = getTone(tone, TONES);
 
   return (
-    <Card className={`overflow-hidden border ${theme.border} shadow-sm transition-shadow duration-200 hover:shadow-md animate-fade-in ${className}`}>
-      <div className={`bg-gradient-to-r ${theme.shell} px-4 py-4`}>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            {icon ? (
-              <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${theme.iconBg} ${theme.iconText} shadow-sm`}>
-                <span className="text-lg leading-none">{icon}</span>
-              </div>
-            ) : null}
-            <div className="space-y-1">
-              <h3 className={`text-lg font-semibold ${theme.title}`}>{title}</h3>
-              <p className={`text-sm ${theme.description}`}>{description}</p>
+    <section className={`relative overflow-hidden rounded-[34px] border ${theme.border} bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(248,250,252,0.86))] shadow-[0_12px_28px_-26px_rgba(15,23,42,0.22)] animate-fade-in ${className}`} {...props}>
+      <div className={`absolute inset-x-0 top-0 h-[4px] bg-gradient-to-r ${theme.shell}`} />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.8),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(16,185,129,0.05),_transparent_34%)]" />
+      <div className="relative grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)] lg:items-end">
+        <div className="flex items-start gap-4">
+          {icon ? (
+            <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-[18px] ${theme.iconBg} ${theme.iconText}`}>
+              <span className="text-lg leading-none">{icon}</span>
             </div>
-          </div>
-
-          <div className="flex flex-col items-end gap-2 text-right">
-            {badge}
-            {actions}
+          ) : null}
+          <div className="space-y-1">
+            <div className={`text-[10px] font-semibold uppercase tracking-[0.34em] ${theme.description} opacity-80`}>Overview</div>
+            <h3 className={`text-xl font-semibold tracking-tight ${theme.title}`}>{title}</h3>
+            <p className={`max-w-2xl text-sm leading-6 ${theme.description}`}>{description}</p>
           </div>
         </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 lg:justify-end lg:text-right">
+          {badge}
+          {actions}
+        </div>
       </div>
-      {children ? <div className="border-t border-white/70 bg-white/75 px-4 py-4">{children}</div> : null}
-    </Card>
+      {children ? <div className="relative border-t border-white/80 px-5 py-5">{children}</div> : null}
+    </section>
   );
 });
 
 TabHero.displayName = 'TabHero';
 
-export const MetricTile = memo(({ label, value, hint, tone = 'slate', icon, className = '' }) => {
+export const MetricTile = memo(({ label, value, hint, tone = 'slate', icon, className = '', ...props }) => {
   const theme = getTone(tone, METRIC_TONES);
 
   return (
-    <div className={`rounded-2xl border border-white/70 bg-white/90 px-3 py-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md animate-fade-in ${className}`}>
+    <div className={`relative overflow-hidden rounded-[22px] border border-slate-200/60 bg-white/80 px-4 py-3 shadow-[0_8px_18px_-20px_rgba(15,23,42,0.18)] animate-fade-in ${className}`} {...props}>
+      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${theme.chip}`} />
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className={`text-[11px] font-semibold uppercase tracking-wide ${theme.label}`}>{label}</div>
-          <div className={`mt-1 text-lg font-semibold leading-none ${theme.value}`}>{value}</div>
+          <div className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${theme.label}`}>{label}</div>
+          <div className={`mt-1 text-2xl font-semibold leading-none ${theme.value}`}>{value}</div>
         </div>
         {icon ? (
-          <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${theme.chip}`}>
+          <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-[14px] ${theme.chip}`}>
             <span className="text-sm leading-none">{icon}</span>
           </div>
         ) : null}

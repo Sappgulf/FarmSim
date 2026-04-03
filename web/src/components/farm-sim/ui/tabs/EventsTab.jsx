@@ -1,6 +1,5 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '../../context/GameContext';
-import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
@@ -16,7 +15,7 @@ import { getWeekKey } from '../../../../utils/retention';
 import { getDifficultyModifier, getProgressionBand } from '../../systems/progression';
 import PerfectHarvestModal from '../minigames/PerfectHarvestModal';
 import FarmCardShareButton from '../FarmCardShareButton';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 const FALLBACK_RULE_SET = {
   id: 'fallback_rule',
@@ -434,7 +433,7 @@ const EventsTab = memo(() => {
         title="Events Board"
         description="Seasonal events, town-board prompts, and small daily reasons to return."
         badge={(
-          <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
+          <Badge variant="outline" className="border-amber-200 bg-white/80 text-amber-700">
             {seasonEvents.length} seasonal events
           </Badge>
         )}
@@ -464,13 +463,12 @@ const EventsTab = memo(() => {
         </div>
       </TabHero>
 
-      {newPackHighlights.length > 0 && (
-        <Card className="overflow-hidden border-rose-200/70 bg-gradient-to-br from-white via-rose-50/30 to-amber-50/40 p-4" data-qa="whats-new-card">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">{whatsNewTitle}</h3>
-              <p className="text-sm text-slate-600">Season packs just landed on the Town Board.</p>
-            </div>
+      {newPackHighlights.length > 0 ? (
+        <TabSection
+          title={whatsNewTitle}
+          description="Season packs just landed on the Town Board."
+          tone="rose"
+          action={(
             <div className="flex flex-col items-end gap-2">
               <Badge variant="outline" className="bg-white/80 text-slate-600">
                 {newPackHighlights.length} Pack{newPackHighlights.length > 1 ? 's' : ''}
@@ -484,31 +482,33 @@ const EventsTab = memo(() => {
                 Dismiss
               </Button>
             </div>
-          </div>
-          <div className="mt-3 space-y-3 text-sm text-slate-700">
+          )}
+          data-qa="whats-new-card"
+        >
+          <div className="space-y-4">
             {newPackHighlights.map((highlight, index) => (
-              <div key={`${highlight.packName}-${index}`}>
-                <div className="font-semibold text-rose-700">{highlight.packName}</div>
-                <ul className="list-disc list-inside space-y-1">
+              <div key={`${highlight.packName}-${index}`} className="grid gap-2 border-b border-rose-100/70 pb-3 last:border-0 last:pb-0">
+                <div className="text-sm font-semibold text-rose-700">{highlight.packName}</div>
+                <ul className="grid gap-1 text-sm text-slate-700">
                   {highlight.items.map((item) => (
-                    <li key={item}>{item}</li>
+                    <li key={item} className="flex items-start gap-2">
+                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-rose-300" />
+                      <span>{item}</span>
+                    </li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-        </Card>
-      )}
+        </TabSection>
+      ) : null}
 
-      {showWelcomeBack && (
-        <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-rose-50/40 p-4" data-qa="welcome-back-card">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">Welcome back</h3>
-              <p className="text-sm text-slate-600">
-                Last time: Day {lastSeenDayCount}, {lastSeenSeason.charAt(0).toUpperCase() + lastSeenSeason.slice(1)}
-              </p>
-            </div>
+      {showWelcomeBack ? (
+        <TabSection
+          title="Welcome back"
+          description={`Last time: Day ${lastSeenDayCount}, ${lastSeenSeason.charAt(0).toUpperCase() + lastSeenSeason.slice(1)}`}
+          tone="amber"
+          action={(
             <Button
               size="sm"
               variant="outline"
@@ -518,235 +518,211 @@ const EventsTab = memo(() => {
             >
               Dismiss
             </Button>
-          </div>
-          <div className="mt-3 space-y-2 text-sm text-slate-700">
+          )}
+          data-qa="welcome-back-card"
+        >
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:items-start">
             <div>
               <div className="text-[11px] uppercase tracking-wide text-amber-600">Since then</div>
               {sinceThenHighlights.length > 0 ? (
-                <ul className="mt-1 space-y-1">
+                <ul className="mt-2 grid gap-2 text-sm text-slate-700">
                   {sinceThenHighlights.map((item) => (
                     <li key={item} className="flex items-start gap-2">
-                      <span className="text-base">•</span>
+                      <span className="text-amber-400">•</span>
                       <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <div className="mt-1 text-xs text-amber-700">Your farm is calm and ready for a gentle return.</div>
+                <p className="mt-2 text-sm text-amber-700">Your farm is calm and ready for a gentle return.</p>
               )}
             </div>
-            <div className="text-xs text-amber-700">
-              <span className="font-semibold">Next cozy thing:</span> {cozySuggestion}
+            <div className="rounded-[22px] border border-amber-100/80 bg-white/72 px-4 py-3 text-sm text-slate-700">
+              <div className="text-[11px] uppercase tracking-wide text-amber-600">Next cozy thing</div>
+              <p className="mt-1 leading-6">{cozySuggestion}</p>
             </div>
           </div>
-        </Card>
-      )}
+        </TabSection>
+      ) : null}
 
-      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-amber-50/20 to-emerald-50/40 p-4" data-qa="daily-delight-card">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">Daily delight</h3>
-            <p className="text-sm text-slate-600">A tiny thank-you for stopping by.</p>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <TabSection
+          title="Daily delight"
+          description="A tiny thank-you for stopping by."
+          tone="emerald"
+          action={<Badge variant="outline" className="bg-white/80 text-slate-600">+{DAILY_DELIGHT_COINS}🪙</Badge>}
+          data-qa="daily-delight-card"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-700">
+              {dailyDelightClaimed ? 'Claimed for today. Come back tomorrow!' : 'Claim once per real-world day.'}
+            </p>
+            <Button
+              size="sm"
+              onClick={handleDailyDelightClaim}
+              disabled={dailyDelightClaimed}
+              data-qa="daily-delight-claim"
+            >
+              {dailyDelightClaimed ? 'Claimed' : 'Claim'}
+            </Button>
           </div>
-          <Badge variant="outline" className="bg-white/80 text-slate-600">
-            +{DAILY_DELIGHT_COINS}🪙
-          </Badge>
-        </div>
-        <div className="mt-3 flex flex-col gap-2 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            {dailyDelightClaimed
-              ? 'Claimed for today. Come back tomorrow!'
-              : 'Claim once per real-world day.'}
-          </div>
-          <Button
-            size="sm"
-            onClick={handleDailyDelightClaim}
-            disabled={dailyDelightClaimed}
-            data-qa="daily-delight-claim"
-          >
-            {dailyDelightClaimed ? 'Claimed' : 'Claim'}
-          </Button>
-        </div>
-      </Card>
+        </TabSection>
 
-      <Card className="overflow-hidden border-sky-200/70 bg-slate-50/80 p-4" data-qa="weekly-visits-card">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">Weekly visits</h3>
-            <p className="text-sm text-slate-600">Cosmetic-only thank-yous for gentle consistency.</p>
-          </div>
-          <Badge variant="outline" className="bg-white/80 text-slate-600">
-            {weeklyVisitCount} visit{weeklyVisitCount === 1 ? '' : 's'}
-          </Badge>
-        </div>
-        <div className="mt-3 text-xs text-slate-600">
-          Week window: {weeklyVisits.weekKey || currentWeekKey}
-        </div>
-        <div className="mt-3 space-y-2 text-sm text-slate-700">
-          {WEEKLY_VISIT_TIERS.map((tier) => {
-            const decor = content.decorById?.[tier.reward.decorId];
-            const rewardLabel = decor ? `${decor.emoji} ${decor.name}` : tier.label;
-            const isClaimed = weeklyClaimedTiers.has(tier.visits);
-            const isEligible = weeklyVisitCount >= tier.visits;
-            return (
-              <div key={tier.visits} className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="font-semibold text-sky-800">{tier.visits} visits</div>
-                  <div className="text-xs text-gray-600">Reward: {rewardLabel}</div>
-                </div>
-                <Button
-                  size="sm"
-                  variant={isEligible && !isClaimed ? 'default' : 'outline'}
-                  onClick={() => handleWeeklyRewardClaim(tier)}
-                  disabled={!isEligible || isClaimed}
-                  className="h-8 px-3 text-[11px]"
-                  data-qa={`weekly-visit-claim-${tier.visits}`}
-                >
-                  {isClaimed ? 'Claimed' : (isEligible ? 'Claim' : 'Locked')}
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      {(onboardingActive || isFirstDay) && (
-        <Card className="p-4 bg-slate-50/80 border-amber-200">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold text-amber-800">📌 Town Board</h3>
-              <p className="text-sm text-amber-700">Today’s Plan</p>
-            </div>
-            <Badge variant="outline" className="bg-amber-100 text-amber-700">
-              First Session
+        <TabSection
+          title="Weekly visits"
+          description="Cosmetic-only thank-yous for gentle consistency."
+          tone="sky"
+          action={(
+            <Badge variant="outline" className="bg-white/80 text-slate-600">
+              {weeklyVisitCount} visit{weeklyVisitCount === 1 ? '' : 's'}
             </Badge>
+          )}
+          data-qa="weekly-visits-card"
+        >
+          <div className="space-y-3">
+            <div className="text-xs text-slate-600">Week window: {weeklyVisits.weekKey || currentWeekKey}</div>
+            <div className="space-y-2">
+              {WEEKLY_VISIT_TIERS.map((tier) => {
+                const decor = content.decorById?.[tier.reward.decorId];
+                const rewardLabel = decor ? `${decor.emoji} ${decor.name}` : tier.label;
+                const isClaimed = weeklyClaimedTiers.has(tier.visits);
+                const isEligible = weeklyVisitCount >= tier.visits;
+                return (
+                  <div key={tier.visits} className="flex items-center justify-between gap-3 rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5">
+                    <div>
+                      <div className="font-semibold text-sky-800">{tier.visits} visits</div>
+                      <div className="text-xs text-slate-600">Reward: {rewardLabel}</div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={isEligible && !isClaimed ? 'default' : 'outline'}
+                      onClick={() => handleWeeklyRewardClaim(tier)}
+                      disabled={!isEligible || isClaimed}
+                      className="h-8 px-3 text-[11px]"
+                      data-qa={`weekly-visit-claim-${tier.visits}`}
+                    >
+                      {isClaimed ? 'Claimed' : (isEligible ? 'Claim' : 'Locked')}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+        </TabSection>
+      </div>
 
-          <div className="mt-3 space-y-2 text-sm text-gray-700">
+      {(onboardingActive || isFirstDay) ? (
+        <TabSection
+          title="Town Board"
+          description="Today’s plan for a fresh start."
+          tone="amber"
+          action={<Badge variant="outline" className="bg-amber-100 text-amber-700">First Session</Badge>}
+        >
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
             <div>
-              <div className="text-[11px] uppercase tracking-wide text-amber-600">Today’s Plan</div>
-              <ul className="mt-1 space-y-1">
+              <div className="text-[11px] uppercase tracking-wide text-amber-600">Today&apos;s Plan</div>
+              <div className="mt-2 space-y-2">
                 {planSuggestions.map((item) => (
-                  <li key={item.id} className="flex items-start gap-2">
-                    <span className="text-base">{item.emoji}</span>
+                  <div key={item.id} className="flex items-start gap-2 rounded-[18px] border border-amber-100/70 bg-white/72 px-3 py-2.5 text-sm text-slate-700">
+                    <span>{item.emoji}</span>
                     <span>{item.text}</span>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
-            <div className="text-xs text-amber-700">
-              <span className="font-semibold">You’re close to:</span> {closeToTeaser}
-            </div>
-            <div className="text-xs text-amber-700">
-              <span className="font-semibold">Shop Today:</span> {shopSnippet}
-            </div>
-            <div className="text-xs text-amber-700">
-              <span className="font-semibold">Vibe:</span> {vibeLine}
+            <div className="space-y-3 rounded-[22px] border border-amber-100/80 bg-white/72 px-4 py-3 text-sm text-slate-700">
+              <div><span className="font-semibold text-amber-800">You&apos;re close to:</span> {closeToTeaser}</div>
+              <div><span className="font-semibold text-amber-800">Shop today:</span> {shopSnippet}</div>
+              <div><span className="font-semibold text-amber-800">Vibe:</span> {vibeLine}</div>
             </div>
           </div>
-        </Card>
-      )}
+        </TabSection>
+      ) : null}
 
-      {cozyGoals.length > 0 && (
-        <Card className="p-4 bg-slate-50/80 border-amber-200">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold text-amber-800">🧺 Cozy Goals</h3>
-              <p className="text-sm text-amber-700">Optional prompts for a gentle direction.</p>
-            </div>
-            <Badge variant="outline" className="bg-amber-100 text-amber-700">
-              Optional
-            </Badge>
-          </div>
-          <div className="mt-3 space-y-2 text-sm text-gray-700">
+      {cozyGoals.length > 0 ? (
+        <TabSection
+          title="Cozy goals"
+          description="Optional prompts for a gentle direction."
+          tone="amber"
+          action={<Badge variant="outline" className="bg-amber-100 text-amber-700">Optional</Badge>}
+        >
+          <div className="space-y-2">
             {cozyGoals.map((goal) => {
               const isCompleted = completedCozyGoals.has(goal.id);
               return (
-                <div key={goal.id} className="flex items-start justify-between gap-3">
+                <div key={goal.id} className="flex items-center justify-between gap-3 rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5 text-sm text-slate-700">
                   <div className="flex items-start gap-2">
-                    <span className="text-base">{goal.emoji}</span>
+                    <span>{goal.emoji}</span>
                     <span>{goal.text}</span>
                   </div>
-                  {isCompleted && (
+                  {isCompleted ? (
                     <Badge variant="outline" className="bg-emerald-100 text-emerald-700 text-[10px]">
                       Complete
                     </Badge>
-                  )}
+                  ) : null}
                 </div>
               );
             })}
           </div>
-        </Card>
-      )}
+        </TabSection>
+      ) : null}
 
-      {weeklySpecialToday && (
-        <Card className="p-4 bg-slate-50/80 border-rose-200">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold text-rose-800">✨ Weekly Special Day</h3>
-              <p className="text-sm text-rose-700">{WEEKLY_SPECIAL_DAY.boardCopy}</p>
-            </div>
-            <Badge variant="outline" className="bg-rose-100 text-rose-700">Town Board</Badge>
-          </div>
-        </Card>
-      )}
+      {weeklySpecialToday ? (
+        <TabSection
+          title="Weekly special day"
+          description={WEEKLY_SPECIAL_DAY.boardCopy}
+          tone="rose"
+          action={<Badge variant="outline" className="bg-rose-100 text-rose-700">Town Board</Badge>}
+        />
+      ) : null}
 
-      {/* Town Board Insight */}
-      <Card className="p-4 bg-slate-50/80 border-amber-200">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-amber-800">📖 Almanac Insight</h3>
-            <p className="text-sm text-amber-700">Shared from the Town Board</p>
-          </div>
-          <Badge variant="outline" className="bg-amber-100 text-amber-700">
-            Almanac
-          </Badge>
-        </div>
-        <div className="mt-3 text-sm text-gray-700">
-          {almanacInsight
-            ? (
+      <div className="grid gap-4 xl:grid-cols-2">
+        <TabSection
+          title="Almanac insight"
+          description="Shared from the Town Board."
+          tone="amber"
+          action={<Badge variant="outline" className="bg-amber-100 text-amber-700">Almanac</Badge>}
+        >
+          <div className="text-sm leading-6 text-slate-700">
+            {almanacInsight ? (
               <>
-                <span className="font-semibold">{almanacInsight.page.title}:</span> {almanacInsight.text}
+                <span className="font-semibold text-amber-800">{almanacInsight.page.title}:</span> {almanacInsight.text}
               </>
-            )
-            : 'No Almanac pages yet. Keep farming to uncover gentle insights.'
-          }
-        </div>
-      </Card>
-
-      <Card className="p-4 border border-emerald-200 theme-card-surface">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold">📸 Share Farm</h3>
-            <p className="text-sm text-gray-600">
-              Export a Farm Card with today&apos;s spotlight and theme.
-            </p>
+            ) : (
+              'No Almanac pages yet. Keep farming to uncover gentle insights.'
+            )}
           </div>
-          <FarmCardShareButton size="sm" className="theme-accent-bg theme-accent-border border" />
-        </div>
-        <div className="mt-3 rounded-lg border border-emerald-100 bg-white/80 p-3 text-sm text-gray-700">
-          <div className="text-xs uppercase tracking-wide text-gray-500">Spotlight</div>
-          <div className="mt-1 font-semibold">{farmCardSpotlight.title}</div>
-          <div className="text-sm text-gray-600">{farmCardSpotlight.text}</div>
-          <div className="mt-2 text-xs text-gray-500">Current Title: <span className="font-semibold text-gray-700">{activeTitleName}</span></div>
-        </div>
-      </Card>
+        </TabSection>
 
-      <Card className="p-4 bg-gradient-to-r from-emerald-50 to-lime-50 border-emerald-200" data-qa="festival-game-card">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-emerald-800">
-              {activeRuleSet?.theme?.icon || '🏮'} {activeEvent ? 'Festival Game Live' : 'Town Board Challenge'}
-            </h3>
-            <p className="text-sm text-emerald-700">
-              {activeRuleSet?.instructions || 'Stop the marker in the sweet spot for a cozy reward.'}
-            </p>
+        <TabSection
+          title="Share farm"
+          description="Export a Farm Card with today&apos;s spotlight and theme."
+          tone="emerald"
+          action={<FarmCardShareButton size="sm" className="theme-accent-bg theme-accent-border border" />}
+        >
+          <div className="rounded-[22px] border border-emerald-100/80 bg-white/72 p-4 text-sm text-slate-700">
+            <div className="text-[11px] uppercase tracking-wide text-slate-500">Spotlight</div>
+            <div className="mt-1 font-semibold text-slate-900">{farmCardSpotlight.title}</div>
+            <div className="text-sm text-slate-600">{farmCardSpotlight.text}</div>
+            <div className="mt-2 text-xs text-slate-500">
+              Current Title: <span className="font-semibold text-slate-700">{activeTitleName}</span>
+            </div>
           </div>
+        </TabSection>
+      </div>
+
+      <TabSection
+        title={activeEvent ? 'Festival game live' : 'Town board challenge'}
+        description={activeRuleSet?.instructions || 'Stop the marker in the sweet spot for a cozy reward.'}
+        tone="emerald"
+        action={(
           <Badge variant="outline" className="bg-emerald-100 text-emerald-700">
             {activeEvent ? activeEvent.name : 'Daily'}
           </Badge>
-        </div>
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        )}
+        data-qa="festival-game-card"
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-xs text-emerald-700">
             {playLimitLabel} • {activeRuleSet?.rounds || 2} rounds
           </div>
@@ -771,31 +747,28 @@ const EventsTab = memo(() => {
             {canPlayFestivalGame ? 'Play Challenge' : 'Already Played'}
           </Button>
         </div>
-        {lastReward && (
-          <div className="mt-3 rounded-lg border border-emerald-100 bg-white/70 p-2 text-xs text-emerald-800">
+        {lastReward ? (
+          <div className="mt-3 rounded-[18px] border border-emerald-100/80 bg-white/72 px-3 py-2 text-xs text-emerald-800">
             Last result: <span className="font-semibold capitalize">{lastReward.tier}</span> •
             {' '}{lastReward.mode === 'festival' ? 'Festival' : 'Board'}
             {lastReward.text ? ` • ${lastReward.text}` : ''}
           </div>
-        )}
-      </Card>
+        ) : null}
+      </TabSection>
 
-      {/* Season Header */}
-      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-sky-50/40 p-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">Seasonal events</h3>
-            <p className="text-sm capitalize text-slate-600">
-              Current Season: {currentSeason} {currentSeason === 'spring' ? '🌸' :
-                                              currentSeason === 'summer' ? '☀️' :
-                                              currentSeason === 'autumn' ? '🍂' : '❄️'}
-            </p>
-          </div>
-          <Badge variant="outline" className="bg-white/80 text-slate-600">
-            {seasonEvents.length} Events Available
-          </Badge>
+      <TabSection
+        title="Seasonal events"
+        description={`Current season: ${currentSeason} ${currentSeason === 'spring' ? '🌸' : currentSeason === 'summer' ? '☀️' : currentSeason === 'autumn' ? '🍂' : '❄️'}`}
+        tone="emerald"
+        action={<Badge variant="outline" className="bg-white/80 text-slate-600">{seasonEvents.length} Events Available</Badge>}
+      >
+        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
+          <span>{seasonEvents.length} event{seasonEvents.length === 1 ? '' : 's'} ready now.</span>
+          <span className="rounded-full border border-emerald-100 bg-white/72 px-2.5 py-1 text-xs font-medium text-emerald-700">
+            Active season: {currentSeason}
+          </span>
         </div>
-      </Card>
+      </TabSection>
 
       <PerfectHarvestModal
         isOpen={showPerfectHarvest}
@@ -808,58 +781,46 @@ const EventsTab = memo(() => {
         rewardSummary={gameSummary}
       />
 
-      {/* Active Event */}
-      {activeEvent && (
-        <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-orange-50/40 p-4">
-          <div className="flex justify-between items-start mb-3">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{activeEvent.emoji}</span>
-              <div>
-                <h4 className="text-lg font-semibold text-slate-900">{activeEvent.name}</h4>
-                <p className="text-sm text-slate-600">{activeEvent.description}</p>
+      {activeEvent ? (
+        <TabSection
+          title={`${activeEvent.emoji} ${activeEvent.name}`}
+          description={activeEvent.description}
+          tone="amber"
+          action={<Badge className={getRarityColor(activeEvent.rarity)}>{activeEvent.rarity}</Badge>}
+          data-qa="active-event-card"
+        >
+          <div className="space-y-4">
+            <div>
+              <div className="mb-1 flex justify-between text-sm text-slate-700">
+                <span>Time remaining</span>
+                <span className="font-mono">{getEventTimeLeft(activeEvent)}</span>
               </div>
+              <Progress
+                value={((activeEvent.endsAt - Date.now()) / (activeEvent.durationSeconds * 1000)) * 100}
+                className="h-2"
+              />
             </div>
-            <Badge className={getRarityColor(activeEvent.rarity)}>
-              {activeEvent.rarity}
-            </Badge>
-          </div>
-
-          <div className="mb-3">
-            <div className="flex justify-between text-sm mb-1">
-              <span>Time Remaining</span>
-              <span className="font-mono">{getEventTimeLeft(activeEvent)}</span>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {Object.entries(activeEvent.effects).map(([effect, value]) => (
+                <div key={effect} className="flex items-center justify-between rounded-[18px] border border-white/80 bg-white/72 px-3 py-2 text-sm">
+                  <span className="capitalize text-slate-700">{formatDisplayLabel(effect)}</span>
+                  <span className="font-semibold text-slate-900">
+                    {typeof value === 'boolean' ? (value ? '✓' : '✗')
+                      : typeof value === 'number' && value > 1 ? `+${Math.round((value - 1) * 100)}%`
+                        : value}
+                  </span>
+                </div>
+              ))}
             </div>
-            <Progress
-              value={((activeEvent.endsAt - Date.now()) / (activeEvent.durationSeconds * 1000)) * 100}
-              className="h-2"
-            />
           </div>
-
-          {/* Event Effects */}
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            {Object.entries(activeEvent.effects).map(([effect, value]) => (
-              <div key={effect} className="flex justify-between rounded-2xl border border-white/80 bg-white/85 p-2 shadow-sm">
-                <span className="capitalize">{formatDisplayLabel(effect)}:</span>
-                <span className="font-semibold">
-                  {typeof value === 'boolean' ? (value ? '✓' : '✗') :
-                   typeof value === 'number' && value > 1 ? `+${Math.round((value - 1) * 100)}%` :
-                   value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Trigger Event */}
-      {!activeEvent && (
-        <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-          <div className="text-center">
-            <div className="mb-4 text-slate-500">
-              <div className="text-4xl mb-2">🎲</div>
-              <p>No active seasonal events</p>
-              <p className="text-sm">Trigger a random event to earn rewards!</p>
-            </div>
+        </TabSection>
+      ) : (
+        <TabEmptyState
+          icon="🎲"
+          title="No active seasonal events"
+          description={seasonEvents.length > 0 ? 'Trigger a random event to earn rewards.' : 'No events available for this season.'}
+          tone="slate"
+          action={(
             <Button
               onClick={triggerSeasonalEvent}
               className="w-full"
@@ -867,76 +828,91 @@ const EventsTab = memo(() => {
             >
               🎲 Trigger {currentSeason} Event
             </Button>
-            {seasonEvents.length === 0 && (
-              <p className="text-xs text-gray-500 mt-2">
-                No events available for this season
-              </p>
-            )}
-          </div>
-        </Card>
+          )}
+          data-qa="trigger-event-card"
+        />
       )}
 
-      {/* Available Events */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Available {currentSeason} events</h4>
-
-        <div className="space-y-3">
-          {seasonEvents.map(event => (
-            <div key={event.id} className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 shadow-sm">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">{event.emoji}</span>
-                  <span className="font-medium">{event.name}</span>
+      <TabSection
+        title={`Available ${currentSeason} events`}
+        description="The current season pulls from the local board of possible events."
+        tone="slate"
+      >
+        {seasonEvents.length === 0 ? (
+          <p className="py-2 text-sm text-slate-600">Nothing is scheduled here yet.</p>
+        ) : (
+          <div className="overflow-hidden rounded-[24px] border border-slate-200/60 bg-white/72">
+            {seasonEvents.map((event, index) => (
+              <div
+                key={event.id}
+                className={`flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-start sm:justify-between ${
+                  index !== 0 ? 'border-t border-slate-200/60' : ''
+                }`}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{event.emoji}</span>
+                    <span className="font-semibold text-slate-900">{event.name}</span>
+                  </div>
+                  <p className="text-sm text-slate-600">{event.description}</p>
+                  <div className="text-xs text-slate-500">
+                    Duration: {Math.round(event.durationSeconds / 60)}m · Reward: {event.rewards.coins}🪙
+                  </div>
                 </div>
                 <Badge variant="outline" className={getRarityColor(event.rarity)}>
                   {event.rarity}
                 </Badge>
               </div>
+            ))}
+          </div>
+        )}
+      </TabSection>
 
-              <p className="text-sm text-gray-600 mb-2">{event.description}</p>
-
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Duration: {Math.round(event.durationSeconds / 60)}m</span>
-                <span>Reward: {event.rewards.coins}🪙</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Event History */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-        <h4 className="mb-3 font-semibold text-slate-900">Recent events</h4>
-
+      <TabSection
+        title="Recent events"
+        description="A short history of what the farm has already seen."
+        tone="slate"
+      >
         {eventHistory.length === 0 ? (
-          <p className="py-4 text-center text-slate-500">No completed events yet</p>
+          <p className="py-2 text-sm text-slate-600">No completed events yet.</p>
         ) : (
-          <div className="space-y-2">
+          <div className="overflow-hidden rounded-[24px] border border-slate-200/60 bg-white/72">
             {eventHistory.slice(0, 5).map((event, index) => (
-              <div key={index} className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-2 text-sm shadow-sm">
-                <div className="flex justify-between items-center">
-                  <span>{event.emoji} {event.name}</span>
-                  <span className="text-green-600 font-semibold">+{event.rewards.coins}🪙</span>
+              <div
+                key={index}
+                className={`flex items-center justify-between gap-3 px-3 py-2.5 text-sm ${
+                  index !== 0 ? 'border-t border-slate-200/60' : ''
+                }`}
+              >
+                <div className="space-y-0.5">
+                  <div className="font-medium text-slate-900">{event.emoji} {event.name}</div>
+                  <div className="text-xs text-slate-500">{new Date(event.completedAt).toLocaleDateString()}</div>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {new Date(event.completedAt).toLocaleDateString()}
-                </div>
+                <div className="font-semibold text-emerald-700">+{event.rewards.coins}🪙</div>
               </div>
             ))}
           </div>
         )}
-      </Card>
+      </TabSection>
 
-      {/* Season Info */}
-      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-indigo-50/40 p-4">
-        <h4 className="mb-2 font-semibold text-slate-900">Season information</h4>
-        <div className="space-y-1 text-sm text-slate-700">
-          <p><strong>Spring (Mar-May):</strong> Focus on planting and growth bonuses</p>
-          <p><strong>Summer (Jun-Aug):</strong> Harvest festivals and heat events</p>
-          <p><strong>Autumn (Sep-Nov):</strong> Epic festivals and crop bonuses</p>
-          <p><strong>Winter (Dec-Feb):</strong> Frost resistance and greenhouse boosts</p>
+      <TabSection
+        title="Season information"
+        description="A compact reminder of how each season tends to behave."
+        tone="sky"
+      >
+        <div className="grid gap-2 sm:grid-cols-2">
+          {[
+            ['Spring (Mar-May)', 'Focus on planting and growth bonuses'],
+            ['Summer (Jun-Aug)', 'Harvest festivals and heat events'],
+            ['Autumn (Sep-Nov)', 'Epic festivals and crop bonuses'],
+            ['Winter (Dec-Feb)', 'Frost resistance and greenhouse boosts'],
+          ].map(([seasonLabel, text]) => (
+            <div key={seasonLabel} className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5 text-sm text-slate-700">
+              <span className="font-semibold text-slate-900">{seasonLabel}:</span> {text}
+            </div>
+          ))}
         </div>
-      </Card>
+      </TabSection>
     </div>
   );
 });

@@ -1,8 +1,8 @@
 import React, { memo } from 'react';
 import { useGameSelector } from '../../../context/GameContext';
-import { Card } from '../../../../ui/card';
 import { Badge } from '../../../../ui/badge';
 import { APP_VERSION, getReleaseModeLabel } from '../../../../../config/release';
+import { TabSection } from '../TabSurface';
 
 const TONE_CLASSES = {
   green: 'text-green-600',
@@ -17,7 +17,7 @@ const TONE_CLASSES = {
 };
 
 const StatTile = ({ value, label, tone = 'emerald' }) => (
-  <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-3 shadow-sm">
+  <div className="rounded-2xl border border-slate-200/70 bg-white/78 p-3 shadow-sm">
     <div className={`text-lg font-bold tabular-nums ${TONE_CLASSES[tone] || TONE_CLASSES.emerald}`}>
       {value}
     </div>
@@ -51,25 +51,19 @@ export const GameStats = memo(() => {
   ];
 
   return (
-    <Card className="overflow-hidden border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-emerald-50/30 p-4">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Snapshot
-          </div>
-          <h4 className="text-base font-semibold text-slate-900">Game statistics</h4>
-        </div>
-        <Badge variant="outline" className="bg-white/80 text-slate-600">
-          Live
-        </Badge>
-      </div>
+    <TabSection
+      title="Game statistics"
+      description="Current progress at a glance."
+      tone="slate"
+      action={<Badge variant="outline" className="bg-white/80 text-slate-600">Live</Badge>}
+    >
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
         {stats.map((stat) => (
           <StatTile key={`${stat.label}-${String(stat.value)}`} {...stat} />
         ))}
       </div>
-    </Card>
+    </TabSection>
   );
 });
 
