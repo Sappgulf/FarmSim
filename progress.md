@@ -35,3 +35,5 @@
 - [x] Added semantic button types and explicit transition properties to the main shell nav/sidebar controls.
 - [x] Hid the decorative iOS title layers from accessibility and exposed a single header label for the main menu title.
 - [x] Re-ran a direct Playwright smoke test against `http://localhost:4173` and verified tab switching still works with no console errors.
+- [x] Investigated a Vercel build failure: root build was missing `vite` because the web app dependencies were not being installed in the Vercel build environment.
+- [x] Added `vercel.json` to make Vercel install and build `web/` explicitly (`installCommand`, `buildCommand`, `outputDirectory`).
