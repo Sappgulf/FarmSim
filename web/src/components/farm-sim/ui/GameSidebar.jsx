@@ -192,11 +192,12 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
           <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-smart scrollbar-gutter-stable">
             {TAB_CONFIGS.map(tab => (
               <button
+                type="button"
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 data-onboard={tab.id === 'events' ? 'events-tab' : undefined}
                 className={`
-                  text-xs px-2.5 py-2 rounded-lg transition-all duration-200 text-left touch-manipulation
+                  text-xs px-2.5 py-2 rounded-lg transition-[transform,color,background-color,box-shadow,border-color] duration-200 text-left touch-manipulation
                   ${activeTab === tab.id
                     ? 'bg-white text-emerald-700 font-semibold shadow-md ring-1 ring-emerald-100 scale-[1.02]'
                     : 'bg-transparent text-gray-600 hover:bg-white/70 hover:text-gray-900 active:scale-95'

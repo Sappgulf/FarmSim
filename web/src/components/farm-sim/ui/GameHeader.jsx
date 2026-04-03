@@ -50,7 +50,7 @@ const AnimatedNumber = memo(({ value, duration = 500 }) => {
   }, [value, duration]);
 
   return (
-    <span className={`transition-all ${isAnimating ? 'text-green-600 scale-110' : ''}`}>
+    <span className={`transition-[transform,color] duration-200 ${isAnimating ? 'text-green-600 scale-110' : ''}`}>
       {displayValue}
     </span>
   );
@@ -278,7 +278,7 @@ const GameHeader = memo(() => {
             <button
               type="button"
               onClick={() => openRelatedTab('shop')}
-              className="flex items-center gap-1.5 group bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 px-2 sm:px-3 py-1.5 rounded-xl transition-all shadow-sm border border-amber-200/50"
+              className="flex items-center gap-1.5 group bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 px-2 sm:px-3 py-1.5 rounded-xl transition-[transform,background-color,box-shadow,border-color] shadow-sm border border-amber-200/50"
               title="Open Shop"
             >
 	              <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 group-hover:animate-spin filter drop-shadow-sm" />
@@ -392,7 +392,7 @@ const GameHeader = memo(() => {
 	            <button
               type="button"
               onClick={() => openRelatedTab('events')}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-all group relative shadow-md hover:shadow-lg"
+              className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-[transform,background-color,box-shadow,border-color] group relative shadow-md hover:shadow-lg"
               title="Open Events"
               style={{
               boxShadow: '0 2px 8px rgba(168, 85, 247, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
@@ -405,7 +405,7 @@ const GameHeader = memo(() => {
 	                {season.config.name}
 	              </span>
               {/* Season time remaining tooltip */}
-              <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 backdrop-blur-lg bg-opacity-95" style={{
+              <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-[opacity,visibility,transform] z-50 backdrop-blur-lg bg-opacity-95" style={{
                 boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(168, 85, 247, 0.2)'
               }}>
 	                <div className="text-xs font-semibold text-gray-700 mb-1">
@@ -425,7 +425,7 @@ const GameHeader = memo(() => {
           <button
             type="button"
             onClick={() => openRelatedTab('weather')}
-            className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg transition cursor-pointer ${weatherMeta.headerClassName}`}
+            className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg transition-[transform,background-color,box-shadow,border-color,color] cursor-pointer ${weatherMeta.headerClassName}`}
             title="Open Weather"
           >
             <span className="text-lg animate-weather">
@@ -440,7 +440,7 @@ const GameHeader = memo(() => {
           <button
             type="button"
             onClick={() => openRelatedTab('achievements')}
-            className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition min-h-[40px]"
+            className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-[transform,background-color,box-shadow] min-h-[40px]"
             title="Open Achievements"
           >
             <Trophy className="w-4 h-4 text-yellow-600" />

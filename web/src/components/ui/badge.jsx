@@ -1,7 +1,7 @@
 import React from "react";
 
 export function Badge({ className = "", variant = "default", children, ...props }) {
-  const baseClasses = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-all duration-200 border shadow-sm";
+  const baseClasses = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors duration-200 border shadow-sm";
   
   const variants = {
     default: "border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-800",

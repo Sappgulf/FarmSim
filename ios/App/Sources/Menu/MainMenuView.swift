@@ -159,6 +159,9 @@ struct MainMenuView: View {
                         .shadow(color: Color(red: 0.25, green: 0.12, blue: 0.04).opacity(0.7),
                                 radius: 1, x: 0, y: 1)
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Farm Sim")
+                .accessibilityAddTraits(.isHeader)
             }
             .scaleEffect(titleAppeared ? 1.0 : 0.78)
             .opacity(titleAppeared ? 1.0 : 0)

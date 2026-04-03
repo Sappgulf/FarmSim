@@ -117,7 +117,7 @@ export function TabsTrigger({
       aria-controls={`panel-${value}`}
       aria-selected={isActive}
       tabIndex={isActive ? 0 : -1}
-      className={`inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 touch-manipulation ${
+      className={`inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition-[transform,background-color,border-color,box-shadow,color,opacity] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 touch-manipulation ${
         isActive
           ? "bg-white text-emerald-700 shadow-md ring-1 ring-emerald-100"
           : "text-slate-600 hover:bg-white/70 hover:text-slate-900 active:scale-95"

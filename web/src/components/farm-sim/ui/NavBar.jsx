@@ -214,6 +214,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                             const TabIcon = tabInfo?.icon;
                             return (
                                 <button
+                                    type="button"
                                     key={tabId}
                                     onClick={() => onTabChange(tabId)}
                                     data-onboard={tabId === 'events' ? 'events-tab' : undefined}
@@ -221,7 +222,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                     aria-label={tabInfo?.label || tabId}
                                     className={`
                     flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold
-                    whitespace-nowrap transition-all duration-200 touch-manipulation
+                    whitespace-nowrap transition-[transform,color,background-color,box-shadow,border-color] duration-200 touch-manipulation
                     ${isActive
                                             ? 'bg-white text-emerald-700 shadow-md ring-1 ring-emerald-100'
                                             : 'text-gray-600 hover:bg-white/70 hover:text-gray-800 active:scale-95'
@@ -254,6 +255,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
 
                     return (
                         <button
+                            type="button"
                             key={section.id}
                             onClick={() => handleSectionPress(section, isActive)}
                             aria-pressed={isActive}
@@ -263,7 +265,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                             className={`
                 relative flex flex-col items-center justify-center
                 min-w-[64px] min-h-[60px] px-2 py-1.5 rounded-2xl
-                transition-all duration-200 touch-manipulation
+                transition-[transform,color,background-color,box-shadow,border-color] duration-200 touch-manipulation
                 ${isActive
                                     ? 'text-emerald-700 bg-gradient-to-br from-emerald-50 to-green-100 shadow-lg scale-105'
                                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 active:scale-95'

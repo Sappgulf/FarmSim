@@ -26,7 +26,7 @@ export function Progress({ value = 0, className = "", variant = "default", ...pr
     >
       {/* Progress bar with shine effect */}
       <div
-        className={`h-full bg-gradient-to-r ${getGradient()} transition-all duration-500 ease-out relative`}
+        className={`h-full bg-gradient-to-r ${getGradient()} transition-[width,background-color,box-shadow] duration-500 ease-out relative`}
         style={{ 
           width: `${Math.min(100, Math.max(0, value || 0))}%`,
           boxShadow: '0 0 12px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4)'

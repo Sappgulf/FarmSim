@@ -19,7 +19,7 @@ export function Button({
   const baseClasses = `
     relative overflow-hidden inline-flex items-center justify-center 
     rounded-xl text-sm font-semibold
-    transition-all duration-200 ease-out
+    transition-[transform,box-shadow,background-color,border-color,color,opacity] duration-200 ease-out
     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
     disabled:opacity-50 disabled:pointer-events-none
     shadow-sm hover:shadow-lg

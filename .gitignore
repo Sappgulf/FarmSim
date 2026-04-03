@@ -52,6 +52,7 @@ coverage/
 # Temporary folders
 tmp/
 temp/
+output/
 
 # Local Codex sub-agent artifacts
 .subagents/
