@@ -305,7 +305,6 @@ const GameHeader = memo(() => {
 	                <div className="text-[10px] text-gray-600 font-medium text-center mt-0.5">
 	                  {Math.floor(currentLevelXp)}/{xpNeededForNext} to Lv{level + 1}
 	                </div>
-	                <div className="text-[10px] text-gray-500 text-center">Leveling slows as your farm matures.</div>
 	              </div>
 	            </div>
 
@@ -451,15 +450,15 @@ const GameHeader = memo(() => {
 	        </div>
 	      </div>
 
-      {/* Auto-save indicator */}
-	      {autoSaveEnabled && (
-	        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
-	          <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-	            <Calendar className="w-3 h-3" />
-	            <LastSaveTime lastSavedAt={lastSavedAt} autoSave={autoSaveEnabled} />
-	          </div>
-	        </div>
-	      )}
+      {/* Auto-save indicator - inline at bottom of header */}
+      {autoSaveEnabled && (
+        <div className="flex justify-center pt-1 pb-0.5">
+          <div className="text-[10px] text-gray-400 flex items-center gap-1">
+            <Calendar className="w-3 h-3" />
+            <LastSaveTime lastSavedAt={lastSavedAt} autoSave={autoSaveEnabled} />
+          </div>
+        </div>
+      )}
 
     </header>
   );

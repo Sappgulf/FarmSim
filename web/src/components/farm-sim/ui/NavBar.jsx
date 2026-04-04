@@ -195,7 +195,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                         aria-label={`${activeSectionConfig.label} tabs: ${showSubTabs ? 'hide options' : 'show options'}`}
                     >
                         <span className="text-[11px] font-semibold tracking-[0.12em] text-emerald-900/90 uppercase">
-                            {activeSectionConfig.label} section: {activeTabInfo?.label || activeTab} ({activeSectionConfig.tabs.length} tabs)
+                            {activeSectionConfig.label} · {activeTabInfo?.label || activeTab}
                         </span>
                         <ChevronDown className={`icon-16 text-emerald-700 transition-transform ${showSubTabs ? 'rotate-180' : ''}`} aria-hidden="true" />
                     </button>
@@ -283,9 +283,9 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                             <span className={`mt-0.5 text-[11px] font-semibold ${isActive ? 'text-emerald-700' : 'text-gray-500'}`}>
                                 {section.label}
                             </span>
-                            {sectionHasMultipleTabs && (
-                                <span className={`mt-0.5 text-[9px] leading-none ${isActive ? 'text-emerald-600' : 'text-gray-400'}`}>
-                                    {sectionSubTabsVisible ? 'Hide' : `${section.tabs.length} tabs`}
+                            {sectionHasMultipleTabs && isActive && (
+                                <span className="mt-0.5 text-[9px] leading-none text-emerald-500">
+                                    {sectionSubTabsVisible ? '▲' : '▼'}
                                 </span>
                             )}
 

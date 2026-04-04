@@ -557,13 +557,13 @@ export function FarmSimCore() {
 
       {/* Main Game Area - Mobile Optimized with bottom padding for NavBar */}
       <div className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4">
-        {/* Farm Grid - Full width on mobile, larger on desktop */}
-        <div className="w-full lg:flex-1 order-2 lg:order-1">
+        {/* Farm Grid - First on mobile, left on desktop */}
+        <div className="w-full lg:flex-1 order-1 lg:order-1">
           <FarmGrid />
         </div>
 
-        {/* Game Sidebar - Shows tabs for active section */}
-        <div className="w-full lg:w-80 xl:w-96 order-1 lg:order-2">
+        {/* Game Sidebar - Below farm on mobile, right column on desktop */}
+        <div className="w-full lg:w-80 xl:w-96 order-2 lg:order-2">
           <GameSidebar activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
       </div>

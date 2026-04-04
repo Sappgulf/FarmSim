@@ -4,7 +4,7 @@ import { Tabs, TabsContent } from '../../ui/tabs';
 import { Card } from '../../ui/card';
 import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 import TabWrapper from './tabs/TabWrapper';
-import { TAB_INFO } from './NavBar';
+import { TAB_INFO, NAV_SECTIONS } from './NavBar';
 import { Circle } from 'lucide-react';
 
 // Lazy load tab components for better performance
@@ -188,50 +188,59 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
     <Card className="h-fit overflow-hidden border border-white/70 bg-white/90 shadow-[0_20px_54px_-30px_rgba(15,23,42,0.48)]">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="border-b border-white/70 bg-gradient-to-b from-slate-50/90 to-white px-3 py-3">
-          <div className="flex items-start justify-between gap-3">
+          {/* Active tab header */}
+          <div className="flex items-center justify-between gap-2 mb-3">
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-emerald-700/70">
-                Section
+              <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-700/70">
+                {Object.values(NAV_SECTIONS).find(s => s.tabs.includes(activeTab))?.label || 'Game'}
               </div>
-              <div className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
-                {activeConfig.label}
-              </div>
-              <div className="mt-1 text-sm leading-6 text-slate-600">
-                Use the grid below, or jump with keyboard shortcuts 1-9.
+              <div className="text-base font-semibold tracking-tight text-slate-900">
+                {TAB_INFO[activeTab]?.emoji} {TAB_INFO[activeTab]?.label || activeConfig.label}
               </div>
             </div>
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-right shadow-sm">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-700/70">
-                Active tab
-              </div>
-              <div className="mt-1 text-sm font-semibold text-emerald-900">
-                {TAB_INFO[activeTab]?.label || activeConfig.label}
-              </div>
-            </div>
+            <div className="text-[10px] text-gray-400 hidden sm:block">1-9 to jump</div>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="mt-4 grid max-h-56 grid-cols-2 gap-1.5 overflow-y-auto rounded-2xl bg-white/60 p-1.5 scrollbar-smart scrollbar-gutter-stable">
-            {TAB_CONFIGS.map((tab) => (
-              <button
-                type="button"
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                data-onboard={tab.id === 'events' ? 'events-tab' : undefined}
-                className={`
-                  flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-[transform,color,background-color,box-shadow,border-color] duration-200 touch-manipulation
-                  ${activeTab === tab.id
-                    ? 'border-emerald-100 bg-white text-emerald-700 shadow-[0_10px_24px_-18px_rgba(16,185,129,0.45)] ring-1 ring-emerald-100 scale-[1.01]'
-                    : 'border-transparent bg-white/50 text-gray-600 hover:bg-white hover:text-gray-900 active:scale-95'
-                  }
-                `}
-              >
-                <span className="flex-shrink-0">
-                  {renderIcon(TAB_INFO[tab.id]?.icon, TAB_INFO[tab.id]?.emoji)}
-                </span>
-                <span className="truncate">{TAB_INFO[tab.id]?.label || tab.label}</span>
-              </button>
-            ))}
+          {/* Tab Navigation - grouped by section */}
+          <div className="space-y-2 max-h-60 overflow-y-auto scrollbar-smart scrollbar-gutter-stable">
+            {Object.values(NAV_SECTIONS).map((section) => {
+              const sectionTabConfigs = TAB_CONFIGS.filter(t => section.tabs.includes(t.id));
+              if (sectionTabConfigs.length === 0) return null;
+              const SectionIcon = section.icon;
+              return (
+                <div key={section.id}>
+                  <div className="flex items-center gap-1 mb-1 px-1">
+                    <SectionIcon className="w-3 h-3 text-gray-400" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                      {section.label}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    {sectionTabConfigs.map((tab) => (
+                      <button
+                        type="button"
+                        key={tab.id}
+                        onClick={() => handleTabChange(tab.id)}
+                        data-onboard={tab.id === 'events' ? 'events-tab' : undefined}
+                        className={`
+                          flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-left text-xs font-semibold
+                          transition-[transform,color,background-color,box-shadow,border-color] duration-150 touch-manipulation
+                          ${activeTab === tab.id
+                            ? 'border-emerald-100 bg-white text-emerald-700 shadow-sm ring-1 ring-emerald-100 scale-[1.01]'
+                            : 'border-transparent bg-white/50 text-gray-600 hover:bg-white hover:text-gray-800 active:scale-95'
+                          }
+                        `}
+                      >
+                        <span className="flex-shrink-0 text-sm leading-none">
+                          {TAB_INFO[tab.id]?.emoji || renderIcon(TAB_INFO[tab.id]?.icon, null)}
+                        </span>
+                        <span className="truncate">{TAB_INFO[tab.id]?.label || tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
