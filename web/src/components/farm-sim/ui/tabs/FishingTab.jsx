@@ -313,7 +313,7 @@ const FishingTab = memo(() => {
           {nextUpgrade && (
             <Button
               onClick={handleUpgradePond}
-              variant="primary"
+              variant="default"
               size="sm"
               disabled={state.coins < nextUpgrade.cost}
               className="hover:scale-105 transition-transform ml-3"
@@ -338,7 +338,7 @@ const FishingTab = memo(() => {
             </p>
             <Button
               onClick={handleCastLine}
-              variant="primary"
+              variant="default"
               size="lg"
               disabled={fishing.pond.population < 10}
               className="hover:scale-110 transition-transform text-lg px-8 py-6 shadow-lg"

@@ -231,7 +231,7 @@ const LivestockTab = memo(() => {
           </div>
           <Button
             onClick={handleUpgradeBarn}
-            variant="primary"
+            variant="default"
             size="sm"
             disabled={state.coins < stats.capacity * 100}
             className="hover:scale-105 transition-transform"
@@ -421,7 +421,7 @@ const LivestockTab = memo(() => {
                     </Button>
                     <Button
                       onClick={() => handleCollectProduct(animal.id)}
-                      variant="primary"
+                      variant="default"
                       size="sm"
                       className="flex-1 text-xs"
                       disabled={!animal.hasProduct}
