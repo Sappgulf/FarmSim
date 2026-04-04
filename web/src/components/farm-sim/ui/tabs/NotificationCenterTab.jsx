@@ -133,7 +133,7 @@ const NotificationCenterTab = memo(() => {
               size="sm"
               variant={activeFilter === filter ? 'default' : 'outline'}
               onClick={() => setActiveFilter(filter)}
-              className="capitalize min-h-[40px]"
+              className="capitalize min-h-[44px]"
             >
               {filter}
             </Button>

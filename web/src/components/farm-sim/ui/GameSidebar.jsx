@@ -223,7 +223,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
                         onClick={() => handleTabChange(tab.id)}
                         data-onboard={tab.id === 'events' ? 'events-tab' : undefined}
                         className={`
-                          flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-left text-xs font-semibold
+                          flex items-center gap-1.5 rounded-xl border px-2.5 py-2.5 min-h-[44px] text-left text-xs font-semibold
                           transition-[transform,color,background-color,box-shadow,border-color] duration-150 touch-manipulation
                           ${activeTab === tab.id
                             ? 'border-emerald-100 bg-white text-emerald-700 shadow-sm ring-1 ring-emerald-100 scale-[1.01]'

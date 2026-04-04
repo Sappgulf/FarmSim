@@ -196,7 +196,7 @@ const InventoryTab = memo(() => {
             variant="outline"
             onClick={handleSellAllCrops}
             disabled={cropSellSummary.totalQuantity === 0}
-            className="min-h-[40px]"
+            className="min-h-[44px]"
           >
             Sell All ({cropSellSummary.totalEarnings}🪙)
           </Button>
@@ -256,7 +256,7 @@ const InventoryTab = memo(() => {
                       variant="outline"
                       onClick={() => handleSellCrop(itemId, 1)}
                       disabled={qty < 1}
-                      className="min-h-[40px]"
+                      className="min-h-[44px]"
                     >
                       Sell 1
                     </Button>
@@ -265,7 +265,7 @@ const InventoryTab = memo(() => {
                       variant="outline"
                       onClick={() => handleSellCrop(itemId, bulkSellCount)}
                       disabled={qty < 1}
-                      className="min-h-[40px]"
+                      className="min-h-[44px]"
                     >
                       Sell {bulkSellCount}
                     </Button>
@@ -273,7 +273,7 @@ const InventoryTab = memo(() => {
                       size="sm"
                       onClick={() => handleSellCrop(itemId, qty)}
                       disabled={qty < 1}
-                      className="min-h-[40px]"
+                      className="min-h-[44px]"
                     >
                       Sell All ({effectiveSellPrice * qty}🪙)
                     </Button>

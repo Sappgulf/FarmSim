@@ -84,7 +84,7 @@ const FishingTab = memo(() => {
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 3;
         window.triggerParticleEffect(centerX, centerY, 'harvest', {
-          text: `🎣 ${result.quality || 'Catch'}! +$${result.value}`,
+          text: `🎣 ${result.quality || 'Catch'}! +${result.value}🪙`,
           value: result.value
         });
       }
@@ -260,7 +260,7 @@ const FishingTab = memo(() => {
           <MetricTile
             tone="emerald"
             label="Total Value"
-            value={`$${stats.totalValue}`}
+            value={`${stats.totalValue}🪙`}
             hint="Converted from catches"
             icon="💰"
           />
@@ -320,7 +320,7 @@ const FishingTab = memo(() => {
             >
               <div className="text-center">
                 <div className="font-bold">Upgrade Pond</div>
-                <div className="text-xs">{nextUpgrade.name} • ${nextUpgrade.cost}</div>
+                <div className="text-xs">{nextUpgrade.name} • {nextUpgrade.cost}🪙</div>
               </div>
             </Button>
           )}
@@ -362,7 +362,7 @@ const FishingTab = memo(() => {
                 {gameState?.fish.name} Hooked!
               </div>
               <div className="text-sm text-sky-100/80">
-                Size: {gameState?.size}cm • Base Value: ${gameState?.fish.baseValue}
+                Size: {gameState?.size}cm • Base Value: {gameState?.fish.baseValue}🪙
               </div>
             </div>
 
@@ -549,7 +549,7 @@ const FishingTab = memo(() => {
                         <div className="flex justify-between text-xs">
                           <span>Value:</span>
                           <span className="font-bold text-green-600">
-                            ${fish.baseValue}
+                            {fish.baseValue}🪙
                           </span>
                         </div>
                         <div className="flex justify-between text-xs">

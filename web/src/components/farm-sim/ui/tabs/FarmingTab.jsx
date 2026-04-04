@@ -283,7 +283,7 @@ const FarmingTab = memo(() => {
           </div>
           <Button
             size="sm"
-            className={`min-h-[40px] ${advisorCard.buttonClass}`}
+            className={`min-h-[44px] ${advisorCard.buttonClass}`}
             onClick={runAdvisorAction}
           >
             {advisorCard.cta}
@@ -304,7 +304,7 @@ const FarmingTab = memo(() => {
             <Button
               size="sm"
               variant="outline"
-              className="min-h-[40px]"
+              className="min-h-[44px]"
               onClick={() => {
                 if (typeof window.switchToTab === 'function') {
                   window.switchToTab('inventory');

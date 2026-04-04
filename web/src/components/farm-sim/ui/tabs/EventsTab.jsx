@@ -477,7 +477,7 @@ const EventsTab = memo(() => {
                 size="sm"
                 variant="outline"
                 onClick={() => actions.dismissWhatsNew(newPackHighlights)}
-                className="h-8 px-2 text-[11px]"
+                className="min-h-[44px] px-2 text-[11px]"
               >
                 Dismiss
               </Button>
@@ -513,7 +513,7 @@ const EventsTab = memo(() => {
               size="sm"
               variant="outline"
               onClick={handleDismissWelcomeBack}
-              className="h-8 px-2 text-[11px]"
+              className="min-h-[44px] px-2 text-[11px]"
               data-qa="welcome-back-dismiss"
             >
               Dismiss
@@ -598,7 +598,7 @@ const EventsTab = memo(() => {
                       variant={isEligible && !isClaimed ? 'default' : 'outline'}
                       onClick={() => handleWeeklyRewardClaim(tier)}
                       disabled={!isEligible || isClaimed}
-                      className="h-8 px-3 text-[11px]"
+                      className="min-h-[44px] px-3 text-[11px]"
                       data-qa={`weekly-visit-claim-${tier.visits}`}
                     >
                       {isClaimed ? 'Claimed' : (isEligible ? 'Claim' : 'Locked')}

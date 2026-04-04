@@ -330,7 +330,7 @@ const GameHeader = memo(() => {
               size="sm"
               variant="outline"
               onClick={() => setShowStatsDropdown(!showStatsDropdown)}
-              className="flex items-center gap-1 min-h-[40px]"
+              className="flex items-center gap-1 min-h-[44px]"
               aria-expanded={showStatsDropdown}
               aria-controls="farm-stats-dropdown"
             >
@@ -439,7 +439,7 @@ const GameHeader = memo(() => {
           <button
             type="button"
             onClick={() => openRelatedTab('achievements')}
-            className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-[transform,background-color,box-shadow] min-h-[40px]"
+            className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-[transform,background-color,box-shadow] min-h-[44px]"
             title="Open Achievements"
           >
             <Trophy className="w-4 h-4 text-yellow-600" />

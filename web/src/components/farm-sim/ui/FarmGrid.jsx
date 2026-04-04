@@ -1037,7 +1037,7 @@ const FarmGrid = memo(() => {
             size="sm"
             variant={decorMode ? 'default' : 'outline'}
             onClick={() => actions.setDecorationMode(!decorMode)}
-            className="min-h-[40px]"
+            className="min-h-[44px]"
           >
             {decorMode ? '🪴 Decor Mode On' : '🪴 Decor Mode'}
           </Button>
@@ -1048,7 +1048,7 @@ const FarmGrid = memo(() => {
                 variant="outline"
                 onClick={handleDecorUndo}
                 disabled={decorUndoCount === 0}
-                className="min-h-[40px]"
+                className="min-h-[44px]"
               >
                 ↩️ Undo {decorUndoCount > 0 ? `(${decorUndoCount})` : ''}
               </Button>
@@ -1056,7 +1056,7 @@ const FarmGrid = memo(() => {
                 size="sm"
                 variant={repeatDecorPlacement ? 'default' : 'outline'}
                 onClick={() => setRepeatDecorPlacement((prev) => !prev)}
-                className="min-h-[40px]"
+                className="min-h-[44px]"
               >
                 {repeatDecorPlacement ? '🔁 Repeat On' : '🔁 Repeat Off'}
               </Button>
