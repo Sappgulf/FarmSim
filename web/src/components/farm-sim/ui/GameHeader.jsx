@@ -278,7 +278,7 @@ const GameHeader = memo(() => {
             <button
               type="button"
               onClick={() => openRelatedTab('shop')}
-              className="flex items-center gap-1.5 group bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 px-2 sm:px-3 py-1.5 rounded-xl transition-[transform,background-color,box-shadow,border-color] shadow-sm border border-amber-200/50"
+              className="flex items-center gap-1.5 group bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 px-2 sm:px-3 py-1.5 min-h-[44px] rounded-xl transition-[transform,background-color,box-shadow,border-color] shadow-sm border border-amber-200/50"
               title="Open Shop"
             >
 	              <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 group-hover:animate-spin filter drop-shadow-sm" />
@@ -291,7 +291,7 @@ const GameHeader = memo(() => {
               <button
                 type="button"
                 onClick={() => openRelatedTab('analytics')}
-                className="flex items-center gap-1 hover:bg-blue-50 px-2 py-1 rounded transition"
+                className="flex items-center gap-1 hover:bg-blue-50 px-2 py-1 min-h-[44px] rounded transition"
                 title="Open Analytics"
               >
                 <Star className="w-4 h-4 text-blue-600" />
@@ -391,7 +391,7 @@ const GameHeader = memo(() => {
 	            <button
               type="button"
               onClick={() => openRelatedTab('events')}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-[transform,background-color,box-shadow,border-color] group relative shadow-md hover:shadow-lg"
+              className="flex items-center gap-2 px-3 py-1.5 min-h-[44px] bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-[transform,background-color,box-shadow,border-color] group relative shadow-md hover:shadow-lg"
               title="Open Events"
               style={{
               boxShadow: '0 2px 8px rgba(168, 85, 247, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
@@ -424,7 +424,7 @@ const GameHeader = memo(() => {
           <button
             type="button"
             onClick={() => openRelatedTab('weather')}
-            className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg transition-[transform,background-color,box-shadow,border-color,color] cursor-pointer ${weatherMeta.headerClassName}`}
+            className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 min-h-[44px] rounded-lg transition-[transform,background-color,box-shadow,border-color,color] cursor-pointer ${weatherMeta.headerClassName}`}
             title="Open Weather"
           >
             <span className="text-lg animate-weather">

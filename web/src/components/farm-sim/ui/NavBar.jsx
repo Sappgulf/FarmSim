@@ -189,7 +189,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                     <button
                         type="button"
                         onClick={() => setShowSubTabs((value) => !value)}
-                        className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left transition-colors hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60"
+                        className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 min-h-[44px] text-left transition-colors hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60"
                         aria-expanded={showSubTabs}
                         aria-controls={`subtabs-${activeSection}`}
                         aria-label={`${activeSectionConfig.label} tabs: ${showSubTabs ? 'hide options' : 'show options'}`}
@@ -222,7 +222,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                     aria-current={isActive ? 'page' : undefined}
                                     aria-label={tabInfo?.label || tabId}
                                     className={`
-                    flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold
+                    flex items-center gap-1.5 rounded-xl border px-3 py-3 min-h-[44px] text-sm font-semibold
                     whitespace-nowrap transition-[transform,color,background-color,box-shadow,border-color] duration-200 touch-manipulation
                     ${isActive
                                             ? 'border-emerald-100 bg-white text-emerald-700 shadow-[0_12px_24px_-18px_rgba(16,185,129,0.45)] ring-1 ring-emerald-100'
