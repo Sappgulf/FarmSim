@@ -144,7 +144,7 @@ const ShopTab = memo(() => {
             disabled={state.coins < item.cost || isOwned}
             className="min-w-[72px] shrink-0"
           >
-            {isOwned ? 'Owned' : `${item.cost}`}
+            {isOwned ? 'Owned' : `${item.cost}🪙`}
           </Button>
         </div>
       </div>
@@ -269,7 +269,7 @@ const ShopTab = memo(() => {
                     disabled={state.coins < item.cost}
                     className="ml-2"
                   >
-                    {item.cost}
+                    {item.cost}🪙
                   </Button>
                 </div>
               </div>

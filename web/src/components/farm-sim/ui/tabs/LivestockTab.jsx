@@ -205,7 +205,7 @@ const LivestockTab = memo(() => {
         </div>
         {stats.dailyCost > 0 && (
           <div className="mt-3 text-center text-sm text-gray-600">
-            Daily Maintenance: ${stats.dailyCost}
+            Daily Maintenance: {stats.dailyCost}🪙
           </div>
         )}
       </TabHero>
@@ -238,7 +238,7 @@ const LivestockTab = memo(() => {
           >
             <div className="text-center">
               <div className="font-bold">Expand Barn</div>
-              <div className="text-xs">+5 space • ${stats.capacity * 100}</div>
+              <div className="text-xs">+5 space • {stats.capacity * 100}🪙</div>
             </div>
           </Button>
         </div>
@@ -277,16 +277,16 @@ const LivestockTab = memo(() => {
                   <div className="text-sm space-y-1 mb-2">
                     <div className="flex justify-between text-xs">
                       <span>Cost:</span>
-                      <span className="font-bold text-yellow-600">${animalType.cost}</span>
+                      <span className="font-bold text-yellow-600">{animalType.cost}🪙</span>
                     </div>
                     <div className="flex justify-between text-xs">
                       <span>Feed:</span>
-                      <span>${animalType.feedCost}</span>
+                      <span>{animalType.feedCost}🪙</span>
                     </div>
                     <div className="flex justify-between text-xs">
                       <span>Production:</span>
                       <span className="font-bold text-green-600">
-                        ${animalType.products[0].value}
+                        {animalType.products[0].value}🪙
                       </span>
                     </div>
                     <div className="flex justify-between text-xs">
@@ -409,7 +409,7 @@ const LivestockTab = memo(() => {
                       className="flex-1 text-xs"
                       disabled={state.coins < animal.type.feedCost}
                     >
-                      Feed (${animal.type.feedCost})
+                      Feed ({animal.type.feedCost}🪙)
                     </Button>
                     <Button
                       onClick={() => handlePetAnimal(animal.id)}

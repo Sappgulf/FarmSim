@@ -314,7 +314,7 @@ const ChallengesTab = memo(() => {
 
       <Card className="p-4 bg-slate-50/80">
         <h4 className="font-semibold mb-2">📊 Progress Snapshot</h4>
-        <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 text-sm sm:grid-cols-2">
           <div className="p-2 bg-white rounded-2xl text-center shadow-sm">
             <div className="font-bold text-emerald-700">{claimedCount}/{challengesWithProgress.length}</div>
             <div className="text-gray-600">Claimed Today</div>

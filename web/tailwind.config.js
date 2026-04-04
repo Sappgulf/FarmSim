@@ -5,6 +5,14 @@ module.exports = {
     "./src/**/*.{js,jsx}"
   ],
   theme: {
+    screens: {
+      xs: '375px',
+      sm: '640px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
+      '2xl': '1536px',
+    },
     extend: {
       animation: {
         'slide-down': 'slideDown 0.3s ease-out',

@@ -231,7 +231,7 @@ const FarmingTab = memo(() => {
       };
     }
     if (plotInsights.emptyPlots > 0) {
-      const focusName = dailyFocus?.crop?.name || cropList.find((crop) => crop.id === state.selectedCrop)?.name || 'your selected crop';
+      const focusName = dailyFocus?.crop?.name || availableCrops.find((crop) => crop.id === state.selectedCrop)?.name || 'your selected crop';
       return {
         title: 'Planting Opportunity',
         emoji: '🌱',
@@ -257,7 +257,7 @@ const FarmingTab = memo(() => {
 
   const runAdvisorAction = useCallback(() => {
     if (advisorCard.action === 'SELECT_CROP') {
-      const fallbackCrop = cropList[0];
+      const fallbackCrop = availableCrops[0];
       const cropId = dailyFocus?.cropId || state.selectedCrop || fallbackCrop?.id;
       if (cropId) {
         handleSelectCrop(cropId);
@@ -383,7 +383,7 @@ const FarmingTab = memo(() => {
             className="text-xs min-h-[44px]"
             disabled={plotInsights.diseasedPlots === 0}
           >
-            🐛 Treat ({plotInsights.diseasedPlots})
+            🧪 Treat ({plotInsights.diseasedPlots})
           </Button>
         </div>
         <div className="mt-3 text-[11px] text-slate-500">

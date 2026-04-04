@@ -9,10 +9,10 @@ const EXPANSION_COSTS = { 3: 60, 4: 180 };
 const MAX_SIZE = 5;
 
 const PLOT_ZONES = [
-  { id: 'fertile', name: 'Fertile Soil', emoji: '🌱', description: '+25% growth speed in this zone', color: 'bg-green-100 border-green-300' },
-  { id: 'irrigated', name: 'Irrigated', emoji: '💧', description: 'Water drains 50% slower', color: 'bg-blue-100 border-blue-300' },
-  { id: 'decor', name: 'Decor Garden', emoji: '🪴', description: 'Dedicated decor area, no crop competition', color: 'bg-rose-100 border-rose-300' },
-  { id: 'experimental', name: 'Experimental', emoji: '🔬', description: '+10% mutation chance for genetics', color: 'bg-purple-100 border-purple-300' },
+  { id: 'fertile', name: 'Fertile Soil', emoji: '🌱', description: '+25% growth speed in this zone', color: 'bg-green-100 border-green-300', requiredSize: 4 },
+  { id: 'irrigated', name: 'Irrigated', emoji: '💧', description: 'Water drains 50% slower', color: 'bg-blue-100 border-blue-300', requiredSize: 4 },
+  { id: 'decor', name: 'Decor Garden', emoji: '🪴', description: 'Dedicated decor area, no crop competition', color: 'bg-rose-100 border-rose-300', requiredSize: 4 },
+  { id: 'experimental', name: 'Experimental', emoji: '🔬', description: '+10% mutation chance for genetics', color: 'bg-purple-100 border-purple-300', requiredSize: 5 },
 ];
 
 const EXPANSION_MILESTONES = [
@@ -96,7 +96,7 @@ const ExpandTab = memo(() => {
       {/* Plot Usage Overview */}
       <Card className="p-4 bg-slate-50/80">
         <h4 className="font-semibold mb-3">Plot Usage</h4>
-        <div className="grid grid-cols-2 gap-3 mb-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 mb-3 sm:grid-cols-4">
           <MetricTile tone="emerald" label="Growing" value={plotStats.planted} hint="In progress" icon="🌱" />
           <MetricTile tone="amber" label="Ready" value={plotStats.ready} hint="Harvest now" icon="⏱️" />
           <MetricTile tone="rose" label="Decor" value={plotStats.decor} hint="Style plots" icon="🪴" />
@@ -175,14 +175,14 @@ const ExpandTab = memo(() => {
         <p className="text-xs text-gray-500 mb-3">Specialization zones unlock as you expand your farm.</p>
         <div className="space-y-2">
           {PLOT_ZONES.map((zone) => {
-            const unlocked = state.gridSize >= 4;
+            const unlocked = state.gridSize >= zone.requiredSize;
             return (
               <div key={zone.id} className={`flex items-center gap-3 p-2.5 rounded-lg border ${unlocked ? zone.color : 'bg-gray-50 border-gray-200 opacity-50'}`}>
                 <span className="text-2xl">{unlocked ? zone.emoji : '🔒'}</span>
                 <div className="flex-1">
                   <div className="font-medium text-sm flex items-center gap-2">
                     {zone.name}
-                    {!unlocked && <Badge variant="outline" className="text-[10px]">4x4+</Badge>}
+                    {!unlocked && <Badge variant="outline" className="text-[10px]">{zone.requiredSize}×{zone.requiredSize} required</Badge>}
                   </div>
                   <div className="text-xs text-gray-600">{zone.description}</div>
                 </div>

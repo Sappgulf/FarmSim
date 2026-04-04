@@ -251,7 +251,7 @@ const BuildingsTab = memo(() => {
                   {!isBuilt && (
                     <>
                       <div className="text-sm">
-                        <span className="font-semibold">Cost:</span> {building.baseCost}
+                        <span className="font-semibold">Cost:</span> {building.baseCost}🪙
                       </div>
                       <Button
                         onClick={() => handleBuild(building)}
@@ -262,8 +262,8 @@ const BuildingsTab = memo(() => {
                         {isLocked
                           ? `Level ${building.requiredLevel}`
                           : canAfford
-                          ? 'Build Now'
-                          : `Need ${building.baseCost}`}
+                          ? `Build (${building.baseCost}🪙)`
+                          : `Need ${building.baseCost - state.coins}🪙 more`}
                       </Button>
                     </>
                   )}
@@ -281,8 +281,8 @@ const BuildingsTab = memo(() => {
                         className={state.coins >= nextUpgrade.cost ? 'bg-blue-600 hover:bg-blue-700' : ''}
                       >
                         {state.coins >= nextUpgrade.cost
-                          ? `Upgrade ${nextUpgrade.cost}`
-                          : `Need ${nextUpgrade.cost}`}
+                          ? `Upgrade (${nextUpgrade.cost}🪙)`
+                          : `Need ${nextUpgrade.cost - state.coins}🪙 more`}
                       </Button>
                     </>
                   )}

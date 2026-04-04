@@ -115,7 +115,7 @@ export const TabEmptyState = memo(({ icon = '📭', title, description, tone = '
     <div className={`relative overflow-hidden rounded-[24px] border ${theme.border} bg-white/82 px-4 py-5 text-center shadow-[0_8px_20px_-20px_rgba(15,23,42,0.2)] animate-fade-in ${className}`} {...props}>
       <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${theme.shell}`} />
       <div className={`mx-auto grid h-12 w-12 place-items-center rounded-[18px] ${theme.iconBg} ${theme.iconText}`}>
-        <span className="text-xl leading-none">{icon}</span>
+        <span className="text-xl leading-none" aria-hidden="true">{icon}</span>
       </div>
       <div className={`mt-3 text-base font-semibold ${theme.title}`}>{title}</div>
       <p className="mt-1 text-sm text-slate-600">{description}</p>
@@ -137,7 +137,7 @@ export const TabHero = memo(({ icon, title, description, tone = 'slate', badge, 
         <div className="flex items-start gap-4">
           {icon ? (
             <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-[18px] ${theme.iconBg} ${theme.iconText}`}>
-              <span className="text-lg leading-none">{icon}</span>
+              <span className="text-lg leading-none" aria-hidden="true">{icon}</span>
             </div>
           ) : null}
           <div className="space-y-1">
@@ -172,7 +172,7 @@ export const MetricTile = memo(({ label, value, hint, tone = 'slate', icon, clas
         </div>
         {icon ? (
           <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-[14px] ${theme.chip}`}>
-            <span className="text-sm leading-none">{icon}</span>
+            <span className="text-sm leading-none" aria-hidden="true">{icon}</span>
           </div>
         ) : null}
       </div>
