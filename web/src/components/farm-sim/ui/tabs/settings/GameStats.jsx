@@ -58,7 +58,7 @@ export const GameStats = memo(() => {
       action={<Badge variant="outline" className="bg-white/80 text-slate-600">Live</Badge>}
     >
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3">
         {stats.map((stat) => (
           <StatTile key={`${stat.label}-${String(stat.value)}`} {...stat} />
         ))}

@@ -305,7 +305,7 @@ const AchievementsTab = memo(() => {
       </TabSection>
 
       <TabSection title="Achievement statistics" description="Category coverage and completion depth." tone="sky">
-        <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 text-sm">
           {Object.entries(achievementStats.categories).map(([category, total]) => {
             const unlocked = ACHIEVEMENTS.filter(a => a.category === category && state.achievements.find(ua => ua.id === a.id)?.unlocked).length;
 
