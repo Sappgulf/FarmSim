@@ -198,20 +198,20 @@ const GeneticsTab = memo(() => {
                 Grow or harvest crops to unlock breeding options.
               </div>
             ) : (
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-2 gap-3 mb-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Parent 1</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto scrollbar-smart">
                   {availableCrops.map(crop => (
                     <Button
                       key={crop}
                       variant={selectedParent1 === crop ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedParent1(crop)}
-                      className="text-xs justify-between"
+                      className="text-xs justify-between w-full"
                     >
-                      <span>{formatDisplayLabel(crop)}</span>
-                      <span className="text-[10px] text-muted-foreground">{state.inventory[crop] || 0}</span>
+                      <span className="truncate">{formatDisplayLabel(crop)}</span>
+                      <span className="text-[10px] shrink-0 ml-1 opacity-70">×{state.inventory[crop] || 0}</span>
                     </Button>
                   ))}
                 </div>
@@ -219,17 +219,17 @@ const GeneticsTab = memo(() => {
 
               <div>
                 <label className="block text-sm font-medium mb-2">Parent 2</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto scrollbar-smart">
                   {availableCrops.map(crop => (
                     <Button
                       key={crop}
                       variant={selectedParent2 === crop ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedParent2(crop)}
-                      className="text-xs justify-between"
+                      className="text-xs justify-between w-full"
                     >
-                      <span>{formatDisplayLabel(crop)}</span>
-                      <span className="text-[10px] text-muted-foreground">{state.inventory[crop] || 0}</span>
+                      <span className="truncate">{formatDisplayLabel(crop)}</span>
+                      <span className="text-[10px] shrink-0 ml-1 opacity-70">×{state.inventory[crop] || 0}</span>
                     </Button>
                   ))}
                 </div>
