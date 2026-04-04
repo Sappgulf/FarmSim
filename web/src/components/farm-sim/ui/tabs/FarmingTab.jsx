@@ -183,7 +183,7 @@ const FarmingTab = memo(() => {
           if (result.usedFromInventory) parts.push(`used ${result.usedFromInventory} pesticide`);
           if (result.boughtUnits) parts.push(`bought ${result.boughtUnits} (-${result.coinCost}🪙)`);
           actions.addNotification({
-            message: `🐛 Treated ${result.applied} diseased crops${parts.length ? ` (${parts.join(', ')})` : ''}!`,
+            message: `🧪 Treated ${result.applied} diseased crops${parts.length ? ` (${parts.join(', ')})` : ''}!`,
             type: 'success'
           });
         }
