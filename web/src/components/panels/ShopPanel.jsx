@@ -73,27 +73,27 @@ function ShopPanelComponent({
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="seeds" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-4">
-            <TabsTrigger value="seeds" className="text-xs sm:text-sm">
-              <Leaf size={14} className="mr-1" />
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 gap-1 h-auto p-1">
+            <TabsTrigger value="seeds" className="text-xs flex items-center gap-1 py-2">
+              <Leaf size={13} />
               Seeds
             </TabsTrigger>
-            <TabsTrigger value="tools" className="text-xs sm:text-sm">
-              <Wrench size={14} className="mr-1" />
+            <TabsTrigger value="tools" className="text-xs flex items-center gap-1 py-2">
+              <Wrench size={13} />
               Tools
             </TabsTrigger>
-            <TabsTrigger value="buildings" className="text-xs sm:text-sm">
-              <Building2 size={14} className="mr-1" />
+            <TabsTrigger value="buildings" className="text-xs flex items-center gap-1 py-2">
+              <Building2 size={13} />
               Build
             </TabsTrigger>
-            <TabsTrigger value="expand" className="text-xs sm:text-sm">
-              <Expand size={14} className="mr-1" />
+            <TabsTrigger value="expand" className="text-xs flex items-center gap-1 py-2">
+              <Expand size={13} />
               Expand
             </TabsTrigger>
           </TabsList>
 
           {/* Seeds Tab */}
-          <TabsContent value="seeds" className="space-y-2 max-h-[400px] overflow-y-auto">
+          <TabsContent value="seeds" className="space-y-2 max-h-[420px] overflow-y-auto pr-0.5">
             {availableSeeds.map((seed) => {
               const qty = getQuantity(seed.id);
               const totalCost = seed.shopPrice * qty;
@@ -104,39 +104,42 @@ function ShopPanelComponent({
                 <div
                   key={seed.id}
                   className={`
-                    flex items-center justify-between p-3 rounded-lg border
+                    flex items-center justify-between p-3 rounded-xl border
                     ${RARITY_COLORS[seed.rarity] || 'bg-gray-50'}
-                    transition-colors
+                    transition-all hover:shadow-sm
                   `}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{seed.emoji}</span>
-                    <div>
-                      <div className="font-medium capitalize text-sm">{seed.id}</div>
-                      <div className="text-xs text-gray-500">
-                        +{seed.baseValue}🪙 • {seed.season}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-2xl flex-shrink-0">{seed.emoji}</span>
+                    <div className="min-w-0">
+                      <div className="font-semibold capitalize text-sm truncate">{seed.id}</div>
+                      <div className="text-xs text-gray-500 flex items-center gap-1 flex-wrap">
+                        <span>+{seed.baseValue}🪙</span>
+                        <span>•</span>
+                        <span className="capitalize">{seed.season}</span>
+                        {inStock > 0 && (
+                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 ml-0.5">
+                            ×{inStock}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      {inStock} owned
-                    </Badge>
-
+                  <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
                     {/* Quantity selector */}
-                    <div className="flex items-center gap-1 bg-white rounded border">
+                    <div className="flex items-center bg-white rounded-lg border overflow-hidden shadow-sm">
                       <button
                         onClick={() => handleQuantityChange(seed.id, -1)}
-                        className="px-2 py-1 hover:bg-gray-100 text-sm"
+                        className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm font-bold disabled:opacity-40"
                         disabled={qty <= 1}
                       >
-                        -
+                        −
                       </button>
-                      <span className="px-2 text-sm tabular-nums">{qty}</span>
+                      <span className="w-6 text-center text-sm font-semibold tabular-nums">{qty}</span>
                       <button
                         onClick={() => handleQuantityChange(seed.id, 1)}
-                        className="px-2 py-1 hover:bg-gray-100 text-sm"
+                        className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm font-bold"
                       >
                         +
                       </button>
@@ -146,7 +149,7 @@ function ShopPanelComponent({
                       size="sm"
                       onClick={() => onBuySeeds?.(seed.id, qty)}
                       disabled={!canAfford}
-                      className="min-w-[70px]"
+                      className="min-w-[62px] h-7 text-xs px-2"
                     >
                       {totalCost}🪙
                     </Button>
@@ -157,7 +160,7 @@ function ShopPanelComponent({
           </TabsContent>
 
           {/* Tools Tab */}
-          <TabsContent value="tools" className="space-y-2 max-h-[400px] overflow-y-auto">
+          <TabsContent value="tools" className="space-y-2 max-h-[420px] overflow-y-auto pr-0.5">
             {availableTools.map((tool) => {
               const canAfford = coins >= tool.shopPrice;
               const owned = inventory[tool.id] || 0;
@@ -165,20 +168,22 @@ function ShopPanelComponent({
               return (
                 <div
                   key={tool.id}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-slate-50"
+                  className="flex items-center justify-between p-3 rounded-xl border bg-slate-50 hover:bg-slate-100 transition-all hover:shadow-sm"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{tool.emoji}</span>
-                    <div>
-                      <div className="font-medium capitalize text-sm">{tool.id}</div>
-                      <div className="text-xs text-gray-500">{tool.description}</div>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-2xl flex-shrink-0">{tool.emoji}</span>
+                    <div className="min-w-0">
+                      <div className="font-semibold capitalize text-sm truncate">{tool.id}</div>
+                      <div className="text-xs text-gray-500 truncate">{tool.description}</div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      {owned} owned
-                    </Badge>
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                    {owned > 0 && (
+                      <Badge variant="outline" className="text-xs">
+                        ×{owned}
+                      </Badge>
+                    )}
                     <Button
                       size="sm"
                       onClick={() => onBuyTool?.(tool.id)}
@@ -193,7 +198,7 @@ function ShopPanelComponent({
           </TabsContent>
 
           {/* Buildings Tab */}
-          <TabsContent value="buildings" className="space-y-2 max-h-[400px] overflow-y-auto">
+          <TabsContent value="buildings" className="space-y-2 max-h-[420px] overflow-y-auto pr-0.5">
             {availableBuildings.map((building) => {
               const canAfford = coins >= building.price;
 
@@ -201,21 +206,26 @@ function ShopPanelComponent({
                 <div
                   key={building.id}
                   className={`
-                    flex items-center justify-between p-3 rounded-lg border
-                    ${building.owned ? 'bg-green-50 border-green-200' : 'bg-slate-50'}
+                    flex items-center justify-between p-3 rounded-xl border transition-all hover:shadow-sm
+                    ${building.owned
+                      ? 'bg-emerald-50 border-emerald-200'
+                      : canAfford
+                        ? 'bg-slate-50 border-slate-200 hover:border-amber-300 hover:bg-amber-50/30'
+                        : 'bg-slate-50 border-slate-200 opacity-70'
+                    }
                   `}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{building.emoji}</span>
-                    <div>
-                      <div className="font-medium text-sm">{building.name}</div>
-                      <div className="text-xs text-gray-500">{building.description}</div>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-2xl flex-shrink-0">{building.emoji}</span>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-sm truncate">{building.name}</div>
+                      <div className="text-xs text-gray-500 truncate">{building.description}</div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                     {building.owned ? (
-                      <Badge className="bg-green-100 text-green-700">Owned</Badge>
+                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">✓ Owned</Badge>
                     ) : (
                       <Button
                         size="sm"

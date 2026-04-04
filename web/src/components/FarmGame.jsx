@@ -1209,24 +1209,36 @@ export default function FarmGame() {
             />
 
             <Tabs value={rightTab} onValueChange={setRightTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="shop" title="Shop">
-                  <ShoppingCart size={16} />
+              <TabsList className="grid w-full grid-cols-4 mb-1">
+                <TabsTrigger value="shop" title="Shop" className="flex flex-col gap-0.5 h-auto py-1.5 text-[10px]">
+                  <ShoppingCart size={15} />
+                  Shop
                 </TabsTrigger>
-                <TabsTrigger value="process" title="Processing">
-                  <Factory size={16} />
+                <TabsTrigger value="livestock" title="Livestock" className="flex flex-col gap-0.5 h-auto py-1.5 text-[10px]">
+                  <span className="text-sm leading-none">🐄</span>
+                  Animals
                 </TabsTrigger>
-                <TabsTrigger value="achievements" title="Achievements">
-                  <Trophy size={16} />
+                <TabsTrigger value="process" title="Processing" className="flex flex-col gap-0.5 h-auto py-1.5 text-[10px]">
+                  <Factory size={15} />
+                  Process
                 </TabsTrigger>
-                <TabsTrigger value="prestige" title="Prestige">
-                  <Crown size={16} />
+                <TabsTrigger value="achievements" title="Achievements" className="flex flex-col gap-0.5 h-auto py-1.5 text-[10px]">
+                  <Trophy size={15} />
+                  Goals
                 </TabsTrigger>
-                <TabsTrigger value="scrapbook" title="Scrapbook">
-                  📖
+              </TabsList>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="prestige" title="Prestige" className="flex flex-col gap-0.5 h-auto py-1.5 text-[10px]">
+                  <Crown size={15} />
+                  Prestige
                 </TabsTrigger>
-                <TabsTrigger value="settings" title="Settings">
-                  <Settings size={16} />
+                <TabsTrigger value="scrapbook" title="Scrapbook" className="flex flex-col gap-0.5 h-auto py-1.5 text-[10px]">
+                  <span className="text-sm leading-none">📖</span>
+                  Scrapbook
+                </TabsTrigger>
+                <TabsTrigger value="settings" title="Settings" className="flex flex-col gap-0.5 h-auto py-1.5 text-[10px]">
+                  <Settings size={15} />
+                  Settings
                 </TabsTrigger>
               </TabsList>
 
@@ -1240,6 +1252,19 @@ export default function FarmGame() {
                   onBuyTool={handleBuyTool}
                   onExpandFarm={handleExpandFarm}
                   onBuyBuilding={handleBuyBuilding}
+                />
+              </TabsContent>
+
+              <TabsContent value="livestock" className="mt-4">
+                <LivestockPanel
+                  coins={coins}
+                  ownedAnimals={ownedAnimals}
+                  pendingProducts={pendingProducts}
+                  onBuyAnimal={handleBuyAnimal}
+                  onFeedAnimal={handleFeedAnimal}
+                  onWaterAnimal={handleWaterAnimal}
+                  onCollectProduct={handleCollectProduct}
+                  addNotification={addNotification}
                 />
               </TabsContent>
 
@@ -1408,7 +1433,7 @@ export default function FarmGame() {
             />
           )}
 
-          {activeTab === 'goals' && (
+          {(activeTab === 'goals' || activeTab === 'achievements') && (
             <AchievementsPanel
               unlockedAchievements={unlockedAchievements}
               stats={stats}
@@ -1429,6 +1454,42 @@ export default function FarmGame() {
               memories={MEMORIES}
               memoryFlags={memoryFlags}
               onOpen={handleScrapbookOpen}
+            />
+          )}
+
+          {activeTab === 'livestock' && (
+            <LivestockPanel
+              coins={coins}
+              ownedAnimals={ownedAnimals}
+              pendingProducts={pendingProducts}
+              onBuyAnimal={handleBuyAnimal}
+              onFeedAnimal={handleFeedAnimal}
+              onWaterAnimal={handleWaterAnimal}
+              onCollectProduct={handleCollectProduct}
+              addNotification={addNotification}
+            />
+          )}
+
+          {activeTab === 'process' && (
+            <ProcessingPanel
+              inventory={inventory}
+              coins={coins}
+              hasWorkshop={buildings.includes('workshop')}
+              onProcess={handleStartProcessing}
+              onCollect={handleCollectProcessed}
+              processingQueue={processingQueue}
+              completedProducts={completedProducts}
+              addNotification={addNotification}
+            />
+          )}
+
+          {activeTab === 'prestige' && (
+            <PrestigePanel
+              prestige={prestige}
+              totalEarned={totalEarned}
+              coins={coins}
+              onPrestige={handlePrestige}
+              stats={stats}
             />
           )}
 
@@ -1502,6 +1563,9 @@ export default function FarmGame() {
         onShowAchievements={() => { setActiveTab('achievements'); setMenuOpen(false); }}
         onShowBreeding={() => { setActiveTab('breeding'); setMenuOpen(false); }}
         onShowScrapbook={() => { setActiveTab('scrapbook'); setMenuOpen(false); }}
+        onShowLivestock={() => { setActiveTab('livestock'); setMenuOpen(false); }}
+        onShowProcessing={() => { setActiveTab('process'); setMenuOpen(false); }}
+        onShowPrestige={() => { setActiveTab('prestige'); setMenuOpen(false); }}
         onShowHelp={handleShowHelp}
       />
 

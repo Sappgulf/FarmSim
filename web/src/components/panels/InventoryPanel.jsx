@@ -66,26 +66,27 @@ function InventoryPanelComponent({
               <Leaf size={14} className="text-green-600" />
               Seeds & Crops
             </h4>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-2">
               {categorized.seeds.map(({ id, qty, data }) => (
                 <button
                   key={id}
                   onClick={() => onSelectSeed?.(id)}
                   className={`
-                    flex items-center gap-2 p-2 rounded-lg border text-left transition-all
+                    flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all
+                    touch-manipulation select-none
                     ${selectedSeed === id
-                      ? 'bg-green-100 border-green-400 ring-2 ring-green-400 ring-offset-1'
-                      : 'bg-slate-50 border-gray-200 hover:bg-slate-100'
+                      ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-400 ring-offset-1 shadow-sm'
+                      : 'bg-slate-50 border-gray-200 hover:bg-slate-100 hover:border-gray-300'
                     }
                   `}
                 >
-                  <span className="text-xl">{data.emoji}</span>
+                  <span className="text-xl flex-shrink-0">{data.emoji}</span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium capitalize truncate">{id}</div>
+                    <div className="text-sm font-semibold capitalize truncate">{id}</div>
                     <div className="text-xs text-gray-500">×{qty}</div>
                   </div>
                   {selectedSeed === id && (
-                    <Badge className="bg-green-500 text-white text-[10px]">Selected</Badge>
+                    <Badge className="bg-emerald-500 text-white text-[10px] flex-shrink-0">✓</Badge>
                   )}
                 </button>
               ))}
@@ -100,15 +101,15 @@ function InventoryPanelComponent({
               <Wrench size={14} className="text-blue-600" />
               Tools & Items
             </h4>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-2">
               {categorized.tools.map(({ id, qty, data }) => (
                 <div
                   key={id}
-                  className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-gray-200"
+                  className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-gray-200"
                 >
-                  <span className="text-xl">{data.emoji}</span>
+                  <span className="text-xl flex-shrink-0">{data.emoji}</span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium capitalize truncate">{id}</div>
+                    <div className="text-sm font-semibold capitalize truncate">{id}</div>
                     <div className="text-xs text-gray-500">×{qty}</div>
                   </div>
                 </div>
@@ -176,24 +177,12 @@ function InventoryPanelComponent({
           </div>
         )}
 
-        {/* Quick seed selector */}
-        {categorized.seeds.length > 0 && (
-          <div className="pt-4 border-t">
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              Quick Select Seed
-            </label>
-            <select
-              value={selectedSeed}
-              onChange={(e) => onSelectSeed?.(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
-              id="seed-selector"
-            >
-              {categorized.seeds.map(({ id, qty, data }) => (
-                <option key={id} value={id}>
-                  {data.emoji} {id} ({qty} available)
-                </option>
-              ))}
-            </select>
+        {/* Active seed hint */}
+        {categorized.seeds.length > 0 && selectedSeed && (
+          <div className="pt-3 border-t">
+            <p className="text-xs text-gray-500 text-center">
+              Tap a seed above to select it for planting
+            </p>
           </div>
         )}
       </CardContent>
