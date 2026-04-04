@@ -398,7 +398,7 @@ const FarmingTab = memo(() => {
           <Badge variant="outline" className="bg-white/80 text-slate-600">{cropList.length} available</Badge>
         </div>
         <p className="mb-3 text-xs text-slate-600">Click a crop, then click empty plots on your farm</p>
-        <div className="space-y-2 max-h-96 overflow-y-auto">
+        <div className="space-y-2 max-h-96 overflow-y-auto scrollbar-smart">
           {cropList.length === 0 ? (
             <div className="text-center py-10">
               <div className="text-4xl mb-2">🌱</div>

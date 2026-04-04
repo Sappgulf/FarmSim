@@ -173,7 +173,7 @@ const LivestockTab = memo(() => {
           </Badge>
         )}
       >
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <MetricTile
             tone="amber"
             label="Animals"

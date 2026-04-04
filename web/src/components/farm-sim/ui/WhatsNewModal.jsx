@@ -43,7 +43,7 @@ const WhatsNewModal = memo(() => {
           <div className="text-[10px] font-semibold uppercase tracking-[0.34em] text-emerald-600">{releaseNotes.title}</div>
           <h2 className="mt-1 text-xl font-semibold tracking-tight text-emerald-950">✨ {title}</h2>
         </div>
-        <div className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4 text-sm text-slate-700">
+        <div className="max-h-[70vh] space-y-4 overflow-y-auto scrollbar-smart px-5 py-4 text-sm text-slate-700">
           {releaseNotes.sections.map((section) => (
             <div key={section.title} className="rounded-[22px] border border-slate-200/60 bg-white/72 px-4 py-3">
               <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-emerald-600">{section.title}</div>

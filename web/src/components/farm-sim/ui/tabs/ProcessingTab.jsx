@@ -666,7 +666,7 @@ const ProcessingTab = memo(() => {
         description="The current shape of your processing layer."
         tone="slate"
       >
-        <div className="grid grid-cols-3 gap-3 text-sm">
+        <div className="grid grid-cols-1 xs:grid-cols-3 gap-3 text-sm">
           <MetricTile
             tone="amber"
             label="Facilities"

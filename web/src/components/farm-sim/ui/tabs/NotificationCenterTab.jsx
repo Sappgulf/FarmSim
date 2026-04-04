@@ -154,7 +154,7 @@ const NotificationCenterTab = memo(() => {
             description="Try another filter or wait for new activity."
           />
         ) : (
-          <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-96 overflow-y-auto pr-1 scrollbar-smart">
             {filteredHistory.map((entry) => {
               const style = TYPE_STYLES[entry.type] || TYPE_STYLES.info;
               const Icon = style.icon;

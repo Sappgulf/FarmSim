@@ -479,7 +479,7 @@ const PetsTab = memo(() => {
           {/* Pet Supplies */}
           <Card className="p-4 bg-slate-50/80">
             <h3 className="font-semibold mb-3 text-blue-800">🛍️ Pet Supplies</h3>
-            <div className="grid grid-cols-3 gap-3 mb-4 text-sm">
+            <div className="grid grid-cols-1 xs:grid-cols-3 gap-3 mb-4 text-sm">
               <MetricTile tone="amber" label="Food" value={petSupplies.pet_food} hint="Feed the pack" icon="🍖" />
               <MetricTile tone="rose" label="Attention" value={petSupplies.attention} hint="Play sessions" icon="❤️" />
               <MetricTile tone="sky" label="Vet Care" value={petSupplies.vet_care} hint="Health visits" icon="🏥" />

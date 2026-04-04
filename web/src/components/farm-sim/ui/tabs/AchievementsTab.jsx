@@ -254,7 +254,7 @@ const AchievementsTab = memo(() => {
             <TabsTrigger value="milestone">🏆 Milestone</TabsTrigger>
           </TabsList>
 
-          <div className="mt-4 max-h-96 space-y-2 overflow-y-auto">
+          <div className="mt-4 max-h-96 space-y-2 overflow-y-auto scrollbar-smart">
             {filteredAchievements.map(achievement => {
               const isUnlocked = state.achievements.find(a => a.id === achievement.id)?.unlocked;
               const progress = getAchievementProgress(achievement);
