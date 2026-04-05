@@ -189,6 +189,8 @@ struct StatPill: View {
                 .font(Typography.small)
             Text(value)
                 .font(Typography.metricSmall)
+                .contentTransition(.numericText())
+                .animation(DS.Animation.micro, value: value)
         }
         .foregroundStyle(.white.opacity(0.90))
     }

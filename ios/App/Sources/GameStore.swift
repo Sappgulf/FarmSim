@@ -230,6 +230,24 @@ final class GameStore {
     private(set) var dayRolloverCoinsEarned: Int = 0
     private(set) var dayRolloverXPEarned: Int = 0
 
+    var tomorrowWeatherIcon: String {
+        let tomorrow = FarmWeatherModel.resolve(
+            day: save.world.day + 1,
+            timeProgress: 0.35,
+            season: hudSeasonText
+        )
+        return tomorrow.weather.icon
+    }
+
+    var tomorrowWeatherLabel: String {
+        let tomorrow = FarmWeatherModel.resolve(
+            day: save.world.day + 1,
+            timeProgress: 0.35,
+            season: hudSeasonText
+        )
+        return tomorrow.weather.rawValue
+    }
+
     @ObservationIgnored private var engine: GameCoreEngine
     @ObservationIgnored private var timeEngine = TimeEngine(
         config: TimeEngineConfig(secondsPerDay: 1_440, ticksPerSecond: 12, pauseInMenus: false, offlineCatchup: true)
@@ -1447,6 +1465,17 @@ final class GameStore {
         let today = dailySellMultiplierForDay(cropID: cropID, day: save.world.day)
         let yesterday = dailySellMultiplierForDay(cropID: cropID, day: max(0, save.world.day - 1))
         return today / max(0.001, yesterday)
+    }
+
+    /// Last 7 days of sell prices (oldest → newest) for sparkline display.
+    func sellPriceHistory(for cropID: String) -> [Int] {
+        guard let def = engine.cropDefsByID[cropID] else { return [] }
+        let currentDay = save.world.day
+        return (0..<7).map { offset in
+            let day = max(0, currentDay - (6 - offset))
+            let multiplier = dailySellMultiplierForDay(cropID: cropID, day: day)
+            return max(1, Int((Double(def.sellPrice) * sellBonusMultiplier * multiplier).rounded(.down)))
+        }
     }
 
     func growthProgress(tileIndex: Int) -> Double {

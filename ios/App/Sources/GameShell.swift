@@ -73,7 +73,9 @@ struct GameShell: View {
                     day: store.save.world.day,
                     season: store.hudSeasonText,
                     earnedCoins: store.dayRolloverCoinsEarned,
-                    earnedXP: store.dayRolloverXPEarned
+                    earnedXP: store.dayRolloverXPEarned,
+                    forecastIcon: store.tomorrowWeatherIcon,
+                    forecastLabel: store.tomorrowWeatherLabel
                 )
                 .scaleEffect(dayRolloverScale)
                 .opacity(dayRolloverOpacity)
@@ -368,6 +370,8 @@ struct DayRolloverOverlay: View {
     let season: String
     var earnedCoins: Int = 0
     var earnedXP: Int = 0
+    var forecastIcon: String = "sun.max.fill"
+    var forecastLabel: String = ""
 
     var body: some View {
         VStack(spacing: DS.Space.md) {
@@ -403,6 +407,21 @@ struct DayRolloverOverlay: View {
                         RewardBadge(icon: "\u{2728}", value: "+\(earnedXP) XP", color: DS.Color.xp)
                     }
                 }
+            }
+
+            // Tomorrow's forecast
+            if !forecastLabel.isEmpty {
+                HStack(spacing: DS.Space.xs) {
+                    Image(systemName: forecastIcon)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.80))
+                    Text("Tomorrow: \(forecastLabel)")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.75))
+                }
+                .padding(.horizontal, DS.Space.md)
+                .padding(.vertical, DS.Space.xs)
+                .background(.white.opacity(0.12), in: Capsule())
             }
         }
         .padding(.vertical, DS.Space.xl)
@@ -563,6 +582,12 @@ struct OnboardingView: View {
          "sun.max.fill",        Color(red: 0.95, green: 0.72, blue: 0.22)),
         ("Harvest",         "Gather ripe crops and sell them in Town for coins.",
          "basket.fill",         Color(red: 0.75, green: 0.42, blue: 0.18)),
+        ("Visit Town",      "Head to the Market to buy seeds, sell your harvest, and upgrade your farm.",
+         "storefront.fill",     Color(red: 0.35, green: 0.55, blue: 0.90)),
+        ("Stock the Barn",  "Your barn tracks every crop and animal product. Filter and inspect at a glance.",
+         "shippingbox.fill",    Color(red: 0.60, green: 0.38, blue: 0.18)),
+        ("Go Fishing",      "Cast a line at the dock. Rare fish fetch premium prices at market.",
+         "fish.fill",           Color(red: 0.22, green: 0.60, blue: 0.78)),
     ]
 
     var body: some View {

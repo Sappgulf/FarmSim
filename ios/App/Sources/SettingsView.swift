@@ -87,6 +87,11 @@ struct SettingsView: View {
                                 .accessibilityValue(store.settings.palette.title)
                             }
                             .padding(.vertical, DS.Space.xs)
+
+                            // Live palette preview strip
+                            PalettePreviewStrip(palette: store.settings.palette)
+                                .padding(.horizontal, DS.Space.md)
+                                .padding(.bottom, DS.Space.sm)
                         }
                     }
 
@@ -464,6 +469,28 @@ struct SettingsView: View {
         .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 6)
     }
 
+    // MARK: - Palette Preview Strip
+
+    private func paletteGradient(_ palette: FarmPalette) -> LinearGradient {
+        switch palette {
+        case .meadow:
+            return LinearGradient(
+                colors: [Color(red: 0.44, green: 0.76, blue: 0.40), Color(red: 0.62, green: 0.87, blue: 0.55), Color(red: 0.38, green: 0.62, blue: 0.32)],
+                startPoint: .leading, endPoint: .trailing
+            )
+        case .sunrise:
+            return LinearGradient(
+                colors: [Color(red: 0.98, green: 0.72, blue: 0.28), Color(red: 0.96, green: 0.50, blue: 0.22), Color(red: 0.88, green: 0.32, blue: 0.18)],
+                startPoint: .leading, endPoint: .trailing
+            )
+        case .twilight:
+            return LinearGradient(
+                colors: [Color(red: 0.28, green: 0.32, blue: 0.72), Color(red: 0.50, green: 0.30, blue: 0.80), Color(red: 0.18, green: 0.20, blue: 0.55)],
+                startPoint: .leading, endPoint: .trailing
+            )
+        }
+    }
+
     // MARK: - Helper Methods
 
     private func paletteColor(_ palette: FarmPalette) -> SwiftUI.Color {
@@ -474,6 +501,56 @@ struct SettingsView: View {
             return Theme.seasonSummer
         case .twilight:
             return Theme.seasonWinter
+        }
+    }
+}
+
+// MARK: - PalettePreviewStrip
+
+private struct PalettePreviewStrip: View {
+    let palette: FarmPalette
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(FarmPalette.allCases) { p in
+                ZStack {
+                    gradient(p)
+                    if p == palette {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.white)
+                            .shadow(color: .black.opacity(0.4), radius: 2, x: 0, y: 1)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 32)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
+                .strokeBorder(SwiftUI.Color.white.opacity(0.15), lineWidth: 1)
+        )
+        .animation(DS.Animation.standard, value: palette)
+    }
+
+    private func gradient(_ p: FarmPalette) -> LinearGradient {
+        switch p {
+        case .meadow:
+            return LinearGradient(
+                colors: [Color(red: 0.44, green: 0.76, blue: 0.40), Color(red: 0.38, green: 0.62, blue: 0.32)],
+                startPoint: .leading, endPoint: .trailing
+            )
+        case .sunrise:
+            return LinearGradient(
+                colors: [Color(red: 0.98, green: 0.72, blue: 0.28), Color(red: 0.88, green: 0.32, blue: 0.18)],
+                startPoint: .leading, endPoint: .trailing
+            )
+        case .twilight:
+            return LinearGradient(
+                colors: [Color(red: 0.28, green: 0.32, blue: 0.72), Color(red: 0.18, green: 0.20, blue: 0.55)],
+                startPoint: .leading, endPoint: .trailing
+            )
         }
     }
 }

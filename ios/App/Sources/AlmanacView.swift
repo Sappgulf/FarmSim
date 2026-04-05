@@ -56,6 +56,22 @@ struct AlmanacView: View {
                             .padding(.horizontal, DS.Space.md)
                             .padding(.vertical, DS.Space.lg)
 
+                        // Upcoming Festivals column (current + next season, hidden during search)
+                        if query.isEmpty && !upcomingFestivals.isEmpty {
+                            VStack(alignment: .leading, spacing: DS.Space.sm) {
+                                columnHeader("UPCOMING FESTIVALS", ornament: "🗓")
+
+                                ForEach(upcomingFestivals) { festival in
+                                    upcomingFestivalRow(festival)
+                                }
+                            }
+                            .padding(.horizontal, DS.Space.md)
+
+                            ornamentalRule
+                                .padding(.horizontal, DS.Space.md)
+                                .padding(.vertical, DS.Space.lg)
+                        }
+
                         // Festivals column
                         VStack(alignment: .leading, spacing: DS.Space.sm) {
                             columnHeader("LORE & FESTIVALS", ornament: "✦")
@@ -264,6 +280,54 @@ struct AlmanacView: View {
         }
     }
 
+    // MARK: - Upcoming Festival Row
+
+    @ViewBuilder
+    private func upcomingFestivalRow(_ festival: FestivalDef) -> some View {
+        let isCurrent = festival.season.localizedCaseInsensitiveCompare(store.hudSeasonText) == .orderedSame
+
+        ParchmentCard {
+            HStack(spacing: DS.Space.md) {
+                Text(festival.icon).font(.largeTitle)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(festival.name)
+                        .font(.system(.body, design: .serif).weight(.bold))
+                        .foregroundStyle(inkPrimary)
+                    Text(festival.details)
+                        .font(.system(.caption, design: .serif))
+                        .foregroundStyle(inkSecondary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text(isCurrent ? "NOW" : "NEXT")
+                        .font(.system(size: 9, design: .serif).weight(.black))
+                        .tracking(1.2)
+                        .foregroundStyle(isCurrent ? Color(red: 0.14, green: 0.38, blue: 0.14) : inkRed.opacity(0.75))
+
+                    Text(festival.season.capitalized)
+                        .font(.system(.caption2, design: .serif).weight(.semibold))
+                        .foregroundStyle(inkSecondary.opacity(0.80))
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
+                        .fill(isCurrent
+                              ? Color(red: 0.86, green: 0.94, blue: 0.84)
+                              : Color(red: 0.90, green: 0.84, blue: 0.72))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
+                                .strokeBorder(inkSecondary.opacity(0.22), lineWidth: 0.5)
+                        )
+                )
+            }
+        }
+    }
+
     // MARK: - Empty Search
 
     private var emptySearch: some View {
@@ -296,6 +360,22 @@ struct AlmanacView: View {
     private var filteredFestivals: [FestivalDef] {
         query.isEmpty ? store.festivalDefs
             : store.festivalDefs.filter { $0.name.localizedCaseInsensitiveContains(query) }
+    }
+
+    /// Current season + next season festivals, sorted so current season comes first.
+    private var upcomingFestivals: [FestivalDef] {
+        let current = store.hudSeasonText
+        let seasons = ["Spring", "Summer", "Autumn", "Winter"]
+        let nextIdx = (seasons.firstIndex(of: current).map { ($0 + 1) % 4 }) ?? 0
+        let next = seasons[nextIdx]
+
+        let currentFestivals = store.festivalDefs.filter {
+            $0.season.localizedCaseInsensitiveCompare(current) == .orderedSame
+        }
+        let nextFestivals = store.festivalDefs.filter {
+            $0.season.localizedCaseInsensitiveCompare(next) == .orderedSame
+        }
+        return currentFestivals + nextFestivals
     }
 
     private func profitPerDay(for crop: CropDef) -> Double {

@@ -4,7 +4,7 @@ import GameCore
 // MARK: - MarketSection
 
 private enum MarketSection: String, CaseIterable, Identifiable {
-    case buy, sell, upgrades, challenges, fishing, pets, livestock, research, genetics
+    case buy, sell, upgrades, challenges, tasks, fishing, pets, livestock, research, genetics
     var id: String { rawValue }
 
     var title: String {
@@ -13,6 +13,7 @@ private enum MarketSection: String, CaseIterable, Identifiable {
         case .sell:       return "Sell"
         case .upgrades:   return "Upgrades"
         case .challenges: return "Work Orders"
+        case .tasks:      return "Tasks"
         case .fishing:    return "Fishing"
         case .pets:       return "Pets"
         case .livestock:  return "Animals"
@@ -27,6 +28,7 @@ private enum MarketSection: String, CaseIterable, Identifiable {
         case .sell:       return "dollarsign.circle.fill"
         case .upgrades:   return "hammer.fill"
         case .challenges: return "checklist"
+        case .tasks:      return "checklist.checked"
         case .fishing:    return "fish.fill"
         case .pets:       return "pawprint.fill"
         case .livestock:  return "hare.fill"
@@ -626,6 +628,8 @@ private struct MarketSectionContent: View {
                 MarketUpgradesSection(store: store)
             case .challenges:
                 MarketChallengesSection(store: store, reducedMotion: reducedMotion)
+            case .tasks:
+                MarketTasksSection(store: store)
             case .fishing:
                 FishingSection(store: store)
             case .pets:
@@ -759,6 +763,7 @@ private struct MarketSellSection: View {
                         let trend = store.sellPriceTrend(for: crop.id)
                         let trendUp = trend >= 1.01
                         let trendDown = trend <= 0.99
+                        let history = store.sellPriceHistory(for: crop.id)
 
                         HStack(alignment: .top) {
                             Text(store.emoji(for: crop.id))
@@ -784,6 +789,15 @@ private struct MarketSellSection: View {
                                             .foregroundStyle(.red.opacity(0.75))
                                             .labelStyle(.iconOnly)
                                     }
+                                }
+
+                                if history.count > 1 {
+                                    PriceSparkline(
+                                        data: history,
+                                        color: trendUp ? DS.Color.accent : trendDown ? .red.opacity(0.75) : .white.opacity(0.50)
+                                    )
+                                    .frame(height: 18)
+                                    .frame(maxWidth: 80)
                                 }
 
                                 Stepper("Qty \(quantity)", value: Binding(

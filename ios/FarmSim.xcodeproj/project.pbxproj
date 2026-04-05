@@ -16,6 +16,7 @@
 		AA1001001234567890ABCDE1 /* MarketLivestockSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2001001234567890ABCDE1 /* MarketLivestockSection.swift */; };
 		AA1001001234567890ABCDE2 /* MarketResearchSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2001001234567890ABCDE2 /* MarketResearchSection.swift */; };
 		AA1001001234567890ABCDE3 /* MarketGeneticsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2001001234567890ABCDE3 /* MarketGeneticsSection.swift */; };
+		AA1001001234567890ABCDE4 /* MarketTasksSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2001001234567890ABCDE4 /* MarketTasksSection.swift */; };
 		2B5AE1A45B2CE1593793A12C /* FarmSimApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC85027D49EBD255ADF02D94 /* FarmSimApp.swift */; };
 		2B814C2BC30CEF916FA04D19 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7023B05D13E79F0132D0DF /* Components.swift */; };
 		2EFBE9C9B90EBE949D07FAAD /* QuickWheelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4ED1CB1D4830BFFA01057C5 /* QuickWheelView.swift */; };
@@ -66,6 +67,7 @@
 		AA2001001234567890ABCDE1 /* MarketLivestockSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketLivestockSection.swift; sourceTree = "<group>"; };
 		AA2001001234567890ABCDE2 /* MarketResearchSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketResearchSection.swift; sourceTree = "<group>"; };
 		AA2001001234567890ABCDE3 /* MarketGeneticsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketGeneticsSection.swift; sourceTree = "<group>"; };
+		AA2001001234567890ABCDE4 /* MarketTasksSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketTasksSection.swift; sourceTree = "<group>"; };
 		240722FDC0F1B1671F1FC88B /* EnhancedMarketUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedMarketUI.swift; sourceTree = "<group>"; };
 		29480BE67F50123EE0BBA2AA /* MenuButtonsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuButtonsView.swift; sourceTree = "<group>"; };
 		345E94AFFE7C60BF2AAE9257 /* BarnInventoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarnInventoryView.swift; sourceTree = "<group>"; };
@@ -191,6 +193,7 @@
 				AA2001001234567890ABCDE1 /* MarketLivestockSection.swift */,
 				AA2001001234567890ABCDE2 /* MarketResearchSection.swift */,
 				AA2001001234567890ABCDE3 /* MarketGeneticsSection.swift */,
+				AA2001001234567890ABCDE4 /* MarketTasksSection.swift */,
 				98E2E231238BA1E32D1C2A3D /* GameLoopDriver.swift */,
 				CB528E9FEB712A68D8FA8333 /* GameShell.swift */,
 				414AA71CAEFFBAA225B675E5 /* GameShellView.swift */,
@@ -342,6 +345,7 @@
 				AA1001001234567890ABCDE1 /* MarketLivestockSection.swift in Sources */,
 				AA1001001234567890ABCDE2 /* MarketResearchSection.swift in Sources */,
 				AA1001001234567890ABCDE3 /* MarketGeneticsSection.swift in Sources */,
+				AA1001001234567890ABCDE4 /* MarketTasksSection.swift in Sources */,
 				BD1071B837FA760B6CA8D7B3 /* GameLoopDriver.swift in Sources */,
 				40B2359985F0B8E802AD2C0C /* GameShell.swift in Sources */,
 				D3528B9C2C04B9FAD0BBE372 /* GameShellView.swift in Sources */,
