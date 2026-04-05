@@ -12,8 +12,6 @@ struct FarmView: View {
     @State private var zoom: CGFloat = 1.0
     @State private var pan: CGSize = .zero
     @State private var sceneDebugStats = FarmSceneDebugStats()
-    @State private var showDayRolloverOverlay = false
-    
     // Quick Wheel State
     @State private var showQuickWheel = false
     @State private var quickWheelItems: [QuickWheelItem] = []
@@ -69,12 +67,6 @@ struct FarmView: View {
                 .padding(.top, DS.Space.xs)
             }
             .overlay {
-                if showDayRolloverOverlay {
-                    dayRolloverOverlay
-                        .transition(.opacity)
-                        .zIndex(5)
-                }
-                
                 if showQuickWheel {
                     QuickWheelView(
                         items: quickWheelItems,
@@ -150,22 +142,6 @@ struct FarmView: View {
             }
             .onChange(of: appState.showingTileSheet) { _, showing in
                 store.setMenuPresented(showing)
-            }
-            .onChange(of: store.dayRolloverToken) { _, _ in
-                // Avoid duplicate overlay if already showing
-                guard !showDayRolloverOverlay else { return }
-                showDayRolloverOverlay = true
-                let delay = reducedMotion ? 0.35 : 1.2
-                Task {
-                    try? await Task.sleep(for: .seconds(delay))
-                    // Check task cancellation before UI update
-                    guard !Task.isCancelled else { return }
-                    await MainActor.run {
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            showDayRolloverOverlay = false
-                        }
-                    }
-                }
             }
             .sensoryFeedback(.impact(weight: .light), trigger: store.hapticToken)
             .sensoryFeedback(.success, trigger: store.harvestToken)
@@ -391,40 +367,6 @@ struct FarmView: View {
             .lineLimit(1)
             #endif
         }
-    }
-
-    private var dayRolloverOverlay: some View {
-        Button {
-            withAnimation(.easeOut(duration: 0.2)) {
-                showDayRolloverOverlay = false
-            }
-        } label: {
-            VStack(spacing: DS.Space.xs) {
-                Image(systemName: "sunrise.fill")
-                    .font(.system(size: 40, weight: .semibold))
-                    .foregroundStyle(DS.Color.money)
-                    .shadow(color: DS.Color.money.opacity(0.45), radius: 12, x: 0, y: 2)
-                Text(store.dayRolloverMessage)
-                    .font(.headline.weight(.semibold))
-                    .multilineTextAlignment(.center)
-                Text("Tap to dismiss")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(DS.Space.lg)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous)
-                    .stroke(DS.Color.cardStroke, lineWidth: 0.5)
-            )
-            .padding(.horizontal, DS.Space.lg)
-            .shadow(color: DS.shadow, radius: 16, y: 8)
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(store.dayRolloverMessage)
-        .accessibilityHint("Tap to dismiss the day rollover message")
-        .transition(.scale(scale: 0.92).combined(with: .opacity))
     }
 
     private func generateWheelItems(for index: Int) -> [QuickWheelItem] {
