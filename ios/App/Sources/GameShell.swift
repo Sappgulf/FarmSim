@@ -71,7 +71,9 @@ struct GameShell: View {
                 DayRolloverOverlay(
                     message: store.dayRolloverMessage,
                     day: store.save.world.day,
-                    season: store.hudSeasonText
+                    season: store.hudSeasonText,
+                    earnedCoins: store.dayRolloverCoinsEarned,
+                    earnedXP: store.dayRolloverXPEarned
                 )
                 .scaleEffect(dayRolloverScale)
                 .opacity(dayRolloverOpacity)
@@ -364,6 +366,8 @@ struct DayRolloverOverlay: View {
     let message: String
     let day: Int
     let season: String
+    var earnedCoins: Int = 0
+    var earnedXP: Int = 0
 
     var body: some View {
         VStack(spacing: DS.Space.md) {
@@ -388,6 +392,18 @@ struct DayRolloverOverlay: View {
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, DS.Space.lg)
+
+            // Earned rewards row
+            if earnedCoins > 0 || earnedXP > 0 {
+                HStack(spacing: DS.Space.lg) {
+                    if earnedCoins > 0 {
+                        RewardBadge(icon: "\u{1FA99}", value: "+\(earnedCoins)", color: DS.Color.money)
+                    }
+                    if earnedXP > 0 {
+                        RewardBadge(icon: "\u{2728}", value: "+\(earnedXP) XP", color: DS.Color.xp)
+                    }
+                }
+            }
         }
         .padding(.vertical, DS.Space.xl)
         .padding(.horizontal, DS.Space.xxl)

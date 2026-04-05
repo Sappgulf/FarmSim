@@ -4,7 +4,7 @@ import GameCore
 // MARK: - MarketSection
 
 private enum MarketSection: String, CaseIterable, Identifiable {
-    case buy, sell, upgrades, challenges, fishing, pets
+    case buy, sell, upgrades, challenges, fishing, pets, livestock, research, genetics
     var id: String { rawValue }
 
     var title: String {
@@ -15,6 +15,9 @@ private enum MarketSection: String, CaseIterable, Identifiable {
         case .challenges: return "Work Orders"
         case .fishing:    return "Fishing"
         case .pets:       return "Pets"
+        case .livestock:  return "Animals"
+        case .research:   return "Research"
+        case .genetics:   return "Genetics"
         }
     }
 
@@ -26,6 +29,9 @@ private enum MarketSection: String, CaseIterable, Identifiable {
         case .challenges: return "checklist"
         case .fishing:    return "fish.fill"
         case .pets:       return "pawprint.fill"
+        case .livestock:  return "hare.fill"
+        case .research:   return "flask.fill"
+        case .genetics:   return "dna"
         }
     }
 }
@@ -153,7 +159,7 @@ struct TownMarketView: View {
                     Text("MARKET INFO")
                         .font(Typography.small.weight(.bold))
                         .foregroundStyle(.white.opacity(0.55))
-                    Text("New supplies arrive every morning. Prices fluctuate based on seasonal demand.")
+                    Text("New supplies arrive every morning. Sell prices shift daily \u{2014} watch for market trends.")
                         .font(Typography.caption)
                         .foregroundStyle(.white)
                 }
@@ -624,6 +630,12 @@ private struct MarketSectionContent: View {
                 FishingSection(store: store)
             case .pets:
                 PetsSection(store: store)
+            case .livestock:
+                MarketLivestockSection(store: store)
+            case .research:
+                MarketResearchSection(store: store)
+            case .genetics:
+                MarketGeneticsSection(store: store)
             }
         }
     }
@@ -643,7 +655,7 @@ private struct MarketBuySection: View {
                     Text("MARKET INFO")
                         .font(Typography.small.weight(.bold))
                         .foregroundStyle(.white.opacity(0.55))
-                    Text("New supplies arrive every morning. Prices fluctuate based on seasonal demand.")
+                    Text("New supplies arrive every morning. Sell prices shift daily \u{2014} watch for market trends.")
                         .font(Typography.caption)
                         .foregroundStyle(.white)
                 }
@@ -744,6 +756,9 @@ private struct MarketSellSection: View {
                         let unitPrice = store.sellUnitPrice(for: crop.id) ?? crop.sellPrice
                         let quantity = min(available, max(1, sellQuantities[crop.id] ?? 1))
                         let totalValue = unitPrice * quantity
+                        let trend = store.sellPriceTrend(for: crop.id)
+                        let trendUp = trend >= 1.01
+                        let trendDown = trend <= 0.99
 
                         HStack(alignment: .top) {
                             Text(store.emoji(for: crop.id))
@@ -754,9 +769,22 @@ private struct MarketSellSection: View {
                                     .font(Typography.bodyStrong)
                                     .foregroundStyle(.white)
 
-                                Text("\(unitPrice) coins each · \(available) available")
-                                    .font(Typography.caption)
-                                    .foregroundStyle(.white.opacity(0.65))
+                                HStack(spacing: DS.Space.xs) {
+                                    Text("\(unitPrice) coins each · \(available) available")
+                                        .font(Typography.caption)
+                                        .foregroundStyle(.white.opacity(0.65))
+                                    if trendUp {
+                                        Label("up", systemImage: "arrow.up.right")
+                                            .font(Typography.small.weight(.bold))
+                                            .foregroundStyle(DS.Color.accent)
+                                            .labelStyle(.iconOnly)
+                                    } else if trendDown {
+                                        Label("down", systemImage: "arrow.down.right")
+                                            .font(Typography.small.weight(.bold))
+                                            .foregroundStyle(.red.opacity(0.75))
+                                            .labelStyle(.iconOnly)
+                                    }
+                                }
 
                                 Stepper("Qty \(quantity)", value: Binding(
                                     get: { min(available, max(1, sellQuantities[crop.id] ?? 1)) },
@@ -865,6 +893,12 @@ private struct MarketUpgradesSection: View {
                                             .font(Typography.small)
                                             .foregroundStyle(DS.Color.accent.opacity(0.85))
                                     }
+                                    if !isMax {
+                                        let nextBonus = plan.bonusForLevel(level + 1)
+                                        Label("Next: \(nextBonus)", systemImage: "arrow.up.circle.fill")
+                                            .font(Typography.small)
+                                            .foregroundStyle(.white.opacity(0.38))
+                                    }
                                 }
                             }
 
@@ -885,7 +919,7 @@ private struct MarketUpgradesSection: View {
                                     VStack(spacing: 1) {
                                         Text("Upgrade")
                                             .font(Typography.caption.weight(.bold))
-                                        Text("\(cost) 🪙")
+                                        Text("\(cost) \u{1FA99}")
                                             .font(Typography.small.weight(.bold))
                                     }
                                 }
@@ -895,6 +929,32 @@ private struct MarketUpgradesSection: View {
                             }
                         }
                         .padding(.vertical, 4)
+                    }
+                }
+            }
+
+            // Active synergies panel
+            if !store.activeBuildingSynergies.isEmpty {
+                WoodenPanel {
+                    VStack(alignment: .leading, spacing: DS.Space.sm) {
+                        SectionHeader("Active Synergies")
+
+                        ForEach(store.activeBuildingSynergies) { synergy in
+                            HStack(spacing: DS.Space.sm) {
+                                Text(synergy.icon).font(.title3)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(synergy.name)
+                                        .font(Typography.bodyStrong)
+                                        .foregroundStyle(.white)
+                                    Text(synergy.bonus)
+                                        .font(Typography.small)
+                                        .foregroundStyle(DS.Color.accent.opacity(0.90))
+                                }
+                                Spacer()
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(DS.Color.accent)
+                            }
+                        }
                     }
                 }
             }

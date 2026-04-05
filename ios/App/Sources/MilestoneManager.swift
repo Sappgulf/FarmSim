@@ -29,6 +29,7 @@ public enum MilestoneEventType: Sendable {
     case levelUp(Int)
     case dailyStreak(Int)
     case welcomeBack(WelcomeBackInfo)
+    case seasonStart(String)
 }
 
 // MARK: - Milestone Manager
@@ -269,6 +270,28 @@ public final class MilestoneManager: ObservableObject {
             icon: "🔥",
             coins: bonusCoins,
             xp: min(50, streak * 5)
+        )
+        pendingCelebrations.append(event)
+        return event
+    }
+
+    // MARK: - Season Start Celebration
+
+    @discardableResult
+    public func createSeasonStartEvent(season: String, icon: String) -> MilestoneEvent {
+        let messages: [String: String] = [
+            "Spring": "Flowers bloom and the soil warms. Time to plant new crops!",
+            "Summer": "The sun blazes! Perfect weather for fast-growing crops.",
+            "Autumn": "Leaves turn golden — harvest what you can before frost.",
+            "Winter": "The fields rest under frost. Cold-hardy crops thrive now."
+        ]
+        let event = MilestoneEvent(
+            type: .seasonStart(season),
+            title: "\(season) Has Arrived!",
+            message: messages[season] ?? "A new season begins on the farm.",
+            icon: icon,
+            coins: 0,
+            xp: 0
         )
         pendingCelebrations.append(event)
         return event

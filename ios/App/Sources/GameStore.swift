@@ -227,6 +227,8 @@ final class GameStore {
     private(set) var hudTimeProgress: Double = 0
     private(set) var dayRolloverToken: Int = 0
     private(set) var dayRolloverMessage: String = "A new day begins."
+    private(set) var dayRolloverCoinsEarned: Int = 0
+    private(set) var dayRolloverXPEarned: Int = 0
 
     @ObservationIgnored private var engine: GameCoreEngine
     @ObservationIgnored private var timeEngine = TimeEngine(
@@ -610,7 +612,9 @@ final class GameStore {
                 FarmNotifications.scheduleCropsReadyReminder(
                     day: engine.save.world.day,
                     readyCrops: readyTileCount,
-                    farmName: farmName
+                    plantedCrops: plantedTileCount,
+                    farmName: farmName,
+                    secondsUntilReady: secondsUntilNextCropReady
                 )
             }
         }
@@ -641,19 +645,47 @@ final class GameStore {
         let safeCount = max(0, count)
         guard safeCount > 0 else { return }
 
+        let preCoins = engine.save.player.coins
+        let preXP = engine.save.player.xp
+        let oldSeasonIndex = (max(0, engine.save.world.day) / 7) % 4
+
         for _ in 0..<safeCount {
             engine.advanceDay(growthMultiplier: growthMultiplier)
         }
         autoSellCrops()
         engine.setTimeState(timeEngine.state)
 
+        let earnedCoins = max(0, engine.save.player.coins - preCoins)
+        let earnedXP = max(0, engine.save.player.xp - preXP)
+        let newSeasonIndex = (max(0, engine.save.world.day) / 7) % 4
+
+        // Build enriched rollover message with earnings
+        var rolloverMsg = status
+        if triggerDayRollover && (earnedCoins > 0 || earnedXP > 0) {
+            var parts = [status]
+            if earnedCoins > 0 { parts.append("+\(earnedCoins) \u{1FA99}") }
+            if earnedXP > 0 { parts.append("+\(earnedXP) XP") }
+            rolloverMsg = parts.joined(separator: "  ")
+        }
+
         if triggerDayRollover {
-            dayRolloverMessage = status
+            dayRolloverMessage = rolloverMsg
+            dayRolloverCoinsEarned = earnedCoins
+            dayRolloverXPEarned = earnedXP
             dayRolloverToken += 1
             SoundManager.shared.play(.success)
         }
 
-        syncState(statusOverride: status, emitHaptic: emitHaptic, emitHarvest: false)
+        // Season change — queue a festival toast
+        if oldSeasonIndex != newSeasonIndex {
+            let seasons = ["Spring", "Summer", "Autumn", "Winter"]
+            let seasonIcons = ["\u{1F338}", "\u{2600}\u{FE0F}", "\u{1F342}", "\u{2744}\u{FE0F}"]
+            let newSeason = seasons[newSeasonIndex % seasons.count]
+            let icon = seasonIcons[newSeasonIndex % seasonIcons.count]
+            _ = milestoneManager.createSeasonStartEvent(season: newSeason, icon: icon)
+        }
+
+        syncState(statusOverride: rolloverMsg, emitHaptic: emitHaptic, emitHarvest: false)
         refreshHUDTime(force: true, now: Date().timeIntervalSince1970)
     }
 
@@ -743,7 +775,8 @@ final class GameStore {
 
     func sellCrop(cropID: String, quantity: Int = 1) -> Bool {
         guard let def = engine.cropDefsByID[cropID] else { return false }
-        let adjustedUnitPrice = max(1, Int((Double(def.sellPrice) * sellBonusMultiplier).rounded(.down)))
+        let daily = dailySellMultiplier(for: cropID)
+        let adjustedUnitPrice = max(1, Int((Double(def.sellPrice) * sellBonusMultiplier * daily).rounded(.down)))
         let result = engine.sell(
             itemID: cropID,
             quantity: quantity,
@@ -790,7 +823,9 @@ final class GameStore {
 
     func sellUnitPrice(for cropID: String) -> Int? {
         guard let def = engine.cropDefsByID[cropID] else { return nil }
-        return max(1, Int((Double(def.sellPrice) * sellBonusMultiplier).rounded(.down)))
+        let base = Double(def.sellPrice) * sellBonusMultiplier
+        let daily = dailySellMultiplier(for: cropID)
+        return max(1, Int((base * daily).rounded(.down)))
     }
 
     func isUnlocked(cropID: String) -> Bool {
@@ -1377,6 +1412,43 @@ final class GameStore {
         cropDisplay[cropID]?.emoji ?? "🌱"
     }
 
+    var estimatedLivestockIncome: Int {
+        livestockPlans.reduce(0) { total, plan in
+            let count = livestockCount(for: plan.id)
+            guard count > 0 else { return total }
+            let gross = count * max(1, plan.productAmount) * max(0, plan.productValue)
+            let maintenance = count * max(0, plan.maintenanceCost)
+            return total + max(0, gross - maintenance)
+        }
+    }
+
+    var secondsUntilNextCropReady: TimeInterval? {
+        let secondsPerDay = Double(timeEngine.config.secondsPerDay)
+        var minSeconds: TimeInterval = .infinity
+        for (i, tile) in save.world.tiles.enumerated() {
+            guard let planted = tile.planted,
+                  let def = engine.cropDefsByID[planted.cropID] else { continue }
+            if i < renderSnapshot.tiles.count && renderSnapshot.tiles[i].isReady {
+                return 0
+            }
+            let remaining = Double(max(1, def.daysToGrow)) - planted.growthProgress
+            guard remaining > 0 else { return 0 }
+            let adjustedDays = remaining / max(0.01, growthMultiplier)
+            minSeconds = min(minSeconds, adjustedDays * secondsPerDay)
+        }
+        return minSeconds.isFinite ? minSeconds : nil
+    }
+
+    func dailySellMultiplier(for cropID: String) -> Double {
+        dailySellMultiplierForDay(cropID: cropID, day: save.world.day)
+    }
+
+    func sellPriceTrend(for cropID: String) -> Double {
+        let today = dailySellMultiplierForDay(cropID: cropID, day: save.world.day)
+        let yesterday = dailySellMultiplierForDay(cropID: cropID, day: max(0, save.world.day - 1))
+        return today / max(0.001, yesterday)
+    }
+
     func growthProgress(tileIndex: Int) -> Double {
         guard save.world.tiles.indices.contains(tileIndex),
               let planted = save.world.tiles[tileIndex].planted,
@@ -1703,6 +1775,13 @@ final class GameStore {
         }
 
         return max(1, Int((Double(baseCost) * discount).rounded(.down)))
+    }
+
+    private func dailySellMultiplierForDay(cropID: String, day: Int) -> Double {
+        let seed = save.daySeed
+        let hash = stableHash("\(cropID)#sell#\(day)#\(seed)")
+        let normalized = Double(hash % 1000) / 1000.0
+        return 0.80 + normalized * 0.40 // 0.80x … 1.20x
     }
 
     private func stableHash(_ input: String) -> UInt64 {
