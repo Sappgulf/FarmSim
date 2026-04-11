@@ -52,6 +52,8 @@ struct GameShell: View {
     @State private var showingDayRollover = false
     @State private var dayRolloverScale = 0.8
     @State private var dayRolloverOpacity = 0.0
+    @State private var toastManager = ToastManager()
+    @State private var loadingManager = LoadingStateManager()
 
     /// Tab bar appearance is global UIKit state — configure exactly once per process lifetime.
     private static var tabBarConfigured = false
@@ -117,6 +119,15 @@ struct GameShell: View {
                 )
                 .padding(.top, 60)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            }
+
+            // Loading overlay
+            if loadingManager.isLoading {
+                LoadingOverlay(
+                    message: loadingManager.loadingMessage,
+                    progress: loadingManager.progress
+                )
+                .transition(.opacity)
             }
         }
         .onAppear {
