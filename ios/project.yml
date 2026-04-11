@@ -37,12 +37,33 @@ targets:
     dependencies:
       - package: GameCore
         product: GameCore
+  FarmSimTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: GameCore/Tests/GameCoreTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.austinbeatty.farmsim.tests
+        INFOPLIST_FILE: GameCore/Tests/GameCoreTests/Info.plist
+    dependencies:
+      - package: GameCore
+        product: GameCore
 schemes:
   FarmSim:
     build:
       targets:
         FarmSim: all
+        FarmSimTests: test
     run:
       config: Debug
     archive:
       config: Release
+  GameCoreTests:
+    build:
+      targets:
+        FarmSimTests: test
+    test:
+      config: Debug
+      targets:
+        - FarmSimTests

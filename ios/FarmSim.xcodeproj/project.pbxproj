@@ -7,16 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		095C6E481B63B249CC627FB8 /* MarketTasksSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1949A03342D3DCA852A6622F /* MarketTasksSection.swift */; };
+		0BCAF750AD76D8B2BD095E35 /* MarketLivestockSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F5CF811B6E18A399ED23563 /* MarketLivestockSection.swift */; };
+		0C7810000FF0801BB4633AF5 /* MarketGeneticsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30985B651B6388B683656729 /* MarketGeneticsSection.swift */; };
 		0EC494ABDCE8FCFBD53BEC20 /* GameCore in Frameworks */ = {isa = PBXBuildFile; productRef = F2CEB13050FED625C9B8410F /* GameCore */; };
 		1F53A35004EFB2458DE650E2 /* FarmScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFDABDF51EE7D2E47B9DE59D /* FarmScene.swift */; };
 		24AB3B11A27B45088259F442 /* ItemCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCB4A1DCA2BDFCB990FBB40 /* ItemCardView.swift */; };
 		25237B855BAF6766E74592D7 /* ShopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09CA1F9DE3EAA892ACBD1B03 /* ShopView.swift */; };
 		2770A53F011F77720D861252 /* BarnHeaderHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D6A7C0DAA792D766130B984 /* BarnHeaderHUD.swift */; };
 		27BCB1E74A82B731B673057D /* FishingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DFCB78AF03811ED2DDB3C7B /* FishingView.swift */; };
-		AA1001001234567890ABCDE1 /* MarketLivestockSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2001001234567890ABCDE1 /* MarketLivestockSection.swift */; };
-		AA1001001234567890ABCDE2 /* MarketResearchSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2001001234567890ABCDE2 /* MarketResearchSection.swift */; };
-		AA1001001234567890ABCDE3 /* MarketGeneticsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2001001234567890ABCDE3 /* MarketGeneticsSection.swift */; };
-		AA1001001234567890ABCDE4 /* MarketTasksSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2001001234567890ABCDE4 /* MarketTasksSection.swift */; };
 		2B5AE1A45B2CE1593793A12C /* FarmSimApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC85027D49EBD255ADF02D94 /* FarmSimApp.swift */; };
 		2B814C2BC30CEF916FA04D19 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7023B05D13E79F0132D0DF /* Components.swift */; };
 		2EFBE9C9B90EBE949D07FAAD /* QuickWheelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4ED1CB1D4830BFFA01057C5 /* QuickWheelView.swift */; };
@@ -25,6 +24,7 @@
 		4ABA4A4DEB2B0AC8A87FDBE3 /* FarmNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0592929B9C2CCD4116EC7BFD /* FarmNotifications.swift */; };
 		4CE8B5DCDD4AAD2E9EF89C97 /* PerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002A049D3593253C90EE88F1 /* PerformanceMonitor.swift */; };
 		4D4453BC4033E28BF4900048 /* FarmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 088F4123377BE584FF514CA7 /* FarmView.swift */; };
+		4D6CA04E7FEBAD07156B3C99 /* GameCore in Frameworks */ = {isa = PBXBuildFile; productRef = 4322C4DB12B1A0C995E76A65 /* GameCore */; };
 		520B728AA102563E6021A877 /* TownMarketView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 357FD8606D9DB4A8A31939CC /* TownMarketView.swift */; };
 		5C12EFE500E03F731267CAC0 /* ShelfSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03C0947A6ABA5686E6E97575 /* ShelfSectionView.swift */; };
 		5C26A8CA2E911187CCC04A27 /* content in Resources */ = {isa = PBXBuildFile; fileRef = 835A76F4A14781439024499F /* content */; };
@@ -32,6 +32,7 @@
 		60DD5637C29527180F1186A3 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 606F6628867A4DAEE9A09B5A /* SettingsView.swift */; };
 		6E37424541C7B4CE31C6E2E7 /* BarnBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E6F4D01739AB1DC0FE9CE9 /* BarnBackgroundView.swift */; };
 		73276090F48C2C38C49DAF36 /* HomesteadMenuScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D42EF966A07393C213649E6 /* HomesteadMenuScene.swift */; };
+		78CBC0A650E5BF56A431F200 /* MarketResearchSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9B57AECD60DD3A282EF8870 /* MarketResearchSection.swift */; };
 		7BB126C46508EF02697A5063 /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E09E2A7A1B6C7A408ED0E4 /* GameStore.swift */; };
 		7C1AEC85EBD0F3B7B75F3390 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40F33DFB7D52F84EBDFA060 /* Theme.swift */; };
 		7CE2A4E64FBBC71784C706A9 /* InventoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB8CCE7C8FFEB4774FA2F358 /* InventoryView.swift */; };
@@ -54,6 +55,8 @@
 		DAC316D4B4F522362EF1F3BA /* AlmanacView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F250470263ED5C3F70263CD /* AlmanacView.swift */; };
 		DC144227999F7B89FE0A6F53 /* PerfTelemetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B6F55374C2DE85213E57E4F /* PerfTelemetry.swift */; };
 		DC5113D6517A95ECEB16FC60 /* MainMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878038FE6F45E4F5CD84D3A5 /* MainMenuView.swift */; };
+		E0816293C9BC11BB17DB2563 /* GameCoreExtendedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7176D61D573AB5E828807E6F /* GameCoreExtendedTests.swift */; };
+		F93FBD0B88427DA2BDA7737F /* GameCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB35307FC60B1B6A4FA6106 /* GameCoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -62,18 +65,18 @@
 		0592929B9C2CCD4116EC7BFD /* FarmNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FarmNotifications.swift; sourceTree = "<group>"; };
 		088F4123377BE584FF514CA7 /* FarmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FarmView.swift; sourceTree = "<group>"; };
 		09CA1F9DE3EAA892ACBD1B03 /* ShopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShopView.swift; sourceTree = "<group>"; };
+		1949A03342D3DCA852A6622F /* MarketTasksSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketTasksSection.swift; sourceTree = "<group>"; };
 		1AF4540AEFAE2A913FDA5F20 /* PetsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetsView.swift; sourceTree = "<group>"; };
 		1DFCB78AF03811ED2DDB3C7B /* FishingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FishingView.swift; sourceTree = "<group>"; };
-		AA2001001234567890ABCDE1 /* MarketLivestockSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketLivestockSection.swift; sourceTree = "<group>"; };
-		AA2001001234567890ABCDE2 /* MarketResearchSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketResearchSection.swift; sourceTree = "<group>"; };
-		AA2001001234567890ABCDE3 /* MarketGeneticsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketGeneticsSection.swift; sourceTree = "<group>"; };
-		AA2001001234567890ABCDE4 /* MarketTasksSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketTasksSection.swift; sourceTree = "<group>"; };
+		20C30F8B0D6C3C39B21C4737 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		240722FDC0F1B1671F1FC88B /* EnhancedMarketUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedMarketUI.swift; sourceTree = "<group>"; };
 		29480BE67F50123EE0BBA2AA /* MenuButtonsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuButtonsView.swift; sourceTree = "<group>"; };
+		30985B651B6388B683656729 /* MarketGeneticsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketGeneticsSection.swift; sourceTree = "<group>"; };
 		345E94AFFE7C60BF2AAE9257 /* BarnInventoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarnInventoryView.swift; sourceTree = "<group>"; };
 		357FD8606D9DB4A8A31939CC /* TownMarketView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TownMarketView.swift; sourceTree = "<group>"; };
 		3D15194E8D0DB27FBF80242B /* AppModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModels.swift; sourceTree = "<group>"; };
 		3DF65BF944352692FEA98F08 /* ContentRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentRepository.swift; sourceTree = "<group>"; };
+		3F5CF811B6E18A399ED23563 /* MarketLivestockSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketLivestockSection.swift; sourceTree = "<group>"; };
 		414AA71CAEFFBAA225B675E5 /* GameShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameShellView.swift; sourceTree = "<group>"; };
 		4D6A7C0DAA792D766130B984 /* BarnHeaderHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarnHeaderHUD.swift; sourceTree = "<group>"; };
 		4D8064B56ACF2B12E03AA544 /* WeatherSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherSystem.swift; sourceTree = "<group>"; };
@@ -85,6 +88,7 @@
 		606F6628867A4DAEE9A09B5A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6C47BCE186C8445BFD350779 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		6FCB4A1DCA2BDFCB990FBB40 /* ItemCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemCardView.swift; sourceTree = "<group>"; };
+		7176D61D573AB5E828807E6F /* GameCoreExtendedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCoreExtendedTests.swift; sourceTree = "<group>"; };
 		71D6659E17AE49DAADD4CC74 /* FarmSim.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FarmSim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7CF307E5307009A22F64FD47 /* BootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootView.swift; sourceTree = "<group>"; };
 		835A76F4A14781439024499F /* content */ = {isa = PBXFileReference; lastKnownFileType = folder; name = content; path = ../shared/content; sourceTree = SOURCE_ROOT; };
@@ -95,6 +99,7 @@
 		9D42EF966A07393C213649E6 /* HomesteadMenuScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomesteadMenuScene.swift; sourceTree = "<group>"; };
 		A15D3EA798EEF785C1EDDBDD /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		AC55114B3A2EE1183D3130AB /* LoadingStates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingStates.swift; sourceTree = "<group>"; };
+		AE61285153EC00333F161C44 /* FarmSimTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FarmSimTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4ED1CB1D4830BFFA01057C5 /* QuickWheelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickWheelView.swift; sourceTree = "<group>"; };
 		B9E09E2A7A1B6C7A408ED0E4 /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
 		BC85027D49EBD255ADF02D94 /* FarmSimApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FarmSimApp.swift; sourceTree = "<group>"; };
@@ -102,12 +107,22 @@
 		D8E6F4D01739AB1DC0FE9CE9 /* BarnBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarnBackgroundView.swift; sourceTree = "<group>"; };
 		DE7023B05D13E79F0132D0DF /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		F40F33DFB7D52F84EBDFA060 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		F9B57AECD60DD3A282EF8870 /* MarketResearchSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketResearchSection.swift; sourceTree = "<group>"; };
 		FB8CCE7C8FFEB4774FA2F358 /* InventoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryView.swift; sourceTree = "<group>"; };
+		FDB35307FC60B1B6A4FA6106 /* GameCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCoreTests.swift; sourceTree = "<group>"; };
 		FE6F6B0F37323C6BC28BCE3C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FFDABDF51EE7D2E47B9DE59D /* FarmScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FarmScene.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		63EA5B3BD9615C01D54D77B4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D6CA04E7FEBAD07156B3C99 /* GameCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A92BD0F4B1FE86A824745820 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -136,6 +151,7 @@
 			isa = PBXGroup;
 			children = (
 				71D6659E17AE49DAADD4CC74 /* FarmSim.app */,
+				AE61285153EC00333F161C44 /* FarmSimTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -145,6 +161,7 @@
 			children = (
 				835A76F4A14781439024499F /* content */,
 				E9586830C9F1862E47191912 /* App */,
+				BE12AE82BAFA317AA910CA7F /* GameCoreTests */,
 				BE087E491C05548C5C6ADE83 /* Packages */,
 				986126D379346638F5E5176C /* Sources */,
 				25C8FD2F8CCF1492CFC4EFF5 /* Products */,
@@ -190,10 +207,6 @@
 				BC85027D49EBD255ADF02D94 /* FarmSimApp.swift */,
 				088F4123377BE584FF514CA7 /* FarmView.swift */,
 				1DFCB78AF03811ED2DDB3C7B /* FishingView.swift */,
-				AA2001001234567890ABCDE1 /* MarketLivestockSection.swift */,
-				AA2001001234567890ABCDE2 /* MarketResearchSection.swift */,
-				AA2001001234567890ABCDE3 /* MarketGeneticsSection.swift */,
-				AA2001001234567890ABCDE4 /* MarketTasksSection.swift */,
 				98E2E231238BA1E32D1C2A3D /* GameLoopDriver.swift */,
 				CB528E9FEB712A68D8FA8333 /* GameShell.swift */,
 				414AA71CAEFFBAA225B675E5 /* GameShellView.swift */,
@@ -201,6 +214,10 @@
 				5F476801E42B938075DC89E3 /* HapticPatterns.swift */,
 				FB8CCE7C8FFEB4774FA2F358 /* InventoryView.swift */,
 				AC55114B3A2EE1183D3130AB /* LoadingStates.swift */,
+				30985B651B6388B683656729 /* MarketGeneticsSection.swift */,
+				3F5CF811B6E18A399ED23563 /* MarketLivestockSection.swift */,
+				F9B57AECD60DD3A282EF8870 /* MarketResearchSection.swift */,
+				1949A03342D3DCA852A6622F /* MarketTasksSection.swift */,
 				529A3BABC16B676703CB42AC /* MilestoneManager.swift */,
 				5B6F55374C2DE85213E57E4F /* PerfTelemetry.swift */,
 				1AF4540AEFAE2A913FDA5F20 /* PetsView.swift */,
@@ -225,6 +242,17 @@
 				83BF4FC7AF8DFE35824EA9B1 /* GameCore */,
 			);
 			name = Packages;
+			sourceTree = "<group>";
+		};
+		BE12AE82BAFA317AA910CA7F /* GameCoreTests */ = {
+			isa = PBXGroup;
+			children = (
+				7176D61D573AB5E828807E6F /* GameCoreExtendedTests.swift */,
+				FDB35307FC60B1B6A4FA6106 /* GameCoreTests.swift */,
+				20C30F8B0D6C3C39B21C4737 /* Info.plist */,
+			);
+			name = GameCoreTests;
+			path = GameCore/Tests/GameCoreTests;
 			sourceTree = "<group>";
 		};
 		CF898CF114B27062F0C9F44D /* Menu */ = {
@@ -277,6 +305,25 @@
 			productReference = 71D6659E17AE49DAADD4CC74 /* FarmSim.app */;
 			productType = "com.apple.product-type.application";
 		};
+		F465853F468345A5E650928B /* FarmSimTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BC69DA5908CDE411B16A762A /* Build configuration list for PBXNativeTarget "FarmSimTests" */;
+			buildPhases = (
+				C66E687EA03ED31FB18DEDB7 /* Sources */,
+				63EA5B3BD9615C01D54D77B4 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FarmSimTests;
+			packageProductDependencies = (
+				4322C4DB12B1A0C995E76A65 /* GameCore */,
+			);
+			productName = FarmSimTests;
+			productReference = AE61285153EC00333F161C44 /* FarmSimTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -285,9 +332,10 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
 			};
 			buildConfigurationList = 2777D6CDF145A6B0F8EA659B /* Build configuration list for PBXProject "FarmSim" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -300,10 +348,12 @@
 				DF68C75AD8738CED28532788 /* XCLocalSwiftPackageReference "GameCore" */,
 			);
 			preferredProjectObjectVersion = 77;
+			productRefGroup = 25C8FD2F8CCF1492CFC4EFF5 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				AD151C2DD3FBD374ED685B20 /* FarmSim */,
+				F465853F468345A5E650928B /* FarmSimTests */,
 			);
 		};
 /* End PBXProject section */
@@ -342,10 +392,6 @@
 				2B5AE1A45B2CE1593793A12C /* FarmSimApp.swift in Sources */,
 				4D4453BC4033E28BF4900048 /* FarmView.swift in Sources */,
 				27BCB1E74A82B731B673057D /* FishingView.swift in Sources */,
-				AA1001001234567890ABCDE1 /* MarketLivestockSection.swift in Sources */,
-				AA1001001234567890ABCDE2 /* MarketResearchSection.swift in Sources */,
-				AA1001001234567890ABCDE3 /* MarketGeneticsSection.swift in Sources */,
-				AA1001001234567890ABCDE4 /* MarketTasksSection.swift in Sources */,
 				BD1071B837FA760B6CA8D7B3 /* GameLoopDriver.swift in Sources */,
 				40B2359985F0B8E802AD2C0C /* GameShell.swift in Sources */,
 				D3528B9C2C04B9FAD0BBE372 /* GameShellView.swift in Sources */,
@@ -356,6 +402,10 @@
 				24AB3B11A27B45088259F442 /* ItemCardView.swift in Sources */,
 				B2315368BE01BE42BDCA4942 /* LoadingStates.swift in Sources */,
 				DC5113D6517A95ECEB16FC60 /* MainMenuView.swift in Sources */,
+				0C7810000FF0801BB4633AF5 /* MarketGeneticsSection.swift in Sources */,
+				0BCAF750AD76D8B2BD095E35 /* MarketLivestockSection.swift in Sources */,
+				78CBC0A650E5BF56A431F200 /* MarketResearchSection.swift in Sources */,
+				095C6E481B63B249CC627FB8 /* MarketTasksSection.swift in Sources */,
 				B6085B4D94FBD7E944782B8B /* MenuButtonsView.swift in Sources */,
 				7E5CC87A2A7AA0F88803FA7F /* MilestoneManager.swift in Sources */,
 				DC144227999F7B89FE0A6F53 /* PerfTelemetry.swift in Sources */,
@@ -369,6 +419,15 @@
 				520B728AA102563E6021A877 /* TownMarketView.swift in Sources */,
 				826467693FB60315143C88F0 /* Typography.swift in Sources */,
 				A51E8CBA1A83F44471CD26D8 /* WeatherSystem.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C66E687EA03ED31FB18DEDB7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E0816293C9BC11BB17DB2563 /* GameCoreExtendedTests.swift in Sources */,
+				F93FBD0B88427DA2BDA7737F /* GameCoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -512,6 +571,38 @@
 			};
 			name = Debug;
 		};
+		87F15340D3B06F4DCDA24489 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = GameCore/Tests/GameCoreTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.austinbeatty.farmsim.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9A24D1EAF9C99773F56FB4F7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = GameCore/Tests/GameCoreTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.austinbeatty.farmsim.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		9AA3B1E7733706EB27C67E7A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -551,6 +642,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		BC69DA5908CDE411B16A762A /* Build configuration list for PBXNativeTarget "FarmSimTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				87F15340D3B06F4DCDA24489 /* Debug */,
+				9A24D1EAF9C99773F56FB4F7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -561,6 +661,10 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		4322C4DB12B1A0C995E76A65 /* GameCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GameCore;
+		};
 		F2CEB13050FED625C9B8410F /* GameCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = GameCore;
