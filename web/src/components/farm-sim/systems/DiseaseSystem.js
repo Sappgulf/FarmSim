@@ -3,6 +3,7 @@
  */
 
 import { DISEASE_TYPES, CURE_ITEMS, calculateDiseaseRisk, getAdjacentPlots } from '../constants/diseaseData';
+import { getDistrictBonuses, getDistrictIdForPlot } from '../../../utils/farmDistricts';
 
 export class DiseaseSystem {
   constructor(gameState, actions) {
@@ -75,6 +76,7 @@ export class DiseaseSystem {
       
       adjacentIndices.forEach(adjIndex => {
         const adjPlot = updatedPlots[adjIndex];
+        const districtBonuses = getDistrictBonuses(getDistrictIdForPlot(gridSize, adjIndex));
         
         // Can only spread to growing/planted crops without disease
         if (!adjPlot || adjPlot.state === 'empty' || adjPlot.state === 'ready' || adjPlot.disease) {
@@ -87,7 +89,7 @@ export class DiseaseSystem {
         }
         
         // Roll for spread
-        if (Math.random() < diseaseType.spreadChance) {
+        if (Math.random() < (diseaseType.spreadChance * (districtBonuses.diseaseRiskMultiplier || 1))) {
           updatedPlots[adjIndex] = {
             ...adjPlot,
             disease: diseaseType.id,
@@ -142,13 +144,14 @@ export class DiseaseSystem {
         (plot.waterLevel || 50) / 100,
         plot.soilFertility || 1.0
       );
+      const districtBonuses = getDistrictBonuses(getDistrictIdForPlot(gridSize, index));
       
       // Calculate disease risks
       const risks = calculateDiseaseRisk(this.state.weather, plotHealth, adjacentDiseased);
       
       // Roll for each disease type
       Object.entries(risks).forEach(([diseaseId, risk]) => {
-        if (Math.random() < risk) {
+        if (Math.random() < (risk * (districtBonuses.diseaseRiskMultiplier || 1))) {
           updatedPlots[index] = {
             ...plot,
             disease: diseaseId,

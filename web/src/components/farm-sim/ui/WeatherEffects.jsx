@@ -5,7 +5,7 @@ import { normalizeWeatherType } from '../constants/weatherData';
  * Weather Effects Overlay Component
  * Provides visual weather effects like rain, snow, sun rays with smooth transitions
  */
-const WeatherEffects = memo(({ weather, intensity = 1 }) => {
+const WeatherEffects = memo(({ weather, intensity = 1, timePeriod = 'day' }) => {
   const normalizedWeather = normalizeWeatherType(weather);
   const [isTransitioning, setIsTransitioning] = React.useState(false);
   const prevWeatherRef = React.useRef(normalizedWeather);
@@ -24,7 +24,7 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
   
   // Generate particle elements based on weather type
   const particles = useMemo(() => {
-    if (!normalizedWeather || normalizedWeather === 'sunny') return [];
+    if (!normalizedWeather || normalizedWeather === 'sunny' || normalizedWeather === 'cloudy') return [];
 
     const particleCount = normalizedWeather === 'stormy' ? 100 : normalizedWeather === 'rainy' ? 60 : normalizedWeather === 'snow' ? 50 : 30;
     
@@ -37,15 +37,33 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
     }));
   }, [normalizedWeather, intensity]);
 
-  // Don't render anything for clear weather
-  if (!normalizedWeather || normalizedWeather === 'sunny' || normalizedWeather === 'cloudy') {
+  const sceneToneClassName = `weather-scene weather-scene--${normalizedWeather || 'sunny'} weather-scene--${timePeriod}`;
+
+  if (!normalizedWeather) {
     return null;
   }
 
   return (
     <div className={`absolute inset-0 pointer-events-none overflow-hidden z-10 transition-opacity duration-500 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+      <div className={sceneToneClassName} aria-hidden="true" />
+
+      {normalizedWeather === 'sunny' && (
+        <>
+          <div className="weather-sunbeam weather-sunbeam--left" />
+          <div className="weather-sunbeam weather-sunbeam--right" />
+        </>
+      )}
+
+      {normalizedWeather === 'cloudy' && (
+        <>
+          <div className="weather-cloud-shadow weather-cloud-shadow--one" />
+          <div className="weather-cloud-shadow weather-cloud-shadow--two" />
+        </>
+      )}
+
       {normalizedWeather === 'rainy' && (
         <>
+          <div className="weather-mist weather-mist--cool" />
           {particles.map((particle) => (
             <div
               key={particle.id}
@@ -63,6 +81,8 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
 
       {normalizedWeather === 'stormy' && (
         <>
+          <div className="weather-storm-vignette" />
+          <div className="weather-mist weather-mist--storm" />
           {/* Rain */}
           {particles.map((particle) => (
             <div
@@ -83,6 +103,7 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
 
       {normalizedWeather === 'snow' && (
         <>
+          <div className="weather-mist weather-mist--frost" />
           {particles.map((particle) => (
             <div
               key={particle.id}
@@ -96,6 +117,21 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
               }}
             />
           ))}
+        </>
+      )}
+
+      {normalizedWeather === 'windy' && (
+        <>
+          <div className="weather-gust weather-gust--one" />
+          <div className="weather-gust weather-gust--two" />
+          <div className="weather-gust weather-gust--three" />
+        </>
+      )}
+
+      {normalizedWeather === 'drought' && (
+        <>
+          <div className="weather-heat-haze weather-heat-haze--one" />
+          <div className="weather-heat-haze weather-heat-haze--two" />
         </>
       )}
 

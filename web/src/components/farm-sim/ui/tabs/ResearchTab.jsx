@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useEffect } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
@@ -7,6 +7,16 @@ import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { getContentManager } from '../../../../content/ContentManager';
 import { TabHero, MetricTile, TabSection } from './TabSurface';
+import {
+  SPECIALIZATION_ORDER,
+  SPECIALIZATION_PATHS,
+  canSelectSpecialization,
+  getCompletedResearchCount,
+  getFarmSpecialization,
+  getSpecializationModifiers,
+  getSpecializationSwitchCost,
+  getUnlockedSpecializationIds,
+} from '../../../../utils/farmSpecializations';
 
 // Mapping for unlock IDs to user-friendly names
 const UNLOCK_NAMES = {
@@ -47,15 +57,44 @@ const buildResearchMap = (items = []) => (
   ]))
 );
 
+const getSpecializationToneClass = (specializationId) => {
+  switch (specializationId) {
+    case 'crops':
+      return 'border-emerald-200 bg-emerald-50/70';
+    case 'livestock':
+      return 'border-amber-200 bg-amber-50/70';
+    case 'processing':
+      return 'border-orange-200 bg-orange-50/70';
+    case 'hybrid':
+      return 'border-sky-200 bg-sky-50/70';
+    case 'cozy':
+      return 'border-rose-200 bg-rose-50/70';
+    default:
+      return 'border-slate-200 bg-slate-50/70';
+  }
+};
+
 const ResearchTab = memo(() => {
   const { state, actions } = useGame();
   const content = getContentManager();
   const RESEARCH_PROJECTS = buildResearchMap(content.research || []);
   const RESEARCH_NAMES = Object.fromEntries(Object.values(RESEARCH_PROJECTS).map((entry) => [entry.id, entry.name]));
+  const specializationModifiers = getSpecializationModifiers(state);
+  const selectedSpecialization = getFarmSpecialization(state);
+  const unlockedSpecializations = getUnlockedSpecializationIds(state);
+  const completedResearchCount = getCompletedResearchCount(state);
+  const activeSpecializationId = selectedSpecialization?.id || state.research?.specialization?.chosenId || null;
+  const switchCost = getSpecializationSwitchCost(state);
 
   // Use research state from global state
   const activeResearch = state.research?.active || null;
   const researchStartTime = state.research?.startTime || null;
+
+  const getEffectiveResearchDuration = (researchId) => {
+    const research = RESEARCH_PROJECTS[researchId];
+    if (!research) return 1;
+    return Math.max(1, research.time / Math.max(1, specializationModifiers.researchSpeedMultiplier || 1));
+  };
 
   // Research progress simulation
   useEffect(() => {
@@ -65,7 +104,7 @@ const ResearchTab = memo(() => {
     if (!research) return;
     const interval = setInterval(() => {
       const elapsed = Date.now() - researchStartTime;
-      const duration = Math.max(1, research.time);
+      const duration = getEffectiveResearchDuration(activeResearch);
       const progress = Math.min(100, (elapsed / (duration * 10)) * 100); // Scale time for demo
 
       if (progress >= 100) {
@@ -75,7 +114,7 @@ const ResearchTab = memo(() => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [activeResearch, researchStartTime]);
+  }, [activeResearch, researchStartTime, specializationModifiers.researchSpeedMultiplier]);
 
   const startResearch = (researchId) => {
     const research = RESEARCH_PROJECTS[researchId];
@@ -125,7 +164,7 @@ const ResearchTab = memo(() => {
     if (!research) return;
 
     // Grant XP reward
-    const xpReward = Math.floor(research.cost * 0.5);
+    const xpReward = Math.floor(research.cost * 0.5 * (specializationModifiers.researchXpMultiplier || 1));
     actions.addXP(xpReward, { source: 'milestone', label: 'Research Complete' });
 
     // Mark as completed
@@ -147,10 +186,8 @@ const ResearchTab = memo(() => {
   const getResearchProgress = (researchId) => {
     if (activeResearch !== researchId || !researchStartTime) return 0;
 
-    const research = RESEARCH_PROJECTS[researchId];
-    if (!research) return 0;
     const elapsed = Date.now() - researchStartTime;
-    const duration = Math.max(1, research.time);
+    const duration = getEffectiveResearchDuration(researchId);
     return Math.min(100, (elapsed / (duration * 10)) * 100);
   };
 
@@ -178,10 +215,8 @@ const ResearchTab = memo(() => {
   const getTimeLeft = (researchId) => {
     if (!isResearching(researchId) || !researchStartTime) return '';
 
-    const research = RESEARCH_PROJECTS[researchId];
-    if (!research) return '';
     const elapsed = Date.now() - researchStartTime;
-    const remaining = Math.max(0, (Math.max(1, research.time) * 10) - elapsed);
+    const remaining = Math.max(0, (getEffectiveResearchDuration(researchId) * 10) - elapsed);
     const minutes = Math.floor(remaining / 60000);
     const seconds = Math.floor((remaining % 60000) / 1000);
 
@@ -196,6 +231,62 @@ const ResearchTab = memo(() => {
       case 'agriculture': return 'border-yellow-500 bg-yellow-50';
       default: return 'border-gray-500 bg-gray-50';
     }
+  };
+
+  const handleSelectSpecialization = (specializationId) => {
+    const path = SPECIALIZATION_PATHS[specializationId];
+    if (!path) return;
+
+    if (!canSelectSpecialization(state, specializationId)) {
+      actions.addNotification({
+        message: `Need level ${path.unlock.level} and ${path.unlock.completedResearch} completed projects.`,
+        type: 'warning',
+      });
+      return;
+    }
+
+    if (activeSpecializationId === specializationId) {
+      return;
+    }
+
+    const selectionCost = activeSpecializationId ? switchCost : 0;
+    if (selectionCost > 0 && state.coins < selectionCost) {
+      actions.addNotification({
+        message: `Need ${selectionCost}🪙 to retool the lab focus.`,
+        type: 'error',
+      });
+      return;
+    }
+
+    if (selectionCost > 0) {
+      actions.spendMoney(selectionCost);
+    }
+
+    const previousHistory = Array.isArray(state.research?.specialization?.history)
+      ? state.research.specialization.history
+      : [];
+    const nextHistory = [
+      ...previousHistory,
+      {
+        id: specializationId,
+        changedAt: Date.now(),
+        cost: selectionCost,
+      },
+    ].slice(-8);
+
+    actions.updateResearch({
+      ...state.research,
+      specialization: {
+        chosenId: specializationId,
+        changedAt: Date.now(),
+        history: nextHistory,
+      },
+    });
+
+    actions.addNotification({
+      message: `${path.icon} ${path.name} is now guiding the farm.`,
+      type: 'success',
+    });
   };
 
   return (
@@ -235,6 +326,103 @@ const ResearchTab = memo(() => {
           />
         </div>
       </TabHero>
+
+      <TabSection
+        title="Farm Paths"
+        description="Commit the lab to a style of farm and let that choice shape the sim."
+        tone="violet"
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="violet"
+            label="Active Path"
+            value={selectedSpecialization?.name || 'Uncommitted'}
+            hint={selectedSpecialization ? selectedSpecialization.tagline : 'Choose a specialty once the lab matures'}
+            icon={selectedSpecialization?.icon || '🧭'}
+          />
+          <MetricTile
+            tone="sky"
+            label="Unlocked"
+            value={`${unlockedSpecializations.length}/${SPECIALIZATION_ORDER.length}`}
+            hint="Paths available right now"
+            icon="🔓"
+          />
+          <MetricTile
+            tone="amber"
+            label="Lab Depth"
+            value={`${completedResearchCount} projects`}
+            hint="Completed research milestone count"
+            icon="🧪"
+          />
+        </div>
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+          {SPECIALIZATION_ORDER.map((specializationId) => {
+            const path = SPECIALIZATION_PATHS[specializationId];
+            const unlocked = canSelectSpecialization(state, specializationId);
+            const selected = activeSpecializationId === specializationId;
+            const actionLabel = selected
+              ? 'Active focus'
+              : activeSpecializationId
+                ? `Switch (${switchCost}🪙)`
+                : 'Commit focus';
+
+            return (
+              <Card
+                key={specializationId}
+                className={`rounded-[28px] border p-4 shadow-sm transition-all ${getSpecializationToneClass(specializationId)} ${selected ? 'ring-2 ring-offset-2 ring-slate-300' : ''} ${!unlocked ? 'opacity-80' : ''}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{path.icon}</span>
+                      <span className="font-semibold text-slate-900">{path.name}</span>
+                    </div>
+                    <p className="text-sm font-medium text-slate-700">{path.tagline}</p>
+                  </div>
+                  {selected ? (
+                    <Badge className="bg-slate-900 text-white">Active</Badge>
+                  ) : unlocked ? (
+                    <Badge variant="outline" className="bg-white/80">Ready</Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-white/70">Locked</Badge>
+                  )}
+                </div>
+
+                <p className="mt-3 text-sm text-slate-600">{path.description}</p>
+
+                <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+                  <span className="rounded-full bg-white/80 px-2.5 py-1">
+                    Lvl {path.unlock.level}
+                  </span>
+                  <span className="rounded-full bg-white/80 px-2.5 py-1">
+                    {path.unlock.completedResearch} research done
+                  </span>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {path.highlights.map((highlight) => (
+                    <div key={highlight} className="rounded-2xl bg-white/75 px-3 py-2 text-sm text-slate-700">
+                      {highlight}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4">
+                  <Button
+                    onClick={() => handleSelectSpecialization(specializationId)}
+                    size="sm"
+                    disabled={!unlocked || selected}
+                    className="w-full"
+                  >
+                    {actionLabel}
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </TabSection>
 
       {/* Active Research */}
       {activeResearch && (
@@ -291,7 +479,7 @@ const ResearchTab = memo(() => {
 
                 <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
                   <span>Cost: {research.cost}🪙</span>
-                  <span>Time: {Math.round(research.time / 60)}m</span>
+                  <span>Time: {Math.round(getEffectiveResearchDuration(id) / 60)}m</span>
                 </div>
 
                 {/* Prerequisites */}
@@ -335,13 +523,20 @@ const ResearchTab = memo(() => {
         description="A quick readout of the lab’s progress."
         tone="slate"
       >
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
             tone="sky"
             label="Projects Completed"
             value={state.research?.completed?.length || 0}
             hint="Unlocked by progress"
             icon="✓"
+          />
+          <MetricTile
+            tone="violet"
+            label="Current Path"
+            value={selectedSpecialization?.name || 'Open'}
+            hint={selectedSpecialization ? selectedSpecialization.tagline : 'No specialization chosen yet'}
+            icon={selectedSpecialization?.icon || '🧭'}
           />
           <MetricTile
             tone="emerald"

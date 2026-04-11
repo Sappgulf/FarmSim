@@ -10,15 +10,31 @@ import { getSoilAnalyzerEnabled } from '../../../../utils/farmUpgrades';
 import { getDailyCropFocus } from '../../../../utils/dailyFocus';
 import { SUPPLY_UNIT_COSTS } from '../../../../utils/supplies';
 
+const DEFAULT_FOREMAN = {
+  autoWater: 'smart',
+  autoHarvest: 'priority',
+  autoTreat: 'critical',
+  notify: true,
+};
+
+const switchToTab = (tabId) => {
+  if (typeof window !== 'undefined' && typeof window.switchToTab === 'function') {
+    window.switchToTab(tabId);
+  }
+};
+
 // Farming Tab Component
 const FarmingTab = memo(() => {
   const { state, actions } = useGame();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const hasSoilAnalyzer = getSoilAnalyzerEnabled(state.inventory);
   const dailyFocus = getDailyCropFocus(state);
+  const foreman = { ...DEFAULT_FOREMAN, ...(state.settings?.foreman || {}) };
   const plotsArray = useMemo(() => (Array.isArray(state.plots) ? state.plots : []), [state.plots]);
   const seasonName = state.season?.config?.name || 'Spring';
   const weatherLabel = state.weather || 'sunny';
+  const hasSprinkler = Number(state.inventory?.sprinkler || 0) > 0;
+  const hasDroneHarvester = Number(state.inventory?.drone_harvester || 0) > 0;
 
   // Get crops available at player's level
   const availableCrops = useMemo(() => getCropsByLevel(state.level), [state.level]);
@@ -267,6 +283,15 @@ const FarmingTab = memo(() => {
     handleBulkAction(advisorCard.action);
   }, [advisorCard.action, cropList, dailyFocus?.cropId, handleBulkAction, handleSelectCrop, state.selectedCrop]);
 
+  const updateForemanSetting = useCallback((patch) => {
+    actions.updateSettings({
+      foreman: {
+        ...foreman,
+        ...patch,
+      },
+    });
+  }, [actions, foreman]);
+
   return (
     <div className="space-y-4">
       <Card className={`p-4 border bg-gradient-to-r ${advisorCard.cardClass}`}>
@@ -388,6 +413,145 @@ const FarmingTab = memo(() => {
         </div>
         <div className="mt-3 text-[11px] text-slate-500">
           Hotkeys: <kbd className="px-1 py-0.5 bg-gray-100 rounded">W</kbd> water, <kbd className="px-1 py-0.5 bg-gray-100 rounded">H</kbd> harvest, <kbd className="px-1 py-0.5 bg-gray-100 rounded">F</kbd> fertilize, <kbd className="px-1 py-0.5 bg-gray-100 rounded">T</kbd> treat
+        </div>
+      </Card>
+
+      <Card className="overflow-hidden border-indigo-200/70 bg-gradient-to-br from-white via-indigo-50/30 to-sky-50/30 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-slate-900">Foreman routines</h3>
+            <p className="text-sm text-slate-600">Set recurring field behavior for watering, harvest routing, and crop health.</p>
+          </div>
+          <Button
+            size="sm"
+            variant={foreman.notify ? 'default' : 'outline'}
+            className="min-h-[40px]"
+            onClick={() => updateForemanSetting({ notify: !foreman.notify })}
+          >
+            {foreman.notify ? 'Alerts on' : 'Alerts off'}
+          </Button>
+        </div>
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+          <div className="rounded-[20px] border border-slate-200/70 bg-white/85 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="font-medium text-slate-900">Irrigation</div>
+                <div className="text-xs text-slate-500">Uses sprinkler hardware.</div>
+              </div>
+              <Badge variant="outline" className={hasSprinkler ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}>
+                {hasSprinkler ? 'Online' : 'Need sprinkler'}
+              </Badge>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                ['off', 'Manual'],
+                ['smart', 'Smart'],
+                ['full', 'Full sweep'],
+              ].map(([value, label]) => (
+                <Button
+                  key={value}
+                  size="sm"
+                  variant={foreman.autoWater === value ? 'default' : 'outline'}
+                  className="min-h-[40px] text-xs"
+                  disabled={!hasSprinkler}
+                  onClick={() => updateForemanSetting({ autoWater: value })}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            {!hasSprinkler ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-3 min-h-[40px] w-full"
+                onClick={() => switchToTab('shop')}
+              >
+                Open shop
+              </Button>
+            ) : (
+              <p className="mt-3 text-xs text-slate-500">
+                Smart only tops up thirsty plots. Full sweep waters every active row.
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-[20px] border border-slate-200/70 bg-white/85 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="font-medium text-slate-900">Harvest routing</div>
+                <div className="text-xs text-slate-500">Uses the drone harvester.</div>
+              </div>
+              <Badge variant="outline" className={hasDroneHarvester ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}>
+                {hasDroneHarvester ? 'Online' : 'Need drone'}
+              </Badge>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                ['off', 'Manual'],
+                ['priority', 'Priority'],
+                ['batch', 'Batch hold'],
+              ].map(([value, label]) => (
+                <Button
+                  key={value}
+                  size="sm"
+                  variant={foreman.autoHarvest === value ? 'default' : 'outline'}
+                  className="min-h-[40px] text-xs"
+                  disabled={!hasDroneHarvester}
+                  onClick={() => updateForemanSetting({ autoHarvest: value })}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            {!hasDroneHarvester ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-3 min-h-[40px] w-full"
+                onClick={() => switchToTab('shop')}
+              >
+                Open shop
+              </Button>
+            ) : (
+              <p className="mt-3 text-xs text-slate-500">
+                Priority clears ripe crops on sight. Batch hold waits until at least two are ready.
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-[20px] border border-slate-200/70 bg-white/85 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="font-medium text-slate-900">Crop health watch</div>
+                <div className="text-xs text-slate-500">Consumes pesticide or coins when needed.</div>
+              </div>
+              <Badge variant="outline" className="bg-sky-50 text-sky-700">
+                {plotInsights.diseasedPlots > 0 ? `${plotInsights.diseasedPlots} flagged` : 'Standing by'}
+              </Badge>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                ['off', 'Manual'],
+                ['critical', 'Critical only'],
+                ['always', 'Always'],
+              ].map(([value, label]) => (
+                <Button
+                  key={value}
+                  size="sm"
+                  variant={foreman.autoTreat === value ? 'default' : 'outline'}
+                  className="min-h-[40px] text-xs"
+                  onClick={() => updateForemanSetting({ autoTreat: value })}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-slate-500">
+              Critical only steps in for multiple outbreaks or diseased ready crops.
+            </p>
+          </div>
         </div>
       </Card>
 

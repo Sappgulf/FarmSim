@@ -187,7 +187,19 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   return (
     <Card className="h-fit overflow-hidden border border-white/70 bg-white/90 shadow-[0_20px_54px_-30px_rgba(15,23,42,0.48)]">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <div className="border-b border-white/70 bg-gradient-to-b from-slate-50/90 to-white px-3 py-3">
+        <div className="sm:hidden border-b border-white/70 bg-gradient-to-r from-slate-50/90 via-white to-emerald-50/70 px-3 py-3">
+          <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-700/70">
+            {Object.values(NAV_SECTIONS).find(s => s.tabs.includes(activeTab))?.label || 'Game'}
+          </div>
+          <div className="mt-1 text-base font-semibold tracking-tight text-slate-900">
+            {TAB_INFO[activeTab]?.emoji} {TAB_INFO[activeTab]?.label || activeConfig.label}
+          </div>
+          <div className="mt-1 text-xs text-gray-500">
+            Use the bottom bar to switch sections and open tab options.
+          </div>
+        </div>
+
+        <div className="hidden sm:block border-b border-white/70 bg-gradient-to-b from-slate-50/90 to-white px-3 py-3">
           {/* Active tab header */}
           <div className="flex items-center justify-between gap-2 mb-3">
             <div>
@@ -255,7 +267,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
       </Tabs>
 
       <div className="mt-4 border-t border-white/70 bg-gradient-to-r from-slate-50/90 via-white to-emerald-50/70 p-3">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 text-xs">
+        <div className="grid grid-cols-4 gap-2 text-xs">
           <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm">
             <div className="font-bold text-emerald-700 text-sm">{inventoryCount}</div>
             <div className="text-gray-500 text-xs font-medium">Items</div>

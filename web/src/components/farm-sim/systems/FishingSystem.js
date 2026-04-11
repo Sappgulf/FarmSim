@@ -1,6 +1,7 @@
 /**
  * Fishing System - Pond management and fishing mini-game
  */
+import { getSpecializationModifiers } from '../../../utils/farmSpecializations';
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -154,7 +155,9 @@ export class FishingSystem {
 
   getRareCatchBonus() {
     const inventory = this.gameState?.inventory || {};
-    return inventory.lucky_lure > 0 ? 1.35 : 1;
+    const specialization = getSpecializationModifiers(this.gameState);
+    const lureBonus = inventory.lucky_lure > 0 ? 1.35 : 1;
+    return lureBonus * (specialization.fishRareWeightMultiplier || 1);
   }
 
   /**
@@ -413,10 +416,19 @@ export class FishingSystem {
     const earlyCatchTuning = level < 6 ? 0.86 : 1;
     const projectedStreak = (this.gameState?.fishing?.stats?.streak || 0) + 1;
     const streakBonus = clamp(1 + Math.max(0, projectedStreak - 2) * 0.04, 1, 1.24);
+    const specialization = getSpecializationModifiers(this.gameState);
 
     const value = Math.max(
       1,
-      Math.floor(fish.baseValue * sizeMultiplier * difficultyMultiplier * qualityTier.multiplier * earlyCatchTuning * streakBonus)
+      Math.floor(
+        fish.baseValue
+        * sizeMultiplier
+        * difficultyMultiplier
+        * qualityTier.multiplier
+        * earlyCatchTuning
+        * streakBonus
+        * (specialization.fishValueMultiplier || 1)
+      )
     );
     const xpReward = Math.max(2, Math.floor((fish.difficulty * 4) + (qualityScore * 8)));
 

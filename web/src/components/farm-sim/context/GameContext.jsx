@@ -69,6 +69,9 @@ import {
 } from '../../../utils/cozyGoals';
 import { SUPPLY_UNIT_COSTS, planSupplyUsage } from '../../../utils/supplies';
 import { updateQuestProgress } from '../systems/QuestSystem';
+import { applyDistrictHarvestBonus, getDistrictIdForPlot } from '../../../utils/farmDistricts';
+import { upsertJournalEntry } from '../../../utils/farmJournal';
+import { getSpecializationModifiers } from '../../../utils/farmSpecializations';
 
 const rollChance = (chance = 0) => Math.random() < chance;
 
@@ -308,6 +311,7 @@ export function GameProvider({ children }) {
         if (dayKey !== currentState.almanac?.lastDayKey) {
           actionsRef.current?.recordAlmanacEvent('day_rollover', { dayKey });
           actionsRef.current?.recordCozyExpansionEvent('day_rollover', { dayKey });
+          actionsRef.current?.recordJournalEntry('day_rollover', { dayKey });
           actionsRef.current?.recordRetentionVisit(dayKey, now);
           actionsRef.current?.recordMilestoneEvent('day_advance', { dayKey });
         }
@@ -441,6 +445,7 @@ export function GameProvider({ children }) {
     updateMemoryCounters: (memoryCounters) => dispatch({ type: GAME_ACTIONS.UPDATE_MEMORY_COUNTERS, payload: memoryCounters }),
     updateAlmanac: (almanac) => dispatch({ type: GAME_ACTIONS.UPDATE_ALMANAC, payload: almanac }),
     updateCozyGoals: (cozyGoals) => dispatch({ type: GAME_ACTIONS.UPDATE_COZY_GOALS, payload: cozyGoals }),
+    updateJournal: (journal) => dispatch({ type: GAME_ACTIONS.UPDATE_JOURNAL, payload: journal }),
     updateWhatsNew: (whatsNew) => dispatch({ type: GAME_ACTIONS.UPDATE_WHATS_NEW, payload: whatsNew }),
     updateOnboarding: (onboarding) => dispatch({ type: GAME_ACTIONS.UPDATE_ONBOARDING, payload: onboarding }),
     updateRetention: (retention) => dispatch({ type: GAME_ACTIONS.UPDATE_RETENTION, payload: retention }),
@@ -452,11 +457,23 @@ export function GameProvider({ children }) {
       const current = stateRef.current.philosophy;
       if (current === philosophyId) return;
       dispatch({ type: GAME_ACTIONS.SET_PHILOSOPHY, payload: philosophyId });
+      actionsRef.current?.recordJournalEntry('philosophy_selected', {
+        dayKey: getDayKey(),
+        flags: { philosophyTouched: true },
+        stateOverride: { philosophy: philosophyId },
+      });
       logDebugAction('philosophy_selected', { philosophyId });
     },
     setFarmName: (farmName) => dispatch({ type: GAME_ACTIONS.SET_FARM_NAME, payload: farmName }),
     setFarmTheme: (themeId) => dispatch({ type: GAME_ACTIONS.SET_FARM_THEME, payload: themeId }),
-    setSpotlight: (spotlight) => dispatch({ type: GAME_ACTIONS.SET_SPOTLIGHT, payload: spotlight }),
+    setSpotlight: (spotlight) => {
+      dispatch({ type: GAME_ACTIONS.SET_SPOTLIGHT, payload: spotlight });
+      actionsRef.current?.recordJournalEntry('spotlight_set', {
+        dayKey: getDayKey(),
+        flags: { spotlightTouched: true },
+        stateOverride: { spotlight },
+      });
+    },
     setActiveFarmTitle: (titleId) => dispatch({ type: GAME_ACTIONS.SET_ACTIVE_FARM_TITLE, payload: titleId }),
     updateSettings: (settings) => dispatch({ type: GAME_ACTIONS.UPDATE_SETTINGS, payload: settings }),
     setEntitlementMode: (mode) => {
@@ -654,7 +671,10 @@ export function GameProvider({ children }) {
       }
 
       const content = getContentManager();
-      const goals = buildCozyGoals(stateRef.current, content, dayKey, { maxGoals: 3 });
+      const specialization = getSpecializationModifiers(stateRef.current);
+      const goals = buildCozyGoals(stateRef.current, content, dayKey, {
+        maxGoals: specialization.cozyGoalSlots || 3,
+      });
       dispatch({
         type: GAME_ACTIONS.UPDATE_COZY_GOALS,
         payload: {
@@ -663,6 +683,22 @@ export function GameProvider({ children }) {
         },
       });
       return goals;
+    },
+
+    recordJournalEntry: (reason = 'reflection', { dayKey = getDayKey(), flags = {}, stateOverride = null } = {}) => {
+      const sourceState = stateOverride
+        ? { ...stateRef.current, ...stateOverride }
+        : stateRef.current;
+      const nextJournal = upsertJournalEntry(sourceState.journal, sourceState, {
+        reason,
+        dayKey,
+        flags,
+      });
+      dispatch({
+        type: GAME_ACTIONS.UPDATE_JOURNAL,
+        payload: nextJournal,
+      });
+      return nextJournal;
     },
 
     recordMilestoneEvent: (eventType, payload = {}) => {
@@ -701,12 +737,15 @@ export function GameProvider({ children }) {
     recordCozyGoalEvent: (eventType, eventData = {}) => {
       const dayKey = getDayKey();
       const content = getContentManager();
+      const specialization = getSpecializationModifiers(stateRef.current);
       let cozyState = stateRef.current.cozyGoals || { lastGeneratedGoals: null, completedGoalIds: [] };
       const lastGenerated = cozyState.lastGeneratedGoals;
       let shouldRefresh = false;
 
       if (lastGenerated?.dayKey !== dayKey || !Array.isArray(lastGenerated?.goals)) {
-        const goals = buildCozyGoals(stateRef.current, content, dayKey, { maxGoals: 3 });
+        const goals = buildCozyGoals(stateRef.current, content, dayKey, {
+          maxGoals: specialization.cozyGoalSlots || 3,
+        });
         cozyState = {
           lastGeneratedGoals: { dayKey, goals },
           completedGoalIds: [],
@@ -730,9 +769,13 @@ export function GameProvider({ children }) {
         const reward = goal.reward || {};
         if (reward.type === 'reputation') {
           const currentSocial = stateRef.current.social || { friends: [], reputation: 0, marketListings: [] };
+          const reputationGain = Math.max(
+            1,
+            Math.ceil((reward.amount || 0) * (specialization.cozyRewardMultiplier || 1))
+          );
           actionsRef.current?.updateSocial({
             ...currentSocial,
-            reputation: (currentSocial.reputation || 0) + (reward.amount || 0),
+            reputation: (currentSocial.reputation || 0) + reputationGain,
           });
         }
         if (reward.type === 'decor') {
@@ -752,6 +795,12 @@ export function GameProvider({ children }) {
           message: `🧺 Cozy Goal complete: ${goal.text} · ${getCozyGoalRewardLabel(goal, content)}`,
           type: 'success',
         });
+        if (specialization.cozyGoalXpBonus > 0) {
+          actionsRef.current?.addXP(specialization.cozyGoalXpBonus, {
+            source: 'cozy_goal',
+            label: 'Cozy Goal',
+          });
+        }
       });
 
       if (didUpdate || shouldRefresh) {
@@ -901,6 +950,10 @@ export function GameProvider({ children }) {
 
       if (eventType === 'scrapbook_opened') {
         actionsRef.current.unlockMemory('quiet_pages');
+        actionsRef.current?.recordJournalEntry('scrapbook_opened', {
+          dayKey: getDayKey(),
+          flags: { scrapbookOpened: true },
+        });
       }
 
       if (eventType === 'crop_harvested') {
@@ -1527,6 +1580,7 @@ export function GameProvider({ children }) {
     harvestAllReadyCrops: () => {
       if (stateRef.current.ghostVisit?.active) return false;
       const currentState = stateRef.current;
+      const specialization = getSpecializationModifiers(currentState);
       if (!Array.isArray(currentState.plots)) {
         return;
       }
@@ -1543,13 +1597,18 @@ export function GameProvider({ children }) {
 
       const updatedPlots = currentState.plots.map(plot => {
         if (plot.state === 'ready' && plot.crop) {
-          const earnings = calculateHarvestValue(
-            plot.crop.baseValue || 10,
-            plot.soilFertility || 1.0,
-            currentState.inventory
+          const earnings = applyDistrictHarvestBonus(
+            Math.floor(
+              calculateHarvestValue(
+                plot.crop.baseValue || 10,
+                plot.soilFertility || 1.0,
+                currentState.inventory
+              ) * (specialization.cropHarvestMultiplier || 1)
+            ),
+            getDistrictIdForPlot(currentState.gridSize || 3, currentState.plots.indexOf(plot))
           );
           totalEarnings += earnings;
-          totalXp += Math.floor(earnings * 0.15);
+          totalXp += Math.floor(earnings * 0.15 * (specialization.harvestXpMultiplier || 1));
           inventoryUpdates[plot.crop.id] = (inventoryUpdates[plot.crop.id] || 0) + 1;
 
           return { ...plot, state: 'empty', crop: null, plantedAt: null, growthStage: 0, progress: 0, waterLevel: 50 };

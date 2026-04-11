@@ -151,12 +151,8 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
     useEffect(() => {
         if (!activeSectionHasMultipleTabs) {
             setShowSubTabs(false);
-            return;
         }
-        if (activeSectionConfig.tabs.includes(activeTab)) {
-            setShowSubTabs(true);
-        }
-    }, [activeSectionHasMultipleTabs, activeSectionConfig, activeTab]);
+    }, [activeSectionHasMultipleTabs]);
 
     // Get notification counts for badges
     const getNotificationCount = useCallback((sectionId) => {

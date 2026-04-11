@@ -11,12 +11,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { CROPS, RARITY_COLORS } from '../../data/crops';
 import { TOOLS, GRID_CONFIG } from '../../data/constants';
 import { BUILDINGS } from '../../data/buildings';
+import { formatDisplayLabel } from '../../utils/textFormat';
 
 function ShopPanelComponent({
   coins,
   inventory,
   gridSize,
   buildings,
+  recommendedSeedId,
+  recommendationReason,
+  recommendationTitle,
   onBuySeeds,
   onBuyTool,
   onExpandFarm,
@@ -72,6 +76,27 @@ function ShopPanelComponent({
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {recommendedSeedId && recommendationTitle && recommendationReason && (
+          <div className="mb-4 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-700/70">
+                  Recommended Next Buy
+                </div>
+                <div className="mt-1 text-base font-semibold text-amber-950">
+                  {recommendationTitle}
+                </div>
+                <p className="mt-1 text-sm text-amber-900/80">
+                  {recommendationReason}
+                </p>
+              </div>
+              <div className="rounded-full bg-white px-3 py-1.5 text-sm font-medium text-amber-700 shadow-sm">
+                {CROPS[recommendedSeedId]?.emoji || '🌱'}
+              </div>
+            </div>
+          </div>
+        )}
+
         <Tabs defaultValue="seeds" className="w-full">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 gap-1 h-auto p-1">
             <TabsTrigger value="seeds" className="text-xs flex items-center gap-1 py-2">
@@ -107,12 +132,20 @@ function ShopPanelComponent({
                     flex items-center justify-between p-3 rounded-xl border
                     ${RARITY_COLORS[seed.rarity] || 'bg-gray-50'}
                     transition-all hover:shadow-sm
+                    ${recommendedSeedId === seed.id ? 'ring-2 ring-amber-300 ring-offset-2' : ''}
                   `}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="text-2xl flex-shrink-0">{seed.emoji}</span>
                     <div className="min-w-0">
-                      <div className="font-semibold capitalize text-sm truncate">{seed.id}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="font-semibold text-sm truncate">{formatDisplayLabel(seed.id)}</div>
+                        {recommendedSeedId === seed.id && (
+                          <Badge className="h-5 border-amber-300 bg-amber-100 px-1.5 text-[10px] text-amber-800">
+                            Best now
+                          </Badge>
+                        )}
+                      </div>
                       <div className="text-xs text-gray-500 flex items-center gap-1 flex-wrap">
                         <span>+{seed.baseValue}🪙</span>
                         <span>•</span>
@@ -173,7 +206,7 @@ function ShopPanelComponent({
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="text-2xl flex-shrink-0">{tool.emoji}</span>
                     <div className="min-w-0">
-                      <div className="font-semibold capitalize text-sm truncate">{tool.id}</div>
+                      <div className="font-semibold text-sm truncate">{formatDisplayLabel(tool.id)}</div>
                       <div className="text-xs text-gray-500 truncate">{tool.description}</div>
                     </div>
                   </div>

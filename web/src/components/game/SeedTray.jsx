@@ -5,12 +5,16 @@
 import React, { memo, useMemo, useState } from 'react';
 import { ChevronRight, Sparkles } from 'lucide-react';
 import { CROPS } from '../../data/crops';
+import { formatDisplayLabel } from '../../utils/textFormat';
 
 function SeedTrayComponent({
   inventory,
   selectedSeed,
   onSelectSeed,
   onOpenShop,
+  recommendedSeedId,
+  recommendationReason,
+  recommendationTitle,
 }) {
   const [pressedSeed, setPressedSeed] = useState(null);
 
@@ -36,15 +40,45 @@ function SeedTrayComponent({
   return (
     <div className="bg-white/95 backdrop-blur-sm rounded-2xl border-2 border-gray-200/80 p-3 shadow-lg shadow-gray-200/50">
       {/* Header */}
-      <div className="flex items-center justify-between px-1 mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">🌱</span>
-          <span className="text-sm font-bold text-gray-700">Plant Seed</span>
+      <div className="mb-3 space-y-2 px-1">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🌱</span>
+            <div>
+              <div className="text-sm font-bold text-gray-700">Planting Deck</div>
+              <div className="text-xs text-gray-500">
+                {hasSeeds ? 'Choose one crop and fill the field fast.' : 'No seeds in storage yet.'}
+              </div>
+            </div>
+          </div>
+          {hasSeeds && (
+            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
+              {availableSeeds.length} types
+            </span>
+          )}
         </div>
-        {hasSeeds && (
-          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-            {availableSeeds.length} types
-          </span>
+
+        {hasSeeds && recommendationReason && recommendationTitle && (
+          <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-lime-50 px-3 py-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-700/70">
+                  Best Next Plant
+                </div>
+                <div className="mt-1 text-sm font-semibold text-emerald-900">
+                  {recommendationTitle}
+                </div>
+              </div>
+              {recommendedSeedId && CROPS[recommendedSeedId] && (
+                <div className="rounded-full bg-white px-3 py-1 text-sm font-medium text-emerald-700 shadow-sm">
+                  {CROPS[recommendedSeedId].emoji}
+                </div>
+              )}
+            </div>
+            <p className="mt-1 text-xs leading-5 text-emerald-800/80">
+              {recommendationReason}
+            </p>
+          </div>
         )}
       </div>
 
@@ -73,6 +107,12 @@ function SeedTrayComponent({
                 aria-label={`Select ${seed.id} seed`}
                 aria-pressed={isSelected}
               >
+                {recommendedSeedId === seed.id && (
+                  <span className="absolute left-1.5 top-1.5 rounded-full bg-sky-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">
+                    Best
+                  </span>
+                )}
+
                 {/* Glow effect for selected */}
                 {isSelected && (
                   <div className="absolute inset-0 rounded-xl bg-emerald-400/10 animate-pulse" />
@@ -138,7 +178,7 @@ function SeedTrayComponent({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-gray-800 capitalize">
-                  {selectedSeed}
+                  {formatDisplayLabel(selectedSeed)}
                 </span>
                 {CROPS[selectedSeed].rarity === 'rare' && (
                   <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
@@ -146,10 +186,20 @@ function SeedTrayComponent({
                     Rare
                   </span>
                 )}
+                {recommendedSeedId === selectedSeed && (
+                  <span className="text-[10px] bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded font-medium">
+                    Best now
+                  </span>
+                )}
               </div>
               <span className="text-xs text-gray-500">
                 ⏱️ {CROPS[selectedSeed].secondsPerStage * CROPS[selectedSeed].stages}s to grow
               </span>
+              {recommendedSeedId === selectedSeed && recommendationReason && (
+                <p className="mt-1 max-w-[18rem] text-[11px] leading-4 text-gray-500">
+                  {recommendationReason}
+                </p>
+              )}
             </div>
           </div>
           <div className="text-right">

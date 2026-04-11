@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 
 /**
  * Premium Button component with juicy animations and ripple effects
@@ -14,7 +14,17 @@ export function Button({
   ...props 
 }) {
   const buttonRef = useRef(null);
+  const pressTimeoutRef = useRef(null);
+  const rippleTimeoutsRef = useRef([]);
   const [isPressed, setIsPressed] = useState(false);
+
+  useEffect(() => () => {
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+    }
+    rippleTimeoutsRef.current.forEach((timeoutId) => clearTimeout(timeoutId));
+    rippleTimeoutsRef.current = [];
+  }, []);
   
   const baseClasses = `
     relative overflow-hidden inline-flex items-center justify-center 
@@ -120,12 +130,22 @@ export function Button({
     `;
 
     button.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 600);
+    const timeoutId = setTimeout(() => {
+      ripple.remove();
+      rippleTimeoutsRef.current = rippleTimeoutsRef.current.filter((id) => id !== timeoutId);
+    }, 600);
+    rippleTimeoutsRef.current.push(timeoutId);
   }, []);
 
   const handleClick = useCallback((event) => {
     setIsPressed(true);
-    setTimeout(() => setIsPressed(false), 150);
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+    }
+    pressTimeoutRef.current = setTimeout(() => {
+      setIsPressed(false);
+      pressTimeoutRef.current = null;
+    }, 150);
     createRipple(event);
     onClick?.(event);
   }, [onClick, createRipple]);

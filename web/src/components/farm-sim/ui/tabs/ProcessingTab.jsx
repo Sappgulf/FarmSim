@@ -6,6 +6,7 @@ import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { CROP_DATA } from '../../constants/cropData';
 import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
+import { getFarmSpecialization, getSpecializationModifiers } from '../../../../utils/farmSpecializations';
 
 // Facility upgrade tiers: each level reduces time and boosts value
 const FACILITY_LEVELS = {
@@ -135,6 +136,8 @@ const mergeCompletedProducts = (inventory, completedItems) => {
 
 const ProcessingTab = memo(() => {
   const { state, actions } = useGame();
+  const specialization = getSpecializationModifiers(state);
+  const activePath = getFarmSpecialization(state);
 
   const processingQueue = state.processingQueue || [];
   const processedInventory = state.processedInventory || {};
@@ -182,16 +185,17 @@ const ProcessingTab = memo(() => {
 
   const buyProcessingFacility = (facilityId) => {
     const facility = PROCESSING_FACILITIES[facilityId];
+    const purchaseCost = Math.floor(facility.cost * (specialization.processingCostMultiplier || 1));
     if (processingFacilities.some(f => f.id === facilityId)) {
       actions.addNotification({ message: 'You already own this facility!', type: 'warning' });
       return;
     }
-    if (state.coins < facility.cost) {
+    if (state.coins < purchaseCost) {
       actions.addNotification({ message: 'Not enough coins!', type: 'error' });
       return;
     }
 
-    actions.spendMoney(facility.cost);
+    actions.spendMoney(purchaseCost);
     const newFacility = {
       id: facilityId,
       ...facility,
@@ -219,7 +223,9 @@ const ProcessingTab = memo(() => {
     }
 
     const facilityData = PROCESSING_FACILITIES[facilityId];
-    const cost = getUpgradeCost(currentLevel, facilityData.cost);
+    const cost = Math.floor(
+      getUpgradeCost(currentLevel, facilityData.cost) * (specialization.processingCostMultiplier || 1)
+    );
     if (state.coins < cost) {
       actions.addNotification({ message: `Need ${cost}🪙 to upgrade!`, type: 'error' });
       return;
@@ -304,7 +310,10 @@ const ProcessingTab = memo(() => {
       });
     }
 
-    const effectiveTime = getEffectiveTime(facilityData.time, level);
+    const effectiveTime = Math.max(
+      1,
+      Math.floor(getEffectiveTime(facilityData.time, level) * (specialization.processingTimeMultiplier || 1))
+    );
     const outputQuantity = 1;
     const finishTime = Date.now() + (effectiveTime * 1000);
     const processingItem = {
@@ -358,7 +367,11 @@ const ProcessingTab = memo(() => {
     // Apply level bonus if facility is owned
     const ownedFacility = (state.processingFacilities || []).find(f => PROCESSING_FACILITIES[f.id]?.output === itemType);
     const level = ownedFacility?.level || 1;
-    const effectivePrice = Math.floor(basePrice * (FACILITY_LEVELS[level]?.valueMultiplier || 1));
+    const effectivePrice = Math.floor(
+      basePrice
+      * (FACILITY_LEVELS[level]?.valueMultiplier || 1)
+      * (specialization.processingValueMultiplier || 1)
+    );
     const totalValue = effectivePrice * quantity;
 
     actions.updateProcessedInventory((currentInventory) => ({
@@ -426,6 +439,11 @@ const ProcessingTab = memo(() => {
             icon="📦"
           />
         </div>
+        {activePath?.id === 'processing' ? (
+          <div className="mt-3 text-center text-sm text-slate-600">
+            {activePath.icon} {activePath.name} is active: lower facility costs, faster batches, richer sales.
+          </div>
+        ) : null}
       </TabHero>
 
       {/* Available Facilities */}
@@ -469,7 +487,7 @@ const ProcessingTab = memo(() => {
                       disabled={state.coins < facility.cost}
                       className="w-full"
                     >
-                      Buy ({facility.cost}🪙)
+                      Buy ({Math.floor(facility.cost * (specialization.processingCostMultiplier || 1))}🪙)
                     </Button>
                   ) : (
                     <div className="text-center text-sm font-medium text-emerald-700">✓ Facility Owned</div>

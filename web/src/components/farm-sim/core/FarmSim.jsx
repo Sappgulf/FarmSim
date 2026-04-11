@@ -119,6 +119,20 @@ export function FarmSimCore() {
     setShowStartScreen(false);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    window.switchToTab = (tabId) => {
+      if (typeof tabId === 'string') {
+        handleTabChange(tabId);
+      }
+    };
+
+    return () => {
+      delete window.switchToTab;
+    };
+  }, [handleTabChange]);
+
   // Initialize systems ONCE - don't recreate on state changes!
   // We pass current state to update() method, so no need to recreate
   const farmingSystem = useMemo(() => {
@@ -537,7 +551,7 @@ export function FarmSimCore() {
       {!reducedMotionEnabled && timePeriod === 'night' && (
         <div className="ambient-vfx ambient-vfx--night" aria-hidden="true" />
       )}
-      <WeatherEffects weather={cozyVisualWeather || weather} intensity={0.45} />
+      <WeatherEffects weather={cozyVisualWeather || weather} intensity={0.45} timePeriod={timePeriod} />
 
       {/* Performance monitoring (dev only) */}
       {isDevelopmentMode() && (
@@ -546,66 +560,70 @@ export function FarmSimCore() {
         </div>
       )}
 
-      {/* Game Header */}
-      <div className="relative z-20"><GameHeader /></div>
+      {!showStartScreen && (
+        <>
+          {/* Game Header */}
+          <div className="relative z-20"><GameHeader /></div>
 
-      {ghostVisitActive && (
-        <div className="relative z-30 mx-2 sm:mx-4 mt-2 max-w-7xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] lg:mx-auto rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-800">
-          👻 Ghost Visit (Read Only) — actions are disabled until you exit in Social.
-        </div>
+          {ghostVisitActive && (
+            <div className="relative z-30 mx-2 sm:mx-4 mt-2 max-w-7xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] lg:mx-auto rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-800">
+              👻 Ghost Visit (Read Only) — actions are disabled until you exit in Social.
+            </div>
+          )}
+
+          {/* Main Game Area - Mobile Optimized with bottom padding for NavBar */}
+          <div className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4">
+            {/* Farm Grid - First on mobile, left on desktop */}
+            <div className="w-full lg:flex-1 order-1 lg:order-1">
+              <FarmGrid />
+            </div>
+
+            {/* Game Sidebar - Below farm on mobile, right column on desktop */}
+            <div className="w-full lg:w-80 xl:w-96 order-2 lg:order-2">
+              <GameSidebar activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+          </div>
+
+          {/* Bottom Navigation Bar - Fixed on mobile */}
+          <div className="fixed bottom-0 left-0 right-0 lg:relative z-40">
+            <NavBar
+              activeSection={activeSection}
+              activeTab={activeTab}
+              onSectionChange={handleSectionChange}
+              onTabChange={handleTabChange}
+            />
+          </div>
+
+          {/* Notification System - Mobile positioned above NavBar */}
+          <NotificationSystem />
+
+          {/* Particle Effects System */}
+          <ParticleEffectsManager />
+
+          {/* FPS Overlay */}
+          <FPSCounter />
+          <PerfHud />
+
+          {debugToolsAllowed && (
+            <Suspense fallback={null}>
+              {/* Performance Overlay (dev, toggle with `) */}
+              <PerformanceOverlay />
+
+              {/* Debug Stress Panel (?debug=1) */}
+              {debugQueryEnabled ? <DebugStressPanel /> : null}
+
+              {/* QA Mode Panel (?debug=1) */}
+              {debugQueryEnabled ? <QAModePanel /> : null}
+            </Suspense>
+          )}
+
+          {/* Onboarding Tutorial (auto-shows for new players) */}
+          <Tutorial />
+
+          {/* What's New should not interrupt the launch screen on first load. */}
+          <WhatsNewModal />
+        </>
       )}
-
-      {/* Main Game Area - Mobile Optimized with bottom padding for NavBar */}
-      <div className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4">
-        {/* Farm Grid - First on mobile, left on desktop */}
-        <div className="w-full lg:flex-1 order-1 lg:order-1">
-          <FarmGrid />
-        </div>
-
-        {/* Game Sidebar - Below farm on mobile, right column on desktop */}
-        <div className="w-full lg:w-80 xl:w-96 order-2 lg:order-2">
-          <GameSidebar activeTab={activeTab} onTabChange={handleTabChange} />
-        </div>
-      </div>
-
-      {/* Bottom Navigation Bar - Fixed on mobile */}
-      <div className="fixed bottom-0 left-0 right-0 lg:relative z-40">
-        <NavBar
-          activeSection={activeSection}
-          activeTab={activeTab}
-          onSectionChange={handleSectionChange}
-          onTabChange={handleTabChange}
-        />
-      </div>
-
-      {/* Notification System - Mobile positioned above NavBar */}
-      <NotificationSystem />
-
-      {/* Particle Effects System */}
-      <ParticleEffectsManager />
-
-      {/* FPS Overlay */}
-      <FPSCounter />
-      <PerfHud />
-
-      {debugToolsAllowed && (
-        <Suspense fallback={null}>
-          {/* Performance Overlay (dev, toggle with `) */}
-          <PerformanceOverlay />
-
-          {/* Debug Stress Panel (?debug=1) */}
-          {debugQueryEnabled ? <DebugStressPanel /> : null}
-
-          {/* QA Mode Panel (?debug=1) */}
-          {debugQueryEnabled ? <QAModePanel /> : null}
-        </Suspense>
-      )}
-
-      {/* Onboarding Tutorial (auto-shows for new players) */}
-      <Tutorial />
-
-      {/* What's New should not interrupt the launch screen on first load. */}
-      {!showStartScreen && <WhatsNewModal />}
 
       {/* Premium lock modal (premium mode only) */}
       <PremiumLockModal />

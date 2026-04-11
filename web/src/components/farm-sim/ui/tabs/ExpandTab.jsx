@@ -4,16 +4,10 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { TabHero, MetricTile } from './TabSurface';
+import { FARM_DISTRICTS, getUnlockedDistricts } from '../../../../utils/farmDistricts';
 
 const EXPANSION_COSTS = { 3: 60, 4: 180 };
 const MAX_SIZE = 5;
-
-const PLOT_ZONES = [
-  { id: 'fertile', name: 'Fertile Soil', emoji: '🌱', description: '+25% growth speed in this zone', color: 'bg-green-100 border-green-300', requiredSize: 4 },
-  { id: 'irrigated', name: 'Irrigated', emoji: '💧', description: 'Water drains 50% slower', color: 'bg-blue-100 border-blue-300', requiredSize: 4 },
-  { id: 'decor', name: 'Decor Garden', emoji: '🪴', description: 'Dedicated decor area, no crop competition', color: 'bg-rose-100 border-rose-300', requiredSize: 4 },
-  { id: 'experimental', name: 'Experimental', emoji: '🔬', description: '+10% mutation chance for genetics', color: 'bg-purple-100 border-purple-300', requiredSize: 5 },
-];
 
 const EXPANSION_MILESTONES = [
   { id: 'first_expand', name: 'Growing Pains', description: 'Expand farm to 4x4', condition: (size) => size >= 4, reward: '+30 XP' },
@@ -42,6 +36,19 @@ const ExpandTab = memo(() => {
     EXPANSION_MILESTONES.filter((m) => m.condition(state.gridSize)),
     [state.gridSize]
   );
+  const unlockedDistricts = useMemo(() => getUnlockedDistricts(state.gridSize), [state.gridSize]);
+  const districtMatrix = useMemo(() => (
+    Array.from({ length: state.gridSize }, (_, row) => (
+      Array.from({ length: state.gridSize }, (_, col) => {
+        if (state.gridSize <= 3) return FARM_DISTRICTS.homestead;
+        if (state.gridSize >= 5 && (row === 2 || col === 2)) return FARM_DISTRICTS.workshop;
+        if (row < 2 && col < 2) return FARM_DISTRICTS.orchard;
+        if (row < 2 && col >= 2) return FARM_DISTRICTS.waterline;
+        if (row >= 2 && col < 2) return FARM_DISTRICTS.hearth;
+        return FARM_DISTRICTS.market;
+      })
+    ))
+  ), [state.gridSize]);
 
   const handleExpand = () => {
     if (state.gridSize >= MAX_SIZE) return;
@@ -171,24 +178,33 @@ const ExpandTab = memo(() => {
 
       {/* Plot Zones Guide */}
       <Card className="p-4">
-        <h4 className="font-semibold mb-3">Plot Zones</h4>
-        <p className="text-xs text-gray-500 mb-3">Specialization zones unlock as you expand your farm.</p>
-        <div className="space-y-2">
-          {PLOT_ZONES.map((zone) => {
-            const unlocked = state.gridSize >= zone.requiredSize;
-            return (
-              <div key={zone.id} className={`flex items-center gap-3 p-2.5 rounded-lg border ${unlocked ? zone.color : 'bg-gray-50 border-gray-200 opacity-50'}`}>
-                <span className="text-2xl">{unlocked ? zone.emoji : '🔒'}</span>
+        <h4 className="font-semibold mb-3">District plan</h4>
+        <p className="text-xs text-gray-500 mb-3">Each expansion tier reshapes the farm into named districts with different strengths.</p>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)]">
+          <div className="grid gap-1 rounded-[22px] border border-slate-200/70 bg-slate-50/80 p-3" style={{ gridTemplateColumns: `repeat(${state.gridSize}, minmax(0, 1fr))` }}>
+            {districtMatrix.flat().map((district, index) => (
+              <div
+                key={`${district.id}-${index}`}
+                className={`aspect-square rounded-xl border p-1 text-center text-[10px] font-semibold text-slate-700 ${district.surfaceClassName || 'farm-district--homestead'}`}
+              >
+                <div className="text-sm">{district.emoji}</div>
+                <div className="mt-1 leading-tight">{district.shortLabel}</div>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-2">
+            {unlockedDistricts.map((district) => (
+              <div key={district.id} className="flex items-center gap-3 rounded-[18px] border border-slate-200/70 bg-white/80 p-3">
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${district.surfaceClassName || 'farm-district--homestead'}`}>
+                  <span className="text-xl">{district.emoji}</span>
+                </div>
                 <div className="flex-1">
-                  <div className="font-medium text-sm flex items-center gap-2">
-                    {zone.name}
-                    {!unlocked && <Badge variant="outline" className="text-[10px]">{zone.requiredSize}×{zone.requiredSize} required</Badge>}
-                  </div>
-                  <div className="text-xs text-gray-600">{zone.description}</div>
+                  <div className="font-medium text-sm text-slate-900">{district.name}</div>
+                  <div className="text-xs text-slate-600">{district.description}</div>
                 </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </Card>
 

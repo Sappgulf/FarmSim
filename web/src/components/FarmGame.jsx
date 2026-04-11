@@ -58,6 +58,7 @@ import { BLESSINGS, MEMORIES, MEMORY_CHAPTERS, MOOD_TIERS, WISHING_WELL } from '
 // Utils
 import { nowSec } from '../utils/time.mjs';
 import { loadGameSave, saveGameState, saveGameStateImmediate } from '../utils/save.mjs';
+import { formatDisplayLabel } from '../utils/textFormat';
 
 const getMoodTierForPoints = (points) => {
   let tier = MOOD_TIERS[0];
@@ -76,6 +77,61 @@ const FEATURED_CROP_BY_SEASON = {
 
 const getFeaturedCropId = (season) => {
   return FEATURED_CROP_BY_SEASON[season] || 'carrot';
+};
+
+const WEATHER_RECOMMENDATION_MODES = {
+  rainy: { mode: 'season', reason: 'Lean into the season while rain keeps the field moving.' },
+  stormy: { mode: 'speed', reason: 'Shorter crops lower the risk of losing value to rough weather.' },
+  drought: { mode: 'speed', reason: 'Shorter cycles are safer while water pressure is high.' },
+  frost: { mode: 'speed', reason: 'Fast crops help you stay productive through the cold snap.' },
+  cloudy: { mode: 'speed', reason: 'Keep momentum with crops that pay out quickly.' },
+  sunny: { mode: 'value', reason: 'Stable weather is a good time to push a stronger-value crop.' },
+  windy: { mode: 'balanced', reason: 'Stay with a seasonal staple while conditions stay mixed.' },
+};
+
+const pickRecommendedCrop = (entries, currentSeason, currentWeather) => {
+  if (!entries.length) return null;
+
+  const { mode, reason } = WEATHER_RECOMMENDATION_MODES[currentWeather] || {
+    mode: 'balanced',
+    reason: 'Stick to a crop that matches the season and keeps the loop moving.',
+  };
+
+  const ranked = entries
+    .map(([id, crop]) => {
+      const growSeconds = crop.secondsPerStage * crop.stages;
+      const seasonMatch = crop.season === currentSeason;
+      const speedScore = Math.max(0, 90 - growSeconds);
+      const valueScore = crop.baseValue * 2;
+      const seasonScore = seasonMatch ? 28 : 0;
+
+      let score = seasonScore + speedScore + valueScore;
+      if (mode === 'speed') score = seasonScore + speedScore * 1.8 + valueScore * 0.7;
+      if (mode === 'value') score = seasonScore * 1.2 + speedScore * 0.8 + valueScore * 1.4;
+      if (mode === 'season') score = seasonScore * 1.8 + speedScore + valueScore;
+
+      return {
+        id,
+        crop,
+        growSeconds,
+        seasonMatch,
+        score,
+      };
+    })
+    .sort((a, b) => b.score - a.score || a.growSeconds - b.growSeconds || b.crop.baseValue - a.crop.baseValue);
+
+  const best = ranked[0];
+  if (!best) return null;
+
+  return {
+    id: best.id,
+    crop: best.crop,
+    title: formatDisplayLabel(best.id),
+    reason,
+    note: best.seasonMatch
+      ? `${formatDisplayLabel(best.id)} is in season and fits the current pace.`
+      : `${formatDisplayLabel(best.id)} is your strongest fallback even outside its peak season.`,
+  };
 };
 
 export default function FarmGame() {
@@ -157,6 +213,18 @@ export default function FarmGame() {
 
   const featuredCropId = useMemo(() => getFeaturedCropId(currentSeason), [currentSeason]);
   const featuredCropData = CROPS[featuredCropId];
+  const availableSeedEntries = useMemo(
+    () => Object.entries(CROPS).filter(([id]) => (inventory[id] || 0) > 0),
+    [inventory]
+  );
+  const ownedSeedRecommendation = useMemo(
+    () => pickRecommendedCrop(availableSeedEntries, currentSeason, currentWeather),
+    [availableSeedEntries, currentSeason, currentWeather]
+  );
+  const shopSeedRecommendation = useMemo(
+    () => pickRecommendedCrop(Object.entries(CROPS), currentSeason, currentWeather),
+    [currentSeason, currentWeather]
+  );
 
   // Tutorial state
   const tutorial = useTutorial(tutorialComplete, tutorialStep, advanceTutorial, completeTutorial);
@@ -211,6 +279,16 @@ export default function FarmGame() {
   // Processing state
   const [processingQueue, setProcessingQueue] = useState([]);
   const [completedProducts, setCompletedProducts] = useState([]);
+
+  const plotCounts = useMemo(() => {
+    return plots.reduce((counts, _, index) => {
+      const { status } = getPlotStatus(index);
+      if (status === 'ready') counts.ready += 1;
+      else if (status === 'empty') counts.empty += 1;
+      else counts.active += 1;
+      return counts;
+    }, { ready: 0, active: 0, empty: 0 });
+  }, [plots, getPlotStatus]);
 
   // Day/night cycle
   const dayNight = useDayNight(false);
@@ -1119,7 +1197,7 @@ export default function FarmGame() {
       />
 
       {/* Main Container */}
-      <div className="max-w-6xl mx-auto px-4 py-4 pb-20 sm:pb-4">
+      <div className="max-w-7xl mx-auto px-4 py-4 pb-20 sm:pb-4">
         {/* Header Stats Bar */}
         <StatsBar
           coins={coins}
@@ -1143,27 +1221,18 @@ export default function FarmGame() {
         />
 
         {/* Desktop Layout */}
-        <div className="hidden sm:grid sm:grid-cols-3 gap-4 mt-4">
+        <div className="hidden sm:grid sm:grid-cols-[minmax(0,1.2fr)_360px] gap-5 mt-4 items-start">
           {/* Left Column - Farm */}
-          <div className="col-span-2 space-y-4">
-            {/* Weather Display */}
-            <WeatherDisplay
-              currentWeather={currentWeather}
-              weatherData={weatherData}
-              currentSeason={currentSeason}
-              seasonData={seasonData}
-              forecast={forecast}
-            />
-
-            {/* Active Building Bonuses */}
-            <BuildingIndicators buildings={buildings} />
-
+          <div className="space-y-4">
             {/* Quick Seed Selector */}
             <SeedTray
               inventory={inventory}
               selectedSeed={selectedSeed}
               onSelectSeed={setSelectedSeed}
-              onOpenShop={() => setActiveTab('shop')}
+              onOpenShop={() => setRightTab('shop')}
+              recommendedSeedId={ownedSeedRecommendation?.id || null}
+              recommendationReason={ownedSeedRecommendation?.reason || null}
+              recommendationTitle={ownedSeedRecommendation?.title || null}
             />
 
             {/* Farm Grid */}
@@ -1180,17 +1249,10 @@ export default function FarmGame() {
               onFertilize={handleFertilize}
               onHarvestAll={handleHarvestAll}
             />
-
-            {/* Inventory Panel */}
-            <InventoryPanel
-              inventory={inventory}
-              selectedSeed={selectedSeed}
-              onSelectSeed={setSelectedSeed}
-            />
           </div>
 
           {/* Right Column - Tabs */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:sticky lg:top-4">
             <StoryDashboard
               moodTier={moodTier}
               vibeLine={vibeLine}
@@ -1208,11 +1270,67 @@ export default function FarmGame() {
               onWish={handleMakeWish}
             />
 
+            <WeatherDisplay
+              currentWeather={currentWeather}
+              weatherData={weatherData}
+              currentSeason={currentSeason}
+              seasonData={seasonData}
+              forecast={forecast}
+            />
+
+            <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-700/70">
+                    Field Focus
+                  </div>
+                  <div className="mt-2 text-lg font-semibold text-slate-900">
+                    {plotCounts.ready > 0
+                      ? `Harvest ${plotCounts.ready} ready plot${plotCounts.ready > 1 ? 's' : ''}`
+                      : plotCounts.empty > 0
+                        ? `Plant ${Math.min(plotCounts.empty, 3)} more plot${plotCounts.empty > 1 ? 's' : ''}`
+                        : 'Keep the current field cycle moving'}
+                  </div>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {ownedSeedRecommendation
+                      ? `${ownedSeedRecommendation.title} is the cleanest next plant for ${formatDisplayLabel(currentSeason)}.`
+                      : `${shopSeedRecommendation?.title || 'Lettuce'} is the best next pickup if you need to restock.`}
+                  </p>
+                </div>
+                <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  {plotCounts.active}/{gridSize * gridSize} active
+                </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {ownedSeedRecommendation && (
+                  <button
+                    onClick={() => setSelectedSeed(ownedSeedRecommendation.id)}
+                    className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
+                  >
+                    Plant {ownedSeedRecommendation.crop.emoji} {ownedSeedRecommendation.title}
+                  </button>
+                )}
+                <button
+                  onClick={() => setRightTab('shop')}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  Open Shop
+                </button>
+              </div>
+            </div>
+
+            <BuildingIndicators buildings={buildings} />
+
             <Tabs value={rightTab} onValueChange={setRightTab} className="w-full">
               <TabsList className="grid w-full grid-cols-4 mb-1">
                 <TabsTrigger value="shop" title="Shop" className="flex flex-col gap-0.5 h-auto py-1.5 text-[10px]">
                   <ShoppingCart size={15} />
                   Shop
+                </TabsTrigger>
+                <TabsTrigger value="inventory" title="Inventory" className="flex flex-col gap-0.5 h-auto py-1.5 text-[10px]">
+                  <Package size={15} />
+                  Inventory
                 </TabsTrigger>
                 <TabsTrigger value="livestock" title="Livestock" className="flex flex-col gap-0.5 h-auto py-1.5 text-[10px]">
                   <span className="text-sm leading-none">🐄</span>
@@ -1222,12 +1340,12 @@ export default function FarmGame() {
                   <Factory size={15} />
                   Process
                 </TabsTrigger>
+              </TabsList>
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="achievements" title="Achievements" className="flex flex-col gap-0.5 h-auto py-1.5 text-[10px]">
                   <Trophy size={15} />
                   Goals
                 </TabsTrigger>
-              </TabsList>
-              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="prestige" title="Prestige" className="flex flex-col gap-0.5 h-auto py-1.5 text-[10px]">
                   <Crown size={15} />
                   Prestige
@@ -1248,10 +1366,22 @@ export default function FarmGame() {
                   inventory={inventory}
                   gridSize={gridSize}
                   buildings={buildings}
+                  recommendedSeedId={shopSeedRecommendation?.id || null}
+                  recommendationReason={shopSeedRecommendation?.reason || null}
+                  recommendationTitle={shopSeedRecommendation?.title || null}
                   onBuySeeds={handleBuySeeds}
                   onBuyTool={handleBuyTool}
                   onExpandFarm={handleExpandFarm}
                   onBuyBuilding={handleBuyBuilding}
+                />
+              </TabsContent>
+
+              <TabsContent value="inventory" className="mt-4">
+                <InventoryPanel
+                  inventory={inventory}
+                  selectedSeed={selectedSeed}
+                  onSelectSeed={setSelectedSeed}
+                  onOpenShop={() => setRightTab('shop')}
                 />
               </TabsContent>
 
@@ -1398,6 +1528,9 @@ export default function FarmGame() {
                 selectedSeed={selectedSeed}
                 onSelectSeed={setSelectedSeed}
                 onOpenShop={() => setActiveTab('shop')}
+                recommendedSeedId={ownedSeedRecommendation?.id || null}
+                recommendationReason={ownedSeedRecommendation?.reason || null}
+                recommendationTitle={ownedSeedRecommendation?.title || null}
               />
               <FarmGrid
                 gridSize={gridSize}
@@ -1426,6 +1559,9 @@ export default function FarmGame() {
               inventory={inventory}
               gridSize={gridSize}
               buildings={buildings}
+              recommendedSeedId={shopSeedRecommendation?.id || null}
+              recommendationReason={shopSeedRecommendation?.reason || null}
+              recommendationTitle={shopSeedRecommendation?.title || null}
               onBuySeeds={handleBuySeeds}
               onBuyTool={handleBuyTool}
               onExpandFarm={handleExpandFarm}

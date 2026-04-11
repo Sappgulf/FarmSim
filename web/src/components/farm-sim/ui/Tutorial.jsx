@@ -12,7 +12,7 @@ const ONBOARDING_STEPS = [
   {
     id: 'plant',
     title: 'Plant something',
-    description: 'Pick a crop and tap an empty plot to get growing.',
+    description: 'Pick a seed, then tap empty soil.',
     emoji: '🌱',
     target: '[data-onboard="farm-grid"]',
     placement: 'right',
@@ -20,7 +20,7 @@ const ONBOARDING_STEPS = [
   {
     id: 'harvest',
     title: 'Harvest it',
-    description: 'Tap a glowing crop to harvest and earn coins.',
+    description: 'Tap a glowing crop for coins.',
     emoji: '🧺',
     target: '[data-onboard="farm-grid"]',
     placement: 'right',
@@ -28,7 +28,7 @@ const ONBOARDING_STEPS = [
   {
     id: 'board',
     title: 'Visit the Town Board',
-    description: 'Open More → Events to see today’s plan.',
+    description: 'Open More > Events for today\'s plan.',
     emoji: '📌',
     target: '[data-onboard="events-tab"]',
     placement: 'top',
@@ -218,7 +218,7 @@ const Tutorial = memo(() => {
           <p className="mt-2 text-xs text-gray-600">{currentStep.description}</p>
 
           <div className="mt-3 flex items-center justify-between">
-            <span className="text-[10px] text-gray-400">Drag to move</span>
+            <span className="text-[10px] text-gray-400">Drag if needed</span>
             <Button variant="outline" size="sm" onClick={handleSkip}>
               Skip
             </Button>

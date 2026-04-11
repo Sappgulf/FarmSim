@@ -2,6 +2,7 @@
  * Weather System - Handles weather changes and effects
  * Includes forecasting and weather impact calculations
  */
+import { getDistrictBonuses, getDistrictIdForPlot } from '../../../utils/farmDistricts';
 
 export class WeatherSystem {
   constructor(gameState, gameActions) {
@@ -129,16 +130,20 @@ export class WeatherSystem {
     const weatherProtection = this.getWeatherProtection();
 
     // Apply to all plots - only modify weather-related properties, not growth state
-    const updatedPlots = this.gameState.plots.map(plot => {
+    const updatedPlots = this.gameState.plots.map((plot, index) => {
       if (plot.state === 'empty') return plot;
 
       let updatedPlot = { ...plot };
+      const districtBonuses = getDistrictBonuses(getDistrictIdForPlot(this.gameState.gridSize || 3, index));
       
       // Water level changes (well reduces water drain/adds water)
       if (effects.waterChange) {
         const waterBonus = hasWell ? 5 : 0;
+        const districtWaterBonus = effects.waterChange < 0
+          ? Math.abs(effects.waterChange) * (1 - (districtBonuses.waterDrainMultiplier || 1))
+          : 0;
         updatedPlot.waterLevel = Math.max(0, Math.min(100,
-          updatedPlot.waterLevel + effects.waterChange + waterBonus
+          updatedPlot.waterLevel + effects.waterChange + waterBonus + districtWaterBonus
         ));
       }
 
@@ -149,7 +154,9 @@ export class WeatherSystem {
 
       // Disease risk (barn reduces disease risk)
       const diseaseReduction = hasBarn ? 0.5 : 0;
-      const actualDiseaseRisk = effects.diseaseRisk ? effects.diseaseRisk * (1 - diseaseReduction) : 0;
+      const actualDiseaseRisk = effects.diseaseRisk
+        ? effects.diseaseRisk * (1 - diseaseReduction) * (districtBonuses.diseaseRiskMultiplier || 1)
+        : 0;
       if (actualDiseaseRisk && Math.random() < actualDiseaseRisk) {
         updatedPlot.disease = 'weather-induced';
       }
@@ -216,10 +223,11 @@ export class WeatherSystem {
     const weatherProtection = this.getWeatherProtection();
 
     // Only apply gradual changes, not state-changing effects
-    const updatedPlots = this.gameState.plots.map(plot => {
+    const updatedPlots = this.gameState.plots.map((plot, index) => {
       if (plot.state === 'empty') return plot;
 
       let updatedPlot = plot;
+      const districtBonuses = getDistrictBonuses(getDistrictIdForPlot(this.gameState.gridSize || 3, index));
 
       const ensureClone = () => {
         if (updatedPlot === plot) {
@@ -230,7 +238,7 @@ export class WeatherSystem {
       // Apply gradual water drain (if any), reduced by well
       if (effects.waterDrainRate) {
         const drainReduction = hasWell ? 0.5 : 0;
-        const baseDrain = effects.waterDrainRate * (1 - drainReduction);
+        const baseDrain = effects.waterDrainRate * (1 - drainReduction) * (districtBonuses.waterDrainMultiplier || 1);
         const actualDrain = baseDrain * 0.2 * elapsedSeconds;
         const nextWater = Math.max(0, (plot.waterLevel || 0) - actualDrain);
         if (nextWater !== plot.waterLevel) {

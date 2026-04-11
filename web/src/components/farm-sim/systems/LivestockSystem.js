@@ -1,6 +1,7 @@
 /**
  * Livestock System - Manage animals, production, and care
  */
+import { getSpecializationModifiers } from '../../../utils/farmSpecializations';
 
 export const LIVESTOCK_TYPES = {
   CHICKEN: {
@@ -146,6 +147,7 @@ export class LivestockSystem {
     const now = Date.now();
     const deltaTime = (now - this.lastUpdate) / 1000; // seconds
     this.lastUpdate = now;
+    const specialization = getSpecializationModifiers(this.gameState);
 
     if (!this.gameState.livestock?.animals) {
       return;
@@ -153,10 +155,16 @@ export class LivestockSystem {
 
     const updatedAnimals = this.gameState.livestock.animals.map(animal => {
       // Update happiness (decays over time)
-      let newHappiness = Math.max(0, animal.happiness - (animal.type.happinessDecay * deltaTime / 60));
+      let newHappiness = Math.max(
+        0,
+        animal.happiness - ((animal.type.happinessDecay * (specialization.livestockHappinessDecayMultiplier || 1)) * deltaTime / 60)
+      );
       
       // Update hunger (increases over time)
-      let newHunger = Math.min(100, animal.hunger + (animal.type.hungerRate * deltaTime / 60));
+      let newHunger = Math.min(
+        100,
+        animal.hunger + ((animal.type.hungerRate * (specialization.livestockHungerRateMultiplier || 1)) * deltaTime / 60)
+      );
       
       // Update health (decreases if hungry or unhappy)
       let newHealth = animal.health;
@@ -309,12 +317,13 @@ export class LivestockSystem {
     const animal = this.gameState.livestock?.animals?.find(a => a.id === animalId);
     if (!animal) return { success: false, message: 'Animal not found' };
     if (!animal.hasProduct) return { success: false, message: 'No product ready' };
+    const specialization = getSpecializationModifiers(this.gameState);
 
     // Calculate product value (affected by happiness and health)
     const qualityModifier = ((animal.happiness / 100) * 0.3) + ((animal.health / 100) * 0.3) + 0.4;
     const products = animal.type.products.map(p => ({
       ...p,
-      actualValue: Math.floor(p.value * qualityModifier)
+      actualValue: Math.floor(p.value * qualityModifier * (specialization.livestockProductMultiplier || 1))
     }));
 
     // Update animal
@@ -429,4 +438,3 @@ export class LivestockSystem {
 }
 
 export default LivestockSystem;
-

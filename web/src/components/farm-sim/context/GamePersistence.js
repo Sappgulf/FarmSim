@@ -6,7 +6,7 @@ import { normalizeEntitlements } from '../entitlements/EntitlementManager';
 import { getLevelFromXp, remapXpToCurrentCurve } from '../systems/progression';
 
 // Save schema version (separate from APP_VERSION in src/config/release.js).
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 18;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -307,6 +307,30 @@ export function migrateSaveData(savedData) {
             }
         }
 
+        // Version 16 -> 17: Research specialization support
+        if (saveVersion < 17) {
+            migratedData.research = ensureObject(migratedData.research, {});
+            migratedData.research.specialization = ensureObject(migratedData.research.specialization, {
+                chosenId: null,
+                changedAt: null,
+                history: [],
+            });
+        }
+
+        // Version 17 -> 18: Seasonal journal support
+        if (saveVersion < 18) {
+            migratedData.journal = ensureObject(migratedData.journal, {
+                entries: [],
+                ritual: {
+                    lastEntryDayKey: null,
+                    streak: 0,
+                    lastScrapbookDayKey: null,
+                    lastPhilosophyDayKey: null,
+                    lastSpotlightDayKey: null,
+                },
+            });
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
         migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
@@ -449,6 +473,21 @@ export function migrateSaveData(savedData) {
         migratedData.cozyGoals.completedGoalIds = Array.isArray(migratedData.cozyGoals.completedGoalIds)
             ? migratedData.cozyGoals.completedGoalIds
             : [];
+        const rawJournal = ensureObject(migratedData.journal, {});
+        migratedData.journal = {
+            entries: Array.isArray(rawJournal.entries)
+                ? rawJournal.entries
+                    .filter((entry) => entry && typeof entry === 'object')
+                    .slice(-24)
+                : [],
+            ritual: {
+                lastEntryDayKey: typeof rawJournal.ritual?.lastEntryDayKey === 'string' ? rawJournal.ritual.lastEntryDayKey : null,
+                streak: clampNumber(rawJournal.ritual?.streak, 0, { min: 0 }),
+                lastScrapbookDayKey: typeof rawJournal.ritual?.lastScrapbookDayKey === 'string' ? rawJournal.ritual.lastScrapbookDayKey : null,
+                lastPhilosophyDayKey: typeof rawJournal.ritual?.lastPhilosophyDayKey === 'string' ? rawJournal.ritual.lastPhilosophyDayKey : null,
+                lastSpotlightDayKey: typeof rawJournal.ritual?.lastSpotlightDayKey === 'string' ? rawJournal.ritual.lastSpotlightDayKey : null,
+            },
+        };
         migratedData.whatsNew = ensureObject(migratedData.whatsNew, { dismissed: {} });
         migratedData.whatsNew.dismissed = ensureObject(migratedData.whatsNew.dismissed, {});
         migratedData.whatsNew.lastSeenVersion = typeof migratedData.whatsNew.lastSeenVersion === 'string'
@@ -531,7 +570,25 @@ export function migrateSaveData(savedData) {
         migratedData.pets = Array.isArray(migratedData.pets) ? migratedData.pets : [];
         migratedData.social = ensureObject(migratedData.social, { friends: [], reputation: 0, marketListings: [] });
         migratedData.genetics = ensureObject(migratedData.genetics, {});
-        migratedData.research = ensureObject(migratedData.research, {});
+        const rawResearch = ensureObject(migratedData.research, {});
+        migratedData.research = {
+            active: typeof rawResearch.active === 'string' ? rawResearch.active : null,
+            startTime: clampNumber(rawResearch.startTime, null, { min: 0 }),
+            completed: Array.isArray(rawResearch.completed)
+                ? Array.from(new Set(rawResearch.completed.filter((entry) => typeof entry === 'string')))
+                : [],
+            specialization: {
+                chosenId: typeof rawResearch.specialization?.chosenId === 'string'
+                    ? rawResearch.specialization.chosenId
+                    : null,
+                changedAt: clampNumber(rawResearch.specialization?.changedAt, null, { min: 0 }),
+                history: Array.isArray(rawResearch.specialization?.history)
+                    ? rawResearch.specialization.history
+                        .filter((entry) => entry && typeof entry === 'object')
+                        .slice(-8)
+                    : [],
+            },
+        };
         migratedData.prestige = ensureObject(migratedData.prestige, {
             tier: 0,
             totalRebirths: 0,
@@ -550,6 +607,18 @@ export function migrateSaveData(savedData) {
             showWelcomeBackSummary: ensureBoolean(migratedData.settings?.showWelcomeBackSummary, true),
             showTooltips: ensureBoolean(migratedData.settings?.showTooltips, true),
             keyboardShortcuts: ensureBoolean(migratedData.settings?.keyboardShortcuts, true),
+            foreman: {
+                autoWater: ['off', 'smart', 'full'].includes(migratedData.settings?.foreman?.autoWater)
+                    ? migratedData.settings.foreman.autoWater
+                    : 'smart',
+                autoHarvest: ['off', 'priority', 'batch'].includes(migratedData.settings?.foreman?.autoHarvest)
+                    ? migratedData.settings.foreman.autoHarvest
+                    : 'priority',
+                autoTreat: ['off', 'critical', 'always'].includes(migratedData.settings?.foreman?.autoTreat)
+                    ? migratedData.settings.foreman.autoTreat
+                    : 'critical',
+                notify: ensureBoolean(migratedData.settings?.foreman?.notify, true),
+            },
         };
 
         migratedData.selectedDecoration = typeof migratedData.selectedDecoration === 'string'

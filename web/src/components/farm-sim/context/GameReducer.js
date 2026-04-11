@@ -105,6 +105,16 @@ export const initialState = {
         lastGeneratedGoals: null,
         completedGoalIds: [],
     },
+    journal: {
+        entries: [],
+        ritual: {
+            lastEntryDayKey: null,
+            streak: 0,
+            lastScrapbookDayKey: null,
+            lastPhilosophyDayKey: null,
+            lastSpotlightDayKey: null,
+        },
+    },
     whatsNew: {
         dismissed: {},
         lastSeenVersion: null,
@@ -139,7 +149,16 @@ export const initialState = {
         legacyBonuses: {},
         heirloomSeeds: [],
     },
-    research: {},
+    research: {
+        active: null,
+        startTime: null,
+        completed: [],
+        specialization: {
+            chosenId: null,
+            changedAt: null,
+            history: [],
+        },
+    },
     genetics: {},
 
     // Social features
@@ -193,6 +212,12 @@ export const initialState = {
         showWelcomeBackSummary: true,
         showTooltips: true,
         keyboardShortcuts: true,
+        foreman: {
+            autoWater: 'smart',
+            autoHarvest: 'priority',
+            autoTreat: 'critical',
+            notify: true,
+        },
     },
     entitlements: {
         mode: 'free',
@@ -446,6 +471,9 @@ export function gameReducer(state, action) {
 
         case GAME_ACTIONS.UPDATE_COZY_GOALS:
             return { ...state, cozyGoals: action.payload };
+
+        case GAME_ACTIONS.UPDATE_JOURNAL:
+            return { ...state, journal: action.payload };
 
         case GAME_ACTIONS.UPDATE_WHATS_NEW:
             return { ...state, whatsNew: action.payload };

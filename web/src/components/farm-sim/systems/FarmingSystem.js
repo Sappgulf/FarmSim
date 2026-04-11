@@ -9,6 +9,12 @@ import {
   getSprinklerConfig,
   getWateringBonus,
 } from '../../../utils/farmUpgrades';
+import {
+  applyDistrictHarvestBonus,
+  getDistrictBonuses,
+  getDistrictIdForPlot,
+} from '../../../utils/farmDistricts';
+import { getSpecializationModifiers } from '../../../utils/farmSpecializations';
 import { isDevelopmentMode } from '../../../config/release';
 import { getDifficultyModifier } from './progression';
 
@@ -30,6 +36,7 @@ export class FarmingSystem {
     this.lastFertilityUpdate = 0;
     this.lastSprinklerWater = 0;
     this.lastAutoHarvestTick = 0;
+    this.lastAutoTreatTick = 0;
     // PERF: timestamp-based growth doesn't require high-frequency React state writes.
     // Throttle expensive full-plot scans to reduce CPU and GC pressure.
     this.lastGrowthUpdate = 0;
@@ -66,6 +73,9 @@ export class FarmingSystem {
 
     // Apply sprinkler automation (if owned)
     this.applySprinklerAutoWater();
+
+    // Apply optional crop health automation
+    this.applyAutoTreatment();
 
     // Apply optional auto-harvest automation (if owned)
     this.applyAutoHarvest();
@@ -124,6 +134,7 @@ export class FarmingSystem {
     const inventory = this.gameState.inventory || {};
     const greenhouseGrowthBonus = getMiniGreenhouseGrowthBonus(inventory);
     const hydroponicsGrowthBonus = getHydroponicsGrowthBonus(inventory);
+    const specialization = getSpecializationModifiers(this.gameState);
 
     // PERF: copy-on-write; avoid allocating a full array unless something changes.
     let updatedPlots = null;
@@ -139,11 +150,18 @@ export class FarmingSystem {
       const baseGrowthTime = plot.crop.growthTime || 10;
       const plotWeatherModifier = plot.weatherModifier || weatherModifier;
       const growthBoost = plot.growthBoost || 1;
+      const districtBonuses = getDistrictBonuses(getDistrictIdForPlot(this.gameState.gridSize || 3, i));
       const level = this.gameState.level || 1;
       const difficulty = getDifficultyModifier(level);
       const effectiveGrowthTime =
         (baseGrowthTime * difficulty.growthTime) /
-        (plotWeatherModifier * seasonBonus * greenhouseGrowthBonus * hydroponicsGrowthBonus * growthBoost);
+        (plotWeatherModifier
+          * seasonBonus
+          * greenhouseGrowthBonus
+          * hydroponicsGrowthBonus
+          * growthBoost
+          * (districtBonuses.growthMultiplier || 1)
+          * (specialization.cropGrowthMultiplier || 1));
 
       // Crop rotation bonus: +5% growth speed per unique predecessor in last 3 crops
       const rotationHistory = Array.isArray(plot.rotationHistory) ? plot.rotationHistory : [];
@@ -302,7 +320,8 @@ export class FarmingSystem {
       if (!plot) continue;
       const currentFertility = Number.isFinite(plot.soilFertility) ? plot.soilFertility : 1.0;
       if (currentFertility >= 1.0) continue;
-      const nextFertility = Math.min(1.0, currentFertility + regenAmount);
+      const districtBonuses = getDistrictBonuses(getDistrictIdForPlot(this.gameState.gridSize || 3, i));
+      const nextFertility = Math.min(1.0, currentFertility + (regenAmount * (districtBonuses.fertilityRegenMultiplier || 1)));
       if (nextFertility === currentFertility) continue;
       if (!updatedPlots) updatedPlots = plots.slice();
       updatedPlots[i] = {
@@ -397,17 +416,28 @@ export class FarmingSystem {
     if (!crop) {
       return false;
     }
+    const specialization = getSpecializationModifiers(this.gameState);
 
     // Calculate harvest value with soil fertility bonus
     const baseValue = crop.baseValue || 10;
     const soilMultiplier = plot.soilFertility || 1.0;
-    const harvestValue = calculateHarvestValue(baseValue, soilMultiplier, this.gameState.inventory);
+    const districtId = getDistrictIdForPlot(this.gameState.gridSize || 3, plotIndex);
+    const harvestValue = applyDistrictHarvestBonus(
+      Math.floor(
+        calculateHarvestValue(baseValue, soilMultiplier, this.gameState.inventory)
+        * (specialization.cropHarvestMultiplier || 1)
+      ),
+      districtId
+    );
 
     // Update coins and XP
     // Add coins and XP for harvest
     this.actions.earnMoney(harvestValue, 'harvest');
     // REBALANCED: Consistent 15% XP rate across all harvest methods
-    this.actions.addXP(Math.floor(harvestValue * 0.15), { source: 'harvest', cropId: crop.id, label: `Harvest ${crop.name}` });
+    this.actions.addXP(
+      Math.floor(harvestValue * 0.15 * (specialization.harvestXpMultiplier || 1)),
+      { source: 'harvest', cropId: crop.id, label: `Harvest ${crop.name}` }
+    );
 
     // Update inventory
     const updatedInventory = {
@@ -499,7 +529,8 @@ export class FarmingSystem {
       return;
     }
     const config = getSprinklerConfig(this.gameState.inventory);
-    if (!config) {
+    const waterMode = this.gameState.settings?.foreman?.autoWater || 'smart';
+    if (!config || waterMode === 'off') {
       return;
     }
     const now = Date.now();
@@ -517,8 +548,15 @@ export class FarmingSystem {
       if (!plot || (plot.state !== 'planted' && plot.state !== 'growing')) {
         return plot;
       }
-      const nextWater = Math.min(100, (plot.waterLevel || 0) + config.waterAmount);
-      if (nextWater === plot.waterLevel) {
+      const currentWater = Number(plot.waterLevel || 0);
+      const shouldWater = waterMode === 'full'
+        ? currentWater < 100
+        : currentWater < 70;
+      if (!shouldWater) {
+        return plot;
+      }
+      const nextWater = Math.min(100, currentWater + config.waterAmount);
+      if (nextWater === currentWater) {
         return plot;
       }
       hasChanges = true;
@@ -539,7 +577,9 @@ export class FarmingSystem {
     }
 
     const config = getAutoHarvestConfig(this.gameState.inventory);
-    if (!config) {
+    const harvestMode = this.gameState.settings?.foreman?.autoHarvest || 'priority';
+    const notify = this.gameState.settings?.foreman?.notify !== false;
+    if (!config || harvestMode === 'off') {
       return;
     }
 
@@ -554,11 +594,25 @@ export class FarmingSystem {
     }
     this.lastAutoHarvestTick = now;
 
+    const readyIndexes = this.gameState.plots
+      .map((plot, index) => (plot?.state === 'ready' ? index : -1))
+      .filter((index) => index !== -1)
+      .sort((a, b) => {
+        const readyA = Number(this.gameState.plots[a]?.readyAt || 0);
+        const readyB = Number(this.gameState.plots[b]?.readyAt || 0);
+        return readyA - readyB;
+      });
+
+    if (harvestMode === 'batch' && readyIndexes.length < Math.min(2, config.maxPlotsPerTick)) {
+      return;
+    }
+
     let harvestedCount = 0;
-    for (let index = 0; index < this.gameState.plots.length; index += 1) {
+    for (let pointer = 0; pointer < readyIndexes.length; pointer += 1) {
       if (harvestedCount >= config.maxPlotsPerTick) {
         break;
       }
+      const index = readyIndexes[pointer];
       if (this.gameState.plots[index]?.state === 'ready') {
         const harvested = this.harvestCrop(index);
         if (harvested) {
@@ -567,10 +621,51 @@ export class FarmingSystem {
       }
     }
 
-    if (harvestedCount > 0) {
+    if (harvestedCount > 0 && notify) {
       this.actions.addNotification?.({
         message: `🤖 Drone Harvester collected ${harvestedCount} crop${harvestedCount > 1 ? 's' : ''}.`,
         type: 'success',
+      });
+    }
+  }
+
+  applyAutoTreatment() {
+    if (!this.gameState || !Array.isArray(this.gameState.plots)) {
+      return;
+    }
+
+    const treatMode = this.gameState.settings?.foreman?.autoTreat || 'critical';
+    const notify = this.gameState.settings?.foreman?.notify !== false;
+    if (treatMode === 'off' || typeof this.actions.treatAllDiseases !== 'function') {
+      return;
+    }
+
+    const now = Date.now();
+    if (!this.lastAutoTreatTick) {
+      this.lastAutoTreatTick = now;
+      return;
+    }
+    if (now - this.lastAutoTreatTick < 12000) {
+      return;
+    }
+    this.lastAutoTreatTick = now;
+
+    const diseasedPlots = this.gameState.plots.filter((plot) => Boolean(plot?.disease));
+    if (diseasedPlots.length === 0) {
+      return;
+    }
+
+    const hasReadyDisease = diseasedPlots.some((plot) => plot?.state === 'ready');
+    const shouldTreat = treatMode === 'always' || diseasedPlots.length >= 2 || hasReadyDisease;
+    if (!shouldTreat) {
+      return;
+    }
+
+    const result = this.actions.treatAllDiseases();
+    if (result?.applied > 0 && notify) {
+      this.actions.addNotification?.({
+        message: `🧑‍🌾 Foreman treated ${result.applied} diseased plot${result.applied > 1 ? 's' : ''}.`,
+        type: 'info',
       });
     }
   }

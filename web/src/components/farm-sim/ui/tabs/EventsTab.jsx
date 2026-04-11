@@ -12,6 +12,8 @@ import { getDailyAlmanacInsight, getDayKey } from '../../../../systems/almanac';
 import { FARM_TITLES, WEEKLY_SPECIAL_DAY } from '../../../../data/cozyExpansion';
 import { getContentManager } from '../../../../content/ContentManager';
 import { getWeekKey } from '../../../../utils/retention';
+import { getDailyCropFocus } from '../../../../utils/dailyFocus';
+import { getDailyOperationProgress } from '../../../../utils/challengesBoard';
 import { getDifficultyModifier, getProgressionBand } from '../../systems/progression';
 import PerfectHarvestModal from '../minigames/PerfectHarvestModal';
 import FarmCardShareButton from '../FarmCardShareButton';
@@ -43,6 +45,23 @@ const WEEKLY_VISIT_TIERS = [
   { visits: 6, reward: { decorId: 'stone_path' }, label: 'Stone Path' },
 ];
 const VALID_SEASONS = new Set(['spring', 'summer', 'autumn', 'winter']);
+
+const PLAN_ACTIONS = {
+  harvest: { tabId: 'farming', label: 'Open field' },
+  plant: { tabId: 'farming', label: 'Open field' },
+  wait: { tabId: 'farming', label: 'View crops' },
+  explore: { tabId: 'farming', label: 'Open field' },
+  earn: { tabId: 'shop', label: 'Open shop' },
+  shop: { tabId: 'shop', label: 'Open shop' },
+  build: { tabId: 'buildings', label: 'Open build' },
+  board: { tabId: 'events', label: 'Stay here' },
+};
+
+const switchToTab = (tabId) => {
+  if (typeof window !== 'undefined' && typeof window.switchToTab === 'function') {
+    window.switchToTab(tabId);
+  }
+};
 
 const selectFestivalRuleSet = (rules = [], activeEvent, season) => {
   const list = Array.isArray(rules) ? rules : [];
@@ -271,6 +290,25 @@ const EventsTab = memo(() => {
   const weeklyClaimedTiers = new Set(weeklyVisits.claimedTiers || []);
   const dailyDelightClaimed = state.retention?.lastDailyDelightClaimDate === dayKey;
   const dailyDelightCount = state.retention?.dailyDelightClaimCount || 0;
+  const dailyFocus = useMemo(() => getDailyCropFocus(state, dayKey), [state, dayKey]);
+  const dailyOperations = useMemo(() => {
+    const operations = Array.isArray(state.dailyChallenges) ? state.dailyChallenges : [];
+    return operations
+      .map((challenge) => {
+        const progress = getDailyOperationProgress(state, challenge);
+        const target = Math.max(1, Math.floor(Number(challenge?.target) || 1));
+        return {
+          ...challenge,
+          progress,
+          target,
+          percent: Math.min(100, Math.round((progress / target) * 100)),
+        };
+      })
+      .sort((a, b) => {
+        if (Boolean(a.claimed) !== Boolean(b.claimed)) return a.claimed ? 1 : -1;
+        return b.percent - a.percent;
+      });
+  }, [state]);
   const sinceThenHighlights = useMemo(() => {
     const highlights = [];
     if (activeEvent) {
@@ -304,6 +342,48 @@ const EventsTab = memo(() => {
   }, [actions, dayKey]);
 
   const planSuggestions = getPlanSuggestions(state, 2);
+  const boardDirectionCards = useMemo(() => {
+    const cards = [];
+
+    if (dailyFocus?.crop) {
+      cards.push({
+        id: 'daily-focus',
+        eyebrow: 'Market focus',
+        title: `${dailyFocus.crop.emoji} ${dailyFocus.crop.name}`,
+        detail: `Sells for +${Math.round((dailyFocus.bonusMultiplier - 1) * 100)}% today.`,
+        actionLabel: 'Open inventory',
+        actionTab: 'inventory',
+      });
+    }
+
+    const topOperation = dailyOperations.find((challenge) => !challenge.claimed) || dailyOperations[0];
+    if (topOperation) {
+      cards.push({
+        id: 'daily-op',
+        eyebrow: 'Daily operation',
+        title: topOperation.name,
+        detail: topOperation.description,
+        progressLabel: `${Math.min(topOperation.progress, topOperation.target)} / ${topOperation.target}`,
+        progressPercent: topOperation.percent,
+        actionLabel: 'Open operations',
+        actionTab: 'challenges',
+      });
+    }
+
+    const nextGoal = cozyGoals.find((goal) => !completedCozyGoals.has(goal.id)) || cozyGoals[0];
+    if (nextGoal) {
+      cards.push({
+        id: 'cozy-goal',
+        eyebrow: 'Soft goal',
+        title: `${nextGoal.emoji} ${nextGoal.text}`,
+        detail: 'Optional progress if you want a gentler route.',
+        actionLabel: 'Open field',
+        actionTab: 'farming',
+      });
+    }
+
+    return cards.slice(0, 3);
+  }, [cozyGoals, completedCozyGoals, dailyFocus, dailyOperations]);
   const nextMemory = MEMORIES.find((memory) => !state.memoryFlags?.[memory.id]);
   const nextAlmanac = ALMANAC_PAGES.find((page) => !state.almanac?.unlocked?.[page.id]);
   const closeToTeaser = nextMemory?.hint || nextAlmanac?.hint || 'All pages are complete. Your story feels whole.';
@@ -611,33 +691,73 @@ const EventsTab = memo(() => {
         </TabSection>
       </div>
 
-      {(onboardingActive || isFirstDay) ? (
-        <TabSection
-          title="Town Board"
-          description="Today’s plan for a fresh start."
-          tone="amber"
-          action={<Badge variant="outline" className="bg-amber-100 text-amber-700">First Session</Badge>}
-        >
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-            <div>
-              <div className="text-[11px] uppercase tracking-wide text-amber-600">Today&apos;s Plan</div>
-              <div className="mt-2 space-y-2">
-                {planSuggestions.map((item) => (
-                  <div key={item.id} className="flex items-start gap-2 rounded-[18px] border border-amber-100/70 bg-white/72 px-3 py-2.5 text-sm text-slate-700">
+      <TabSection
+        title="Town Board"
+        description="Today’s plan, market focus, and next gentle push."
+        tone="amber"
+        action={(
+          <Badge variant="outline" className="bg-amber-100 text-amber-700">
+            {onboardingActive || isFirstDay ? 'First Session' : 'Live board'}
+          </Badge>
+        )}
+      >
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+          <div>
+            <div className="text-[11px] uppercase tracking-wide text-amber-600">Today&apos;s Plan</div>
+            <div className="mt-2 space-y-2">
+              {planSuggestions.map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-3 rounded-[18px] border border-amber-100/70 bg-white/72 px-3 py-2.5 text-sm text-slate-700">
+                  <div className="flex items-start gap-2">
                     <span>{item.emoji}</span>
                     <span>{item.text}</span>
                   </div>
-                ))}
-              </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="min-h-[40px] shrink-0"
+                    onClick={() => switchToTab(PLAN_ACTIONS[item.id]?.tabId || 'farming')}
+                  >
+                    {PLAN_ACTIONS[item.id]?.label || 'Open'}
+                  </Button>
+                </div>
+              ))}
             </div>
-            <div className="space-y-3 rounded-[22px] border border-amber-100/80 bg-white/72 px-4 py-3 text-sm text-slate-700">
+            <div className="mt-3 rounded-[20px] border border-amber-100/70 bg-white/72 px-4 py-3 text-sm text-slate-700">
               <div><span className="font-semibold text-amber-800">You&apos;re close to:</span> {closeToTeaser}</div>
-              <div><span className="font-semibold text-amber-800">Shop today:</span> {shopSnippet}</div>
-              <div><span className="font-semibold text-amber-800">Vibe:</span> {vibeLine}</div>
+              <div className="mt-1"><span className="font-semibold text-amber-800">Shop today:</span> {shopSnippet}</div>
+              <div className="mt-1"><span className="font-semibold text-amber-800">Vibe:</span> {vibeLine}</div>
             </div>
           </div>
-        </TabSection>
-      ) : null}
+          <div className="space-y-3">
+            {boardDirectionCards.map((card) => (
+              <div key={card.id} className="rounded-[22px] border border-amber-100/80 bg-white/78 px-4 py-3 text-sm text-slate-700">
+                <div className="text-[11px] uppercase tracking-wide text-amber-600">{card.eyebrow}</div>
+                <div className="mt-1 font-semibold text-slate-900">{card.title}</div>
+                <div className="mt-1 text-sm text-slate-600">{card.detail}</div>
+                {card.progressLabel ? (
+                  <div className="mt-3 space-y-1">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500">
+                      <span>Progress</span>
+                      <span>{card.progressLabel}</span>
+                    </div>
+                    <Progress value={card.progressPercent} className="h-2" />
+                  </div>
+                ) : null}
+                <div className="mt-3 flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="min-h-[40px]"
+                    onClick={() => switchToTab(card.actionTab)}
+                  >
+                    {card.actionLabel}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </TabSection>
 
       {cozyGoals.length > 0 ? (
         <TabSection

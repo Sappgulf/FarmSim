@@ -13,6 +13,8 @@ import {
   getMiniGreenhouseGrowthBonus,
   getSoilAnalyzerEnabled,
 } from '../../../utils/farmUpgrades';
+import { getNextGoalFromCounts } from '../../../utils/goalHints';
+import { getDistrictForPlot } from '../../../utils/farmDistricts';
 import { getDifficultyModifier } from '../systems/progression';
 
 const ReadyCountdown = memo(({ readyAt, harvestWindowMs = 45000 }) => {
@@ -64,6 +66,7 @@ const FarmPlot = memo(({
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const sharedTick = useTick();
+  const district = getDistrictForPlot(gridSize, index);
 
   const getPlotDisplay = () => {
     if (!plot || plot.state === 'empty') {
@@ -124,13 +127,21 @@ const FarmPlot = memo(({
     }
 
     if (plot.state === 'ready') {
+      const estimatedValue = Math.max(
+        1,
+        Math.floor((plot.crop?.baseValue || 10) * (plot.soilFertility || 1.0) * harvestMultiplier)
+      );
       return {
         emoji: plot.crop.emoji || '🌾',
-        bgColor: 'bg-yellow-100',
-        borderColor: 'border-yellow-400',
-        text: 'Ready! 🎉',
+        bgColor: 'bg-gradient-to-br from-amber-50 via-yellow-100 to-orange-100',
+        borderColor: 'border-amber-300',
+        text: 'Harvest',
+        subText: `+${estimatedValue}🪙`,
+        textClassName: 'text-amber-900',
+        subTextClassName: 'text-amber-700',
         animation: 'animate-pulse',
-        hoverEffect: 'hover:bg-yellow-200 hover:shadow-xl hover:scale-110'
+        hoverEffect: 'hover:bg-yellow-200 hover:shadow-xl hover:scale-110',
+        emphasisClassName: 'ready-plot-shell shadow-[0_16px_40px_-20px_rgba(245,158,11,0.9)]'
       };
     }
 
@@ -160,6 +171,7 @@ const FarmPlot = memo(({
   const display = getPlotDisplay();
   const growthScaleProgress = display.liveProgress != null ? display.liveProgress : (plot?.progress || 0);
   const isDenseGrid = gridSize >= 5;
+  const isReadyPlot = plot?.state === 'ready';
 
   // Get soil fertility color gradient
   const getSoilGradient = () => {
@@ -237,11 +249,13 @@ const FarmPlot = memo(({
           ${display.bgColor} ${display.borderColor} border-2
           ${display.hoverEffect} active:scale-95
           ${display.animation || ''}
+          ${display.emphasisClassName || ''}
           ${plot?.disease ? 'ring-2 ring-red-400 ring-opacity-50' : ''}
           ${plot?.fertilizer > 0 ? 'ring-2 ring-green-400 ring-opacity-50' : ''}
           ${isSelected ? 'ring-4 ring-blue-500 ring-opacity-70 scale-105' : ''}
           ${showPreview && plot?.state === 'empty' ? 'ring-4 ring-emerald-400 ring-opacity-70' : ''}
           ${plot?.state === 'decor' ? 'shadow-inner' : ''}
+          ${district?.surfaceClassName || ''}
           ${isTrinket ? 'trinket-idle' : ''}
           touch-manipulation select-none
         `}
@@ -276,6 +290,20 @@ const FarmPlot = memo(({
       >
         {/* Soil fertility gradient overlay */}
         <div className={`absolute inset-0 bg-gradient-to-t ${getSoilGradient()} pointer-events-none`} />
+        <div className="absolute bottom-1 right-1 rounded-full bg-white/78 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-500 shadow-sm">
+          {district.shortLabel}
+        </div>
+        {isReadyPlot && <div className="harvest-ready-sheen" aria-hidden="true" />}
+        {isReadyPlot && (
+          <div className="absolute inset-x-2 top-2 z-20 flex items-center justify-between">
+            <span className="harvest-ready-ribbon">
+              Ready
+            </span>
+            <span className="rounded-full bg-white/88 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-amber-700 shadow-sm">
+              Tap
+            </span>
+          </div>
+        )}
 
         <div className="flex flex-col items-center justify-center h-full p-0.5 sm:p-1 relative z-10">
           {/* Crop emoji with growth animation - Responsive sizes */}
@@ -306,17 +334,22 @@ const FarmPlot = memo(({
               </div>
             </div>
           )}
-          <div className="text-[10px] sm:text-xs text-center font-medium text-gray-700 leading-tight">
+          <div className={`text-[10px] sm:text-xs text-center font-medium leading-tight ${display.textClassName || 'text-gray-700'}`}>
             {display.text}
           </div>
           {plot?.state === 'ready' ? (
             <ReadyCountdown readyAt={plot.readyAt} />
           ) : (
             display.subText && (
-              <div className="text-[9px] text-center font-semibold text-gray-600 mt-0.5">
+              <div className={`text-[9px] text-center font-semibold mt-0.5 ${display.subTextClassName || 'text-gray-600'}`}>
                 {display.subText}
               </div>
             )
+          )}
+          {isReadyPlot && (
+            <div className="mt-1 rounded-full bg-amber-950/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-amber-800">
+              Best next move
+            </div>
           )}
 
           {/* Enhanced progress bar with percentage */}
@@ -391,7 +424,8 @@ const FarmPlot = memo(({
                 <div className="text-yellow-300">{plot.crop.emoji} {plot.crop.name}</div>
                 <div className="mt-1 space-y-0.5 text-gray-300">
                   <div>💧 Water: {Math.round(plot.waterLevel || 0)}%</div>
-                  <div>🌱 Fertility: {Math.round((plot.soilFertility || 1.0) * 100)}%</div>
+              <div>🌱 Fertility: {Math.round((plot.soilFertility || 1.0) * 100)}%</div>
+                <div>📍 District: {district.name}</div>
                   {plot.fertilizer > 0 && <div>✨ Fertilizer: +{plot.fertilizer * 10}%</div>}
                   {plot.disease && <div className="text-red-400">🐛 Diseased!</div>}
                   {(plot.state === 'growing' || plot.state === 'planted') && display.progress !== undefined && (
@@ -420,10 +454,11 @@ const FarmPlot = memo(({
             )}
             {plot.state === 'empty' && (
               <div className="text-gray-400">
-                <div>🌱 Fertility: {Math.round((plot.soilFertility || 1.0) * 100)}%</div>
-                <div className="mt-1 text-xs">Click to plant or decorate.</div>
-              </div>
-            )}
+              <div>🌱 Fertility: {Math.round((plot.soilFertility || 1.0) * 100)}%</div>
+              <div className="mt-1 text-xs">📍 {district.name}</div>
+              <div className="mt-1 text-xs">Click to plant or decorate.</div>
+            </div>
+          )}
             {plot.state === 'withered' && (
               <div className="text-red-400">
                 <div className="font-semibold">Dead Crop 💀</div>
@@ -502,6 +537,7 @@ const FarmGrid = memo(() => {
     () => plots.reduce((count, plot) => (plot?.state !== 'empty' ? count + 1 : count), 0),
     [plots]
   );
+  const emptyPlotCount = Math.max(0, plots.length - plotsInUseCount);
   const readyPlotIndexes = useMemo(() => {
     const indexes = [];
     plots.forEach((plot, index) => {
@@ -510,14 +546,51 @@ const FarmGrid = memo(() => {
     return indexes;
   }, [plots]);
   const hasReadyPlots = readyPlotIndexes.length > 0;
+  const nextGoal = useMemo(() => (
+    getNextGoalFromCounts({
+      active: plotsInUseCount,
+      ready: readyPlotIndexes.length,
+      empty: emptyPlotCount,
+      coins,
+      level,
+    })
+  ), [coins, emptyPlotCount, level, plotsInUseCount, readyPlotIndexes.length]);
   const farmAtmosphere = useMemo(() => {
     const seasonKey = String(seasonCurrent || 'spring').toLowerCase();
     const weatherKey = String(weather || 'sunny').toLowerCase();
     const seasonThemes = {
-      spring: { emoji: '🌸', label: 'Spring Pulse', className: 'from-rose-50 via-pink-50 to-emerald-50', hint: 'Fast sprouting and fresh growth.' },
-      summer: { emoji: '☀️', label: 'Summer Heat', className: 'from-amber-50 via-yellow-50 to-orange-50', hint: 'High yield potential with steady water.' },
-      autumn: { emoji: '🍂', label: 'Autumn Harvest', className: 'from-orange-50 via-amber-50 to-red-50', hint: 'Prime season for dependable harvest cycles.' },
-      winter: { emoji: '❄️', label: 'Winter Watch', className: 'from-sky-50 via-cyan-50 to-indigo-50', hint: 'Growth slows; protect crop health.' },
+      spring: {
+        emoji: '🌸',
+        label: 'Spring Pulse',
+        className: 'from-rose-50 via-pink-50 to-emerald-50',
+        shellClassName: 'farm-field-shell--spring',
+        gridClassName: 'farm-grid-surface--spring',
+        hint: 'Fast sprouting and fresh growth.',
+      },
+      summer: {
+        emoji: '☀️',
+        label: 'Summer Heat',
+        className: 'from-amber-50 via-yellow-50 to-orange-50',
+        shellClassName: 'farm-field-shell--summer',
+        gridClassName: 'farm-grid-surface--summer',
+        hint: 'High yield potential with steady water.',
+      },
+      autumn: {
+        emoji: '🍂',
+        label: 'Autumn Harvest',
+        className: 'from-orange-50 via-amber-50 to-red-50',
+        shellClassName: 'farm-field-shell--autumn',
+        gridClassName: 'farm-grid-surface--autumn',
+        hint: 'Prime season for dependable harvest cycles.',
+      },
+      winter: {
+        emoji: '❄️',
+        label: 'Winter Watch',
+        className: 'from-sky-50 via-cyan-50 to-indigo-50',
+        shellClassName: 'farm-field-shell--winter',
+        gridClassName: 'farm-grid-surface--winter',
+        hint: 'Growth slows; protect crop health.',
+      },
     };
     const weatherMood = {
       sunny: { emoji: '☀️', note: 'Sunlight boost active' },
@@ -539,6 +612,8 @@ const FarmGrid = memo(() => {
       weatherLabel: weatherTheme.note,
       growthStateLabel,
       className: seasonTheme.className,
+      shellClassName: seasonTheme.shellClassName,
+      gridClassName: seasonTheme.gridClassName,
       hint: seasonTheme.hint,
     };
   }, [seasonBonus, seasonCurrent, weather]);
@@ -1005,21 +1080,23 @@ const FarmGrid = memo(() => {
   return (
     <Card
       data-onboard="farm-grid"
-      className="p-4 sm:p-6 bg-gradient-to-br from-green-50/90 via-emerald-50/80 to-lime-50/70 relative overflow-hidden rounded-2xl shadow-lg border border-green-100/50 backdrop-blur-sm"
+      className={`p-4 sm:p-6 relative overflow-hidden rounded-2xl shadow-lg border border-green-100/50 backdrop-blur-sm farm-field-shell ${farmAtmosphere.shellClassName}`}
     >
       <div className="mb-4 text-center relative z-20">
-        <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-600 bg-clip-text text-transparent mb-1.5 flex items-center justify-center gap-2">
-          <span className="text-2xl sm:text-3xl filter drop-shadow-sm">🌾</span>
-          Your Farm
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-600 bg-clip-text text-transparent flex items-center justify-center gap-2">
+            <span className="text-2xl sm:text-3xl filter drop-shadow-sm">🌾</span>
+            Your Farm
+          </h2>
           {selectedPlots.size > 0 && (
             <Badge className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white animate-pulse shadow-lg">
               {selectedPlots.size} selected
             </Badge>
           )}
-        </h2>
-        <p className="text-gray-500 text-sm font-medium">
-          {gridSize}×{gridSize} grid • <span className="text-emerald-600">{plotsInUseCount}</span> plots in use
-        </p>
+          <Badge variant="outline" className="bg-white/80 text-emerald-700 border-emerald-200">
+            {gridSize}×{gridSize} · {plotsInUseCount} active
+          </Badge>
+        </div>
         <div className={`mt-3 rounded-xl border border-white/70 bg-gradient-to-r ${farmAtmosphere.className} px-3 py-2 shadow-sm`}>
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs sm:text-sm">
             <span className="font-semibold text-gray-800 flex items-center gap-1">
@@ -1030,7 +1107,17 @@ const FarmGrid = memo(() => {
             </span>
             <span className="text-emerald-700 font-medium">{farmAtmosphere.growthStateLabel}</span>
           </div>
-          <p className="text-[11px] sm:text-xs text-gray-500 mt-1">{farmAtmosphere.hint}</p>
+        </div>
+        <div className="mt-3 rounded-xl border border-emerald-100 bg-white/78 px-3 py-3 shadow-sm backdrop-blur-sm">
+          <div className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
+            <Badge className="bg-emerald-600 text-white shadow-sm">{nextGoal.emoji} {nextGoal.text}</Badge>
+            {selectedCrop && !decorMode && (
+              <span className="font-medium text-gray-700">
+                Seed: <span className="text-emerald-700">{selectedCrop.emoji} {selectedCrop.name}</span>
+              </span>
+            )}
+            <span className="text-gray-500">{farmAtmosphere.hint}</span>
+          </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
           <Button
@@ -1067,7 +1154,7 @@ const FarmGrid = memo(() => {
           <p className="mt-2 text-xs text-rose-600 font-semibold">
             {selectedDecoration
               ? `Selected decoration: ${selectedDecoration.emoji} ${selectedDecoration.name}`
-              : 'Select a decoration from Inventory to place.'}
+              : 'Pick decor from Inventory to place.'}
           </p>
         )}
       </div>
@@ -1128,7 +1215,7 @@ const FarmGrid = memo(() => {
 
       {/* Farm Grid - Responsive with larger touch targets on mobile */}
       <div
-        className="grid gap-1.5 sm:gap-2.5 md:gap-4 mx-auto justify-center farm-grid relative w-full"
+        className={`grid gap-1.5 sm:gap-2.5 md:gap-4 mx-auto justify-center farm-grid relative w-full rounded-[1.5rem] p-2.5 sm:p-4 border border-white/70 shadow-inner ${farmAtmosphere.gridClassName}`}
         data-harvest-bloom={harvestBloomTick > 0 ? 'on' : 'off'}
         style={{
           gridTemplateColumns: `repeat(${gridSize}, minmax(${gridSize >= 5 ? 52 : 56}px, 1fr))`,
@@ -1166,27 +1253,24 @@ const FarmGrid = memo(() => {
         ))}
       </div>
 
-      {/* Grid expansion hint */}
-      {gridSize < 5 && (
-        <div className="mt-4 text-center">
-          <p className="text-sm text-gray-500">
-            💡 Expand your farm to unlock more plots! Visit the Expand tab.
-          </p>
-        </div>
-      )}
-
-      {/* Keyboard shortcuts hint - Mobile optimized */}
-      <div className="mt-4 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg">
-        <div className="text-xs sm:text-sm text-amber-800">
-          <span className="font-semibold">💡 Quick Tips:</span>
-          <ul className="mt-1 sm:mt-2 space-y-1 ml-4 list-disc">
-            <li className="hidden sm:list-item"><kbd className="px-1 py-0.5 bg-white rounded">Shift</kbd> + Click for multi-select</li>
-            <li className="sm:hidden">Long press plots for details</li>
-            <li>Hover/Tap empty plots to see planting preview</li>
-            <li>Click empty plots to plant selected crop</li>
-            <li>Click ready crops to harvest instantly</li>
-          </ul>
-        </div>
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-[11px] sm:text-xs text-gray-600">
+        {gridSize < 5 && (
+          <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5">
+            Expand for more plots
+          </span>
+        )}
+        <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5">
+          {readyPlotIndexes.length} ready now
+        </span>
+        <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 hidden sm:inline-flex">
+          Shift + Click selects
+        </span>
+        <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 sm:hidden">
+          Hold for details
+        </span>
+        <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5">
+          Tap empty soil to plant
+        </span>
       </div>
 
     </Card>

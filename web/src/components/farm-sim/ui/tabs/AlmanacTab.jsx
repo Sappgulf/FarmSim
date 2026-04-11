@@ -9,9 +9,16 @@ import { ALMANAC_PAGES, ALMANAC_SECTIONS } from '../../../../data/almanac';
 import { getAlmanacText } from '../../../../systems/almanac';
 import { FARM_THEMES, getFarmTheme } from '../../../../data/farmThemes';
 import { buildFarmCardData, getSpotlightSelection } from '../../../../utils/farmCard';
+import { getJournalOverview } from '../../../../utils/farmJournal';
 import { CROP_TRAITS, FARM_TITLES } from '../../../../data/cozyExpansion';
 import FarmCardShareButton from '../FarmCardShareButton';
 import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
+
+const switchToTab = (tabId) => {
+  if (typeof window !== 'undefined' && typeof window.switchToTab === 'function') {
+    window.switchToTab(tabId);
+  }
+};
 
 const AlmanacTab = memo(() => {
   const { state, actions } = useGame();
@@ -40,6 +47,8 @@ const AlmanacTab = memo(() => {
   const farmCardSpotlight = buildFarmCardData(state).spotlight;
   const unlockedPages = ALMANAC_PAGES.filter((page) => state.almanac?.unlocked?.[page.id]);
   const activeTheme = getFarmTheme(state.farmTheme);
+  const journalOverview = getJournalOverview(state);
+  const latestJournalEntry = journalOverview.latestEntry;
 
   const toggleSection = (sectionId) => {
     setOpenSections((prev) => (
@@ -135,6 +144,108 @@ const AlmanacTab = memo(() => {
               {philosophy.name}
             </Button>
           ))}
+        </div>
+      </TabSection>
+
+      <TabSection
+        title="Season Journal"
+        description="Each new day writes a reflection from mood, philosophy, spotlight, and scrapbook progress."
+        tone="violet"
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="violet"
+            label="Entries"
+            value={journalOverview.totalEntries}
+            hint="Journal notes written so far"
+            icon="📓"
+          />
+          <MetricTile
+            tone="amber"
+            label="This Season"
+            value={journalOverview.seasonEntries}
+            hint="Notes in the current season"
+            icon="🍂"
+          />
+          <MetricTile
+            tone="emerald"
+            label="Reflection Streak"
+            value={journalOverview.streak}
+            hint="Consecutive days with journal notes"
+            icon="✨"
+          />
+        </div>
+
+        {latestJournalEntry ? (
+          <div className="mt-4 rounded-[24px] border border-violet-200 bg-violet-50/60 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-violet-600">Latest Entry</div>
+                <div className="mt-1 text-lg font-semibold text-slate-900">{latestJournalEntry.title}</div>
+                <div className="mt-1 text-sm text-slate-600">
+                  {latestJournalEntry.moodIcon} {latestJournalEntry.moodName} · {latestJournalEntry.philosophyName}
+                </div>
+              </div>
+              <Badge variant="outline" className="bg-white/80 border-violet-200 text-violet-700">
+                {latestJournalEntry.dayKey}
+              </Badge>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-slate-700">{latestJournalEntry.reflection}</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+              <span className="rounded-full bg-white/85 px-2.5 py-1">{latestJournalEntry.spotlightLabel}</span>
+              <span className="rounded-full bg-white/85 px-2.5 py-1">{latestJournalEntry.latestMemoryTitle}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4">
+            <TabEmptyState
+              icon="📓"
+              tone="violet"
+              title="No journal notes yet"
+              description="A fresh note is written as the next new day rolls in."
+            />
+          </div>
+        )}
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-[24px] border border-slate-200/80 bg-white/90 p-4">
+            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Today&apos;s Reflection Loop</div>
+            <div className="mt-3 space-y-2">
+              {journalOverview.todayChecklist.map((item) => (
+                <div
+                  key={item.id}
+                  className={`flex items-center justify-between rounded-2xl px-3 py-2 text-sm ${
+                    item.done ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  <span>{item.done ? 'Done' : 'Open'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-slate-200/80 bg-slate-50/70 p-4">
+            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Quick Actions</div>
+            <div className="mt-3 space-y-2">
+              <Button size="sm" className="w-full" onClick={() => switchToTab('achievements')}>
+                Open Scrapbook
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full"
+                onClick={() => actions.setSpotlight({ mode: 'latest', type: 'memory', id: null })}
+              >
+                Use Latest Memory
+              </Button>
+              {!state.philosophy ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  Choose a philosophy below to change the journal voice.
+                </div>
+              ) : null}
+            </div>
+          </div>
         </div>
       </TabSection>
 
