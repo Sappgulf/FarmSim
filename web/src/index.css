@@ -265,11 +265,23 @@
   .farm-plot {
     aspect-ratio: 1;
     border-radius: var(--radius-lg);
+    border-width: 2px;
+    border-style: solid;
     transition: transform var(--duration-normal) var(--ease-out-quart), box-shadow var(--duration-normal) var(--ease-out-quart), border-color var(--duration-normal) var(--ease-out-quart), background-color var(--duration-normal) var(--ease-out-quart);
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
   }
+
+  /* Seasonal plot borders */
+  .farm-plot.season-spring { border-color: #86efac; }
+  .farm-plot.season-spring:hover { border-color: #4ade80; }
+  .farm-plot.season-summer { border-color: #fde047; }
+  .farm-plot.season-summer:hover { border-color: #eab308; }
+  .farm-plot.season-fall { border-color: #fdba74; }
+  .farm-plot.season-fall:hover { border-color: #f97316; }
+  .farm-plot.season-winter { border-color: #bae6fd; }
+  .farm-plot.season-winter:hover { border-color: #7dd3fc; }
 
   .farm-plot:hover {
     transform: translateY(-2px);
