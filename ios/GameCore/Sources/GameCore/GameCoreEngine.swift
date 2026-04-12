@@ -475,4 +475,108 @@ public struct GameCoreEngine: Sendable {
         let roll = Double.random(in: 0...1, using: &rng)
         return roll < fractional ? (baseQuantity + 1) : max(1, baseQuantity)
     }
+    
+    // MARK: - Foreman Automation
+    
+    public mutating func applyForemanAutoWater(sprinklerInventory: Int = 0) {
+        guard sprinklerInventory > 0 else { return }
+        let settings = save.meta.foreman
+        guard settings.autoWater != .off else { return }
+        
+        for i in 0..<save.world.tiles.count {
+            guard save.world.tiles[i].planted != nil else { continue }
+            guard !save.world.tiles[i].state.watered else { continue }
+            
+            save.world.tiles[i].state.watered = true
+        }
+    }
+    
+    public mutating func applyForemanAutoHarvest(droneHarvesterInventory: Int = 0) -> Int {
+        guard droneHarvesterInventory > 0 else { return 0 }
+        let settings = save.meta.foreman
+        guard settings.autoHarvest != .off else { return 0 }
+        
+        var harvested = 0
+        let maxPlots = settings.autoHarvest == .batch ? min(4, droneHarvesterInventory * 2) : min(2, droneHarvesterInventory)
+        
+        for i in 0..<save.world.tiles.count {
+            guard harvested < maxPlots else { break }
+            guard isTileReady(i) else { continue }
+            
+            let yield = harvest(tileIndex: i, yieldMultiplier: 1.0, maxCapacity: nil)
+            if yield > 0 {
+                harvested += 1
+            }
+        }
+        
+        return harvested
+    }
+    
+    // MARK: - Prestige System
+    
+    public mutating func performPrestige() -> Bool {
+        let tier = getPrestigeTier(for: save.meta.prestige.totalEarnedLifetime)
+        guard tier > save.meta.prestige.tier else { return false }
+        
+        save.meta.prestige.tier = tier
+        save.meta.prestige.lastPrestigeDay = save.world.day
+        
+        return true
+    }
+    
+    public func getPrestigeBonus() -> Double {
+        return getPrestigeMultiplier(for: save.meta.prestige.tier)
+    }
+    
+    // MARK: - Specialization/Research
+    
+    public mutating func selectSpecialization(_ path: SpecializationPath) -> Bool {
+        guard save.meta.specialization.selectedPath == nil else { return false }
+        save.meta.specialization.selectedPath = path
+        return true
+    }
+    
+    public mutating func unlockResearch(_ researchID: String, playerLevel: Int, coins: inout Int) -> Bool {
+        guard let research = RESEARCH_CATALOG.first(where: { $0.id == researchID }) else { return false }
+        guard save.meta.specialization.unlockedResearch[researchID] != true else { return false }
+        guard playerLevel >= research.requirement else { return false }
+        guard coins >= research.cost else { return false }
+        
+        coins -= research.cost
+        save.meta.specialization.unlockedResearch[researchID] = true
+        return true
+    }
+    
+    public func getAvailableResearch(forPath path: SpecializationPath, playerLevel: Int) -> [ResearchItem] {
+        return RESEARCH_CATALOG.filter { item in
+            item.path == path && 
+            playerLevel >= item.requirement && 
+            save.meta.specialization.unlockedResearch[item.id] != true
+        }
+    }
+    
+    public func getResearchBonus(for researchID: String) -> Double {
+        guard let _ = save.meta.specialization.unlockedResearch[researchID], 
+              let research = RESEARCH_CATALOG.first(where: { $0.id == researchID }) else {
+            return 1.0
+        }
+        
+        switch research.id {
+        case "super_growth": return 1.15
+        case "drought_resist": return 0.8
+        case "quality_boost": return 1.25
+        case "disease_shield": return 0.7
+        case "animal_love": return 1.20
+        case "faster_breeding": return 0.75
+        case "nutritionist": return 1.15
+        case "efficient_kitchen": return 0.85
+        case "quality_preservation": return 1.20
+        case "hybrid_theory": return 1.0
+        case "gene_splicer": return 1.30
+        case "market_trends": return 1.10
+        case "barter_bonus": return 1.15
+        case "export_route": return 1.25
+        default: return 1.0
+        }
+    }
 }

@@ -306,7 +306,82 @@ final class GameStore {
 
     var yieldMultiplier: Double {
         let base = ProgressionSystem.yieldMultiplier(forLevel: playerLevel)
-        return base * buildingYieldMultiplier * researchYieldMultiplier * petYieldMultiplier
+        let prestigeBonus = engine.getPrestigeBonus()
+        return base * buildingYieldMultiplier * researchYieldMultiplier * petYieldMultiplier * prestigeBonus
+    }
+
+    // MARK: - Foreman Settings
+    var foremanSettings: ForemanSettings {
+        save.meta.foreman
+    }
+
+    func updateForemanSettings(_ settings: ForemanSettings) {
+        var updatedMeta = save.meta
+        updatedMeta.foreman = settings
+        save.meta = updatedMeta
+    }
+
+    // MARK: - Prestige System
+    var prestigeTier: Int {
+        save.meta.prestige.tier
+    }
+
+    var prestigeInfo: (name: String, emoji: String, bonus: Double)? {
+        let tier = prestigeTier
+        guard tier > 0, tier <= PRESTIGE_TIERS.count else { return nil }
+        let prestige = PRESTIGE_TIERS[tier - 1]
+        return (prestige.name, prestige.emoji, prestige.bonus)
+    }
+
+    var lifetimeEarnings: Int {
+        save.meta.prestige.totalEarnedLifetime
+    }
+
+    var nextPrestigeRequirement: Int? {
+        let currentTier = prestigeTier
+        guard currentTier < PRESTIGE_TIERS.count else { return nil }
+        return PRESTIGE_TIERS[currentTier].required
+    }
+
+    @discardableResult
+    func triggerPrestige() -> Bool {
+        let success = engine.performPrestige()
+        if success {
+            syncState(statusOverride: "Congratulations! Prestige level \(prestigeTier) achieved!", emitHaptic: true, emitHarvest: false)
+        }
+        return success
+    }
+
+    // MARK: - Specialization/Research
+    var selectedSpecialization: SpecializationPath? {
+        save.meta.specialization.selectedPath
+    }
+
+    func selectSpecialization(_ path: SpecializationPath) -> Bool {
+        let success = engine.selectSpecialization(path)
+        if success {
+            syncState(statusOverride: "Specialization selected: \(path.name). Research now available!", emitHaptic: true, emitHarvest: false)
+        }
+        return success
+    }
+
+    func availableResearch(for path: SpecializationPath) -> [ResearchItem] {
+        engine.getAvailableResearch(forPath: path, playerLevel: playerLevel)
+    }
+
+    @discardableResult
+    func unlockResearch(_ researchID: String) -> Bool {
+        var coins = save.player.coins
+        let success = engine.unlockResearch(researchID, playerLevel: playerLevel, coins: &coins)
+        if success {
+            save.player.coins = coins
+            syncState(statusOverride: "Research unlocked!", emitHaptic: true, emitHarvest: false)
+        }
+        return success
+    }
+
+    func researchBonus(for researchID: String) -> Double {
+        engine.getResearchBonus(for: researchID)
     }
 
     var nextGridUnlock: Int {

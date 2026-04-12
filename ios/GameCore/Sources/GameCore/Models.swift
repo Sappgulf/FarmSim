@@ -179,10 +179,33 @@ public struct PlantedCrop: Codable, Hashable, Sendable {
 public struct TileState: Codable, Hashable, Sendable {
     public var tilled: Bool
     public var watered: Bool
-
-    public init(tilled: Bool = true, watered: Bool = false) {
+    public var waterLevel: Int
+    public var disease: Bool
+    public var isReady: Bool
+    
+    public init(tilled: Bool = true, watered: Bool = false, waterLevel: Int = 0, disease: Bool = false, isReady: Bool = false) {
         self.tilled = tilled
         self.watered = watered
+        self.waterLevel = max(0, min(100, waterLevel))
+        self.disease = disease
+        self.isReady = isReady
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case tilled
+        case watered
+        case waterLevel
+        case disease
+        case isReady
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        tilled = try container.decodeIfPresent(Bool.self, forKey: .tilled) ?? true
+        watered = try container.decodeIfPresent(Bool.self, forKey: .watered) ?? false
+        waterLevel = max(0, min(100, try container.decodeIfPresent(Int.self, forKey: .waterLevel) ?? 0))
+        disease = try container.decodeIfPresent(Bool.self, forKey: .disease) ?? false
+        isReady = try container.decodeIfPresent(Bool.self, forKey: .isReady) ?? false
     }
 }
 
@@ -330,6 +353,9 @@ public struct MetaState: Codable, Hashable, Sendable {
     public var challengeStreak: Int
     public var favoriteItems: [String: Bool]
     public var time: TimeMetaState
+    public var foreman: ForemanSettings
+    public var prestige: PrestigeState
+    public var specialization: SpecializationState
 
     public init(
         buildingLevels: [String: Int] = [:],
@@ -343,7 +369,10 @@ public struct MetaState: Codable, Hashable, Sendable {
         challengeClaims: [String: Int] = [:],
         challengeStreak: Int = 0,
         favoriteItems: [String: Bool] = [:],
-        time: TimeMetaState = TimeMetaState()
+        time: TimeMetaState = TimeMetaState(),
+        foreman: ForemanSettings = ForemanSettings(),
+        prestige: PrestigeState = PrestigeState(),
+        specialization: SpecializationState = SpecializationState()
     ) {
         self.buildingLevels = buildingLevels
         self.completedResearch = completedResearch
@@ -357,6 +386,9 @@ public struct MetaState: Codable, Hashable, Sendable {
         self.challengeStreak = max(0, challengeStreak)
         self.favoriteItems = favoriteItems
         self.time = time
+        self.foreman = foreman
+        self.prestige = prestige
+        self.specialization = specialization
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -372,6 +404,9 @@ public struct MetaState: Codable, Hashable, Sendable {
         case challengeStreak
         case favoriteItems
         case time
+        case foreman
+        case prestige
+        case specialization
     }
 
     public init(from decoder: Decoder) throws {
@@ -388,5 +423,183 @@ public struct MetaState: Codable, Hashable, Sendable {
         challengeStreak = max(0, try container.decodeIfPresent(Int.self, forKey: .challengeStreak) ?? 0)
         favoriteItems = try container.decodeIfPresent([String: Bool].self, forKey: .favoriteItems) ?? [:]
         time = try container.decodeIfPresent(TimeMetaState.self, forKey: .time) ?? TimeMetaState()
+        foreman = try container.decodeIfPresent(ForemanSettings.self, forKey: .foreman) ?? ForemanSettings()
+        prestige = try container.decodeIfPresent(PrestigeState.self, forKey: .prestige) ?? PrestigeState()
+        specialization = try container.decodeIfPresent(SpecializationState.self, forKey: .specialization) ?? SpecializationState()
     }
+}
+
+// MARK: - Foreman Automation Settings
+public enum ForemanAutoWaterMode: String, Codable, Sendable, CaseIterable {
+    case off
+    case smart
+    case full
+}
+
+public enum ForemanAutoHarvestMode: String, Codable, Sendable, CaseIterable {
+    case off
+    case priority
+    case batch
+}
+
+public enum ForemanAutoTreatMode: String, Codable, Sendable, CaseIterable {
+    case off
+    case critical
+    case always
+}
+
+public struct ForemanSettings: Codable, Hashable, Sendable {
+    public var autoWater: ForemanAutoWaterMode
+    public var autoHarvest: ForemanAutoHarvestMode
+    public var autoTreat: ForemanAutoTreatMode
+    public var notify: Bool
+    
+    public init(
+        autoWater: ForemanAutoWaterMode = .off,
+        autoHarvest: ForemanAutoHarvestMode = .off,
+        autoTreat: ForemanAutoTreatMode = .off,
+        notify: Bool = true
+    ) {
+        self.autoWater = autoWater
+        self.autoHarvest = autoHarvest
+        self.autoTreat = autoTreat
+        self.notify = notify
+    }
+    
+    public static let `default` = ForemanSettings()
+}
+
+// MARK: - Prestige System
+public struct PrestigeState: Codable, Hashable, Sendable {
+    public var tier: Int
+    public var totalEarnedLifetime: Int
+    public var lastPrestigeDay: Int
+    
+    public init(tier: Int = 0, totalEarnedLifetime: Int = 0, lastPrestigeDay: Int = 0) {
+        self.tier = max(0, tier)
+        self.totalEarnedLifetime = max(0, totalEarnedLifetime)
+        self.lastPrestigeDay = max(0, lastPrestigeDay)
+    }
+}
+
+public struct PrestigeTier: Sendable {
+    public let tier: Int
+    public let required: Int
+    public let name: String
+    public let emoji: String
+    public let bonus: Double
+    
+    public init(tier: Int, required: Int, name: String, emoji: String, bonus: Double) {
+        self.tier = tier
+        self.required = required
+        self.name = name
+        self.emoji = emoji
+        self.bonus = bonus
+    }
+}
+
+public let PRESTIGE_TIERS: [PrestigeTier] = [
+    PrestigeTier(tier: 1, required: 10, name: "Farmhand", emoji: "🌱", bonus: 0.05),
+    PrestigeTier(tier: 2, required: 25, name: "Farmer", emoji: "👨‍🌾", bonus: 0.10),
+    PrestigeTier(tier: 3, required: 50, name: "Master Farmer", emoji: "🏅", bonus: 0.15),
+    PrestigeTier(tier: 4, required: 100, name: "Farm Baron", emoji: "👑", bonus: 0.25),
+    PrestigeTier(tier: 5, required: 200, name: "Agricultural Legend", emoji: "🌟", bonus: 0.40),
+]
+
+public func getPrestigeTier(for lifetimeEarnings: Int) -> Int {
+    var tier = 0
+    for (index, prestigeTier) in PRESTIGE_TIERS.enumerated() {
+        if lifetimeEarnings >= prestigeTier.required {
+            tier = index + 1
+        }
+    }
+    return tier
+}
+
+public func getPrestigeMultiplier(for tier: Int) -> Double {
+    guard tier > 0, tier <= PRESTIGE_TIERS.count else { return 1.0 }
+    return 1.0 + PRESTIGE_TIERS[tier - 1].bonus
+}
+
+// MARK: - Specialization/Research System
+public enum SpecializationPath: String, Codable, Sendable, CaseIterable, Identifiable {
+    case crops
+    case animals
+    case processing
+    case hybrids
+    case commerce
+    
+    public var id: String { rawValue }
+    
+    public var name: String {
+        switch self {
+        case .crops: return "Crop Mastery"
+        case .animals: return "Livestock Pro"
+        case .processing: return "Artisan Crafts"
+        case .hybrids: return "Genetics Lab"
+        case .commerce: return "Trade Empire"
+        }
+    }
+    
+    public var emoji: String {
+        switch self {
+        case .crops: return "🌾"
+        case .animals: return "🐄"
+        case .processing: return "🧀"
+        case .hybrids: return "🧬"
+        case .commerce: return "💰"
+        }
+    }
+}
+
+public struct SpecializationState: Codable, Hashable, Sendable {
+    public var selectedPath: SpecializationPath?
+    public var unlockedResearch: [String: Bool]
+    public var skillPoints: Int
+    
+    public init(selectedPath: SpecializationPath? = nil, unlockedResearch: [String: Bool] = [:], skillPoints: Int = 0) {
+        self.selectedPath = selectedPath
+        self.unlockedResearch = unlockedResearch
+        self.skillPoints = max(0, skillPoints)
+    }
+}
+
+public struct ResearchItem: Sendable, Identifiable {
+    public let id: String
+    public let name: String
+    public let description: String
+    public let cost: Int
+    public let path: SpecializationPath
+    public let requirement: Int
+    
+    public init(id: String, name: String, description: String, cost: Int, path: SpecializationPath, requirement: Int) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.cost = max(0, cost)
+        self.path = path
+        self.requirement = max(1, requirement)
+    }
+}
+
+public let RESEARCH_CATALOG: [ResearchItem] = [
+    ResearchItem(id: "super_growth", name: "Super Growth", description: "+15% crop growth speed", cost: 50, path: .crops, requirement: 5),
+    ResearchItem(id: "drought_resist", name: "Drought Resistance", description: "-20% water drain rate", cost: 75, path: .crops, requirement: 8),
+    ResearchItem(id: "quality_boost", name: "Quality Boost", description: "+25% harvest quality chance", cost: 100, path: .crops, requirement: 12),
+    ResearchItem(id: "disease_shield", name: "Disease Shield", description: "-30% disease risk", cost: 125, path: .crops, requirement: 15),
+    ResearchItem(id: "animal_love", name: "Animal Love", description: "+20% animal product yield", cost: 50, path: .animals, requirement: 5),
+    ResearchItem(id: "faster_breeding", name: "Faster Breeding", description: "-25% breeding time", cost: 75, path: .animals, requirement: 8),
+    ResearchItem(id: "nutritionist", name: "Nutritionist", description: "+15% animal happiness", cost: 100, path: .animals, requirement: 12),
+    ResearchItem(id: "efficient_kitchen", name: "Efficient Kitchen", description: "-15% processing time", cost: 50, path: .processing, requirement: 6),
+    ResearchItem(id: "quality_preservation", name: "Quality Preservation", description: "+20% processed item value", cost: 80, path: .processing, requirement: 10),
+    ResearchItem(id: "recipe_master", name: "Recipe Master", description: "Unlock 3 advanced recipes", cost: 150, path: .processing, requirement: 15),
+    ResearchItem(id: "hybrid_theory", name: "Hybrid Theory", description: "Unlock hybrid experiments", cost: 60, path: .hybrids, requirement: 7),
+    ResearchItem(id: "gene_splicer", name: "Gene Splicer", description: "+30% hybrid success rate", cost: 100, path: .hybrids, requirement: 12),
+    ResearchItem(id: "market_trends", name: "Market Trends", description: "+10% sell prices", cost: 40, path: .commerce, requirement: 4),
+    ResearchItem(id: "barter_bonus", name: "Barter Bonus", description: "+15% trade value", cost: 70, path: .commerce, requirement: 9),
+    ResearchItem(id: "export_route", name: "Export Route", description: "+25% coin earnings", cost: 120, path: .commerce, requirement: 14),
+]
+
+public func getResearchForPath(_ path: SpecializationPath) -> [ResearchItem] {
+    RESEARCH_CATALOG.filter { $0.path == path }
 }
