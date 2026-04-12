@@ -628,15 +628,17 @@ Progress: ████████░░ 80%
 - Upgrade fishing pond to Master level for rare fish
 - Collect entire fish encyclopedia
 
-### 🎮 Hotkeys (Coming Soon)
+### 🎮 Hotkeys (Implemented)
 
 - **Space** - Harvest all ready crops
 - **W** - Water selected plots
 - **F** - Fertilize selected plots
+- **T** - Treat diseased plots
 - **B** - Toggle bulk selection mode
 - **G** - Quick switch to Genetics tab
 - **S** - Manual save game
-- **1-4** - Quick crop selection
+- **1-9** - Quick tab/function selection
+- **Escape** - Close dialogs/pause
 
 ---
 
