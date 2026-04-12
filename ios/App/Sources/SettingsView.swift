@@ -53,8 +53,45 @@ struct SettingsView: View {
                                         if value.count > 32 {
                                             farmNameInput = String(value.prefix(32))
                                         }
-                                    }
-                            }
+    }
+}
+
+private struct ForemanModeRow<T: Hashable & CaseIterable & RawRepresentable>: View where T.RawValue == String {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let iconBackground: Color
+    let selectedMode: T
+    let modes: T.Type
+    let onSelect: (T) -> Void
+
+    var body: some View {
+        SettingRow(
+            icon: icon,
+            title: title,
+            subtitle: subtitle,
+            iconBackground: iconBackground
+        ) {
+            HStack(spacing: DS.Space.xs) {
+                ForEach(Array(modes.allCases), id: \.self) { mode in
+                    Button(action: { onSelect(mode) }) {
+                        Text(mode.rawValue.capitalized)
+                            .font(.system(.caption, design: .rounded, weight: .medium))
+                            .foregroundStyle(selectedMode == mode ? .white : DS.Color.textSecondary)
+                            .padding(.horizontal, DS.Space.sm)
+                            .padding(.vertical, DS.Space.xs)
+                            .background(
+                                RoundedRectangle(cornerRadius: DS.Radius.sm)
+                                    .fill(selectedMode == mode ? Theme.leafGreen : SwiftUI.Color.gray.opacity(0.2))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(.vertical, DS.Space.xs)
+    }
+}
                             .padding(.vertical, DS.Space.xs)
 
                             Divider()
@@ -145,94 +182,38 @@ struct SettingsView: View {
                         }
                     }
 
-                    // Comfort & Ease Section
-                    SettingsSection(
-                        title: "Comfort & Ease",
-                        icon: "accessibility",
-                        iconColor: Theme.seasonWinter
-                    ) {
-                        VStack(spacing: 0) {
-                            ToggleRow(
-                                icon: "figure.walk.motion",
-                                title: "Reduce Motion",
-                                subtitle: "Minimize animations for comfort",
-                                iconBackground: Theme.seasonWinter,
-                                isOn: Binding(
-                                    get: { store.settings.reducedMotion },
-                                    set: { store.setReducedMotion($0) }
-                                )
-                            )
-
-                            Divider()
-                                .background(SwiftUI.Color.white.opacity(0.1))
-                                .padding(.horizontal, DS.Space.md)
-
-                            ToggleRow(
-                                icon: "ear.fill",
-                                title: "VoiceOver Hints",
-                                subtitle: "Extra descriptions for accessibility",
-                                iconBackground: Theme.seasonWinter.opacity(0.8),
-                                isOn: Binding(
-                                    get: { store.settings.voiceOverHints },
-                                    set: { store.setVoiceOverHints($0) }
-                                )
-                            )
+                    // Prestige Section
+                    if store.prestigeTier > 0 {
+                        SettingsSection(
+                            title: "Prestige",
+                            icon: "star.fill",
+                            iconColor: Theme.wheatGold
+                        ) {
+                            VStack(spacing: 0) {
+                                if let info = store.prestigeInfo {
+                                    InfoRow(icon: "crown.fill", title: "Tier", value: "\(info.emoji) \(info.name)")
+                                    InfoRow(icon: "percent", title: "Bonus", value: "+\(Int(info.bonus * 100))%")
+                                }
+                                InfoRow(icon: "banknote.fill", title: "Lifetime", value: "\(store.lifetimeEarnings) coins")
+                                if let nextReq = store.nextPrestigeRequirement {
+                                    InfoRow(icon: "arrow.up.circle", title: "Next Tier", value: "\(nextReq) coins")
+                                }
+                            }
+                            .padding(.vertical, DS.Space.xs)
                         }
                     }
 
-                    // Under the Hood Section
-                    SettingsSection(
-                        title: "Under the Hood",
-                        icon: "gearshape.2.fill",
-                        iconColor: DS.Color.textSecondary
-                    ) {
-                        VStack(spacing: 0) {
-                            ToggleRow(
-                                icon: "grid",
-                                title: "Show Tile Coordinates",
-                                subtitle: "Display X,Y positions on tiles",
-                                iconBackground: SwiftUI.Color.gray,
-                                isOn: Binding(
-                                    get: { store.settings.showTileCoordinates },
-                                    set: { store.setShowTileCoordinates($0) }
-                                )
-                            )
-
-                            Divider()
-                                .background(SwiftUI.Color.white.opacity(0.1))
-                                .padding(.horizontal, DS.Space.md)
-
-                            ToggleRow(
-                                icon: "sparkles",
-                                title: "Particle Effects",
-                                subtitle: "Visual flourishes when harvesting",
-                                iconBackground: Theme.wheatGold,
-                                isOn: Binding(
-                                    get: { store.settings.particleEffects },
-                                    set: { store.setParticleEffects($0) }
-                                )
-                            )
-
-                            Divider()
-                                .background(SwiftUI.Color.white.opacity(0.1))
-                                .padding(.horizontal, DS.Space.md)
-
-                            SettingRow(
-                                icon: "fps",
-                                title: "Target FPS",
-                                subtitle: "Frame rate for smoother gameplay",
-                                iconBackground: SwiftUI.Color.purple.opacity(0.7)
-                            ) {
-                                Picker("", selection: Binding(
-                                    get: { store.settings.targetFPS },
-                                    set: { store.setTargetFPS($0) }
-                                )) {
-                                    Text("30").tag(30)
-                                    Text("60").tag(60)
-                                    Text("120").tag(120)
-                                }
-                                .pickerStyle(.segmented)
-                                .frame(width: 120)
+                    // Specialization Section
+                    if let specialization = store.selectedSpecialization {
+                        SettingsSection(
+                            title: "Specialization",
+                            icon: specialization.emoji,
+                            iconColor: Theme.seasonSummer
+                        ) {
+                            VStack(spacing: 0) {
+                                InfoRow(icon: "checkmark.seal.fill", title: "Path", value: specialization.name)
+                                let availableCount = store.availableResearch(for: specialization).count
+                                InfoRow(icon: "book.fill", title: "Available", value: "\(availableCount) research")
                             }
                             .padding(.vertical, DS.Space.xs)
                         }
