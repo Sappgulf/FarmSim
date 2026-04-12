@@ -327,8 +327,8 @@ const LivestockTab = memo(() => {
         {livestock.animals.length === 0 ? (
           <div className="text-center py-10 px-4">
             <div className="text-5xl mb-3">🐄</div>
-            <p className="font-semibold text-gray-700 mb-1">Your barn is empty</p>
-            <p className="text-sm text-gray-500 mb-4">Purchase your first animal above to start collecting products and earning extra income!</p>
+            <p className="font-semibold text-slate-700 mb-1">Your barn is empty</p>
+            <p className="text-sm text-slate-500 mb-4">Purchase your first animal above to start collecting products and earning extra income!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
