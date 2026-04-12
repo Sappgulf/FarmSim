@@ -37,7 +37,9 @@ export const SEASON_CONFIG = {
       drought: 0,
       snow: 0,
       windy: 0,
-      foggy: 0
+      foggy: 0,
+      hail: 0,
+      tornado: 0
     },
     description: 'Perfect growing conditions! Crops grow 25% faster.',
     icon: '🌷'
@@ -67,7 +69,9 @@ export const SEASON_CONFIG = {
       drought: 0.1,
       snow: 0,
       windy: 0,
-      foggy: 0.05
+      foggy: 0.05,
+      hail: 0.02,
+      tornado: 0.03
     },
     description: 'Hot weather! Crops sell for 30% more, but watch for droughts.',
     icon: '🌻'
@@ -97,7 +101,9 @@ export const SEASON_CONFIG = {
       drought: 0,
       snow: 0,
       windy: 0.05,
-      foggy: 0.05
+      foggy: 0.05,
+      hail: 0.03,
+      tornado: 0.02
     },
     description: 'Harvest season! Best prices (40% more) and quality (+30%).',
     icon: '🎃'
@@ -127,7 +133,9 @@ export const SEASON_CONFIG = {
       drought: 0,
       snow: 0.2,
       windy: 0.05,
-      foggy: 0.05
+      foggy: 0.05,
+      hail: 0.02,
+      tornado: 0
     },
     description: 'Cold weather. Growth is 30% slower, but diseases are rare.',
     icon: '⛄'

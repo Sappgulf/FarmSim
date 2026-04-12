@@ -328,17 +328,37 @@ export class WeatherSystem {
         diseaseRisk: 0.08, // High disease risk
         description: 'Very dry, crops struggle without irrigation'
       },
-      snow: {
-        waterChange: 2, // Snow provides some water
-        growthModifier: 0.3, // Very slow growth in snow
-        diseaseRisk: 0.0, // No disease in snow
+      snowy: {
+        waterChange: 2,
+        growthModifier: 0.3,
+        diseaseRisk: 0.0,
         description: 'Freezing conditions, minimal growth'
       },
       windy: {
-        waterDrainRate: 1.2, // Slightly higher drain
-        growthModifier: 0.9, // Slightly slower growth
-        diseaseRisk: 0.03, // Moderate disease risk
+        waterDrainRate: 1.2,
+        growthModifier: 0.9,
+        diseaseRisk: 0.03,
         description: 'Windy conditions, minor effects'
+      },
+      foggy: {
+        waterDrainRate: 0.6,
+        growthModifier: 0.95,
+        diseaseRisk: 0.04,
+        description: 'High humidity, slow drying, mild growth'
+      },
+      hail: {
+        waterChange: 3,
+        growthModifier: 0.5,
+        diseaseRisk: 0.0,
+        damageRisk: 0.15,
+        description: 'DANGER! Crop damage likely, seek shelter'
+      },
+      tornado: {
+        waterChange: 0,
+        growthModifier: 0.0,
+        diseaseRisk: 0.0,
+        damageRisk: 0.4,
+        description: 'SEVERE WARNING! Take shelter immediately!'
       }
     };
 

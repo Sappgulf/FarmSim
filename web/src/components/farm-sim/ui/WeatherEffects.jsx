@@ -142,6 +142,36 @@ const WeatherEffects = memo(({ weather, intensity = 1, timePeriod = 'day' }) => 
         </>
       )}
 
+      {normalizedWeather === 'hail' && (
+        <>
+          <div className="weather-hail-vignette" />
+          {particles.map((particle) => (
+            <div
+              key={particle.id}
+              className="absolute rounded-sm bg-sky-200 weather-hail"
+              style={{
+                left: `${particle.left}%`,
+                width: `${particle.size * 2}px`,
+                height: `${particle.size * 2}px`,
+                animationDelay: `${particle.delay}s`,
+                animationDuration: `${particle.duration * 0.5}s`,
+              }}
+            />
+          ))}
+        </>
+      )}
+
+      {normalizedWeather === 'tornado' && (
+        <>
+          <div className="weather-tornado-container">
+            <div className="weather-tornado-spiral weather-tornado-spiral--one" />
+            <div className="weather-tornado-spiral weather-tornado-spiral--two" />
+            <div className="weather-tornado-spiral weather-tornado-spiral--three" />
+          </div>
+          <div className="weather-tornado-warning" />
+        </>
+      )}
+
     </div>
   );
 });

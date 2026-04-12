@@ -2,6 +2,9 @@ const WEATHER_ALIASES = Object.freeze({
   snowy: 'snow',
   frost: 'snow',
   hazy: 'foggy',
+  hailstorm: 'hail',
+  tornado: 'tornado',
+  twister: 'tornado',
 });
 
 export const WEATHER_META = Object.freeze({
@@ -33,7 +36,7 @@ export const WEATHER_META = Object.freeze({
     key: 'drought',
     label: 'Drought',
     emoji: '🏜️',
-    headerClassName: 'bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200/70',
+    headerClassName: 'bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200/60',
   }),
   snow: Object.freeze({
     key: 'snow',
@@ -52,6 +55,18 @@ export const WEATHER_META = Object.freeze({
     label: 'Foggy',
     emoji: '🌫️',
     headerClassName: 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300/70',
+  }),
+  hail: Object.freeze({
+    key: 'hail',
+    label: 'Hail',
+    emoji: '🧊',
+    headerClassName: 'bg-sky-100 hover:bg-sky-200 text-sky-700 border border-sky-300/70',
+  }),
+  tornado: Object.freeze({
+    key: 'tornado',
+    label: 'Tornado Warning',
+    emoji: '🌪️',
+    headerClassName: 'bg-red-100 hover:bg-red-200 text-red-700 border border-red-300/70',
   }),
 });
 
