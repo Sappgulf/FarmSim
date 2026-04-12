@@ -135,6 +135,13 @@ const WeatherEffects = memo(({ weather, intensity = 1, timePeriod = 'day' }) => 
         </>
       )}
 
+      {normalizedWeather === 'foggy' && (
+        <>
+          <div className="weather-fog-layer weather-fog-layer--back" />
+          <div className="weather-fog-layer weather-fog-layer--front" />
+        </>
+      )}
+
     </div>
   );
 });

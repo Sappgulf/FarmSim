@@ -600,6 +600,7 @@ const FarmGrid = memo(() => {
       windy: { emoji: '💨', note: 'Wind stress on tender crops' },
       drought: { emoji: '🏜️', note: 'Hydration pressure increased' },
       snow: { emoji: '❄️', note: 'Cold weather growth penalty' },
+      foggy: { emoji: '🌫️', note: 'Mild growth, high humidity' },
     };
     const seasonTheme = seasonThemes[seasonKey] || seasonThemes.spring;
     const weatherTheme = weatherMood[weatherKey] || weatherMood.sunny;

@@ -1,6 +1,7 @@
 const WEATHER_ALIASES = Object.freeze({
   snowy: 'snow',
   frost: 'snow',
+  hazy: 'foggy',
 });
 
 export const WEATHER_META = Object.freeze({
@@ -45,6 +46,12 @@ export const WEATHER_META = Object.freeze({
     label: 'Windy',
     emoji: '💨',
     headerClassName: 'bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/70',
+  }),
+  foggy: Object.freeze({
+    key: 'foggy',
+    label: 'Foggy',
+    emoji: '🌫️',
+    headerClassName: 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300/70',
   }),
 });
 

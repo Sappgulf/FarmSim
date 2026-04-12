@@ -1506,7 +1506,8 @@
 .weather-mist,
 .weather-gust,
 .weather-heat-haze,
-.weather-storm-vignette {
+.weather-storm-vignette,
+.weather-fog-layer {
   position: absolute;
   pointer-events: none;
 }
@@ -1596,6 +1597,30 @@
   filter: blur(6px);
   opacity: 0.42;
   animation: heat-shimmer 4.8s ease-in-out infinite;
+}
+
+.weather-fog-layer {
+  position: absolute;
+  left: -15%;
+  width: 130%;
+  border-radius: 9999px;
+  animation: fog-drift 18s ease-in-out infinite;
+}
+
+.weather-fog-layer--back {
+  bottom: 8%;
+  height: 35%;
+  background: linear-gradient(90deg, rgba(200, 210, 220, 0), rgba(200, 210, 220, 0.28), rgba(200, 210, 220, 0));
+  filter: blur(22px);
+  animation-delay: -6s;
+}
+
+.weather-fog-layer--front {
+  bottom: 2%;
+  height: 24%;
+  background: linear-gradient(90deg, rgba(180, 190, 200, 0), rgba(180, 190, 200, 0.2), rgba(180, 190, 200, 0));
+  filter: blur(14px);
+  animation-delay: 0s;
 }
 
 .weather-heat-haze--one { left: 18%; }
@@ -1709,6 +1734,11 @@
 @keyframes mist-drift {
   0%, 100% { transform: translateX(0); opacity: 0.16; }
   50% { transform: translateX(4%); opacity: 0.3; }
+}
+
+@keyframes fog-drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(8%); }
 }
 
 @keyframes gust-sweep {
