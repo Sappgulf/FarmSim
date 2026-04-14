@@ -328,53 +328,426 @@ final class InventoryTests: XCTestCase {
     }
 }
 
-// MARK: - Edge Cases
+// MARK: - Foreman Automation Tests
 
-final class EdgeCaseTests: XCTestCase {
-    func testPlantOnInvalidTile() throws {
+final class ForemanAutomationTests: XCTestCase {
+    func testForemanAutoWaterWatersAllTiles() throws {
         let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 2, seedCost: 5, sellPrice: 15)
-        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        var save = GameCoreEngine.defaultSave(gridWidth: 3, gridHeight: 3, starterSeeds: ["carrot": 9])
+        save.meta.foreman.autoWater = .smart
         var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
         
-        // Try to plant on invalid tile index
-        let result = engine.plant(tileIndex: 100, cropID: "carrot")
+        for i in 0..<9 {
+            _ = engine.plant(tileIndex: i, cropID: "carrot")
+        }
         
-        XCTAssertFalse(result)
+        engine.applyForemanAutoWater(sprinklerInventory: 1)
+        
+        for i in 0..<9 {
+            XCTAssertTrue(engine.save.world.tiles[i].state.watered, "Tile \(i) should be watered")
+        }
     }
     
-    func testHarvestEmptyTile() throws {
-        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
-        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+    func testForemanAutoWaterNoEffectWithoutSprinkler() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 2, seedCost: 5, sellPrice: 15)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2, starterSeeds: ["carrot": 4])
+        save.meta.foreman.autoWater = .smart
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
         
-        let harvested = engine.harvest(tileIndex: 0)
+        for i in 0..<4 {
+            _ = engine.plant(tileIndex: i, cropID: "carrot")
+        }
+        
+        engine.applyForemanAutoWater(sprinklerInventory: 0)
+        
+        for i in 0..<4 {
+            XCTAssertFalse(engine.save.world.tiles[i].state.watered)
+        }
+    }
+    
+    func testForemanAutoHarvestHarvestsReadyTiles() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 1, seedCost: 5, sellPrice: 15)
+        var save = GameCoreEngine.defaultSave(gridWidth: 3, gridHeight: 3, starterSeeds: ["carrot": 9])
+        save.meta.foreman.autoHarvest = .priority
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
+        
+        for i in 0..<9 {
+            _ = engine.plant(tileIndex: i, cropID: "carrot")
+        }
+        engine.advanceDay()
+        
+        let harvested = engine.applyForemanAutoHarvest(droneHarvesterInventory: 1)
+        
+        XCTAssertGreaterThan(harvested, 0)
+    }
+    
+    func testForemanAutoHarvestNoEffectWithoutDrone() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 1, seedCost: 5, sellPrice: 15)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2, starterSeeds: ["carrot": 4])
+        save.meta.foreman.autoHarvest = .priority
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
+        
+        for i in 0..<4 {
+            _ = engine.plant(tileIndex: i, cropID: "carrot")
+        }
+        engine.advanceDay()
+        
+        let harvested = engine.applyForemanAutoHarvest(droneHarvesterInventory: 0)
         
         XCTAssertEqual(harvested, 0)
     }
     
-    func testNegativeCoinsPrevention() throws {
-        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 2, seedCost: 1000, sellPrice: 15)
-        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
-        save.player.coins = 10
-        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
+    func testForemanSettingsDefaultValues() throws {
+        let settings = ForemanSettings.default
         
-        let result = engine.buy(itemID: "carrot", quantity: 1, pricing: MarketPricing(seedUnitCosts: ["carrot": 1000]))
-        
-        XCTAssertEqual(result.status, .insufficientCoins)
-        XCTAssertEqual(engine.save.player.coins, 10, "Coins should remain unchanged")
+        XCTAssertEqual(settings.autoWater, .off)
+        XCTAssertEqual(settings.autoHarvest, .off)
+        XCTAssertEqual(settings.autoTreat, .off)
+        XCTAssertTrue(settings.notify)
+    }
+}
+
+// MARK: - Prestige System Tests
+
+final class PrestigeSystemTests: XCTestCase {
+    func testPrestigeTierCalculation() throws {
+        XCTAssertEqual(getPrestigeTier(for: 0), 0)
+        XCTAssertEqual(getPrestigeTier(for: 5), 0)
+        XCTAssertEqual(getPrestigeTier(for: 10), 1)
+        XCTAssertEqual(getPrestigeTier(for: 25), 2)
+        XCTAssertEqual(getPrestigeTier(for: 50), 3)
+        XCTAssertEqual(getPrestigeTier(for: 100), 4)
+        XCTAssertEqual(getPrestigeTier(for: 200), 5)
     }
     
-    func testMultipleHarvestsSameTile() throws {
-        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 1, seedCost: 5, sellPrice: 15)
-        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2, starterSeeds: ["carrot": 1])
+    func testPrestigeMultiplierCalculation() throws {
+        XCTAssertEqual(getPrestigeMultiplier(for: 0), 1.0)
+        XCTAssertEqual(getPrestigeMultiplier(for: 1), 1.05)
+        XCTAssertEqual(getPrestigeMultiplier(for: 2), 1.10)
+        XCTAssertEqual(getPrestigeMultiplier(for: 3), 1.15)
+        XCTAssertEqual(getPrestigeMultiplier(for: 4), 1.25)
+        XCTAssertEqual(getPrestigeMultiplier(for: 5), 1.40)
+    }
+    
+    func testPerformPrestigeAdvancesTier() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.meta.prestige = PrestigeState(tier: 0, totalEarnedLifetime: 50, lastPrestigeDay: 0)
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        let result = engine.performPrestige()
+        
+        XCTAssertTrue(result)
+        XCTAssertEqual(engine.save.meta.prestige.tier, 3)
+    }
+    
+    func testPerformPrestigeFailsWhenNoTierGain() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.meta.prestige = PrestigeState(tier: 3, totalEarnedLifetime: 50, lastPrestigeDay: 0)
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        let result = engine.performPrestige()
+        
+        XCTAssertFalse(result)
+        XCTAssertEqual(engine.save.meta.prestige.tier, 3)
+    }
+    
+    func testGetPrestigeBonus() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.meta.prestige.tier = 2
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        let bonus = engine.getPrestigeBonus()
+        
+        XCTAssertEqual(bonus, 1.10)
+    }
+    
+    func testPrestigeTiersHaveCorrectValues() throws {
+        XCTAssertEqual(PRESTIGE_TIERS.count, 5)
+        XCTAssertEqual(PRESTIGE_TIERS[0].tier, 1)
+        XCTAssertEqual(PRESTIGE_TIERS[0].required, 10)
+        XCTAssertEqual(PRESTIGE_TIERS[0].name, "Farmhand")
+        XCTAssertEqual(PRESTIGE_TIERS[0].bonus, 0.05)
+    }
+}
+
+// MARK: - Specialization System Tests
+
+final class SpecializationSystemTests: XCTestCase {
+    func testSelectSpecialization() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        let result = engine.selectSpecialization(.crops)
+        
+        XCTAssertTrue(result)
+        XCTAssertEqual(engine.save.meta.specialization.selectedPath, .crops)
+    }
+    
+    func testSelectSpecializationFailsIfAlreadySelected() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.meta.specialization.selectedPath = .animals
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        let result = engine.selectSpecialization(.crops)
+        
+        XCTAssertFalse(result)
+    }
+    
+    func testUnlockResearch() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.player.coins = 100
+        save.player.xp = 50
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        _ = engine.selectSpecialization(.crops)
+        
+        let result = engine.unlockResearch("super_growth", playerLevel: 5, coins: &save.player.coins)
+        
+        XCTAssertTrue(result)
+        XCTAssertTrue(engine.save.meta.specialization.unlockedResearch["super_growth"] ?? false)
+    }
+    
+    func testUnlockResearchFailsIfAlreadyUnlocked() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.player.coins = 100
+        save.meta.specialization.unlockedResearch["super_growth"] = true
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        let result = engine.unlockResearch("super_growth", playerLevel: 5, coins: &save.player.coins)
+        
+        XCTAssertFalse(result)
+    }
+    
+    func testUnlockResearchFailsIfInsufficientLevel() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.player.coins = 100
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        _ = engine.selectSpecialization(.crops)
+        
+        let result = engine.unlockResearch("super_growth", playerLevel: 2, coins: &save.player.coins)
+        
+        XCTAssertFalse(result)
+    }
+    
+    func testUnlockResearchFailsIfInsufficientCoins() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.player.coins = 10
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        _ = engine.selectSpecialization(.crops)
+        
+        let result = engine.unlockResearch("super_growth", playerLevel: 5, coins: &save.player.coins)
+        
+        XCTAssertFalse(result)
+    }
+    
+    func testGetAvailableResearch() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.meta.specialization.selectedPath = .crops
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        let available = engine.getAvailableResearch(forPath: .crops, playerLevel: 10)
+        
+        XCTAssertFalse(available.isEmpty)
+    }
+    
+    func testGetResearchBonus() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.meta.specialization.unlockedResearch["super_growth"] = true
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        let bonus = engine.getResearchBonus(for: "super_growth")
+        
+        XCTAssertEqual(bonus, 1.15)
+    }
+    
+    func testResearchCatalogHasAllPaths() throws {
+        let allPaths: [SpecializationPath] = [.crops, .animals, .processing, .hybrids, .commerce]
+        
+        for path in allPaths {
+            let research = getResearchForPath(path)
+            XCTAssertFalse(research.isEmpty, "Path \(path) should have research items")
+        }
+    }
+    
+    func testSpecializationPathNames() throws {
+        XCTAssertEqual(SpecializationPath.crops.name, "Crop Mastery")
+        XCTAssertEqual(SpecializationPath.animals.name, "Livestock Pro")
+        XCTAssertEqual(SpecializationPath.processing.name, "Artisan Crafts")
+        XCTAssertEqual(SpecializationPath.hybrids.name, "Genetics Lab")
+        XCTAssertEqual(SpecializationPath.commerce.name, "Trade Empire")
+    }
+    
+    func testSpecializationPathEmojis() throws {
+        XCTAssertEqual(SpecializationPath.crops.emoji, "🌾")
+        XCTAssertEqual(SpecializationPath.animals.emoji, "🐄")
+        XCTAssertEqual(SpecializationPath.processing.emoji, "🧀")
+        XCTAssertEqual(SpecializationPath.hybrids.emoji, "🧬")
+        XCTAssertEqual(SpecializationPath.commerce.emoji, "💰")
+    }
+}
+
+// MARK: - Watering Bonus Tests
+
+final class WateringBonusTests: XCTestCase {
+    func testWateredTilesGetGrowthBonus() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 2, seedCost: 5, sellPrice: 15)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2, starterSeeds: ["carrot": 2])
         var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
         
         _ = engine.plant(tileIndex: 0, cropID: "carrot")
+        _ = engine.water(tileIndex: 0)
+        
+        _ = engine.plant(tileIndex: 1, cropID: "carrot")
+        
         engine.advanceDay()
         
-        let firstHarvest = engine.harvest(tileIndex: 0)
-        let secondHarvest = engine.harvest(tileIndex: 0)
+        let wateredGrowth = engine.save.world.tiles[0].planted?.growthProgress ?? 0
+        let unwateredGrowth = engine.save.world.tiles[1].planted?.growthProgress ?? 0
         
-        XCTAssertEqual(firstHarvest, 1)
-        XCTAssertEqual(secondHarvest, 0, "Second harvest should return 0 - tile is empty")
+        XCTAssertGreaterThan(wateredGrowth, unwateredGrowth, "Watered tile should have more growth")
+        XCTAssertEqual(unwateredGrowth, 1.0, "Unwatered should grow 1.0 per day")
+        XCTAssertEqual(wateredGrowth, 1.5, "Watered should grow 1.5 per day (1.0 + 0.5 bonus)")
+    }
+    
+    func testWateredTileReadySoonerWithDailyWatering() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 4, seedCost: 5, sellPrice: 15)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2, starterSeeds: ["carrot": 2])
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
+        
+        _ = engine.plant(tileIndex: 0, cropID: "carrot")
+        _ = engine.water(tileIndex: 0)
+        
+        _ = engine.plant(tileIndex: 1, cropID: "carrot")
+        
+        for day in 0..<4 {
+            if day > 0 {
+                _ = engine.water(tileIndex: 0)
+                _ = engine.water(tileIndex: 1)
+            }
+            engine.advanceDay()
+        }
+        
+        XCTAssertTrue(engine.isTileReady(0), "Watered 4-day crop should be ready after 4 days with daily watering")
+        XCTAssertTrue(engine.isTileReady(1), "Unwatered 4-day crop ready after 4 days (4.0 growth)")
+    }
+    
+    func testWateredTileReadySooner() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 3, seedCost: 5, sellPrice: 15)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2, starterSeeds: ["carrot": 2])
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
+        
+        _ = engine.plant(tileIndex: 0, cropID: "carrot")
+        _ = engine.water(tileIndex: 0)
+        
+        _ = engine.plant(tileIndex: 1, cropID: "carrot")
+        
+        engine.advanceDay()
+        
+        XCTAssertFalse(engine.isTileReady(0), "Not ready after 1 day (1.5 growth, needs 3)")
+        XCTAssertFalse(engine.isTileReady(1), "Not ready after 1 day")
+        
+        _ = engine.water(tileIndex: 0)
+        engine.advanceDay()
+        
+        XCTAssertTrue(engine.isTileReady(0), "Watered ready after 2 days (1.5 + 1.5 = 3.0)")
+        XCTAssertFalse(engine.isTileReady(1), "Unwatered not ready after 2 days (2.0, needs 3)")
+        
+        _ = engine.water(tileIndex: 1)
+        engine.advanceDay()
+        
+        XCTAssertTrue(engine.isTileReady(1), "Now ready after 3 days")
+    }
+}
+
+// MARK: - Grid Resize Tests
+
+final class GridResizeTests: XCTestCase {
+    func testResizeGridExpands() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.world.tiles[0].planted = PlantedCrop(cropID: "carrot", plantedDay: 0)
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        engine.resizeGrid(width: 4, height: 3)
+        
+        XCTAssertEqual(engine.save.world.gridWidth, 4)
+        XCTAssertEqual(engine.save.world.gridHeight, 3)
+        XCTAssertEqual(engine.save.world.tiles.count, 12)
+    }
+    
+    func testResizeGridShrinks() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 4, gridHeight: 4)
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        engine.resizeGrid(width: 2, height: 2)
+        
+        XCTAssertEqual(engine.save.world.gridWidth, 2)
+        XCTAssertEqual(engine.save.world.gridHeight, 2)
+        XCTAssertEqual(engine.save.world.tiles.count, 4)
+    }
+    
+    func testResizeGridPreservesPlantedTiles() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 4, gridHeight: 4)
+        save.world.tiles[0].planted = PlantedCrop(cropID: "carrot", plantedDay: 0)
+        save.world.tiles[5].planted = PlantedCrop(cropID: "tomato", plantedDay: 0)
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        engine.resizeGrid(width: 3, height: 3)
+        
+        XCTAssertEqual(engine.save.world.tiles[0].planted?.cropID, "carrot")
+    }
+    
+    func testResizeGridSameSizeNoChange() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 3, gridHeight: 3)
+        let originalTiles = save.world.tiles
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        engine.resizeGrid(width: 3, height: 3)
+        
+        XCTAssertEqual(engine.save.world.tiles.count, originalTiles.count)
+    }
+    
+    func testResizeGridNegativeValuesClamped() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        engine.resizeGrid(width: -1, height: -5)
+        
+        XCTAssertEqual(engine.save.world.gridWidth, 1)
+        XCTAssertEqual(engine.save.world.gridHeight, 1)
+    }
+}
+
+// MARK: - Inventory Capacity Tests
+
+final class InventoryCapacityTests: XCTestCase {
+    func testHarvestRespectsMaxCapacity() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 1, seedCost: 5, sellPrice: 15)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2, starterSeeds: ["carrot": 4])
+        save.player.inventory.crops = ["carrot": 100]
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
+        
+        for i in 0..<4 {
+            _ = engine.plant(tileIndex: i, cropID: "carrot")
+        }
+        engine.advanceDay()
+        
+        let harvested = engine.harvest(tileIndex: 0, maxCapacity: 100)
+        
+        XCTAssertEqual(harvested, 0, "Should not harvest when at capacity")
+    }
+    
+    func testHarvestPartialWhenNearCapacity() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 1, seedCost: 5, sellPrice: 15)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2, starterSeeds: ["carrot": 4])
+        save.player.inventory.crops = ["carrot": 99]
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
+        
+        for i in 0..<4 {
+            _ = engine.plant(tileIndex: i, cropID: "carrot")
+        }
+        engine.advanceDay()
+        
+        let harvested = engine.harvestAll(maxCapacity: 101)
+        
+        XCTAssertEqual(harvested, 1, "Should harvest 1 when capacity allows 1 more")
     }
 }

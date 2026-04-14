@@ -1,6 +1,8 @@
 import Foundation
 
 public enum SimTickSystem {
+    public static let wateredGrowthBonus: Double = 0.5
+
     @discardableResult
     public static func advanceDay(
         world: inout WorldState,
@@ -9,17 +11,19 @@ public enum SimTickSystem {
     ) -> Int {
         world.day += 1
         let safeGrowthMultiplier = max(0.1, growthMultiplier)
-        let dayGrowthIncrement = 1.0 * safeGrowthMultiplier
+        let baseGrowth = 1.0 * safeGrowthMultiplier
 
         for index in world.tiles.indices {
             var tile = world.tiles[index]
             if var planted = tile.planted {
-                // Keep crop readiness aligned with the shared day-based vector contract.
-                planted.growthProgress += dayGrowthIncrement
+                var totalGrowth = baseGrowth
+                if tile.state.watered {
+                    totalGrowth += wateredGrowthBonus * safeGrowthMultiplier
+                }
+                planted.growthProgress += totalGrowth
                 tile.planted = planted
             }
             
-            // Tiles dry out every day
             tile.state.watered = false
             world.tiles[index] = tile
         }
