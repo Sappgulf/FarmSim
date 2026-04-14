@@ -185,9 +185,9 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   const ActiveTabComponent = activeConfig.component;
 
   return (
-    <Card className="h-fit overflow-hidden border border-white/70 bg-white/90 shadow-[0_20px_54px_-30px_rgba(15,23,42,0.48)]">
+    <Card className="h-fit overflow-hidden rounded-[28px] border border-white/70 bg-white/90 shadow-[0_20px_54px_-30px_rgba(15,23,42,0.48)]">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <div className="sm:hidden border-b border-white/70 bg-gradient-to-r from-slate-50/90 via-white to-emerald-50/70 px-3 py-3">
+        <div className="sm:hidden border-b border-white/70 bg-gradient-to-r from-slate-50/90 via-white to-emerald-50/70 px-4 py-3.5">
           <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-700/70">
             {Object.values(NAV_SECTIONS).find(s => s.tabs.includes(activeTab))?.label || 'Game'}
           </div>
@@ -199,7 +199,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
           </div>
         </div>
 
-        <div className="hidden sm:block border-b border-white/70 bg-gradient-to-b from-slate-50/90 to-white px-3 py-3">
+        <div className="hidden sm:block border-b border-white/70 bg-gradient-to-b from-slate-50/90 to-white px-4 py-3.5">
           {/* Active tab header */}
           <div className="flex items-center justify-between gap-2 mb-3">
             <div>
@@ -214,7 +214,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
           </div>
 
           {/* Tab Navigation - grouped by section */}
-          <div className="space-y-2 max-h-60 overflow-y-auto scrollbar-smart scrollbar-gutter-stable">
+          <div className="space-y-2.5 max-h-[min(56vh,21rem)] overflow-y-auto pr-1 scrollbar-smart scrollbar-gutter-stable">
             {Object.values(NAV_SECTIONS).map((section) => {
               const sectionTabConfigs = TAB_CONFIGS.filter(t => section.tabs.includes(t.id));
               if (sectionTabConfigs.length === 0) return null;
@@ -227,7 +227,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
                       {section.label}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-1">
+                  <div className="grid grid-cols-2 gap-1.5">
                     {sectionTabConfigs.map((tab) => (
                       <button
                         type="button"
@@ -235,7 +235,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
                         onClick={() => handleTabChange(tab.id)}
                         data-onboard={tab.id === 'events' ? 'events-tab' : undefined}
                         className={`
-                          flex items-center gap-1.5 rounded-xl border px-2.5 py-2.5 min-h-[44px] text-left text-xs font-semibold
+                          flex items-center gap-2 rounded-xl border px-2.5 py-2.5 min-h-[46px] text-left text-xs font-semibold leading-tight
                           transition-[transform,color,background-color,box-shadow,border-color] duration-150 touch-manipulation
                           ${activeTab === tab.id
                             ? 'border-emerald-100 bg-white text-emerald-700 shadow-sm ring-1 ring-emerald-100 scale-[1.01]'
@@ -257,7 +257,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         </div>
 
         {/* Active tab only: avoids creating all tab panels on each render. */}
-        <TabsContent key={activeConfig.id} value={activeConfig.id} className="mt-4 px-3">
+        <TabsContent key={activeConfig.id} value={activeConfig.id} className="mt-3 px-3 pb-3 sm:mt-4 sm:px-4 sm:pb-4">
           <Suspense fallback={<TabLoader />}>
             <TabWrapper>
               <ActiveTabComponent />
@@ -266,21 +266,21 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         </TabsContent>
       </Tabs>
 
-      <div className="mt-4 border-t border-white/70 bg-gradient-to-r from-slate-50/90 via-white to-emerald-50/70 p-3">
-        <div className="grid grid-cols-4 gap-2 text-xs">
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm">
+      <div className="border-t border-white/70 bg-gradient-to-r from-slate-50/90 via-white to-emerald-50/70 p-3 sm:p-4">
+        <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm min-h-[66px]">
             <div className="font-bold text-emerald-700 text-sm">{inventoryCount}</div>
             <div className="text-gray-500 text-xs font-medium">Items</div>
           </div>
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm min-h-[66px]">
             <div className="font-bold text-amber-600 text-sm">{builtCount}</div>
             <div className="text-gray-500 text-xs font-medium">Built</div>
           </div>
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm min-h-[66px]">
             <div className="font-bold text-blue-600 text-sm">{animalCount}</div>
             <div className="text-gray-500 text-xs font-medium">Animals</div>
           </div>
-          <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm">
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-2.5 text-center shadow-sm min-h-[66px]">
             <div className="font-bold text-purple-600 text-sm">{reputation}</div>
             <div className="text-gray-500 text-xs font-medium">Rep</div>
           </div>
