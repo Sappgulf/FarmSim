@@ -751,3 +751,391 @@ final class InventoryCapacityTests: XCTestCase {
         XCTAssertEqual(harvested, 1, "Should harvest 1 when capacity allows 1 more")
     }
 }
+
+// MARK: - SeededRandom Tests
+
+final class SeededRandomTests: XCTestCase {
+    func testSeededRandomProducesConsistentSequence() throws {
+        var rng1 = SeededRandomNumberGenerator(seed: 42)
+        var rng2 = SeededRandomNumberGenerator(seed: 42)
+        
+        let values1 = (0..<10).map { _ in rng1.next() }
+        let values2 = (0..<10).map { _ in rng2.next() }
+        
+        XCTAssertEqual(values1, values2, "Same seed should produce same sequence")
+    }
+    
+    func testSeededRandomZeroSeedBecomesNonZero() throws {
+        let rng = SeededRandomNumberGenerator(seed: 0)
+        
+        XCTAssertNotEqual(rng.currentState, 0, "Zero seed should be replaced with non-zero")
+    }
+    
+    func testSeededRandomGeneratesValidUInt64() throws {
+        var rng = SeededRandomNumberGenerator(seed: 123)
+        
+        for _ in 0..<100 {
+            let value = rng.next()
+            XCTAssertGreaterThan(value, 0, "Should generate positive values")
+        }
+    }
+    
+    func testSeededRandomStateIsAccessible() throws {
+        let rng = SeededRandomNumberGenerator(seed: 999)
+        
+        XCTAssertEqual(rng.currentState, 999)
+    }
+}
+
+// MARK: - VectorStateHasher Tests
+
+final class VectorStateHasherTests: XCTestCase {
+    func testCanonicalStringEmptyMaps() throws {
+        let tiles: [Tile] = []
+        
+        let result = VectorStateHasher.canonicalString(
+            day: 0,
+            coins: 0,
+            tiles: tiles,
+            seeds: [:],
+            crops: [:]
+        )
+        
+        XCTAssertTrue(result.contains("day=0"))
+        XCTAssertTrue(result.contains("coins=0"))
+        XCTAssertTrue(result.contains("seeds=-"))
+        XCTAssertTrue(result.contains("crops=-"))
+    }
+    
+    func testCanonicalStringWithPlantedTiles() throws {
+        let tiles = [
+            Tile(index: 0, planted: PlantedCrop(cropID: "carrot", plantedDay: 1)),
+            Tile(index: 1),
+        ]
+        
+        let result = VectorStateHasher.canonicalString(
+            day: 5,
+            coins: 100,
+            tiles: tiles,
+            seeds: ["carrot": 2],
+            crops: [:]
+        )
+        
+        XCTAssertTrue(result.contains("carrot@1"))
+        XCTAssertTrue(result.contains("day=5"))
+        XCTAssertTrue(result.contains("coins=100"))
+    }
+    
+    func testCanonicalStringSeedsSorted() throws {
+        let result1 = VectorStateHasher.canonicalString(
+            day: 0, coins: 0, tiles: [], seeds: ["zebra": 1, "apple": 2, "mango": 3], crops: [:]
+        )
+        let result2 = VectorStateHasher.canonicalString(
+            day: 0, coins: 0, tiles: [], seeds: ["apple": 2, "mango": 3, "zebra": 1], crops: [:]
+        )
+        
+        XCTAssertEqual(result1, result2, "Seeds should be sorted alphabetically for consistency")
+    }
+    
+    func testCanonicalStringForSaveGame() throws {
+        let save = SaveGame(
+            version: 1,
+            player: PlayerState(coins: 50, xp: 10, inventory: Inventory(seeds: ["carrot": 3], crops: [:])),
+            world: WorldState(day: 2, gridWidth: 2, gridHeight: 2, tiles: [
+                Tile(index: 0, planted: PlantedCrop(cropID: "carrot", plantedDay: 0)),
+                Tile(index: 1),
+                Tile(index: 2),
+                Tile(index: 3),
+            ])
+        )
+        
+        let result = VectorStateHasher.canonicalString(for: save)
+        
+        XCTAssertTrue(result.contains("day=2"))
+        XCTAssertTrue(result.contains("coins=50"))
+    }
+}
+
+// MARK: - TimeEngine Edge Cases
+
+final class TimeEngineEdgeCaseTests: XCTestCase {
+    func testTimeEngineInitialTimestamp() throws {
+        var engine = TimeEngine(
+            config: TimeEngineConfig(secondsPerDay: 60, ticksPerSecond: 10),
+            state: TimeMetaState(currentTimeSeconds: 0, dayIndex: 0, lastRealWorldTimestamp: 0)
+        )
+        
+        let result = engine.tick(now: 100, isPaused: false)
+        
+        XCTAssertEqual(result.dayDelta, 0)
+        XCTAssertEqual(engine.state.lastRealWorldTimestamp, 100)
+    }
+    
+    func testTimeEngineFastForward() throws {
+        var engine = TimeEngine(
+            config: TimeEngineConfig(secondsPerDay: 60, ticksPerSecond: 10),
+            state: TimeMetaState(currentTimeSeconds: 0, dayIndex: 0, lastRealWorldTimestamp: 0)
+        )
+        
+        let result = engine.fastForward(days: 5)
+        
+        XCTAssertEqual(result.dayDelta, 5)
+        XCTAssertEqual(engine.state.dayIndex, 5)
+    }
+    
+    func testTimeEngineFastForwardZeroDays() throws {
+        var engine = TimeEngine(
+            config: TimeEngineConfig(secondsPerDay: 60),
+            state: TimeMetaState()
+        )
+        
+        let result = engine.fastForward(days: 0)
+        
+        XCTAssertEqual(result.dayDelta, 0)
+    }
+    
+    func testTimeEngineSecondsIntoDay() throws {
+        var engine = TimeEngine(
+            config: TimeEngineConfig(secondsPerDay: 100),
+            state: TimeMetaState(currentTimeSeconds: 45, dayIndex: 1, lastRealWorldTimestamp: 100)
+        )
+        
+        let result = engine.secondsIntoDay
+        
+        XCTAssertEqual(result, 45)
+    }
+    
+    func testTimeEngineDayProgress() throws {
+        var engine = TimeEngine(
+            config: TimeEngineConfig(secondsPerDay: 100),
+            state: TimeMetaState(currentTimeSeconds: 50, dayIndex: 1, lastRealWorldTimestamp: 100)
+        )
+        
+        let result = engine.dayProgress
+        
+        XCTAssertEqual(result, 0.5, "50 seconds into 100-second day should be 50%")
+    }
+    
+    func testTimeEngineNegativeNowHandled() throws {
+        var engine = TimeEngine(
+            config: TimeEngineConfig(secondsPerDay: 60),
+            state: TimeMetaState()
+        )
+        
+        let result = engine.tick(now: -100, isPaused: false)
+        
+        XCTAssertEqual(result.dayDelta, 0, "Negative time should be clamped to 0")
+    }
+    
+    func testTimeEngineOfflineCatchupWithMaxDays() throws {
+        var engine = TimeEngine(
+            config: TimeEngineConfig(secondsPerDay: 60, offlineCatchup: true),
+            state: TimeMetaState(currentTimeSeconds: 0, dayIndex: 5, lastRealWorldTimestamp: 100)
+        )
+        
+        let result = engine.applyOfflineCatchup(now: 1000, maxCatchupDays: 3)
+        
+        XCTAssertEqual(result.dayDelta, 3, "Should cap at maxCatchupDays")
+        XCTAssertEqual(engine.state.dayIndex, 8)
+    }
+    
+    func testTimeEngineOfflineCatchupDisabled() throws {
+        var engine = TimeEngine(
+            config: TimeEngineConfig(secondsPerDay: 60, offlineCatchup: false),
+            state: TimeMetaState(currentTimeSeconds: 0, dayIndex: 5, lastRealWorldTimestamp: 100)
+        )
+        
+        let result = engine.applyOfflineCatchup(now: 1000)
+        
+        XCTAssertEqual(result.dayDelta, 0, "Should not catchup when disabled")
+    }
+}
+
+// MARK: - ContentLoader Tests
+
+final class ContentLoaderTests: XCTestCase {
+    func testLoadCropDefsFromValidData() throws {
+        let json = """
+        {
+            "schemaVersion": 1,
+            "items": [
+                {"id": "carrot", "name": "Carrot", "cost": 5, "baseValue": 15, "growthTime": 120}
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let crops = try ContentLoader.loadCropDefs(from: json)
+        
+        XCTAssertEqual(crops.count, 1)
+        XCTAssertEqual(crops[0].id, "carrot")
+        XCTAssertEqual(crops[0].daysToGrow, 2, "120 seconds = 2 days")
+    }
+    
+    func testLoadCropDefsMissingSchema() throws {
+        let json = """
+        {
+            "items": [{"id": "carrot", "name": "Carrot", "cost": 5, "baseValue": 15, "growthTime": 60}]
+        }
+        """.data(using: .utf8)!
+        
+        XCTAssertThrowsError(try ContentLoader.loadCropDefs(from: json)) { error in
+            guard case ContentLoaderError.invalidContent(let msg) = error else {
+                return XCTFail("Expected invalidContent error")
+            }
+            XCTAssertTrue(msg.contains("missing schemaVersion"))
+        }
+    }
+    
+    func testLoadCropDefsEmptyItems() throws {
+        let json = """
+        {"schemaVersion": 1, "items": []}
+        """.data(using: .utf8)!
+        
+        XCTAssertThrowsError(try ContentLoader.loadCropDefs(from: json)) { error in
+            guard case ContentLoaderError.invalidContent(let msg) = error else {
+                return XCTFail("Expected invalidContent error")
+            }
+            XCTAssertTrue(msg.contains("no crop entries"))
+        }
+    }
+    
+    func testLoadCropDefsNegativeGrowthTime() throws {
+        let json = """
+        {
+            "schemaVersion": 1,
+            "items": [{"id": "carrot", "name": "Carrot", "cost": 5, "baseValue": 15, "growthTime": -10}]
+        }
+        """.data(using: .utf8)!
+        
+        let crops = try ContentLoader.loadCropDefs(from: json)
+        
+        XCTAssertEqual(crops[0].daysToGrow, 1, "Negative growth time should clamp to 1 day minimum")
+    }
+    
+    func testLoadCropDefsZeroCostAndValue() throws {
+        let json = """
+        {
+            "schemaVersion": 1,
+            "items": [{"id": "carrot", "name": "Carrot", "cost": 0, "baseValue": 0, "growthTime": 60}]
+        }
+        """.data(using: .utf8)!
+        
+        let crops = try ContentLoader.loadCropDefs(from: json)
+        
+        XCTAssertEqual(crops[0].seedCost, 0)
+        XCTAssertEqual(crops[0].sellPrice, 0)
+    }
+    
+    func testLoadDecorDefs() throws {
+        let json = """
+        {
+            "schemaVersion": 1,
+            "items": [
+                {"id": "fountain", "name": "Fountain", "cost": 500, "category": "water", "seasonTags": ["summer"], "emoji": "⛲"}
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let decor = try ContentLoader.loadDecorDefs(from: json)
+        
+        XCTAssertEqual(decor.count, 1)
+        XCTAssertEqual(decor[0].id, "fountain")
+        XCTAssertEqual(decor[0].cost, 500)
+        XCTAssertEqual(decor[0].category, "water")
+    }
+    
+    func testLoadFestivalDefs() throws {
+        let json = """
+        {
+            "schemaVersion": 1,
+            "items": [
+                {"id": "harvest_fest", "name": "Harvest Festival", "season": "fall", "cadence": "yearly", "duration": 3600, "icon": "🎃"}
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let festivals = try ContentLoader.loadFestivalDefs(from: json)
+        
+        XCTAssertEqual(festivals.count, 1)
+        XCTAssertEqual(festivals[0].id, "harvest_fest")
+        XCTAssertEqual(festivals[0].season, "fall")
+    }
+    
+    func testLoadMinigameDefs() throws {
+        let json = """
+        {
+            "schemaVersion": 1,
+            "items": [
+                {"id": "fishing", "title": "Fishing", "rounds": 5, "instructions": "Catch fish!", "theme": {"icon": "🎣"}}
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let minigames = try ContentLoader.loadMinigameDefs(from: json)
+        
+        XCTAssertEqual(minigames.count, 1)
+        XCTAssertEqual(minigames[0].id, "fishing")
+        XCTAssertEqual(minigames[0].rounds, 5)
+    }
+    
+    func testContentLoaderErrorDescriptions() throws {
+        let missingError = ContentLoaderError.missingFile("test")
+        XCTAssertEqual(missingError.errorDescription, "test")
+        
+        let decodeError = ContentLoaderError.decodeFailure("test")
+        XCTAssertEqual(decodeError.errorDescription, "test")
+        
+        let invalidError = ContentLoaderError.invalidContent("test")
+        XCTAssertEqual(invalidError.errorDescription, "test")
+    }
+}
+
+// MARK: - Edge Case Tests
+
+final class EdgeCaseTests: XCTestCase {
+    func testPlantOnInvalidTile() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 2, seedCost: 5, sellPrice: 15)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
+        
+        let result = engine.plant(tileIndex: 100, cropID: "carrot")
+        
+        XCTAssertFalse(result)
+    }
+    
+    func testHarvestEmptyTile() throws {
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        var engine = GameCoreEngine(save: save, cropDefs: [], seed: 123)
+        
+        let harvested = engine.harvest(tileIndex: 0)
+        
+        XCTAssertEqual(harvested, 0)
+    }
+    
+    func testNegativeCoinsPrevention() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 2, seedCost: 1000, sellPrice: 15)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2)
+        save.player.coins = 10
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
+        
+        let result = engine.buy(itemID: "carrot", quantity: 1, pricing: MarketPricing(seedUnitCosts: ["carrot": 1000]))
+        
+        XCTAssertEqual(result.status, .insufficientCoins)
+        XCTAssertEqual(engine.save.player.coins, 10)
+    }
+    
+    func testMultipleHarvestsSameTile() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 1, seedCost: 5, sellPrice: 15)
+        var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 2, starterSeeds: ["carrot": 1])
+        var engine = GameCoreEngine(save: save, cropDefs: [carrot], seed: 123)
+        
+        _ = engine.plant(tileIndex: 0, cropID: "carrot")
+        engine.advanceDay()
+        
+        let firstHarvest = engine.harvest(tileIndex: 0)
+        let secondHarvest = engine.harvest(tileIndex: 0)
+        
+        XCTAssertEqual(firstHarvest, 1)
+        XCTAssertEqual(secondHarvest, 0)
+    }
+}
