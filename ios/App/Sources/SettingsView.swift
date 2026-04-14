@@ -53,51 +53,18 @@ struct SettingsView: View {
                                         if value.count > 32 {
                                             farmNameInput = String(value.prefix(32))
                                         }
-    }
-}
-
-private struct ForemanModeRow<T: Hashable & CaseIterable & RawRepresentable>: View where T.RawValue == String {
-    let icon: String
-    let title: String
-    let subtitle: String
-    let iconBackground: Color
-    let selectedMode: T
-    let modes: T.Type
-    let onSelect: (T) -> Void
-
-    var body: some View {
-        SettingRow(
-            icon: icon,
-            title: title,
-            subtitle: subtitle,
-            iconBackground: iconBackground
-        ) {
-            HStack(spacing: DS.Space.xs) {
-                ForEach(Array(modes.allCases), id: \.self) { mode in
-                    Button(action: { onSelect(mode) }) {
-                        Text(mode.rawValue.capitalized)
-                            .font(.system(.caption, design: .rounded, weight: .medium))
-                            .foregroundStyle(selectedMode == mode ? .white : DS.Color.textSecondary)
-                            .padding(.horizontal, DS.Space.sm)
-                            .padding(.vertical, DS.Space.xs)
-                            .background(
-                                RoundedRectangle(cornerRadius: DS.Radius.sm)
-                                    .fill(selectedMode == mode ? Theme.leafGreen : SwiftUI.Color.gray.opacity(0.2))
-                            )
+                                    }
+                            }
+                        }
                     }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .padding(.vertical, DS.Space.xs)
-    }
-}
-                            .padding(.vertical, DS.Space.xs)
 
-                            Divider()
-                                .background(SwiftUI.Color.white.opacity(0.1))
-                                .padding(.horizontal, DS.Space.md)
-
+                    // Farm Colors Section
+                    SettingsSection(
+                        title: "Appearance",
+                        icon: "paintpalette.fill",
+                        iconColor: Theme.seasonSummer
+                    ) {
+                        VStack(spacing: 0) {
                             SettingRow(
                                 icon: "paintpalette.fill",
                                 title: "Farm Colors",
