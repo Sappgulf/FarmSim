@@ -32,6 +32,7 @@ final class FarmScene: SKScene {
     private var currentPan: CGSize = .zero
     private var reduceMotion = false
     private var particleEffectsEnabled = true
+    private var weatherEmitters: [SKEmitterNode] = []
     private var showTileIndices = false
     private var preferredFPS = 60
     private var timeOfDayProgress: Double = 0
@@ -607,6 +608,201 @@ final class FarmScene: SKScene {
             .wait(forDuration: 1.0),
             .removeFromParent()
         ]))
+    }
+
+    func spawnPlantPop(at position: CGPoint) {
+        guard particleEffectsEnabled else { return }
+        
+        let emitter = SKEmitterNode()
+        emitter.particleBirthRate = 0
+        emitter.numParticlesToEmit = 8
+        emitter.particleLifetime = 0.5
+        emitter.particleLifetimeRange = 0.15
+        emitter.particlePositionRange = CGVector(dx: 8, dy: 8)
+        emitter.particleSpeed = 40
+        emitter.particleSpeedRange = 20
+        emitter.emissionAngle = -.pi / 2
+        emitter.emissionAngleRange = .pi / 3
+        emitter.particleAlpha = 1.0
+        emitter.particleAlphaSpeed = -1.8
+        emitter.particleScale = 0.3
+        emitter.particleScaleRange = 0.15
+        emitter.particleScaleSpeed = -0.3
+        emitter.particleColor = SKColor(red: 0.4, green: 0.8, blue: 0.3, alpha: 1)
+        emitter.particleColorBlendFactor = 1.0
+        emitter.particleBlendMode = .add
+        
+        emitter.position = position
+        emitter.zPosition = 100
+        boardNode.addChild(emitter)
+        
+        emitter.run(.sequence([
+            .wait(forDuration: 0.8),
+            .removeFromParent()
+        ]))
+    }
+
+    func spawnWaterSplash(at position: CGPoint) {
+        guard particleEffectsEnabled else { return }
+        
+        let emitter = SKEmitterNode()
+        emitter.particleBirthRate = 0
+        emitter.numParticlesToEmit = 15
+        emitter.particleLifetime = 0.4
+        emitter.particleLifetimeRange = 0.1
+        emitter.particlePositionRange = CGVector(dx: 10, dy: 5)
+        emitter.particleSpeed = 60
+        emitter.particleSpeedRange = 30
+        emitter.emissionAngle = -.pi / 2
+        emitter.emissionAngleRange = .pi / 4
+        emitter.particleAlpha = 0.8
+        emitter.particleAlphaSpeed = -2.0
+        emitter.particleScale = 0.2
+        emitter.particleScaleRange = 0.1
+        emitter.particleScaleSpeed = -0.2
+        emitter.particleColor = SKColor(red: 0.3, green: 0.6, blue: 0.9, alpha: 1)
+        emitter.particleColorBlendFactor = 1.0
+        emitter.particleBlendMode = .alpha
+        
+        emitter.position = position
+        emitter.zPosition = 100
+        boardNode.addChild(emitter)
+        
+        emitter.run(.sequence([
+            .wait(forDuration: 0.6),
+            .removeFromParent()
+        ]))
+    }
+
+    func spawnHarvestBurst(at position: CGPoint, cropColor: SKColor? = nil) {
+        guard particleEffectsEnabled else { return }
+        
+        let emitter = SKEmitterNode()
+        emitter.particleBirthRate = 0
+        emitter.numParticlesToEmit = 20
+        emitter.particleLifetime = 0.7
+        emitter.particleLifetimeRange = 0.2
+        emitter.particlePositionRange = CGVector(dx: 15, dy: 15)
+        emitter.particleSpeed = 80
+        emitter.particleSpeedRange = 40
+        emitter.emissionAngle = 0
+        emitter.emissionAngleRange = 2 * .pi
+        emitter.particleAlpha = 1.0
+        emitter.particleAlphaSpeed = -1.3
+        emitter.particleScale = 0.5
+        emitter.particleScaleRange = 0.2
+        emitter.particleScaleSpeed = -0.5
+        let burstColor = cropColor ?? SKColor(red: 1.0, green: 0.9, blue: 0.4, alpha: 1)
+        emitter.particleColor = burstColor
+        emitter.particleColorBlendFactor = 1.0
+        emitter.particleBlendMode = .add
+        
+        emitter.position = position
+        emitter.zPosition = 100
+        boardNode.addChild(emitter)
+        
+        emitter.run(.sequence([
+            .wait(forDuration: 1.2),
+            .removeFromParent()
+        ]))
+    }
+
+    // MARK: - Weather Particles
+
+    func startRain(at position: CGPoint, bounds: CGRect) {
+        guard particleEffectsEnabled else { return }
+        
+        let emitter = SKEmitterNode()
+        emitter.particleBirthRate = 100
+        emitter.particleLifetime = 2.0
+        emitter.particlePosition = CGPoint(x: bounds.midX, y: bounds.maxY + 50)
+        emitter.particlePositionRange = CGVector(dx: bounds.width, dy: 0)
+        emitter.particleSpeed = 400
+        emitter.particleSpeedRange = 50
+        emitter.emissionAngle = -.pi / 2
+        emitter.emissionAngleRange = 0.1
+        emitter.particleAlpha = 0.4
+        emitter.particleScale = 0.08
+        emitter.particleScaleRange = 0.02
+        emitter.particleColor = SKColor(red: 0.6, green: 0.7, blue: 0.9, alpha: 1)
+        emitter.particleBlendMode = .alpha
+        
+        emitter.zPosition = 200
+        boardNode.addChild(emitter)
+        weatherEmitters.append(emitter)
+    }
+
+    func startSnowflakes(at position: CGPoint, bounds: CGRect) {
+        guard particleEffectsEnabled else { return }
+        
+        let emitter = SKEmitterNode()
+        emitter.particleBirthRate = 40
+        emitter.particleLifetime = 4.0
+        emitter.particlePosition = CGPoint(x: bounds.midX, y: bounds.maxY + 50)
+        emitter.particlePositionRange = CGVector(dx: bounds.width, dy: 0)
+        emitter.particleSpeed = 60
+        emitter.particleSpeedRange = 30
+        emitter.particleSpeed = 40
+        emitter.particleSpeedRange = 20
+        emitter.emissionAngle = -.pi / 2
+        emitter.emissionAngleRange = 0.3
+        emitter.particleAlpha = 0.9
+        emitter.particleScale = 0.15
+        emitter.particleScaleRange = 0.08
+        emitter.particleColor = SKColor.white
+        emitter.particleBlendMode = .alpha
+        
+        emitter.zPosition = 200
+        boardNode.addChild(emitter)
+        weatherEmitters.append(emitter)
+    }
+
+    func startFallingLeaves(at position: CGPoint, bounds: CGRect, season: String) {
+        guard particleEffectsEnabled else { return }
+        
+        let leafColors: [SKColor] = {
+            switch season.lowercased() {
+            case "fall", "autumn":
+                return [
+                    SKColor(red: 0.8, green: 0.4, blue: 0.2, alpha: 1),
+                    SKColor(red: 0.9, green: 0.6, blue: 0.3, alpha: 1),
+                    SKColor(red: 0.7, green: 0.3, blue: 0.1, alpha: 1),
+                ]
+            case "spring":
+                return [
+                    SKColor(red: 0.6, green: 0.9, blue: 0.5, alpha: 1),
+                    SKColor(red: 0.8, green: 0.5, blue: 0.3, alpha: 1),
+                ]
+            default:
+                return [SKColor(red: 0.5, green: 0.7, blue: 0.3, alpha: 1)]
+            }
+        }()
+        
+        let emitter = SKEmitterNode()
+        emitter.particleBirthRate = 15
+        emitter.particleLifetime = 5.0
+        emitter.particlePosition = CGPoint(x: bounds.midX, y: bounds.maxY + 50)
+        emitter.particlePositionRange = CGVector(dx: bounds.width, dy: 0)
+        emitter.particleSpeed = 30
+        emitter.particleSpeedRange = 15
+        emitter.emissionAngle = -.pi / 2
+        emitter.emissionAngleRange = 0.2
+        emitter.particleAlpha = 0.85
+        emitter.particleScale = 0.25
+        emitter.particleScaleRange = 0.1
+        emitter.particleColor = leafColors.randomElement() ?? SKColor.green
+        emitter.particleColorBlendFactor = 1.0
+        
+        emitter.zPosition = 200
+        boardNode.addChild(emitter)
+        weatherEmitters.append(emitter)
+    }
+
+    func clearWeatherParticles() {
+        for emitter in weatherEmitters {
+            emitter.removeFromParent()
+        }
+        weatherEmitters.removeAll()
     }
 
 
