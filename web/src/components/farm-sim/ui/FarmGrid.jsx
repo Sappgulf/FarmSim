@@ -61,10 +61,12 @@ const FarmPlot = memo(({
   harvestMultiplier = 1.0,
   gridSize = 3,
   plotRef = null,
+  showTooltips = true,
   isTrinket = false
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const tooltipTouchTimerRef = useRef(null);
   const sharedTick = useTick();
   const district = getDistrictForPlot(gridSize, index);
 
@@ -173,6 +175,12 @@ const FarmPlot = memo(({
   const isDenseGrid = gridSize >= 5;
   const isReadyPlot = plot?.state === 'ready';
 
+  useEffect(() => () => {
+    if (tooltipTouchTimerRef.current) {
+      clearTimeout(tooltipTouchTimerRef.current);
+    }
+  }, []);
+
   // Get soil fertility color gradient
   const getSoilGradient = () => {
     const fertility = plot?.soilFertility || 1.0;
@@ -261,26 +269,46 @@ const FarmPlot = memo(({
         `}
         onClick={handleClick}
         onMouseEnter={() => {
+          if (!showTooltips) return;
           setShowTooltip(true);
           if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
             setShowPreview(true);
           }
         }}
         onMouseLeave={() => {
+          if (!showTooltips) return;
           setShowTooltip(false);
           setShowPreview(false);
         }}
         onTouchStart={() => {
+          if (!showTooltips) return;
+          if (tooltipTouchTimerRef.current) {
+            clearTimeout(tooltipTouchTimerRef.current);
+            tooltipTouchTimerRef.current = null;
+          }
           setShowTooltip(true);
           if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
             setShowPreview(true);
           }
         }}
         onTouchEnd={() => {
-          setTimeout(() => {
+          if (!showTooltips) return;
+          if (tooltipTouchTimerRef.current) {
+            clearTimeout(tooltipTouchTimerRef.current);
+          }
+          tooltipTouchTimerRef.current = setTimeout(() => {
             setShowTooltip(false);
             setShowPreview(false);
+            tooltipTouchTimerRef.current = null;
           }, 2000);
+        }}
+        onTouchCancel={() => {
+          if (tooltipTouchTimerRef.current) {
+            clearTimeout(tooltipTouchTimerRef.current);
+            tooltipTouchTimerRef.current = null;
+          }
+          setShowTooltip(false);
+          setShowPreview(false);
         }}
         onKeyDown={handleKeyDown}
         data-plot-button="true"
@@ -415,7 +443,7 @@ const FarmPlot = memo(({
       </Card>
 
       {/* Enhanced Tooltip */}
-      {showTooltip && plot && (
+      {showTooltips && showTooltip && plot && (
         <div className="absolute z-50 -top-2 left-1/2 transform -translate-x-1/2 -translate-y-full">
           <div className="bg-gray-900 text-white text-xs rounded-lg shadow-2xl p-2 w-40 animate-fade-in">
             <div className="font-semibold mb-1">Plot #{index + 1}</div>
@@ -507,6 +535,7 @@ const FarmGrid = memo(() => {
   const [repeatDecorPlacement, setRepeatDecorPlacement] = useState(true);
   const [harvestBloomTick, setHarvestBloomTick] = useState(0);
   const harvestBloomTimerRef = useRef(null);
+  const actionLockRef = useRef(new Map());
   const plotRefs = useRef([]);
   const decorUndoStack = useRef([]);
   const selectedDecoration = selectedDecorationId ? DECORATION_DATA[selectedDecorationId] : null;
@@ -517,6 +546,17 @@ const FarmGrid = memo(() => {
     () => CROP_DATA[selectedCropId] || CROP_LIST[0],
     [selectedCropId]
   );
+  const performHaptic = useCallback((pattern = 8) => {
+    if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
+    navigator.vibrate(pattern);
+  }, []);
+  const isActionLocked = useCallback((key, ms = 320) => {
+    const now = Date.now();
+    const expiresAt = actionLockRef.current.get(key) || 0;
+    if (expiresAt > now) return true;
+    actionLockRef.current.set(key, now + ms);
+    return false;
+  }, []);
 
   const getPlotCenter = useCallback((index) => {
     const plotNode = plotRefs.current[index];
@@ -625,6 +665,7 @@ const FarmGrid = memo(() => {
     if (harvestBloomTimerRef.current) {
       clearTimeout(harvestBloomTimerRef.current);
     }
+    actionLockRef.current.clear();
   }, []);
 
   useEffect(() => {
@@ -718,7 +759,8 @@ const FarmGrid = memo(() => {
       message: '↩️ Undid last decoration change.',
       type: 'info'
     });
-  }, [actions]);
+    performHaptic(10);
+  }, [actions, performHaptic]);
 
   const handlePlotClick = useCallback((index, action) => {
     // Handle clearing withered crops
@@ -752,11 +794,8 @@ const FarmGrid = memo(() => {
       return;
     }
 
-    // Handle plot interaction
-    actions.addNotification({
-      message: `Plot ${index + 1} info displayed`,
-      type: 'info'
-    });
+    // Regular plot taps should not spam notifications.
+    // Detailed context is already visible in-plot and via tooltip.
   }, [actions, farmPlots]);
 
   const handleToggleSelect = useCallback((index) => {
@@ -776,6 +815,7 @@ const FarmGrid = memo(() => {
       actions.addNotification({ message: 'Ghost Visit is read-only.', type: 'info' });
       return;
     }
+    if (isActionLocked(`plant:${index}`)) return;
     // Use consolidated crop data
     if (!selectedCrop) return;
 
@@ -800,6 +840,7 @@ const FarmGrid = memo(() => {
         message: `Planted ${selectedCrop.emoji} ${selectedCrop.name} on plot ${index + 1}`,
         type: 'success'
       });
+      performHaptic([8, 18, 8]);
 
       if (planted) {
         actions.recordOnboardingEvent('plant');
@@ -813,10 +854,11 @@ const FarmGrid = memo(() => {
         type: 'error'
       });
     }
-  }, [actions, animationsEnabled, coins, getPlotCenter, ghostActive, plots, selectedCrop]);
+  }, [actions, animationsEnabled, coins, getPlotCenter, ghostActive, isActionLocked, performHaptic, plots, selectedCrop]);
 
   const handleDecorate = useCallback((index) => {
     if (ghostActive) return;
+    if (isActionLocked(`decor:${index}`)) return;
     const plotsArray = farmPlots;
     const plot = plotsArray[index];
     if (!plot) return;
@@ -889,17 +931,19 @@ const FarmGrid = memo(() => {
       message: `Placed ${selectedDecoration.emoji} ${selectedDecoration.name}!`,
       type: 'success'
     });
+    performHaptic([10, 22, 10]);
 
     if (!repeatDecorPlacement) {
       actions.setSelectedDecoration(null);
     }
-  }, [actions, animationsEnabled, farmPlots, getPlotCenter, ghostActive, pushDecorUndo, repeatDecorPlacement, selectedDecoration]);
+  }, [actions, animationsEnabled, farmPlots, getPlotCenter, ghostActive, isActionLocked, performHaptic, pushDecorUndo, repeatDecorPlacement, selectedDecoration]);
 
   const handleHarvest = useCallback((index) => {
     if (ghostActive) {
       actions.addNotification({ message: 'Ghost Visit is read-only.', type: 'info' });
       return;
     }
+    if (isActionLocked(`harvest:${index}`)) return;
     const plotsArray = farmPlots;
     const plot = plotsArray[index];
     if (!plot || plot.state !== 'ready') return;
@@ -964,10 +1008,12 @@ const FarmGrid = memo(() => {
       message: `Harvested ${crop.emoji} ${crop.name}! +${earnings}🪙`,
       type: 'success'
     });
-  }, [actions, animationsEnabled, farmPlots, getPlotCenter, ghostActive, inventory, seasonCurrent, weather]);
+    performHaptic([14, 24, 14]);
+  }, [actions, animationsEnabled, farmPlots, getPlotCenter, ghostActive, inventory, isActionLocked, performHaptic, seasonCurrent, weather]);
 
   // Bulk actions
   const handleBulkHarvest = useCallback(() => {
+    if (isActionLocked('harvest:bulk', 450)) return;
     let totalEarnings = 0;
     let totalXp = 0;
     let harvestedCount = 0;
@@ -1052,6 +1098,7 @@ const FarmGrid = memo(() => {
         message: `Bulk harvested ${harvestedCount} crops! +${totalEarnings}🪙`,
         type: 'success'
       });
+      performHaptic([12, 28, 12, 28, 12]);
 
       if (animationsEnabled && typeof window.triggerParticleEffect === 'function') {
         window.triggerParticleEffect(window.innerWidth / 2, window.innerHeight * 0.35, 'harvest', {
@@ -1066,7 +1113,23 @@ const FarmGrid = memo(() => {
     }
 
     setSelectedPlots(new Set());
-  }, [actions, animationsEnabled, farmPlots, inventory, seasonCurrent, selectedPlots, weather]);
+  }, [actions, animationsEnabled, farmPlots, inventory, isActionLocked, performHaptic, seasonCurrent, selectedPlots, weather]);
+
+  const handleHarvestReadyNow = useCallback(() => {
+    if (!hasReadyPlots) return;
+    if (isActionLocked('harvest:ready_now', 500)) return;
+    actions.harvestAllReadyCrops();
+    setHarvestBloomTick(Date.now());
+    actions.recordOnboardingEvent('harvest');
+    actions.addNotification({
+      message: `Bulk harvested ${readyPlotIndexes.length} ready crops!`,
+      type: 'success'
+    });
+    if (typeof window.soundSystem !== 'undefined') {
+      window.soundSystem.playHarvestSound();
+    }
+    performHaptic([12, 28, 12, 28, 12]);
+  }, [actions, hasReadyPlots, isActionLocked, performHaptic, readyPlotIndexes.length]);
 
   const handleSelectAll = useCallback(() => {
     setSelectedPlots(new Set(farmPlots.map((_, index) => index)));
@@ -1079,6 +1142,51 @@ const FarmGrid = memo(() => {
   const handleClearSelection = useCallback(() => {
     setSelectedPlots(new Set());
   }, []);
+
+  const handleGoalAction = useCallback(() => {
+    switch (nextGoal.id) {
+      case 'harvest':
+        handleHarvestReadyNow();
+        return;
+      case 'plant': {
+        const firstEmptyIndex = plots.findIndex((plot) => plot?.state === 'empty');
+        if (firstEmptyIndex >= 0) {
+          handlePlant(firstEmptyIndex);
+        }
+        return;
+      }
+      case 'build':
+        if (typeof window.switchToTab === 'function') {
+          window.switchToTab('buildings');
+        }
+        return;
+      case 'earn':
+      case 'explore':
+        if (typeof window.switchToTab === 'function') {
+          window.switchToTab('shop');
+        }
+        return;
+      default:
+        return;
+    }
+  }, [handleHarvestReadyNow, handlePlant, nextGoal.id, plots]);
+
+  const goalActionLabel = useMemo(() => {
+    switch (nextGoal.id) {
+      case 'harvest':
+        return 'Do it now';
+      case 'plant':
+        return 'Plant first empty';
+      case 'build':
+        return 'Open buildings';
+      case 'earn':
+        return 'Open shop';
+      case 'explore':
+        return 'Browse upgrades';
+      default:
+        return 'Keep going';
+    }
+  }, [nextGoal.id]);
 
   return (
     <Card
@@ -1120,6 +1228,16 @@ const FarmGrid = memo(() => {
               </span>
             )}
             <span className="text-gray-500">{farmAtmosphere.hint}</span>
+            {nextGoal.id !== 'wait' && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleGoalAction}
+                className="min-h-[40px] border-emerald-200 bg-emerald-50/80 text-emerald-700 hover:bg-emerald-100"
+              >
+                ✨ {goalActionLabel}
+              </Button>
+            )}
           </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
@@ -1215,6 +1333,21 @@ const FarmGrid = memo(() => {
           </div>
         </div>
       )}
+      {hasReadyPlots && selectedPlots.size === 0 && (
+        <div className="sticky bottom-2 z-30 mt-3 sm:hidden">
+          <div className="rounded-2xl border border-emerald-200/80 bg-white/94 p-2.5 shadow-[0_14px_34px_-20px_rgba(15,23,42,0.6)] backdrop-blur">
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={handleHarvestReadyNow}
+                className="flex-1 min-h-[46px] bg-emerald-600 hover:bg-emerald-700"
+              >
+                🌾 Harvest {readyPlotIndexes.length} Ready
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Farm Grid - Responsive with larger touch targets on mobile */}
       <div
@@ -1251,6 +1384,7 @@ const FarmGrid = memo(() => {
             hasSoilAnalyzer={hasSoilAnalyzer}
             harvestMultiplier={harvestMultiplier}
             gridSize={gridSize}
+            showTooltips={showTooltips}
             isTrinket={Boolean(DECORATION_DATA[plot?.decorationId]?.tags?.includes('trinket'))}
           />
         ))}

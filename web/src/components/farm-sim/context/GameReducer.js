@@ -547,6 +547,7 @@ export function gameReducer(state, action) {
                 type: action.payload?.type || 'info',
                 timestamp,
             };
+            const existingNotifications = Array.isArray(state.notifications) ? state.notifications : [];
             const nextHistory = [
                 ...(Array.isArray(state.notificationHistory) ? state.notificationHistory : []),
                 {
@@ -559,7 +560,7 @@ export function gameReducer(state, action) {
             ].slice(-120);
             return {
                 ...state,
-                notifications: [...state.notifications, nextNotification],
+                notifications: [...existingNotifications, nextNotification].slice(-60),
                 notificationHistory: nextHistory,
             };
 
