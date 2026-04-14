@@ -352,6 +352,7 @@ public struct MetaState: Codable, Hashable, Sendable {
     public var challengeClaims: [String: Int]
     public var challengeStreak: Int
     public var favoriteItems: [String: Bool]
+    public var actionHistory: ActionHistory
     public var time: TimeMetaState
     public var foreman: ForemanSettings
     public var prestige: PrestigeState
@@ -369,6 +370,7 @@ public struct MetaState: Codable, Hashable, Sendable {
         challengeClaims: [String: Int] = [:],
         challengeStreak: Int = 0,
         favoriteItems: [String: Bool] = [:],
+        actionHistory: ActionHistory = ActionHistory(),
         time: TimeMetaState = TimeMetaState(),
         foreman: ForemanSettings = ForemanSettings(),
         prestige: PrestigeState = PrestigeState(),
@@ -385,6 +387,7 @@ public struct MetaState: Codable, Hashable, Sendable {
         self.challengeClaims = challengeClaims
         self.challengeStreak = max(0, challengeStreak)
         self.favoriteItems = favoriteItems
+        self.actionHistory = actionHistory
         self.time = time
         self.foreman = foreman
         self.prestige = prestige
@@ -403,6 +406,7 @@ public struct MetaState: Codable, Hashable, Sendable {
         case challengeClaims
         case challengeStreak
         case favoriteItems
+        case actionHistory
         case time
         case foreman
         case prestige
@@ -422,6 +426,7 @@ public struct MetaState: Codable, Hashable, Sendable {
         challengeClaims = try container.decodeIfPresent([String: Int].self, forKey: .challengeClaims) ?? [:]
         challengeStreak = max(0, try container.decodeIfPresent(Int.self, forKey: .challengeStreak) ?? 0)
         favoriteItems = try container.decodeIfPresent([String: Bool].self, forKey: .favoriteItems) ?? [:]
+        actionHistory = try container.decodeIfPresent(ActionHistory.self, forKey: .actionHistory) ?? ActionHistory()
         time = try container.decodeIfPresent(TimeMetaState.self, forKey: .time) ?? TimeMetaState()
         foreman = try container.decodeIfPresent(ForemanSettings.self, forKey: .foreman) ?? ForemanSettings()
         prestige = try container.decodeIfPresent(PrestigeState.self, forKey: .prestige) ?? PrestigeState()
@@ -602,4 +607,85 @@ public let RESEARCH_CATALOG: [ResearchItem] = [
 
 public func getResearchForPath(_ path: SpecializationPath) -> [ResearchItem] {
     RESEARCH_CATALOG.filter { $0.path == path }
+}
+
+// MARK: - Action History System
+
+public struct FarmAction: Codable, Hashable, Sendable, Identifiable {
+    public let id: UUID
+    public let timestamp: TimeInterval
+    public let actionType: ActionType
+    public let tileIndex: Int?
+    public let cropID: String?
+    public let quantity: Int
+    public let previousState: ActionSnapshot?
+    public let newState: ActionSnapshot?
+
+    public init(
+        actionType: ActionType,
+        tileIndex: Int? = nil,
+        cropID: String? = nil,
+        quantity: Int = 1,
+        previousState: ActionSnapshot? = nil,
+        newState: ActionSnapshot? = nil
+    ) {
+        self.id = UUID()
+        self.timestamp = Date().timeIntervalSince1970
+        self.actionType = actionType
+        self.tileIndex = tileIndex
+        self.cropID = cropID
+        self.quantity = quantity
+        self.previousState = previousState
+        self.newState = newState
+    }
+}
+
+public enum ActionType: String, Codable, Sendable {
+    case plant
+    case harvest
+    case water
+    case clear
+    case buy
+    case sell
+    case unlock
+    case upgrade
+}
+
+public struct ActionSnapshot: Codable, Hashable, Sendable {
+    public let coinBalance: Int
+    public let seeds: [String: Int]
+    public let crops: [String: Int]
+    public let tileStates: [Int: Tile]
+
+    public init(coinBalance: Int, seeds: [String: Int], crops: [String: Int], tileStates: [Int: Tile]) {
+        self.coinBalance = coinBalance
+        self.seeds = seeds
+        self.crops = crops
+        self.tileStates = tileStates
+    }
+}
+
+public struct ActionHistory: Codable, Hashable, Sendable {
+    public var actions: [FarmAction]
+    public static let maxHistory = 50
+
+    public init(actions: [FarmAction] = []) {
+        self.actions = actions
+    }
+
+    public mutating func record(_ action: FarmAction) {
+        actions.append(action)
+        if actions.count > Self.maxHistory {
+            actions.removeFirst(actions.count - Self.maxHistory)
+        }
+    }
+
+    public var lastAction: FarmAction? {
+        actions.last
+    }
+
+    public func canUndo(actionType: ActionType) -> Bool {
+        guard let last = lastAction else { return false }
+        return last.actionType == actionType && last.previousState != nil
+    }
 }

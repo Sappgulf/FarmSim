@@ -581,3 +581,85 @@ private struct VectorAction: Decodable {
     let tile: Int?
     let cropId: String?
 }
+
+// MARK: - Action History Tests
+
+final class ActionHistoryTests: XCTestCase {
+    func testActionHistoryRecordsPlant() throws {
+        var history = ActionHistory()
+        
+        let action = FarmAction(
+            actionType: .plant,
+            tileIndex: 0,
+            cropID: "carrot",
+            quantity: 1
+        )
+        
+        history.record(action)
+        
+        XCTAssertEqual(history.actions.count, 1)
+        XCTAssertEqual(history.lastAction?.actionType, .plant)
+        XCTAssertEqual(history.lastAction?.tileIndex, 0)
+    }
+    
+    func testActionHistoryCapsAt50() throws {
+        var history = ActionHistory()
+        
+        for i in 0..<60 {
+            let action = FarmAction(actionType: .plant, tileIndex: i)
+            history.record(action)
+        }
+        
+        XCTAssertEqual(history.actions.count, 50)
+        XCTAssertEqual(history.lastAction?.tileIndex, 59)
+    }
+    
+    func testActionHistoryCanUndo() throws {
+        var history = ActionHistory()
+        
+        let previousState = ActionSnapshot(
+            coinBalance: 100,
+            seeds: ["carrot": 2],
+            crops: [:],
+            tileStates: [:]
+        )
+        
+        let action = FarmAction(
+            actionType: .plant,
+            tileIndex: 0,
+            cropID: "carrot",
+            quantity: 1,
+            previousState: previousState
+        )
+        
+        history.record(action)
+        
+        XCTAssertTrue(history.canUndo(actionType: .plant))
+        XCTAssertFalse(history.canUndo(actionType: .harvest))
+    }
+    
+    func testActionSnapshotEncoding() throws {
+        let snapshot = ActionSnapshot(
+            coinBalance: 500,
+            seeds: ["carrot": 5, "tomato": 3],
+            crops: ["carrot": 10],
+            tileStates: [0: Tile(index: 0)]
+        )
+        
+        let encoded = try JSONEncoder().encode(snapshot)
+        let decoded = try JSONDecoder().decode(ActionSnapshot.self, from: encoded)
+        
+        XCTAssertEqual(decoded.coinBalance, 500)
+        XCTAssertEqual(decoded.seeds["carrot"], 5)
+        XCTAssertEqual(decoded.crops["carrot"], 10)
+    }
+    
+    func testMetaStateIncludesActionHistory() throws {
+        var meta = MetaState()
+        
+        let action = FarmAction(actionType: .plant, tileIndex: 0, cropID: "carrot")
+        meta.actionHistory.record(action)
+        
+        XCTAssertEqual(meta.actionHistory.actions.count, 1)
+    }
+}
