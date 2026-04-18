@@ -4,6 +4,7 @@ import GameCore
 
 struct FarmView: View {
     @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @Bindable var store: GameStore
     @Bindable var appState: AppState
@@ -19,6 +20,10 @@ struct FarmView: View {
     
     private var reducedMotion: Bool {
         store.settings.reducedMotion || accessibilityReduceMotion
+    }
+
+    private var compactBottomLayout: Bool {
+        horizontalSizeClass == .compact
     }
 
     private var weatherSnapshot: FarmWeatherSnapshot {
@@ -77,13 +82,13 @@ struct FarmView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                VStack(spacing: DS.Space.sm) {
+                VStack(spacing: compactBottomLayout ? DS.Space.xs : DS.Space.sm) {
                     statusBar
                     seedTray
                     actionBar
                 }
-                .padding(.horizontal, DS.Space.md)
-                .padding(.bottom, DS.Space.xs)
+                .padding(.horizontal, compactBottomLayout ? DS.Space.sm : DS.Space.md)
+                .padding(.bottom, compactBottomLayout ? DS.Space.xs : DS.Space.xs)
             }
             .onAppear {
                 scene.onTileTapped = { index in
@@ -275,10 +280,10 @@ struct FarmView: View {
     private var statusBar: some View {
         WoodenPanel {
             Text(store.statusText)
-                .font(.footnote)
+                .font(compactBottomLayout ? .caption : .footnote)
                 .foregroundStyle(.white.opacity(0.95))
                 .shadow(color: .black.opacity(0.4), radius: 1)
-                .lineLimit(2)
+                .lineLimit(compactBottomLayout ? 1 : 2)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityLabel("Status")
                 .accessibilityValue(store.statusText)
@@ -299,12 +304,12 @@ struct FarmView: View {
                     } label: {
                         VStack(spacing: DS.Space.xxs) {
                             Text(store.emoji(for: crop.id))
-                                .font(.title3)
+                                .font(compactBottomLayout ? .headline : .title3)
                             Text("\(count)")
-                                .font(.caption.monospacedDigit().weight(.semibold))
+                                .font((compactBottomLayout ? Font.caption2 : Font.caption).monospacedDigit().weight(.semibold))
                         }
                         .foregroundStyle(selected ? Color(red: 0.3, green: 0.2, blue: 0.1) : .white)
-                        .frame(width: 52, height: 56)
+                        .frame(width: compactBottomLayout ? 48 : 52, height: compactBottomLayout ? 52 : 56)
                         .background(
                             ZStack {
                                 if selected {
@@ -330,8 +335,8 @@ struct FarmView: View {
                     .accessibilityHint(unlocked ? "Pick this seed for planting" : "Keep growing to unlock this seed")
                 }
             }
-            .padding(.horizontal, DS.Space.md) // Increased padding
-            .padding(.vertical, DS.Space.sm)
+            .padding(.horizontal, compactBottomLayout ? DS.Space.sm : DS.Space.md)
+            .padding(.vertical, compactBottomLayout ? DS.Space.xs : DS.Space.sm)
         }
         .background(
             ZStack {
@@ -347,7 +352,7 @@ struct FarmView: View {
     }
 
     private var actionBar: some View {
-        HStack(spacing: DS.Space.sm) {
+        HStack(spacing: compactBottomLayout ? DS.Space.xs : DS.Space.sm) {
             Button("Gather Crops") {
                 store.harvestAll()
             }

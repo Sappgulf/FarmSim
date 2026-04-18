@@ -37,3 +37,5 @@
 - [x] Re-ran a direct Playwright smoke test against `http://localhost:4173` and verified tab switching still works with no console errors.
 - [x] Investigated a Vercel build failure: root build was missing `vite` because the web app dependencies were not being installed in the Vercel build environment.
 - [x] Added `vercel.json` to make Vercel install and build `web/` explicitly (`installCommand`, `buildCommand`, `outputDirectory`).
+- [ ] Mobile browser snapshot exposed launch clutter on fresh start: `Tutorial` and `WhatsNewModal` can stack on top of the first playable screen, which reads as crowded on phone-sized viewports. Gate the release-notes modal behind a real returning-player signal so it does not compete with onboarding.
+- [ ] Web runtime has no real GLB/GLTF shipping surface in the current repo scan, so the 3D asset pipeline skill was not directly applicable to this pass.

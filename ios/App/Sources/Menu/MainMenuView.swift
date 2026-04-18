@@ -173,7 +173,20 @@ struct MainMenuView: View {
                 .opacity(subtitleAppeared ? 1.0 : 0)
                 .offset(y: subtitleAppeared ? 0 : 8)
         }
-        .padding(.top, 20)
+        .padding(.top, 12)
+    }
+
+    private var launchHighlights: some View {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 96), spacing: DS.Space.sm)],
+            alignment: .center,
+            spacing: DS.Space.sm
+        ) {
+            highlightPill(icon: "cloud.sun.fill", title: "Live weather")
+            highlightPill(icon: "hand.tap.fill", title: "Touch first")
+            highlightPill(icon: "square.and.arrow.down.fill", title: "Auto save")
+        }
+        .padding(.horizontal, DS.Space.xs)
     }
 
     private var menuButtons: some View {
@@ -198,18 +211,41 @@ struct MainMenuView: View {
             }
         )
         .buttonStyle(WoodButtonStyle())
-        .frame(maxWidth: 300)
-        .padding(.bottom, 52)
+        .frame(maxWidth: 320)
+        .padding(.bottom, 44)
         .scaleEffect(buttonsAppeared ? 1.0 : 0.88)
         .opacity(buttonsAppeared ? 1.0 : 0)
     }
 
     private var versionLabel: some View {
         Text("v1.0.0 · Swift 5.10")
-            .font(Typography.small)
-            .foregroundStyle(.white.opacity(0.38))
-            .padding(.bottom, 14)
-            .opacity(buttonsAppeared ? 1.0 : 0)
+        .font(Typography.small)
+        .foregroundStyle(.white.opacity(0.38))
+        .padding(.bottom, 14)
+        .opacity(buttonsAppeared ? 1.0 : 0)
+    }
+
+    private func highlightPill(icon: String, title: String) -> some View {
+        HStack(spacing: DS.Space.xs) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color(red: 0.96, green: 0.86, blue: 0.58))
+            Text(title)
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.88))
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, minHeight: 44)
+        .padding(.horizontal, DS.Space.sm)
+        .background(
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                .fill(.white.opacity(0.10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                        .strokeBorder(.white.opacity(0.14), lineWidth: 1)
+                )
+        )
+        .shadow(color: .black.opacity(0.16), radius: 4, x: 0, y: 2)
     }
 
     // MARK: - Entrance Sequence

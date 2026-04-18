@@ -1,11 +1,28 @@
 import React, { memo, useEffect, useMemo, useState } from 'react';
-import { ChevronRight, Leaf, Sparkles } from 'lucide-react';
+import { ChevronRight, Leaf, Sparkles, TrendingUp } from 'lucide-react';
 import { Button } from '../../ui/button';
 
 export const START_SCREEN_STORAGE_KEY = 'farmSim_start_screen_seen_v1';
 
 function StartScreenComponent({ onStart }) {
   const [stage, setStage] = useState(0);
+  const launchHighlights = useMemo(() => ([
+    {
+      icon: Leaf,
+      label: 'Seasonal play',
+      detail: 'Weather, growth, and color stay in sync.',
+    },
+    {
+      icon: Sparkles,
+      label: 'Touch first',
+      detail: 'Feels right on desktop, phone, and tablet.',
+    },
+    {
+      icon: TrendingUp,
+      label: 'Auto-save',
+      detail: 'Your homestead keeps its momentum.',
+    },
+  ]), []);
   const reduceMotion = useMemo(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return false;
@@ -40,9 +57,9 @@ function StartScreenComponent({ onStart }) {
       </div>
 
       <div className="relative z-10 flex min-h-dvh items-center">
-        <div className="mx-auto w-full max-w-3xl px-6 py-10 sm:px-8 lg:px-10">
+        <div className="mx-auto w-full max-w-4xl px-6 py-10 sm:px-8 lg:px-10">
           <section
-            className={`rounded-[2rem] border border-white/12 bg-white/7 px-6 py-8 text-center shadow-[0_26px_90px_-34px_rgba(15,23,42,0.9)] backdrop-blur-xl transition-[opacity,transform] duration-700 ${
+            className={`rounded-[2rem] border border-white/12 bg-white/7 px-6 py-8 text-center shadow-[0_26px_90px_-34px_rgba(15,23,42,0.9)] backdrop-blur-xl transition-[opacity,transform] duration-700 sm:px-8 sm:py-10 ${
               stage >= 1 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
             }`}
           >
@@ -59,6 +76,23 @@ function StartScreenComponent({ onStart }) {
               Start small, read the season, and grow into something bigger.
             </p>
 
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              {launchHighlights.map(({ icon: Icon, label, detail }) => (
+                <div
+                  key={label}
+                  className="rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-left shadow-[0_14px_38px_-28px_rgba(15,23,42,0.75)] backdrop-blur-md"
+                >
+                  <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-100/75">
+                    <Icon size={12} />
+                    {label}
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-emerald-50/82">
+                    {detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button
                 onClick={onStart}
@@ -70,6 +104,10 @@ function StartScreenComponent({ onStart }) {
                 <ChevronRight className="ml-2 transition-transform group-hover:translate-x-1" size={20} />
               </Button>
             </div>
+
+            <p className="mt-4 text-xs font-medium uppercase tracking-[0.28em] text-emerald-100/55">
+              Built for one-tap play across desktop and mobile
+            </p>
           </section>
         </div>
       </div>

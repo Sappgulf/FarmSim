@@ -49,6 +49,9 @@ export function FarmSimCore() {
   const store = useGameStore();
   const paused = useGameSelector((state) => Boolean(state.gameLoop?.paused));
   const fps = useGameSelector((state) => state.gameLoop?.fps || 0);
+  const coins = useGameSelector((state) => state.coins || 0);
+  const xp = useGameSelector((state) => state.xp || 0);
+  const level = useGameSelector((state) => state.level || 1);
   const musicEnabled = useGameSelector((state) => state.settings?.musicEnabled !== false);
   const soundEnabled = useGameSelector((state) => state.settings?.soundEnabled !== false);
   const reducedMotionEnabled = useGameSelector((state) => state.settings?.reducedMotion === true);
@@ -60,6 +63,9 @@ export function FarmSimCore() {
   const farmThemeId = useGameSelector((state) => state.farmTheme || null);
   const weather = useGameSelector((state) => state.weather || 'sunny');
   const ghostVisitActive = useGameSelector((state) => Boolean(state.ghostVisit?.active));
+  const plots = useGameSelector((state) => (Array.isArray(state.plots) ? state.plots : []));
+  const notifications = useGameSelector((state) => (Array.isArray(state.notifications) ? state.notifications : []));
+  const onboardingSeen = useGameSelector((state) => Boolean(state.onboardingSeen || state.onboardingSkipped));
 
   const debugToolsAllowed = shouldShowDebugTools();
   const debugQueryEnabled = useMemo(() => {
@@ -527,7 +533,75 @@ export function FarmSimCore() {
   }, [actions, dayCount, hasCozyVisualWeather]);
 
   const activeTheme = getFarmTheme(farmThemeId);
+  const activeThemeId = activeTheme.id;
   const themeVars = getFarmThemeVars(activeTheme);
+  const plotSummary = useMemo(() => {
+    let active = 0;
+    let ready = 0;
+    let empty = 0;
+    for (const plot of plots) {
+      if (!plot) continue;
+      if (plot.state === 'empty') {
+        empty += 1;
+      } else {
+        active += 1;
+      }
+      if (plot.state === 'ready') {
+        ready += 1;
+      }
+    }
+    return { active, ready, empty };
+  }, [plots]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const renderGameToText = () => JSON.stringify({
+      screen: showStartScreen ? 'start' : 'game',
+      section: activeSection,
+      tab: activeTab,
+      paused,
+      timePeriod,
+      season: seasonCurrent,
+      weather: cozyVisualWeather || weather,
+      day: dayCount,
+      coins,
+      xp,
+      level,
+      farmTheme: activeThemeId,
+      plots: plotSummary,
+      ui: {
+        notifications: notifications.length,
+        onboardingSeen,
+        ghostVisitActive,
+      },
+    });
+
+    window.render_game_to_text = renderGameToText;
+    return () => {
+      if (window.render_game_to_text === renderGameToText) {
+        delete window.render_game_to_text;
+      }
+    };
+  }, [
+    activeSection,
+    activeTab,
+    activeThemeId,
+    coins,
+    cozyVisualWeather,
+    dayCount,
+    ghostVisitActive,
+    level,
+    notifications.length,
+    onboardingSeen,
+    paused,
+    plotSummary,
+    seasonCurrent,
+    showStartScreen,
+    timePeriod,
+    weather,
+    xp,
+  ]);
 
   return (
     <div

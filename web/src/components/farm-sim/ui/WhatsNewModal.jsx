@@ -8,13 +8,14 @@ import { getContentManager } from '../../../content/ContentManager';
 const WhatsNewModal = memo(() => {
   const actions = useGameActions();
   const whatsNew = useGameSelector((state) => state.whatsNew || null);
+  const onboardingReady = useGameSelector((state) => Boolean(state.onboardingSeen || state.onboardingSkipped));
   const [isOpen, setIsOpen] = useState(false);
 
   const content = getContentManager();
   const releaseNotes = useMemo(() => getLatestReleaseNotes(), []);
   const hasNotes = releaseNotes.sections?.length > 0;
   const lastSeenVersion = whatsNew?.lastSeenVersion || null;
-  const shouldShow = hasNotes && lastSeenVersion !== APP_VERSION;
+  const shouldShow = hasNotes && lastSeenVersion !== APP_VERSION && onboardingReady;
 
   useEffect(() => {
     if (shouldShow) {
@@ -36,8 +37,8 @@ const WhatsNewModal = memo(() => {
   const title = content.strings?.ui?.whatsNewTitle || "What's New";
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4 py-6">
-      <section className="w-full max-w-lg overflow-hidden rounded-[28px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.9))] shadow-[0_30px_90px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl">
+    <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 px-0 py-0 sm:items-center sm:px-4 sm:py-6">
+      <section className="w-full max-w-lg overflow-hidden rounded-t-[28px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.9))] shadow-[0_30px_90px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl sm:rounded-[28px] max-h-[88vh]">
         <div className="h-1 bg-gradient-to-r from-emerald-300 via-emerald-200 to-teal-200" />
         <div className="border-b border-emerald-100/70 px-5 py-4">
           <div className="text-[10px] font-semibold uppercase tracking-[0.34em] text-emerald-600">{releaseNotes.title}</div>
