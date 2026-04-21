@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import {
   Leaf, ShoppingCart, Trophy, Dna, Building2, Settings, CloudSun,
-  Target, Package, RotateCcw, Volume2, VolumeX, HelpCircle, Crown, Factory
+  Target, Package, RotateCcw, Volume2, VolumeX, HelpCircle, Crown, Factory, Droplets, Sprout
 } from 'lucide-react';
 
 // Hooks
@@ -288,6 +288,15 @@ export default function FarmGame() {
       else counts.active += 1;
       return counts;
     }, { ready: 0, active: 0, empty: 0 });
+  }, [plots, getPlotStatus]);
+
+  const actionablePlotCounts = useMemo(() => {
+    return plots.reduce((counts, plot, index) => {
+      const { status } = getPlotStatus(index);
+      if (status === 'ready') counts.ready += 1;
+      if (plot?.crop && !plot?.wateredAt && status !== 'ready') counts.thirsty += 1;
+      return counts;
+    }, { ready: 0, thirsty: 0 });
   }, [plots, getPlotStatus]);
 
   // Day/night cycle
@@ -1122,6 +1131,26 @@ export default function FarmGame() {
     }
   }, [plots, getPlotStatus, harvest, applyHarvestIdentity, addNotification, reducedMotion, fireConfetti, sound, flashGold, gridSize, unlockMemory]);
 
+  const handleWaterAll = useCallback(() => {
+    let watered = 0;
+    plots.forEach((plot, index) => {
+      if (!plot?.crop || plot?.wateredAt) return;
+      const { status } = getPlotStatus(index);
+      if (status === 'ready') return;
+      if (water(index)) {
+        watered += 1;
+      }
+    });
+
+    if (watered > 0) {
+      addNotification(`💧 Watered ${watered} thirsty plot${watered > 1 ? 's' : ''}.`, 'success');
+      sound.playSuccess();
+      bumpMood(1);
+    } else {
+      addNotification('🌱 Your active crops are already hydrated.', 'info');
+    }
+  }, [plots, getPlotStatus, water, addNotification, sound, bumpMood]);
+
   // ------------ RENDER ------------
 
   // Get day/night visual adjustments
@@ -1219,6 +1248,56 @@ export default function FarmGame() {
           activeBlessing={activeBlessing}
           onShowHelp={() => handleShowHelp('basics')}
         />
+
+        <div className="mt-3 rounded-2xl border border-emerald-100/80 bg-white/80 p-3 shadow-sm backdrop-blur-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-700/70">
+                Farm rhythm
+              </div>
+              <p className="text-sm text-slate-700">
+                {actionablePlotCounts.ready > 0
+                  ? `${actionablePlotCounts.ready} crop${actionablePlotCounts.ready > 1 ? 's are' : ' is'} ready to harvest.`
+                  : actionablePlotCounts.thirsty > 0
+                    ? `${actionablePlotCounts.thirsty} crop${actionablePlotCounts.thirsty > 1 ? 's need' : ' needs'} water.`
+                    : 'Everything is stable. Plant another crop to keep momentum.'}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleHarvestAll}
+                disabled={actionablePlotCounts.ready === 0}
+                className="gap-1.5"
+              >
+                <Leaf size={14} />
+                Harvest all
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleWaterAll}
+                disabled={actionablePlotCounts.thirsty === 0}
+                className="gap-1.5"
+              >
+                <Droplets size={14} />
+                Water all
+              </Button>
+              {ownedSeedRecommendation && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedSeed(ownedSeedRecommendation.id)}
+                  className="gap-1.5 border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
+                >
+                  <Sprout size={14} />
+                  Queue {ownedSeedRecommendation.title}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Desktop Layout */}
         <div className="hidden sm:grid sm:grid-cols-[minmax(0,1.2fr)_360px] gap-5 mt-4 items-start">
