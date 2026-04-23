@@ -37,6 +37,10 @@ const ONBOARDING_STEPS = [
 
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
+export const isTutorialInteractiveTarget = (target) => Boolean(
+  target?.closest?.('button, input, textarea, select, a, label, [role="button"]')
+);
+
 const Tutorial = memo(() => {
   const actions = useGameActions();
   const onboardingStep = useGameSelector((state) => state.onboardingStep || 0);
@@ -163,6 +167,9 @@ const Tutorial = memo(() => {
   /* Drag handlers --------------------------------------------------- */
   const handlePointerDown = (event) => {
     if (!position) return;
+    if (isTutorialInteractiveTarget(event.target)) {
+      return;
+    }
     dragStateRef.current = {
       startX: event.clientX,
       startY: event.clientY,
@@ -231,7 +238,7 @@ const Tutorial = memo(() => {
       {targetRect && (
         <>
           <div
-            className="absolute rounded-2xl border-2 border-emerald-300/70 ring-4 ring-emerald-200/30 shadow-[0_0_40px_-8px_rgba(16,185,129,0.45)] pointer-events-none transition-all duration-500"
+            className="absolute rounded-2xl ring-1 ring-white/20 shadow-[0_0_32px_-8px_rgba(255,255,255,0.14)] pointer-events-none transition-all duration-500"
             style={{
               top: targetRect.top - 8,
               left: targetRect.left - 8,
@@ -241,7 +248,7 @@ const Tutorial = memo(() => {
           />
           {/* Soft inner glow behind target */}
           <div
-            className="absolute rounded-2xl bg-emerald-400/10 pointer-events-none transition-all duration-500"
+            className="absolute rounded-2xl bg-white/8 pointer-events-none transition-all duration-500"
             style={{
               top: targetRect.top - 8,
               left: targetRect.left - 8,
@@ -258,15 +265,17 @@ const Tutorial = memo(() => {
         style={{ top: position.top, left: position.left, width: position.width }}
       >
         <div
-          className={`pointer-events-auto rounded-[2rem] border border-white/20 bg-white/10 backdrop-blur-2xl shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] p-5 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+          className={`pointer-events-auto rounded-[2rem] border border-white/20 bg-white/10 backdrop-blur-2xl shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] p-5 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] touch-manipulation ${
             cardVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-[0.96]'
           }`}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          onLostPointerCapture={handlePointerUp}
         >
           {/* Top bar: emoji + title + close */}
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start justify-between gap-3 cursor-grab active:cursor-grabbing">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-xl shadow-inner">
                 {currentStep.emoji}

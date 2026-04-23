@@ -1299,7 +1299,7 @@ const FarmGrid = memo(() => {
   return (
     <Card
       data-onboard="farm-grid"
-      className={`p-4 sm:p-6 relative overflow-hidden rounded-2xl shadow-lg border border-green-100/50 backdrop-blur-sm farm-field-shell ${farmAtmosphere.shellClassName}`}
+      className={`p-4 sm:p-6 relative overflow-hidden rounded-2xl shadow-lg border border-slate-200/70 dark:border-slate-700/60 backdrop-blur-sm farm-field-shell ${farmAtmosphere.shellClassName}`}
     >
       <div className="mb-4 text-center relative z-20">
         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -1486,7 +1486,7 @@ const FarmGrid = memo(() => {
 
       {/* Farm Grid - Responsive with larger touch targets on mobile */}
       <div
-        className={`grid gap-2 sm:gap-3 md:gap-4 mx-auto justify-center farm-grid relative w-full rounded-[1.5rem] p-3 sm:p-5 border-[3px] border-emerald-900/10 shadow-[inset_0_2px_12px_rgba(0,0,0,0.06)] ${farmAtmosphere.gridClassName}`}
+        className={`grid gap-2 sm:gap-3 md:gap-4 mx-auto justify-center farm-grid relative w-full rounded-[1.5rem] p-3 sm:p-5 border border-slate-200/50 dark:border-slate-700/50 shadow-[inset_0_2px_12px_rgba(0,0,0,0.06)] ${farmAtmosphere.gridClassName}`}
         data-harvest-bloom={harvestBloomTick > 0 ? 'on' : 'off'}
         style={{
           gridTemplateColumns: `repeat(${gridSize}, minmax(${gridSize >= 5 ? 56 : 64}px, 1fr))`,
