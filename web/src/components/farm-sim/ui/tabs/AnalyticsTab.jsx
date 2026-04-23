@@ -3,7 +3,7 @@ import { useGame } from '../../context/GameContext';
 import { CROP_DATA } from '../../constants/cropData';
 import { Badge } from '../../../ui/badge';
 import { TrendingUp, TrendingDown, DollarSign, Zap, Award, PieChart } from 'lucide-react';
-import { TabHero, TabSection } from './TabSurface';
+import { TabHero, TabSection, TabEmptyState } from './TabSurface';
 
 /**
  * Farm Analytics Dashboard
@@ -302,7 +302,12 @@ const AnalyticsTab = memo(() => {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-600">No crops harvested yet. Start farming to see your top performers.</p>
+            <TabEmptyState
+              icon="📊"
+              tone="emerald"
+              title="No crops harvested yet"
+              description="Start farming to see your top performers."
+            />
           )}
         </TabSection>
 

@@ -13,7 +13,7 @@ import {
   getResetCountdownLabel,
 } from '../../../../utils/challengesBoard';
 import { logDebugAction } from '../../../../utils/debugTools';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 const REFRESH_COST = 90;
 const WEEKLY_MILESTONES = [
@@ -255,14 +255,21 @@ const ChallengesTab = memo(() => {
         </div>
       </TabHero>
 
-      {challengesWithProgress.length === 0 ? (
-        <Card className="p-6 text-center">
-          <div className="text-4xl mb-2">🎯</div>
-          <p className="text-gray-600">Generating daily operations...</p>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {challengesWithProgress.map((challenge) => {
+      <TabSection
+        title="Daily Operations"
+        description="Claim rewards as you finish each goal."
+        tone="amber"
+      >
+        {challengesWithProgress.length === 0 ? (
+          <TabEmptyState
+            icon="🎯"
+            tone="amber"
+            title="Generating daily operations..."
+            description="The board refreshes automatically when ready."
+          />
+        ) : (
+          <div className="space-y-3">
+            {challengesWithProgress.map((challenge) => {
             const styles = getDifficultyStyles(challenge.difficulty);
             const progressPercent = Math.min(100, Math.round((challenge.progress / challenge.target) * 100));
 
@@ -311,9 +318,13 @@ const ChallengesTab = memo(() => {
           })}
         </div>
       )}
+      </TabSection>
 
-      <Card className="p-4 bg-slate-50/80">
-        <h4 className="font-semibold mb-2">📊 Progress Snapshot</h4>
+      <TabSection
+        title="Progress Snapshot"
+        description="Category coverage and completion depth."
+        tone="sky"
+      >
         <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 text-sm sm:grid-cols-2">
           <div className="p-2 bg-white rounded-2xl text-center shadow-sm">
             <div className="font-bold text-emerald-700">{claimedCount}/{challengesWithProgress.length}</div>
@@ -324,13 +335,13 @@ const ChallengesTab = memo(() => {
             <div className="text-gray-600">Current Streak</div>
           </div>
         </div>
-      </Card>
+      </TabSection>
 
-      <Card className="p-4 bg-slate-50/80">
-        <h4 className="font-semibold mb-2 text-slate-900">🗓️ Weekly Operations Milestones</h4>
-        <p className="text-xs text-slate-600 mb-3">
-          Clear all daily operations on multiple days this week to unlock milestone rewards.
-        </p>
+      <TabSection
+        title="Weekly Operations Milestones"
+        description="Clear all daily operations on multiple days this week to unlock milestone rewards."
+        tone="emerald"
+      >
         <div className="space-y-2">
           {WEEKLY_MILESTONES.map((milestone) => {
             const reached = weeklyOpsState.completedDays.length >= milestone.days;
@@ -363,7 +374,7 @@ const ChallengesTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
     </div>
   );
 });

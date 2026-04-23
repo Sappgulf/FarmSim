@@ -4,6 +4,7 @@ import { useTick } from '../context/TickContext';
 import { Card } from '../../ui/card';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
+import Tooltip from '../../ui/tooltip';
 import { CROP_DATA, CROP_LIST } from '../constants/cropData';
 import { DECORATION_DATA } from '../constants/decorData';
 import {
@@ -257,292 +258,292 @@ const FarmPlot = memo(({
     return `Plot ${index + 1}: ${stateLabel}${cropLabel}`;
   }, [index, plot?.crop?.name, plot?.state]);
 
+  const tooltipContent = useMemo(() => {
+    if (!plot || !showTooltips) return null;
+    return (
+      <div className="w-44">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="font-bold text-sm">Plot #{index + 1}</span>
+          <span className={`w-2.5 h-2.5 rounded-full border border-white/20 ${
+            (plot.soilFertility || 1.0) > 0.8 ? 'bg-emerald-400' :
+            (plot.soilFertility || 1.0) > 0.5 ? 'bg-yellow-400' : 'bg-red-400'
+          }`} />
+        </div>
+        {plot.state !== 'empty' && plot.crop && (
+          <>
+            <div className="text-yellow-300 font-semibold text-sm">{plot.crop.emoji} {plot.crop.name}</div>
+            <div className="mt-1.5 space-y-1 text-gray-200 text-[11px] leading-relaxed">
+              <div className="flex justify-between"><span>💧 Water</span> <span className="font-medium">{Math.round(plot.waterLevel || 0)}%</span></div>
+              <div className="flex justify-between"><span>🌱 Fertility</span> <span className="font-medium">{Math.round((plot.soilFertility || 1.0) * 100)}%</span></div>
+              <div className="flex justify-between"><span>📍 District</span> <span className="font-medium">{district.name}</span></div>
+              {plot.fertilizer > 0 && <div className="flex justify-between"><span>✨ Fertilizer</span> <span className="font-medium">+{plot.fertilizer * 10}%</span></div>}
+              {plot.disease && <div className="text-red-400 flex justify-between"><span>🐛 Status</span> <span>Diseased!</span></div>}
+              {(plot.state === 'growing' || plot.state === 'planted') && display.progress !== undefined && (
+                <div className="flex justify-between"><span>📈 Growth</span> <span className="font-medium">{display.progress}%</span></div>
+              )}
+              {plot.weatherModifier && plot.weatherModifier !== 1.0 && (
+                <div className={plot.weatherModifier > 1.0 ? 'text-green-400 flex justify-between' : 'text-orange-400 flex justify-between'}>
+                  <span>🌤️ Weather</span>
+                  <span className="font-medium">{plot.weatherModifier > 1.0 ? '+' : ''}{Math.round((plot.weatherModifier - 1.0) * 100)}%</span>
+                </div>
+              )}
+              {hasSoilAnalyzer && plot.crop && (
+                <div className="text-emerald-300 flex justify-between">
+                  <span>🧪 Est. Value</span>
+                  <span className="font-medium">{Math.floor((plot.crop.baseValue || 10) * (plot.soilFertility || 1.0) * harvestMultiplier)}🪙</span>
+                </div>
+              )}
+              {plot.weatherDamage && <div className="text-red-400 flex justify-between"><span>⚡ Damage</span> <span>Storm</span></div>}
+              {plot.droughtDamage && <div className="text-orange-400 flex justify-between"><span>☀️ Damage</span> <span>Drought</span></div>}
+            </div>
+          </>
+        )}
+        {plot.state === 'decor' && plot.decorationId && (
+          <div className="text-rose-200">
+            <div className="font-semibold text-sm">Decor</div>
+            <div className="mt-1 text-xs text-gray-300">Tap to remove or swap.</div>
+          </div>
+        )}
+        {plot.state === 'empty' && (
+          <div className="text-gray-300 space-y-1 text-[11px] leading-relaxed">
+            <div className="flex justify-between"><span>🌱 Fertility</span> <span className="font-medium">{Math.round((plot.soilFertility || 1.0) * 100)}%</span></div>
+            <div className="flex justify-between"><span>📍 District</span> <span className="font-medium">{district.name}</span></div>
+            <div className="text-gray-400 mt-1">Click to plant or decorate.</div>
+          </div>
+        )}
+        {plot.state === 'withered' && (
+          <div className="text-red-400">
+            <div className="font-semibold text-sm">Dead Crop 💀</div>
+            <div className="mt-1 text-xs text-gray-300">Reason: {plot.witherReason === 'no_water' ? 'No Water' : plot.witherReason === 'overripe' ? 'Left Too Long' : 'Unknown'}</div>
+            <div className="mt-1 text-xs font-bold text-yellow-300">👆 Click to clear!</div>
+          </div>
+        )}
+      </div>
+    );
+  }, [plot, showTooltips, index, district, display.progress, hasSoilAnalyzer, harvestMultiplier]);
+
+  const plotCard = (
+    <Card
+      className={`
+        w-full aspect-square min-h-[56px] sm:min-h-[72px] md:min-h-[88px] cursor-pointer relative overflow-hidden
+        transition-all-fast hover-lift
+        ${display.bgColor} ${display.borderColor} border-2
+        ${display.hoverEffect} active:scale-[0.96]
+        ${display.animation || ''}
+        ${display.emphasisClassName || ''}
+        ${plot?.disease ? 'ring-2 ring-red-400 ring-opacity-50' : ''}
+        ${plot?.fertilizer > 0 ? 'ring-2 ring-green-400 ring-opacity-50' : ''}
+        ${isSelected ? 'ring-[3px] ring-emerald-400/80 shadow-[0_0_18px_rgba(52,211,153,0.4)] scale-105' : ''}
+        ${showPreview && plot?.state === 'empty' ? 'ring-4 ring-emerald-400 ring-opacity-70' : ''}
+        ${plot?.state === 'decor' ? 'shadow-inner' : ''}
+        ${district?.surfaceClassName || ''}
+        ${isTrinket ? 'trinket-idle' : ''}
+        touch-manipulation select-none
+      `}
+      style={display.plotStyle || undefined}
+      onClick={handleClick}
+      onMouseEnter={() => {
+        if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
+          setShowPreview(true);
+        }
+      }}
+      onMouseLeave={() => {
+        setShowPreview(false);
+      }}
+      onTouchStart={() => {
+        if (previewTouchTimerRef.current) {
+          clearTimeout(previewTouchTimerRef.current);
+          previewTouchTimerRef.current = null;
+        }
+        if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
+          setShowPreview(true);
+        }
+      }}
+      onTouchEnd={() => {
+        if (previewTouchTimerRef.current) {
+          clearTimeout(previewTouchTimerRef.current);
+        }
+        previewTouchTimerRef.current = setTimeout(() => {
+          setShowPreview(false);
+          previewTouchTimerRef.current = null;
+        }, 2000);
+      }}
+      onTouchCancel={() => {
+        if (previewTouchTimerRef.current) {
+          clearTimeout(previewTouchTimerRef.current);
+          previewTouchTimerRef.current = null;
+        }
+        setShowPreview(false);
+      }}
+      onKeyDown={handleKeyDown}
+      data-plot-button="true"
+      tabIndex={0}
+      role="button"
+      aria-label={ariaLabel}
+    >
+      {/* Soil fertility gradient overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-t ${getSoilGradient()} pointer-events-none`} />
+      <div className="absolute bottom-1 right-1 rounded-full bg-white/78 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-500 shadow-sm">
+        {district.shortLabel}
+      </div>
+      {isReadyPlot && <div className="harvest-ready-sheen" aria-hidden="true" />}
+      {isReadyPlot && (
+        <div className="absolute inset-0 rounded-lg pointer-events-none z-10 animate-pulse border-2 border-amber-300/60" aria-hidden="true" />
+      )}
+      {isReadyPlot && (
+        <div className="absolute inset-x-2 top-2 z-20 flex items-center justify-between">
+          <span className="harvest-ready-ribbon">
+            Ready
+          </span>
+          <span className="rounded-full bg-white/88 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-amber-700 shadow-sm">
+            Tap
+          </span>
+        </div>
+      )}
+      {isReadyPlot && (
+        <div className="absolute bottom-7 left-1/2 -translate-x-1/2 z-20 animate-bounce pointer-events-none">
+          <span className="text-sm drop-shadow-md">⬇️</span>
+        </div>
+      )}
+
+      <div className="flex flex-col items-center justify-center h-full p-0.5 sm:p-1 relative z-10">
+        {/* Crop emoji with growth animation - Responsive sizes */}
+        <div
+          className={`${isDenseGrid ? 'text-lg sm:text-2xl md:text-3xl' : 'text-xl sm:text-2xl md:text-3xl'} mb-0.5 sm:mb-1 transition-transform-medium ${plot?.state === 'growing' ? 'animate-grow' : ''
+            } ${plot?.state === 'ready' ? 'animate-ready-pop' : ''
+            } ${showPreview ? 'opacity-50' : ''
+            }`}
+          style={{
+            transform: plot?.state === 'growing'
+              ? `scale(${0.6 + (growthScaleProgress * 0.6)})`  // Grows from 60% to 120% size
+              : plot?.state === 'ready'
+                ? 'scale(1.2)'
+                : 'scale(1)'
+          }}
+        >
+          {display.emoji}
+        </div>
+
+        {/* Planting/Decor preview */}
+        {showPreview && plot?.state === 'empty' && (selectedCrop || selectedDecoration) && (
+          <div className="absolute inset-0 flex items-center justify-center animate-pulse z-20">
+            <div className="text-3xl sm:text-4xl opacity-70">
+              {selectedDecoration?.emoji || selectedCrop?.emoji}
+            </div>
+            <div className="absolute bottom-1 left-0 right-0 text-center text-[8px] sm:text-[10px] font-bold text-emerald-700">
+              {isDecorMode ? 'Click to decorate' : 'Click to plant'}
+            </div>
+          </div>
+        )}
+        <div className={`text-[10px] sm:text-xs text-center font-medium leading-tight ${display.textClassName || 'text-gray-700'}`}>
+          {display.text}
+        </div>
+        {plot?.state === 'ready' ? (
+          <>
+            <ReadyCountdown readyAt={plot.readyAt} />
+            <div className="flex items-center gap-0.5 text-[10px] font-bold text-amber-700 mt-0.5">
+              <span>🪙</span>
+              <span>{display.subText}</span>
+            </div>
+          </>
+        ) : (
+          display.subText && (
+            <div className={`text-[9px] text-center font-semibold mt-0.5 ${display.subTextClassName || 'text-gray-600'}`}>
+              {display.subText}
+            </div>
+          )
+        )}
+        {isReadyPlot && (
+          <div className="mt-1 rounded-full bg-amber-950/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-amber-800">
+            Best next move
+          </div>
+        )}
+
+        {/* Enhanced progress bar with percentage */}
+        {display.progress !== undefined && (
+          <div className="absolute bottom-1 left-1 right-1 h-2 sm:h-2.5 bg-gray-200/80 rounded-full overflow-hidden shadow-inner border border-white/40">
+            <div
+              className={`h-full transition-all duration-500 animate-shimmer ${
+                display.progress < 33
+                  ? 'bg-gradient-to-r from-lime-300 to-green-400'
+                  : display.progress < 66
+                    ? 'bg-gradient-to-r from-green-400 to-emerald-500'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-600'
+              }`}
+              style={{ width: `${display.progress}%` }}
+            />
+            <span className="absolute inset-0 flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-white drop-shadow">
+              {display.progress}%
+            </span>
+          </div>
+        )}
+
+        {/* Enhanced indicators */}
+        <div className="absolute top-1 right-1 flex flex-col gap-1">
+          {/* Weather damage indicator */}
+          {plot?.weatherDamage && (
+            <div className="text-xs animate-pulse" title="Storm Damaged!">⚡</div>
+          )}
+          {plot?.droughtDamage && (
+            <div className="text-xs animate-pulse" title="Drought Damage!">☀️</div>
+          )}
+          {plot?.disease && (
+            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg" title="Diseased!" />
+          )}
+          {plot?.fertilizer > 0 && (
+            <div className="w-3 h-3 bg-green-500 rounded-full shadow-lg" title="Fertilized" />
+          )}
+        </div>
+
+        {/* Weather icon on plot */}
+        {plot?.currentWeather && plot?.state !== 'empty' && (
+          <div className="absolute top-1 left-1 text-xs opacity-60">
+            {plot.currentWeather === 'sunny' && '☀️'}
+            {plot.currentWeather === 'rainy' && '🌧️'}
+            {plot.currentWeather === 'cloudy' && '☁️'}
+            {plot.currentWeather === 'stormy' && '⛈️'}
+            {plot.currentWeather === 'snow' && '❄️'}
+            {plot.currentWeather === 'windy' && '💨'}
+            {plot.currentWeather === 'drought' && '🏜️'}
+          </div>
+        )}
+
+        {/* Withered indicator */}
+        {plot?.state === 'withered' && (
+          <div className="absolute top-1 right-1 z-20 text-xs opacity-80 drop-shadow-sm">💀</div>
+        )}
+
+        {/* Water level indicator */}
+        {plot?.waterLevel !== undefined && plot?.state !== 'empty' && plot?.state !== 'ready' && (
+          <div className="absolute bottom-4 left-1 flex items-center gap-0.5 text-[10px] drop-shadow-sm z-10">
+            {plot.waterLevel > 70 ? (
+              <span title="Well watered">💧</span>
+            ) : plot.waterLevel > 40 ? (
+              <span title="Okay">💧</span>
+            ) : (
+              <span className="animate-pulse" title="Thirsty!">💧</span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Selection indicator */}
+      {isSelected && (
+        <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs px-1 rounded-bl">
+          ✓
+        </div>
+      )}
+    </Card>
+  );
+
   return (
     <div className="relative" ref={plotRef}>
-      <Card
-        className={`
-          w-full aspect-square min-h-[52px] sm:min-h-[72px] md:min-h-[88px] cursor-pointer relative overflow-hidden
-          transition-all-fast hover-lift
-          ${display.bgColor} ${display.borderColor} border-2
-          ${display.hoverEffect} active:scale-95
-          ${display.animation || ''}
-          ${display.emphasisClassName || ''}
-          ${plot?.disease ? 'ring-2 ring-red-400 ring-opacity-50' : ''}
-          ${plot?.fertilizer > 0 ? 'ring-2 ring-green-400 ring-opacity-50' : ''}
-          ${isSelected ? 'ring-[3px] ring-emerald-400/80 shadow-[0_0_18px_rgba(52,211,153,0.4)] scale-105' : ''}
-          ${showPreview && plot?.state === 'empty' ? 'ring-4 ring-emerald-400 ring-opacity-70' : ''}
-          ${plot?.state === 'decor' ? 'shadow-inner' : ''}
-          ${district?.surfaceClassName || ''}
-          ${isTrinket ? 'trinket-idle' : ''}
-          touch-manipulation select-none
-        `}
-        style={display.plotStyle || undefined}
-        onClick={handleClick}
-        onMouseEnter={() => {
-          if (!showTooltips) return;
-          setShowTooltip(true);
-          if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
-            setShowPreview(true);
-          }
-        }}
-        onMouseLeave={() => {
-          if (!showTooltips) return;
-          setShowTooltip(false);
-          setShowPreview(false);
-        }}
-        onTouchStart={() => {
-          if (!showTooltips) return;
-          if (tooltipTouchTimerRef.current) {
-            clearTimeout(tooltipTouchTimerRef.current);
-            tooltipTouchTimerRef.current = null;
-          }
-          setShowTooltip(true);
-          if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
-            setShowPreview(true);
-          }
-        }}
-        onTouchEnd={() => {
-          if (!showTooltips) return;
-          if (tooltipTouchTimerRef.current) {
-            clearTimeout(tooltipTouchTimerRef.current);
-          }
-          tooltipTouchTimerRef.current = setTimeout(() => {
-            setShowTooltip(false);
-            setShowPreview(false);
-            tooltipTouchTimerRef.current = null;
-          }, 2000);
-        }}
-        onTouchCancel={() => {
-          if (tooltipTouchTimerRef.current) {
-            clearTimeout(tooltipTouchTimerRef.current);
-            tooltipTouchTimerRef.current = null;
-          }
-          setShowTooltip(false);
-          setShowPreview(false);
-        }}
-        onKeyDown={handleKeyDown}
-        data-plot-button="true"
-        tabIndex={0}
-        role="button"
-        aria-label={ariaLabel}
-      >
-        {/* Soil fertility gradient overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-t ${getSoilGradient()} pointer-events-none`} />
-        <div className="absolute bottom-1 right-1 rounded-full bg-white/78 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-500 shadow-sm">
-          {district.shortLabel}
-        </div>
-        {isReadyPlot && <div className="harvest-ready-sheen" aria-hidden="true" />}
-        {isReadyPlot && (
-          <div className="absolute inset-0 rounded-lg pointer-events-none z-10 animate-pulse border-2 border-amber-300/60" aria-hidden="true" />
-        )}
-        {isReadyPlot && (
-          <div className="absolute inset-x-2 top-2 z-20 flex items-center justify-between">
-            <span className="harvest-ready-ribbon">
-              Ready
-            </span>
-            <span className="rounded-full bg-white/88 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-amber-700 shadow-sm">
-              Tap
-            </span>
-          </div>
-        )}
-        {isReadyPlot && (
-          <div className="absolute bottom-7 left-1/2 -translate-x-1/2 z-20 animate-bounce pointer-events-none">
-            <span className="text-sm drop-shadow-md">⬇️</span>
-          </div>
-        )}
-
-        <div className="flex flex-col items-center justify-center h-full p-0.5 sm:p-1 relative z-10">
-          {/* Crop emoji with growth animation - Responsive sizes */}
-          <div
-            className={`${isDenseGrid ? 'text-lg sm:text-2xl md:text-3xl' : 'text-xl sm:text-2xl md:text-3xl'} mb-0.5 sm:mb-1 transition-transform-medium ${plot?.state === 'growing' ? 'animate-grow' : ''
-              } ${plot?.state === 'ready' ? 'animate-ready-pop' : ''
-              } ${showPreview ? 'opacity-50' : ''
-              }`}
-            style={{
-              transform: plot?.state === 'growing'
-                ? `scale(${0.6 + (growthScaleProgress * 0.6)})`  // Grows from 60% to 120% size
-                : plot?.state === 'ready'
-                  ? 'scale(1.2)'
-                  : 'scale(1)'
-            }}
-          >
-            {display.emoji}
-          </div>
-
-          {/* Planting/Decor preview */}
-          {showPreview && plot?.state === 'empty' && (selectedCrop || selectedDecoration) && (
-            <div className="absolute inset-0 flex items-center justify-center animate-pulse z-20">
-              <div className="text-3xl sm:text-4xl opacity-70">
-                {selectedDecoration?.emoji || selectedCrop?.emoji}
-              </div>
-              <div className="absolute bottom-1 left-0 right-0 text-center text-[8px] sm:text-[10px] font-bold text-emerald-700">
-                {isDecorMode ? 'Click to decorate' : 'Click to plant'}
-              </div>
-            </div>
-          )}
-          <div className={`text-[10px] sm:text-xs text-center font-medium leading-tight ${display.textClassName || 'text-gray-700'}`}>
-            {display.text}
-          </div>
-          {plot?.state === 'ready' ? (
-            <>
-              <ReadyCountdown readyAt={plot.readyAt} />
-              <div className="flex items-center gap-0.5 text-[10px] font-bold text-amber-700 mt-0.5">
-                <span>🪙</span>
-                <span>{display.subText}</span>
-              </div>
-            </>
-          ) : (
-            display.subText && (
-              <div className={`text-[9px] text-center font-semibold mt-0.5 ${display.subTextClassName || 'text-gray-600'}`}>
-                {display.subText}
-              </div>
-            )
-          )}
-          {isReadyPlot && (
-            <div className="mt-1 rounded-full bg-amber-950/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-amber-800">
-              Best next move
-            </div>
-          )}
-
-          {/* Enhanced progress bar with percentage */}
-          {display.progress !== undefined && (
-            <div className="absolute bottom-1 left-1 right-1 h-2 sm:h-2.5 bg-gray-200/80 rounded-full overflow-hidden shadow-inner border border-white/40">
-              <div
-                className={`h-full transition-all duration-500 animate-shimmer ${
-                  display.progress < 33
-                    ? 'bg-gradient-to-r from-lime-300 to-green-400'
-                    : display.progress < 66
-                      ? 'bg-gradient-to-r from-green-400 to-emerald-500'
-                      : 'bg-gradient-to-r from-emerald-500 to-teal-600'
-                }`}
-                style={{ width: `${display.progress}%` }}
-              />
-              <span className="absolute inset-0 flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-white drop-shadow">
-                {display.progress}%
-              </span>
-            </div>
-          )}
-
-          {/* Enhanced indicators */}
-          <div className="absolute top-1 right-1 flex flex-col gap-1">
-            {/* Weather damage indicator */}
-            {plot?.weatherDamage && (
-              <div className="text-xs animate-pulse" title="Storm Damaged!">⚡</div>
-            )}
-            {plot?.droughtDamage && (
-              <div className="text-xs animate-pulse" title="Drought Damage!">☀️</div>
-            )}
-            {plot?.disease && (
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg" title="Diseased!" />
-            )}
-            {plot?.fertilizer > 0 && (
-              <div className="w-3 h-3 bg-green-500 rounded-full shadow-lg" title="Fertilized" />
-            )}
-          </div>
-
-          {/* Weather icon on plot */}
-          {plot?.currentWeather && plot?.state !== 'empty' && (
-            <div className="absolute top-1 left-1 text-xs opacity-60">
-              {plot.currentWeather === 'sunny' && '☀️'}
-              {plot.currentWeather === 'rainy' && '🌧️'}
-              {plot.currentWeather === 'cloudy' && '☁️'}
-              {plot.currentWeather === 'stormy' && '⛈️'}
-              {plot.currentWeather === 'snow' && '❄️'}
-              {plot.currentWeather === 'windy' && '💨'}
-              {plot.currentWeather === 'drought' && '🏜️'}
-            </div>
-          )}
-
-          {/* Withered indicator */}
-          {plot?.state === 'withered' && (
-            <div className="absolute top-1 right-1 z-20 text-xs opacity-80 drop-shadow-sm">💀</div>
-          )}
-
-          {/* Water level indicator */}
-          {plot?.waterLevel !== undefined && plot?.state !== 'empty' && plot?.state !== 'ready' && (
-            <div className="absolute bottom-4 left-1 flex items-center gap-0.5 text-[10px] drop-shadow-sm z-10">
-              {plot.waterLevel > 70 ? (
-                <span title="Well watered">💧</span>
-              ) : plot.waterLevel > 40 ? (
-                <span title="Okay">💧</span>
-              ) : (
-                <span className="animate-pulse" title="Thirsty!">💧</span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Selection indicator */}
-        {isSelected && (
-          <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs px-1 rounded-bl">
-            ✓
-          </div>
-        )}
-      </Card>
-
-      {/* Enhanced Tooltip */}
-      {showTooltips && showTooltip && plot && (
-        <div className="absolute z-50 -top-2 left-1/2 transform -translate-x-1/2 -translate-y-full">
-          <div className="bg-gray-900/85 backdrop-blur-md text-white text-xs rounded-xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] p-2.5 w-44 animate-fade-in border border-white/10">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="font-bold text-sm">Plot #{index + 1}</span>
-              <span className={`w-2.5 h-2.5 rounded-full border border-white/20 ${
-                (plot.soilFertility || 1.0) > 0.8 ? 'bg-emerald-400' :
-                (plot.soilFertility || 1.0) > 0.5 ? 'bg-yellow-400' : 'bg-red-400'
-              }`} title={`Fertility: ${Math.round((plot.soilFertility || 1.0) * 100)}%`} />
-            </div>
-            {plot.state !== 'empty' && plot.crop && (
-              <>
-                <div className="text-yellow-300 font-semibold text-sm">{plot.crop.emoji} {plot.crop.name}</div>
-                <div className="mt-1.5 space-y-1 text-gray-200 text-[11px] leading-relaxed">
-                  <div className="flex justify-between"><span>💧 Water</span> <span className="font-medium">{Math.round(plot.waterLevel || 0)}%</span></div>
-                  <div className="flex justify-between"><span>🌱 Fertility</span> <span className="font-medium">{Math.round((plot.soilFertility || 1.0) * 100)}%</span></div>
-                  <div className="flex justify-between"><span>📍 District</span> <span className="font-medium">{district.name}</span></div>
-                  {plot.fertilizer > 0 && <div className="flex justify-between"><span>✨ Fertilizer</span> <span className="font-medium">+{plot.fertilizer * 10}%</span></div>}
-                  {plot.disease && <div className="text-red-400 flex justify-between"><span>🐛 Status</span> <span>Diseased!</span></div>}
-                  {(plot.state === 'growing' || plot.state === 'planted') && display.progress !== undefined && (
-                    <div className="flex justify-between"><span>📈 Growth</span> <span className="font-medium">{display.progress}%</span></div>
-                  )}
-                  {plot.weatherModifier && plot.weatherModifier !== 1.0 && (
-                    <div className={plot.weatherModifier > 1.0 ? 'text-green-400 flex justify-between' : 'text-orange-400 flex justify-between'}>
-                      <span>🌤️ Weather</span>
-                      <span className="font-medium">{plot.weatherModifier > 1.0 ? '+' : ''}{Math.round((plot.weatherModifier - 1.0) * 100)}%</span>
-                    </div>
-                  )}
-                  {hasSoilAnalyzer && plot.crop && (
-                    <div className="text-emerald-300 flex justify-between">
-                      <span>🧪 Est. Value</span>
-                      <span className="font-medium">{Math.floor((plot.crop.baseValue || 10) * (plot.soilFertility || 1.0) * harvestMultiplier)}🪙</span>
-                    </div>
-                  )}
-                  {plot.weatherDamage && <div className="text-red-400 flex justify-between"><span>⚡ Damage</span> <span>Storm</span></div>}
-                  {plot.droughtDamage && <div className="text-orange-400 flex justify-between"><span>☀️ Damage</span> <span>Drought</span></div>}
-                </div>
-              </>
-            )}
-            {plot.state === 'decor' && plot.decorationId && (
-              <div className="text-rose-200">
-                <div className="font-semibold text-sm">Decor</div>
-                <div className="mt-1 text-xs text-gray-300">Tap to remove or swap.</div>
-              </div>
-            )}
-            {plot.state === 'empty' && (
-              <div className="text-gray-300 space-y-1 text-[11px] leading-relaxed">
-                <div className="flex justify-between"><span>🌱 Fertility</span> <span className="font-medium">{Math.round((plot.soilFertility || 1.0) * 100)}%</span></div>
-                <div className="flex justify-between"><span>📍 District</span> <span className="font-medium">{district.name}</span></div>
-                <div className="text-gray-400 mt-1">Click to plant or decorate.</div>
-              </div>
-            )}
-            {plot.state === 'withered' && (
-              <div className="text-red-400">
-                <div className="font-semibold text-sm">Dead Crop 💀</div>
-                <div className="mt-1 text-xs text-gray-300">Reason: {plot.witherReason === 'no_water' ? 'No Water' : plot.witherReason === 'overripe' ? 'Left Too Long' : 'Unknown'}</div>
-                <div className="mt-1 text-xs font-bold text-yellow-300">👆 Click to clear!</div>
-              </div>
-            )}
-            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900/85 rotate-45 border-r border-b border-white/10"></div>
-          </div>
-        </div>
+      {showTooltips && tooltipContent ? (
+        <Tooltip content={tooltipContent} placement="top">
+          {plotCard}
+        </Tooltip>
+      ) : (
+        plotCard
       )}
     </div>
   );
@@ -1488,8 +1489,8 @@ const FarmGrid = memo(() => {
         className={`grid gap-2 sm:gap-3 md:gap-4 mx-auto justify-center farm-grid relative w-full rounded-[1.5rem] p-3 sm:p-5 border-[3px] border-emerald-900/10 shadow-[inset_0_2px_12px_rgba(0,0,0,0.06)] ${farmAtmosphere.gridClassName}`}
         data-harvest-bloom={harvestBloomTick > 0 ? 'on' : 'off'}
         style={{
-          gridTemplateColumns: `repeat(${gridSize}, minmax(${gridSize >= 5 ? 52 : 56}px, 1fr))`,
-          maxWidth: `min(100%, ${gridSize * 108}px)`,
+          gridTemplateColumns: `repeat(${gridSize}, minmax(${gridSize >= 5 ? 56 : 64}px, 1fr))`,
+          maxWidth: `min(100%, ${gridSize * (gridSize >= 5 ? 100 : 112)}px)`,
           backgroundImage: `radial-gradient(circle at 2px 2px, rgba(16,185,129,0.08) 1px, transparent 0)`,
           backgroundSize: '18px 18px'
         }}

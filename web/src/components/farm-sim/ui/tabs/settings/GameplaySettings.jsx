@@ -12,6 +12,7 @@ export const GameplaySettings = memo(({
   showWelcomeBackSummary,
   fastMode,
   particleEffects,
+  darkMode,
   handleToggleAnimations,
   handleToggleAutoSave,
   handleToggleShowFps,
@@ -20,7 +21,8 @@ export const GameplaySettings = memo(({
   handleToggleAlmanacHints,
   handleToggleWelcomeBackSummary,
   handleToggleFastMode,
-  handleToggleParticleEffects
+  handleToggleParticleEffects,
+  handleToggleDarkMode
 }) => {
   const experienceRows = [
     {
@@ -50,6 +52,13 @@ export const GameplaySettings = memo(({
       description: 'Reduce heavier motion for comfort or testing.',
       enabled: reducedMotion,
       onToggle: handleToggleReducedMotion,
+    },
+    {
+      key: 'dark-mode',
+      title: 'Dark Mode',
+      description: 'Switch to a darker color theme for low-light comfort.',
+      enabled: darkMode,
+      onToggle: handleToggleDarkMode,
     },
   ];
 

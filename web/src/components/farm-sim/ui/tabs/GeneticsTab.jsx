@@ -6,7 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs';
 import { getContentManager } from '../../../../content/ContentManager';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 const buildBreedingRecipes = (items = []) => (
   Object.fromEntries(items.map((item) => [
@@ -189,14 +189,19 @@ const GeneticsTab = memo(() => {
 
         {/* Breeding Tab */}
         <TabsContent value="breeding" className="space-y-4">
-          <Card className="p-4 bg-slate-50/80">
-            <h4 className="font-semibold mb-3">Select Parent Crops</h4>
-
+          <TabSection
+            title="Select Parent Crops"
+            description="Combine crops to discover hybrids."
+            tone="violet"
+          >
             {/* Parent Selection */}
             {availableCrops.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-600">
-                Grow or harvest crops to unlock breeding options.
-              </div>
+              <TabEmptyState
+                icon="🧬"
+                tone="violet"
+                title="No crops available"
+                description="Grow or harvest crops to unlock breeding options."
+              />
             ) : (
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div>
@@ -289,14 +294,16 @@ const GeneticsTab = memo(() => {
                 </div>
               </Card>
             )}
-          </Card>
+          </TabSection>
         </TabsContent>
 
         {/* Hybrids Tab */}
         <TabsContent value="hybrids" className="space-y-4">
-          <Card className="p-4 bg-slate-50/80">
-            <h4 className="font-semibold mb-3">🌱 Discovered Hybrids</h4>
-
+          <TabSection
+            title="Discovered Hybrids"
+            description="Hybrids found and their rarity stats."
+            tone="emerald"
+          >
             <div className="grid grid-cols-1 gap-3">
               {Object.entries(BREEDING_RECIPES).map(([key, recipe]) => {
                 const owned = state.inventory[recipe.outputId || key] || 0;
@@ -343,14 +350,16 @@ const GeneticsTab = memo(() => {
                 );
               })}
             </div>
-          </Card>
+          </TabSection>
         </TabsContent>
 
         {/* Traits Tab */}
         <TabsContent value="traits" className="space-y-4">
-          <Card className="p-4 bg-slate-50/80">
-            <h4 className="font-semibold mb-3">⚡ Genetic Traits</h4>
-
+          <TabSection
+            title="Genetic Traits"
+            description="Potential trait bonuses from breeding."
+            tone="amber"
+          >
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="p-2 bg-green-50 rounded">
@@ -379,7 +388,7 @@ const GeneticsTab = memo(() => {
                 </div>
               </div>
             </div>
-          </Card>
+          </TabSection>
         </TabsContent>
       </Tabs>
     </div>

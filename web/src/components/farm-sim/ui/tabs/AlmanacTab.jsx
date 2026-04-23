@@ -23,6 +23,8 @@ const switchToTab = (tabId) => {
 const AlmanacTab = memo(() => {
   const { state, actions } = useGame();
   const [openSections, setOpenSections] = useState(() => ALMANAC_SECTIONS.map(section => section.id));
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const reduceMotion = state.settings?.reducedMotion;
 
   const pagesBySection = useMemo(() => {
@@ -38,6 +40,23 @@ const AlmanacTab = memo(() => {
     });
     return grouped;
   }, []);
+
+  const categories = useMemo(() => ['all', ...ALMANAC_SECTIONS.map((s) => s.id)], []);
+
+  const filteredSections = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return ALMANAC_SECTIONS.map((section) => {
+      const pages = pagesBySection[section.id] || [];
+      const filteredPages = pages.filter((page) => {
+        const matchesCategory = selectedCategory === 'all' || section.id === selectedCategory;
+        const matchesSearch = !query
+          || page.title.toLowerCase().includes(query)
+          || (page.hint || '').toLowerCase().includes(query);
+        return matchesCategory && matchesSearch;
+      });
+      return { ...section, pages: filteredPages };
+    }).filter((section) => section.pages.length > 0);
+  }, [searchQuery, selectedCategory, pagesBySection]);
 
   const totalUnlocked = ALMANAC_PAGES.reduce(
     (count, page) => count + (state.almanac?.unlocked?.[page.id] ? 1 : 0),
@@ -68,7 +87,7 @@ const AlmanacTab = memo(() => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <TabHero
         icon="📖"
         tone="emerald"
@@ -367,8 +386,50 @@ const AlmanacTab = memo(() => {
         </div>
       </TabSection>
 
-      {ALMANAC_SECTIONS.map((section) => {
-        const sectionPages = pagesBySection[section.id] || [];
+      <TabSection
+        title="Almanac Library"
+        description="Search and filter every page you have unlocked or are working toward."
+        tone="emerald"
+      >
+        <div className="space-y-3">
+          <Input
+            placeholder="Search pages..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full"
+          />
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <Button
+                key={cat}
+                size="sm"
+                variant={selectedCategory === cat ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory(cat)}
+                className="capitalize"
+              >
+                {cat === 'all' ? 'All' : ALMANAC_SECTIONS.find((s) => s.id === cat)?.title || cat}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </TabSection>
+
+      {filteredSections.length === 0 && (
+        <TabEmptyState
+          icon="🔍"
+          tone="emerald"
+          title="No pages match"
+          description="Try a different search or category filter."
+          action={(
+            <Button size="sm" variant="outline" onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}>
+              Clear filters
+            </Button>
+          )}
+        />
+      )}
+
+      {filteredSections.map((section) => {
+        const sectionPages = section.pages || [];
         const unlockedCount = sectionPages.filter(page => state.almanac?.unlocked?.[page.id]).length;
         const isOpen = openSections.includes(section.id);
         const motionClass = reduceMotion ? '' : 'transition-opacity transition-transform duration-200';
@@ -401,7 +462,7 @@ const AlmanacTab = memo(() => {
                 isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'
               }`}
             >
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {sectionPages.map((page) => {
                   const unlocked = !!state.almanac?.unlocked?.[page.id];
                   const dateUnlocked = state.almanac?.dates?.[page.id];

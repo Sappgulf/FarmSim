@@ -6,7 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Sparkles, Gift, TrendingUp } from 'lucide-react';
 import { MYSTERY_SEED_PACKS, rollMysterySeed, rollMysterySeedWithGuarantee, getRarityColor } from '../../constants/mysterySeedData';
 import { CROP_DATA } from '../../constants/cropData';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 /**
  * Mystery Shop Tab - Gambling mechanics with mystery seed packs
@@ -139,11 +139,11 @@ const MysteryShopTab = memo(() => {
       )}
 
       {/* Mystery Packs */}
-      <Card className="p-4 bg-slate-50/80">
-        <h4 className="font-semibold mb-3 flex items-center gap-2">
-          <Gift className="w-4 h-4" />
-          🎁 Available Packs
-        </h4>
+      <TabSection
+        title="Available Packs"
+        description="Open packs, chase rarities, and let the reveal animation do the work."
+        tone="violet"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {Object.values(MYSTERY_SEED_PACKS).map((pack) => (
             <Card
@@ -190,11 +190,14 @@ const MysteryShopTab = memo(() => {
             </Card>
           ))}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Drop Rate Information */}
-      <Card className="p-4 bg-slate-50/80">
-        <h4 className="font-semibold mb-3">📊 Drop Rates</h4>
+      <TabSection
+        title="Drop Rates"
+        description="Odds for each rarity tier."
+        tone="slate"
+      >
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-sm flex items-center gap-2">
@@ -227,15 +230,15 @@ const MysteryShopTab = memo(() => {
             <Badge variant="outline">1%</Badge>
           </div>
         </div>
-      </Card>
+      </TabSection>
 
       {/* Recent Reveals */}
       {lastReveals.length > 0 && (
-        <Card className="p-4">
-          <h4 className="font-semibold mb-3 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            🎉 Recent Reveals
-          </h4>
+        <TabSection
+          title="Recent Reveals"
+          description="Your latest pack openings."
+          tone="emerald"
+        >
           <div className="space-y-2">
             {lastReveals.slice(0, 5).map((reveal, idx) => (
               <div
@@ -261,19 +264,22 @@ const MysteryShopTab = memo(() => {
               </div>
             ))}
           </div>
-        </Card>
+        </TabSection>
       )}
 
       {/* Tips */}
-      <Card className="p-4 bg-blue-50 border-blue-200">
-        <h4 className="font-semibold mb-2 text-blue-800">💡 Pro Tips</h4>
+      <TabSection
+        title="Pro Tips"
+        description="How to get the most out of the mystery shop."
+        tone="sky"
+      >
         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
           <li>Premium packs guarantee better odds!</li>
           <li>Legendary seeds are incredibly rare (1%)</li>
           <li>All seeds go directly to your inventory</li>
           <li>Higher rarity = better crop stats</li>
         </ul>
-      </Card>
+      </TabSection>
     </div>
   );
 });

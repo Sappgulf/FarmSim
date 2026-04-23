@@ -4,6 +4,18 @@ import FarmSim from "./components/farm-sim/core/FarmSim";
 import GameErrorBoundary from "./components/GameErrorBoundary";
 import "./index.css";
 
+// Apply dark mode before first paint to avoid flash
+(function applyDarkMode() {
+  try {
+    const darkMode = window.localStorage.getItem('farmSim_darkMode');
+    if (darkMode === 'true') {
+      document.documentElement.classList.add('dark');
+    }
+  } catch {
+    // Ignore storage failures in restrictive browsers or private mode.
+  }
+})();
+
 // Global error capture buffer for QA and postmortems
 window.__farmErrorBuffer = window.__farmErrorBuffer || [];
 const pushGlobalError = (entry) => {

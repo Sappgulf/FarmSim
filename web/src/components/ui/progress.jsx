@@ -27,11 +27,11 @@ export function Progress({
 
   return (
     <div
-      className={`relative h-4 w-full overflow-hidden rounded-full bg-slate-200/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] ${className}`}
+      className={`relative h-4 w-full overflow-hidden rounded-full bg-slate-200/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] dark:bg-slate-700/80 ${className}`}
       {...props}
     >
       {/* Track inner highlight */}
-      <div className="pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]" />
+      <div className="pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]" />
 
       {/* Progress bar */}
       <div
@@ -44,7 +44,7 @@ export function Progress({
         style={{ width: `${clampedValue}%` }}
       >
         {/* Subtle top highlight */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-white/40" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-white/40 dark:bg-white/20" />
 
         {/* Shine overlay */}
         <div

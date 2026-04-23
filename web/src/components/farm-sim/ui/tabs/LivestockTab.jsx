@@ -6,7 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { LIVESTOCK_TYPES } from '../../systems/LivestockSystem';
 import { isDevelopmentMode } from '../../../../config/release';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 const LivestockTab = memo(() => {
   const { state, actions, systems } = useGame();
@@ -211,7 +211,11 @@ const LivestockTab = memo(() => {
       </TabHero>
 
       {/* Barn Upgrade */}
-      <Card className="p-4 bg-slate-50/80 shadow-sm hover:shadow-md transition-all">
+      <TabSection
+        title="Barn Capacity"
+        description="Expand to house more animals."
+        tone="amber"
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="text-4xl">🏚️</div>
@@ -242,15 +246,14 @@ const LivestockTab = memo(() => {
             </div>
           </Button>
         </div>
-      </Card>
+      </TabSection>
 
       {/* Buy Animals */}
-      <Card className="p-4 bg-white/90 shadow-sm">
-        <h4 className="font-bold mb-4 flex items-center gap-2 text-lg">
-          🛒 Buy Animals
-          <span className="text-xs text-gray-500 font-normal ml-2">Click to purchase</span>
-        </h4>
-
+      <TabSection
+        title="Buy Animals"
+        description="Click to purchase and add to your barn."
+        tone="emerald"
+      >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {Object.values(LIVESTOCK_TYPES).map(animalType => {
             const canAfford = state.coins >= animalType.cost;
@@ -315,21 +318,22 @@ const LivestockTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Your Animals */}
-      <Card className="p-4 shadow-md">
-        <h4 className="font-bold mb-4 flex items-center gap-2 text-lg">
-          🐾 Your Animals
-          <Badge className="ml-2">{livestock.animals.length}</Badge>
-        </h4>
-
+      <TabSection
+        title="Your Animals"
+        description="Manage health, happiness, and production."
+        tone="sky"
+        action={<Badge variant="outline">{livestock.animals.length}</Badge>}
+      >
         {livestock.animals.length === 0 ? (
-          <div className="text-center py-10 px-4">
-            <div className="text-5xl mb-3">🐄</div>
-            <p className="font-semibold text-slate-700 mb-1">Your barn is empty</p>
-            <p className="text-sm text-slate-500 mb-4">Purchase your first animal above to start collecting products and earning extra income!</p>
-          </div>
+          <TabEmptyState
+            icon="🐄"
+            tone="sky"
+            title="Your barn is empty"
+            description="Purchase your first animal above to start collecting products and earning extra income!"
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {livestock.animals.map(animal => {
@@ -434,7 +438,7 @@ const LivestockTab = memo(() => {
             })}
           </div>
         )}
-      </Card>
+      </TabSection>
     </div>
   );
 });

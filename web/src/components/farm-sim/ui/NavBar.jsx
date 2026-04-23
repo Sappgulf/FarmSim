@@ -214,24 +214,24 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
     return (
         <>
             <style>{navStyles}</style>
-            <nav className="relative overflow-hidden border-t border-white/80 bg-white/92 shadow-[0_-20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-2xl mobile-scroll">
+            <nav className="relative overflow-hidden border-t border-white/80 bg-white/92 shadow-[0_-20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-2xl mobile-scroll dark:bg-slate-900/92 dark:border-slate-800">
                 {/* Top border glow */}
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" style={{ animation: 'glowLine 3s ease-in-out infinite' }} />
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent dark:via-slate-700/80" />
             {activeSectionHasMultipleTabs && (
-                <div className="border-b border-white/70 bg-gradient-to-r from-emerald-50/80 via-white/70 to-teal-50/70 px-3 pt-2 pb-1">
+                <div className="border-b border-white/70 bg-gradient-to-r from-emerald-50/80 via-white/70 to-teal-50/70 px-3 pt-2 pb-1 dark:border-slate-700/70 dark:from-emerald-950/60 dark:via-slate-900/60 dark:to-teal-950/60">
                     <button
                         type="button"
                         onClick={() => setShowSubTabs((value) => !value)}
-                        className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 min-h-[44px] text-left transition-colors hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60"
+                        className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 min-h-[44px] text-left transition-colors hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 dark:hover:bg-slate-800/70"
                         aria-expanded={showSubTabs}
                         aria-controls={`subtabs-${activeSection}`}
                         aria-label={`${activeSectionConfig.label} tabs: ${showSubTabs ? 'hide options' : 'show options'}`}
                     >
-                        <span className="text-[11px] font-semibold tracking-[0.12em] text-emerald-900/90 uppercase">
+                        <span className="text-[11px] font-semibold tracking-[0.12em] text-emerald-900/90 uppercase dark:text-emerald-300/90">
                             {activeSectionConfig.label} · {activeTabInfo?.label || activeTab}
                         </span>
-                        <ChevronDown className={`icon-16 text-emerald-700 transition-transform ${showSubTabs ? 'rotate-180' : ''}`} aria-hidden="true" />
+                        <ChevronDown className={`icon-16 text-emerald-700 transition-transform ${showSubTabs ? 'rotate-180' : ''} dark:text-emerald-400`} aria-hidden="true" />
                     </button>
                 </div>
             )}
@@ -240,12 +240,12 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
             {showSubTabs && activeSectionHasMultipleTabs && (
                 <div
                     id={`subtabs-${activeSection}`}
-                    className="border-b border-white/70 bg-gradient-to-r from-slate-50/90 via-white/80 to-emerald-50/70 px-2 py-2.5 tab-slide-in"
+                    className="border-b border-white/70 bg-gradient-to-r from-slate-50/90 via-white/80 to-emerald-50/70 px-2 py-2.5 tab-slide-in dark:border-slate-700/70 dark:from-slate-900/90 dark:via-slate-900/80 dark:to-emerald-950/70"
                 >
                     {/* Scroll fade indicators */}
                     <div className="relative">
-                        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-slate-50/90 to-transparent z-10" />
-                        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-emerald-50/70 to-transparent z-10" />
+                        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-slate-50/90 to-transparent z-10 dark:from-slate-900/90" />
+                        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-emerald-50/70 to-transparent z-10 dark:from-emerald-950/70" />
                         <div className="flex gap-1.5 overflow-x-auto rounded-2xl scrollbar-smart scrollbar-gutter-stable px-1">
                             {activeSectionConfig.tabs.map(tabId => {
                                 const tabInfo = TAB_INFO[tabId];
@@ -262,9 +262,10 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                         className={`
                                             relative flex items-center gap-1.5 rounded-xl border px-3.5 py-3 min-h-[44px] text-sm font-bold
                                             whitespace-nowrap transition-all duration-200 touch-manipulation
+                                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2
                                             ${isActive
-                                                ? 'border-emerald-200/60 bg-white text-emerald-700 shadow-[0_8px_20px_-12px_rgba(16,185,129,0.5)] ring-1 ring-emerald-100/80 scale-[1.02]'
-                                                : 'border-transparent bg-white/40 text-gray-500 hover:bg-white/70 hover:text-gray-700 hover:shadow-sm active:scale-95'
+                                                ? 'border-emerald-200/60 bg-white text-emerald-700 shadow-[0_8px_20px_-12px_rgba(16,185,129,0.5)] ring-1 ring-emerald-100/80 scale-[1.02] dark:bg-slate-800 dark:border-emerald-700/60 dark:text-emerald-300 dark:shadow-[0_8px_20px_-12px_rgba(16,185,129,0.3)] dark:ring-emerald-800/80'
+                                                : 'border-transparent bg-white/40 text-gray-500 hover:bg-white/70 hover:text-gray-700 hover:shadow-sm active:scale-95 dark:bg-slate-800/40 dark:text-gray-400 dark:hover:bg-slate-700/70 dark:hover:text-gray-300'
                                             }
                                         `}
                                     >
@@ -273,7 +274,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                         )}
                                         <SoraIcon
                                             id={tabInfo?.assetId}
-                                            className={`icon-16 ${isActive ? 'text-emerald-600' : 'text-gray-400'}`}
+                                            className={`icon-16 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500'}`}
                                             fallbackIcon={TabIcon}
                                             fallbackEmoji={tabInfo?.emoji}
                                         />
@@ -309,15 +310,16 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                             className={`
                                 relative flex min-w-[64px] flex-1 flex-col items-center justify-center rounded-[1.35rem] px-2 py-2
                                 transition-all duration-200 touch-manipulation
+                                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2
                                 ${isActive
-                                    ? 'text-emerald-700 bg-gradient-to-br from-emerald-50 via-white to-green-100 shadow-[0_14px_30px_-20px_rgba(16,185,129,0.5)] ring-1 ring-emerald-100/80 scale-[1.02]'
-                                    : 'text-gray-400 hover:bg-slate-50/80 hover:text-gray-600 hover:scale-[1.03] active:scale-95'
+                                    ? 'text-emerald-700 bg-gradient-to-br from-emerald-50 via-white to-green-100 shadow-[0_14px_30px_-20px_rgba(16,185,129,0.5)] ring-1 ring-emerald-100/80 scale-[1.02] dark:text-emerald-300 dark:from-emerald-950/60 dark:via-slate-900/60 dark:to-green-950/50 dark:shadow-[0_14px_30px_-20px_rgba(16,185,129,0.3)] dark:ring-emerald-800/60'
+                                    : 'text-gray-400 hover:bg-slate-50/80 hover:text-gray-600 hover:scale-[1.03] active:scale-95 dark:text-gray-500 dark:hover:bg-slate-800/80 dark:hover:text-gray-300'
                                 }
                             `}
                         >
                             {/* Floating pill background for active state */}
                             {isActive && (
-                                <span className="absolute inset-1 rounded-[1.1rem] bg-gradient-to-br from-emerald-100/40 to-green-100/30 blur-sm pointer-events-none" />
+                                <span className="absolute inset-1 rounded-[1.1rem] bg-gradient-to-br from-emerald-100/40 to-green-100/30 blur-sm pointer-events-none dark:from-emerald-800/30 dark:to-green-800/20" />
                             )}
 
                             <span className={`relative flex items-center justify-center ${isActive ? 'drop-shadow-sm' : ''}`}>
@@ -328,18 +330,18 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                                     fallbackEmoji={section.emoji}
                                 />
                             </span>
-                            <span className={`relative mt-0.5 text-[11px] font-bold tracking-tight ${isActive ? 'text-emerald-700' : 'text-gray-400'}`}>
+                            <span className={`relative mt-0.5 text-[11px] font-bold tracking-tight ${isActive ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-400 dark:text-gray-500'}`}>
                                 {section.label}
                             </span>
 
                             {/* More chevron — intuitive indicator */}
                             {isMore && sectionHasMultipleTabs && (
                                 <span className={`relative mt-0.5 transition-transform duration-200 ${sectionSubTabsVisible ? 'rotate-180' : ''}`}>
-                                    <ChevronDown className="w-3 h-3 text-gray-400" />
+                                    <ChevronDown className="w-3 h-3 text-gray-400 dark:text-gray-500" />
                                 </span>
                             )}
                             {sectionHasMultipleTabs && !isMore && isActive && (
-                                <span className={`relative mt-0.5 text-[9px] leading-none text-emerald-500 transition-transform duration-200 ${sectionSubTabsVisible ? 'rotate-180' : ''}`}>
+                                <span className={`relative mt-0.5 text-[9px] leading-none text-emerald-500 transition-transform duration-200 ${sectionSubTabsVisible ? 'rotate-180' : ''} dark:text-emerald-400`}>
                                     <ChevronDown className="w-3 h-3" />
                                 </span>
                             )}

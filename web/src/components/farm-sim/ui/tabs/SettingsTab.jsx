@@ -21,6 +21,7 @@ import { GameStats } from './settings/GameStats';
 
 const SOUND_VOLUME_KEY = 'farmlife_settings_sound_volume';
 const MUSIC_VOLUME_KEY = 'farmlife_settings_music_volume';
+const DARK_MODE_KEY = 'farmSim_darkMode';
 const DEFAULT_SOUND_VOLUME = 0.3;
 const DEFAULT_MUSIC_VOLUME = 0.15;
 
@@ -39,6 +40,10 @@ const SettingsTab = memo(() => {
   const fps = useGameSelector((state) => state.gameLoop?.fps || 0);
   const [soundVolume, setSoundVolume] = useState(() => readStoredVolume(SOUND_VOLUME_KEY, DEFAULT_SOUND_VOLUME));
   const [musicVolume, setMusicVolume] = useState(() => readStoredVolume(MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME, 0.5));
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(DARK_MODE_KEY) === 'true';
+  });
 
   const soundEnabled = settings.soundEnabled !== false;
   const musicEnabled = settings.musicEnabled !== false;
@@ -200,6 +205,22 @@ const SettingsTab = memo(() => {
     addNotification(`Keyboard shortcuts ${nextValue ? 'enabled ⌨️' : 'disabled'}`, 'info');
   }, [actions, addNotification, keyboardShortcutsEnabled]);
 
+  const handleToggleDarkMode = useCallback(() => {
+    const nextValue = !darkMode;
+    setDarkMode(nextValue);
+    try {
+      window.localStorage.setItem(DARK_MODE_KEY, String(nextValue));
+    } catch {
+      // Ignore storage failures
+    }
+    if (nextValue) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    addNotification(`Dark mode ${nextValue ? 'enabled 🌙' : 'disabled ☀️'}`, 'info');
+  }, [darkMode, addNotification]);
+
   const handleTogglePause = useCallback(() => {
     if (paused) {
       actions.resumeGame();
@@ -342,13 +363,13 @@ const SettingsTab = memo(() => {
         description="Save routines, runtime controls, audio, and accessibility live in one place."
         badge={(
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="bg-white/80 text-slate-600">
+            <Badge variant="outline" className="bg-white/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
               {paused ? 'Paused' : 'Running'}
             </Badge>
-            <Badge variant="outline" className="bg-white/80 text-slate-600">
+            <Badge variant="outline" className="bg-white/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
               {fps} FPS
             </Badge>
-            <Badge variant="outline" className="bg-white/80 text-slate-600">
+            <Badge variant="outline" className="bg-white/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
               Auto-save {autoSaveEnabled ? 'On' : 'Off'}
             </Badge>
           </div>
@@ -389,6 +410,7 @@ const SettingsTab = memo(() => {
         showWelcomeBackSummary={showWelcomeBackSummary}
         fastMode={fastMode}
         particleEffects={particleEffects}
+        darkMode={darkMode}
         handleToggleAnimations={handleToggleAnimations}
         handleToggleAutoSave={handleToggleAutoSave}
         handleToggleShowFps={handleToggleShowFps}
@@ -398,6 +420,7 @@ const SettingsTab = memo(() => {
         handleToggleWelcomeBackSummary={handleToggleWelcomeBackSummary}
         handleToggleFastMode={handleToggleFastMode}
         handleToggleParticleEffects={handleToggleParticleEffects}
+        handleToggleDarkMode={handleToggleDarkMode}
       />
 
       <AudioSettings
@@ -428,7 +451,7 @@ const SettingsTab = memo(() => {
         )}
         bodyClassName="pt-4"
       >
-        <div className="overflow-hidden rounded-[24px] border border-slate-200/60 bg-white/72">
+        <div className="overflow-hidden rounded-[24px] border border-slate-200/60 bg-white/72 dark:bg-slate-800/72 dark:border-slate-700/60">
           {[
             ['Switch Tabs', '1 – 9'],
             ['Pause / Resume', 'Space'],
@@ -443,11 +466,11 @@ const SettingsTab = memo(() => {
             <div
               key={label}
               className={`flex items-center justify-between gap-3 px-3 py-2.5 text-sm ${
-                index !== 0 ? 'border-t border-slate-200/60' : ''
+                index !== 0 ? 'border-t border-slate-200/60 dark:border-slate-700/60' : ''
               }`}
             >
-              <span className="text-slate-700">{label}</span>
-              <Badge variant="outline" className="font-mono bg-white/80 text-slate-600">
+              <span className="text-slate-700 dark:text-slate-300">{label}</span>
+              <Badge variant="outline" className="font-mono bg-white/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-400">
                 {shortcut}
               </Badge>
             </div>
@@ -505,34 +528,34 @@ const SettingsTab = memo(() => {
         description="A modular farm simulation with sound, background music, livestock, fishing, and a growing set of systems that can be tuned without losing the cozy feel."
         tone="emerald"
         action={(
-          <Badge variant="outline" className="bg-white/80 text-slate-600">
+          <Badge variant="outline" className="bg-white/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
             {getReleaseModeLabel()}
           </Badge>
         )}
       >
         <div className="grid gap-2 text-sm sm:grid-cols-2">
-          <div className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Version</div>
-            <div className="font-medium text-slate-900">{APP_VERSION}</div>
+          <div className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5 dark:bg-slate-800/72 dark:border-slate-700/60">
+            <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Version</div>
+            <div className="font-medium text-slate-900 dark:text-slate-100">{APP_VERSION}</div>
           </div>
-          <div className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Stack</div>
-            <div className="font-medium text-slate-900">React + Vite + Tailwind CSS</div>
+          <div className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2.5 dark:bg-slate-800/72 dark:border-slate-700/60">
+            <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Stack</div>
+            <div className="font-medium text-slate-900 dark:text-slate-100">React + Vite + Tailwind CSS</div>
           </div>
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+        <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
           Built to stay cozy while supporting sound, music, livestock, fishing, and systems that can keep expanding without losing the mood.
         </p>
 
-        <div className="mt-4 border-t border-slate-200/70 pt-4">
-          <p className="text-sm font-semibold text-emerald-800">Recent upgrades</p>
-          <ul className="mt-2 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
-            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2">Weekly Operations milestone rewards</li>
-            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2">Streak-based challenge reward boosts</li>
-            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2">Daily Market Focus bonus crop loop</li>
-            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2">Reworked Daily Operations board with reroll</li>
-            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2">Sidebar mounts only active tab content</li>
-            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2">Notification Center with saved history</li>
+        <div className="mt-4 border-t border-slate-200/70 pt-4 dark:border-slate-700/60">
+          <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">Recent upgrades</p>
+          <ul className="mt-2 grid gap-2 text-xs text-slate-600 sm:grid-cols-2 dark:text-slate-400">
+            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2 dark:bg-slate-800/72 dark:border-slate-700/60">Weekly Operations milestone rewards</li>
+            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2 dark:bg-slate-800/72 dark:border-slate-700/60">Streak-based challenge reward boosts</li>
+            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2 dark:bg-slate-800/72 dark:border-slate-700/60">Daily Market Focus bonus crop loop</li>
+            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2 dark:bg-slate-800/72 dark:border-slate-700/60">Reworked Daily Operations board with reroll</li>
+            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2 dark:bg-slate-800/72 dark:border-slate-700/60">Sidebar mounts only active tab content</li>
+            <li className="rounded-[18px] border border-slate-200/60 bg-white/72 px-3 py-2 dark:bg-slate-800/72 dark:border-slate-700/60">Notification Center with saved history</li>
           </ul>
         </div>
       </TabSection>

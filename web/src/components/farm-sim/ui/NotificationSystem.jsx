@@ -45,6 +45,41 @@ const NOTIFICATION_CONFIG = {
   },
 };
 
+const DARK_NOTIFICATION_CONFIG = {
+  success: {
+    gradient: 'dark:bg-gradient-to-br dark:from-green-950/80 dark:via-emerald-950/70 dark:to-teal-950/60',
+    border: 'dark:border-l-emerald-600',
+    iconBg: 'dark:bg-gradient-to-br dark:from-green-600 dark:to-emerald-700',
+    textColor: 'dark:text-green-200',
+    barColor: 'dark:bg-emerald-400',
+    icon: CheckCircle,
+  },
+  error: {
+    gradient: 'dark:bg-gradient-to-br dark:from-red-950/80 dark:via-rose-950/70 dark:to-pink-950/60',
+    border: 'dark:border-l-rose-600',
+    iconBg: 'dark:bg-gradient-to-br dark:from-red-600 dark:to-rose-700',
+    textColor: 'dark:text-red-200',
+    barColor: 'dark:bg-rose-400',
+    icon: AlertCircle,
+  },
+  warning: {
+    gradient: 'dark:bg-gradient-to-br dark:from-amber-950/80 dark:via-yellow-950/70 dark:to-orange-950/60',
+    border: 'dark:border-l-amber-600',
+    iconBg: 'dark:bg-gradient-to-br dark:from-amber-600 dark:to-orange-600',
+    textColor: 'dark:text-amber-200',
+    barColor: 'dark:bg-amber-400',
+    icon: AlertTriangle,
+  },
+  info: {
+    gradient: 'dark:bg-gradient-to-br dark:from-blue-950/80 dark:via-sky-950/70 dark:to-cyan-950/60',
+    border: 'dark:border-l-sky-600',
+    iconBg: 'dark:bg-gradient-to-br dark:from-blue-600 dark:to-sky-700',
+    textColor: 'dark:text-blue-200',
+    barColor: 'dark:bg-sky-400',
+    icon: Info,
+  },
+};
+
 // Inline keyframe styles for enter/exit animations
 const NotificationStyles = memo(() => (
   <style>{`
@@ -56,6 +91,13 @@ const NotificationStyles = memo(() => (
     @keyframes notificationSlideOut {
       0% { opacity: 1; transform: translateX(0) scale(1); }
       100% { opacity: 0; transform: translateX(60px) scale(0.96); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .notification-enter,
+      .notification-exit {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
     }
     .notification-enter {
       animation: notificationSlideIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -71,6 +113,7 @@ NotificationStyles.displayName = 'NotificationStyles';
 const NotificationItem = memo(({ notification, onClose, groupCount }) => {
   const [isExiting, setIsExiting] = useState(false);
   const config = NOTIFICATION_CONFIG[notification.type] || NOTIFICATION_CONFIG.info;
+  const darkConfig = DARK_NOTIFICATION_CONFIG[notification.type] || DARK_NOTIFICATION_CONFIG.info;
   const Icon = config.icon;
 
   const progressBarRef = useRef(null);
@@ -162,7 +205,9 @@ const NotificationItem = memo(({ notification, onClose, groupCount }) => {
         'hover:-translate-y-1 hover:shadow-2xl',
         'shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.06)]',
         config.gradient,
+        darkConfig.gradient,
         config.border,
+        darkConfig.border,
         isExiting ? 'notification-exit' : 'notification-enter',
       ].join(' ')}
       role={notification.type === 'error' || notification.important ? 'alert' : 'status'}
@@ -177,21 +222,22 @@ const NotificationItem = memo(({ notification, onClose, groupCount }) => {
         <div className={[
           'relative flex-shrink-0 mt-0.5 w-10 h-10 rounded-full flex items-center justify-center shadow-md',
           config.iconBg,
+          darkConfig.iconBg,
         ].join(' ')}>
           <Icon className="w-5 h-5 text-white" aria-hidden="true" />
           {groupCount > 1 && (
-            <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 flex items-center justify-center rounded-full bg-gray-900 text-white text-[10px] font-bold shadow-sm border-2 border-white">
+            <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 flex items-center justify-center rounded-full bg-gray-900 text-white text-[10px] font-bold shadow-sm border-2 border-white dark:bg-gray-100 dark:text-gray-900 dark:border-slate-800">
               {groupCount}
             </span>
           )}
         </div>
 
         <div className="flex-1 min-w-0 py-0.5">
-          <p className={`text-sm font-semibold ${config.textColor} leading-snug`}>
+          <p className={`text-sm font-semibold leading-snug ${config.textColor} ${darkConfig.textColor}`}>
             {notification.message}
           </p>
           {notification.details && (
-            <p className="text-xs text-gray-600/90 mt-1 leading-relaxed">
+            <p className="text-xs text-gray-600/90 mt-1 leading-relaxed dark:text-gray-300/90">
               {notification.details}
             </p>
           )}
@@ -204,7 +250,7 @@ const NotificationItem = memo(({ notification, onClose, groupCount }) => {
             e.stopPropagation();
             performClose();
           }}
-          className="flex-shrink-0 h-8 w-8 p-0 hover:bg-white/60 rounded-lg text-gray-600 hover:text-gray-900 transition-all"
+          className="flex-shrink-0 h-8 w-8 p-0 hover:bg-white/60 rounded-lg text-gray-600 hover:text-gray-900 transition-all dark:hover:bg-slate-700/60 dark:text-gray-400 dark:hover:text-gray-100"
           aria-label="Close notification"
         >
           <X className="w-4 h-4" />
@@ -212,10 +258,10 @@ const NotificationItem = memo(({ notification, onClose, groupCount }) => {
       </div>
 
       {!notification.sticky && !notification.important && (
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black/5">
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black/5 dark:bg-white/5">
           <div
             ref={progressBarRef}
-            className={`h-full ${config.barColor} opacity-60`}
+            className={`h-full ${config.barColor} ${darkConfig.barColor} opacity-60`}
             style={{ width: '100%' }}
           />
         </div>
@@ -330,11 +376,11 @@ const NotificationSystem = memo(() => {
                 transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease',
               }}
             >
-              <Card className="relative overflow-hidden p-3 bg-gradient-to-br from-slate-50 via-gray-50/90 to-zinc-50/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.06)] text-center">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+              <Card className="relative overflow-hidden p-3 bg-gradient-to-br from-slate-50 via-gray-50/90 to-zinc-50/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.06)] text-center dark:from-slate-900 dark:via-slate-800/90 dark:to-zinc-900/80 dark:border-slate-700/60">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none dark:via-slate-700/40" />
                 <div className="relative flex items-center justify-center gap-2">
-                  <Bell className="w-3.5 h-3.5 text-gray-500" aria-hidden="true" />
-                  <p className="text-xs text-gray-600 font-semibold tracking-wide">
+                  <Bell className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+                  <p className="text-xs text-gray-600 font-semibold tracking-wide dark:text-gray-300">
                     +{overflowCount} more notification{overflowCount > 1 ? 's' : ''}
                   </p>
                 </div>

@@ -11,8 +11,8 @@ const ToggleSwitch = memo(({ enabled, label, onToggle }) => (
       focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-emerald-400 focus-visible:ring-offset-2
       active:scale-95
       ${enabled
-        ? 'border-emerald-500/40 bg-gradient-to-r from-emerald-500 to-green-600 shadow-sm shadow-emerald-200/70'
-        : 'border-slate-300 bg-slate-300 shadow-inner'}
+        ? 'border-emerald-500/40 bg-gradient-to-r from-emerald-500 to-green-600 shadow-sm shadow-emerald-200/70 dark:shadow-emerald-900/50'
+        : 'border-slate-300 bg-slate-300 shadow-inner dark:border-slate-600 dark:bg-slate-600'}
     `}
   >
     <span
@@ -40,11 +40,11 @@ export const SettingToggleRow = memo(({
   className = '',
 }) => {
   return (
-    <div className={`group flex items-start justify-between gap-4 rounded-[20px] border border-slate-200/60 bg-white/66 px-4 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:bg-white/80 ${className}`}>
-      <div className={`min-w-0 border-l-[3px] pl-3 transition-colors duration-200 ${enabled ? 'border-emerald-400' : 'border-slate-200'}`}>
-        <div className="font-medium text-slate-950">{title}</div>
+    <div className={`group flex items-start justify-between gap-4 rounded-[20px] border border-slate-200/60 bg-white/66 px-4 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:bg-white/80 dark:bg-slate-800/66 dark:border-slate-700/60 dark:hover:bg-slate-800/80 ${className}`}>
+      <div className={`min-w-0 border-l-[3px] pl-3 transition-colors duration-200 ${enabled ? 'border-emerald-400' : 'border-slate-200 dark:border-slate-700'}`}>
+        <div className="font-medium text-slate-950 dark:text-slate-100">{title}</div>
         {description && (
-          <div className="text-sm leading-snug text-slate-600">
+          <div className="text-sm leading-snug text-slate-600 dark:text-slate-400">
             {description}
           </div>
         )}

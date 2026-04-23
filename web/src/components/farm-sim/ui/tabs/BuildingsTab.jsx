@@ -4,7 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { getContentManager } from '../../../../content/ContentManager';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 const toBuildingDefs = (items = []) => (
   items.map((item) => {
@@ -160,8 +160,11 @@ const BuildingsTab = memo(() => {
 
       {/* Active Synergies */}
       {activeSynergies.length > 0 && (
-        <Card className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50">
-          <h4 className="font-semibold mb-2 text-indigo-800">Active Synergies</h4>
+        <TabSection
+          title="Active Synergies"
+          description="Passive bonuses from building combos."
+          tone="violet"
+        >
           <div className="space-y-1.5">
             {activeSynergies.map((syn) => (
               <div key={syn.name} className="flex items-center gap-2 text-sm p-2 bg-white/70 rounded-lg">
@@ -171,12 +174,15 @@ const BuildingsTab = memo(() => {
               </div>
             ))}
           </div>
-        </Card>
+        </TabSection>
       )}
 
       {/* Available Buildings */}
-      <Card className="p-4 bg-slate-50/80">
-        <h4 className="font-semibold mb-3">Available Buildings</h4>
+      <TabSection
+        title="Available Buildings"
+        description="Construct and upgrade structures across your farm."
+        tone="amber"
+      >
         <div className="space-y-3">
           {BUILDING_DEFS.map((building) => {
             const bState = getBuildingState(building.id);
@@ -297,11 +303,14 @@ const BuildingsTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Synergy Guide */}
-      <Card className="p-4 bg-gray-50">
-        <h4 className="font-semibold mb-2">Synergy Guide</h4>
+      <TabSection
+        title="Synergy Guide"
+        description="Combine buildings to unlock passive bonuses."
+        tone="slate"
+      >
         <div className="space-y-2 text-sm">
           {SYNERGIES.map((syn) => {
             const active = syn.ids.every((id) => state.buildings[id]?.built);
@@ -320,7 +329,7 @@ const BuildingsTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
     </div>
   );
 });

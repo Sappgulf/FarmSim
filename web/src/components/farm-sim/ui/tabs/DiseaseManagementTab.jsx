@@ -6,7 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { AlertTriangle, Shield, Droplet, Bug } from 'lucide-react';
 import { DISEASE_TYPES, CURE_ITEMS } from '../../constants/diseaseData';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 /**
  * Disease Management Tab - Handle crop diseases and pests
@@ -190,47 +190,44 @@ const DiseaseManagementTab = memo(() => {
 
       {/* Active Diseases Alert / Healthy Farm State */}
       {diseaseStats.totalDiseased === 0 ? (
-        <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300">
+        <TabSection
+          title="Farm Health"
+          description="No diseases detected. Keep your soil watered and your barn built to stay protected."
+          tone="emerald"
+        >
           <div className="flex items-center gap-3">
             <Shield className="w-8 h-8 text-green-600 flex-shrink-0" />
-            <div>
-              <div className="font-semibold text-green-800 text-lg">
-                🌿 All Crops Healthy!
-              </div>
-              <p className="text-sm text-green-600 mt-1">
-                No diseases detected. Keep your soil watered and your barn built to stay protected.
-              </p>
+            <div className="font-semibold text-green-800 text-lg">
+              🌿 All Crops Healthy!
             </div>
           </div>
-        </Card>
+        </TabSection>
       ) : (
-        <Card className="p-4 bg-red-50 border-2 border-red-400">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
-            <div className="flex-1">
-              <div className="font-semibold text-red-800 mb-2">
-                ⚠️ {diseaseStats.totalDiseased} Active Infection{diseaseStats.totalDiseased > 1 ? 's' : ''}!
-              </div>
-              <div className="text-sm text-red-700 space-y-1">
-                {Object.entries(diseaseStats.diseaseTypes).map(([diseaseId, count]) => {
-                  const disease = DISEASE_TYPES[diseaseId];
-                  return disease ? (
-                    <div key={diseaseId}>
-                      {disease.emoji} {disease.name}: {count} plot{count > 1 ? 's' : ''}
-                    </div>
-                  ) : null;
-                })}
-              </div>
-              <Button
-                onClick={handleCureAll}
-                className="mt-3 bg-red-600 hover:bg-red-700"
-                size="sm"
-              >
-                ✨ Cure All ({CURE_ITEMS.universal_cure.cost}🪙)
-              </Button>
-            </div>
+        <TabSection
+          title="Active Infections"
+          description={`${diseaseStats.totalDiseased} outbreak${diseaseStats.totalDiseased > 1 ? 's' : ''} need attention.`}
+          tone="rose"
+          action={(
+            <Button
+              onClick={handleCureAll}
+              className="bg-red-600 hover:bg-red-700"
+              size="sm"
+            >
+              ✨ Cure All ({CURE_ITEMS.universal_cure.cost}🪙)
+            </Button>
+          )}
+        >
+          <div className="text-sm text-red-700 space-y-1">
+            {Object.entries(diseaseStats.diseaseTypes).map(([diseaseId, count]) => {
+              const disease = DISEASE_TYPES[diseaseId];
+              return disease ? (
+                <div key={diseaseId}>
+                  {disease.emoji} {disease.name}: {count} plot{count > 1 ? 's' : ''}
+                </div>
+              ) : null;
+            })}
           </div>
-        </Card>
+        </TabSection>
       )}
 
       {/* Disease Protection Info */}
@@ -244,12 +241,11 @@ const DiseaseManagementTab = memo(() => {
       )}
 
       {/* Cure Items Shop */}
-      <Card className="p-4 bg-slate-50/80">
-        <h4 className="font-semibold mb-3 flex items-center gap-2">
-          <Droplet className="w-4 h-4" />
-          Treatment Shop
-        </h4>
-
+      <TabSection
+        title="Treatment Shop"
+        description="Buy cures and apply them to infected plots."
+        tone="sky"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {Object.values(CURE_ITEMS).map((cureItem) => {
             const canAfford = state.coins >= cureItem.cost;
@@ -315,12 +311,14 @@ const DiseaseManagementTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Disease Encyclopedia */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">📚 Disease Encyclopedia</h4>
-
+      <TabSection
+        title="Disease Encyclopedia"
+        description="Learn about each disease and how it spreads."
+        tone="slate"
+      >
         <div className="space-y-3">
           {Object.values(DISEASE_TYPES).map((disease) => {
             const activeCount = diseaseStats.diseaseTypes[disease.id] || 0;
@@ -369,11 +367,14 @@ const DiseaseManagementTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Tips */}
-      <Card className="p-4 bg-blue-50 border-blue-200">
-        <h4 className="font-semibold mb-2 text-blue-800">💡 Disease Prevention Tips</h4>
+      <TabSection
+        title="Disease Prevention Tips"
+        description="Best practices for keeping crops healthy."
+        tone="sky"
+      >
         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
           <li>Disease checks happen at randomized intervals, so outbreaks feel less predictable.</li>
           <li>Diseases spread to adjacent plots - treat infections quickly!</li>
@@ -382,7 +383,7 @@ const DiseaseManagementTab = memo(() => {
           <li>Weather affects disease occurrence - rainy weather increases fungal infections</li>
           <li>Universal Cure provides 24h immunity to all diseases!</li>
         </ul>
-      </Card>
+      </TabSection>
     </div>
   );
 });

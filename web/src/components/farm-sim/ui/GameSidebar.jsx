@@ -207,42 +207,44 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   const ActiveTabComponent = activeConfig.component;
 
   return (
-    <Card className="h-fit overflow-hidden rounded-[28px] border border-white/60 bg-white/80 shadow-[0_24px_64px_-24px_rgba(15,23,42,0.55),0_0_0_1px_rgba(255,255,255,0.6)_inset,0_8px_32px_-8px_rgba(16,185,129,0.14)] backdrop-blur-xl">
+    <Card className="h-fit overflow-hidden rounded-[28px] border border-white/60 bg-white/80 shadow-[0_24px_64px_-24px_rgba(15,23,42,0.55),0_0_0_1px_rgba(255,255,255,0.6)_inset,0_8px_32px_-8px_rgba(16,185,129,0.14)] backdrop-blur-xl dark:bg-slate-800/80 dark:border-slate-700/60">
       <style>{`
         .elegant-scroll::-webkit-scrollbar { width: 5px; }
         .elegant-scroll::-webkit-scrollbar-track { background: transparent; }
         .elegant-scroll::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.35); border-radius: 9999px; }
         .elegant-scroll::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.55); }
+        .dark .elegant-scroll::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.45); }
+        .dark .elegant-scroll::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.65); }
       `}</style>
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <div className="sm:hidden border-b border-white/70 bg-gradient-to-r from-slate-50/90 via-white to-emerald-50/70 px-4 py-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-700/80 drop-shadow-sm">
+        <div className="sm:hidden border-b border-white/70 bg-gradient-to-r from-slate-50/90 via-white to-emerald-50/70 px-4 py-4 dark:border-slate-700/70 dark:from-slate-900/90 dark:via-slate-900 dark:to-emerald-950/70">
+          <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-700/80 drop-shadow-sm dark:text-emerald-400/80">
             {Object.values(NAV_SECTIONS).find(s => s.tabs.includes(activeTab))?.label || 'Game'}
           </div>
-          <div className="mt-1.5 text-lg font-bold tracking-tight text-slate-900">
+          <div className="mt-1.5 text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
             {TAB_INFO[activeTab]?.emoji} {TAB_INFO[activeTab]?.label || activeConfig.label}
           </div>
-          <div className="mt-1 text-xs text-gray-500/80 font-medium leading-relaxed">
+          <div className="mt-1 text-xs text-gray-500/80 font-medium leading-relaxed dark:text-gray-400/80">
             Use the bottom bar to switch sections and open tab options.
           </div>
         </div>
 
-        <div className="hidden sm:block border-b border-white/70 bg-gradient-to-b from-slate-50/90 to-white px-4 py-3.5">
+        <div className="hidden sm:block border-b border-white/70 bg-gradient-to-b from-slate-50/90 to-white px-4 py-3.5 dark:border-slate-700/70 dark:from-slate-900/90 dark:to-slate-900">
           {/* Active tab header */}
           <div className="flex items-center justify-between gap-2 mb-3">
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-700/80 drop-shadow-sm">
+              <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-700/80 drop-shadow-sm dark:text-emerald-400/80">
                 {Object.values(NAV_SECTIONS).find(s => s.tabs.includes(activeTab))?.label || 'Game'}
               </div>
-              <div className="text-base font-bold tracking-tight text-slate-900">
+              <div className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100">
                 {TAB_INFO[activeTab]?.emoji} {TAB_INFO[activeTab]?.label || activeConfig.label}
               </div>
             </div>
-            <div className="text-[10px] text-gray-400 hidden sm:block font-medium tracking-wide">1-9 to jump</div>
+            <div className="text-[10px] text-gray-400 hidden sm:block font-medium tracking-wide dark:text-gray-500">1-9 to jump</div>
           </div>
 
           {/* Tab Navigation - grouped by section */}
-          <div className="space-y-2.5 max-h-[min(56vh,21rem)] overflow-y-auto pr-2 elegant-scroll scrollbar-gutter-stable">
+          <nav className="space-y-2.5 max-h-[min(56vh,21rem)] overflow-y-auto pr-2 elegant-scroll scrollbar-gutter-stable" aria-label="Sidebar tabs">
             {Object.values(NAV_SECTIONS).map((section) => {
               const sectionTabConfigs = TAB_CONFIGS.filter(t => section.tabs.includes(t.id));
               if (sectionTabConfigs.length === 0) return null;
@@ -250,8 +252,8 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
               return (
                 <div key={section.id}>
                   <div className="flex items-center gap-1.5 mb-1.5 px-1">
-                    <SectionIcon className="w-3 h-3 text-gray-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    <SectionIcon className="w-3 h-3 text-gray-400 dark:text-gray-500" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
                       {section.label}
                     </span>
                   </div>
@@ -265,9 +267,10 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
                         className={`
                           group relative flex items-center gap-2 rounded-xl border px-2.5 py-2.5 min-h-[46px] text-left text-xs font-semibold leading-tight
                           transition-all duration-200 touch-manipulation overflow-hidden
+                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2
                           ${activeTab === tab.id
-                            ? 'border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/60 text-emerald-700 shadow-[0_2px_8px_-2px_rgba(16,185,129,0.18)] ring-1 ring-emerald-100/80 scale-[1.02]'
-                            : 'border-transparent bg-white/40 text-gray-600 hover:bg-white/80 hover:text-gray-800 hover:shadow-sm hover:-translate-y-0.5 active:scale-95'
+                            ? 'border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/60 text-emerald-700 shadow-[0_2px_8px_-2px_rgba(16,185,129,0.18)] ring-1 ring-emerald-100/80 scale-[1.02] dark:from-slate-800 dark:to-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60 dark:shadow-[0_2px_8px_-2px_rgba(16,185,129,0.12)] dark:ring-emerald-800/60'
+                            : 'border-transparent bg-white/40 text-gray-600 hover:bg-white/80 hover:text-gray-800 hover:shadow-sm hover:-translate-y-0.5 active:scale-95 dark:bg-slate-800/40 dark:text-gray-300 dark:hover:bg-slate-700/80 dark:hover:text-gray-100'
                           }
                         `}
                       >
@@ -286,7 +289,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
                 </div>
               );
             })}
-          </div>
+          </nav>
         </div>
 
         {/* Active tab only: avoids creating all tab panels on each render. */}
@@ -301,27 +304,27 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         </TabsContent>
       </Tabs>
 
-      <div className="border-t border-white/70 bg-gradient-to-r from-slate-50/90 via-white to-emerald-50/70 p-3 sm:p-4">
+      <div className="border-t border-white/70 bg-gradient-to-r from-slate-50/90 via-white to-emerald-50/70 p-3 sm:p-4 dark:border-slate-700/70 dark:from-slate-900/90 dark:via-slate-900 dark:to-emerald-950/70">
         <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-          <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-gradient-to-br from-white/90 to-emerald-50/70 p-2.5 text-center shadow-sm min-h-[66px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group">
+          <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-gradient-to-br from-white/90 to-emerald-50/70 p-2.5 text-center shadow-sm min-h-[66px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group dark:border-slate-700/60 dark:from-slate-800/90 dark:to-emerald-950/50">
             <Package className="absolute -right-1 -top-1 w-7 h-7 text-emerald-500/10 rotate-12 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6" />
-            <div className="font-bold text-emerald-700 text-sm tabular-nums tracking-tight">{inventoryCount}</div>
-            <div className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mt-0.5">Items</div>
+            <div className="font-bold text-emerald-700 text-sm tabular-nums tracking-tight dark:text-emerald-400">{inventoryCount}</div>
+            <div className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mt-0.5 dark:text-gray-400">Items</div>
           </div>
-          <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-gradient-to-br from-white/90 to-amber-50/70 p-2.5 text-center shadow-sm min-h-[66px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group">
+          <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-gradient-to-br from-white/90 to-amber-50/70 p-2.5 text-center shadow-sm min-h-[66px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group dark:border-slate-700/60 dark:from-slate-800/90 dark:to-amber-950/50">
             <Home className="absolute -right-1 -top-1 w-7 h-7 text-amber-500/10 rotate-12 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6" />
-            <div className="font-bold text-amber-600 text-sm tabular-nums tracking-tight">{builtCount}</div>
-            <div className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mt-0.5">Built</div>
+            <div className="font-bold text-amber-600 text-sm tabular-nums tracking-tight dark:text-amber-400">{builtCount}</div>
+            <div className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mt-0.5 dark:text-gray-400">Built</div>
           </div>
-          <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-gradient-to-br from-white/90 to-blue-50/70 p-2.5 text-center shadow-sm min-h-[66px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group">
+          <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-gradient-to-br from-white/90 to-blue-50/70 p-2.5 text-center shadow-sm min-h-[66px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group dark:border-slate-700/60 dark:from-slate-800/90 dark:to-blue-950/50">
             <PawPrint className="absolute -right-1 -top-1 w-7 h-7 text-blue-500/10 rotate-12 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6" />
-            <div className="font-bold text-blue-600 text-sm tabular-nums tracking-tight">{animalCount}</div>
-            <div className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mt-0.5">Animals</div>
+            <div className="font-bold text-blue-600 text-sm tabular-nums tracking-tight dark:text-blue-400">{animalCount}</div>
+            <div className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mt-0.5 dark:text-gray-400">Animals</div>
           </div>
-          <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-gradient-to-br from-white/90 to-purple-50/70 p-2.5 text-center shadow-sm min-h-[66px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group">
+          <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-gradient-to-br from-white/90 to-purple-50/70 p-2.5 text-center shadow-sm min-h-[66px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group dark:border-slate-700/60 dark:from-slate-800/90 dark:to-purple-950/50">
             <Star className="absolute -right-1 -top-1 w-7 h-7 text-purple-500/10 rotate-12 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6" />
-            <div className="font-bold text-purple-600 text-sm tabular-nums tracking-tight">{reputation}</div>
-            <div className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mt-0.5">Rep</div>
+            <div className="font-bold text-purple-600 text-sm tabular-nums tracking-tight dark:text-purple-400">{reputation}</div>
+            <div className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mt-0.5 dark:text-gray-400">Rep</div>
           </div>
         </div>
       </div>

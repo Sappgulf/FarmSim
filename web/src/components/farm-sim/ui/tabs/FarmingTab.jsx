@@ -4,6 +4,7 @@ import { Button } from '../../../ui/button';
 import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
+import { TabHero, TabSection, TabEmptyState, MetricTile } from './TabSurface';
 import { getCropsByLevel, CROP_CATEGORIES } from '../../constants/cropData';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { getSoilAnalyzerEnabled } from '../../../../utils/farmUpgrades';
@@ -293,7 +294,43 @@ const FarmingTab = memo(() => {
   }, [actions, foreman]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      <TabHero
+        icon="🌾"
+        tone="emerald"
+        title="Farming Operations"
+        description="Plant, water, harvest, and automate your field."
+        badge={(
+          <Badge variant="outline" className="bg-white/80 text-emerald-700 border-emerald-200">
+            {farmStats.activePlots}/{farmStats.totalPlots} plots
+          </Badge>
+        )}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricTile
+            tone="emerald"
+            label="Active Plots"
+            value={`${farmStats.activePlots}/${farmStats.totalPlots}`}
+            hint="Growing or ready"
+            icon="🌱"
+          />
+          <MetricTile
+            tone="amber"
+            label="Ready to Harvest"
+            value={farmStats.readyPlots}
+            hint="Cash out now"
+            icon="🌾"
+          />
+          <MetricTile
+            tone="violet"
+            label="Efficiency"
+            value={`${farmStats.efficiencyPercent}%`}
+            hint="Overall farm health"
+            icon="⚡"
+          />
+        </div>
+      </TabHero>
+
       <Card className={`p-4 border bg-gradient-to-r ${advisorCard.cardClass}`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -318,14 +355,11 @@ const FarmingTab = memo(() => {
 
       {/* Daily Focus */}
       {dailyFocus?.crop && (
-        <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-orange-50/40 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="font-semibold text-slate-900">Daily market focus</h3>
-              <p className="text-sm text-slate-600">
-                Today, {dailyFocus.crop.emoji} {dailyFocus.crop.name} sells for +{Math.round((dailyFocus.bonusMultiplier - 1) * 100)}%.
-              </p>
-            </div>
+        <TabSection
+          title="Daily market focus"
+          description={`Today, ${dailyFocus.crop.emoji} ${dailyFocus.crop.name} sells for +${Math.round((dailyFocus.bonusMultiplier - 1) * 100)}%.`}
+          tone="amber"
+          action={(
             <Button
               size="sm"
               variant="outline"
@@ -338,13 +372,16 @@ const FarmingTab = memo(() => {
             >
               Open Inventory
             </Button>
-          </div>
-        </Card>
+          )}
+        />
       )}
 
       {/* Category Filter */}
-      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-green-50/40 p-4">
-        <h3 className="mb-2 font-semibold text-slate-900">Crop categories</h3>
+      <TabSection
+        title="Crop categories"
+        description="Filter crops by category."
+        tone="emerald"
+      >
         <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
@@ -370,10 +407,13 @@ const FarmingTab = memo(() => {
             );
           })}
         </div>
-      </Card>
+      </TabSection>
       {/* Quick Actions */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-        <h3 className="mb-3 font-semibold text-slate-900">Quick actions</h3>
+      <TabSection
+        title="Quick actions"
+        description="Bulk water, harvest, fertilize, or treat."
+        tone="slate"
+      >
         <div className="grid grid-cols-2 gap-2">
           <Button
             onClick={() => handleBulkAction('Water All')}
@@ -414,14 +454,13 @@ const FarmingTab = memo(() => {
         <div className="mt-3 text-[11px] text-slate-500">
           Hotkeys: <kbd className="px-1 py-0.5 bg-gray-100 rounded">W</kbd> water, <kbd className="px-1 py-0.5 bg-gray-100 rounded">H</kbd> harvest, <kbd className="px-1 py-0.5 bg-gray-100 rounded">F</kbd> fertilize, <kbd className="px-1 py-0.5 bg-gray-100 rounded">T</kbd> treat
         </div>
-      </Card>
+      </TabSection>
 
-      <Card className="overflow-hidden border-indigo-200/70 bg-gradient-to-br from-white via-indigo-50/30 to-sky-50/30 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="font-semibold text-slate-900">Foreman routines</h3>
-            <p className="text-sm text-slate-600">Set recurring field behavior for watering, harvest routing, and crop health.</p>
-          </div>
+      <TabSection
+        title="Foreman routines"
+        description="Set recurring field behavior for watering, harvest routing, and crop health."
+        tone="sky"
+        action={(
           <Button
             size="sm"
             variant={foreman.notify ? 'default' : 'outline'}
@@ -430,9 +469,9 @@ const FarmingTab = memo(() => {
           >
             {foreman.notify ? 'Alerts on' : 'Alerts off'}
           </Button>
-        </div>
-
-        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+        )}
+      >
+        <div className="grid gap-3 lg:grid-cols-3">
           <div className="rounded-[20px] border border-slate-200/70 bg-white/85 p-3">
             <div className="flex items-center justify-between gap-2">
               <div>
@@ -553,22 +592,25 @@ const FarmingTab = memo(() => {
             </p>
           </div>
         </div>
-      </Card>
+      </TabSection>
 
       {/* Available Crops */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-semibold text-slate-900">Select crop to plant</h3>
+      <TabSection
+        title="Select crop to plant"
+        description="Click a crop, then click empty plots on your farm"
+        tone="emerald"
+        action={(
           <Badge variant="outline" className="bg-white/80 text-slate-600">{cropList.length} available</Badge>
-        </div>
-        <p className="mb-3 text-xs text-slate-600">Click a crop, then click empty plots on your farm</p>
+        )}
+      >
         <div className="space-y-2 max-h-96 overflow-y-auto scrollbar-smart">
           {cropList.length === 0 ? (
-            <div className="text-center py-10">
-              <div className="text-4xl mb-2">🌱</div>
-              <p className="text-sm text-slate-600">No crops unlocked for this category yet.</p>
-              <p className="text-xs text-slate-500 mt-1">Level up to discover new seeds.</p>
-            </div>
+            <TabEmptyState
+              icon="🌱"
+              tone="emerald"
+              title="No crops unlocked"
+              description="Level up to discover new seeds for this category."
+            />
           ) : (
             cropList.map(crop => {
               const isSelected = state.selectedCrop === crop.id;
@@ -619,11 +661,14 @@ const FarmingTab = memo(() => {
             })
           )}
         </div>
-      </Card>
+      </TabSection>
 
       {/* Farm Statistics */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-        <h3 className="mb-3 font-semibold text-slate-900">Farm statistics</h3>
+      <TabSection
+        title="Farm statistics"
+        description="A quick read on plot usage and efficiency."
+        tone="slate"
+      >
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm">Active Plots</span>
@@ -660,18 +705,21 @@ const FarmingTab = memo(() => {
             />
           </div>
         </div>
-      </Card>
+      </TabSection>
 
       {/* Farming Tips */}
-      <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-blue-50/40 p-4">
-        <h3 className="mb-2 font-semibold text-slate-900">Farming tips</h3>
+      <TabSection
+        title="Farming tips"
+        description="Best practices for a productive field."
+        tone="sky"
+      >
         <ul className="space-y-1 text-sm text-slate-700">
           <li>• Plant crops during optimal seasons for bonus yields</li>
           <li>• Water crops regularly to prevent withering</li>
           <li>• Use fertilizers to speed up growth</li>
           <li>• Monitor weather forecasts for better planning</li>
         </ul>
-      </Card>
+      </TabSection>
     </div>
   );
 });

@@ -297,28 +297,73 @@ const SocialTab = memo(() => {
         )}
       </TabHero>
 
+      {/* Friends */}
+      <TabSection
+        title="Friends"
+        description="Neighbors you can visit and send gifts to."
+        tone="sky"
+      >
+        {social.friends.length === 0 ? (
+          <TabEmptyState
+            icon="👥"
+            tone="sky"
+            title="No friends yet"
+            description="Invite neighbors to trade and send gifts."
+            action={(
+              <Button size="sm" variant="outline" onClick={() => actions.addNotification({ message: 'Friend invites coming soon!', type: 'info' })}>
+                Find Friends
+              </Button>
+            )}
+          />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {social.friends.map((friend) => (
+              <Card key={friend.id} className="p-3 flex items-center gap-3">
+                <div className="text-3xl">{friend.avatar || '👤'}</div>
+                <div className="flex-1">
+                  <div className="font-medium">{friend.name || 'Neighbor'}</div>
+                  <div className="text-xs text-slate-500">Lvl {friend.level || 1}</div>
+                </div>
+                <Button size="sm" variant="outline">
+                  🎁 Gift
+                </Button>
+              </Card>
+            ))}
+          </div>
+        )}
+      </TabSection>
+
       {/* Your Profile */}
       <TabSection
         title="Your profile"
         description="Quick stats from the social layer."
         tone="slate"
       >
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
-            <div className="font-bold text-green-600">{state.level}</div>
-            <div className="text-xs uppercase tracking-wide text-green-700">Farm level</div>
+        <div className="space-y-3">
+          <div>
+            <div className="flex justify-between text-xs text-slate-500 mb-1">
+              <span>{currentTier.name}</span>
+              <span>{nextTier ? `${nextTier.name} (${nextTier.minRep} rep)` : 'Max'}</span>
+            </div>
+            <Progress value={progressToNext} className="h-3" />
           </div>
-          <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
-            <div className="font-bold text-blue-600">{reputation}</div>
-            <div className="text-xs uppercase tracking-wide text-blue-700">Reputation</div>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
-            <div className="font-bold text-yellow-600">{state.coins}🪙</div>
-            <div className="text-xs uppercase tracking-wide text-yellow-700">Coins</div>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
-            <div className="font-bold text-purple-600">{state.xp} XP</div>
-            <div className="text-xs uppercase tracking-wide text-purple-700">Experience</div>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
+              <div className="font-bold text-green-600">{state.level}</div>
+              <div className="text-xs uppercase tracking-wide text-green-700">Farm level</div>
+            </div>
+            <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
+              <div className="font-bold text-blue-600">{reputation}</div>
+              <div className="text-xs uppercase tracking-wide text-blue-700">Reputation</div>
+            </div>
+            <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
+              <div className="font-bold text-yellow-600">{state.coins}🪙</div>
+              <div className="text-xs uppercase tracking-wide text-yellow-700">Coins</div>
+            </div>
+            <div className="rounded-2xl border border-white/80 bg-white/90 p-3 text-center shadow-sm">
+              <div className="font-bold text-purple-600">{state.xp} XP</div>
+              <div className="text-xs uppercase tracking-wide text-purple-700">Experience</div>
+            </div>
           </div>
         </div>
       </TabSection>
@@ -452,6 +497,30 @@ const SocialTab = memo(() => {
               </div>
             );
           })}
+        </div>
+      </TabSection>
+
+      {/* Leaderboard */}
+      <TabSection
+        title="Leaderboard"
+        description="Top growers this season."
+        tone="amber"
+      >
+        <div className="space-y-2">
+          {[
+            { rank: 1, name: 'GreenThumb_Gary', score: 1250, avatar: '🥇' },
+            { rank: 2, name: 'Sunny_Sally', score: 1100, avatar: '🥈' },
+            { rank: 3, name: 'Harvest_Hank', score: 950, avatar: '🥉' },
+          ].map((entry) => (
+            <Card key={entry.rank} className="p-3 flex items-center gap-3">
+              <div className="text-xl">{entry.avatar}</div>
+              <div className="flex-1">
+                <div className="font-medium">{entry.name}</div>
+                <div className="text-xs text-slate-500">{entry.score} rep</div>
+              </div>
+              <Badge variant="outline">#{entry.rank}</Badge>
+            </Card>
+          ))}
         </div>
       </TabSection>
 

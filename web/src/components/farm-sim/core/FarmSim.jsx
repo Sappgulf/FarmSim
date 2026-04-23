@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GameProvider, useGameActions, useGameSelector, useGameStore } from '../context/GameContext';
 import { TickProvider } from '../context/TickContext';
 
@@ -17,6 +17,7 @@ import PremiumLockModal from '../ui/PremiumLockModal';
 import LevelUpModal from '../ui/LevelUpModal';
 import AchievementUnlockModal from '../ui/AchievementUnlockModal';
 import WeatherEffects from '../ui/WeatherEffects';
+import ContextualHints from '../ui/ContextualHints';
 import { StartScreen, START_SCREEN_STORAGE_KEY } from '../ui/StartScreen';
 import { logDebugAction } from '../../../utils/debugTools';
 import { getFarmTheme, getFarmThemeVars } from '../../../data/farmThemes';
@@ -96,16 +97,22 @@ export function FarmSimCore() {
     Object.values(NAV_SECTIONS).find((section) => section.tabs.includes(tabId))?.id || null
   ), []);
 
+  // Stable ref for activeTab so handleSectionChange doesn't recreate on tab changes
+  const activeTabRef = useRef(activeTab);
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
   // Handle section change
   const handleSectionChange = useCallback((sectionId) => {
     setActiveSection(sectionId);
     logDebugAction('nav_section_change', { sectionId });
     // Auto-select first tab of section if not already in that section
     const section = NAV_SECTIONS[sectionId];
-    if (section && !section.tabs.includes(activeTab)) {
+    if (section && !section.tabs.includes(activeTabRef.current)) {
       setActiveTab(section.tabs[0]);
     }
-  }, [activeTab]);
+  }, []);
 
   // Handle tab change
   const handleTabChange = useCallback((tabId) => {
@@ -611,6 +618,14 @@ export function FarmSimCore() {
       data-farm-theme={activeTheme.id}
       style={{ ...themeVars, filter: TIME_OF_DAY_VISUALS[timePeriod]?.filter || 'none' }}
     >
+      {/* Skip to main content link for keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:px-4 focus:py-2 focus:bg-emerald-600 focus:text-white focus:rounded-xl focus:font-semibold focus:shadow-lg focus:outline-none"
+      >
+        Skip to main content
+      </a>
+
       {showStartScreen && (
         <StartScreen
           onStart={dismissStartScreen}
@@ -648,7 +663,7 @@ export function FarmSimCore() {
           )}
 
           {/* Main Game Area - Mobile Optimized with bottom padding for NavBar */}
-          <div className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4">
+          <main id="main-content" className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4">
             {/* Farm Grid - First on mobile, left on desktop */}
             <div className="w-full lg:flex-1 order-1 lg:order-1">
               <FarmGrid />
@@ -658,7 +673,7 @@ export function FarmSimCore() {
             <div className="w-full lg:w-80 xl:w-96 order-2 lg:order-2">
               <GameSidebar activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
-          </div>
+          </main>
 
           {/* Bottom Navigation Bar - Fixed on mobile */}
           <div className="fixed bottom-0 left-0 right-0 lg:relative z-40">
@@ -695,6 +710,9 @@ export function FarmSimCore() {
 
           {/* Onboarding Tutorial (auto-shows for new players) */}
           <Tutorial />
+
+          {/* Contextual hints for newly unlocked features */}
+          <ContextualHints />
 
           {/* What's New should not interrupt the launch screen on first load. */}
           <WhatsNewModal />

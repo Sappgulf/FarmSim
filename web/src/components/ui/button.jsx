@@ -61,12 +61,12 @@ export function Button({
   const baseClasses = `
     relative overflow-hidden inline-flex items-center justify-center gap-2
     rounded-xl text-sm font-semibold
-    transition-[transform,box-shadow,background-color,border-color,color,opacity] duration-200 ease-out
+    transition-[transform,box-shadow,background-color,border-color,color,opacity] duration-150 ease-out
     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
     disabled:opacity-50 disabled:pointer-events-none
     transform-gpu
     ${juicy ? "btn-juicy" : ""}
-    ${isPressed && !juicy ? "scale-95" : ""}
+    ${isPressed && !juicy ? "scale-[0.97]" : ""}
     ${isPressed && juicy ? "scale-[0.96]" : ""}
   `;
 
@@ -76,6 +76,7 @@ export function Button({
       hover:from-emerald-300 hover:via-emerald-400 hover:to-emerald-600
       focus-visible:ring-emerald-500
       shadow-emerald-200/60 hover:shadow-emerald-300/50
+      dark:shadow-emerald-900/40 dark:hover:shadow-emerald-800/50
       ${elevated ? "shadow-[0_4px_14px_-4px_rgba(16,185,129,0.4)] hover:shadow-[0_8px_24px_-6px_rgba(16,185,129,0.45)]" : "shadow-sm hover:shadow-lg"}
     `,
     destructive: `
@@ -83,6 +84,7 @@ export function Button({
       hover:from-red-300 hover:via-red-400 hover:to-red-600
       focus-visible:ring-red-500
       shadow-red-200/60 hover:shadow-red-300/50
+      dark:shadow-red-900/40 dark:hover:shadow-red-800/50
       ${elevated ? "shadow-[0_4px_14px_-4px_rgba(239,68,68,0.4)] hover:shadow-[0_8px_24px_-6px_rgba(239,68,68,0.45)]" : "shadow-sm hover:shadow-lg"}
     `,
     secondary: `
@@ -90,23 +92,30 @@ export function Button({
       hover:from-white hover:via-slate-50 hover:to-slate-100
       border border-slate-200/80
       shadow-slate-200/50
+      dark:from-slate-700 dark:via-slate-800 dark:to-slate-700 dark:text-slate-200
+      dark:hover:from-slate-600 dark:hover:via-slate-700 dark:hover:to-slate-600
+      dark:border-slate-600/80 dark:shadow-slate-900/50
       ${elevated ? "shadow-[0_4px_14px_-4px_rgba(100,116,139,0.2)] hover:shadow-[0_8px_24px_-6px_rgba(100,116,139,0.25)]" : "shadow-sm"}
     `,
     outline: `
       border-2 border-slate-200/80 bg-white/90 backdrop-blur-sm text-slate-700
       hover:bg-slate-50/90 hover:border-slate-300
       shadow-sm
+      dark:bg-slate-800/90 dark:border-slate-600/80 dark:text-slate-200
+      dark:hover:bg-slate-700/90 dark:hover:border-slate-500
       ${elevated ? "shadow-[0_4px_14px_-4px_rgba(100,116,139,0.15)] hover:shadow-[0_8px_24px_-6px_rgba(100,116,139,0.2)]" : ""}
     `,
     ghost: `
       text-slate-600 hover:bg-slate-100/80 hover:text-slate-900
       shadow-none hover:shadow-none
+      dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100
     `,
     success: `
       bg-gradient-to-br from-green-400 via-green-500 to-emerald-700 text-white
       hover:from-green-300 hover:via-green-400 hover:to-emerald-600
       focus-visible:ring-green-500
       shadow-green-200/60 hover:shadow-green-300/50
+      dark:shadow-green-900/40 dark:hover:shadow-green-800/50
       ${elevated ? "shadow-[0_4px_14px_-4px_rgba(34,197,94,0.4)] hover:shadow-[0_8px_24px_-6px_rgba(34,197,94,0.45)]" : "shadow-sm hover:shadow-lg"}
     `,
     warning: `
@@ -114,6 +123,7 @@ export function Button({
       hover:from-amber-300 hover:via-amber-400 hover:to-orange-500
       focus-visible:ring-amber-500
       shadow-amber-200/60 hover:shadow-amber-300/50
+      dark:shadow-amber-900/40 dark:hover:shadow-amber-800/50
       ${elevated ? "shadow-[0_4px_14px_-4px_rgba(245,158,11,0.4)] hover:shadow-[0_8px_24px_-6px_rgba(245,158,11,0.45)]" : "shadow-sm hover:shadow-lg"}
     `,
     premium: `
@@ -121,6 +131,7 @@ export function Button({
       hover:from-purple-300 hover:via-violet-400 hover:to-indigo-600
       focus-visible:ring-purple-500
       shadow-purple-200/60 hover:shadow-purple-300/50
+      dark:shadow-purple-900/40 dark:hover:shadow-purple-800/50
       ${elevated ? "shadow-[0_4px_14px_-4px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_24px_-6px_rgba(139,92,246,0.45)]" : "shadow-sm hover:shadow-lg"}
     `,
     gold: `
@@ -128,6 +139,7 @@ export function Button({
       hover:from-amber-200 hover:via-yellow-300 hover:to-amber-500
       focus-visible:ring-amber-500
       shadow-amber-200/60 hover:shadow-amber-300/50
+      dark:shadow-amber-900/40 dark:hover:shadow-amber-800/50
       font-bold
       ${elevated ? "shadow-[0_4px_14px_-4px_rgba(245,158,11,0.4)] hover:shadow-[0_8px_24px_-6px_rgba(245,158,11,0.45)]" : "shadow-sm hover:shadow-lg"}
     `,
@@ -136,6 +148,9 @@ export function Button({
       hover:from-white hover:via-slate-50 hover:to-slate-50
       border border-slate-200/60
       shadow-[0_4px_14px_-4px_rgba(100,116,139,0.25)] hover:shadow-[0_8px_24px_-6px_rgba(100,116,139,0.3)]
+      dark:from-slate-800 dark:via-slate-800 dark:to-slate-700 dark:text-slate-200
+      dark:hover:from-slate-700 dark:hover:via-slate-700 dark:hover:to-slate-600
+      dark:border-slate-600/60
     `,
   };
 
@@ -201,7 +216,7 @@ export function Button({
       pressTimeoutRef.current = setTimeout(() => {
         setIsPressed(false);
         pressTimeoutRef.current = null;
-      }, 150);
+      }, 100);
       createRipple(event);
       onClick?.(event);
     },

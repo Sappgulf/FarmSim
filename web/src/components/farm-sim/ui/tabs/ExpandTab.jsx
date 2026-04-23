@@ -3,7 +3,7 @@ import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 import { FARM_DISTRICTS, getUnlockedDistricts } from '../../../../utils/farmDistricts';
 
 const EXPANSION_COSTS = { 3: 60, 4: 180 };
@@ -101,8 +101,11 @@ const ExpandTab = memo(() => {
       </TabHero>
 
       {/* Plot Usage Overview */}
-      <Card className="p-4 bg-slate-50/80">
-        <h4 className="font-semibold mb-3">Plot Usage</h4>
+      <TabSection
+        title="Plot Usage"
+        description="How your current grid is allocated."
+        tone="slate"
+      >
         <div className="grid grid-cols-2 gap-3 mb-3 sm:grid-cols-4">
           <MetricTile tone="emerald" label="Growing" value={plotStats.planted} hint="In progress" icon="🌱" />
           <MetricTile tone="amber" label="Ready" value={plotStats.ready} hint="Harvest now" icon="⏱️" />
@@ -118,11 +121,15 @@ const ExpandTab = memo(() => {
             {plotStats.empty > 0 && <div className="bg-gray-300" style={{ width: `${(plotStats.empty / plotStats.total) * 100}%` }} />}
           </div>
         )}
-      </Card>
+      </TabSection>
 
       {/* Expansion Options */}
-      {state.gridSize >= MAX_SIZE ? (
-        <Card className="p-6 bg-gradient-to-r from-yellow-50 to-orange-50">
+      <TabSection
+        title="Expansion Options"
+        description={state.gridSize >= MAX_SIZE ? 'You have reached the maximum farm size.' : 'Grow the grid and unlock new districts.'}
+        tone="amber"
+      >
+        {state.gridSize >= MAX_SIZE ? (
           <div className="text-center">
             <div className="text-5xl mb-3">🏆</div>
             <h4 className="text-xl font-bold text-orange-800 mb-2">Maximum Size Reached!</h4>
@@ -131,10 +138,9 @@ const ExpandTab = memo(() => {
             </p>
             <Badge className="bg-orange-600">Farm Master</Badge>
           </div>
-        </Card>
-      ) : (
-        <Card className="p-4">
-          <h4 className="font-semibold mb-4">Upgrade Available</h4>
+        ) : (
+          <div className="space-y-4">
+            <h4 className="font-semibold">Upgrade Available</h4>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="p-3 bg-gray-50 rounded-lg border-2 border-gray-200 text-center">
               <div className="text-sm text-gray-600 mb-1">Current</div>
@@ -173,13 +179,16 @@ const ExpandTab = memo(() => {
               ? `Expand Farm (${expansionCost})`
               : `Need ${expansionCost - state.coins} more coins`}
           </Button>
-        </Card>
+        </div>
       )}
+      </TabSection>
 
       {/* Plot Zones Guide */}
-      <Card className="p-4">
-        <h4 className="font-semibold mb-3">District plan</h4>
-        <p className="text-xs text-gray-500 mb-3">Each expansion tier reshapes the farm into named districts with different strengths.</p>
+      <TabSection
+        title="District Plan"
+        description="Each expansion tier reshapes the farm into named districts with different strengths."
+        tone="slate"
+      >
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)]">
           <div className="grid gap-1 rounded-[22px] border border-slate-200/70 bg-slate-50/80 p-3" style={{ gridTemplateColumns: `repeat(${state.gridSize}, minmax(0, 1fr))` }}>
             {districtMatrix.flat().map((district, index) => (
@@ -203,14 +212,17 @@ const ExpandTab = memo(() => {
                   <div className="text-xs text-slate-600">{district.description}</div>
                 </div>
               </div>
-            ))}
+            )            )}
           </div>
         </div>
-      </Card>
+      </TabSection>
 
       {/* Expansion Milestones */}
-      <Card className="p-4 bg-gray-50">
-        <h4 className="font-semibold mb-3">Expansion Milestones</h4>
+      <TabSection
+        title="Expansion Milestones"
+        description="Track your growth goals."
+        tone="emerald"
+      >
         <div className="space-y-2">
           {EXPANSION_MILESTONES.map((milestone) => {
             const completed = milestone.condition(state.gridSize);
@@ -233,7 +245,7 @@ const ExpandTab = memo(() => {
         <div className="mt-3 text-xs text-gray-500 text-center">
           {completedMilestones.length}/{EXPANSION_MILESTONES.length} milestones completed
         </div>
-      </Card>
+      </TabSection>
     </div>
   );
 });
