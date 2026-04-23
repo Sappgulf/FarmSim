@@ -74,10 +74,17 @@ const FarmPlot = memo(({
     if (!plot || plot.state === 'empty') {
       return {
         emoji: '🌱',
-        bgColor: 'bg-amber-50',
-        borderColor: 'border-amber-300',
+        bgColor: 'bg-transparent',
+        borderColor: 'border-amber-900/20',
         text: 'Empty',
-        hoverEffect: 'hover:bg-amber-100 hover:border-amber-400 hover:scale-105'
+        hoverEffect: 'hover:brightness-105 hover:border-amber-900/35 hover:scale-105',
+        plotStyle: {
+          background: `radial-gradient(circle at 30% 30%, rgba(160,110,60,0.15) 0%, transparent 20%),
+            radial-gradient(circle at 70% 70%, rgba(140,90,50,0.12) 0%, transparent 25%),
+            repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(120,80,40,0.04) 2px, rgba(120,80,40,0.04) 4px),
+            repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(120,80,40,0.04) 2px, rgba(120,80,40,0.04) 4px),
+            linear-gradient(180deg, #f5e6d3 0%, #e8d5c0 100%)`
+        }
       };
     }
 
@@ -118,13 +125,13 @@ const FarmPlot = memo(({
 
       return {
         emoji: plot.crop.emoji || '🌱',
-        bgColor: 'bg-green-50',
+        bgColor: liveProgress < 0.33 ? 'bg-green-50' : liveProgress < 0.66 ? 'bg-emerald-100' : 'bg-emerald-200',
         borderColor: 'border-green-400',
         text: `Stage ${growthStage}/${totalStages}`,
         subText: secondsLeft > 0 ? `${secondsLeft}s left` : 'Almost ready...',
         progress: Math.round(liveProgress * 100),
         liveProgress,
-        hoverEffect: 'hover:bg-green-100 hover:scale-105'
+        hoverEffect: 'hover:brightness-105 hover:scale-105'
       };
     }
 
@@ -136,14 +143,14 @@ const FarmPlot = memo(({
       return {
         emoji: plot.crop.emoji || '🌾',
         bgColor: 'bg-gradient-to-br from-amber-50 via-yellow-100 to-orange-100',
-        borderColor: 'border-amber-300',
+        borderColor: 'border-amber-400',
         text: 'Harvest',
-        subText: `+${estimatedValue}🪙`,
+        subText: `+${estimatedValue}`,
         textClassName: 'text-amber-900',
         subTextClassName: 'text-amber-700',
         animation: 'animate-pulse',
         hoverEffect: 'hover:bg-yellow-200 hover:shadow-xl hover:scale-110',
-        emphasisClassName: 'ready-plot-shell shadow-[0_16px_40px_-20px_rgba(245,158,11,0.9)]'
+        emphasisClassName: 'ready-plot-shell shadow-[0_0_30px_rgba(245,158,11,0.6)]'
       };
     }
 
@@ -153,11 +160,13 @@ const FarmPlot = memo(({
           'Withered';
       return {
         emoji: '🥀',
-        bgColor: 'bg-red-50',
-        borderColor: 'border-red-300',
+        bgColor: 'bg-stone-200',
+        borderColor: 'border-red-400/50',
         text: 'Withered',
         subText: 'Click to clear',
-        hoverEffect: 'hover:bg-red-200 hover:scale-105 cursor-pointer'
+        hoverEffect: 'hover:bg-stone-300 hover:scale-105 cursor-pointer',
+        textClassName: 'text-stone-600',
+        plotStyle: { filter: 'saturate(0.35) brightness(0.92)' }
       };
     }
 
@@ -260,13 +269,14 @@ const FarmPlot = memo(({
           ${display.emphasisClassName || ''}
           ${plot?.disease ? 'ring-2 ring-red-400 ring-opacity-50' : ''}
           ${plot?.fertilizer > 0 ? 'ring-2 ring-green-400 ring-opacity-50' : ''}
-          ${isSelected ? 'ring-4 ring-blue-500 ring-opacity-70 scale-105' : ''}
+          ${isSelected ? 'ring-[3px] ring-emerald-400/80 shadow-[0_0_18px_rgba(52,211,153,0.4)] scale-105' : ''}
           ${showPreview && plot?.state === 'empty' ? 'ring-4 ring-emerald-400 ring-opacity-70' : ''}
           ${plot?.state === 'decor' ? 'shadow-inner' : ''}
           ${district?.surfaceClassName || ''}
           ${isTrinket ? 'trinket-idle' : ''}
           touch-manipulation select-none
         `}
+        style={display.plotStyle || undefined}
         onClick={handleClick}
         onMouseEnter={() => {
           if (!showTooltips) return;
@@ -323,6 +333,9 @@ const FarmPlot = memo(({
         </div>
         {isReadyPlot && <div className="harvest-ready-sheen" aria-hidden="true" />}
         {isReadyPlot && (
+          <div className="absolute inset-0 rounded-lg pointer-events-none z-10 animate-pulse border-2 border-amber-300/60" aria-hidden="true" />
+        )}
+        {isReadyPlot && (
           <div className="absolute inset-x-2 top-2 z-20 flex items-center justify-between">
             <span className="harvest-ready-ribbon">
               Ready
@@ -330,6 +343,11 @@ const FarmPlot = memo(({
             <span className="rounded-full bg-white/88 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-amber-700 shadow-sm">
               Tap
             </span>
+          </div>
+        )}
+        {isReadyPlot && (
+          <div className="absolute bottom-7 left-1/2 -translate-x-1/2 z-20 animate-bounce pointer-events-none">
+            <span className="text-sm drop-shadow-md">⬇️</span>
           </div>
         )}
 
@@ -366,7 +384,13 @@ const FarmPlot = memo(({
             {display.text}
           </div>
           {plot?.state === 'ready' ? (
-            <ReadyCountdown readyAt={plot.readyAt} />
+            <>
+              <ReadyCountdown readyAt={plot.readyAt} />
+              <div className="flex items-center gap-0.5 text-[10px] font-bold text-amber-700 mt-0.5">
+                <span>🪙</span>
+                <span>{display.subText}</span>
+              </div>
+            </>
           ) : (
             display.subText && (
               <div className={`text-[9px] text-center font-semibold mt-0.5 ${display.subTextClassName || 'text-gray-600'}`}>
@@ -382,12 +406,18 @@ const FarmPlot = memo(({
 
           {/* Enhanced progress bar with percentage */}
           {display.progress !== undefined && (
-            <div className="absolute bottom-1 left-1 right-1 h-2 sm:h-2.5 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+            <div className="absolute bottom-1 left-1 right-1 h-2 sm:h-2.5 bg-gray-200/80 rounded-full overflow-hidden shadow-inner border border-white/40">
               <div
-                className="h-full bg-gradient-to-r from-green-400 via-green-500 to-green-600 transition-all duration-500 animate-shimmer"
+                className={`h-full transition-all duration-500 animate-shimmer ${
+                  display.progress < 33
+                    ? 'bg-gradient-to-r from-lime-300 to-green-400'
+                    : display.progress < 66
+                      ? 'bg-gradient-to-r from-green-400 to-emerald-500'
+                      : 'bg-gradient-to-r from-emerald-500 to-teal-600'
+                }`}
                 style={{ width: `${display.progress}%` }}
               />
-              <span className="absolute inset-0 flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-gray-700">
+              <span className="absolute inset-0 flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-white drop-shadow">
                 {display.progress}%
               </span>
             </div>
@@ -423,13 +453,21 @@ const FarmPlot = memo(({
             </div>
           )}
 
+          {/* Withered indicator */}
+          {plot?.state === 'withered' && (
+            <div className="absolute top-1 right-1 z-20 text-xs opacity-80 drop-shadow-sm">💀</div>
+          )}
+
           {/* Water level indicator */}
-          {plot?.waterLevel !== undefined && plot?.state !== 'empty' && (
-            <div className="absolute bottom-1 left-1 flex items-center gap-0.5">
-              <div className={`w-2 h-2 rounded-full ${plot.waterLevel > 70 ? 'bg-blue-500' :
-                plot.waterLevel > 40 ? 'bg-yellow-500' :
-                  'bg-red-500 animate-pulse'
-                }`} />
+          {plot?.waterLevel !== undefined && plot?.state !== 'empty' && plot?.state !== 'ready' && (
+            <div className="absolute bottom-4 left-1 flex items-center gap-0.5 text-[10px] drop-shadow-sm z-10">
+              {plot.waterLevel > 70 ? (
+                <span title="Well watered">💧</span>
+              ) : plot.waterLevel > 40 ? (
+                <span title="Okay">💧</span>
+              ) : (
+                <span className="animate-pulse" title="Thirsty!">💧</span>
+              )}
             </div>
           )}
         </div>
@@ -445,56 +483,64 @@ const FarmPlot = memo(({
       {/* Enhanced Tooltip */}
       {showTooltips && showTooltip && plot && (
         <div className="absolute z-50 -top-2 left-1/2 transform -translate-x-1/2 -translate-y-full">
-          <div className="bg-gray-900 text-white text-xs rounded-lg shadow-2xl p-2 w-40 animate-fade-in">
-            <div className="font-semibold mb-1">Plot #{index + 1}</div>
+          <div className="bg-gray-900/85 backdrop-blur-md text-white text-xs rounded-xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] p-2.5 w-44 animate-fade-in border border-white/10">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="font-bold text-sm">Plot #{index + 1}</span>
+              <span className={`w-2.5 h-2.5 rounded-full border border-white/20 ${
+                (plot.soilFertility || 1.0) > 0.8 ? 'bg-emerald-400' :
+                (plot.soilFertility || 1.0) > 0.5 ? 'bg-yellow-400' : 'bg-red-400'
+              }`} title={`Fertility: ${Math.round((plot.soilFertility || 1.0) * 100)}%`} />
+            </div>
             {plot.state !== 'empty' && plot.crop && (
               <>
-                <div className="text-yellow-300">{plot.crop.emoji} {plot.crop.name}</div>
-                <div className="mt-1 space-y-0.5 text-gray-300">
-                  <div>💧 Water: {Math.round(plot.waterLevel || 0)}%</div>
-              <div>🌱 Fertility: {Math.round((plot.soilFertility || 1.0) * 100)}%</div>
-                <div>📍 District: {district.name}</div>
-                  {plot.fertilizer > 0 && <div>✨ Fertilizer: +{plot.fertilizer * 10}%</div>}
-                  {plot.disease && <div className="text-red-400">🐛 Diseased!</div>}
+                <div className="text-yellow-300 font-semibold text-sm">{plot.crop.emoji} {plot.crop.name}</div>
+                <div className="mt-1.5 space-y-1 text-gray-200 text-[11px] leading-relaxed">
+                  <div className="flex justify-between"><span>💧 Water</span> <span className="font-medium">{Math.round(plot.waterLevel || 0)}%</span></div>
+                  <div className="flex justify-between"><span>🌱 Fertility</span> <span className="font-medium">{Math.round((plot.soilFertility || 1.0) * 100)}%</span></div>
+                  <div className="flex justify-between"><span>📍 District</span> <span className="font-medium">{district.name}</span></div>
+                  {plot.fertilizer > 0 && <div className="flex justify-between"><span>✨ Fertilizer</span> <span className="font-medium">+{plot.fertilizer * 10}%</span></div>}
+                  {plot.disease && <div className="text-red-400 flex justify-between"><span>🐛 Status</span> <span>Diseased!</span></div>}
                   {(plot.state === 'growing' || plot.state === 'planted') && display.progress !== undefined && (
-                    <div>📈 Growth: {display.progress}%</div>
+                    <div className="flex justify-between"><span>📈 Growth</span> <span className="font-medium">{display.progress}%</span></div>
                   )}
                   {plot.weatherModifier && plot.weatherModifier !== 1.0 && (
-                    <div className={plot.weatherModifier > 1.0 ? 'text-green-400' : 'text-orange-400'}>
-                      🌤️ Weather: {plot.weatherModifier > 1.0 ? '+' : ''}{Math.round((plot.weatherModifier - 1.0) * 100)}%
+                    <div className={plot.weatherModifier > 1.0 ? 'text-green-400 flex justify-between' : 'text-orange-400 flex justify-between'}>
+                      <span>🌤️ Weather</span>
+                      <span className="font-medium">{plot.weatherModifier > 1.0 ? '+' : ''}{Math.round((plot.weatherModifier - 1.0) * 100)}%</span>
                     </div>
                   )}
                   {hasSoilAnalyzer && plot.crop && (
-                    <div className="text-emerald-300">
-                      🧪 Est. Value: {Math.floor((plot.crop.baseValue || 10) * (plot.soilFertility || 1.0) * harvestMultiplier)}🪙
+                    <div className="text-emerald-300 flex justify-between">
+                      <span>🧪 Est. Value</span>
+                      <span className="font-medium">{Math.floor((plot.crop.baseValue || 10) * (plot.soilFertility || 1.0) * harvestMultiplier)}🪙</span>
                     </div>
                   )}
-                  {plot.weatherDamage && <div className="text-red-400">⚡ Storm Damage</div>}
-                  {plot.droughtDamage && <div className="text-orange-400">☀️ Drought Damage</div>}
+                  {plot.weatherDamage && <div className="text-red-400 flex justify-between"><span>⚡ Damage</span> <span>Storm</span></div>}
+                  {plot.droughtDamage && <div className="text-orange-400 flex justify-between"><span>☀️ Damage</span> <span>Drought</span></div>}
                 </div>
               </>
             )}
             {plot.state === 'decor' && plot.decorationId && (
               <div className="text-rose-200">
-                <div className="font-semibold">Decor</div>
-                <div className="mt-1 text-xs">Tap to remove or swap.</div>
+                <div className="font-semibold text-sm">Decor</div>
+                <div className="mt-1 text-xs text-gray-300">Tap to remove or swap.</div>
               </div>
             )}
             {plot.state === 'empty' && (
-              <div className="text-gray-400">
-              <div>🌱 Fertility: {Math.round((plot.soilFertility || 1.0) * 100)}%</div>
-              <div className="mt-1 text-xs">📍 {district.name}</div>
-              <div className="mt-1 text-xs">Click to plant or decorate.</div>
-            </div>
-          )}
+              <div className="text-gray-300 space-y-1 text-[11px] leading-relaxed">
+                <div className="flex justify-between"><span>🌱 Fertility</span> <span className="font-medium">{Math.round((plot.soilFertility || 1.0) * 100)}%</span></div>
+                <div className="flex justify-between"><span>📍 District</span> <span className="font-medium">{district.name}</span></div>
+                <div className="text-gray-400 mt-1">Click to plant or decorate.</div>
+              </div>
+            )}
             {plot.state === 'withered' && (
               <div className="text-red-400">
-                <div className="font-semibold">Dead Crop 💀</div>
-                <div className="mt-1 text-xs">Reason: {plot.witherReason === 'no_water' ? 'No Water' : plot.witherReason === 'overripe' ? 'Left Too Long' : 'Unknown'}</div>
+                <div className="font-semibold text-sm">Dead Crop 💀</div>
+                <div className="mt-1 text-xs text-gray-300">Reason: {plot.witherReason === 'no_water' ? 'No Water' : plot.witherReason === 'overripe' ? 'Left Too Long' : 'Unknown'}</div>
                 <div className="mt-1 text-xs font-bold text-yellow-300">👆 Click to clear!</div>
               </div>
             )}
-            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900/85 rotate-45 border-r border-b border-white/10"></div>
           </div>
         </div>
       )}
@@ -1439,11 +1485,13 @@ const FarmGrid = memo(() => {
 
       {/* Farm Grid - Responsive with larger touch targets on mobile */}
       <div
-        className={`grid gap-1.5 sm:gap-2.5 md:gap-4 mx-auto justify-center farm-grid relative w-full rounded-[1.5rem] p-2.5 sm:p-4 border border-white/70 shadow-inner ${farmAtmosphere.gridClassName}`}
+        className={`grid gap-2 sm:gap-3 md:gap-4 mx-auto justify-center farm-grid relative w-full rounded-[1.5rem] p-3 sm:p-5 border-[3px] border-emerald-900/10 shadow-[inset_0_2px_12px_rgba(0,0,0,0.06)] ${farmAtmosphere.gridClassName}`}
         data-harvest-bloom={harvestBloomTick > 0 ? 'on' : 'off'}
         style={{
           gridTemplateColumns: `repeat(${gridSize}, minmax(${gridSize >= 5 ? 52 : 56}px, 1fr))`,
-          maxWidth: `min(100%, ${gridSize * 104}px)`
+          maxWidth: `min(100%, ${gridSize * 108}px)`,
+          backgroundImage: `radial-gradient(circle at 2px 2px, rgba(16,185,129,0.08) 1px, transparent 0)`,
+          backgroundSize: '18px 18px'
         }}
       >
         {harvestBloomTick > 0 && (

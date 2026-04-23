@@ -14,6 +14,8 @@ import PerfHud from '../ui/PerfHud';
 import Tutorial from '../ui/Tutorial';
 import WhatsNewModal from '../ui/WhatsNewModal';
 import PremiumLockModal from '../ui/PremiumLockModal';
+import LevelUpModal from '../ui/LevelUpModal';
+import AchievementUnlockModal from '../ui/AchievementUnlockModal';
 import WeatherEffects from '../ui/WeatherEffects';
 import { StartScreen, START_SCREEN_STORAGE_KEY } from '../ui/StartScreen';
 import { logDebugAction } from '../../../utils/debugTools';
@@ -701,6 +703,12 @@ export function FarmSimCore() {
 
       {/* Premium lock modal (premium mode only) */}
       <PremiumLockModal />
+
+      {/* Level up celebration */}
+      <LevelUpModal />
+
+      {/* Achievement unlock celebration */}
+      <AchievementUnlockModal />
     </div>
   );
 }

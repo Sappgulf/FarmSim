@@ -93,8 +93,18 @@ export const GameplaySettings = memo(({
 
   return (
     <>
-      <TabSection title="Gameplay preferences" description="Core simulation and comfort settings." tone="violet" bodyClassName="space-y-3">
-        <div className="space-y-3">
+      <TabSection
+        title={
+          <span className="inline-flex items-center gap-2">
+            <span className="text-lg leading-none" aria-hidden="true">🎮</span>
+            <span>Gameplay preferences</span>
+          </span>
+        }
+        description="Core simulation and comfort settings."
+        tone="violet"
+        bodyClassName="space-y-4"
+      >
+        <div className="space-y-4">
           {experienceRows.map((row) => (
             <SettingToggleRow
               key={row.key}
@@ -108,8 +118,18 @@ export const GameplaySettings = memo(({
         </div>
       </TabSection>
 
-      <TabSection title="Assistance and polish" description="Hints, overlays, and other supporting affordances." tone="sky" bodyClassName="space-y-3">
-        <div className="space-y-3">
+      <TabSection
+        title={
+          <span className="inline-flex items-center gap-2">
+            <span className="text-lg leading-none" aria-hidden="true">💡</span>
+            <span>Assistance and polish</span>
+          </span>
+        }
+        description="Hints, overlays, and other supporting affordances."
+        tone="sky"
+        bodyClassName="space-y-4"
+      >
+        <div className="space-y-4">
           {guidanceRows.map((row) => (
             <SettingToggleRow
               key={row.key}

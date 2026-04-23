@@ -32,11 +32,33 @@ const ExpandTab = lazy(() => import('./tabs/ExpandTab'));
 const SettingsTab = lazy(() => import('./tabs/SettingsTab'));
 const NotificationCenterTab = lazy(() => import('./tabs/NotificationCenterTab'));
 
-// Loading fallback component
+// Loading fallback component — skeleton screen that mimics real tab layout
 const TabLoader = () => (
-  <div className="flex items-center justify-center p-8">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-    <span className="ml-3 text-gray-600">Loading...</span>
+  <div className="space-y-5 p-1">
+    {/* Hero Section */}
+    <div className="flex items-start gap-3">
+      <div className="skeleton-base skeleton-shimmer w-10 h-10 rounded-xl flex-shrink-0" />
+      <div className="flex-1 space-y-2 pt-1">
+        <div className="skeleton-base skeleton-shimmer h-4 w-3/5 rounded-md" />
+        <div className="skeleton-base skeleton-shimmer h-3 w-full rounded-md" />
+        <div className="skeleton-base skeleton-shimmer h-3 w-4/5 rounded-md" />
+      </div>
+    </div>
+
+    {/* Metric Tiles */}
+    <div className="grid grid-cols-3 gap-2">
+      <div className="skeleton-base skeleton-shimmer h-[72px] rounded-2xl" />
+      <div className="skeleton-base skeleton-shimmer h-[72px] rounded-2xl" />
+      <div className="skeleton-base skeleton-shimmer h-[72px] rounded-2xl" />
+    </div>
+
+    {/* Content Rows */}
+    <div className="space-y-3">
+      <div className="skeleton-base skeleton-shimmer h-20 rounded-xl" />
+      <div className="skeleton-base skeleton-shimmer h-10 rounded-lg" />
+      <div className="skeleton-base skeleton-shimmer h-10 rounded-lg" />
+      <div className="skeleton-base skeleton-shimmer h-10 rounded-lg" />
+    </div>
   </div>
 );
 
@@ -268,12 +290,14 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         </div>
 
         {/* Active tab only: avoids creating all tab panels on each render. */}
-        <TabsContent key={activeConfig.id} value={activeConfig.id} className="mt-3 px-3 pb-3 sm:mt-4 sm:px-4 sm:pb-4 animate-tab-slide-in">
-          <Suspense fallback={<TabLoader />}>
-            <TabWrapper>
-              <ActiveTabComponent />
-            </TabWrapper>
-          </Suspense>
+        <TabsContent key={activeConfig.id} value={activeConfig.id} className="mt-3 px-3 pb-3 sm:mt-4 sm:px-4 sm:pb-4">
+          <div className="tab-content-enter">
+            <Suspense fallback={<TabLoader />}>
+              <TabWrapper>
+                <ActiveTabComponent />
+              </TabWrapper>
+            </Suspense>
+          </div>
         </TabsContent>
       </Tabs>
 
