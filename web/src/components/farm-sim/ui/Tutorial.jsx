@@ -1,26 +1,26 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useGameActions, useGameSelector } from '../context/GameContext';
 import { Button } from '../../ui/button';
-import { Card } from '../../ui/card';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 /**
- * Tutorial - Soft onboarding overlay for first-time users
- * Event-driven steps, non-blocking, and skippable
+ * Tutorial — polished guided tour with glassmorphism, progress dots,
+ * Next/Back navigation, spotlight overlay, and spring animations.
  */
 
 const ONBOARDING_STEPS = [
   {
     id: 'plant',
-    title: 'Plant something',
-    description: 'Pick a seed, then tap empty soil.',
+    title: 'Plant Your First Crop',
+    description: 'Choose a seed from your pouch, then tap any empty soil patch to sow it.',
     emoji: '🌱',
     target: '[data-onboard="farm-grid"]',
     placement: 'right',
   },
   {
     id: 'harvest',
-    title: 'Harvest it',
-    description: 'Tap a glowing crop for coins.',
+    title: 'Harvest & Earn',
+    description: 'When your crops glow, tap them to gather produce and earn coins.',
     emoji: '🧺',
     target: '[data-onboard="farm-grid"]',
     placement: 'right',
@@ -28,8 +28,8 @@ const ONBOARDING_STEPS = [
   {
     id: 'board',
     title: 'Visit the Town Board',
-    description: 'Open More > Events for today\'s plan.',
-    emoji: '📌',
+    description: 'Open the menu and head to Events to see today\'s plan and special quests.',
+    emoji: '📋',
     target: '[data-onboard="events-tab"]',
     placement: 'top',
   },
@@ -44,20 +44,35 @@ const Tutorial = memo(() => {
   const onboardingSeen = useGameSelector((state) => Boolean(state.onboardingSeen));
   const [targetRect, setTargetRect] = useState(null);
   const [manualPosition, setManualPosition] = useState(null);
+  const [cardVisible, setCardVisible] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
   const dragStateRef = useRef(null);
+  const prevStepRef = useRef(onboardingStep);
 
   const stepIndex = onboardingStep;
   const currentStep = ONBOARDING_STEPS[stepIndex];
   const totalSteps = ONBOARDING_STEPS.length;
-
   const shouldShow = !onboardingSkipped && stepIndex < totalSteps;
 
+  /* Animate card in whenever step changes --------------------------- */
+  useEffect(() => {
+    if (!shouldShow) {
+      setCardVisible(false);
+      return;
+    }
+    setCardVisible(false);
+    const t = setTimeout(() => setCardVisible(true), 40);
+    return () => clearTimeout(t);
+  }, [shouldShow, stepIndex]);
+
+  /* Mark as seen ---------------------------------------------------- */
   useEffect(() => {
     if (shouldShow && !onboardingSeen) {
       actions.updateOnboarding({ onboardingSeen: true });
     }
   }, [shouldShow, onboardingSeen, actions]);
 
+  /* Track target element -------------------------------------------- */
   useEffect(() => {
     if (!shouldShow || !currentStep?.target) {
       setTargetRect(null);
@@ -94,21 +109,23 @@ const Tutorial = memo(() => {
     };
   }, [shouldShow, currentStep]);
 
+  /* Reset manual drag on step change -------------------------------- */
   useEffect(() => {
     setManualPosition(null);
   }, [stepIndex]);
 
+  /* Position calculation -------------------------------------------- */
   const defaultPosition = useMemo(() => {
     if (!shouldShow) return null;
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 360;
     const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 640;
-    const margin = 12;
-    const cardWidth = Math.min(320, viewportWidth - margin * 2);
-    const cardHeight = 190;
+    const margin = 16;
+    const cardWidth = Math.min(340, viewportWidth - margin * 2);
+    const cardHeight = 220;
 
     if (!targetRect) {
       return {
-        top: clamp(viewportHeight - cardHeight - 120, margin, viewportHeight - cardHeight - margin),
+        top: clamp(viewportHeight - cardHeight - 140, margin, viewportHeight - cardHeight - margin),
         left: clamp((viewportWidth - cardWidth) / 2, margin, viewportWidth - cardWidth - margin),
         width: cardWidth,
       };
@@ -143,6 +160,7 @@ const Tutorial = memo(() => {
 
   const position = manualPosition || defaultPosition;
 
+  /* Drag handlers --------------------------------------------------- */
   const handlePointerDown = (event) => {
     if (!position) return;
     dragStateRef.current = {
@@ -158,9 +176,9 @@ const Tutorial = memo(() => {
     if (!dragStateRef.current) return;
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 360;
     const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 640;
-    const margin = 12;
+    const margin = 16;
     const cardWidth = position?.width || 280;
-    const cardHeight = 190;
+    const cardHeight = 220;
 
     const dx = event.clientX - dragStateRef.current.startX;
     const dy = event.clientY - dragStateRef.current.startY;
@@ -175,55 +193,163 @@ const Tutorial = memo(() => {
     dragStateRef.current = null;
   };
 
+  /* Navigation ------------------------------------------------------ */
+  const handleNext = () => {
+    const next = stepIndex + 1;
+    if (next >= totalSteps) {
+      finish();
+    } else {
+      actions.updateOnboarding({ onboardingStep: next, onboardingSeen: true });
+    }
+  };
+
+  const handleBack = () => {
+    const prev = Math.max(0, stepIndex - 1);
+    actions.updateOnboarding({ onboardingStep: prev, onboardingSeen: true });
+  };
+
   const handleSkip = () => {
-    actions.updateOnboarding({ onboardingSkipped: true, onboardingStep: totalSteps, onboardingSeen: true });
+    finish();
+  };
+
+  const finish = () => {
+    actions.updateOnboarding({
+      onboardingSkipped: dontShowAgain,
+      onboardingStep: totalSteps,
+      onboardingSeen: true,
+    });
   };
 
   if (!shouldShow || !currentStep || !position) return null;
 
   return (
     <div className="fixed inset-0 z-[95] pointer-events-none">
+      {/* ── Spotlight overlay ── */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] transition-opacity duration-500" />
+
+      {/* Target highlight ring + glow */}
       {targetRect && (
-        <div
-          className="absolute rounded-2xl border-2 border-emerald-300/80 ring-2 ring-emerald-200/60 shadow-lg pointer-events-none"
-          style={{
-            top: targetRect.top - 6,
-            left: targetRect.left - 6,
-            width: targetRect.width + 12,
-            height: targetRect.height + 12,
-          }}
-        />
+        <>
+          <div
+            className="absolute rounded-2xl border-2 border-emerald-300/70 ring-4 ring-emerald-200/30 shadow-[0_0_40px_-8px_rgba(16,185,129,0.45)] pointer-events-none transition-all duration-500"
+            style={{
+              top: targetRect.top - 8,
+              left: targetRect.left - 8,
+              width: targetRect.width + 16,
+              height: targetRect.height + 16,
+            }}
+          />
+          {/* Soft inner glow behind target */}
+          <div
+            className="absolute rounded-2xl bg-emerald-400/10 pointer-events-none transition-all duration-500"
+            style={{
+              top: targetRect.top - 8,
+              left: targetRect.left - 8,
+              width: targetRect.width + 16,
+              height: targetRect.height + 16,
+            }}
+          />
+        </>
       )}
 
+      {/* ── Tutorial card ── */}
       <div
         className="absolute"
         style={{ top: position.top, left: position.left, width: position.width }}
       >
-        <Card
-          className="pointer-events-auto p-4 bg-white/95 shadow-xl border border-emerald-100"
+        <div
+          className={`pointer-events-auto rounded-[2rem] border border-white/20 bg-white/10 backdrop-blur-2xl shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] p-5 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+            cardVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-[0.96]'
+          }`}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
         >
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">{currentStep.emoji}</span>
-              <div className="text-sm font-semibold text-gray-900">{currentStep.title}</div>
+          {/* Top bar: emoji + title + close */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-xl shadow-inner">
+                {currentStep.emoji}
+              </span>
+              <div>
+                <div className="text-sm font-bold text-white">{currentStep.title}</div>
+                <div className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-200/60">
+                  Step {stepIndex + 1} of {totalSteps}
+                </div>
+              </div>
             </div>
-            <span className="text-[10px] uppercase tracking-wide text-gray-400">
-              Step {stepIndex + 1} / {totalSteps}
-            </span>
+            <button
+              onClick={handleSkip}
+              className="rounded-lg p-1.5 text-white/40 hover:bg-white/10 hover:text-white/70 transition-colors"
+              aria-label="Skip tutorial"
+            >
+              <X size={16} />
+            </button>
           </div>
 
-          <p className="mt-2 text-xs text-gray-600">{currentStep.description}</p>
+          {/* Description */}
+          <p className="mt-3 text-sm leading-6 text-emerald-50/80">
+            {currentStep.description}
+          </p>
 
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-[10px] text-gray-400">Drag if needed</span>
-            <Button variant="outline" size="sm" onClick={handleSkip}>
-              Skip
-            </Button>
+          {/* Progress dots */}
+          <div className="mt-4 flex items-center justify-center gap-2">
+            {ONBOARDING_STEPS.map((s, i) => (
+              <button
+                key={s.id}
+                onClick={() => actions.updateOnboarding({ onboardingStep: i, onboardingSeen: true })}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  i === stepIndex
+                    ? 'w-6 bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.5)]'
+                    : i < stepIndex
+                    ? 'w-2 bg-emerald-300/50'
+                    : 'w-2 bg-white/20 hover:bg-white/30'
+                }`}
+                aria-label={`Go to step ${i + 1}`}
+              />
+            ))}
           </div>
-        </Card>
+
+          {/* Footer: Don't show again + Nav buttons */}
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <label className="flex items-center gap-2 cursor-pointer select-none group">
+              <span className="relative flex h-4 w-4 items-center justify-center rounded border border-white/20 bg-white/5 transition-colors group-hover:border-white/30">
+                <input
+                  type="checkbox"
+                  className="peer sr-only"
+                  checked={dontShowAgain}
+                  onChange={(e) => setDontShowAgain(e.target.checked)}
+                />
+                <span className="h-2 w-2 rounded-sm bg-emerald-300 opacity-0 transition-opacity peer-checked:opacity-100" />
+              </span>
+              <span className="text-[11px] text-white/40 group-hover:text-white/55 transition-colors">
+                Don&apos;t show again
+              </span>
+            </label>
+
+            <div className="flex items-center gap-2">
+              {stepIndex > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBack}
+                  className="h-8 px-2.5 text-emerald-100/70 hover:bg-white/10 hover:text-white"
+                >
+                  <ChevronLeft size={16} className="mr-0.5" />
+                  Back
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={handleNext}
+                className="h-8 bg-white/15 text-white hover:bg-white/25 border border-white/10 backdrop-blur-md"
+              >
+                {stepIndex === totalSteps - 1 ? 'Finish' : 'Next'}
+                <ChevronRight size={16} className="ml-0.5" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

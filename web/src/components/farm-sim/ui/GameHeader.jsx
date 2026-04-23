@@ -4,11 +4,64 @@ import { useTick } from '../context/TickContext';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Progress } from '../../ui/progress';
-import { Coins, Star, Trophy, ChevronDown, TrendingUp, Calendar } from 'lucide-react';
+import { Coins, Star, Trophy, ChevronDown, TrendingUp } from 'lucide-react';
 import { getNextGoalFromCounts } from '../../../utils/goalHints';
 import { getXpProgress } from '../systems/progression';
 import { getWeatherMeta } from '../constants/weatherData';
 import { getFarmTheme } from '../../../data/farmThemes';
+
+/* ── AAA polish keyframes ── */
+const aaaStyles = `
+@keyframes coinShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes xpGlow {
+  0%, 100% { text-shadow: 0 0 4px rgba(59,130,246,0.35), 0 0 12px rgba(59,130,246,0.15); }
+  50% { text-shadow: 0 0 8px rgba(59,130,246,0.55), 0 0 20px rgba(59,130,246,0.25); }
+}
+@keyframes sunRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes snowFall {
+  0% { transform: translateY(-4px) translateX(0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(10px) translateX(6px); opacity: 0; }
+}
+@keyframes rainDrop {
+  0% { transform: translateY(-3px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(8px); opacity: 0; }
+}
+@keyframes cloudFloat {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(3px); }
+}
+@keyframes savePulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.35); opacity: 1; }
+}
+@keyframes separatorShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes trophyGold {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(234,179,8,0.4)); }
+  50% { filter: drop-shadow(0 0 6px rgba(234,179,8,0.8)); }
+}
+.coin-shimmer {
+  background: linear-gradient(90deg, #b45309 0%, #f59e0b 25%, #fcd34d 50%, #f59e0b 75%, #b45309 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: coinShimmer 3s linear infinite;
+}
+.xp-glow {
+  animation: xpGlow 2.5s ease-in-out infinite;
+}
+`;
 
 // Animated number counter component
 const AnimatedNumber = memo(({ value, duration = 500 }) => {
@@ -243,7 +296,9 @@ const GameHeader = memo(() => {
   }, []);
 
   return (
-    <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 px-2.5 sm:px-4 py-2 sm:py-3 relative sticky top-0 z-50">
+    <>
+      <style>{aaaStyles}</style>
+      <header className="bg-gradient-to-b from-white via-slate-50/95 to-slate-100/90 backdrop-blur-xl shadow-lg border-b border-white/60 px-2.5 sm:px-4 py-2 sm:py-3 relative sticky top-0 z-50 overflow-hidden">
       <div className="max-w-7xl mx-auto flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         {/* Left side - Game title and basic stats */}
         <div className="flex items-center justify-between lg:justify-start gap-2 sm:gap-4 lg:gap-6 w-full lg:w-auto">
@@ -278,35 +333,44 @@ const GameHeader = memo(() => {
             <button
               type="button"
               onClick={() => openRelatedTab('shop')}
-              className="flex items-center gap-1.5 group bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 px-2 sm:px-3 py-1.5 min-h-[44px] rounded-xl transition-[transform,background-color,box-shadow,border-color] shadow-sm border border-amber-200/50"
+              className="flex items-center gap-1.5 group bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 px-2 sm:px-3 py-1.5 min-h-[44px] rounded-xl transition-[transform,background-color,box-shadow,border-color] shadow-sm border border-amber-200/50 active:scale-95"
               title="Open Shop"
             >
-	              <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 group-hover:animate-spin filter drop-shadow-sm" />
-	              <span className="font-bold text-amber-700 text-sm sm:text-base coin-display">
-	                <AnimatedNumber value={coins} />
-	              </span>
-	            </button>
+              <span className="relative flex items-center justify-center">
+                <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 group-hover:animate-spin filter drop-shadow-sm" />
+                <span className="absolute inset-0 rounded-full bg-amber-400/0 group-hover:bg-amber-400/10 transition-colors" />
+              </span>
+              <span className="font-bold text-sm sm:text-base coin-display coin-shimmer">
+                <AnimatedNumber value={coins} />
+              </span>
+            </button>
 
             <div className="flex flex-col gap-1">
               <button
                 type="button"
                 onClick={() => openRelatedTab('analytics')}
-                className="flex items-center gap-1 hover:bg-blue-50 px-2 py-1 min-h-[44px] rounded transition"
+                className="flex items-center gap-1.5 hover:bg-blue-50/80 px-2 py-1 min-h-[44px] rounded-xl transition active:scale-95"
                 title="Open Analytics"
               >
-                <Star className="w-4 h-4 text-blue-600" />
-	                <span className="font-semibold text-gray-900 text-sm">
-	                  <AnimatedNumber value={xp} /> XP
-	                </span>
-	              </button>
+                <span className="relative flex items-center justify-center">
+                  <Star className="w-4 h-4 text-blue-600 drop-shadow-sm" />
+                  <span className="absolute inset-0 rounded-full bg-blue-400/0 group-hover:bg-blue-400/10 transition-colors" />
+                </span>
+                <span className="font-bold text-gray-900 text-sm xp-glow">
+                  <AnimatedNumber value={xp} /> <span className="text-blue-600">XP</span>
+                </span>
+              </button>
               {/* XP Progress bar to next level */}
-              <div className="w-28 sm:w-32 hidden sm:block">
-                <Progress value={xpProgress} className="h-2 bg-blue-100" />
-	                <div className="text-[10px] text-gray-600 font-medium text-center mt-0.5">
-	                  {Math.floor(currentLevelXp)}/{xpNeededForNext} to Lv{level + 1}
-	                </div>
-	              </div>
-	            </div>
+              <div className="w-28 sm:w-32 hidden sm:block px-1">
+                <div className="relative">
+                  <Progress value={xpProgress} className="h-2 bg-blue-100" />
+                  <div className="absolute inset-0 rounded-full bg-blue-400/10 blur-sm pointer-events-none" />
+                </div>
+                <div className="text-[10px] text-blue-700/70 font-semibold text-center mt-1 tracking-wide">
+                  {Math.floor(currentLevelXp)} / {xpNeededForNext} to Lv{level + 1}
+                </div>
+              </div>
+            </div>
 
             <button type="button" onClick={() => openRelatedTab('achievements')} title="Open Achievements">
 	              <Badge variant="outline" className="bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200 font-bold hover:bg-emerald-100/80 transition-colors cursor-pointer">
@@ -321,6 +385,9 @@ const GameHeader = memo(() => {
             </div>
           </div>
         </div>
+
+        {/* Animated vertical separator (desktop only) */}
+        <div className="hidden lg:block w-px h-10 self-center rounded-full bg-gradient-to-b from-transparent via-slate-300/40 to-transparent" />
 
         {/* Right side - Controls and weather */}
         <div className="w-full lg:w-auto flex flex-wrap items-center justify-between sm:justify-end gap-2">
@@ -339,81 +406,110 @@ const GameHeader = memo(() => {
               <ChevronDown className={`w-3 h-3 transition-transform ${showStatsDropdown ? 'rotate-180' : ''}`} />
             </Button>
 
-            {/* Dropdown panel */}
+            {/* Dropdown panel — glassmorphism */}
             {showStatsDropdown && (
-              <div id="farm-stats-dropdown" className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 animate-fade-in" role="dialog" aria-label="Farm stats">
-                <div className="p-3">
-                  <h3 className="font-semibold text-sm mb-2 text-gray-700">📊 Farm Statistics</h3>
-                  <div className="space-y-2 text-xs">
-	                  <div className="flex justify-between">
-	                      <span className="text-gray-600">Total Coins:</span>
-	                      <span className="font-semibold">{formatNumber(coins)}🪙</span>
-	                    </div>
-	                    <div className="flex justify-between">
-	                      <span className="text-gray-600">Experience:</span>
-	                      <span className="font-semibold">{formatNumber(xp)} XP</span>
-	                    </div>
-	                    <div className="flex justify-between">
-	                      <span className="text-gray-600">Cosmetic Tokens:</span>
-	                      <span className="font-semibold">{formatNumber(cosmeticTokens || 0)}</span>
-	                    </div>
-	                    {(recentXpEvents || []).length > 0 && (
-	                      <div className="pt-1 border-t border-gray-100">
-	                        <div className="text-[11px] font-semibold text-gray-600 mb-1">Recent XP</div>
-	                        <div className="space-y-0.5">
-	                          {(recentXpEvents || []).slice().reverse().map((event) => (
-	                            <div key={event.id} className="text-[11px] text-gray-600 flex justify-between">
-	                              <span className="truncate pr-2">{event.source}</span><span>+{event.amount}</span>
-	                            </div>
-	                          ))}
-	                        </div>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Active Plots:</span>
-                      <span className="font-semibold">{activePlotCount}</span>
-                    </div>
-		                    <div className="flex justify-between">
-		                      <span className="text-gray-600">Achievements:</span>
-		                      <span className="font-semibold">{unlockedAchievements}/{totalAchievements}</span>
-		                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Buildings:</span>
-                      <span className="font-semibold">{builtBuildings}</span>
-                    </div>
+              <div
+                id="farm-stats-dropdown"
+                className="absolute right-0 top-full mt-2 w-72 rounded-2xl z-50 animate-fade-in overflow-hidden"
+                role="dialog"
+                aria-label="Farm stats"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(248,250,252,0.88) 100%)',
+                  backdropFilter: 'blur(20px) saturate(140%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+                  boxShadow: '0 24px 48px -12px rgba(15,23,42,0.18), 0 0 0 1px rgba(255,255,255,0.6) inset, 0 0 0 1px rgba(226,232,240,0.4)',
+                }}
+              >
+                {/* Header */}
+                <div className="px-4 pt-4 pb-3">
+                  <h3 className="font-bold text-sm text-slate-800 tracking-tight">📊 Farm Statistics</h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Your farm at a glance</p>
+                </div>
+
+                {/* Section 1 — Currency */}
+                <div className="px-4 py-3 space-y-2.5 bg-white/40 border-y border-slate-200/40">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-500">Total Coins</span>
+                    <span className="font-bold text-sm text-amber-700">{formatNumber(coins)} <span className="text-amber-500">🪙</span></span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-500">Experience</span>
+                    <span className="font-bold text-sm text-blue-700">{formatNumber(xp)} <span className="text-blue-500">XP</span></span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-500">Cosmetic Tokens</span>
+                    <span className="font-bold text-sm text-purple-700">{formatNumber(cosmeticTokens || 0)} <span className="text-purple-500">✨</span></span>
                   </div>
                 </div>
+
+                {/* Section 2 — Recent XP */}
+                {(recentXpEvents || []).length > 0 && (
+                  <div className="px-4 py-3 border-b border-slate-200/40">
+                    <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">Recent XP</div>
+                    <div className="space-y-1.5 max-h-24 overflow-y-auto pr-1 scrollbar-thin">
+                      {(recentXpEvents || []).slice().reverse().map((event) => (
+                        <div key={event.id} className="flex items-center justify-between text-[11px]">
+                          <span className="truncate pr-3 text-slate-600 max-w-[160px]">{event.source}</span>
+                          <span className="font-bold text-blue-600 shrink-0">+{event.amount}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Section 3 — Farm stats */}
+                <div className="px-4 py-3 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-500">Active Plots</span>
+                    <span className="font-bold text-sm text-emerald-700">{activePlotCount}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-500">Achievements</span>
+                    <span className="font-bold text-sm text-yellow-700">{unlockedAchievements} <span className="text-slate-400">/</span> {totalAchievements}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-500">Buildings</span>
+                    <span className="font-bold text-sm text-slate-700">{builtBuildings}</span>
+                  </div>
+                </div>
+
+                {/* Footer glow */}
+                <div className="h-1 w-full bg-gradient-to-r from-amber-300 via-blue-400 to-emerald-400 opacity-60" />
               </div>
             )}
           </div>
           {/* Season display with animation */}
-	          {season?.config && (
-	            <button
+          {season?.config && (
+            <button
               type="button"
               onClick={() => openRelatedTab('events')}
-              className="flex items-center gap-2 px-3 py-1.5 min-h-[44px] bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-[transform,background-color,box-shadow,border-color] group relative shadow-md hover:shadow-lg"
+              className="flex items-center gap-2 px-3 py-1.5 min-h-[44px] bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-all active:scale-95 group relative shadow-sm hover:shadow-md"
               title="Open Events"
               style={{
-              boxShadow: '0 2px 8px rgba(168, 85, 247, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+                boxShadow: '0 2px 8px rgba(168, 85, 247, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
               }}
             >
-	              <span className="text-lg animate-season drop-shadow-sm">
-	                {season.config.emoji}
-	              </span>
-	              <span className="text-sm font-medium text-purple-700 capitalize">
-	                {season.config.name}
-	              </span>
+              <span className="relative flex items-center justify-center w-6 h-6">
+                <span className="text-lg drop-shadow-sm" style={{ animation: 'sunRotate 12s linear infinite' }}>
+                  {season.config.emoji}
+                </span>
+              </span>
+              <span className="text-sm font-semibold text-purple-700 capitalize tracking-tight">
+                {season.config.name}
+              </span>
               {/* Season time remaining tooltip */}
-              <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-[opacity,visibility,transform] z-50 backdrop-blur-lg bg-opacity-95" style={{
-                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(168, 85, 247, 0.2)'
+              <div className="absolute top-full right-0 mt-2 w-52 rounded-xl p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50" style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,244,255,0.92) 100%)',
+                backdropFilter: 'blur(16px)',
+                boxShadow: '0 20px 40px -12px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.6) inset',
               }}>
-	                <div className="text-xs font-semibold text-gray-700 mb-1">
-	                  {season.config.name} {season.config.icon}
-	                </div>
-                <div className="text-xs text-gray-600 mb-2">
+                <div className="text-xs font-bold text-purple-800 mb-1 tracking-tight">
+                  {season.config.name} {season.config.icon}
+                </div>
+                <div className="text-xs text-purple-700/70 mb-2 leading-relaxed">
                   {season.config.description}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-[11px] font-medium text-purple-600/80 bg-purple-50 rounded-lg px-2 py-1.5 text-center">
                   <SeasonCountdown lastChangeTime={season?.lastChangeTime} />
                 </div>
               </div>
@@ -424,13 +520,41 @@ const GameHeader = memo(() => {
           <button
             type="button"
             onClick={() => openRelatedTab('weather')}
-            className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 min-h-[44px] rounded-lg transition-[transform,background-color,box-shadow,border-color,color] cursor-pointer ${weatherMeta.headerClassName}`}
+            className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 min-h-[44px] rounded-xl transition-all active:scale-95 cursor-pointer ${weatherMeta.headerClassName || 'bg-slate-50 hover:bg-slate-100 border border-slate-200/50'}`}
             title="Open Weather"
           >
-            <span className="text-lg animate-weather">
-              {weatherMeta.emoji}
+            <span className="relative flex items-center justify-center w-6 h-6">
+              {/* Animated weather effects */}
+              {weather === 'sunny' && (
+                <>
+                  <span className="absolute inset-0 rounded-full bg-amber-400/20 blur-md animate-pulse" />
+                  <span className="text-lg" style={{ animation: 'sunRotate 8s linear infinite' }}>{weatherMeta.emoji}</span>
+                </>
+              )}
+              {weather === 'snowy' && (
+                <>
+                  <span className="absolute text-[6px] left-0 top-0" style={{ animation: 'snowFall 1.2s linear infinite' }}>❄</span>
+                  <span className="absolute text-[6px] right-0 top-1" style={{ animation: 'snowFall 1.5s linear infinite 0.3s' }}>❄</span>
+                  <span className="absolute text-[6px] left-2 bottom-0" style={{ animation: 'snowFall 1s linear infinite 0.6s' }}>❄</span>
+                  <span className="text-lg">{weatherMeta.emoji}</span>
+                </>
+              )}
+              {weather === 'rainy' && (
+                <>
+                  <span className="absolute text-[6px] left-0 top-0" style={{ animation: 'rainDrop 0.7s linear infinite' }}>💧</span>
+                  <span className="absolute text-[6px] right-0 top-1" style={{ animation: 'rainDrop 0.9s linear infinite 0.2s' }}>💧</span>
+                  <span className="absolute text-[6px] left-2 bottom-0" style={{ animation: 'rainDrop 0.8s linear infinite 0.4s' }}>💧</span>
+                  <span className="text-lg">{weatherMeta.emoji}</span>
+                </>
+              )}
+              {weather === 'cloudy' && (
+                <span className="text-lg" style={{ animation: 'cloudFloat 3s ease-in-out infinite' }}>{weatherMeta.emoji}</span>
+              )}
+              {weather !== 'sunny' && weather !== 'snowy' && weather !== 'rainy' && weather !== 'cloudy' && (
+                <span className="text-lg">{weatherMeta.emoji}</span>
+              )}
             </span>
-            <span className="text-xs sm:text-sm font-medium">
+            <span className="text-xs sm:text-sm font-semibold">
               {weatherMeta.label}
             </span>
           </button>
@@ -439,28 +563,43 @@ const GameHeader = memo(() => {
           <button
             type="button"
             onClick={() => openRelatedTab('achievements')}
-            className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-[transform,background-color,box-shadow] min-h-[44px]"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 min-h-[44px] rounded-xl bg-gradient-to-br from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 border border-yellow-200/40 transition-all active:scale-95 group"
             title="Open Achievements"
           >
-            <Trophy className="w-4 h-4 text-yellow-600" />
-		            <span className="text-sm font-medium text-gray-700">
-		              {unlockedAchievements}/{totalAchievements}
-		            </span>
-	          </button>
+            <Trophy className="w-4 h-4 text-yellow-600 group-hover:text-yellow-500 transition-colors" style={{ animation: 'trophyGold 2.5s ease-in-out infinite' }} />
+            <span className="text-sm font-bold text-yellow-800 group-hover:text-yellow-700 transition-colors">
+              {unlockedAchievements}<span className="text-yellow-500/60 mx-0.5">/</span>{totalAchievements}
+            </span>
+          </button>
 	        </div>
 	      </div>
 
-      {/* Auto-save indicator - inline at bottom of header */}
+      {/* Auto-save indicator - elegant pulsing dot */}
       {autoSaveEnabled && (
-        <div className="flex justify-center pt-1 pb-0.5">
-          <div className="text-[10px] text-gray-400 flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            <LastSaveTime lastSavedAt={lastSavedAt} autoSave={autoSaveEnabled} />
+        <div className="flex justify-center pt-1.5 pb-0.5">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100/60 border border-slate-200/30">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" style={{ animationDuration: '2s' }} />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" style={{ animation: 'savePulse 2s ease-in-out infinite' }} />
+            </span>
+            <span className="text-[10px] text-slate-400 font-medium tracking-wide">
+              <LastSaveTime lastSavedAt={lastSavedAt} autoSave={autoSaveEnabled} />
+            </span>
           </div>
         </div>
       )}
 
+      {/* Subtle animated separator line */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px"
+        style={{
+          background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.25), rgba(59,130,246,0.25), rgba(245,158,11,0.25), transparent)',
+          backgroundSize: '200% auto',
+          animation: 'separatorShimmer 4s linear infinite',
+        }}
+      />
     </header>
+  </>
   );
 });
 
