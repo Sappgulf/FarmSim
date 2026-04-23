@@ -23,17 +23,37 @@ const SECTION_EMOJIS = {
   'UI/UX': '🎨',
 };
 
+export const MIN_ONBOARDING_STEP_FOR_WHATS_NEW = 3;
+
+export const shouldShowWhatsNew = ({
+  hasNotes,
+  lastSeenVersion,
+  appVersion = APP_VERSION,
+  onboardingStep = 0,
+  onboardingSkipped = false,
+}) => (
+  hasNotes
+  && lastSeenVersion !== appVersion
+  && (onboardingSkipped || onboardingStep >= MIN_ONBOARDING_STEP_FOR_WHATS_NEW)
+);
+
 const WhatsNewModal = memo(() => {
   const actions = useGameActions();
   const whatsNew = useGameSelector((state) => state.whatsNew || null);
-  const onboardingReady = useGameSelector((state) => Boolean(state.onboardingSeen || state.onboardingSkipped));
+  const onboardingStep = useGameSelector((state) => state.onboardingStep || 0);
+  const onboardingSkipped = useGameSelector((state) => Boolean(state.onboardingSkipped));
   const [isOpen, setIsOpen] = useState(false);
 
   const content = getContentManager();
   const releaseNotes = useMemo(() => getLatestReleaseNotes(), []);
   const hasNotes = releaseNotes.sections?.length > 0;
   const lastSeenVersion = whatsNew?.lastSeenVersion || null;
-  const shouldShow = hasNotes && lastSeenVersion !== APP_VERSION && onboardingReady;
+  const shouldShow = shouldShowWhatsNew({
+    hasNotes,
+    lastSeenVersion,
+    onboardingStep,
+    onboardingSkipped,
+  });
 
   useEffect(() => {
     if (shouldShow) {

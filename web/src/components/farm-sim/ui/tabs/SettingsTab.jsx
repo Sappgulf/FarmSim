@@ -332,7 +332,7 @@ const SettingsTab = memo(() => {
   const handleResetStartScreen = useCallback(() => {
     try {
       window.localStorage.removeItem(START_SCREEN_STORAGE_KEY);
-      addNotification('🌱 Start screen will show again on the next reload.', 'success');
+      addNotification('🌱 Title screen will show again on the next reload.', 'success');
       setTimeout(() => window.location.reload(), 900);
     } catch (error) {
       addNotification('Failed to reset start screen', 'error');
@@ -527,7 +527,7 @@ const SettingsTab = memo(() => {
       />
 
       <TabSection
-        title="Start screen"
+        title="Title Screen"
         description="Clear the launch gate so the intro screen appears again on the next refresh."
         tone="emerald"
         action={(
@@ -536,7 +536,7 @@ const SettingsTab = memo(() => {
             variant="outline"
             size="sm"
           >
-            Replay
+            Return to Title
           </Button>
         )}
       />
