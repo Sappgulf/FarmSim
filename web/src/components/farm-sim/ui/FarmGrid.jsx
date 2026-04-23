@@ -585,6 +585,25 @@ const FarmGrid = memo(() => {
     });
     return indexes;
   }, [plots]);
+  const witheredPlotIndexes = useMemo(() => {
+    const indexes = [];
+    plots.forEach((plot, index) => {
+      if (plot?.state === 'withered') indexes.push(index);
+    });
+    return indexes;
+  }, [plots]);
+  const thirstyPlotCount = useMemo(
+    () => plots.reduce((count, plot) => (
+      (plot?.state === 'growing' || plot?.state === 'planted') && Number(plot?.waterLevel || 0) < 35
+        ? count + 1
+        : count
+    ), 0),
+    [plots]
+  );
+  const decoratedPlotCount = useMemo(
+    () => plots.reduce((count, plot) => (plot?.state === 'decor' ? count + 1 : count), 0),
+    [plots]
+  );
   const hasReadyPlots = readyPlotIndexes.length > 0;
   const nextGoal = useMemo(() => (
     getNextGoalFromCounts({
@@ -1143,6 +1162,41 @@ const FarmGrid = memo(() => {
     setSelectedPlots(new Set());
   }, []);
 
+  const handleClearWithered = useCallback(() => {
+    if (ghostActive || witheredPlotIndexes.length === 0) return;
+    if (isActionLocked('clear:withered', 450)) return;
+
+    let clearedCount = 0;
+    const updatedPlots = plots.map((plot) => {
+      if (plot?.state !== 'withered') return plot;
+      clearedCount += 1;
+      return {
+        ...plot,
+        state: 'empty',
+        crop: null,
+        plantedAt: null,
+        growthStage: 0,
+        waterLevel: 100,
+        fertilizer: 0,
+        disease: null,
+        soilFertility: (plot?.soilFertility || 1.0) * 0.95,
+        progress: 0,
+        witherReason: null,
+        witheredAt: null
+      };
+    });
+
+    if (clearedCount > 0) {
+      actions.updatePlots(updatedPlots);
+      setHarvestBloomTick(Date.now());
+      actions.addNotification({
+        message: `🧹 Cleared ${clearedCount} withered plot${clearedCount > 1 ? 's' : ''}.`,
+        type: 'info'
+      });
+      performHaptic([8, 16, 8]);
+    }
+  }, [actions, ghostActive, isActionLocked, performHaptic, plots, witheredPlotIndexes.length]);
+
   const handleGoalAction = useCallback(() => {
     switch (nextGoal.id) {
       case 'harvest':
@@ -1187,6 +1241,13 @@ const FarmGrid = memo(() => {
         return 'Keep going';
     }
   }, [nextGoal.id]);
+
+  const fieldStatusChips = useMemo(() => ([
+    { label: 'Ready', value: readyPlotIndexes.length, tone: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+    { label: 'Withered', value: witheredPlotIndexes.length, tone: 'text-rose-700 bg-rose-50 border-rose-200' },
+    { label: 'Thirsty', value: thirstyPlotCount, tone: 'text-sky-700 bg-sky-50 border-sky-200' },
+    { label: 'Decor', value: decoratedPlotCount, tone: 'text-purple-700 bg-purple-50 border-purple-200' },
+  ]), [decoratedPlotCount, readyPlotIndexes.length, thirstyPlotCount, witheredPlotIndexes.length]);
 
   return (
     <Card
@@ -1239,6 +1300,16 @@ const FarmGrid = memo(() => {
               </Button>
             )}
           </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+          {fieldStatusChips.map((chip) => (
+            <span
+              key={chip.label}
+              className={`rounded-full border px-3 py-1 text-[11px] sm:text-xs font-semibold ${chip.tone}`}
+            >
+              {chip.label}: {chip.value}
+            </span>
+          ))}
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
           <Button
@@ -1333,6 +1404,23 @@ const FarmGrid = memo(() => {
           </div>
         </div>
       )}
+      {witheredPlotIndexes.length > 0 && (
+        <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50/80 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-rose-700">
+              🥀 {witheredPlotIndexes.length} withered {witheredPlotIndexes.length === 1 ? 'plot needs' : 'plots need'} cleanup.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleClearWithered}
+              className="min-h-[40px] border-rose-300 bg-white text-rose-700 hover:bg-rose-100"
+            >
+              Clear withered
+            </Button>
+          </div>
+        </div>
+      )}
       {hasReadyPlots && selectedPlots.size === 0 && (
         <div className="sticky bottom-2 z-30 mt-3 sm:hidden">
           <div className="rounded-2xl border border-emerald-200/80 bg-white/94 p-2.5 shadow-[0_14px_34px_-20px_rgba(15,23,42,0.6)] backdrop-blur">
@@ -1398,6 +1486,9 @@ const FarmGrid = memo(() => {
         )}
         <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5">
           {readyPlotIndexes.length} ready now
+        </span>
+        <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5">
+          {witheredPlotIndexes.length} withered
         </span>
         <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 hidden sm:inline-flex">
           Shift + Click selects
