@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useCallback } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
@@ -7,6 +7,15 @@ import { Progress } from '../../../ui/progress';
 import { LIVESTOCK_TYPES } from '../../systems/LivestockSystem';
 import { isDevelopmentMode } from '../../../../config/release';
 import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
+
+/* ── Animal type accent colors for avatar rings ── */
+const ANIMAL_RING_COLORS = {
+  chicken: 'border-amber-400 shadow-amber-200/60 text-amber-600',
+  cow: 'border-slate-400 shadow-slate-200/60 text-slate-600',
+  pig: 'border-rose-300 shadow-rose-200/60 text-rose-500',
+  sheep: 'border-sky-300 shadow-sky-200/60 text-sky-500',
+  goat: 'border-emerald-300 shadow-emerald-200/60 text-emerald-600',
+};
 
 const LivestockTab = memo(() => {
   const { state, actions, systems } = useGame();
@@ -148,6 +157,23 @@ const LivestockTab = memo(() => {
     }
   };
 
+  /* ── Bulk actions (no new game logic) ── */
+  const handleFeedAll = useCallback(() => {
+    livestock.animals.forEach(animal => {
+      if (animal.hunger > 20 && state.coins >= animal.type.feedCost) {
+        handleFeedAnimal(animal.id);
+      }
+    });
+  }, [livestock.animals, state.coins]);
+
+  const handleCollectAll = useCallback(() => {
+    livestock.animals.forEach(animal => {
+      if (animal.hasProduct) {
+        handleCollectProduct(animal.id);
+      }
+    });
+  }, [livestock.animals]);
+
   const getHealthColor = (health) => {
     if (health > 70) return 'text-green-600';
     if (health > 40) return 'text-yellow-600';
@@ -158,6 +184,36 @@ const LivestockTab = memo(() => {
     if (happiness > 70) return 'text-green-600';
     if (happiness > 40) return 'text-yellow-600';
     return 'text-red-600';
+  };
+
+  const getHungerBarColor = (hunger) => {
+    if (hunger < 40) return 'from-green-400 via-green-500 to-emerald-600';
+    if (hunger < 70) return 'from-yellow-400 via-yellow-500 to-amber-600';
+    return 'from-red-400 via-red-500 to-rose-600';
+  };
+
+  /* ── Happiness hearts renderer ── */
+  const HappinessHearts = ({ value }) => {
+    const filled = Math.ceil((value / 100) * 3);
+    return (
+      <div className="flex items-center gap-0.5" aria-label={`Happiness ${Math.floor(value)}%`}>
+        {[1, 2, 3].map(i => (
+          <span
+            key={i}
+            className={`text-sm leading-none ${i <= filled ? 'heart-filled text-rose-500' : 'text-slate-200 dark:text-slate-700'}`}
+          >
+            ❤️
+          </span>
+        ))}
+      </div>
+    );
+  };
+
+  /* ── Time remaining formatter ── */
+  const formatTimeLeft = (seconds) => {
+    if (seconds <= 0) return 'Ready!';
+    if (seconds < 60) return `${Math.ceil(seconds)}s`;
+    return `${Math.ceil(seconds / 60)}m`;
   };
 
   return (
@@ -220,14 +276,14 @@ const LivestockTab = memo(() => {
           <div className="flex items-center gap-3">
             <div className="text-4xl">🏚️</div>
             <div>
-              <h4 className="font-bold text-gray-800">Barn Capacity</h4>
+              <h4 className="font-bold text-gray-800 dark:text-gray-100">Barn Capacity</h4>
               <div className="flex items-center gap-2 mt-1">
                 <Progress
                   value={(stats.spaceUsed / stats.capacity) * 100}
                   className="h-2 w-32"
                   variant="energy"
                 />
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
                   {stats.spaceUsed}/{stats.capacity}
                 </span>
               </div>
@@ -320,7 +376,7 @@ const LivestockTab = memo(() => {
         </div>
       </TabSection>
 
-      {/* Your Animals */}
+      {/* Your Animals — Barn */}
       <TabSection
         title="Your Animals"
         description="Manage health, happiness, and production."
@@ -329,113 +385,150 @@ const LivestockTab = memo(() => {
       >
         {livestock.animals.length === 0 ? (
           <TabEmptyState
-            icon="🐄"
-            tone="sky"
+            icon="🏚️"
+            tone="amber"
             title="Your barn is empty"
             description="Purchase your first animal above to start collecting products and earning extra income!"
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {livestock.animals.map(animal => {
-              const timeSinceProduction = (Date.now() - animal.lastProduction) / 1000;
-              const productionProgress = Math.min(100, (timeSinceProduction / animal.type.productionTime) * 100);
+          <div className="space-y-4">
+            {/* Bulk action bar */}
+            <div className="flex items-center gap-2 px-1">
+              <Button
+                onClick={handleFeedAll}
+                size="sm"
+                variant="outline"
+                className="text-xs flex-1"
+                disabled={livestock.animals.every(a => a.hunger <= 20) || livestock.animals.every(a => state.coins < a.type.feedCost)}
+              >
+                🌿 Feed All
+              </Button>
+              <Button
+                onClick={handleCollectAll}
+                size="sm"
+                variant="success"
+                className="text-xs flex-1"
+                disabled={!livestock.animals.some(a => a.hasProduct)}
+              >
+                ✨ Collect All
+              </Button>
+            </div>
 
-              return (
-                <Card
-                  key={animal.id}
-                  className="p-4 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-all duration-200 border-2 border-transparent hover:border-amber-200"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="text-4xl">{animal.type.emoji}</div>
-                      <div>
-                        <div className="font-bold text-gray-800">{animal.name}</div>
-                        <div className="text-xs text-gray-600">
-                          {animal.type.name} • Age: {Math.floor(animal.age / 60)}m
+            {/* Stall grid */}
+            <div className="barn-shell p-3 sm:p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                {livestock.animals.map(animal => {
+                  const timeSinceProduction = (Date.now() - animal.lastProduction) / 1000;
+                  const productionProgress = Math.min(100, (timeSinceProduction / animal.type.productionTime) * 100);
+                  const timeLeft = animal.type.productionTime - timeSinceProduction;
+                  const ringColor = ANIMAL_RING_COLORS[animal.type.id] || ANIMAL_RING_COLORS.chicken;
+
+                  return (
+                    <Card
+                      key={animal.id}
+                      className={`stall-card p-4 bg-gradient-to-br from-white to-amber-50/40 dark:from-slate-800 dark:to-slate-900/60 border-2 border-transparent hover:border-amber-200/80 dark:hover:border-amber-800/50 ${animal.hasProduct ? 'stall-ready' : ''}`}
+                    >
+                      {/* Header: Avatar + Name + Sell */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`stall-avatar-ring grid h-14 w-14 shrink-0 place-items-center rounded-full border-[3px] bg-white dark:bg-slate-800 shadow-md ${ringColor}`}>
+                            <span className="text-3xl leading-none select-none">{animal.type.emoji}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-gray-800 dark:text-gray-100 truncate">{animal.name}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {animal.type.name} • {Math.floor(animal.age / 60)}m old
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleSellAnimal(animal.id)}
+                          className="text-[10px] text-slate-400 hover:text-red-500 transition-colors px-1.5 py-0.5 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
+                          title="Sell animal"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      {/* Meters */}
+                      <div className="space-y-2.5 mb-3">
+                        {/* Happiness hearts */}
+                        <div className="flex items-center justify-between">
+                          <HappinessHearts value={animal.happiness} />
+                          <span className={`text-[10px] font-semibold ${getHappinessColor(animal.happiness)}`}>
+                            {Math.floor(animal.happiness)}%
+                          </span>
+                        </div>
+
+                        {/* Hunger bar */}
+                        <div>
+                          <div className="flex justify-between text-[10px] mb-1 text-gray-500 dark:text-gray-400">
+                            <span>Hunger</span>
+                            <span className={animal.hunger > 70 ? 'text-red-500 font-semibold' : ''}>{Math.floor(animal.hunger)}%</span>
+                          </div>
+                          <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-700/80">
+                            <div
+                              className={`h-full rounded-full bg-gradient-to-r ${getHungerBarColor(animal.hunger)} transition-all duration-500`}
+                              style={{ width: `${animal.hunger}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Production */}
+                        <div>
+                          {animal.hasProduct ? (
+                            <Badge variant="success" className="badge-glow text-[10px] font-bold">
+                              ✨ Ready to collect!
+                            </Badge>
+                          ) : (
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-[10px] text-gray-500 dark:text-gray-400">
+                                <span>{animal.type.products[0].item}</span>
+                                <span>{formatTimeLeft(timeLeft)}</span>
+                              </div>
+                              <Progress value={productionProgress} variant="growth" className="h-1.5" />
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleSellAnimal(animal.id)}
-                      className="text-xs"
-                    >
-                      Sell
-                    </Button>
-                  </div>
 
-                  {/* Stats */}
-                  <div className="space-y-2 mb-3">
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className={getHealthColor(animal.health)}>
-                          ❤️ Health: {Math.floor(animal.health)}%
-                        </span>
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleFeedAnimal(animal.id)}
+                          variant="default"
+                          size="sm"
+                          className="flex-1 text-xs"
+                          disabled={state.coins < animal.type.feedCost}
+                          juicy
+                        >
+                          🌿 Feed
+                        </Button>
+                        <Button
+                          onClick={() => handlePetAnimal(animal.id)}
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-xs"
+                          juicy
+                        >
+                          💕 Pet
+                        </Button>
+                        <Button
+                          onClick={() => handleCollectProduct(animal.id)}
+                          variant={animal.hasProduct ? 'success' : 'outline'}
+                          size="sm"
+                          className="flex-1 text-xs"
+                          disabled={!animal.hasProduct}
+                          juicy
+                        >
+                          {animal.hasProduct ? '✨ Collect' : '⏳ Wait'}
+                        </Button>
                       </div>
-                      <Progress value={animal.health} variant="health" className="h-2" />
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className={getHappinessColor(animal.happiness)}>
-                          😊 Happiness: {Math.floor(animal.happiness)}%
-                        </span>
-                      </div>
-                      <Progress value={animal.happiness} variant="xp" className="h-2" />
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-orange-600">
-                          🍖 Hunger: {Math.floor(animal.hunger)}%
-                        </span>
-                      </div>
-                      <Progress value={animal.hunger} variant="energy" className="h-2" />
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-green-600">
-                          {animal.type.products[0].item}: {Math.floor(productionProgress)}%
-                        </span>
-                      </div>
-                      <Progress value={productionProgress} variant="growth" className="h-2" />
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleFeedAnimal(animal.id)}
-                      variant="default"
-                      size="sm"
-                      className="flex-1 text-xs"
-                      disabled={state.coins < animal.type.feedCost}
-                    >
-                      Feed ({animal.type.feedCost}🪙)
-                    </Button>
-                    <Button
-                      onClick={() => handlePetAnimal(animal.id)}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs"
-                    >
-                      Pet 💕
-                    </Button>
-                    <Button
-                      onClick={() => handleCollectProduct(animal.id)}
-                      variant="default"
-                      size="sm"
-                      className="flex-1 text-xs"
-                      disabled={!animal.hasProduct}
-                    >
-                      {animal.hasProduct ? '✨ Collect' : '⏳ Wait'}
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })}
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
       </TabSection>

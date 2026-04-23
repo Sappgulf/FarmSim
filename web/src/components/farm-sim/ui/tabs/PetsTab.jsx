@@ -123,6 +123,45 @@ const formatBonusValue = (key, value) => {
   return `+${value.toFixed(1)}`;
 };
 
+/* ── Circular bond progress ring ── */
+const BondRing = ({ value, size = 56, stroke = 5, color = '#8b5cf6' }) => {
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (Math.min(100, value) / 100) * circumference;
+
+  return (
+    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={stroke}
+          className="text-slate-200 dark:text-slate-700"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className="bond-ring-circle"
+          style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.22,1,0.36,1)' }}
+        />
+      </svg>
+      <span className="absolute text-[10px] font-bold text-violet-700 dark:text-violet-300">
+        {Math.round(value)}%
+      </span>
+    </div>
+  );
+};
+
 const PetsTab = memo(() => {
   const { state, actions } = useGame();
   const petSupplies = state.inventory.petSupplies || {
@@ -260,6 +299,9 @@ const PetsTab = memo(() => {
     return { text: 'Critical', color: 'text-red-600' };
   };
 
+  /* ── Owned pet types set ── */
+  const ownedTypes = new Set(state.pets.map(p => p.type));
+
   return (
     <div className="space-y-4">
       <TabHero
@@ -309,10 +351,10 @@ const PetsTab = memo(() => {
             {Object.entries(activeBonuses).map(([key, value]) => {
               const info = BONUS_LABELS[key] || { label: formatDisplayLabel(key), emoji: '📊' };
               return (
-                <div key={key} className="flex items-center gap-2 p-2 bg-white/70 rounded text-sm">
-                  <span>{info.emoji}</span>
-                  <span className="text-gray-700">{info.label}</span>
-                  <span className="ml-auto font-semibold text-amber-700">{formatBonusValue(key, value)}</span>
+                <div key={key} className="flex items-center gap-2 p-2 bg-white/70 dark:bg-slate-800/60 rounded-xl text-sm border border-slate-100 dark:border-slate-700">
+                  <span className="text-base">{info.emoji}</span>
+                  <span className="text-gray-700 dark:text-gray-300">{info.label}</span>
+                  <span className="ml-auto font-semibold text-amber-700 dark:text-amber-300">{formatBonusValue(key, value)}</span>
                 </div>
               );
             })}
@@ -320,7 +362,7 @@ const PetsTab = memo(() => {
         </TabSection>
       )}
 
-      {/* Pet Adoption */}
+      {/* Pet Adoption (first pet) */}
       {state.pets.length === 0 && (
         <TabSection
           title="Adopt Your First Pet"
@@ -329,12 +371,14 @@ const PetsTab = memo(() => {
         >
           <div className="grid grid-cols-1 gap-3">
             {Object.entries(PET_TYPES).map(([petType, pet]) => (
-              <Card key={petType} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg bg-white/70">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{pet.emoji || '🐾'}</span>
+              <Card key={petType} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-[24px] bg-white/70 dark:bg-slate-800/60 hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className="relative grid h-16 w-16 place-items-center rounded-full bg-violet-100 dark:bg-violet-900/40 text-3xl shadow-inner">
+                    {pet.emoji || '🐾'}
+                  </div>
                   <div>
-                    <div className="font-medium text-gray-900">{pet.name}</div>
-                    <div className="flex flex-wrap gap-1 mt-1">
+                    <div className="font-semibold text-gray-900 dark:text-gray-100">{pet.name}</div>
+                    <div className="flex flex-wrap gap-1 mt-1.5">
                       {pet.traits.map((trait) => (
                         <Badge key={trait} variant="outline" className="text-[10px]">
                           {formatDisplayLabel(trait)}
@@ -348,6 +392,7 @@ const PetsTab = memo(() => {
                   size="sm"
                   disabled={state.coins < pet.cost}
                   className="sm:self-center"
+                  juicy
                 >
                   Adopt ({pet.cost}🪙)
                 </Button>
@@ -365,7 +410,7 @@ const PetsTab = memo(() => {
             description={`Manage ${state.pets.length} active companions.`}
             tone="emerald"
           >
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {state.pets.map(pet => {
                 const petData = PET_TYPES[pet.type];
                 const healthStatus = getHealthStatus(pet.health);
@@ -374,98 +419,120 @@ const PetsTab = memo(() => {
                 const expPct = petData && pet.level < petData.maxLevel
                   ? Math.min(100, Math.round((pet.experience / expForNext) * 100))
                   : 100;
+                // Bond = weighted combo of level progress + happiness
+                const bondValue = Math.min(100, Math.round(
+                  ((pet.level / (petData?.maxLevel || 1)) * 50) +
+                  ((pet.happiness / 100) * 30) +
+                  ((pet.health / 100) * 20)
+                ));
 
                 return (
-                  <Card key={pet.id} className="p-3">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
+                  <Card key={pet.id} className="p-4 overflow-hidden">
+                    {/* Top row: emoji, info, bond ring */}
+                    <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-3xl">{petIcon}</span>
+                        <div className="relative">
+                          <div className="pet-bounce grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-900/40 dark:to-fuchsia-900/30 text-4xl shadow-md select-none">
+                            {petIcon}
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full bg-white dark:bg-slate-800 text-xs shadow border border-slate-100 dark:border-slate-700">
+                            {getHappinessEmoji(pet.happiness)}
+                          </div>
+                        </div>
                         <div>
-                          <div className="font-semibold text-gray-900">{pet.name}</div>
-                          <div className="text-sm text-gray-600">
+                          <div className="font-bold text-gray-900 dark:text-gray-100">{pet.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             {petData?.name || 'Pet'} • Level {pet.level}{petData && pet.level >= petData.maxLevel ? ' (MAX)' : ''}
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            Mood: {getHappinessEmoji(pet.happiness)} {Math.round(pet.happiness)}% happy
-                          </div>
+                          <Badge variant="outline" className={`mt-1 text-[10px] ${healthStatus.color}`}>
+                            {healthStatus.text}
+                          </Badge>
                         </div>
                       </div>
-                      <Badge variant="outline" className={healthStatus.color}>
-                        {healthStatus.text}
-                      </Badge>
+                      <BondRing value={bondValue} color="#8b5cf6" />
                     </div>
 
-                    {/* Pet Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 text-xs">
+                    {/* Stats bars */}
+                    <div className="grid grid-cols-2 gap-2 mb-3">
                       <div>
-                        <div className="flex justify-between mb-1">
+                        <div className="flex justify-between text-[10px] mb-1 text-gray-500 dark:text-gray-400">
                           <span>Health</span>
-                          <span>{pet.health}%</span>
+                          <span className="font-medium">{pet.health}%</span>
                         </div>
-                        <Progress value={pet.health} className="h-2" />
+                        <Progress value={pet.health} className="h-1.5" variant="health" />
                       </div>
                       <div>
-                        <div className="flex justify-between mb-1">
+                        <div className="flex justify-between text-[10px] mb-1 text-gray-500 dark:text-gray-400">
                           <span>Hunger</span>
-                          <span>{100 - pet.hunger}%</span>
+                          <span className="font-medium">{100 - pet.hunger}%</span>
                         </div>
-                        <Progress value={100 - pet.hunger} className="h-2" />
+                        <Progress value={100 - pet.hunger} className="h-1.5" variant="energy" />
                       </div>
                       <div>
-                        <div className="flex justify-between mb-1">
+                        <div className="flex justify-between text-[10px] mb-1 text-gray-500 dark:text-gray-400">
                           <span>Play</span>
-                          <span>{pet.playfulness}%</span>
+                          <span className="font-medium">{pet.playfulness}%</span>
                         </div>
-                        <Progress value={pet.playfulness} className="h-2" />
+                        <Progress value={pet.playfulness} className="h-1.5" />
                       </div>
                       <div>
-                        <div className="flex justify-between mb-1">
+                        <div className="flex justify-between text-[10px] mb-1 text-gray-500 dark:text-gray-400">
                           <span>XP</span>
-                          <span>{pet.experience}/{expForNext}</span>
+                          <span className="font-medium">{pet.experience}/{expForNext}</span>
                         </div>
-                        <Progress value={expPct} className="h-2" />
+                        <Progress value={expPct} className="h-1.5" variant="xp" />
                       </div>
                     </div>
 
+                    {/* Bonuses */}
+                    {petData?.levelBonuses?.[pet.level] && (
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {Object.entries(petData.levelBonuses[pet.level]).map(([key, value]) => {
+                          const info = BONUS_LABELS[key] || { label: formatDisplayLabel(key), emoji: '✨' };
+                          return (
+                            <Badge key={key} variant="premium" className="text-[10px]">
+                              <span className="mr-0.5">{info.emoji}</span>
+                              {info.label} {formatBonusValue(key, value)}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Trait pills */}
                     {petData?.traits?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3">
                         {petData.traits.map((trait) => (
-                          <Badge key={trait} variant="secondary" className="text-[10px]">
+                          <span key={trait} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                             {formatDisplayLabel(trait)}
-                          </Badge>
+                          </span>
                         ))}
                       </div>
                     )}
 
-                    {/* Care Actions */}
+                    {/* Interact pill buttons */}
                     <div className="flex flex-wrap gap-2">
-                      <Button
+                      <button
                         onClick={() => handleCarePet(pet.id, 'food')}
-                        size="sm"
-                        variant="outline"
-                        className="text-xs flex-1 min-w-[100px]"
+                        className="pill-btn flex-1 min-w-[80px] inline-flex items-center justify-center gap-1 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-semibold py-2 px-3 hover:bg-amber-100 dark:hover:bg-amber-900/50 disabled:opacity-40 disabled:cursor-not-allowed"
                         disabled={petSupplies.pet_food < 1}
                       >
                         🍖 Feed
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         onClick={() => handleCarePet(pet.id, 'play')}
-                        size="sm"
-                        variant="outline"
-                        className="text-xs flex-1 min-w-[100px]"
+                        className="pill-btn flex-1 min-w-[80px] inline-flex items-center justify-center gap-1 rounded-full bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold py-2 px-3 hover:bg-rose-100 dark:hover:bg-rose-900/50 disabled:opacity-40 disabled:cursor-not-allowed"
                         disabled={petSupplies.attention < 1}
                       >
                         🎾 Play
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         onClick={() => handleCarePet(pet.id, 'health')}
-                        size="sm"
-                        variant="outline"
-                        className="text-xs flex-1 min-w-[100px]"
+                        className="pill-btn flex-1 min-w-[80px] inline-flex items-center justify-center gap-1 rounded-full bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 text-sky-700 dark:text-sky-300 text-xs font-semibold py-2 px-3 hover:bg-sky-100 dark:hover:bg-sky-900/50 disabled:opacity-40 disabled:cursor-not-allowed"
                         disabled={petSupplies.vet_care < 1}
                       >
                         🏥 Checkup
-                      </Button>
+                      </button>
                     </div>
                   </Card>
                 );
@@ -473,22 +540,38 @@ const PetsTab = memo(() => {
             </div>
           </TabSection>
 
-          {/* Pet Supplies */}
+          {/* Pet Supplies — inventory cards */}
           <TabSection
             title="Pet Supplies"
             description="Stock up on food, attention, and vet care."
             tone="sky"
           >
-            <div className="grid grid-cols-1 xs:grid-cols-3 gap-3 mb-4 text-sm">
-              <MetricTile tone="amber" label="Food" value={petSupplies.pet_food} hint="Feed the pack" icon="🍖" />
-              <MetricTile tone="rose" label="Attention" value={petSupplies.attention} hint="Play sessions" icon="❤️" />
-              <MetricTile tone="sky" label="Vet Care" value={petSupplies.vet_care} hint="Health visits" icon="🏥" />
+            <div className="grid grid-cols-1 xs:grid-cols-3 gap-3 mb-4">
+              {[
+                { key: 'pet_food', label: 'Food', icon: '🍖', tone: 'amber', color: 'from-amber-400 to-orange-500' },
+                { key: 'attention', label: 'Attention', icon: '❤️', tone: 'rose', color: 'from-rose-400 to-pink-500' },
+                { key: 'vet_care', label: 'Vet Care', icon: '🏥', tone: 'sky', color: 'from-sky-400 to-blue-500' },
+              ].map(supply => (
+                <div key={supply.key} className="supply-card relative overflow-hidden rounded-[20px] border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 shadow-sm">
+                  <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${supply.color}`} />
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100 dark:bg-slate-700 text-lg">
+                      {supply.icon}
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{supply.label}</div>
+                      <div className="text-xl font-bold text-slate-800 dark:text-slate-100">{petSupplies[supply.key]}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
             <div className="flex gap-2">
               <Button
                 onClick={() => handleBuySupplies('pet_food', 20)}
                 size="sm" variant="outline" className="text-xs flex-1"
                 disabled={state.coins < 20}
+                juicy
               >
                 Buy Food (20🪙)
               </Button>
@@ -496,6 +579,7 @@ const PetsTab = memo(() => {
                 onClick={() => handleBuySupplies('attention', 15)}
                 size="sm" variant="outline" className="text-xs flex-1"
                 disabled={state.coins < 15}
+                juicy
               >
                 Buy Attention (15🪙)
               </Button>
@@ -503,32 +587,69 @@ const PetsTab = memo(() => {
                 onClick={() => handleBuySupplies('vet_care', 30)}
                 size="sm" variant="outline" className="text-xs flex-1"
                 disabled={state.coins < 30}
+                juicy
               >
                 Vet Care (30🪙)
               </Button>
             </div>
           </TabSection>
 
-          {/* Adopt More Pets */}
+          {/* Adopt More Pets — mystery silhouettes for unowned */}
           <TabSection
             title="Adopt More Pets"
             description="Expand your farm family."
             tone="violet"
           >
-            <div className="grid grid-cols-1 gap-2">
-              {Object.entries(PET_TYPES).map(([petType, pet]) => (
-                <Button
-                  key={petType}
-                  onClick={() => handleAdoptPet(petType)}
-                  variant="outline"
-                  size="sm"
-                  disabled={state.coins < pet.cost}
-                  className="justify-between"
-                >
-                  <span>{pet.emoji} Adopt {pet.name}</span>
-                  <span>{pet.cost}🪙</span>
-                </Button>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Object.entries(PET_TYPES).map(([petType, pet]) => {
+                const isOwned = ownedTypes.has(petType);
+                return (
+                  <Card
+                    key={petType}
+                    className={`p-4 transition-all duration-200 ${
+                      isOwned
+                        ? 'opacity-40 bg-slate-50 dark:bg-slate-900/40'
+                        : 'bg-white dark:bg-slate-800 hover:shadow-md cursor-pointer'
+                    }`}
+                    onClick={() => !isOwned && handleAdoptPet(petType)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="relative grid h-14 w-14 shrink-0 place-items-center rounded-full bg-violet-50 dark:bg-violet-900/30 text-2xl">
+                        {isOwned ? (
+                          <span className="opacity-40 grayscale">{pet.emoji}</span>
+                        ) : (
+                          <>
+                            <span className="mystery-silhouette select-none">{pet.emoji}</span>
+                            <span className="absolute inset-0 grid place-items-center text-lg font-bold text-white drop-shadow-md">?</span>
+                          </>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-semibold text-sm ${isOwned ? 'text-slate-400 dark:text-slate-600' : 'text-gray-900 dark:text-gray-100'}`}>
+                          {pet.name} {isOwned && <span className="text-[10px] font-normal text-slate-400">(owned)</span>}
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {pet.traits.map(trait => (
+                            <Badge key={trait} variant="outline" className="text-[9px]">
+                              {formatDisplayLabel(trait)}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      {!isOwned && (
+                        <Button
+                          size="sm"
+                          disabled={state.coins < pet.cost}
+                          className="shrink-0"
+                          juicy
+                        >
+                          {pet.cost}🪙
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           </TabSection>
         </>

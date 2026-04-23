@@ -19,6 +19,9 @@ import AchievementUnlockModal from '../ui/AchievementUnlockModal';
 import WeatherEffects from '../ui/WeatherEffects';
 import ContextualHints from '../ui/ContextualHints';
 import { StartScreen, START_SCREEN_STORAGE_KEY } from '../ui/StartScreen';
+import OfflineIndicator from '../ui/OfflineIndicator';
+import InstallPrompt from '../ui/InstallPrompt';
+import KeyboardShortcutsHelp from '../ui/KeyboardShortcutsHelp';
 import { logDebugAction } from '../../../utils/debugTools';
 import { getFarmTheme, getFarmThemeVars } from '../../../data/farmThemes';
 import { isDevelopmentMode, shouldShowDebugTools } from '../../../config/release';
@@ -84,6 +87,7 @@ export function FarmSimCore() {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem(START_SCREEN_STORAGE_KEY) !== 'true';
   });
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   const computeTimePeriod = () => {
     const hour = new Date().getHours();
@@ -147,6 +151,26 @@ export function FarmSimCore() {
       delete window.switchToTab;
     };
   }, [handleTabChange]);
+
+  useEffect(() => {
+    const handler = () => setShortcutsOpen(true);
+    window.addEventListener('farmSim:openShortcuts', handler);
+    return () => window.removeEventListener('farmSim:openShortcuts', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const target = e.target;
+        const tag = target?.tagName;
+        const isTextField = (tag && ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) || target?.isContentEditable;
+        if (isTextField) return;
+        setShortcutsOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   // Initialize systems ONCE - don't recreate on state changes!
   // We pass current state to update() method, so no need to recreate
@@ -626,6 +650,8 @@ export function FarmSimCore() {
         Skip to main content
       </a>
 
+      <OfflineIndicator />
+
       {showStartScreen && (
         <StartScreen
           onStart={dismissStartScreen}
@@ -677,6 +703,7 @@ export function FarmSimCore() {
 
           {/* Bottom Navigation Bar - Fixed on mobile */}
           <div className="fixed bottom-0 left-0 right-0 lg:relative z-40">
+            <InstallPrompt />
             <NavBar
               activeSection={activeSection}
               activeTab={activeTab}
@@ -727,6 +754,9 @@ export function FarmSimCore() {
 
       {/* Achievement unlock celebration */}
       <AchievementUnlockModal />
+
+      {/* Keyboard shortcuts cheat sheet */}
+      <KeyboardShortcutsHelp open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </div>
   );
 }

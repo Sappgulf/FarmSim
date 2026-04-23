@@ -339,6 +339,21 @@ const SettingsTab = memo(() => {
     }
   }, [addNotification]);
 
+  const handleOpenShortcuts = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('farmSim:openShortcuts'));
+    }
+  }, []);
+
+  const handleClearHints = useCallback(() => {
+    try {
+      localStorage.removeItem('farmSim_contextHints_v1');
+      addNotification('💡 Hint data cleared. You will see hints again as you level up.', 'success');
+    } catch {
+      addNotification('Failed to clear hint data', 'error');
+    }
+  }, [addNotification]);
+
   const handleInstallApp = useCallback(() => {
     const prompt = window.__pwaInstallPrompt;
     if (prompt) {
@@ -475,6 +490,24 @@ const SettingsTab = memo(() => {
               </Badge>
             </div>
           ))}
+        </div>
+      </TabSection>
+
+      <TabSection
+        title="Help & Guides"
+        description="Quick access to help resources and game guides."
+        tone="sky"
+      >
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={handleOpenShortcuts} variant="outline" size="sm">
+            ⌨️ Keyboard Shortcuts
+          </Button>
+          <Button onClick={handleResetTutorial} variant="outline" size="sm">
+            🎓 Replay Tutorial
+          </Button>
+          <Button onClick={handleClearHints} variant="outline" size="sm">
+            💡 Clear Hints
+          </Button>
         </div>
       </TabSection>
 

@@ -1,6 +1,5 @@
 import React, { memo, useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useGame } from '../../context/GameContext';
-import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { DECORATION_DATA } from '../../constants/decorData';
@@ -46,6 +45,24 @@ const switchToTab = (tabId) => {
   if (typeof window !== 'undefined' && typeof window.switchToTab === 'function') {
     window.switchToTab(tabId);
   }
+};
+
+const RARITY_CLASSES = {
+  common: { border: 'border-slate-300', bg: 'bg-slate-50/50', text: 'text-slate-600', label: 'Common' },
+  uncommon: { border: 'border-green-400', bg: 'bg-green-50/50', text: 'text-green-700', label: 'Uncommon' },
+  rare: { border: 'border-blue-400', bg: 'bg-blue-50/50', text: 'text-blue-700', label: 'Rare' },
+  epic: { border: 'border-purple-400', bg: 'bg-purple-50/50', text: 'text-purple-700', label: 'Epic' },
+  legendary: { border: 'border-amber-400', bg: 'bg-amber-50/50', text: 'text-amber-700', label: 'Legendary' },
+};
+
+const getItemRarity = (item) => {
+  if (item.rarity) return item.rarity;
+  const cost = item.cost || 0;
+  if (cost >= 400) return 'legendary';
+  if (cost >= 300) return 'epic';
+  if (cost >= 150) return 'rare';
+  if (cost >= 50) return 'uncommon';
+  return 'common';
 };
 
 const ShopTab = memo(() => {
@@ -224,38 +241,105 @@ const ShopTab = memo(() => {
     }
   }, [state, actions, premiumModeEnabled, triggerHighlight]);
 
-  const renderShopItem = useCallback((item, bgClass) => {
+  const renderPremiumCard = useCallback((item, options = {}) => {
+    const { isPremiumDecor = false, showReason = false, isBlueprint = false } = options;
+    const rarity = getItemRarity(item);
+    const style = RARITY_CLASSES[rarity];
     const ownedCount = state.inventory[item.id] || 0;
     const isOwned = item.unique && ownedCount > 0;
     const isHighlighted = highlightedItemId === item.id;
-    return (
-      <div
-        key={item.id}
-        className={`flex flex-col gap-3 rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white sm:flex-row sm:items-center sm:justify-between ${bgClass} ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}
-      >
-        <div className="flex items-start gap-3 flex-1">
-          <span className="text-2xl">{item.emoji}</span>
-          <div className="flex-1">
-            <div className="font-medium text-slate-900">{item.name}</div>
-            <div className="text-xs text-gray-600">{item.description}</div>
-            {item.effect && <div className="text-xs text-green-600 font-medium mt-0.5">{item.effect}</div>}
+    const canAfford = item.canAfford !== undefined ? item.canAfford : (state.coins || 0) >= item.cost;
+
+    const inner = (
+      <div className={`relative flex flex-col rounded-[14px] bg-white/90 p-3 h-full ${style.bg} ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-3xl shrink-0">{item.emoji}</span>
+            <div className="min-w-0">
+              <div className="font-semibold text-slate-900 text-sm leading-tight truncate">{item.name}</div>
+              {isOwned && (
+                <Badge variant="success" className="text-[10px] mt-1">
+                  ✓ Owned
+                </Badge>
+              )}
+              {!isOwned && ownedCount > 0 && (
+                <Badge variant="outline" className="text-[10px] mt-1">
+                  x{ownedCount}
+                </Badge>
+              )}
+              {isPremiumDecor && (
+                <Badge variant="warning" className="text-[10px] mt-1" data-qa={`premium-badge-${item.id}`}>
+                  Premium
+                </Badge>
+              )}
+            </div>
+          </div>
+          <div className="shrink-0 rounded-full px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-200 text-amber-900 shadow-sm border border-amber-300/50">
+            {item.cost}🪙
           </div>
         </div>
-        <div className="flex items-center justify-between gap-2 sm:justify-end">
-          {ownedCount > 0 && (
-            <Badge variant="outline" className="text-[10px]">
-              {item.unique ? 'Owned' : `x${ownedCount}`}
-            </Badge>
+
+        {showReason && item.reason && (
+          <p className="mt-1 text-xs text-slate-700 italic">{item.reason}</p>
+        )}
+
+        <p className="mt-1 text-xs text-slate-600 leading-relaxed">{item.description}</p>
+
+        {item.effect && (
+          <div className={`mt-1 text-xs font-medium flex items-center gap-1 ${style.text}`}>
+            <span>⚡</span>
+            <span>{item.effect}</span>
+          </div>
+        )}
+
+        {isBlueprint && item.coinsNeeded > 0 && (
+          <div className="mt-1 text-[11px] text-slate-500">
+            {item.coinsNeeded}🪙 to go
+          </div>
+        )}
+
+        <div className="mt-auto pt-2">
+          {isBlueprint ? (
+            <Button size="sm" variant="outline" disabled className="w-full">
+              Save up
+            </Button>
+          ) : showReason && !canAfford ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => switchToTab(SHOP_TAB_TARGETS[item.id] || 'farming')}
+              className="w-full"
+            >
+              Prep field
+            </Button>
+          ) : (
+            <Button
+              onClick={() => handlePurchase(item)}
+              size="sm"
+              disabled={!canAfford || isOwned}
+              juicy
+              shine={isPremiumDecor}
+              variant={isPremiumDecor ? 'gold' : 'default'}
+              className="w-full"
+            >
+              {isOwned ? 'Owned' : 'Buy'}
+            </Button>
           )}
-          <Button
-            onClick={() => handlePurchase(item)}
-            size="sm"
-            disabled={state.coins < item.cost || isOwned}
-            className="min-w-[72px] shrink-0"
-          >
-            {isOwned ? 'Owned' : `${item.cost}🪙`}
-          </Button>
         </div>
+      </div>
+    );
+
+    if (rarity === 'legendary') {
+      return (
+        <div key={item.id} className="shimmer-border-gold p-[2px] rounded-2xl card-game-hover">
+          {inner}
+        </div>
+      );
+    }
+
+    return (
+      <div key={item.id} className={`rounded-2xl border-2 ${style.border} bg-white/60 p-[2px] card-game-hover`}>
+        {inner}
       </div>
     );
   }, [state.inventory, state.coins, highlightedItemId, handlePurchase]);
@@ -305,44 +389,8 @@ const ShopTab = memo(() => {
           tone="amber"
           action={<Badge variant="outline" className="bg-white/80 text-amber-700">Today</Badge>}
         >
-          <div className="grid gap-3 lg:grid-cols-3">
-            {recommendedOffers.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-[22px] border border-amber-100/80 bg-white/88 p-4 shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-2xl">{item.emoji}</div>
-                    <div className="mt-2 font-semibold text-slate-900">{item.name}</div>
-                  </div>
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                    {item.cost}🪙
-                  </Badge>
-                </div>
-                <p className="mt-2 text-sm text-slate-700">{item.reason}</p>
-                <p className="mt-1 text-xs text-slate-500">{item.effect}</p>
-                <div className="mt-3 flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-medium text-slate-500">
-                    {item.canAfford ? 'Ready to buy' : `Save ${item.coinsNeeded}🪙 more`}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant={item.canAfford ? 'default' : 'outline'}
-                    onClick={() => {
-                      if (item.canAfford) {
-                        handlePurchase(item);
-                        return;
-                      }
-                      switchToTab(SHOP_TAB_TARGETS[item.id] || 'farming');
-                    }}
-                    className="min-h-[40px]"
-                  >
-                    {item.canAfford ? 'Buy now' : 'Prep field'}
-                  </Button>
-                </div>
-              </div>
-            ))}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {recommendedOffers.map((item) => renderPremiumCard(item, { showReason: true }))}
           </div>
         </TabSection>
       ) : null}
@@ -354,27 +402,8 @@ const ShopTab = memo(() => {
           tone="violet"
           action={<span className="text-xs text-slate-500">Unowned</span>}
         >
-          <div className="grid gap-2">
-            {upcomingBlueprints.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between gap-3 rounded-[18px] border border-slate-200/70 bg-white/80 px-3 py-3"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{item.emoji}</span>
-                  <div>
-                    <div className="font-medium text-slate-900">{item.name}</div>
-                    <div className="text-xs text-slate-600">{item.effect}</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-semibold text-slate-900">{item.cost}🪙</div>
-                  <div className="text-[11px] text-slate-500">
-                    {item.coinsNeeded === 0 ? 'Affordable now' : `${item.coinsNeeded}🪙 to go`}
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {upcomingBlueprints.map((item) => renderPremiumCard(item, { isBlueprint: true }))}
           </div>
         </TabSection>
       ) : null}
@@ -385,8 +414,8 @@ const ShopTab = memo(() => {
         description="Quick-use items for watering, treating, and boosting plots."
         tone="emerald"
       >
-        <div className="space-y-2">
-          {shopItems.supplies.map((item) => renderShopItem(item, 'bg-green-50'))}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {shopItems.supplies.map((item) => renderPremiumCard(item))}
         </div>
       </TabSection>
 
@@ -397,43 +426,11 @@ const ShopTab = memo(() => {
           tone="rose"
           action={<Badge variant="outline" className="bg-white/80 text-rose-700">{todayKey}</Badge>}
         >
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {featuredDecor.map((item) => {
-              const ownedCount = state.inventory[item.id] || 0;
-              return (
-                <div
-                  key={item.id}
-                  className="rounded-[22px] border border-rose-100/80 bg-white/88 p-4 shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-2xl">{item.emoji}</div>
-                      <div className="mt-2 font-semibold text-slate-900">{item.name}</div>
-                    </div>
-                    <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200">
-                      {item.cost}🪙
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-slate-700">{item.description}</p>
-                  <div className="mt-1 text-xs font-medium capitalize text-rose-600">
-                    {item.category} · {item.rarity}
-                  </div>
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-slate-500">
-                      {ownedCount > 0 ? `Owned x${ownedCount}` : 'Fresh today'}
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handlePurchase(item)}
-                      disabled={state.coins < item.cost}
-                      className="min-h-[40px]"
-                    >
-                      Buy
-                    </Button>
-                  </div>
-                </div>
-              );
+              const entitlementInfo = getItemEntitlementInfo(item.id, 'decor');
+              const isPremium = premiumModeEnabled && entitlementInfo?.access === 'premium';
+              return renderPremiumCard(item, { isPremiumDecor: isPremium });
             })}
           </div>
         </TabSection>
@@ -462,7 +459,7 @@ const ShopTab = memo(() => {
           ))}
         </div>
 
-        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 scrollbar-smart">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 max-h-[600px] overflow-y-auto pr-1 scrollbar-smart">
           {filteredDecor.length === 0 ? (
             <TabEmptyState
               icon="🪴"
@@ -470,49 +467,10 @@ const ShopTab = memo(() => {
               title="No decor in this category"
               description="Try a different filter or keep shopping."
             />
-          ) : filteredDecor.map((item, index) => {
-            const ownedCount = state.inventory[item.id] || 0;
-            const isHighlighted = highlightedItemId === item.id;
+          ) : filteredDecor.map((item) => {
             const entitlementInfo = getItemEntitlementInfo(item.id, 'decor');
             const isPremium = premiumModeEnabled && entitlementInfo?.access === 'premium';
-            return (
-              <div
-                key={item.id}
-                className={`flex flex-col gap-3 rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white sm:flex-row sm:items-center sm:justify-between ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}
-                style={{ animationDelay: `${Math.min(index, 6) * 40}ms` }}
-              >
-                <div className="flex items-start gap-3 flex-1">
-                    <span className="text-2xl">{item.emoji}</span>
-                    <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium">{item.name}</span>
-                      {isPremium && (
-                        <Badge variant="warning" className="text-[10px]" data-qa={`premium-badge-${item.id}`}>
-                          {entitlementInfo?.badgeLabel || 'Premium'}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-600">{item.description}</div>
-                    <div className="text-xs text-rose-600 font-medium mt-0.5 capitalize">
-                      {item.category} &middot; {item.rarity}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-row flex-wrap items-center justify-between gap-2 sm:flex-col sm:items-end sm:justify-start">
-                  {ownedCount > 0 && (
-                    <Badge variant="outline" className="text-[10px]">x{ownedCount}</Badge>
-                  )}
-                  <Button
-                    onClick={() => handlePurchase(item)}
-                    size="sm"
-                    disabled={state.coins < item.cost}
-                    className="ml-2"
-                  >
-                    {item.cost}🪙
-                  </Button>
-                </div>
-              </div>
-            );
+            return renderPremiumCard(item, { isPremiumDecor: isPremium });
           })}
         </div>
       </TabSection>
@@ -523,8 +481,8 @@ const ShopTab = memo(() => {
         description="Permanent tools for speed, watering, and automation."
         tone="sky"
       >
-        <div className="space-y-2">
-          {shopItems.tools.map((item) => renderShopItem(item, 'bg-blue-50'))}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {shopItems.tools.map((item) => renderPremiumCard(item))}
         </div>
       </TabSection>
 
@@ -534,8 +492,8 @@ const ShopTab = memo(() => {
         description="Long-term systems that raise output and resilience."
         tone="violet"
       >
-        <div className="space-y-2">
-          {shopItems.upgrades.map((item) => renderShopItem(item, 'bg-purple-50'))}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {shopItems.upgrades.map((item) => renderPremiumCard(item))}
         </div>
       </TabSection>
     </div>
