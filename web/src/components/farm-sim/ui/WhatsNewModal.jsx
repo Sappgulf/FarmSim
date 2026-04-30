@@ -76,8 +76,8 @@ const WhatsNewModal = memo(() => {
   const title = content.strings?.ui?.whatsNewTitle || "What's New";
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/50 backdrop-blur-sm px-0 py-0 sm:items-center sm:px-4 sm:py-6">
-      <section className="w-full max-w-lg overflow-hidden rounded-t-[28px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.95))] shadow-[0_30px_90px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl sm:rounded-[28px] max-h-[88vh]">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 py-8 sm:p-8">
+      <section className="w-full max-w-lg overflow-hidden rounded-[28px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.95))] shadow-[0_30px_90px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl max-h-[min(88vh,calc(100dvh-4rem))] mx-auto">
         {/* Top accent bar */}
         <div className="h-1.5 bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-300" />
 

@@ -1,6 +1,5 @@
 import React, {
   memo,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -21,9 +20,6 @@ import {
 const SIDE_MARGIN = 16;
 /** Room for fixed bottom nav + home-indicator band — pairs with `<main>` bottom padding. */
 const BOTTOM_NAV_RESERVE = 120;
-
-const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
-
 function collectFocusables(root) {
   if (!root) return [];
   const nodes = root.querySelectorAll(
@@ -85,10 +81,8 @@ const Tutorial = memo(() => {
   const onboardingSkipped = useGameSelector((state) => Boolean(state.onboardingSkipped));
   const onboardingSeen = useGameSelector((state) => Boolean(state.onboardingSeen));
   const [targetRect, setTargetRect] = useState(null);
-  const [manualPosition, setManualPosition] = useState(null);
   const [cardVisible, setCardVisible] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
-  const dragStateRef = useRef(null);
   const speechPanelRef = useRef(null);
   const onboardingMoreRevealRef = useRef(false);
 
@@ -235,106 +229,13 @@ const Tutorial = memo(() => {
     };
   }, [shouldShow, currentStep?.id, currentStep?.target, currentStep?.targetSelectors]);
 
-  /* Reset manual drag on step change -------------------------------- */
-  useEffect(() => {
-    setManualPosition(null);
-  }, [stepIndex]);
-
-  /* Position calculation -------------------------------------------- */
-  const defaultPosition = useMemo(() => {
+  /** Card width caps — layout is viewport-centered via flex, not anchored to highlights. */
+  const cardLayout = useMemo(() => {
     if (!shouldShow) return null;
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 360;
-    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 640;
     const cardWidth = Math.min(340, viewportWidth - SIDE_MARGIN * 2);
-    const cardHeight = 240;
-    const maxTop = viewportHeight - cardHeight - SIDE_MARGIN - BOTTOM_NAV_RESERVE;
-
-    if (!targetRect) {
-      const centeredTop = viewportHeight / 2 - cardHeight / 2;
-      return {
-        top: clamp(centeredTop, SIDE_MARGIN, maxTop),
-        left: clamp(
-          (viewportWidth - cardWidth) / 2,
-          SIDE_MARGIN,
-          viewportWidth - cardWidth - SIDE_MARGIN
-        ),
-        width: cardWidth,
-      };
-    }
-
-    const placements = {
-      right: {
-        top: targetRect.top + targetRect.height / 2 - cardHeight / 2,
-        left: targetRect.left + targetRect.width + SIDE_MARGIN,
-      },
-      left: {
-        top: targetRect.top + targetRect.height / 2 - cardHeight / 2,
-        left: targetRect.left - cardWidth - SIDE_MARGIN,
-      },
-      top: {
-        top: targetRect.top - cardHeight - SIDE_MARGIN,
-        left: targetRect.left + targetRect.width / 2 - cardWidth / 2,
-      },
-      bottom: {
-        top: targetRect.top + targetRect.height + SIDE_MARGIN,
-        left: targetRect.left + targetRect.width / 2 - cardWidth / 2,
-      },
-    };
-
-    const placement = placements[currentStep?.placement] || placements.bottom;
-    return {
-      top: clamp(placement.top, SIDE_MARGIN, maxTop),
-      left: clamp(placement.left, SIDE_MARGIN, viewportWidth - cardWidth - SIDE_MARGIN),
-      width: cardWidth,
-    };
-  }, [shouldShow, targetRect, currentStep]);
-
-  const position = manualPosition || defaultPosition;
-
-  const handlePointerDown = useCallback(
-    (event) => {
-      if (!position) return;
-      if (isTutorialInteractiveTarget(event.target)) {
-        return;
-      }
-      dragStateRef.current = {
-        startX: event.clientX,
-        startY: event.clientY,
-        originLeft: position.left,
-        originTop: position.top,
-      };
-      event.currentTarget.setPointerCapture(event.pointerId);
-    },
-    [position]
-  );
-
-  const handlePointerMove = useCallback(
-    (event) => {
-      if (!dragStateRef.current || !position) return;
-      const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 360;
-      const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 640;
-      const cardWidth = position?.width || 280;
-      const cardHeight = 240;
-      const maxTop = viewportHeight - cardHeight - SIDE_MARGIN - BOTTOM_NAV_RESERVE;
-
-      const dx = event.clientX - dragStateRef.current.startX;
-      const dy = event.clientY - dragStateRef.current.startY;
-
-      const nextLeft = clamp(
-        dragStateRef.current.originLeft + dx,
-        SIDE_MARGIN,
-        viewportWidth - cardWidth - SIDE_MARGIN
-      );
-      const nextTop = clamp(dragStateRef.current.originTop + dy, SIDE_MARGIN, maxTop);
-
-      setManualPosition({ left: nextLeft, top: nextTop, width: cardWidth });
-    },
-    [position]
-  );
-
-  const handlePointerUp = () => {
-    dragStateRef.current = null;
-  };
+    return { width: cardWidth };
+  }, [shouldShow]);
 
   /* Navigation ------------------------------------------------------ */
   const handleNext = () => {
@@ -363,7 +264,7 @@ const Tutorial = memo(() => {
     });
   };
 
-  if (!shouldShow || !currentStep || !position) return null;
+  if (!shouldShow || !currentStep || !cardLayout) return null;
 
   return (
     <div className="fixed inset-0 z-[95]" data-qa="onboarding-tutorial">
@@ -396,29 +297,28 @@ const Tutorial = memo(() => {
         </>
       )}
 
-      {/* ── Tutorial card ── */}
+      {/* ── Tutorial card (always centered; target ring above is informational only) ── */}
       <div
-        className="pointer-events-none absolute"
-        style={{ top: position.top, left: position.left, width: position.width }}
+        className="pointer-events-none absolute inset-0 flex items-center justify-center px-4"
+        style={{
+          paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))',
+          paddingBottom: `max(5.5rem, calc(${BOTTOM_NAV_RESERVE}px + env(safe-area-inset-bottom, 0px)))`,
+        }}
       >
-        <div
-          ref={speechPanelRef}
-          tabIndex={-1}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="farm-tutorial-title"
-          aria-describedby="farm-tutorial-description"
-          className={`outline-none pointer-events-auto rounded-[2rem] border border-white/20 bg-white/10 backdrop-blur-2xl shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] p-5 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] touch-manipulation ${
-            cardVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-[0.96]'
-          }`}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          onLostPointerCapture={handlePointerUp}
-        >
+        <div className="w-full pointer-events-none" style={{ maxWidth: cardLayout.width }}>
+          <div
+            ref={speechPanelRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="farm-tutorial-title"
+            aria-describedby="farm-tutorial-description"
+            className={`outline-none pointer-events-auto rounded-[2rem] border border-white/20 bg-white/10 backdrop-blur-2xl shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] p-5 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] touch-manipulation ${
+              cardVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-[0.96]'
+            }`}
+          >
           {/* Top bar: emoji + title + close */}
-          <div className="flex items-start justify-between gap-3 cursor-grab active:cursor-grabbing">
+          <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl shadow-inner" aria-hidden>
                 {currentStep.emoji}
@@ -513,6 +413,7 @@ const Tutorial = memo(() => {
                 <ChevronRight size={16} className="ml-0.5" />
               </Button>
             </div>
+          </div>
           </div>
         </div>
       </div>
