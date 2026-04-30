@@ -9,6 +9,10 @@
  * setQualityPreset('low');
  */
 
+import { createLogger } from './utils/logger';
+
+const perfLog = createLogger('perf');
+
 const ADAPTIVE_STORAGE_KEY = 'farm.perf.adaptiveOverlay.v1';
 
 /** @param {unknown} value */
@@ -156,7 +160,7 @@ export function restoreAdaptiveParticleOverlayIfMatching(currentQualitySetting) 
 function setQualityPreset(preset) {
     const source = QUALITY_BLUEPRINT[preset];
     if (!source) {
-        console.warn(`[perf] Unknown preset: ${preset}`);
+        perfLog.warn(`Unknown preset: ${preset}`);
         return;
     }
 
@@ -164,7 +168,7 @@ function setQualityPreset(preset) {
 
     notifyPerfConfigChanged({ reason: 'preset', preset });
 
-    console.log(`[perf] Quality set to: ${preset}`);
+    perfLog.debug(`Quality set to: ${preset}`);
 }
 
 /**
@@ -196,7 +200,7 @@ function withinLimit(count, type = 'entities') {
     const limit = perfConfig.limits[limitKey] || 100;
 
     if (count >= limit * 0.9) {
-        console.warn(`[perf] ${type} count (${count}) approaching limit (${limit})`);
+        perfLog.warn(`${type} count (${count}) approaching limit (${limit})`);
     }
 
     return count < limit;
@@ -227,7 +231,7 @@ function handleAdaptiveQuality(currentFPS) {
 
     persistAdaptiveParticleOverlay();
     notifyPerfConfigChanged({ reason: 'adaptive', fps: currentFPS });
-    console.log(`[perf] Adaptive: Reduced particles to ${perfConfig.particles.maxCount}`);
+    perfLog.debug(`Adaptive: Reduced particles to ${perfConfig.particles.maxCount}`);
     return true;
 }
 

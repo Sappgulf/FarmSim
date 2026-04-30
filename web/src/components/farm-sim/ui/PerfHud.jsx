@@ -1,5 +1,8 @@
 import React, { memo, useEffect, useMemo, useState } from 'react';
 import { isDevelopmentMode } from '../../../config/release';
+import { createLogger } from '../../../utils/logger';
+
+const perfHudLog = createLogger('farm-perf');
 
 const HUD_FLAG_KEY = 'farm.perf.hud';
 const LOG_FLAG_KEY = 'farm.perf.log';
@@ -74,7 +77,7 @@ const PerfHud = memo(() => {
         renderMs: Number(snapshot.renderMs.toFixed(2)),
         ts: new Date().toISOString(),
       };
-      console.log('[farm-perf]', payload);
+      perfHudLog.debug('interval snapshot', payload);
     }, 5000);
 
     return () => clearInterval(logInterval);

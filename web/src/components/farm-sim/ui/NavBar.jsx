@@ -28,40 +28,6 @@ import {
 import { useGameSelector } from '../context/GameContext';
 import SoraIcon from './SoraIcon';
 
-/* ── AAA polish keyframes ── */
-const navStyles = `
-@keyframes badgePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.45); }
-  50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
-}
-@keyframes badgeRing {
-  0% { transform: scale(1); opacity: 1; }
-  100% { transform: scale(2.2); opacity: 0; }
-}
-@keyframes tabSlideIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes glowLine {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-.badge-pulse {
-  animation: badgePulse 2s ease-in-out infinite;
-}
-.badge-ring::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 9999px;
-  border: 2px solid rgba(239,68,68,0.35);
-  animation: badgeRing 2s ease-out infinite;
-}
-.tab-slide-in {
-  animation: tabSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-`;
-
 /**
  * NavBar - Consolidated navigation with 5 main sections
  * Replaces the 21-tab grid with grouped navigation
@@ -218,11 +184,9 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
     }, [onSectionChange, onTabChange, showSubTabs]);
 
     return (
-        <>
-            <style>{navStyles}</style>
-            <nav className="relative overflow-hidden border-t border-white/80 bg-white/92 shadow-[0_-20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-2xl mobile-scroll dark:bg-slate-900/92 dark:border-slate-800">
+        <nav className="relative overflow-hidden border-t border-white/80 bg-white/92 shadow-[0_-20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-2xl mobile-scroll dark:bg-slate-900/92 dark:border-slate-800">
                 {/* Top border glow */}
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" style={{ animation: 'glowLine 3s ease-in-out infinite' }} />
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent navbar-top-glow-line" />
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent dark:via-slate-700/80" />
             {activeSectionHasMultipleTabs && (
                 <div className="border-b border-white/70 bg-gradient-to-r from-emerald-50/80 via-white/70 to-teal-50/70 px-3 pt-2 pb-1 dark:border-slate-700/70 dark:from-emerald-950/60 dark:via-slate-900/60 dark:to-teal-950/60">
@@ -246,7 +210,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
             {showSubTabs && activeSectionHasMultipleTabs && (
                 <div
                     id={`subtabs-${activeSection}`}
-                    className="border-b border-white/70 bg-gradient-to-r from-slate-50/90 via-white/80 to-emerald-50/70 px-2 py-2.5 tab-slide-in dark:border-slate-700/70 dark:from-slate-900/90 dark:via-slate-900/80 dark:to-emerald-950/70"
+                    className="border-b border-white/70 bg-gradient-to-r from-slate-50/90 via-white/80 to-emerald-50/70 px-2 py-2.5 animate-navbar-subtabs-enter dark:border-slate-700/70 dark:from-slate-900/90 dark:via-slate-900/80 dark:to-emerald-950/70"
                 >
                     {/* Scroll fade indicators */}
                     <div className="relative">
@@ -355,7 +319,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
 
                             {/* Notification badge with pulse ring */}
                             {notifCount && (
-                                <span className="badge-pulse badge-ring absolute -top-0.5 -right-0.5 min-w-[20px] h-[20px] flex items-center justify-center bg-gradient-to-br from-red-500 to-rose-600 text-white text-[10px] font-extrabold rounded-full px-1 shadow-lg">
+                                <span className="navbar-badge-pulse navbar-badge-ring absolute -top-0.5 -right-0.5 min-w-[20px] h-[20px] flex items-center justify-center bg-gradient-to-br from-red-500 to-rose-600 text-white text-[10px] font-extrabold rounded-full px-1 shadow-lg">
                                     {notifCount > 9 ? '9+' : notifCount}
                                 </span>
                             )}
@@ -372,7 +336,6 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                 })}
             </div>
             </nav>
-        </>
     );
 });
 

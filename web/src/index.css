@@ -1015,6 +1015,27 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* NavBar sub-tab strip — slight upward drift (paired timing with `.animate-tab-slide-in`) */
+@keyframes navbar-subtab-enter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes navbar-top-glow-line {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes navbar-badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.45); }
+  50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+}
+
+@keyframes navbar-badge-ring {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
 @keyframes skeleton-shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
@@ -1429,6 +1450,27 @@
 .animate-bob { animation: bob 2s ease-in-out infinite; }
 .animate-tab-slide-in {
   animation: tab-slide-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-navbar-subtabs-enter {
+  animation: navbar-subtab-enter 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.navbar-top-glow-line {
+  animation: navbar-top-glow-line 3s ease-in-out infinite;
+}
+
+.navbar-badge-pulse {
+  animation: navbar-badge-pulse 2s ease-in-out infinite;
+}
+
+.navbar-badge-ring::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 2px solid rgba(239,68,68,0.35);
+  animation: navbar-badge-ring 2s ease-out infinite;
 }
 
 .skeleton-base {

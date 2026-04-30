@@ -45,10 +45,11 @@ window.addEventListener('unhandledrejection', (event) => {
   });
 });
 
-// Register service worker for PWA/offline support (production only)
+// Register service worker for PWA/light offline shell (`public/sw.js`). Production only.
+// Dev aggressively unregisters + clears caches so Vite HMR and asset hashing never fight SW.
+// After deploys, CACHE_NAME bumps in sw.js prune old caches; navigation uses network-first.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    // In dev, unregister service workers to avoid caching issues
     if (import.meta.env.DEV) {
       navigator.serviceWorker
         .getRegistrations()
@@ -63,7 +64,6 @@ if ("serviceWorker" in navigator) {
       return;
     }
 
-    // Production: register service worker
     navigator.serviceWorker.register("./sw.js").catch(() => {});
   });
 }

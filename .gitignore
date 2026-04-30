@@ -11,6 +11,8 @@ build/
 
 # Local QA screenshots / artifacts
 web/qa-out/
+web/playwright-report/
+web/test-results/
 
 # Environment variables
 .env

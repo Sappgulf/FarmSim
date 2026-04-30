@@ -1,177 +1,46 @@
-# FarmSim Modular Architecture
+# FarmSim frontend (`farm-sim/`)
 
-## Overview
+Modular gameplay UI and systems layered on **`GameProvider`** (`context/GameContext.jsx`). The previous monolithic canvas surface has been replaced by **`FarmSim`** / **`FarmSimCore`** as the shell: header, **`FarmGrid`**, bottom **`NavBar`**, and lazy-loaded sidebar tabs (**`GameSidebar`** + **`ui/tabs/*`**).
 
-This is a refactored, modular version of the original FarmSimCanvas component. The monolithic 9,818-line component has been broken down into smaller, focused modules for better maintainability, performance, and scalability.
-
-## Architecture
-
-### 📁 Directory Structure
+## Layout
 
 ```
 src/components/farm-sim/
-├── core/                    # Main orchestrator components
-│   ├── FarmSim.jsx         # Main game component with context provider
-│   └── FarmSimCore.jsx     # Core game logic (internal)
-├── ui/                     # User interface components
-│   ├── GameHeader.jsx      # Top navigation and stats
-│   ├── FarmGrid.jsx        # Farm plot grid display
-│   ├── GameSidebar.jsx     # Tabbed sidebar interface
-│   ├── NotificationSystem.jsx # Toast notifications
-│   └── tabs/              # Individual tab components
-│       ├── FarmingTab.jsx
-│       ├── InventoryTab.jsx
-│       ├── ShopTab.jsx
-│       ├── BuildingsTab.jsx
-│       ├── ResearchTab.jsx
-│       ├── GeneticsTab.jsx
-│       ├── WeatherTab.jsx
-│       ├── SocialTab.jsx
-│       └── ExpandTab.jsx
-├── systems/               # Game logic systems
-│   ├── FarmingSystem.js   # Crop growth, planting, harvesting
-│   ├── WeatherSystem.js   # Weather simulation and effects
-│   ├── EconomicSystem.js  # Market dynamics and pricing
-│   └── AchievementSystem.js # Achievement tracking
-└── context/              # State management
-    └── GameContext.jsx   # Centralized game state and actions
+├── core/           FarmSim.jsx, FarmSimCore.jsx — shell, loops, orchestration
+├── context/       Game persistence, reducer, selectors
+├── systems/       Farming, weather, livestock, achievements, …
+├── ui/            Visible chrome: NavBar, GameSidebar, modals, toasts
+│   └── tabs/      Lazy tab panels (shop, livestock, settings, …)
+├── data/          Onboarding/tutorial copy and helpers
+├── qa/            In-game QA helpers (manual / debug tooling)
+└── constants/      Shared UI constants where applicable
 ```
 
-## Key Improvements
+## State and saves
 
-### 🚀 Performance Optimizations
+- **Runtime state** lives in context; **persistence** is handled in `context/GamePersistence.js` with a versioned save shape (see `SAVE_VERSION` / `migrateSave` there).
+- Do not mutate loaded save objects in place during play; migrate on load when the schema changes.
 
-1. **Component Memoization**: All components use `React.memo()` for efficient re-rendering
-2. **Selective State Updates**: Only changed data triggers re-renders
-3. **Efficient Event Handling**: Callback memoization with `useCallback`
-4. **CSS Containment**: Layout, style, and paint containment for better performance
-5. **Background Processing**: Game loop runs at 60fps without blocking UI
+## Performance
 
-### 🏗️ Architecture Benefits
+- Game tick and canvas work stay off the React commit path where possible; use selectors and memoization for UI.
+- Quality presets and adaptive particle trims live in **`src/performance.js`** (see Vitest `performanceUX.test.js`).
+- **Tab panels**: `TabsContent` uses **`animate-tab-slide-in`** from `index.css`. The bottom nav sub-tab strip uses **`animate-navbar-subtabs-enter`** (same duration/easing, opposite vertical drift).
 
-1. **Modularity**: Each system is self-contained and focused
-2. **Maintainability**: Easy to locate and modify specific functionality
-3. **Testability**: Individual systems can be tested in isolation
-4. **Scalability**: New features can be added without affecting existing code
-5. **Reusability**: Components can be reused across different parts of the game
+## Tests
 
-### 📊 State Management
+From repo root:
 
-- **Context API**: Centralized state management with React Context
-- **Reducer Pattern**: Predictable state updates with action types
-- **Optimized Dispatch**: Memoized action creators to prevent unnecessary re-renders
-- **Auto-save**: Automatic state persistence to localStorage
+- **Unit / component**: `npm test` (Vitest in `web/`).
+- **Smoke E2E** (Chromium, built app): `npm --prefix web run test:e2e` — requires `npx playwright install chromium` once. The config starts **`vite preview`** on port **4173** (or reuses an existing server when not in CI).
 
-## Component Responsibilities
+## Service worker
 
-### Core Components
+`public/sw.js` registers in **production** only (`main.jsx` unregisters workers and clears caches in dev). Bump **`CACHE_NAME`** there when shell assets or caching rules change materially so clients drop stale entries on activate.
 
-- **FarmSim**: Entry point with context provider
-- **GameHeader**: Displays game stats, weather, and controls
-- **FarmGrid**: Renders the farm plots with interactive elements
-- **GameSidebar**: Contains all game tabs and interfaces
-- **NotificationSystem**: Manages toast notifications
+## Adding a feature
 
-### System Components
-
-- **FarmingSystem**: Handles crop lifecycle, growth calculations, harvesting
-- **WeatherSystem**: Manages weather changes, forecasts, and environmental effects
-- **EconomicSystem**: Controls market prices, sales, and economic calculations
-- **AchievementSystem**: Tracks and unlocks achievements
-
-## Performance Metrics
-
-### Before Refactoring
-- **File Size**: 9,818 lines in single component
-- **Re-render Frequency**: High due to monolithic state
-- **Memory Usage**: Higher due to large component tree
-- **Development Velocity**: Slow due to complex file navigation
-
-### After Refactoring
-- **Main Component**: ~50 lines (FarmSim orchestrator)
-- **Average Component Size**: ~100-200 lines each
-- **Re-render Optimization**: 70-80% reduction in unnecessary re-renders
-- **Memory Efficiency**: Better garbage collection with smaller components
-- **Development Velocity**: 3x faster feature development
-
-## Development Guidelines
-
-### Adding New Features
-
-1. **Identify System**: Determine which system should handle the new feature
-2. **Create Component**: Add new UI components in appropriate directories
-3. **Update Context**: Add new state/actions to GameContext if needed
-4. **Test Integration**: Ensure new feature integrates with existing systems
-
-### Performance Best Practices
-
-1. **Use React.memo()**: For all components that don't need frequent re-renders
-2. **Memoize Callbacks**: Use useCallback for event handlers
-3. **Optimize State Updates**: Batch related state changes
-4. **Avoid Inline Functions**: Define functions outside render methods
-5. **Use CSS Containment**: Add `contain` properties for better performance
-
-### Code Organization
-
-1. **Single Responsibility**: Each component/system has one clear purpose
-2. **Consistent Naming**: Use PascalCase for components, camelCase for functions
-3. **Clear Imports**: Group imports by type (React, UI, utils, etc.)
-4. **Documentation**: Add JSDoc comments for complex functions
-5. **Error Boundaries**: Wrap complex components in error boundaries
-
-## Migration Path
-
-### Phase 1: Core Refactoring ✅ (COMPLETED)
-- [x] Break down FarmSimCanvas into modular components
-- [x] Implement Context API for state management
-- [x] Add performance optimizations
-- [x] Create system classes for game logic
-- [x] Test refactored system
-
-### Phase 2: Feature Integration (UPCOMING)
-- [ ] Migrate existing features from old component
-- [ ] Implement advanced farming mechanics
-- [ ] Add comprehensive testing
-- [ ] Performance benchmarking
-
-### Phase 3: Advanced Features (FUTURE)
-- [ ] Multiplayer functionality
-- [ ] Advanced AI systems
-- [ ] Mobile optimizations
-- [ ] Analytics dashboard
-
-## Testing Strategy
-
-### Unit Tests
-- Individual component functionality
-- System logic validation
-- State management correctness
-
-### Integration Tests
-- Component interaction testing
-- End-to-end user workflows
-- Performance regression testing
-
-### Performance Tests
-- Render performance benchmarks
-- Memory usage monitoring
-- Bundle size optimization
-
-## Future Enhancements
-
-### Planned Features
-1. **3D Farm Visualization**: Three.js integration for immersive experience
-2. **Advanced AI**: Machine learning-based farming recommendations
-3. **Multiplayer**: Real-time farming with other players
-4. **Mobile App**: Native mobile experience with touch optimizations
-5. **Cloud Sync**: Cross-device save synchronization
-
-### Technical Improvements
-1. **WebAssembly**: Performance-critical calculations
-2. **Service Workers**: Offline functionality and caching
-3. **Progressive Web App**: Installable web application
-4. **Advanced Caching**: Intelligent asset and data caching
-
----
-
-This modular architecture provides a solid foundation for scaling the FarmSim game to new heights while maintaining excellent performance and developer experience.
+1. Prefer **system** logic in `systems/` or existing `utils/`, not inside tab JSX.
+2. Add UI under `ui/` or `ui/tabs/`; wire through context actions/selectors.
+3. Extend persistence with a **version bump + migration** if save shape changes.
+4. Add or extend Vitest coverage; optional Playwright touch for flows that span start screen + navigation.

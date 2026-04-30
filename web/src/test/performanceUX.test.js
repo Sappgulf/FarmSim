@@ -30,7 +30,7 @@ describe('performance module', () => {
   });
 
   it('handleAdaptiveQuality reduces budgets and persists when FPS is low', () => {
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
     const changed = handleAdaptiveQuality(10);
     expect(changed).toBe(true);
     expect(perfConfig.particles.maxCount).toBeLessThan(150);
@@ -44,7 +44,7 @@ describe('performance module', () => {
   });
 
   it('restoreAdaptiveParticleOverlayIfMatching reapplies trims for same preset', () => {
-    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'debug').mockImplementation(() => {});
     handleAdaptiveQuality(12);
     const lowered = perfConfig.particles.maxCount;
     expect(lowered).toBeLessThan(150);
