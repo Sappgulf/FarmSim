@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useGameActions, useGameSelector } from '../context/GameContext';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
@@ -62,6 +62,14 @@ const WhatsNewModal = memo(() => {
     }
   }, [shouldShow]);
 
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const id = window.requestAnimationFrame(() => {
+      document.getElementById('farm-whats-new-dismiss')?.focus();
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [isOpen]);
+
   const handleDismiss = () => {
     const current = whatsNew || { dismissed: {} };
     actions.updateWhatsNew({
@@ -76,8 +84,16 @@ const WhatsNewModal = memo(() => {
   const title = content.strings?.ui?.whatsNewTitle || "What's New";
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 py-8 sm:p-8">
-      <section className="w-full max-w-lg overflow-hidden rounded-[28px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.95))] shadow-[0_30px_90px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl max-h-[min(88vh,calc(100dvh-4rem))] mx-auto">
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 py-8 sm:p-8"
+      role="presentation"
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="farm-whats-new-title"
+        className="flex max-h-[min(88vh,calc(100dvh-4rem))] w-full max-w-lg flex-col overflow-hidden rounded-[28px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.95))] shadow-[0_30px_90px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl mx-auto"
+      >
         {/* Top accent bar */}
         <div className="h-1.5 bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-300" />
 
@@ -99,15 +115,16 @@ const WhatsNewModal = memo(() => {
                   v{APP_VERSION}
                 </Badge>
               </div>
-              <h2 className="mt-1.5 text-2xl font-bold tracking-tight text-emerald-950">
+              <h2 id="farm-whats-new-title" className="mt-1.5 text-2xl font-bold tracking-tight text-emerald-950">
                 ✨ {title}
               </h2>
             </div>
           </div>
         </div>
 
-        {/* Scrollable content */}
-        <div className="max-h-[70vh] space-y-3 overflow-y-auto scrollbar-smart px-5 py-4 text-sm text-slate-700">
+        {/* Scrollable content + footer */}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-y-contain scrollbar-smart px-5 py-4 text-sm text-slate-700">
           {releaseNotes.sections.map((section) => {
             const SectionIcon = SECTION_ICONS[section.title] || Sparkles;
             const emoji = SECTION_EMOJIS[section.title] || '✨';
@@ -133,11 +150,11 @@ const WhatsNewModal = memo(() => {
           })}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-2 border-t border-emerald-100/70 px-5 py-4">
-          <Button size="sm" variant="default" onClick={handleDismiss}>
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-emerald-100/70 px-5 py-4">
+          <Button id="farm-whats-new-dismiss" size="sm" variant="default" onClick={handleDismiss}>
             Got it
           </Button>
+        </div>
         </div>
       </section>
     </div>

@@ -9,6 +9,9 @@ pnpm-debug.log*
 dist/
 build/
 
+# Local QA screenshots / artifacts
+web/qa-out/
+
 # Environment variables
 .env
 .env.local

@@ -80,9 +80,9 @@ function StartScreenComponent({ onStart }) {
     }
 
     const timers = [
-      setTimeout(() => setStage(1), 200),
-      setTimeout(() => setStage(2), 700),
-      setTimeout(() => setStage(3), 1200),
+      setTimeout(() => setStage(1), 120),
+      setTimeout(() => setStage(2), 420),
+      setTimeout(() => setStage(3), 780),
     ];
     return () => timers.forEach(clearTimeout);
   }, [reduceMotion]);
@@ -216,7 +216,7 @@ function StartScreenComponent({ onStart }) {
                   className={`group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.07] to-white/[0.02] px-5 py-4 text-left shadow-[0_16px_42px_-28px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_24px_50px_-24px_rgba(0,0,0,0.7)] hover:border-white/15 ${
                     stage >= 3 ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
                   }`}
-                  style={{ transitionDelay: `${450 + idx * 120}ms` }}
+                  style={{ transitionDelay: `${220 + idx * 70}ms` }}
                 >
                   {/* Card hover gradient sweep */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-emerald-400/5 to-transparent pointer-events-none" />
@@ -239,7 +239,7 @@ function StartScreenComponent({ onStart }) {
               className={`relative mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row transition-all duration-700 ${
                 stage >= 3 ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
               }`}
-              style={{ transitionDelay: '800ms' }}
+              style={{ transitionDelay: '480ms' }}
             >
               <Button
                 onClick={handleNewGame}
@@ -289,7 +289,7 @@ function StartScreenComponent({ onStart }) {
               className={`relative mt-6 text-[10px] font-medium uppercase tracking-[0.28em] text-emerald-100/35 transition-all duration-700 ${
                 stage >= 3 ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
               }`}
-              style={{ transitionDelay: '950ms' }}
+              style={{ transitionDelay: '620ms' }}
             >
               Built for one-tap play across desktop and mobile
             </p>
@@ -300,7 +300,7 @@ function StartScreenComponent({ onStart }) {
             className={`mt-6 text-center text-[10px] tracking-wider text-emerald-100/20 transition-all duration-700 ${
               stage >= 3 ? 'opacity-100' : 'opacity-0'
             }`}
-            style={{ transitionDelay: '1100ms' }}
+            style={{ transitionDelay: '720ms' }}
           >
             &copy; {new Date().getFullYear()} FarmSim. All rights reserved.
           </p>

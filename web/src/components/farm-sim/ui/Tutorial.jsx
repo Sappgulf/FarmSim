@@ -313,107 +313,107 @@ const Tutorial = memo(() => {
             aria-modal="true"
             aria-labelledby="farm-tutorial-title"
             aria-describedby="farm-tutorial-description"
-            className={`outline-none pointer-events-auto rounded-[2rem] border border-white/20 bg-white/10 backdrop-blur-2xl shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] p-5 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] touch-manipulation ${
+            className={`outline-none pointer-events-auto max-h-[min(68vh,520px)] overflow-y-auto overscroll-y-contain rounded-[2rem] border border-white/25 bg-white/[0.14] backdrop-blur-2xl shadow-[0_24px_80px_-24px_rgba(0,0,0,0.75)] ring-2 ring-emerald-400/20 ring-inset sm:ring-offset-0 p-5 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] touch-manipulation ${
               cardVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-[0.96]'
             }`}
           >
-          {/* Top bar: emoji + title + close */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl shadow-inner" aria-hidden>
-                {currentStep.emoji}
-              </span>
-              <div className="min-w-0">
-                <div id="farm-tutorial-title" className="text-sm font-bold text-white">
-                  {currentStep.title}
-                </div>
-                <div className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-200/60">
-                  Step {stepIndex + 1} of {totalSteps}
+            {/* Top bar: emoji + title + close */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl shadow-inner" aria-hidden>
+                  {currentStep.emoji}
+                </span>
+                <div className="min-w-0">
+                  <div id="farm-tutorial-title" className="text-sm font-bold text-white">
+                    {currentStep.title}
+                  </div>
+                  <div className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-200/60">
+                    Step {stepIndex + 1} of {totalSteps}
+                  </div>
                 </div>
               </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleSkip}
-              className="rounded-lg p-1.5 text-white/40 hover:bg-white/10 hover:text-white/70 transition-colors"
-              aria-label="Skip tutorial"
-            >
-              <X size={16} />
-            </button>
-          </div>
-
-          <p id="farm-tutorial-description" className="mt-3 whitespace-pre-line text-sm leading-6 text-emerald-50/80">
-            {currentStep.description}
-          </p>
-
-          {/* Progress dots */}
-          <div className="mt-4 flex items-center justify-center gap-2" role="group" aria-label="Tutorial steps">
-            {ONBOARDING_STEPS.map((s, i) => (
               <button
                 type="button"
-                key={s.id}
-                onClick={() =>
-                  actions.updateOnboarding({
-                    onboardingStep: i,
-                    onboardingSeen: true,
-                  })}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i === stepIndex
-                    ? 'w-6 bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.5)]'
-                    : i < stepIndex
-                      ? 'w-2 bg-emerald-300/50'
-                      : 'w-2 bg-white/20 hover:bg-white/30'
-                }`}
-                aria-label={`Go to step ${i + 1}, ${s.title}`}
-                aria-current={i === stepIndex ? 'step' : undefined}
-              />
-            ))}
-          </div>
+                onClick={handleSkip}
+                className="rounded-lg p-1.5 text-white/40 hover:bg-white/10 hover:text-white/70 transition-colors shrink-0"
+                aria-label="Skip tutorial"
+              >
+                <X size={16} />
+              </button>
+            </div>
 
-          {/* Footer */}
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <label className="flex cursor-pointer items-center gap-2 select-none group">
-              <span className="relative flex h-4 w-4 items-center justify-center rounded border border-white/20 bg-white/5 transition-colors group-hover:border-white/30">
-                <input
-                  type="checkbox"
-                  className="peer sr-only"
-                  checked={dontShowAgain}
-                  onChange={(e) => setDontShowAgain(e.target.checked)}
+            <p id="farm-tutorial-description" className="mt-3 whitespace-pre-line text-sm leading-6 text-emerald-50/90">
+              {currentStep.description}
+            </p>
+
+            {/* Progress dots */}
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Tutorial steps">
+              {ONBOARDING_STEPS.map((s, i) => (
+                <button
+                  type="button"
+                  key={s.id}
+                  onClick={() =>
+                    actions.updateOnboarding({
+                      onboardingStep: i,
+                      onboardingSeen: true,
+                    })}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    i === stepIndex
+                      ? 'w-6 bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.5)]'
+                      : i < stepIndex
+                        ? 'w-2 bg-emerald-300/50'
+                        : 'w-2 bg-white/20 hover:bg-white/30'
+                  }`}
+                  aria-label={`Go to step ${i + 1}, ${s.title}`}
+                  aria-current={i === stepIndex ? 'step' : undefined}
                 />
-                <span className="h-2 w-2 rounded-sm bg-emerald-300 opacity-0 transition-opacity peer-checked:opacity-100" />
-              </span>
-              <span className="text-[11px] text-white/40 group-hover:text-white/55 transition-colors">
-                Don&apos;t show again
-              </span>
-            </label>
+              ))}
+            </div>
 
-            <div className="flex items-center gap-2 sm:justify-end">
-              {stepIndex > 0 ? (
+            {/* Footer */}
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <label className="flex cursor-pointer items-center gap-2 select-none group">
+                <span className="relative flex h-4 w-4 items-center justify-center rounded border border-white/20 bg-white/5 transition-colors group-hover:border-white/30">
+                  <input
+                    type="checkbox"
+                    className="peer sr-only"
+                    checked={dontShowAgain}
+                    onChange={(e) => setDontShowAgain(e.target.checked)}
+                  />
+                  <span className="h-2 w-2 rounded-sm bg-emerald-300 opacity-0 transition-opacity peer-checked:opacity-100" />
+                </span>
+                <span className="text-[11px] text-white/40 group-hover:text-white/55 transition-colors">
+                  Don&apos;t show again
+                </span>
+              </label>
+
+              <div className="flex items-center gap-2 sm:justify-end">
+                {stepIndex > 0 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBack}
+                    className="h-8 px-2.5 text-emerald-100/70 hover:bg-white/10 hover:text-white"
+                  >
+                    <ChevronLeft size={16} className="mr-0.5" />
+                    Back
+                  </Button>
+                ) : (
+                  <span className="min-w-[1px] sm:h-8" aria-hidden />
+                )}
                 <Button
                   type="button"
-                  variant="ghost"
                   size="sm"
-                  onClick={handleBack}
-                  className="h-8 px-2.5 text-emerald-100/70 hover:bg-white/10 hover:text-white"
+                  onClick={handleNext}
+                  data-tutorial-primary="true"
+                  className="h-8 bg-white/15 text-white hover:bg-white/25 border border-white/10 backdrop-blur-md"
                 >
-                  <ChevronLeft size={16} className="mr-0.5" />
-                  Back
+                  {stepIndex === totalSteps - 1 ? 'Finish' : 'Next'}
+                  <ChevronRight size={16} className="ml-0.5" />
                 </Button>
-              ) : (
-                <span className="min-w-[1px] sm:h-8" aria-hidden />
-              )}
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleNext}
-                data-tutorial-primary="true"
-                className="h-8 bg-white/15 text-white hover:bg-white/25 border border-white/10 backdrop-blur-md"
-              >
-                {stepIndex === totalSteps - 1 ? 'Finish' : 'Next'}
-                <ChevronRight size={16} className="ml-0.5" />
-              </Button>
+              </div>
             </div>
-          </div>
           </div>
         </div>
       </div>
