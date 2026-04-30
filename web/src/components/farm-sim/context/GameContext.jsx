@@ -44,6 +44,7 @@ import { getContentManager } from '../../../content/ContentManager';
 import { CROP_DATA } from '../constants/cropData';
 import { MILESTONE_DEFINITIONS } from '../../../data/milestones';
 import { createMilestoneManager } from '../../../systems/milestones';
+import { ONBOARDING_TUTORIAL_MAX_STEP_FROM_EVENTS } from '../data/onboardingTutorialSteps';
 import { CROP_TRAITS, CROP_TRAIT_IDS, DECOR_SETS, FARM_TITLES, RARE_MOMENTS, VISUAL_WEATHER_ROTATION, WEEKLY_SPECIAL_DAY } from '../../../data/cozyExpansion';
 import {
   applyXpTuning,
@@ -857,7 +858,6 @@ export function GameProvider({ children }) {
         board_open: 2,
       };
 
-      const totalSteps = 3;
       const eventStep = onboardingStepMap[eventType];
 
       const hasFirstSeed = !!currentState.memoryFlags?.first_seed;
@@ -906,7 +906,7 @@ export function GameProvider({ children }) {
       if (typeof eventStep !== 'number') return false;
       if (currentState.onboardingStep !== eventStep) return false;
 
-      const nextStep = Math.min(totalSteps, eventStep + 1);
+      const nextStep = Math.min(ONBOARDING_TUTORIAL_MAX_STEP_FROM_EVENTS, eventStep + 1);
       dispatch({
         type: GAME_ACTIONS.UPDATE_ONBOARDING,
         payload: { onboardingStep: nextStep, onboardingSeen: true },

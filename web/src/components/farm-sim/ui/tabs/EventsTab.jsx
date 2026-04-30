@@ -18,6 +18,7 @@ import { getDifficultyModifier, getProgressionBand } from '../../systems/progres
 import PerfectHarvestModal from '../minigames/PerfectHarvestModal';
 import FarmCardShareButton from '../FarmCardShareButton';
 import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
+import { ONBOARDING_TUTORIAL_COMPLETE_STEP_INDEX } from '../../data/onboardingTutorialSteps';
 
 const FALLBACK_RULE_SET = {
   id: 'fallback_rule',
@@ -276,7 +277,7 @@ const EventsTab = memo(() => {
   const canPlayFestivalGame = activeEvent
     ? (playLimit === 'festival' ? !playedFestival : !playedSameFestivalDay)
     : (playLimit === 'daily' ? !playedToday : !playedToday);
-  const onboardingActive = !state.onboardingSkipped && (state.onboardingStep || 0) < 3;
+  const onboardingActive = !state.onboardingSkipped && (state.onboardingStep || 0) < ONBOARDING_TUTORIAL_COMPLETE_STEP_INDEX;
   const isFirstDay = (state.almanac?.counters?.dayCount || 0) <= 0;
   const farmCardSpotlight = buildFarmCardData(state).spotlight;
   const activeTitleId = state.cozyExpansion?.farmTitles?.activeId || 'home_grower';

@@ -7,73 +7,55 @@ const STORAGE_KEY = 'farmSim_contextHints_v1';
 const HINT_CONFIGS = [
   {
     id: 'hint_shop',
-    minLevel: 1,
-    maxLevel: 2,
-    message: 'You unlocked the Shop! Tap here.',
-    targetSelector: 'button[title="Open Shop"], [data-onboard="shop-tab"]',
-    fallbackSelector: '[aria-label*="Shop" i]',
+    message: 'Nice find in the Shop! Tap Items or Shop anytime from the bar.',
+    targetSelector: '[data-onboard="shop-tab"]',
+    fallbackSelector: 'button[title="Open Shop"], button[aria-label*="Shop" i]',
   },
   {
     id: 'hint_buildings',
-    minLevel: 2,
-    maxLevel: 3,
-    message: 'Buildings are now available! Tap Build.',
+    message: 'Buildings are live! Tap Build to expand your homestead.',
     targetSelector: 'button[aria-label*="Build" i]',
-    fallbackSelector: '[aria-label*="Build" i]',
+    fallbackSelector: null,
   },
   {
     id: 'hint_inventory',
-    minLevel: 2,
-    maxLevel: 3,
-    message: 'Check your Items tab for tools and seeds.',
+    message: 'Check your Items tab for tools and leftover seeds.',
     targetSelector: 'button[aria-label*="Items" i]',
     fallbackSelector: null,
   },
   {
     id: 'hint_animals',
-    minLevel: 4,
-    maxLevel: 5,
-    message: 'Animals unlocked! Tap Animals to adopt.',
+    message: 'You have animals now! Tap Animals to care for them.',
     targetSelector: 'button[aria-label*="Animals" i]',
     fallbackSelector: null,
   },
   {
     id: 'hint_processing',
-    minLevel: 5,
-    maxLevel: 6,
-    message: 'Processing unlocked! Turn crops into goods.',
+    message: 'Processing is open! Turn crops into goods here.',
     targetSelector: '[data-onboard="processing-tab"]',
     fallbackSelector: null,
   },
   {
     id: 'hint_research',
-    minLevel: 6,
-    maxLevel: 7,
-    message: 'Research unlocked! Upgrade your farm tech.',
+    message: 'Research is buzzing! Tune upgrades in the Build section.',
     targetSelector: '[data-onboard="research-tab"]',
     fallbackSelector: null,
   },
   {
     id: 'hint_fishing',
-    minLevel: 7,
-    maxLevel: 8,
-    message: 'Fishing unlocked! Cast a line in the Animals tab.',
+    message: 'You caught fish! Fishing lives under Animals.',
     targetSelector: 'button[aria-label*="Animals" i]',
     fallbackSelector: null,
   },
   {
     id: 'hint_analytics',
-    minLevel: 3,
-    maxLevel: 4,
-    message: 'Analytics unlocked! Track your farm stats.',
+    message: 'You opened Events — peek at Analytics anytime in More.',
     targetSelector: 'button[title="Open Analytics"]',
     fallbackSelector: null,
   },
   {
     id: 'hint_achievements',
-    minLevel: 2,
-    maxLevel: 3,
-    message: 'Achievements unlocked! Earn rewards.',
+    message: 'Chasing goals? Claim Achievements under More.',
     targetSelector: 'button[title="Open Achievements"]',
     fallbackSelector: null,
   },
@@ -138,28 +120,32 @@ const ContextualHint = memo(function ContextualHint({
   const targetRect = findTargetRect(hint.targetSelector, hint.fallbackSelector);
   if (!targetRect || !containerRect) return null;
 
-  // Position above the target by default
   const top = targetRect.top - containerRect.top - 40;
   const left = targetRect.left + targetRect.width / 2 - containerRect.left;
 
+  const ih = typeof window !== 'undefined' ? window.innerHeight : 640;
+  const topResolved = Math.max(8, Math.min(top, ih - 130));
+
   return (
     <div
-      className="absolute z-[90] flex flex-col items-center"
+      className="pointer-events-auto absolute z-[90] flex flex-col items-center max-w-[min(92vw,20rem)]"
       style={{
-        top,
+        top: topResolved,
         left,
         transform: 'translateX(-50%)',
         animation: 'hint-pop-in 300ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
       <div
-        className="relative flex items-center gap-2 rounded-full border border-amber-300/70
+        className="relative flex flex-wrap items-center justify-center gap-2 rounded-full border border-amber-300/70
                    bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50
                    px-3.5 py-2 text-xs font-bold text-amber-900 shadow-lg
-                   backdrop-blur-sm animate-pulse-slow"
+                   backdrop-blur-sm animate-pulse-slow text-center sm:flex-nowrap"
       >
         <span className="text-sm">💡</span>
-        <span className="whitespace-nowrap">{hint.message}</span>
+        <span className="text-center text-[11px] font-bold leading-snug text-amber-900 sm:text-xs">
+          {hint.message}
+        </span>
         <button
           type="button"
           onClick={() => onDismiss(hint.id)}
@@ -170,7 +156,6 @@ const ContextualHint = memo(function ContextualHint({
           ✕
         </button>
 
-        {/* Auto-dismiss progress ring */}
         <div className="absolute -bottom-1 left-3 right-3 h-0.5 rounded-full bg-amber-200/40 overflow-hidden">
           <div
             className="h-full bg-amber-500 rounded-full"
@@ -182,21 +167,41 @@ const ContextualHint = memo(function ContextualHint({
         </div>
       </div>
 
-      {/* Arrow */}
       <div className="w-2 h-2 bg-amber-50 rotate-45 border-r border-b border-amber-300/70 -mt-1" />
     </div>
   );
 });
 
 const ContextualHints = memo(function ContextualHints() {
-  const level = useGameSelector((state) => state.level || 1);
+  const shopEligible = useGameSelector((s) => !!s.memoryFlags?.first_shop_purchase);
+  const buildingEligible = useGameSelector((s) => !!s.memoryFlags?.first_building);
+  const harvestEligible = useGameSelector((s) => !!s.memoryFlags?.first_harvest);
+  const animalEligible = useGameSelector((s) => (s.livestock?.animals?.length || 0) > 0);
+  const processingEligible = useGameSelector((s) => (s.processingFacilities?.length || 0) > 0);
+  const researchEligible = useGameSelector(
+    (s) => ((s.research?.completed?.length || 0) > 0) || (s.research?.active != null)
+  );
+  const fishingEligible = useGameSelector((s) => (s.fishing?.stats?.totalCaught || 0) > 0);
+  const boardEligible = useGameSelector((s) => !!s.memoryFlags?.first_board_visit);
+
   const [activeHints, setActiveHints] = useState([]);
   const [containerRect, setContainerRect] = useState(null);
   const containerRef = useRef(null);
   const shownRef = useRef(getShownHints());
-  const levelRef = useRef(level);
 
-  // Keep container rect updated for positioning
+  /** Rising-edge tracking per hint id — mirrors unlockWhen without allocating state objects per frame. */
+  const prevEligibleRef = useRef({
+    hint_shop: false,
+    hint_buildings: false,
+    hint_inventory: false,
+    hint_animals: false,
+    hint_processing: false,
+    hint_research: false,
+    hint_fishing: false,
+    hint_analytics: false,
+    hint_achievements: false,
+  });
+
   useEffect(() => {
     const updateRect = () => {
       if (containerRef.current) {
@@ -221,28 +226,49 @@ const ContextualHints = memo(function ContextualHints() {
   }, []);
 
   useEffect(() => {
-    // Only evaluate when level increases
-    if (level <= levelRef.current) return;
-    levelRef.current = level;
+    const map = {
+      hint_shop: shopEligible,
+      hint_buildings: buildingEligible,
+      hint_inventory: harvestEligible,
+      hint_animals: animalEligible,
+      hint_processing: processingEligible,
+      hint_research: researchEligible,
+      hint_fishing: fishingEligible,
+      hint_analytics: boardEligible,
+      hint_achievements: !!(shopEligible && boardEligible),
+    };
 
-    // Find newly eligible hints that haven't been shown
-    const newlyEligible = HINT_CONFIGS.filter((hint) => {
-      if (shownRef.current.has(hint.id)) return false;
-      return level >= hint.minLevel && level <= hint.maxLevel;
+    const prev = prevEligibleRef.current;
+    const risen = [];
+
+    HINT_CONFIGS.forEach((config) => {
+      const next = map[config.id];
+      const was = prev[config.id];
+      prev[config.id] = next;
+      if (!next || was || shownRef.current.has(config.id)) return;
+      risen.push(config);
     });
 
-    if (newlyEligible.length === 0) return;
+    if (risen.length === 0) return;
 
-    // Stagger hints so they don't all appear at once
-    newlyEligible.forEach((hint, index) => {
-      setTimeout(() => {
+    risen.forEach((hint, index) => {
+      window.setTimeout(() => {
         setActiveHints((prev) => {
           if (prev.some((h) => h.id === hint.id)) return prev;
           return [...prev, hint];
         });
       }, index * 800);
     });
-  }, [level]);
+  }, [
+    shopEligible,
+    buildingEligible,
+    harvestEligible,
+    animalEligible,
+    processingEligible,
+    researchEligible,
+    fishingEligible,
+    boardEligible,
+  ]);
 
   if (activeHints.length === 0) return null;
 

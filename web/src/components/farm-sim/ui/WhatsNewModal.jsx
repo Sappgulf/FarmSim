@@ -6,6 +6,7 @@ import { getLatestReleaseNotes } from '../../../utils/changelog';
 import { APP_VERSION } from '../../../config/release';
 import { getContentManager } from '../../../content/ContentManager';
 import { Sparkles, PartyPopper, Wrench, Zap, Palette, Plus } from 'lucide-react';
+import { ONBOARDING_TUTORIAL_COMPLETE_STEP_INDEX } from '../data/onboardingTutorialSteps';
 
 const SECTION_ICONS = {
   Added: Plus,
@@ -23,7 +24,7 @@ const SECTION_EMOJIS = {
   'UI/UX': '🎨',
 };
 
-export const MIN_ONBOARDING_STEP_FOR_WHATS_NEW = 3;
+export const MIN_ONBOARDING_STEP_FOR_WHATS_NEW = ONBOARDING_TUTORIAL_COMPLETE_STEP_INDEX;
 
 export const shouldShowWhatsNew = ({
   hasNotes,

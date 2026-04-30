@@ -11,6 +11,7 @@
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest",
     "lint": "node ../scripts/lint.mjs",
+    "gen:icons": "node scripts/generate-pwa-icons.mjs",
     "qa:full": "npm run test && npm run build",
     "smoke-test": "vitest --run src/test/smoke.test.jsx"
   },
@@ -20,6 +21,7 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

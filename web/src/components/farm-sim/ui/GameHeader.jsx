@@ -304,7 +304,7 @@ const GameHeader = memo(() => {
   return (
     <>
       <style>{aaaStyles}</style>
-      <header className="bg-gradient-to-b from-white via-slate-50/95 to-slate-100/90 backdrop-blur-xl shadow-lg border-b border-white/60 px-2.5 sm:px-4 py-2 sm:py-3 relative sticky top-0 z-50 overflow-hidden dark:from-slate-900/95 dark:via-slate-900/95 dark:to-slate-950/90 dark:border-slate-800">
+      <header className="bg-gradient-to-b from-white via-slate-50/95 to-slate-100/90 backdrop-blur-xl shadow-lg border-b border-white/60 px-2.5 sm:px-4 pb-2 sm:pb-3 pt-[max(0.5rem,env(safe-area-inset-top,0px))] sm:pt-[max(0.75rem,env(safe-area-inset-top,0px))] relative sticky top-0 z-50 overflow-hidden dark:from-slate-900/95 dark:via-slate-900/95 dark:to-slate-950/90 dark:border-slate-800">
       <div className="max-w-7xl mx-auto flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         {/* Left side - Game title and basic stats */}
         <div className="flex items-center justify-between lg:justify-start gap-2 sm:gap-4 lg:gap-6 w-full lg:w-auto">

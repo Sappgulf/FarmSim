@@ -188,6 +188,12 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
         }
     }, [activeSectionHasMultipleTabs]);
 
+    useEffect(() => {
+        const revealSubtabs = () => setShowSubTabs(true);
+        window.addEventListener('farmSim:expandMoreSubtabs', revealSubtabs);
+        return () => window.removeEventListener('farmSim:expandMoreSubtabs', revealSubtabs);
+    }, []);
+
     // Get notification counts for badges
     const getNotificationCount = useCallback((sectionId) => {
         switch (sectionId) {
@@ -303,6 +309,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
                             type="button"
                             key={section.id}
                             onClick={() => handleSectionPress(section, isActive)}
+                            data-onboard={section.id === 'more' ? 'events-tutorial-more' : undefined}
                             aria-pressed={isActive}
                             aria-expanded={sectionHasMultipleTabs ? sectionSubTabsVisible : undefined}
                             aria-controls={sectionHasMultipleTabs ? sectionSubTabsId : undefined}

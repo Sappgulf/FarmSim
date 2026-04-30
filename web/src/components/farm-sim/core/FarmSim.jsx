@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFarmSimDocumentMeta } from '../../../hooks/useFarmSimDocumentMeta';
 import { GameProvider, useGameActions, useGameSelector, useGameStore } from '../context/GameContext';
 import { TickProvider } from '../context/TickContext';
 
@@ -81,6 +82,8 @@ export function FarmSimCore() {
   const onboardingSeen = useGameSelector((state) => Boolean(state.onboardingSeen || state.onboardingSkipped));
   const graphicsQuality = useGameSelector((state) => normalizeGraphicsQuality(state.settings?.graphicsQuality));
 
+  useFarmSimDocumentMeta(getFarmTheme(farmThemeId).palette.accent);
+
   const debugToolsAllowed = shouldShowDebugTools();
   const debugQueryEnabled = useMemo(() => {
     if (typeof window === 'undefined') return false;
@@ -153,12 +156,30 @@ export function FarmSimCore() {
     }
   }, [actions, findSectionForTab]);
 
-  const dismissStartScreen = useCallback(() => {
+  const handleStartScreenStart = useCallback((mode = 'continue') => {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(START_SCREEN_STORAGE_KEY, 'true');
     }
     setShowStartScreen(false);
-  }, []);
+    if (mode === 'quick') {
+      setActiveSection('farm');
+      setActiveTab('farming');
+      queueMicrotask(() => {
+        actions.addNotification({
+          message: 'Welcome back — your farm is right where you left it.',
+          type: 'success',
+        });
+      });
+    }
+  }, [actions]);
+
+  useEffect(() => {
+    const onExpandMore = () => {
+      handleSectionChange('more');
+    };
+    window.addEventListener('farmSim:expandMoreSection', onExpandMore);
+    return () => window.removeEventListener('farmSim:expandMoreSection', onExpandMore);
+  }, [handleSectionChange]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -643,14 +664,14 @@ export function FarmSimCore() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000 flex flex-col relative overflow-hidden`}
+      className={`min-h-screen min-h-[100dvh] bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000 flex flex-col relative overflow-x-hidden`}
       data-farm-theme={activeTheme.id}
       style={{ ...themeVars, filter: TIME_OF_DAY_VISUALS[timePeriod]?.filter || 'none' }}
     >
       {/* Skip to main content link for keyboard users */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:px-4 focus:py-2 focus:bg-emerald-600 focus:text-white focus:rounded-xl focus:font-semibold focus:shadow-lg focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[60] focus:rounded-xl focus:bg-emerald-600 focus:px-4 focus:py-2 focus:font-semibold focus:text-white focus:shadow-lg focus:outline-none focus:left-[max(0.5rem,env(safe-area-inset-left,0px))] focus:top-[max(0.5rem,env(safe-area-inset-top,0px))]"
       >
         Skip to main content
       </a>
@@ -659,7 +680,7 @@ export function FarmSimCore() {
 
       {showStartScreen && (
         <StartScreen
-          onStart={dismissStartScreen}
+          onStart={handleStartScreenStart}
         />
       )}
 
@@ -682,7 +703,7 @@ export function FarmSimCore() {
 
       {/* Performance monitoring (dev only) */}
       {isDevelopmentMode() && (
-        <div className="fixed top-2 right-2 z-50 rounded-lg border border-white/10 bg-black/70 px-2 py-1 font-mono text-xs font-bold text-emerald-300 shadow-lg backdrop-blur-sm pointer-events-none select-none">
+        <div className="fixed z-50 rounded-lg border border-white/10 bg-black/70 px-2 py-1 font-mono text-xs font-bold text-emerald-300 shadow-lg backdrop-blur-sm pointer-events-none select-none top-[max(0.5rem,env(safe-area-inset-top,0px))] right-[max(0.5rem,env(safe-area-inset-right,0px))]">
           FPS (state): {fps}
         </div>
       )}
@@ -700,7 +721,10 @@ export function FarmSimCore() {
           )}
 
           {/* Main Game Area - Mobile Optimized with bottom padding for NavBar */}
-          <main id="main-content" className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4">
+          <main
+            id="main-content"
+            className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full lg:pb-4 pb-[max(7rem,calc(5.5rem+env(safe-area-inset-bottom,0px)))]"
+          >
             {/* Farm Grid - First on mobile, left on desktop */}
             <div className="w-full lg:flex-1 order-1 lg:order-1">
               <FarmGrid />

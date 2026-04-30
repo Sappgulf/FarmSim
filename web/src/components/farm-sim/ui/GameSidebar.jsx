@@ -5,6 +5,7 @@ import { Card } from '../../ui/card';
 import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 import TabWrapper from './tabs/TabWrapper';
 import { TAB_INFO, NAV_SECTIONS } from './NavBar';
+import { ONBOARDING_TUTORIAL_BOARD_STEP_INDEX } from '../data/onboardingTutorialSteps';
 import { Circle, Package, Home, PawPrint, Star } from 'lucide-react';
 
 // Lazy load tab components for better performance
@@ -117,6 +118,8 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   });
   const animalCount = useGameSelector((state) => state.livestock?.animals?.length || 0);
   const reputation = useGameSelector((state) => state.social?.reputation ?? 0);
+  const onboardingStep = useGameSelector((state) => state.onboardingStep ?? 0);
+  const onboardingSkipped = useGameSelector((state) => Boolean(state.onboardingSkipped));
   // Use controlled mode if props provided, otherwise internal state (backward compat)
   const [internalTab, setInternalTab] = useState('farming');
   const activeTab = controlledTab ?? internalTab;
@@ -226,6 +229,11 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
           </div>
           <div className="mt-1 text-xs text-gray-500/80 font-medium leading-relaxed dark:text-gray-400/80">
             Use the bottom bar to switch sections and open tab options.
+            {!onboardingSkipped && onboardingStep === ONBOARDING_TUTORIAL_BOARD_STEP_INDEX ? (
+              <span className="mt-2 block rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-2.5 py-2 font-semibold text-emerald-900/90 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-100/90">
+                Tip: Tap More (⚙️) → open the tab tray → Events to reach the Town Board.
+              </span>
+            ) : null}
           </div>
         </div>
 

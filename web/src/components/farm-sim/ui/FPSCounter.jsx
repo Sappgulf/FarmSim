@@ -25,7 +25,7 @@ const FPSCounter = memo(() => {
     };
 
     return (
-        <div className="fixed top-2 left-2 bg-black/70 backdrop-blur-sm p-2 rounded-lg z-50 pointer-events-none select-none border border-white/10 shadow-lg">
+        <div className="fixed z-50 rounded-lg border border-white/10 bg-black/70 p-2 font-mono shadow-lg backdrop-blur-sm pointer-events-none select-none top-[max(0.5rem,env(safe-area-inset-top,0px))] left-[max(0.5rem,env(safe-area-inset-left,0px))]">
             <div className={`font-mono font-bold text-sm ${getColor(fps)}`}>
                 FPS: {fps}
             </div>

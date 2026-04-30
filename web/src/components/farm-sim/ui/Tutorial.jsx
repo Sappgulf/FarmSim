@@ -1,45 +1,83 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useGameActions, useGameSelector } from '../context/GameContext';
 import { Button } from '../../ui/button';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import {
+  ONBOARDING_TUTORIAL_BOARD_STEP_INDEX,
+  ONBOARDING_TUTORIAL_STEPS as ONBOARDING_STEPS,
+} from '../data/onboardingTutorialSteps';
 
 /**
- * Tutorial — polished guided tour with glassmorphism, progress dots,
- * Next/Back navigation, spotlight overlay, and spring animations.
+ * Tutorial — guided tour with focus management (optional Tab trap) and onboarding hooks.
  */
 
-const ONBOARDING_STEPS = [
-  {
-    id: 'plant',
-    title: 'Plant Your First Crop',
-    description: 'Choose a seed from your pouch, then tap any empty soil patch to sow it.',
-    emoji: '🌱',
-    target: '[data-onboard="farm-grid"]',
-    placement: 'right',
-  },
-  {
-    id: 'harvest',
-    title: 'Harvest & Earn',
-    description: 'When your crops glow, tap them to gather produce and earn coins.',
-    emoji: '🧺',
-    target: '[data-onboard="farm-grid"]',
-    placement: 'right',
-  },
-  {
-    id: 'board',
-    title: 'Visit the Town Board',
-    description: 'Open the menu and head to Events to see today\'s plan and special quests.',
-    emoji: '📋',
-    target: '[data-onboard="events-tab"]',
-    placement: 'top',
-  },
-];
+const SIDE_MARGIN = 16;
+/** Room for fixed bottom nav + home-indicator band — pairs with `<main>` bottom padding. */
+const BOTTOM_NAV_RESERVE = 120;
 
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
-export const isTutorialInteractiveTarget = (target) => Boolean(
-  target?.closest?.('button, input, textarea, select, a, label, [role="button"]')
-);
+function collectFocusables(root) {
+  if (!root) return [];
+  const nodes = root.querySelectorAll(
+    [
+      'a[href]',
+      'button:not([disabled])',
+      'textarea:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(', ')
+  );
+  return Array.from(nodes).filter((n) => {
+    const el = n;
+    if (!el.offsetParent && el.getAttribute('type') !== 'hidden') return true;
+    if (typeof el.checkVisibility === 'function') {
+      return el.checkVisibility({ opacityProperty: false });
+    }
+    return Boolean(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+  });
+}
+
+/**
+ * Chooses first matching element with non-trivial geometry (handles `hidden sm:*` onboarding anchors).
+ * @param {string[]} selectors
+ * @returns {HTMLElement | null}
+ */
+export function resolveTutorialTarget(selectors) {
+  if (typeof document === 'undefined' || !Array.isArray(selectors)) return null;
+  const minDim = 6;
+  for (const selector of selectors) {
+    const el = document.querySelector(selector);
+    if (!el) continue;
+    try {
+      const style =
+        typeof window !== 'undefined' && typeof window.getComputedStyle === 'function'
+          ? window.getComputedStyle(el)
+          : null;
+      if (style && (style.display === 'none' || style.visibility === 'hidden')) continue;
+    } catch {
+      continue;
+    }
+    const rect = el.getBoundingClientRect();
+    const width = Math.max(rect.width, el.offsetWidth || 0, el.clientWidth || 0);
+    const height = Math.max(rect.height, el.offsetHeight || 0, el.clientHeight || 0);
+    if (width >= minDim && height >= minDim) {
+      return /** @type {HTMLElement | null} */ (el);
+    }
+  }
+  return null;
+}
+
+export const isTutorialInteractiveTarget = (target) =>
+  Boolean(target?.closest?.('button, input, textarea, select, a, label, [role="button"]'));
 
 const Tutorial = memo(() => {
   const actions = useGameActions();
@@ -51,12 +89,90 @@ const Tutorial = memo(() => {
   const [cardVisible, setCardVisible] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const dragStateRef = useRef(null);
-  const prevStepRef = useRef(onboardingStep);
+  const speechPanelRef = useRef(null);
+  const onboardingMoreRevealRef = useRef(false);
 
   const stepIndex = onboardingStep;
   const currentStep = ONBOARDING_STEPS[stepIndex];
   const totalSteps = ONBOARDING_STEPS.length;
   const shouldShow = !onboardingSkipped && stepIndex < totalSteps;
+
+  /** Land on Farming + widen More strip when the Town Board step is active */
+  useEffect(() => {
+    if (onboardingSkipped || !shouldShow) onboardingMoreRevealRef.current = false;
+  }, [onboardingSkipped, shouldShow]);
+
+  useEffect(() => {
+    if (!shouldShow || stepIndex !== ONBOARDING_TUTORIAL_BOARD_STEP_INDEX || onboardingMoreRevealRef.current) return;
+    onboardingMoreRevealRef.current = true;
+    queueMicrotask(() => {
+      window.dispatchEvent(new CustomEvent('farmSim:expandMoreSection'));
+      window.dispatchEvent(new CustomEvent('farmSim:expandMoreSubtabs'));
+    });
+  }, [shouldShow, stepIndex]);
+
+  /* Restore focus after tour closes -------------------------------- */
+  useEffect(() => {
+    if (!shouldShow) return undefined;
+    const prev = document.activeElement;
+    const safeFocus = () => {
+      if (!(prev instanceof HTMLElement)) return;
+      try {
+        if (prev.isConnected) prev.focus();
+      } catch {
+        /* ignore */
+      }
+    };
+    return () => {
+      queueMicrotask(safeFocus);
+    };
+  }, [shouldShow]);
+
+  /* Prefer primary action when each step settles */
+  useEffect(() => {
+    if (!shouldShow || !cardVisible || !speechPanelRef.current) return undefined;
+    const id = window.setTimeout(() => {
+      const btn = speechPanelRef.current?.querySelector('[data-tutorial-primary="true"]');
+      if (btn && typeof btn.focus === 'function') btn.focus();
+    }, 80);
+    return () => window.clearTimeout(id);
+  }, [shouldShow, cardVisible, stepIndex]);
+
+  /* Tab cycling within tutorial surface (desktop) ------------------- */
+  useEffect(() => {
+    if (!shouldShow || !speechPanelRef.current) return undefined;
+    const root = speechPanelRef.current;
+
+    const onKeyDown = (e) => {
+      if (e.key !== 'Tab' || !root.contains(document.activeElement)) return;
+
+      const list = collectFocusables(root);
+      if (list.length === 0) return;
+
+      const first = list[0];
+      const last = list[list.length - 1];
+
+      const active = document.activeElement;
+      if (!active || !root.contains(active)) {
+        first.focus();
+        e.preventDefault();
+        return;
+      }
+
+      if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+        return;
+      }
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [shouldShow, stepIndex, cardVisible]);
 
   /* Animate card in whenever step changes --------------------------- */
   useEffect(() => {
@@ -78,7 +194,13 @@ const Tutorial = memo(() => {
 
   /* Track target element -------------------------------------------- */
   useEffect(() => {
-    if (!shouldShow || !currentStep?.target) {
+    const selectorList = currentStep?.targetSelectors?.length
+      ? currentStep.targetSelectors
+      : currentStep?.target
+        ? [currentStep.target]
+        : [];
+
+    if (!shouldShow || selectorList.length === 0) {
       setTargetRect(null);
       return;
     }
@@ -87,12 +209,12 @@ const Tutorial = memo(() => {
     const updateRect = () => {
       if (frame) cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const target = document.querySelector(currentStep.target);
-        if (!target) {
+        const targetEl = resolveTutorialTarget(selectorList);
+        if (!targetEl) {
           setTargetRect(null);
           return;
         }
-        const rect = target.getBoundingClientRect();
+        const rect = targetEl.getBoundingClientRect();
         setTargetRect({
           top: rect.top,
           left: rect.left,
@@ -111,7 +233,7 @@ const Tutorial = memo(() => {
       window.removeEventListener('resize', updateRect);
       window.removeEventListener('scroll', updateRect, true);
     };
-  }, [shouldShow, currentStep]);
+  }, [shouldShow, currentStep?.id, currentStep?.target, currentStep?.targetSelectors]);
 
   /* Reset manual drag on step change -------------------------------- */
   useEffect(() => {
@@ -123,14 +245,19 @@ const Tutorial = memo(() => {
     if (!shouldShow) return null;
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 360;
     const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 640;
-    const margin = 16;
-    const cardWidth = Math.min(340, viewportWidth - margin * 2);
-    const cardHeight = 220;
+    const cardWidth = Math.min(340, viewportWidth - SIDE_MARGIN * 2);
+    const cardHeight = 240;
+    const maxTop = viewportHeight - cardHeight - SIDE_MARGIN - BOTTOM_NAV_RESERVE;
 
     if (!targetRect) {
+      const centeredTop = viewportHeight / 2 - cardHeight / 2;
       return {
-        top: clamp(viewportHeight - cardHeight - 140, margin, viewportHeight - cardHeight - margin),
-        left: clamp((viewportWidth - cardWidth) / 2, margin, viewportWidth - cardWidth - margin),
+        top: clamp(centeredTop, SIDE_MARGIN, maxTop),
+        left: clamp(
+          (viewportWidth - cardWidth) / 2,
+          SIDE_MARGIN,
+          viewportWidth - cardWidth - SIDE_MARGIN
+        ),
         width: cardWidth,
       };
     }
@@ -138,63 +265,72 @@ const Tutorial = memo(() => {
     const placements = {
       right: {
         top: targetRect.top + targetRect.height / 2 - cardHeight / 2,
-        left: targetRect.left + targetRect.width + margin,
+        left: targetRect.left + targetRect.width + SIDE_MARGIN,
       },
       left: {
         top: targetRect.top + targetRect.height / 2 - cardHeight / 2,
-        left: targetRect.left - cardWidth - margin,
+        left: targetRect.left - cardWidth - SIDE_MARGIN,
       },
       top: {
-        top: targetRect.top - cardHeight - margin,
+        top: targetRect.top - cardHeight - SIDE_MARGIN,
         left: targetRect.left + targetRect.width / 2 - cardWidth / 2,
       },
       bottom: {
-        top: targetRect.top + targetRect.height + margin,
+        top: targetRect.top + targetRect.height + SIDE_MARGIN,
         left: targetRect.left + targetRect.width / 2 - cardWidth / 2,
       },
     };
 
     const placement = placements[currentStep?.placement] || placements.bottom;
     return {
-      top: clamp(placement.top, margin, viewportHeight - cardHeight - margin),
-      left: clamp(placement.left, margin, viewportWidth - cardWidth - margin),
+      top: clamp(placement.top, SIDE_MARGIN, maxTop),
+      left: clamp(placement.left, SIDE_MARGIN, viewportWidth - cardWidth - SIDE_MARGIN),
       width: cardWidth,
     };
   }, [shouldShow, targetRect, currentStep]);
 
   const position = manualPosition || defaultPosition;
 
-  /* Drag handlers --------------------------------------------------- */
-  const handlePointerDown = (event) => {
-    if (!position) return;
-    if (isTutorialInteractiveTarget(event.target)) {
-      return;
-    }
-    dragStateRef.current = {
-      startX: event.clientX,
-      startY: event.clientY,
-      originLeft: position.left,
-      originTop: position.top,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
+  const handlePointerDown = useCallback(
+    (event) => {
+      if (!position) return;
+      if (isTutorialInteractiveTarget(event.target)) {
+        return;
+      }
+      dragStateRef.current = {
+        startX: event.clientX,
+        startY: event.clientY,
+        originLeft: position.left,
+        originTop: position.top,
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    [position]
+  );
 
-  const handlePointerMove = (event) => {
-    if (!dragStateRef.current) return;
-    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 360;
-    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 640;
-    const margin = 16;
-    const cardWidth = position?.width || 280;
-    const cardHeight = 220;
+  const handlePointerMove = useCallback(
+    (event) => {
+      if (!dragStateRef.current || !position) return;
+      const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 360;
+      const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 640;
+      const cardWidth = position?.width || 280;
+      const cardHeight = 240;
+      const maxTop = viewportHeight - cardHeight - SIDE_MARGIN - BOTTOM_NAV_RESERVE;
 
-    const dx = event.clientX - dragStateRef.current.startX;
-    const dy = event.clientY - dragStateRef.current.startY;
+      const dx = event.clientX - dragStateRef.current.startX;
+      const dy = event.clientY - dragStateRef.current.startY;
 
-    const nextLeft = clamp(dragStateRef.current.originLeft + dx, margin, viewportWidth - cardWidth - margin);
-    const nextTop = clamp(dragStateRef.current.originTop + dy, margin, viewportHeight - cardHeight - margin);
+      const nextLeft = clamp(
+        dragStateRef.current.originLeft + dx,
+        SIDE_MARGIN,
+        viewportWidth - cardWidth - SIDE_MARGIN
+      );
+      const nextTop = clamp(dragStateRef.current.originTop + dy, SIDE_MARGIN, maxTop);
 
-    setManualPosition({ left: nextLeft, top: nextTop, width: cardWidth });
-  };
+      setManualPosition({ left: nextLeft, top: nextTop, width: cardWidth });
+    },
+    [position]
+  );
 
   const handlePointerUp = () => {
     dragStateRef.current = null;
@@ -230,15 +366,16 @@ const Tutorial = memo(() => {
   if (!shouldShow || !currentStep || !position) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] pointer-events-none">
-      {/* ── Spotlight overlay ── */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] transition-opacity duration-500" />
+    <div className="fixed inset-0 z-[95]" data-qa="onboarding-tutorial">
+      {/* ── Spotlight overlay (decorative — keep out of accessibility tree; dialog holds semantics) ── */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/40 backdrop-blur-[1px] transition-opacity duration-500" />
 
       {/* Target highlight ring + glow */}
       {targetRect && (
         <>
           <div
-            className="absolute rounded-2xl ring-1 ring-white/20 shadow-[0_0_32px_-8px_rgba(255,255,255,0.14)] pointer-events-none transition-all duration-500"
+            aria-hidden
+            className="pointer-events-none absolute rounded-2xl ring-1 ring-white/20 shadow-[0_0_32px_-8px_rgba(255,255,255,0.14)] transition-all duration-500"
             style={{
               top: targetRect.top - 8,
               left: targetRect.left - 8,
@@ -246,9 +383,9 @@ const Tutorial = memo(() => {
               height: targetRect.height + 16,
             }}
           />
-          {/* Soft inner glow behind target */}
           <div
-            className="absolute rounded-2xl bg-white/8 pointer-events-none transition-all duration-500"
+            aria-hidden
+            className="pointer-events-none absolute rounded-2xl bg-white/8 transition-all duration-500"
             style={{
               top: targetRect.top - 8,
               left: targetRect.left - 8,
@@ -261,11 +398,17 @@ const Tutorial = memo(() => {
 
       {/* ── Tutorial card ── */}
       <div
-        className="absolute"
+        className="pointer-events-none absolute"
         style={{ top: position.top, left: position.left, width: position.width }}
       >
         <div
-          className={`pointer-events-auto rounded-[2rem] border border-white/20 bg-white/10 backdrop-blur-2xl shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] p-5 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] touch-manipulation ${
+          ref={speechPanelRef}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="farm-tutorial-title"
+          aria-describedby="farm-tutorial-description"
+          className={`outline-none pointer-events-auto rounded-[2rem] border border-white/20 bg-white/10 backdrop-blur-2xl shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] p-5 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] touch-manipulation ${
             cardVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-[0.96]'
           }`}
           onPointerDown={handlePointerDown}
@@ -277,17 +420,20 @@ const Tutorial = memo(() => {
           {/* Top bar: emoji + title + close */}
           <div className="flex items-start justify-between gap-3 cursor-grab active:cursor-grabbing">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-xl shadow-inner">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl shadow-inner" aria-hidden>
                 {currentStep.emoji}
               </span>
-              <div>
-                <div className="text-sm font-bold text-white">{currentStep.title}</div>
+              <div className="min-w-0">
+                <div id="farm-tutorial-title" className="text-sm font-bold text-white">
+                  {currentStep.title}
+                </div>
                 <div className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-200/60">
                   Step {stepIndex + 1} of {totalSteps}
                 </div>
               </div>
             </div>
             <button
+              type="button"
               onClick={handleSkip}
               className="rounded-lg p-1.5 text-white/40 hover:bg-white/10 hover:text-white/70 transition-colors"
               aria-label="Skip tutorial"
@@ -296,32 +442,37 @@ const Tutorial = memo(() => {
             </button>
           </div>
 
-          {/* Description */}
-          <p className="mt-3 text-sm leading-6 text-emerald-50/80">
+          <p id="farm-tutorial-description" className="mt-3 whitespace-pre-line text-sm leading-6 text-emerald-50/80">
             {currentStep.description}
           </p>
 
           {/* Progress dots */}
-          <div className="mt-4 flex items-center justify-center gap-2">
+          <div className="mt-4 flex items-center justify-center gap-2" role="group" aria-label="Tutorial steps">
             {ONBOARDING_STEPS.map((s, i) => (
               <button
+                type="button"
                 key={s.id}
-                onClick={() => actions.updateOnboarding({ onboardingStep: i, onboardingSeen: true })}
+                onClick={() =>
+                  actions.updateOnboarding({
+                    onboardingStep: i,
+                    onboardingSeen: true,
+                  })}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   i === stepIndex
                     ? 'w-6 bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.5)]'
                     : i < stepIndex
-                    ? 'w-2 bg-emerald-300/50'
-                    : 'w-2 bg-white/20 hover:bg-white/30'
+                      ? 'w-2 bg-emerald-300/50'
+                      : 'w-2 bg-white/20 hover:bg-white/30'
                 }`}
-                aria-label={`Go to step ${i + 1}`}
+                aria-label={`Go to step ${i + 1}, ${s.title}`}
+                aria-current={i === stepIndex ? 'step' : undefined}
               />
             ))}
           </div>
 
-          {/* Footer: Don't show again + Nav buttons */}
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <label className="flex items-center gap-2 cursor-pointer select-none group">
+          {/* Footer */}
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <label className="flex cursor-pointer items-center gap-2 select-none group">
               <span className="relative flex h-4 w-4 items-center justify-center rounded border border-white/20 bg-white/5 transition-colors group-hover:border-white/30">
                 <input
                   type="checkbox"
@@ -336,9 +487,10 @@ const Tutorial = memo(() => {
               </span>
             </label>
 
-            <div className="flex items-center gap-2">
-              {stepIndex > 0 && (
+            <div className="flex items-center gap-2 sm:justify-end">
+              {stepIndex > 0 ? (
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   onClick={handleBack}
@@ -347,10 +499,14 @@ const Tutorial = memo(() => {
                   <ChevronLeft size={16} className="mr-0.5" />
                   Back
                 </Button>
+              ) : (
+                <span className="min-w-[1px] sm:h-8" aria-hidden />
               )}
               <Button
+                type="button"
                 size="sm"
                 onClick={handleNext}
+                data-tutorial-primary="true"
                 className="h-8 bg-white/15 text-white hover:bg-white/25 border border-white/10 backdrop-blur-md"
               >
                 {stepIndex === totalSteps - 1 ? 'Finish' : 'Next'}

@@ -1,9 +1,9 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronRight, Leaf, Sparkles, TrendingUp, Play, RotateCcw } from 'lucide-react';
 import { Button } from '../../ui/button';
+import { SAVE_KEY, QA_SAVE_KEY } from '../context/GamePersistence';
 
 export const START_SCREEN_STORAGE_KEY = 'farmSim_start_screen_seen_v1';
-const GAME_SAVE_KEY = 'farmSim_save';
 const APP_VERSION = '5.5.4';
 
 /* ------------------------------------------------------------------ */
@@ -68,7 +68,7 @@ function StartScreenComponent({ onStart }) {
   useEffect(() => {
     // Check for existing save
     try {
-      const raw = localStorage.getItem(GAME_SAVE_KEY);
+      const raw = localStorage.getItem(SAVE_KEY) || localStorage.getItem(QA_SAVE_KEY);
       if (raw && raw.length > 2) setHasSave(true);
     } catch {
       /* ignore */
@@ -105,6 +105,7 @@ function StartScreenComponent({ onStart }) {
 
   const handleContinue = () => onStart?.('continue');
   const handleNewGame = () => onStart?.('new');
+  const handleReturningPlayerQuick = () => onStart?.('quick');
 
   return (
     <div
@@ -163,8 +164,8 @@ function StartScreenComponent({ onStart }) {
       </div>
 
       {/* ── Main content ── */}
-      <div className="relative z-10 flex min-h-dvh items-center">
-        <div className="mx-auto w-full max-w-5xl px-6 py-10 sm:px-8 lg:px-12">
+      <div className="relative z-10 flex min-h-dvh items-center pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] pl-[max(1.5rem,env(safe-area-inset-left,0px))] pr-[max(1.5rem,env(safe-area-inset-right,0px))] sm:pl-[max(2rem,env(safe-area-inset-left,0px))] sm:pr-[max(2rem,env(safe-area-inset-right,0px))] lg:pl-[max(3rem,env(safe-area-inset-left,0px))] lg:pr-[max(3rem,env(safe-area-inset-right,0px))]">
+        <div className="mx-auto w-full max-w-5xl py-10 sm:py-12 lg:py-14">
           <section
             className={`relative overflow-hidden rounded-[2.5rem] border border-white/[0.09] bg-white/[0.04] px-6 py-10 text-center shadow-[0_32px_100px_-40px_rgba(0,0,0,0.85)] backdrop-blur-2xl transition-[opacity,transform] duration-1000 sm:px-10 sm:py-14 ${
               stage >= 1 ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
@@ -269,6 +270,19 @@ function StartScreenComponent({ onStart }) {
                 </Button>
               )}
             </div>
+
+            {hasSave && stage >= 3 && (
+              <div className="relative mt-4">
+                <button
+                  type="button"
+                  onClick={handleReturningPlayerQuick}
+                  className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/55 underline underline-offset-[5px] decoration-emerald-400/35 hover:text-emerald-50/85 hover:decoration-emerald-300/60 transition-colors"
+                  data-qa="start-screen-quick-return"
+                >
+                  Returning player? Skip intro
+                </button>
+              </div>
+            )}
 
             {/* Footer text */}
             <p

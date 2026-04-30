@@ -4,9 +4,10 @@
 import { isDevelopmentMode } from '../../../config/release';
 import { normalizeEntitlements } from '../entitlements/EntitlementManager';
 import { getLevelFromXp, remapXpToCurrentCurve } from '../systems/progression';
+import { ONBOARDING_TUTORIAL_COMPLETE_STEP_INDEX } from '../data/onboardingTutorialSteps';
 
 // Save schema version (separate from APP_VERSION in src/config/release.js).
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 20;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -331,6 +332,15 @@ export function migrateSaveData(savedData) {
             });
         }
 
+        // Version 19 -> 20: Four onboarding cards (introduced "Ready"); completed step shifted 3 → 4
+        if (saveVersion < 20) {
+            const stepRaw = migratedData.onboardingStep;
+            const stepNum = Number(stepRaw);
+            if (Number.isFinite(stepNum) && stepNum === 3) {
+                migratedData.onboardingStep = ONBOARDING_TUTORIAL_COMPLETE_STEP_INDEX;
+            }
+        }
+
         // Validate critical fields
         migratedData.coins = clampNumber(migratedData.coins, 100, { min: 0 });
         migratedData.xp = clampNumber(migratedData.xp, 0, { min: 0 });
@@ -635,7 +645,7 @@ export function migrateSaveData(savedData) {
         migratedData.onboardingStep = clampNumber(
             migratedData.onboardingStep,
             saveVersion < 4 ? 3 : 0,
-            { min: 0, max: 3 }
+            { min: 0, max: ONBOARDING_TUTORIAL_COMPLETE_STEP_INDEX }
         );
         migratedData.onboardingSkipped = ensureBoolean(
             migratedData.onboardingSkipped,

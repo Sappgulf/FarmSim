@@ -181,3 +181,26 @@ describe('gameReducer economy guards', () => {
     expect(next.coins).toBe(initialState.coins);
   });
 });
+
+describe('toast notifications reducer', () => {
+  it('bursts duplicates into one stacked toast instead of unreadable spam', () => {
+    let state = gameReducer(initialState, {
+      type: GAME_ACTIONS.ADD_NOTIFICATION,
+      payload: { message: 'Coins earned', type: 'success' },
+    });
+    expect(state.notifications).toHaveLength(1);
+    const firstId = state.notifications[0].id;
+    const historyAfterFirst = state.notificationHistory?.length ?? 0;
+
+    state = gameReducer(state, {
+      type: GAME_ACTIONS.ADD_NOTIFICATION,
+      payload: { message: 'Coins earned', type: 'success' },
+    });
+
+    expect(state.notifications).toHaveLength(1);
+    expect(state.notifications[0].id).toBe(firstId);
+    expect(state.notifications[0].count).toBe(2);
+    expect(state.notificationHistory?.length ?? 0).toBe(historyAfterFirst);
+  });
+});
+

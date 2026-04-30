@@ -539,22 +539,92 @@ export function gameReducer(state, action) {
         case GAME_ACTIONS.SET_SEED_PROVENANCE:
             return { ...state, seedProvenance: action.payload };
 
-        case GAME_ACTIONS.ADD_NOTIFICATION:
-            const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        case GAME_ACTIONS.ADD_NOTIFICATION: {
+            const payloadIn = action.payload || {};
             const timestamp = Date.now();
+            const type = payloadIn.type || 'info';
+            /** @type {'info'|'success'|'warning'|'error'} */
+            const safeType = ['info', 'success', 'warning', 'error'].includes(type)
+                ? type
+                : 'info';
+
+            const defaultDurationMs = safeType === 'error'
+                ? 8000
+                : safeType === 'warning'
+                    ? 5500
+                    : safeType === 'success'
+                        ? 3200
+                        : 4000;
+            const durationRaw = Number(payloadIn.duration);
+            const duration = payloadIn.sticky || payloadIn.important
+                ? (Number.isFinite(durationRaw) && durationRaw > 0 ? durationRaw : undefined)
+                : (Number.isFinite(durationRaw) && durationRaw > 0 ? durationRaw : defaultDurationMs);
+
+            const rawMessage = typeof payloadIn.message === 'string' ? payloadIn.message.trim() : String(payloadIn.message ?? '');
+            const mergeKey = payloadIn.mergeKey || `${safeType}:${rawMessage}`;
+            const mergeWithinMs = Number.isFinite(Number(payloadIn.mergeWithinMs))
+                ? Math.max(0, Number(payloadIn.mergeWithinMs))
+                : 4000;
+            const allowMerge = payloadIn.noMerge !== true && mergeWithinMs > 0;
+
+            const existingNotifications = Array.isArray(state.notifications) ? state.notifications : [];
+
+            /** @type {(typeof existingNotifications)[0] | null} */
+            let mergedFrom = null;
+            let mergedIndex = -1;
+            if (
+                allowMerge
+                && !payloadIn.sticky
+                && !payloadIn.important
+            ) {
+                for (let i = existingNotifications.length - 1; i >= 0; i -= 1) {
+                    const n = existingNotifications[i];
+                    if (!n || !n.timestamp) continue;
+                    if (n.mergeKey !== mergeKey) continue;
+                    if (n.sticky || n.important) break;
+                    if (timestamp - Number(n.timestamp) > mergeWithinMs) break;
+
+                    mergedFrom = n;
+                    mergedIndex = i;
+                    break;
+                }
+            }
+
+            if (mergedFrom && mergedIndex >= 0) {
+                const nextNotification = {
+                    ...mergedFrom,
+                    timestamp,
+                    count: Math.min(99, (mergedFrom.count || 1) + 1),
+                    message: rawMessage || mergedFrom.message || '',
+                    details: payloadIn.details ?? mergedFrom.details,
+                    ...(duration !== undefined ? { duration } : {}),
+                    mergeKey,
+                };
+                const nextList = [...existingNotifications];
+                nextList[mergedIndex] = nextNotification;
+                return {
+                    ...state,
+                    notifications: nextList.slice(-60),
+                };
+            }
+
+            const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             const nextNotification = {
                 id: uniqueId,
-                ...action.payload,
-                type: action.payload?.type || 'info',
+                ...payloadIn,
+                message: rawMessage || payloadIn.message,
+                type: safeType,
                 timestamp,
+                mergeKey,
+                ...(duration !== undefined ? { duration } : {}),
             };
-            const existingNotifications = Array.isArray(state.notifications) ? state.notifications : [];
+
             const nextHistory = [
                 ...(Array.isArray(state.notificationHistory) ? state.notificationHistory : []),
                 {
                     id: uniqueId,
                     message: nextNotification.message || '',
-                    type: nextNotification.type,
+                    type: safeType,
                     details: nextNotification.details || null,
                     timestamp,
                 },
@@ -564,6 +634,7 @@ export function gameReducer(state, action) {
                 notifications: [...existingNotifications, nextNotification].slice(-60),
                 notificationHistory: nextHistory,
             };
+        }
 
         case GAME_ACTIONS.CLEAR_NOTIFICATION:
             return {

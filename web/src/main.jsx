@@ -2,13 +2,16 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import FarmSim from "./components/farm-sim/core/FarmSim";
 import GameErrorBoundary from "./components/GameErrorBoundary";
+import { applyInitialFarmSimChromeMeta } from "./utils/documentThemeMeta";
 import "./index.css";
 
-// Apply dark mode before first paint to avoid flash
-(function applyDarkMode() {
+// Apply dark mode + chrome meta before first paint to avoid flash
+(function applyEarlyDocumentTheme() {
   try {
     const darkMode = window.localStorage.getItem('farmSim_darkMode');
-    if (darkMode === 'true') {
+    const dark = darkMode === 'true';
+    applyInitialFarmSimChromeMeta(dark);
+    if (dark) {
       document.documentElement.classList.add('dark');
     }
   } catch {

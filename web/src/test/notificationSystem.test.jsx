@@ -24,7 +24,7 @@ describe('NotificationSystem', () => {
       }
     });
 
-    expect(document.querySelectorAll('.notification-enter')).toHaveLength(5);
+    expect(document.querySelectorAll('.toast-anim-enter')).toHaveLength(5);
     expect(screen.getByText('+3 more notifications')).toBeInTheDocument();
   });
 
@@ -43,7 +43,7 @@ describe('NotificationSystem', () => {
     });
 
     const notificationRegion = screen.getByRole('region', { name: 'Game notifications' });
-    expect(notificationRegion).toHaveAttribute('aria-live', 'polite');
+    expect(notificationRegion).toHaveAttribute('aria-live', 'assertive');
     expect(screen.getByRole('status')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });

@@ -78,6 +78,9 @@ const BuildingsTab = memo(() => {
       ...state.buildings,
       [building.id]: { built: true, level: 1, builtAt: Date.now() },
     });
+    if (!state.memoryFlags?.first_building) {
+      actions.unlockMemory('first_building');
+    }
     if (typeof window.triggerParticleEffect === 'function') {
       setTimeout(() => {
         const el = document.querySelector(`[data-building-id="${building.id}"]`);

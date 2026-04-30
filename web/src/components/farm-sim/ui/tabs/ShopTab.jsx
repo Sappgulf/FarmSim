@@ -229,6 +229,9 @@ const ShopTab = memo(() => {
         ...state.inventory,
         [item.id]: (state.inventory[item.id] || 0) + 1,
       });
+      if (!state.memoryFlags?.first_shop_purchase) {
+        actions.unlockMemory('first_shop_purchase');
+      }
       actions.addNotification({ message: `Purchased ${item.emoji} ${item.name}!`, type: 'success' });
       triggerHighlight(item.id);
 
