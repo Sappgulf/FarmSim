@@ -6,7 +6,7 @@ import { normalizeEntitlements } from '../entitlements/EntitlementManager';
 import { getLevelFromXp, remapXpToCurrentCurve } from '../systems/progression';
 
 // Save schema version (separate from APP_VERSION in src/config/release.js).
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 export const SAVE_KEY = 'farm_sim_enhanced_v2';
 export const BACKUP_SAVE_KEY = `${SAVE_KEY}_backup`;
 export const QA_SAVE_KEY = `${SAVE_KEY}__qa__`;
@@ -607,6 +607,9 @@ export function migrateSaveData(savedData) {
             showWelcomeBackSummary: ensureBoolean(migratedData.settings?.showWelcomeBackSummary, true),
             showTooltips: ensureBoolean(migratedData.settings?.showTooltips, true),
             keyboardShortcuts: ensureBoolean(migratedData.settings?.keyboardShortcuts, true),
+            graphicsQuality: ['low', 'medium', 'high'].includes(migratedData.settings?.graphicsQuality)
+                ? migratedData.settings.graphicsQuality
+                : 'high',
             foreman: {
                 autoWater: ['off', 'smart', 'full'].includes(migratedData.settings?.foreman?.autoWater)
                     ? migratedData.settings.foreman.autoWater

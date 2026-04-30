@@ -10,6 +10,7 @@ import {
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { APP_VERSION, getReleaseModeLabel } from '../../../../config/release';
+import { normalizeGraphicsQuality } from '../../../../performance.js';
 import { START_SCREEN_STORAGE_KEY } from '../StartScreen';
 import { TabHero, TabSection, MetricTile } from './TabSurface';
 
@@ -57,6 +58,7 @@ const SettingsTab = memo(() => {
   const showWelcomeBackSummary = settings.showWelcomeBackSummary !== false;
   const fastMode = Boolean(settings.fastMode);
   const particleEffects = settings.particleEffects !== false;
+  const graphicsQuality = normalizeGraphicsQuality(settings.graphicsQuality);
 
   const addNotification = useCallback((message, type) => {
     actions.addNotification({ message, type });
@@ -85,6 +87,12 @@ const SettingsTab = memo(() => {
       window.musicSystem.setVolume(musicVolume);
     }
   }, [musicVolume]);
+
+  const handleGraphicsQualityChange = useCallback((level) => {
+    const next = normalizeGraphicsQuality(level);
+    actions.updateSettings({ graphicsQuality: next });
+    addNotification(`Visual quality: ${next}`, 'info');
+  }, [actions, addNotification]);
 
   const handleToggleSound = useCallback(() => {
     const newState = !soundEnabled;
@@ -418,6 +426,7 @@ const SettingsTab = memo(() => {
       <GameplaySettings
         autoSaveEnabled={autoSaveEnabled}
         animationsEnabled={animationsEnabled}
+        graphicsQuality={graphicsQuality}
         showFPS={showFPS}
         reducedMotion={reducedMotion}
         showTooltips={showTooltips}
@@ -427,6 +436,7 @@ const SettingsTab = memo(() => {
         particleEffects={particleEffects}
         darkMode={darkMode}
         handleToggleAnimations={handleToggleAnimations}
+        handleGraphicsQualityChange={handleGraphicsQualityChange}
         handleToggleAutoSave={handleToggleAutoSave}
         handleToggleShowFps={handleToggleShowFps}
         handleToggleReducedMotion={handleToggleReducedMotion}

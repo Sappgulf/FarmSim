@@ -212,6 +212,7 @@ export const initialState = {
         showWelcomeBackSummary: true,
         showTooltips: true,
         keyboardShortcuts: true,
+        graphicsQuality: 'high',
         foreman: {
             autoWater: 'smart',
             autoHarvest: 'priority',

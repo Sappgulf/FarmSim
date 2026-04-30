@@ -22,11 +22,18 @@ import { StartScreen, START_SCREEN_STORAGE_KEY } from '../ui/StartScreen';
 import OfflineIndicator from '../ui/OfflineIndicator';
 import InstallPrompt from '../ui/InstallPrompt';
 import KeyboardShortcutsHelp from '../ui/KeyboardShortcutsHelp';
+import { subscribeGameFrame } from '../../../utils/gameFrameScheduler';
 import { logDebugAction } from '../../../utils/debugTools';
 import { getFarmTheme, getFarmThemeVars } from '../../../data/farmThemes';
 import { isDevelopmentMode, shouldShowDebugTools } from '../../../config/release';
 import { TIME_OF_DAY_VISUALS, VISUAL_WEATHER_ROTATION } from '../../../data/cozyExpansion';
 import { getDayKey } from '../../../systems/almanac';
+import {
+  normalizeGraphicsQuality,
+  clearAdaptiveParticlePersistence,
+  restoreAdaptiveParticleOverlayIfMatching,
+  setQualityPreset,
+} from '../../../performance.js';
 
 // Import systems
 import { FarmingSystem } from '../systems/FarmingSystem';
@@ -72,6 +79,7 @@ export function FarmSimCore() {
   const plots = useGameSelector((state) => (Array.isArray(state.plots) ? state.plots : []));
   const notifications = useGameSelector((state) => (Array.isArray(state.notifications) ? state.notifications : []));
   const onboardingSeen = useGameSelector((state) => Boolean(state.onboardingSeen || state.onboardingSkipped));
+  const graphicsQuality = useGameSelector((state) => normalizeGraphicsQuality(state.settings?.graphicsQuality));
 
   const debugToolsAllowed = shouldShowDebugTools();
   const debugQueryEnabled = useMemo(() => {
@@ -88,6 +96,20 @@ export function FarmSimCore() {
     return window.localStorage.getItem(START_SCREEN_STORAGE_KEY) !== 'true';
   });
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  const graphicsQualityPrevRef = useRef(null);
+
+  useEffect(() => {
+    if (
+      graphicsQualityPrevRef.current !== null
+      && graphicsQualityPrevRef.current !== graphicsQuality
+    ) {
+      clearAdaptiveParticlePersistence();
+    }
+    graphicsQualityPrevRef.current = graphicsQuality;
+    setQualityPreset(graphicsQuality);
+    restoreAdaptiveParticleOverlayIfMatching(graphicsQuality);
+  }, [graphicsQuality]);
 
   const computeTimePeriod = () => {
     const hour = new Date().getHours();
@@ -250,7 +272,7 @@ export function FarmSimCore() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [farmingSystem, livestockSystem, fishingSystem, soundSystem, musicSystem]);
 
-  // System update loop - Optimized with requestAnimationFrame for better timing
+  // System updates ride the single GameProvider RAF (see gameFrameScheduler); throttled ~10 Hz
   useEffect(() => {
     if (paused) return;
 
@@ -258,56 +280,39 @@ export function FarmSimCore() {
     const targetFPS = 10; // 10 FPS = 100ms per frame
     const targetFrameTime = 1000 / targetFPS; // 100ms
 
-    let animationFrameId = null;
-
-    const systemUpdateLoop = (currentTime) => {
+    return subscribeGameFrame((currentTime) => {
       const currentState = store.getState();
 
       if (currentState.gameLoop.paused) {
         return;
       }
 
-      // Throttle to target FPS (10 FPS)
       const deltaTime = currentTime - lastUpdateTime;
-      if (deltaTime >= targetFrameTime) {
-        // PERF: Measure update time
-        const updateStart = performance.now();
-
-        // Batch all system updates in a single frame
-        // Order matters: dependencies first, dependents last
-        seasonSystem.update(currentState);
-        weatherSystem.update(currentState);
-        farmingSystem.update(currentState);
-        livestockSystem.update(currentState);
-        fishingSystem.update(currentState);
-        economicSystem.update(currentState);
-        achievementSystem.update(currentState);
-        diseaseSystem.update(currentState);
-        disasterSystem.update(currentState);
-
-        // PERF: Record update time for overlay
-        window.__lastUpdateTime = performance.now() - updateStart;
-        if (isDevelopmentMode()) {
-          window.__farmPerf = window.__farmPerf || { loops: 0, maxUpdateMs: 0 };
-          window.__farmPerf.loops += 1;
-          window.__farmPerf.maxUpdateMs = Math.max(window.__farmPerf.maxUpdateMs, window.__lastUpdateTime);
-        }
-
-        lastUpdateTime = currentTime - (deltaTime % targetFrameTime); // Maintain frame timing
+      if (deltaTime < targetFrameTime) {
+        return;
       }
 
-      // Continue loop
-      animationFrameId = requestAnimationFrame(systemUpdateLoop);
-    };
+      const updateStart = performance.now();
 
-    // Start the loop
-    animationFrameId = requestAnimationFrame(systemUpdateLoop);
+      seasonSystem.update(currentState);
+      weatherSystem.update(currentState);
+      farmingSystem.update(currentState);
+      livestockSystem.update(currentState);
+      fishingSystem.update(currentState);
+      economicSystem.update(currentState);
+      achievementSystem.update(currentState);
+      diseaseSystem.update(currentState);
+      disasterSystem.update(currentState);
 
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
+      window.__lastUpdateTime = performance.now() - updateStart;
+      if (isDevelopmentMode()) {
+        window.__farmPerf = window.__farmPerf || { loops: 0, maxUpdateMs: 0 };
+        window.__farmPerf.loops += 1;
+        window.__farmPerf.maxUpdateMs = Math.max(window.__farmPerf.maxUpdateMs, window.__lastUpdateTime);
       }
-    };
+
+      lastUpdateTime = currentTime - (deltaTime % targetFrameTime);
+    });
   }, [paused, store, seasonSystem, farmingSystem, weatherSystem, economicSystem, achievementSystem, diseaseSystem, disasterSystem, livestockSystem, fishingSystem]);
 
   // Initialize sound and music systems
@@ -668,17 +673,23 @@ export function FarmSimCore() {
       {!reducedMotionEnabled && timePeriod === 'night' && (
         <div className="ambient-vfx ambient-vfx--night" aria-hidden="true" />
       )}
-      <WeatherEffects weather={cozyVisualWeather || weather} intensity={0.45} timePeriod={timePeriod} />
+      <WeatherEffects
+        weather={cozyVisualWeather || weather}
+        intensity={0.45}
+        timePeriod={timePeriod}
+        reducedEffects={reducedMotionEnabled}
+      />
 
       {/* Performance monitoring (dev only) */}
       {isDevelopmentMode() && (
-        <div className="fixed top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded z-50">
-          FPS: {fps}
+        <div className="fixed top-2 right-2 z-50 rounded-lg border border-white/10 bg-black/70 px-2 py-1 font-mono text-xs font-bold text-emerald-300 shadow-lg backdrop-blur-sm pointer-events-none select-none">
+          FPS (state): {fps}
         </div>
       )}
 
       {!showStartScreen && (
-        <>
+        <TickProvider>
+          <>
           {/* Game Header */}
           <div className="relative z-20"><GameHeader /></div>
 
@@ -743,7 +754,8 @@ export function FarmSimCore() {
 
           {/* What's New should not interrupt the launch screen on first load. */}
           <WhatsNewModal />
-        </>
+          </>
+        </TickProvider>
       )}
 
       {/* Premium lock modal (premium mode only) */}
@@ -765,9 +777,7 @@ export function FarmSimCore() {
 export default function FarmSim() {
   return (
     <GameProvider>
-      <TickProvider>
-        <FarmSimCore />
-      </TickProvider>
+      <FarmSimCore />
     </GameProvider>
   );
 }

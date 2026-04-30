@@ -1,10 +1,12 @@
 import React, { memo, useState, useEffect } from 'react';
+import perfConfig from '../../../performance.js';
+import { useGameSelector } from '../context/GameContext';
 
 /**
  * Particle Effect Component
  * Creates visual particle effects for actions like harvesting, watering, fertilizing
  */
-const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1 }) => {
+const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1, effectsReduced = false }) => {
   // Store particles data in ref to avoid re-renders
   const particlesRef = React.useRef([]);
   // Store DOM refs to manipulate styles directly
@@ -13,8 +15,21 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1 }) =>
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Generate particles with variety ONCE
-    const particleCount = Math.round((type === 'harvest' ? 60 : type === 'levelup' ? 100 : 25) * Math.max(0.6, intensity));
+    if (effectsReduced || !perfConfig?.particles?.enabled) {
+      if (typeof onComplete === 'function') onComplete();
+      return undefined;
+    }
+
+    const harvestCap = Math.max(4, perfConfig?.particles?.harvestCount ?? 60);
+    const levelCap = Math.max(6, perfConfig?.particles?.levelupCount ?? 100);
+    const globalCap = Math.max(harvestCap, perfConfig?.particles?.maxCount ?? 150);
+
+    const baseRaw = type === 'harvest' ? 60 : type === 'levelup' ? 100 : 25;
+    const typeCap = type === 'harvest' ? harvestCap : type === 'levelup' ? levelCap : 25;
+
+    let particleCount = Math.round(baseRaw * Math.max(0.6, intensity));
+    particleCount = Math.min(particleCount, typeCap, globalCap);
+    particleCount = Math.max(4, particleCount);
 
     particlesRef.current = Array.from({ length: particleCount }, (_, i) => {
       const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
@@ -93,7 +108,7 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1 }) =>
     return () => {
       if (animationFrame) cancelAnimationFrame(animationFrame);
     };
-  }, [intensity, onComplete, type]);
+  }, [effectsReduced, intensity, onComplete, type]);
 
   // Helper for styles (static stuff)
   const getParticleStaticStyle = (p) => {
@@ -226,9 +241,20 @@ const triggerScreenShake = (intensity = 1) => {
  */
 export const ParticleEffectsManager = memo(() => {
   const [effects, setEffects] = useState([]);
+  const [, setPerfTuneRev] = useState(0);
+  const reducedMotion = useGameSelector((state) => state.settings?.reducedMotion === true);
 
-  // PERF: Max concurrent effects to prevent FPS drops during rapid harvesting
-  const MAX_CONCURRENT_EFFECTS = 5;
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const bump = () => setPerfTuneRev((n) => n + 1);
+    window.addEventListener('perfConfigChanged', bump);
+    return () => window.removeEventListener('perfConfigChanged', bump);
+  }, []);
+
+  const maxConcurrentEffects = Math.min(
+    10,
+    Math.max(2, perfConfig.limits?.maxNotifications ?? 8),
+  );
 
   // Track particle count for performance overlay
   useEffect(() => {
@@ -240,7 +266,7 @@ export const ParticleEffectsManager = memo(() => {
     window.triggerParticleEffect = (x, y, type, options = {}) => {
       setEffects(prev => {
         // PERF: Cap concurrent effects to prevent FPS drops
-        if (prev.length >= MAX_CONCURRENT_EFFECTS) {
+        if (prev.length >= maxConcurrentEffects) {
           // Remove oldest effect to make room
           const trimmed = prev.slice(1);
           const id = Date.now() + Math.random();
@@ -251,7 +277,7 @@ export const ParticleEffectsManager = memo(() => {
       });
 
       // Trigger screen shake for harvest and levelup (very subtle!)
-      if ((type === 'harvest' || type === 'levelup') && options.shake !== false) {
+      if ((type === 'harvest' || type === 'levelup') && options.shake !== false && !reducedMotion) {
         // REBALANCED: Level up shake is now very gentle (0.5 instead of 1.5)
         triggerScreenShake(type === 'levelup' ? 0.5 : 0.2); // Much gentler shake
       }
@@ -265,7 +291,7 @@ export const ParticleEffectsManager = memo(() => {
       delete window.triggerScreenShake;
       delete window.__particleCount;
     };
-  }, []);
+  }, [maxConcurrentEffects, reducedMotion]);
 
   const handleEffectComplete = (id) => {
     setEffects(prev => prev.filter(e => e.id !== id));
@@ -282,6 +308,7 @@ export const ParticleEffectsManager = memo(() => {
           text={effect.text}
           value={effect.value}
           intensity={effect.intensity}
+          effectsReduced={reducedMotion}
           onComplete={() => handleEffectComplete(effect.id)}
         />
       ))}

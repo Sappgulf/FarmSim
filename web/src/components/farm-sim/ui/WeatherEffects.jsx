@@ -1,15 +1,24 @@
 import React, { memo, useMemo } from 'react';
 import { normalizeWeatherType } from '../constants/weatherData';
+import perfConfig from '../../../performance.js';
 
 /**
  * Weather Effects Overlay Component
  * Provides visual weather effects like rain, snow, sun rays with smooth transitions
  */
-const WeatherEffects = memo(({ weather, intensity = 1, timePeriod = 'day' }) => {
+const WeatherEffects = memo(({ weather, intensity = 1, timePeriod = 'day', reducedEffects = false }) => {
   const normalizedWeather = normalizeWeatherType(weather);
   const [isTransitioning, setIsTransitioning] = React.useState(false);
   const prevWeatherRef = React.useRef(normalizedWeather);
-  
+  const [perfTuneRev, bumpPerfTuneRev] = React.useState(0);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const bump = () => bumpPerfTuneRev((n) => n + 1);
+    window.addEventListener('perfConfigChanged', bump);
+    return () => window.removeEventListener('perfConfigChanged', bump);
+  }, []);
+
   // Detect weather change and trigger transition
   React.useEffect(() => {
     if (prevWeatherRef.current !== normalizedWeather) {
@@ -25,17 +34,27 @@ const WeatherEffects = memo(({ weather, intensity = 1, timePeriod = 'day' }) => 
   // Generate particle elements based on weather type
   const particles = useMemo(() => {
     if (!normalizedWeather || normalizedWeather === 'sunny' || normalizedWeather === 'cloudy') return [];
+    if (!perfConfig?.particles?.enabled || reducedEffects) return [];
 
-    const particleCount = normalizedWeather === 'stormy' ? 100 : normalizedWeather === 'rainy' ? 60 : normalizedWeather === 'snow' ? 50 : 30;
-    
-    return Array.from({ length: Math.floor(particleCount * intensity) }, (_, i) => ({
+    const maxConfigured = perfConfig?.particles?.maxCount ?? 150;
+    const budget = Math.max(8, Math.floor(maxConfigured * 0.75));
+
+    let particleCountRaw = 30;
+    if (normalizedWeather === 'stormy') particleCountRaw = 100;
+    else if (normalizedWeather === 'rainy') particleCountRaw = 60;
+    else if (normalizedWeather === 'snow') particleCountRaw = 50;
+    else if (normalizedWeather === 'hail') particleCountRaw = 45;
+
+    const particleCount = Math.max(0, Math.min(Math.floor(particleCountRaw * intensity), budget));
+
+    return Array.from({ length: particleCount }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       delay: Math.random() * 3,
       duration: 1 + Math.random() * 2,
       size: normalizedWeather === 'snow' ? 3 + Math.random() * 3 : 1 + Math.random() * 2,
     }));
-  }, [normalizedWeather, intensity]);
+  }, [normalizedWeather, intensity, reducedEffects, perfTuneRev]);
 
   const sceneToneClassName = `weather-scene weather-scene--${normalizedWeather || 'sunny'} weather-scene--${timePeriod}`;
 
@@ -47,7 +66,7 @@ const WeatherEffects = memo(({ weather, intensity = 1, timePeriod = 'day' }) => 
     <div className={`absolute inset-0 pointer-events-none overflow-hidden z-10 transition-opacity duration-500 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
       <div className={sceneToneClassName} aria-hidden="true" />
 
-      {normalizedWeather === 'sunny' && (
+      {normalizedWeather === 'sunny' && !reducedEffects && (
         <>
           <div className="weather-sunbeam weather-sunbeam--left" />
           <div className="weather-sunbeam weather-sunbeam--right" />
@@ -96,8 +115,7 @@ const WeatherEffects = memo(({ weather, intensity = 1, timePeriod = 'day' }) => 
               }}
             />
           ))}
-          {/* Lightning flash overlay */}
-          <div className="lightning-flash" />
+          {!reducedEffects && <div className="lightning-flash" />}
         </>
       )}
 

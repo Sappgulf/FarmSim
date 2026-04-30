@@ -72,6 +72,8 @@ import { updateQuestProgress } from '../systems/QuestSystem';
 import { applyDistrictHarvestBonus, getDistrictIdForPlot } from '../../../utils/farmDistricts';
 import { upsertJournalEntry } from '../../../utils/farmJournal';
 import { getSpecializationModifiers } from '../../../utils/farmSpecializations';
+import { notifyGameFrame } from '../../../utils/gameFrameScheduler';
+import { handleAdaptiveQuality } from '../../../performance.js';
 
 const rollChance = (chance = 0) => Math.random() < chance;
 
@@ -282,8 +284,11 @@ export function GameProvider({ children }) {
     }, 2000);
   }, [buildAutoSaveSignature]);
 
-  // Performance loops: FPS monitoring and Auto-save trigger
+  // Performance loops: FPS monitoring, Auto-save trigger, shared frame subscribers (systems)
   const fpsRef = useRef(60);
+  const lastDispatchedFpsRef = useRef(-1);
+  const lastAdaptiveQualityAtRef = useRef(0);
+
   useEffect(() => {
     if (state.gameLoop.paused) return;
 
@@ -301,6 +306,20 @@ export function GameProvider({ children }) {
         const fps = Math.round((frameCount * 1000) / (currentTime - lastFPSUpdate));
         fpsRef.current = fps;
         window.__currentFPS = fps;
+        if (fps !== lastDispatchedFpsRef.current) {
+          lastDispatchedFpsRef.current = fps;
+          dispatchRef.current?.({
+            type: GAME_ACTIONS.UPDATE_GAME_LOOP,
+            payload: { fps },
+          });
+        }
+
+        const nowPerf = Date.now();
+        if (fps > 2 && nowPerf - lastAdaptiveQualityAtRef.current >= 8000) {
+          lastAdaptiveQualityAtRef.current = nowPerf;
+          handleAdaptiveQuality(fps);
+        }
+
         frameCount = 0;
         lastFPSUpdate = currentTime;
       }
@@ -318,6 +337,8 @@ export function GameProvider({ children }) {
         debouncedAutoSave(currentState);
         lastAutoSaveCheck = now;
       }
+
+      notifyGameFrame(currentTime);
 
       animationFrameId = requestAnimationFrame(masterGameLoop);
     };

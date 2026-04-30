@@ -103,7 +103,7 @@ const FarmPlot = memo(({
 
     if (plot.state === 'planted' || plot.state === 'growing') {
       // Derive growth from timestamps so UI can stay smooth without frequent global state writes.
-      const now = Number.isFinite(sharedTick) ? Date.now() : Date.now();
+      const now = Date.now();
       const plantedAt = Number(plot.plantedAt) || now;
       const elapsedSeconds = Math.max(0, (now - plantedAt) / 1000);
       const baseGrowthTime = plot.crop?.growthTime || 15;
@@ -340,7 +340,10 @@ const FarmPlot = memo(({
         ${isTrinket ? 'trinket-idle' : ''}
         touch-manipulation select-none
       `}
-      style={display.plotStyle || undefined}
+      style={{
+        ...(display.plotStyle || {}),
+        ...(isDenseGrid ? { contain: 'layout paint' } : {}),
+      }}
       onClick={handleClick}
       onMouseEnter={() => {
         if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
@@ -1492,7 +1495,8 @@ const FarmGrid = memo(() => {
           gridTemplateColumns: `repeat(${gridSize}, minmax(${gridSize >= 5 ? 56 : 64}px, 1fr))`,
           maxWidth: `min(100%, ${gridSize * (gridSize >= 5 ? 100 : 112)}px)`,
           backgroundImage: `radial-gradient(circle at 2px 2px, rgba(16,185,129,0.08) 1px, transparent 0)`,
-          backgroundSize: '18px 18px'
+          backgroundSize: '18px 18px',
+          ...(gridSize >= 6 ? { contain: 'layout paint' } : {}),
         }}
       >
         {harvestBloomTick > 0 && (

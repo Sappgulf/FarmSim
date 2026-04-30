@@ -5,6 +5,7 @@ import { TabSection } from '../TabSurface';
 export const GameplaySettings = memo(({
   autoSaveEnabled,
   animationsEnabled,
+  graphicsQuality,
   showFPS,
   reducedMotion,
   showTooltips,
@@ -14,6 +15,7 @@ export const GameplaySettings = memo(({
   particleEffects,
   darkMode,
   handleToggleAnimations,
+  handleGraphicsQualityChange,
   handleToggleAutoSave,
   handleToggleShowFps,
   handleToggleReducedMotion,
@@ -113,6 +115,42 @@ export const GameplaySettings = memo(({
         tone="violet"
         bodyClassName="space-y-4"
       >
+        <div
+          className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-slate-700/60 dark:bg-slate-900/40"
+          role="group"
+          aria-label="Visual quality preset"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="font-semibold text-slate-900 dark:text-slate-100">Visual quality</div>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                Matches rain/snow particle density and burst effects. Saves with your farm.
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[
+              { id: 'low', label: 'Low', hint: 'Best for older phones' },
+              { id: 'medium', label: 'Balanced', hint: 'Default feel' },
+              { id: 'high', label: 'High', hint: 'Full effects' },
+            ].map(({ id, label, hint }) => (
+              <button
+                key={id}
+                type="button"
+                title={hint}
+                onClick={() => handleGraphicsQualityChange(id)}
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
+                  graphicsQuality === id
+                    ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:border-emerald-400 dark:bg-emerald-950/50 dark:text-emerald-50'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700/70'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="space-y-4">
           {experienceRows.map((row) => (
             <SettingToggleRow
