@@ -1,12 +1,23 @@
 /**
- * Lightweight offline / PWA shell. Keep precache minimal; hashed bundles network-first elsewhere.
+ * Lightweight offline / PWA shell. Keep precache minimal; hashed bundles are cached on GET after fetch.
  *
- * IMPORTANT: Bump CACHE_NAME when you change caching rules or precached shell assets so
- * activate() evicts stale caches for existing users (see README in farm-sim/).
+ * Release hygiene: keep CACHE_NAME in sync with `web/package.json` "version" when you ship
+ * (e.g. farmsim-sw-v5.5.4) so activate() prunes old caches after deploy.
+ *
+ * Strategy: navigation requests try network first, fall back to cached shell; other GETs use
+ * cache-if-available then refresh cache when network succeeds.
  */
 const CACHE_NAME = 'farmsim-sw-v5.5.4';
 
-const ASSETS = ['./', './index.html', './manifest.json', './icons/favicon.svg'];
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icons/favicon.svg',
+  './icons/icon-192.png',
+  './screenshots/narrow.png',
+  './screenshots/wide.png',
+];
 
 const IS_LOCAL_DEV =
   self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';

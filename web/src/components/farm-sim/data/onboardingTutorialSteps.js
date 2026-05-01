@@ -32,7 +32,7 @@ export const ONBOARDING_TUTORIAL_STEPS = [
     id: 'ready',
     title: 'You\'re Ready',
     description:
-      'Space toggles pause. Open Settings anytime for autosave, audio, and dark mode.\nAutosave stays on unless you turn it off there.',
+      'Tip: quick pings appear along the top; the More → Inbox tab keeps the full log.\nSpace toggles pause. Settings has autosave, audio, and dark mode.',
     emoji: '🎉',
     targetSelectors: [],
     placement: 'bottom',

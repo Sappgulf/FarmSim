@@ -1,5 +1,6 @@
 import { GAME_ACTIONS } from './GameActions';
 import { SAVE_VERSION, initializePlots } from './GamePersistence';
+import { inferDefaultGraphicsQuality } from '../../../utils/deviceProfile';
 
 const STARTER_INVENTORY = Object.freeze({
     lettuce: 4,
@@ -212,7 +213,7 @@ export const initialState = {
         showWelcomeBackSummary: true,
         showTooltips: true,
         keyboardShortcuts: true,
-        graphicsQuality: 'high',
+        graphicsQuality: inferDefaultGraphicsQuality(),
         foreman: {
             autoWater: 'smart',
             autoHarvest: 'priority',

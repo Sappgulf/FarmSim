@@ -33,6 +33,17 @@ export default function InstallPrompt() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const stored = window.__pwaInstallPrompt;
+    if (stored) {
+      setDeferredPrompt((prev) => prev || stored);
+      if (!isStandalone() && !wasDismissedRecently() && isMobile()) {
+        setVisible(true);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
 
     setIsMobileDevice(isMobile());
     const onResize = () => setIsMobileDevice(isMobile());
@@ -58,13 +69,19 @@ export default function InstallPrompt() {
   }, []);
 
   const handleInstall = useCallback(async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setVisible(false);
+    const promptEvent = deferredPrompt || (typeof window !== 'undefined' ? window.__pwaInstallPrompt : null);
+    if (!promptEvent) return;
+    try {
+      promptEvent.prompt();
+      const { outcome } = await promptEvent.userChoice;
+      if (outcome === 'accepted') setVisible(false);
+    } catch {
+      /* prompt unavailable or dismissed abruptly */
     }
     setDeferredPrompt(null);
+    if (typeof window !== 'undefined') {
+      window.__pwaInstallPrompt = undefined;
+    }
   }, [deferredPrompt]);
 
   const handleDismiss = useCallback(() => {
@@ -78,6 +95,8 @@ export default function InstallPrompt() {
 
   if (!visible || !isMobileDevice) return null;
 
+  const canPrompt = Boolean(deferredPrompt || (typeof window !== 'undefined' && window.__pwaInstallPrompt));
+
   return (
     <div className="relative z-[45] w-full animate-fade-in">
       <div className="mx-2 mb-2 rounded-2xl border border-emerald-200/60 bg-gradient-to-r from-emerald-500 to-teal-500 p-3 shadow-xl dark:border-emerald-800/60 dark:from-emerald-700 dark:to-teal-700">
@@ -86,15 +105,18 @@ export default function InstallPrompt() {
             <span className="text-lg" aria-hidden="true">🌾</span>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-bold text-white truncate">Add Cozy Farms to Home Screen</div>
-            <div className="text-xs text-emerald-50/90 truncate">Install for quick access and offline play.</div>
+            <div className="text-sm font-bold text-white truncate">Install FarmSim</div>
+            <div className="text-xs text-emerald-50/90 leading-snug">
+              Home-screen icon and offline shell; reload after updates for the newest features.
+            </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Button
               onClick={handleInstall}
               variant="default"
               size="sm"
-              className="bg-white text-emerald-700 hover:bg-emerald-50 border-0 shadow-sm"
+              disabled={!canPrompt}
+              className="bg-white text-emerald-700 hover:bg-emerald-50 border-0 shadow-sm disabled:opacity-60"
             >
               <Download className="w-4 h-4 mr-1" />
               Install
@@ -102,7 +124,7 @@ export default function InstallPrompt() {
             <button
               type="button"
               onClick={handleDismiss}
-              className="grid h-8 w-8 place-items-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
+              className="grid min-h-[44px] min-w-[44px] place-items-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors touch-manipulation"
               aria-label="Dismiss install prompt"
             >
               <X className="w-4 h-4" />

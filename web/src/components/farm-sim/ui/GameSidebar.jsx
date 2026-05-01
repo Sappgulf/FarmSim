@@ -252,7 +252,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
           </div>
 
           {/* Tab Navigation - grouped by section */}
-          <nav className="space-y-2.5 max-h-[min(56vh,21rem)] overflow-y-auto pr-2 elegant-scroll scrollbar-gutter-stable" aria-label="Sidebar tabs">
+          <nav className="space-y-2.5 max-h-[min(56vh,21rem)] overflow-y-auto pr-2 elegant-scroll overscroll-y-contain scrollbar-gutter-stable" aria-label="Sidebar tabs">
             {Object.values(NAV_SECTIONS).map((section) => {
               const sectionTabConfigs = TAB_CONFIGS.filter(t => section.tabs.includes(t.id));
               if (sectionTabConfigs.length === 0) return null;
@@ -301,7 +301,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         </div>
 
         {/* Active tab only: avoids creating all tab panels on each render. */}
-        <TabsContent key={activeConfig.id} value={activeConfig.id} className="mt-3 px-3 pb-3 sm:mt-4 sm:px-4 sm:pb-4">
+        <TabsContent key={activeConfig.id} value={activeConfig.id} className="mt-3 px-3 pb-3 sm:mt-4 sm:px-4 sm:pb-4 overscroll-y-contain">
           <Suspense fallback={<TabLoader />}>
             <TabWrapper>
               <ActiveTabComponent />

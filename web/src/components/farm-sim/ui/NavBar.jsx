@@ -184,7 +184,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
     }, [onSectionChange, onTabChange, showSubTabs]);
 
     return (
-        <nav className="relative overflow-hidden border-t border-white/80 bg-white/92 shadow-[0_-20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-2xl mobile-scroll dark:bg-slate-900/92 dark:border-slate-800">
+        <nav className="farm-bottom-nav relative overflow-hidden border-t border-white/80 bg-white/92 shadow-[0_-20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-2xl mobile-scroll dark:bg-slate-900/92 dark:border-slate-800">
                 {/* Top border glow */}
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent navbar-top-glow-line" />
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent dark:via-slate-700/80" />

@@ -1,6 +1,8 @@
 /**
  * Rasterizes web/public/icons/favicon.svg into PNG assets for PWAs / iOS.
  * Run after changing the SVG: `npm run gen:icons`
+ *
+ * Install UI screenshots (manifest): `npm run gen:screenshots`
  */
 import fs from 'node:fs';
 import path from 'node:path';

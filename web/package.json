@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/sync-sw-cache-name.mjs && vite build",
     "preview": "vite preview",
     "test": "vitest --run",
     "test:ui": "vitest --ui",
@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "lint": "node ../scripts/lint.mjs",
     "gen:icons": "node scripts/generate-pwa-icons.mjs",
+    "gen:screenshots": "node scripts/generate-pwa-screenshots.mjs",
     "qa:full": "npm run test && npm run build",
     "smoke-test": "vitest --run src/test/smoke.test.jsx",
     "test:e2e": "playwright test",

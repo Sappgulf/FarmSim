@@ -7,7 +7,7 @@ import { TickProvider } from '../context/TickContext';
 import GameHeader from '../ui/GameHeader';
 import FarmGrid from '../ui/FarmGrid';
 import GameSidebar from '../ui/GameSidebar';
-import NavBar, { NAV_SECTIONS } from '../ui/NavBar';
+import NavBar, { NAV_SECTIONS, TAB_INFO } from '../ui/NavBar';
 import NotificationSystem from '../ui/NotificationSystem';
 import { ParticleEffectsManager } from '../ui/ParticleEffect';
 import FPSCounter from '../ui/FPSCounter';
@@ -22,6 +22,7 @@ import ContextualHints from '../ui/ContextualHints';
 import { StartScreen, START_SCREEN_STORAGE_KEY } from '../ui/StartScreen';
 import OfflineIndicator from '../ui/OfflineIndicator';
 import InstallPrompt from '../ui/InstallPrompt';
+import ServiceWorkerUpdateBanner from '../ui/ServiceWorkerUpdateBanner';
 import KeyboardShortcutsHelp from '../ui/KeyboardShortcutsHelp';
 import { subscribeGameFrame } from '../../../utils/gameFrameScheduler';
 import { logDebugAction } from '../../../utils/debugTools';
@@ -99,6 +100,9 @@ export function FarmSimCore() {
     return window.localStorage.getItem(START_SCREEN_STORAGE_KEY) !== 'true';
   });
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  /** Consume manifest shortcut / bookmark URLs once (`?tab=shop`). */
+  const deepLinkConsumedRef = useRef(false);
 
   const graphicsQualityPrevRef = useRef(null);
 
@@ -200,6 +204,28 @@ export function FarmSimCore() {
     window.addEventListener('farmSim:openShortcuts', handler);
     return () => window.removeEventListener('farmSim:openShortcuts', handler);
   }, []);
+
+  useEffect(() => {
+    if (showStartScreen || deepLinkConsumedRef.current || typeof window === 'undefined') return;
+    let tab = null;
+    try {
+      tab = new URLSearchParams(window.location.search).get('tab');
+    } catch {
+      return;
+    }
+    if (!tab || !TAB_INFO[tab]) return;
+    deepLinkConsumedRef.current = true;
+    handleTabChange(tab);
+    try {
+      const params = new URLSearchParams(window.location.search);
+      params.delete('tab');
+      const qs = params.toString();
+      const path = window.location.pathname || '/';
+      window.history.replaceState(null, '', qs ? `${path}?${qs}` : path);
+    } catch {
+      /* ignore */
+    }
+  }, [showStartScreen, handleTabChange]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -666,6 +692,7 @@ export function FarmSimCore() {
     <div
       className={`min-h-screen min-h-[100dvh] bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000 flex flex-col relative overflow-x-hidden`}
       data-farm-theme={activeTheme.id}
+      data-reduced-motion={reducedMotionEnabled ? 'true' : 'false'}
       style={{ ...themeVars, filter: TIME_OF_DAY_VISUALS[timePeriod]?.filter || 'none' }}
     >
       {/* Skip to main content link for keyboard users */}
@@ -737,7 +764,8 @@ export function FarmSimCore() {
           </main>
 
           {/* Bottom Navigation Bar - Fixed on mobile */}
-          <div className="fixed bottom-0 left-0 right-0 lg:relative z-40">
+          <div className="fixed bottom-0 left-0 right-0 z-40 lg:relative safe-area-inset-x">
+            <ServiceWorkerUpdateBanner />
             <InstallPrompt />
             <NavBar
               activeSection={activeSection}
