@@ -5,11 +5,13 @@ public enum SimTickSystem {
     public static func advanceDay(
         world: inout WorldState,
         rng: inout SeededRandomNumberGenerator,
-        growthMultiplier: Double = 1.0
+        growthMultiplier: Double = 1.0,
+        weatherMultiplier: Double = 1.0
     ) -> Int {
         world.day += 1
         let safeGrowthMultiplier = max(0.1, growthMultiplier)
-        let dayGrowthIncrement = 1.0 * safeGrowthMultiplier
+        let safeWeatherMultiplier = max(0.15, min(2.5, weatherMultiplier))
+        let dayGrowthIncrement = 1.0 * safeGrowthMultiplier * safeWeatherMultiplier
 
         for index in world.tiles.indices {
             var tile = world.tiles[index]

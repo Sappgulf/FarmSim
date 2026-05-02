@@ -264,3 +264,67 @@ struct ChallengePlan: Identifiable, Sendable, Equatable {
     let rewardCoins: Int
     let rewardXP: Int
 }
+
+struct MarketAchievement: Identifiable, Sendable, Equatable {
+    let id: String
+    let name: String
+    let description: String
+    let category: String
+    let metric: String
+    let target: Int
+    let rewardCoins: Int
+    let rewardXP: Int
+    let icon: String
+}
+
+struct MarketAnalyticsSnapshot: Sendable, Equatable {
+    let day: Int
+    let coins: Int
+    let level: Int
+    let totalTiles: Int
+    let readyTiles: Int
+    let plantedTiles: Int
+    let seedInventory: Int
+    let cropInventory: Int
+    let builtStructures: Int
+    let activeResearch: Int
+    let livestockCount: Int
+    let fishCaught: Int
+    let totalHarvested: Int
+    let totalSold: Int
+    let totalCoinsEarned: Int
+    let totalInventoryValue: Int
+    let growthTrendPercent: Int
+    let fieldUtilizationPercent: Int
+}
+
+struct MarketProcessingFacility: Identifiable, Sendable, Equatable {
+    let id: String
+    let name: String
+    let icon: String
+    let status: String
+    let processingMultiplier: Double
+    let batchCapacity: Int
+    let unlocked: Bool
+    let level: Int
+}
+
+struct MarketProcessingQueueItem: Identifiable, Sendable, Equatable {
+    let cropID: String
+    let cropName: String
+    let quantity: Int
+    let estimatedDays: Int
+    let projectedValue: Int
+
+    var id: String { cropID }
+}
+
+struct MarketProcessingSnapshot: Sendable, Equatable {
+    let workshopUnlocked: Bool
+    let processingUnlocked: Bool
+    let processingMultiplier: Double
+    let facilityLevel: Int
+    let facilities: [MarketProcessingFacility]
+    let queue: [MarketProcessingQueueItem]
+    let estimatedQueueLength: Int
+}

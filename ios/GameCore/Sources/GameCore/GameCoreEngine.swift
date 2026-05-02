@@ -121,8 +121,13 @@ public struct GameCoreEngine: Sendable {
         return true
     }
 
-    public mutating func advanceDay(growthMultiplier: Double = 1.0) {
-        lastDailyRoll = SimTickSystem.advanceDay(world: &save.world, rng: &rng, growthMultiplier: growthMultiplier)
+    public mutating func advanceDay(growthMultiplier: Double = 1.0, weatherMultiplier: Double = 1.0) {
+        lastDailyRoll = SimTickSystem.advanceDay(
+            world: &save.world,
+            rng: &rng,
+            growthMultiplier: growthMultiplier,
+            weatherMultiplier: weatherMultiplier
+        )
         save.daySeed = rng.currentState
         if save.meta.time.dayIndex < save.world.day {
             save.meta.time.dayIndex = save.world.day

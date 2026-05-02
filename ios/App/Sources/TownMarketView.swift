@@ -4,30 +4,36 @@ import GameCore
 // MARK: - MarketSection
 
 private enum MarketSection: String, CaseIterable, Identifiable {
-    case buy, sell, upgrades, forecast, challenges, fishing, pets
+    case buy, sell, upgrades, forecast, analytics, processing, achievements, challenges, fishing, pets
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .buy:        return "Buy"
-        case .sell:       return "Sell"
-        case .upgrades:   return "Upgrades"
-        case .forecast:   return "Forecast"
-        case .challenges: return "Work Orders"
-        case .fishing:    return "Fishing"
-        case .pets:       return "Pets"
+        case .buy:          return "Buy"
+        case .sell:         return "Sell"
+        case .upgrades:     return "Upgrades"
+        case .forecast:     return "Forecast"
+        case .analytics:    return "Analytics"
+        case .processing:   return "Processing"
+        case .achievements: return "Hall"
+        case .challenges:   return "Work Orders"
+        case .fishing:      return "Fishing"
+        case .pets:         return "Pets"
         }
     }
 
     var symbol: String {
         switch self {
-        case .buy:        return "cart.fill"
-        case .sell:       return "dollarsign.circle.fill"
-        case .upgrades:   return "hammer.fill"
-        case .forecast:   return "cloud.sun.fill"
-        case .challenges: return "checklist"
-        case .fishing:    return "fish.fill"
-        case .pets:       return "pawprint.fill"
+        case .buy:          return "cart.fill"
+        case .sell:         return "dollarsign.circle.fill"
+        case .upgrades:     return "hammer.fill"
+        case .forecast:     return "cloud.sun.fill"
+        case .analytics:    return "chart.bar.fill"
+        case .processing:   return "gearshape.2.fill"
+        case .achievements: return "rosette"
+        case .challenges:   return "checklist"
+        case .fishing:      return "fish.fill"
+        case .pets:         return "pawprint.fill"
         }
     }
 }
@@ -622,6 +628,12 @@ private struct MarketSectionContent: View {
                 MarketUpgradesSection(store: store)
             case .forecast:
                 MarketForecastSection(store: store)
+            case .analytics:
+                MarketAnalyticsSection(store: store)
+            case .processing:
+                MarketProcessingSection(store: store)
+            case .achievements:
+                MarketAchievementsSection(store: store)
             case .challenges:
                 MarketChallengesSection(store: store, reducedMotion: reducedMotion)
             case .fishing:
@@ -679,6 +691,293 @@ private struct MarketForecastSection: View {
 
                     if entry.id != store.weatherForecast.last?.id {
                         Divider().padding(.leading, 74).background(.white.opacity(0.12))
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - MarketAnalyticsSection
+
+private struct MarketAnalyticsSection: View {
+    let store: GameStore
+
+    private var snapshot: MarketAnalyticsSnapshot {
+        store.marketAnalyticsSnapshot()
+    }
+
+    var body: some View {
+        let trend = snapshot.growthTrendPercent
+        let trendColor: Color = trend >= 0 ? DS.Color.success : DS.Color.warning
+
+        WoodenPanel {
+            VStack(alignment: .leading, spacing: DS.Space.sm) {
+                SectionHeader("Market Analytics")
+                Text("Live performance summary for today’s farming state.")
+                    .font(Typography.caption)
+                    .foregroundStyle(.white.opacity(0.72))
+            }
+
+            Divider().background(.white.opacity(0.12))
+
+            MarketMetricRow(title: "Growth Trend") {
+                Text(String(format: "%.0f%%", Double(trend)))
+            }
+
+            Divider().background(.white.opacity(0.12))
+
+            VStack(spacing: DS.Space.xs) {
+                HStack { MarketAnalyticsTile(value: "\(snapshot.coins)", label: "Coins", accent: DS.Color.money) }
+                HStack { MarketAnalyticsTile(value: "Lvl \(snapshot.level)", label: "Level", accent: DS.Color.xp) }
+                HStack {
+                    MarketAnalyticsTile(value: "\(snapshot.fieldUtilizationPercent)%", label: "Utilization", accent: trendColor)
+                    MarketAnalyticsTile(value: "\(snapshot.readyTiles)/\(snapshot.totalTiles)", label: "Ready/Total", accent: DS.Color.money)
+                }
+                HStack {
+                    MarketAnalyticsTile(value: "\(snapshot.cropInventory)", label: "Crop Stock", accent: DS.Color.success)
+                    MarketAnalyticsTile(value: "\(snapshot.seedInventory)", label: "Seed Stock", accent: DS.Color.accent)
+                }
+                HStack {
+                    MarketAnalyticsTile(value: "\(snapshot.builtStructures)", label: "Buildings", accent: .white)
+                    MarketAnalyticsTile(value: "\(snapshot.activeResearch)", label: "Research", accent: DS.Color.info)
+                }
+                HStack {
+                    MarketAnalyticsTile(value: "\(snapshot.totalHarvested)", label: "Harvested", accent: DS.Color.money)
+                    MarketAnalyticsTile(value: "\(snapshot.totalSold)", label: "Sold", accent: DS.Color.info)
+                }
+                HStack {
+                    MarketAnalyticsTile(value: "\(snapshot.totalCoinsEarned)", label: "Coins Earned", accent: DS.Color.xp)
+                    MarketAnalyticsTile(value: "\(snapshot.totalInventoryValue)", label: "Inventory Value", accent: DS.Color.accent)
+                }
+            }
+        }
+    }
+
+    private struct MarketMetricRow: View {
+        let title: String
+        @ViewBuilder let valueView: () -> Text
+
+        var body: some View {
+            HStack(alignment: .top) {
+                Text(title).font(Typography.caption.weight(.bold)).foregroundStyle(.white.opacity(0.75))
+                Spacer()
+                valueView().font(Typography.bodyStrong).foregroundStyle(.white)
+            }
+        }
+    }
+}
+
+private struct MarketAnalyticsTile: View {
+    let value: String
+    let label: String
+    let accent: Color
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(Typography.bodyStrong)
+                .foregroundStyle(accent)
+            Text(label)
+                .font(Typography.caption)
+                .foregroundStyle(.white.opacity(0.68))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - MarketProcessingSection
+
+private struct MarketProcessingSection: View {
+    let store: GameStore
+
+    private var snapshot: MarketProcessingSnapshot {
+        store.marketProcessingSnapshot()
+    }
+
+    var body: some View {
+        VStack(spacing: DS.Space.md) {
+            WoodenPanel {
+                VStack(alignment: .leading, spacing: DS.Space.xs) {
+                    SectionHeader("Processing Hub")
+                    Text("Process-ready inventory is converted using unlocked workshop and windmill upgrades.")
+                        .font(Typography.caption)
+                        .foregroundStyle(.white.opacity(0.72))
+                }
+            }
+
+            WoodenPanel {
+                HStack(spacing: DS.Space.md) {
+                    MarketMetricTile(
+                        title: "Processing",
+                        value: String(format: "%.2fx", snapshot.processingMultiplier),
+                        icon: "gearshape.2.fill"
+                    )
+                    MarketMetricTile(
+                        title: "Queue",
+                        value: "\(snapshot.estimatedQueueLength) crates",
+                        icon: "shippingbox.fill"
+                    )
+                }
+
+                Divider().padding(.vertical, DS.Space.xs)
+
+                if snapshot.facilities.isEmpty {
+                    EmptyStateView(
+                        icon: "hammer.fill",
+                        title: "No Processing Tools Yet",
+                        subtitle: "Build Workshop and Windmill to unlock processing."
+                    )
+                    .padding(.vertical, DS.Space.sm)
+                } else {
+                    ForEach(snapshot.facilities) { facility in
+                        HStack {
+                            Text(facility.icon).font(.title3)
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack(spacing: 6) {
+                                    Text(facility.name).font(Typography.bodyStrong).foregroundStyle(.white)
+                                    if facility.unlocked {
+                                        Text("Lv \(facility.level)").font(Typography.caption).foregroundStyle(.white.opacity(0.7))
+                                    }
+                                }
+                                Text("Capacity: \(facility.batchCapacity)")
+                                    .font(Typography.caption)
+                                    .foregroundStyle(.white.opacity(0.7))
+                                Text("Status: \(facility.status)")
+                                    .font(Typography.caption)
+                                    .foregroundStyle(.white.opacity(0.7))
+                            }
+                            Spacer()
+                            Text(String(format: "%.2fx", facility.processingMultiplier))
+                                .font(Typography.bodyStrong)
+                                .foregroundStyle(facility.unlocked ? DS.Color.money : .white.opacity(0.6))
+                        }
+                        Divider().background(.white.opacity(0.12))
+                    }
+                }
+            }
+
+            if !snapshot.queue.isEmpty {
+                WoodenPanel {
+                    SectionHeader("Processing Queue")
+                    ForEach(snapshot.queue) { item in
+                        VStack(spacing: DS.Space.xs) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(item.cropName).font(Typography.bodyStrong)
+                                    Text("Qty \(item.quantity)")
+                                        .font(Typography.caption)
+                                        .foregroundStyle(.white.opacity(0.75))
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text("~\(item.estimatedDays)d")
+                                        .font(Typography.caption.weight(.bold))
+                                        .foregroundStyle(DS.Color.money)
+                                    Text("+\(item.projectedValue) 💰")
+                                        .font(Typography.small.weight(.bold))
+                                        .foregroundStyle(DS.Color.accent)
+                                }
+                            }
+                        }
+
+                        if item.id != snapshot.queue.last?.id {
+                            Divider().background(.white.opacity(0.12))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private struct MarketMetricTile: View {
+        let title: String
+        let value: String
+        let icon: String
+
+        var body: some View {
+            HStack(spacing: DS.Space.xs) {
+                Text(icon).font(.title3)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(Typography.small.weight(.bold)).foregroundStyle(.white.opacity(0.75))
+                    Text(value).font(Typography.bodyStrong).foregroundStyle(.white)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+// MARK: - MarketAchievementsSection
+
+private struct MarketAchievementsSection: View {
+    let store: GameStore
+    let titleForMetric: [String: String] = [
+        "total_harvested": "Harvested",
+        "ready_tiles": "Ready tiles",
+        "coin_balance": "Coins",
+        "total_sold": "Sold",
+        "total_inventory_value": "Inventory value",
+        "seed_inventory": "Seeds",
+        "crop_inventory": "Crops",
+        "planted_tiles": "Planted"
+    ]
+
+    var body: some View {
+        let achievements = store.marketAchievementCatalog
+
+        VStack(spacing: DS.Space.md) {
+            WoodenPanel {
+                VStack(alignment: .leading, spacing: DS.Space.xs) {
+                    SectionHeader("Market Hall")
+                    Text("Progressive market-focused goals that reward consistency.")
+                        .font(Typography.caption)
+                        .foregroundStyle(.white.opacity(0.72))
+                }
+            }
+
+            ForEach(achievements) { achievement in
+                let progress = store.marketAchievementProgress(for: achievement)
+                let isReady = progress >= achievement.target
+                let ratio = min(1.0, Double(progress) / Double(max(1, achievement.target)))
+                let categoryText = titleForMetric[achievement.metric] ?? "Metric"
+
+                WoodenPanel {
+                    VStack(alignment: .leading, spacing: DS.Space.xs) {
+                        HStack {
+                            Text(achievement.icon).font(.title3)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(achievement.name)
+                                    .font(Typography.bodyStrong)
+                                    .foregroundStyle(isReady ? DS.Color.money : .white)
+                                Text(achievement.description)
+                                    .font(Typography.caption)
+                                    .foregroundStyle(.white.opacity(0.72))
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 1) {
+                                Text(categoryText).font(Typography.caption).foregroundStyle(.white.opacity(0.7))
+                                Text("\(progress) / \(achievement.target)")
+                                    .font(Typography.small.weight(.bold))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+
+                        ProgressView(value: ratio)
+                            .tint(isReady ? DS.Color.success : DS.Color.info)
+
+                        HStack {
+                            Text("Reward")
+                                .font(Typography.caption)
+                                .foregroundStyle(.white.opacity(0.7))
+                            Spacer()
+                            Label("\(achievement.rewardCoins)", systemImage: "circle.fill")
+                                .font(Typography.small.weight(.bold))
+                                .foregroundStyle(DS.Color.money)
+                            Label("\(achievement.rewardXP) XP", systemImage: "sparkles")
+                                .font(Typography.small.weight(.bold))
+                                .foregroundStyle(DS.Color.xp)
+                        }
                     }
                 }
             }

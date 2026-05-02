@@ -179,6 +179,53 @@ final class GameStore {
         ChallengePlan(id: "coin_reserve", name: "Rainy Day Fund", icon: "💰", description: "Build a reserve of coins.", difficulty: "hard", metric: "coin_balance", target: 600, rewardCoins: 180, rewardXP: 70),
     ]
 
+    private static let defaultMarketAchievements: [MarketAchievement] = [
+        MarketAchievement(
+            id: "first_harvest_batch",
+            name: "First Harvest Run",
+            description: "Harvest 10 crops total from your fields.",
+            category: "field",
+            metric: "total_harvested",
+            target: 10,
+            rewardCoins: 40,
+            rewardXP: 18,
+            icon: "🌽"
+        ),
+        MarketAchievement(
+            id: "ready_tiles_milestone",
+            name: "Steady Stalks",
+            description: "Keep 5 tiles fully ready at once.",
+            category: "field",
+            metric: "ready_tiles",
+            target: 5,
+            rewardCoins: 55,
+            rewardXP: 22,
+            icon: "✅"
+        ),
+        MarketAchievement(
+            id: "coins_hoarder",
+            name: "Strong Wallet",
+            description: "Build a coin buffer for hard seasons.",
+            category: "finance",
+            metric: "coin_balance",
+            target: 350,
+            rewardCoins: 70,
+            rewardXP: 20,
+            icon: "🪙"
+        ),
+        MarketAchievement(
+            id: "market_sales",
+            name: "Market Presence",
+            description: "Sell 30 crops total from the market.",
+            category: "commerce",
+            metric: "total_sold",
+            target: 30,
+            rewardCoins: 80,
+            rewardXP: 30,
+            icon: "🧺"
+        )
+    ]
+
     private static let defaultExpansionConfig = ExpansionPlan(
         maxGrid: 12,
         costsByGridSize: [
@@ -324,6 +371,14 @@ final class GameStore {
         }
     }
 
+    func weatherModifier(for day: Int, timeProgress: Double = 0.5) -> Double {
+        FarmWeatherModel.resolve(
+            day: day,
+            timeProgress: min(0.99, max(0.01, timeProgress)),
+            season: hudSeasonText
+        ).weather.cropGrowthModifier
+    }
+
     var widgetSnapshot: WidgetFarmSnapshot {
         WidgetFarmSnapshot(
             farmName: farmName,
@@ -333,6 +388,116 @@ final class GameStore {
             readyCrops: readyTileCount,
             season: hudSeasonText,
             timeText: hudTimeText
+        )
+    }
+
+    var marketAchievementCatalog: [MarketAchievement] {
+        Self.defaultMarketAchievements
+    }
+
+    func marketAnalyticsSnapshot() -> MarketAnalyticsSnapshot {
+        let totalInventoryValue = save.player.inventory.crops.reduce(0) { partial, item in
+            let sellPrice = engine.cropDefsByID[item.key]?.sellPrice ?? 0
+            return partial + (sellPrice * item.value)
+        }
+        let activeResearch = save.meta.completedResearch.values.filter { $0 }.count
+        let growthTrendPercent = Int(((weatherModifier(for: max(1, save.world.day + 1)) - 1.0) * 100).rounded())
+        let utilizationBase = max(1, totalTileCount)
+        let fieldUtilizationPercent = min(100, (plantedTileCount * 100) / utilizationBase)
+
+        return MarketAnalyticsSnapshot(
+            day: save.world.day,
+            coins: save.player.coins,
+            level: playerLevel,
+            totalTiles: totalTileCount,
+            readyTiles: readyTileCount,
+            plantedTiles: plantedTileCount,
+            seedInventory: cachedSeedInventoryCount,
+            cropInventory: cachedCropInventoryCount,
+            builtStructures: cachedBuiltStructureCount,
+            activeResearch: activeResearch,
+            livestockCount: cachedLivestockCount,
+            fishCaught: cachedTotalFishCaught,
+            totalHarvested: milestoneManager.milestoneState.totalHarvested,
+            totalSold: milestoneManager.milestoneState.totalSold,
+            totalCoinsEarned: milestoneManager.milestoneState.totalCoinsEarned,
+            totalInventoryValue: totalInventoryValue,
+            growthTrendPercent: growthTrendPercent,
+            fieldUtilizationPercent: fieldUtilizationPercent
+        )
+    }
+
+    func marketAchievementProgress(for achievement: MarketAchievement) -> Int {
+        switch achievement.metric {
+        case "total_harvested":
+            return milestoneManager.milestoneState.totalHarvested
+        case "ready_tiles":
+            return readyTileCount
+        case "coin_balance":
+            return save.player.coins
+        case "total_sold":
+            return milestoneManager.milestoneState.totalSold
+        case "total_inventory_value":
+            return marketAnalyticsSnapshot().totalInventoryValue
+        case "seed_inventory":
+            return cachedSeedInventoryCount
+        case "crop_inventory":
+            return cachedCropInventoryCount
+        case "planted_tiles":
+            return plantedTileCount
+        default:
+            return 0
+        }
+    }
+
+    func marketProcessingSnapshot() -> MarketProcessingSnapshot {
+        let workshopLevel = buildingLevel(for: "workshop")
+        let windmillLevel = buildingLevel(for: "windmill")
+        let processingMultiplier = sellBonusMultiplier
+        let facilities = [
+            MarketProcessingFacility(
+                id: "workshop",
+                name: "Workshop",
+                icon: "🔧",
+                status: workshopLevel > 0 ? "Operational" : "Locked",
+                processingMultiplier: levelMultiplier(level: workshopLevel, values: [1.0, 1.05, 1.2, 1.35]),
+                batchCapacity: max(1, 1 * max(1, workshopLevel)),
+                unlocked: workshopLevel > 0,
+                level: workshopLevel
+            ),
+            MarketProcessingFacility(
+                id: "windmill",
+                name: "Windmill",
+                icon: "🏭",
+                status: windmillLevel > 0 ? "Operational" : "Locked",
+                processingMultiplier: levelMultiplier(level: windmillLevel, values: [2.0, 2.5, 3.0, 4.0, 6.0]),
+                batchCapacity: max(1, windmillLevel * 2),
+                unlocked: windmillLevel > 0,
+                level: windmillLevel
+            )
+        ]
+
+        let queueItems: [MarketProcessingQueueItem] = cropDefs.compactMap { crop in
+            guard let count = save.player.inventory.crops[crop.id], count > 0 else { return nil }
+            let projectedValue = Int((Double(crop.sellPrice) * processingMultiplier).rounded(.toNearestOrAwayFromZero))
+            let estimatedDays = max(1, Int((4.0 / max(1.0, processingMultiplier)).rounded(.up)))
+            return MarketProcessingQueueItem(
+                cropID: crop.id,
+                cropName: crop.name,
+                quantity: count,
+                estimatedDays: estimatedDays,
+                projectedValue: projectedValue * max(1, count)
+            )
+        }
+
+        return MarketProcessingSnapshot(
+            workshopUnlocked: workshopLevel > 0,
+            processingUnlocked: windmillLevel > 0 || workshopLevel > 0,
+            processingMultiplier: processingMultiplier,
+            facilityLevel: max(workshopLevel, windmillLevel),
+            facilities: facilities,
+            queue: queueItems,
+            estimatedQueueLength: queueItems.reduce(0) { $0 + $1.quantity }
         )
     }
 
@@ -527,7 +692,9 @@ final class GameStore {
 
         if offlineCatchup.dayDelta > 0 {
             for _ in 0..<offlineCatchup.dayDelta {
-                self.engine.advanceDay(growthMultiplier: self.growthMultiplier)
+                let nextDay = self.engine.save.world.day + 1
+                let weatherAwareGrowth = self.adjustedGrowthMultiplier(for: nextDay)
+                self.engine.advanceDay(growthMultiplier: weatherAwareGrowth, weatherMultiplier: weatherModifier(for: nextDay))
             }
             self.save = self.engine.save
             self.renderSnapshot = Self.makeSnapshot(save: self.save, cropDefsByID: self.engine.cropDefsByID)
@@ -669,7 +836,13 @@ final class GameStore {
         guard safeCount > 0 else { return }
 
         for _ in 0..<safeCount {
-            engine.advanceDay(growthMultiplier: growthMultiplier)
+            let nextDay = save.world.day + 1
+            let weatherAwareGrowth = adjustedGrowthMultiplier(for: nextDay)
+            let weatherMultiplier = weatherModifier(for: nextDay)
+            engine.advanceDay(
+                growthMultiplier: weatherAwareGrowth,
+                weatherMultiplier: weatherMultiplier
+            )
         }
         autoSellCrops()
         engine.setTimeState(timeEngine.state)
@@ -1507,7 +1680,7 @@ final class GameStore {
         save = engine.save
         renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
         selectedSeedID = cropDefs.first?.id ?? selectedSeedID
-        lastPlayerLevel = ProgressionSystem.level(forXP: fresh.player.xp)
+        lastPlayerLevel = ProgressionSystem.level(forXP: save.player.xp)
         syncState(statusOverride: "Save reset.", emitHaptic: false, emitHarvest: false)
         refreshHUDTime(force: true, now: Date().timeIntervalSince1970)
     }
@@ -1593,6 +1766,19 @@ final class GameStore {
 
     var growthMultiplier: Double {
         buildingGrowthMultiplier * researchGrowthMultiplier
+    }
+
+    private func adjustedGrowthMultiplier(for day: Int) -> Double {
+        let base = growthMultiplier
+        return min(5.0, max(0.15, base * weatherResilienceMultiplier(for: weatherModifier(for: max(1, day)))))
+    }
+
+    private func weatherResilienceMultiplier(for weatherModifier: Double) -> Double {
+        guard isResearchCompleted("climate_control") else { return 1.0 }
+        if weatherModifier < 1.0 {
+            return 1.0 - ((1.0 - weatherModifier) * 0.45)
+        }
+        return 1.0 + ((weatherModifier - 1.0) * 0.35)
     }
 
     private var researchGrowthMultiplier: Double {

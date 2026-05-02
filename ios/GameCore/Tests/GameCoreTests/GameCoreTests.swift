@@ -22,6 +22,28 @@ final class GameCoreTests: XCTestCase {
         XCTAssertEqual(engine.save.player.inventory.crops["carrot"], 1)
     }
 
+    func testAdvanceDayRespectsWeatherMultiplier() throws {
+        let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 5, seedCost: 1, sellPrice: 24)
+
+        var sunnySave = GameCoreEngine.defaultSave(gridWidth: 1, gridHeight: 1, starterSeeds: ["carrot": 1])
+        sunnySave.player.coins = 0
+        var sunnyEngine = GameCoreEngine(save: sunnySave, cropDefs: [carrot], seed: 42)
+        XCTAssertTrue(sunnyEngine.plant(tileIndex: 0, cropID: "carrot"))
+        sunnyEngine.advanceDay(growthMultiplier: 1.0, weatherMultiplier: 1.2)
+        let sunnyProgress = sunnyEngine.save.world.tiles[0].planted?.growthProgress ?? 0
+
+        var stormySave = GameCoreEngine.defaultSave(gridWidth: 1, gridHeight: 1, starterSeeds: ["carrot": 1])
+        stormySave.player.coins = 0
+        var stormyEngine = GameCoreEngine(save: stormySave, cropDefs: [carrot], seed: 42)
+        XCTAssertTrue(stormyEngine.plant(tileIndex: 0, cropID: "carrot"))
+        stormyEngine.advanceDay(growthMultiplier: 1.0, weatherMultiplier: 0.5)
+        let stormyProgress = stormyEngine.save.world.tiles[0].planted?.growthProgress ?? 0
+
+        XCTAssertGreaterThan(sunnyProgress, stormyProgress)
+        XCTAssertEqual(sunnyProgress, 1.2, accuracy: 0.001)
+        XCTAssertEqual(stormyProgress, 0.5, accuracy: 0.001)
+    }
+
     func testHarvestAllRespectsMaxCapacity() throws {
         let carrot = CropDef(id: "carrot", name: "Carrot", daysToGrow: 2, seedCost: 1, sellPrice: 24)
         var save = GameCoreEngine.defaultSave(gridWidth: 2, gridHeight: 1, starterSeeds: ["carrot": 2])
