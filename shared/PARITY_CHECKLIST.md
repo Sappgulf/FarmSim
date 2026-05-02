@@ -64,9 +64,10 @@ Legend:
 - [x] Events/Town Board (integrated into Town flow)
   - Web: `web/src/components/farm-sim/ui/tabs/EventsTab.jsx`
   - iOS: `ios/App/Sources/TownMarketView.swift` (Season Board section)
-- [ ] Weather tab
+- [x] Weather tab
   - Web: `web/src/components/farm-sim/ui/tabs/WeatherTab.jsx`
   - iOS: missing dedicated tab/flow
+  - iOS parity note: available as Forecast section inside `MarketSection` (`ios/App/Sources/TownMarketView.swift`)
 - [ ] Disease management
   - Web: `web/src/components/farm-sim/ui/tabs/DiseaseManagementTab.jsx`
   - iOS: missing dedicated tab/flow

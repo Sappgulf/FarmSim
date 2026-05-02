@@ -123,6 +123,7 @@ const GameHeader = memo(() => {
   const season = useGameSelector((state) => state.season || null);
   const farmTheme = useGameSelector((state) => state.farmTheme || null);
   const farmNameRaw = useGameSelector((state) => state.farmName || '');
+  const weatherForecast = useGameSelector((state) => Array.isArray(state.weatherForecast) ? state.weatherForecast : []);
   const autoSaveEnabled = useGameSelector((state) => Boolean(state.settings?.autoSave));
   const lastSavedAt = useGameSelector((state) => state.gameLoop?.lastSaveTime || null);
   const plots = useGameSelector((state) => (Array.isArray(state.plots) ? state.plots : []));
@@ -198,6 +199,26 @@ const GameHeader = memo(() => {
     const parts = String(achievementSummaryKey || '0|0').split('|');
     return [Number(parts[0]) || 0, Number(parts[1]) || 0];
   }, [achievementSummaryKey]);
+  const weatherForecastStrip = useMemo(() => {
+    const forecastItems = weatherForecast.slice(0, 3).map((forecastItem, index) => {
+      const meta = getWeatherMeta(forecastItem?.type || 'sunny');
+      return {
+        dayLabel: index === 0 ? 'Tomorrow' : `+${index + 1}d`,
+        weatherLabel: meta.label,
+        emoji: meta.emoji,
+        className: meta.headerClassName || 'text-slate-700',
+      };
+    });
+
+    if (weatherForecast.length >= 2) {
+      forecastItems[1].dayLabel = '+2d';
+    }
+    if (weatherForecast.length >= 3) {
+      forecastItems[2].dayLabel = '+3d';
+    }
+
+    return forecastItems;
+  }, [weatherForecast]);
 
   const nextGoal = useMemo(() => (
     getNextGoalFromCounts({
@@ -427,6 +448,7 @@ const GameHeader = memo(() => {
             onClick={() => openRelatedTab('weather')}
             className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg transition cursor-pointer ${weatherMeta.headerClassName}`}
             title="Open Weather"
+            aria-label="Open Weather"
           >
             <span className="text-lg animate-weather">
               {weatherMeta.emoji}
@@ -435,6 +457,26 @@ const GameHeader = memo(() => {
               {weatherMeta.label}
             </span>
           </button>
+
+          {weatherForecastStrip.length > 0 && (
+            <div className="hidden sm:flex items-center gap-1.5 rounded-lg bg-white/80 backdrop-blur-sm px-2 py-1 border border-gray-200/70">
+              <span className="text-[10px] font-semibold text-gray-500">Forecast</span>
+              {weatherForecastStrip.map((item) => (
+                <button
+                  key={item.dayLabel}
+                  type="button"
+                  onClick={() => openRelatedTab('weather')}
+                  className="flex items-center gap-1.5 px-1.5 py-1 rounded-lg text-[10px] transition-colors hover:bg-gray-100"
+                  aria-label={`Open weather forecast ${item.dayLabel}`}
+                  title={`Open Weather tab for ${item.dayLabel} (${item.weatherLabel})`}
+                >
+                  <span className="font-semibold text-gray-500">{item.dayLabel}</span>
+                  <span className="text-sm leading-none" aria-hidden="true">{item.emoji}</span>
+                  <span className={`font-semibold ${item.className}`}>{item.weatherLabel}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Achievement indicator */}
           <button

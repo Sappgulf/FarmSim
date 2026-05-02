@@ -2,6 +2,15 @@ import Foundation
 import Observation
 import GameCore
 
+struct MarketWeatherForecastDay: Identifiable {
+    let dayOffset: Int
+    let weather: WeatherType
+    let windowTitle: String
+    let intensityPercent: Int
+
+    var id: Int { dayOffset }
+}
+
 @Observable
 @MainActor
 final class GameStore {
@@ -295,6 +304,24 @@ final class GameStore {
 
     var farmName: String {
         settings.farmName
+    }
+
+    var weatherForecast: [MarketWeatherForecastDay] {
+        let sampleTimes: [Double] = [0.28, 0.52, 0.77]
+        return sampleTimes.enumerated().map { index, anchor in
+            let dayOffset = index + 1
+            let snapshot = FarmWeatherModel.resolve(
+                day: save.world.day + dayOffset,
+                timeProgress: anchor,
+                season: hudSeasonText
+            )
+            return MarketWeatherForecastDay(
+                dayOffset: dayOffset,
+                weather: snapshot.weather,
+                windowTitle: snapshot.windowTitle,
+                intensityPercent: snapshot.intensityPercent
+            )
+        }
     }
 
     var widgetSnapshot: WidgetFarmSnapshot {

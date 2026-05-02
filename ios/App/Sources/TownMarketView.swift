@@ -4,7 +4,7 @@ import GameCore
 // MARK: - MarketSection
 
 private enum MarketSection: String, CaseIterable, Identifiable {
-    case buy, sell, upgrades, challenges, fishing, pets
+    case buy, sell, upgrades, forecast, challenges, fishing, pets
     var id: String { rawValue }
 
     var title: String {
@@ -12,6 +12,7 @@ private enum MarketSection: String, CaseIterable, Identifiable {
         case .buy:        return "Buy"
         case .sell:       return "Sell"
         case .upgrades:   return "Upgrades"
+        case .forecast:   return "Forecast"
         case .challenges: return "Work Orders"
         case .fishing:    return "Fishing"
         case .pets:       return "Pets"
@@ -23,6 +24,7 @@ private enum MarketSection: String, CaseIterable, Identifiable {
         case .buy:        return "cart.fill"
         case .sell:       return "dollarsign.circle.fill"
         case .upgrades:   return "hammer.fill"
+        case .forecast:   return "cloud.sun.fill"
         case .challenges: return "checklist"
         case .fishing:    return "fish.fill"
         case .pets:       return "pawprint.fill"
@@ -618,12 +620,67 @@ private struct MarketSectionContent: View {
                 )
             case .upgrades:
                 MarketUpgradesSection(store: store)
+            case .forecast:
+                MarketForecastSection(store: store)
             case .challenges:
                 MarketChallengesSection(store: store, reducedMotion: reducedMotion)
             case .fishing:
                 FishingSection(store: store)
             case .pets:
                 PetsSection(store: store)
+            }
+        }
+    }
+}
+
+// MARK: - MarketForecastSection
+
+private struct MarketForecastSection: View {
+    let store: GameStore
+
+    var body: some View {
+        WoodenPanel {
+            VStack(alignment: .leading, spacing: DS.Space.sm) {
+                SectionHeader("Weather Forecast")
+                Text("Watch the sky before planting and harvesting.")
+                    .font(Typography.caption)
+                    .foregroundStyle(.white.opacity(0.72))
+
+                ForEach(store.weatherForecast) { entry in
+                    let delta = (entry.weather.cropGrowthModifier - 1.0) * 100
+                    let growthText = delta > 0
+                        ? String(format: "+%.0f%% growth", delta)
+                        : delta < 0
+                            ? String(format: "%.0f%% growth", delta)
+                            : "Normal growth"
+
+                    HStack(spacing: DS.Space.sm) {
+                        Text(entry.dayOffset == 1 ? "Tomorrow" : "+\(entry.dayOffset)d")
+                            .font(Typography.small.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 62, alignment: .leading)
+
+                        Text(entry.weather.icon)
+                            .font(.title2)
+                            .frame(width: 28)
+
+                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                            Text(entry.weather.rawValue)
+                                .font(Typography.bodyStrong)
+                                .foregroundStyle(.white)
+                            Text("\(entry.windowTitle) · \(growthText) · \(entry.intensityPercent)% intensity")
+                                .font(Typography.caption)
+                                .foregroundStyle(.white.opacity(0.7))
+                            Text(entry.weather.ambianceLabel)
+                                .font(Typography.caption)
+                                .foregroundStyle(.white.opacity(0.62))
+                        }
+                    }
+
+                    if entry.id != store.weatherForecast.last?.id {
+                        Divider().padding(.leading, 74).background(.white.opacity(0.12))
+                    }
+                }
             }
         }
     }
