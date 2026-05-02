@@ -1,0 +1,7 @@
+.subagents
+ios
+node_modules
+web/node_modules
+.vercel
+.vscode
+.DS_Store
