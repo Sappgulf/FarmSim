@@ -470,6 +470,10 @@ export function GameProvider({ children }) {
     updateJournal: (journal) => dispatch({ type: GAME_ACTIONS.UPDATE_JOURNAL, payload: journal }),
     updateWhatsNew: (whatsNew) => dispatch({ type: GAME_ACTIONS.UPDATE_WHATS_NEW, payload: whatsNew }),
     updateOnboarding: (onboarding) => dispatch({ type: GAME_ACTIONS.UPDATE_ONBOARDING, payload: onboarding }),
+    setHasLaunchedBefore: () => dispatch({
+      type: GAME_ACTIONS.UPDATE_SESSION_CONTEXT,
+      payload: { hasLaunchedBefore: true },
+    }),
     updateRetention: (retention) => dispatch({ type: GAME_ACTIONS.UPDATE_RETENTION, payload: retention }),
     resetOnboarding: () => dispatch({
       type: GAME_ACTIONS.UPDATE_ONBOARDING,

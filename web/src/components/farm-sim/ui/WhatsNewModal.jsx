@@ -32,8 +32,10 @@ export const shouldShowWhatsNew = ({
   appVersion = APP_VERSION,
   onboardingStep = 0,
   onboardingSkipped = false,
+  hasLaunchedBefore = false,
 }) => (
   hasNotes
+  && hasLaunchedBefore
   && lastSeenVersion !== appVersion
   && (onboardingSkipped || onboardingStep >= MIN_ONBOARDING_STEP_FOR_WHATS_NEW)
 );
@@ -43,6 +45,7 @@ const WhatsNewModal = memo(() => {
   const whatsNew = useGameSelector((state) => state.whatsNew || null);
   const onboardingStep = useGameSelector((state) => state.onboardingStep || 0);
   const onboardingSkipped = useGameSelector((state) => Boolean(state.onboardingSkipped));
+  const hasLaunchedBefore = useGameSelector((state) => Boolean(state.hasLaunchedBefore));
   const [isOpen, setIsOpen] = useState(false);
 
   const content = getContentManager();
@@ -52,6 +55,7 @@ const WhatsNewModal = memo(() => {
   const shouldShow = shouldShowWhatsNew({
     hasNotes,
     lastSeenVersion,
+    hasLaunchedBefore,
     onboardingStep,
     onboardingSkipped,
   });

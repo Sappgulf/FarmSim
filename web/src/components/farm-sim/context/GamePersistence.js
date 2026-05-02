@@ -651,6 +651,7 @@ export function migrateSaveData(savedData) {
             migratedData.onboardingSkipped,
             saveVersion < 4 ? true : false
         );
+        migratedData.hasLaunchedBefore = true;
 
         migratedData.gameLoop = {
             lastUpdate: clampNumber(migratedData.gameLoop?.lastUpdate, Date.now(), { min: 0 }),

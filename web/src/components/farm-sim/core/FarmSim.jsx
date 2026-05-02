@@ -161,6 +161,7 @@ export function FarmSimCore() {
   }, [actions, findSectionForTab]);
 
   const handleStartScreenStart = useCallback((mode = 'continue') => {
+    actions.setHasLaunchedBefore();
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(START_SCREEN_STORAGE_KEY, 'true');
     }

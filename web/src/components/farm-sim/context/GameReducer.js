@@ -204,6 +204,7 @@ export const initialState = {
     onboardingSeen: false,
     onboardingStep: 0,
     onboardingSkipped: false,
+    hasLaunchedBefore: false,
     settings: {
         autoSave: true,
         soundEnabled: true,
@@ -688,6 +689,14 @@ export function gameReducer(state, action) {
                 onboardingSeen: action.payload?.onboardingSeen ?? state.onboardingSeen,
                 onboardingStep: action.payload?.onboardingStep ?? state.onboardingStep,
                 onboardingSkipped: action.payload?.onboardingSkipped ?? state.onboardingSkipped,
+            };
+
+        case GAME_ACTIONS.UPDATE_SESSION_CONTEXT:
+            return {
+                ...state,
+                hasLaunchedBefore: typeof action.payload?.hasLaunchedBefore === 'boolean'
+                    ? action.payload.hasLaunchedBefore
+                    : state.hasLaunchedBefore,
             };
 
         case GAME_ACTIONS.UPDATE_PETS:
