@@ -36,6 +36,13 @@ final class AppState {
         rootScreen = .menu
     }
 
+    func applyPendingShortcutRoute() {
+        guard let tabRawValue = FarmIntentRouter.consumePendingTab() else { return }
+        guard let tab = GameTab(rawValue: tabRawValue) else { return }
+        selectedTab = tab
+        rootScreen = .game
+    }
+
     func startGame(tab: GameTab = .farm) {
         selectedTab = tab
         rootScreen = .game

@@ -43,6 +43,7 @@ struct BootView: View {
         }
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.32), value: appState.rootScreen)
         .onAppear {
+            appState.applyPendingShortcutRoute()
             hasSave = Self.probeHasSave()
             // Eagerly load store for menu
             if store == nil {

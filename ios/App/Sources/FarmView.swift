@@ -280,6 +280,7 @@ struct FarmView: View {
                         }
                     }
                 }
+                WeatherForecastStrip(forecast: Array(store.weatherForecast.prefix(3)))
 
                 ProgressView(value: Double(store.save.player.xp % ProgressionSystem.xpPerLevel), total: Double(ProgressionSystem.xpPerLevel))
                     .tint(DS.Color.xp)
@@ -308,7 +309,6 @@ struct FarmView: View {
                 .accessibilityValue(store.statusText)
         }
     }
-
 
     private var seedTray: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -475,6 +475,68 @@ struct FarmView: View {
         }
         
         return items
+    }
+
+    private struct WeatherForecastStrip: View {
+        let forecast: [MarketWeatherForecastDay]
+
+        var body: some View {
+            if forecast.isEmpty {
+                EmptyView()
+            } else {
+                HStack(spacing: DS.Space.xs) {
+                    ForEach(forecast) { entry in
+                        VStack(spacing: 2) {
+                            Text(forecastDayLabel(for: entry))
+                                .font(Typography.caption)
+                                .foregroundStyle(.white.opacity(0.76))
+                                .lineLimit(1)
+
+                            Text(entry.weather.icon)
+                                .font(.title3)
+                                .frame(height: 22)
+
+                            Text(entry.weather.rawValue)
+                                .font(Typography.caption)
+                                .foregroundStyle(.white.opacity(0.72))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+
+                            Text("\(entry.intensityPercent)%")
+                                .font(Typography.caption)
+                                .foregroundStyle(.white.opacity(0.64))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, DS.Space.xs)
+                        .background(
+                            Capsule()
+                                .fill(Color.white.opacity(0.12))
+                        )
+                        .overlay(
+                            Capsule()
+                                .stroke(entry.weather.tintColor.opacity(0.35), lineWidth: 0.8)
+                        )
+                        .accessibilityLabel("Forecast day \(forecastDayLabel(for: entry))")
+                        .accessibilityValue("\(entry.weather.rawValue), \(entry.windowTitle), \(entry.intensityPercent)% intensity")
+                    }
+                }
+                .padding(.horizontal, DS.Space.xs)
+                .padding(.vertical, DS.Space.xs)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                        .fill(Color.black.opacity(0.24))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                                .stroke(Color.white.opacity(0.16), lineWidth: 0.6)
+                        )
+                )
+            }
+        }
+
+    private func forecastDayLabel(for entry: MarketWeatherForecastDay) -> String {
+        entry.dayOffset == 1 ? "Tomorrow" : "+\(entry.dayOffset)d"
+    }
     }
 }
 

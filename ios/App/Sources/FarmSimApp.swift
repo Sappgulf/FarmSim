@@ -30,6 +30,7 @@ struct FarmSimApp: App {
                 if appState.rootScreen == .game && scenePhase == .active {
                     loopDriver?.start()
                 }
+                appState.applyPendingShortcutRoute()
                 store?.setAppActive(scenePhase == .active)
                 store?.setMenuPresented(appState.rootScreen == .menu)
             }
@@ -45,6 +46,7 @@ struct FarmSimApp: App {
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
+                appState.applyPendingShortcutRoute()
                 store?.setAppActive(true)
                 if appState.rootScreen == .game {
                     loopDriver?.start()

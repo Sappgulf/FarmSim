@@ -26,6 +26,7 @@
 		5C26A8CA2E911187CCC04A27 /* content in Resources */ = {isa = PBXBuildFile; fileRef = 835A76F4A14781439024499F /* content */; };
 		5E59D25F82C14C1A34E32422 /* AppModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D15194E8D0DB27FBF80242B /* AppModels.swift */; };
 		60DD5637C29527180F1186A3 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 606F6628867A4DAEE9A09B5A /* SettingsView.swift */; };
+		687F5A8E6F579C29A74092AB /* FarmShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBB0662294557590E0866674 /* FarmShortcuts.swift */; };
 		6E37424541C7B4CE31C6E2E7 /* BarnBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E6F4D01739AB1DC0FE9CE9 /* BarnBackgroundView.swift */; };
 		73276090F48C2C38C49DAF36 /* HomesteadMenuScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D42EF966A07393C213649E6 /* HomesteadMenuScene.swift */; };
 		7BB126C46508EF02697A5063 /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E09E2A7A1B6C7A408ED0E4 /* GameStore.swift */; };
@@ -35,6 +36,7 @@
 		826467693FB60315143C88F0 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C47BCE186C8445BFD350779 /* Typography.swift */; };
 		873E3E2C4DC5A0D52232AF88 /* PetsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AF4540AEFAE2A913FDA5F20 /* PetsView.swift */; };
 		87902432CFFB44D1724A1DF5 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 948D0B52C7D687974340E421 /* AppState.swift */; };
+		9FB58C2910491AADD147B94C /* FarmIntentRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40818AD52404FADE60F2250F /* FarmIntentRouter.swift */; };
 		A156DE1AADBF34780D3EB898 /* BootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CF307E5307009A22F64FD47 /* BootView.swift */; };
 		A51E8CBA1A83F44471CD26D8 /* WeatherSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D8064B56ACF2B12E03AA544 /* WeatherSystem.swift */; };
 		AF26274D3FF4CD79B1217925 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15D3EA798EEF785C1EDDBDD /* DesignSystem.swift */; };
@@ -66,6 +68,7 @@
 		357FD8606D9DB4A8A31939CC /* TownMarketView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TownMarketView.swift; sourceTree = "<group>"; };
 		3D15194E8D0DB27FBF80242B /* AppModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModels.swift; sourceTree = "<group>"; };
 		3DF65BF944352692FEA98F08 /* ContentRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentRepository.swift; sourceTree = "<group>"; };
+		40818AD52404FADE60F2250F /* FarmIntentRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FarmIntentRouter.swift; sourceTree = "<group>"; };
 		414AA71CAEFFBAA225B675E5 /* GameShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameShellView.swift; sourceTree = "<group>"; };
 		4D6A7C0DAA792D766130B984 /* BarnHeaderHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarnHeaderHUD.swift; sourceTree = "<group>"; };
 		4D8064B56ACF2B12E03AA544 /* WeatherSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherSystem.swift; sourceTree = "<group>"; };
@@ -95,6 +98,7 @@
 		DE7023B05D13E79F0132D0DF /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		F40F33DFB7D52F84EBDFA060 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		FB8CCE7C8FFEB4774FA2F358 /* InventoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryView.swift; sourceTree = "<group>"; };
+		FBB0662294557590E0866674 /* FarmShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FarmShortcuts.swift; sourceTree = "<group>"; };
 		FE6F6B0F37323C6BC28BCE3C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FFDABDF51EE7D2E47B9DE59D /* FarmScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FarmScene.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -177,8 +181,10 @@
 				3DF65BF944352692FEA98F08 /* ContentRepository.swift */,
 				A15D3EA798EEF785C1EDDBDD /* DesignSystem.swift */,
 				240722FDC0F1B1671F1FC88B /* EnhancedMarketUI.swift */,
+				40818AD52404FADE60F2250F /* FarmIntentRouter.swift */,
 				0592929B9C2CCD4116EC7BFD /* FarmNotifications.swift */,
 				FFDABDF51EE7D2E47B9DE59D /* FarmScene.swift */,
+				FBB0662294557590E0866674 /* FarmShortcuts.swift */,
 				BC85027D49EBD255ADF02D94 /* FarmSimApp.swift */,
 				088F4123377BE584FF514CA7 /* FarmView.swift */,
 				1DFCB78AF03811ED2DDB3C7B /* FishingView.swift */,
@@ -273,9 +279,10 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
 			};
 			buildConfigurationList = 2777D6CDF145A6B0F8EA659B /* Build configuration list for PBXProject "FarmSim" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -288,6 +295,7 @@
 				DF68C75AD8738CED28532788 /* XCLocalSwiftPackageReference "GameCore" */,
 			);
 			preferredProjectObjectVersion = 77;
+			productRefGroup = 25C8FD2F8CCF1492CFC4EFF5 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -325,8 +333,10 @@
 				B256A6E29E90580B8267F881 /* ContentRepository.swift in Sources */,
 				AF26274D3FF4CD79B1217925 /* DesignSystem.swift in Sources */,
 				AF6488D033C8BDFD4F5CBE9C /* EnhancedMarketUI.swift in Sources */,
+				9FB58C2910491AADD147B94C /* FarmIntentRouter.swift in Sources */,
 				4ABA4A4DEB2B0AC8A87FDBE3 /* FarmNotifications.swift in Sources */,
 				1F53A35004EFB2458DE650E2 /* FarmScene.swift in Sources */,
+				687F5A8E6F579C29A74092AB /* FarmShortcuts.swift in Sources */,
 				2B5AE1A45B2CE1593793A12C /* FarmSimApp.swift in Sources */,
 				4D4453BC4033E28BF4900048 /* FarmView.swift in Sources */,
 				27BCB1E74A82B731B673057D /* FishingView.swift in Sources */,
