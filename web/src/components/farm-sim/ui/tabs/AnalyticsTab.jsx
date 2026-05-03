@@ -3,18 +3,26 @@ import { useGame } from '../../context/GameContext';
 import { CROP_DATA } from '../../constants/cropData';
 import { Card } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
-import { TrendingUp, TrendingDown, DollarSign, Zap, Award, BarChart3, PieChart } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Zap,
+  Award,
+  BarChart3,
+  PieChart,
+} from 'lucide-react';
 
 /**
  * Farm Analytics Dashboard
  * Provides detailed statistics, insights, and performance metrics
  */
 const COLOR_CLASSES = {
-  blue:   { border: 'border-blue-500',   bg: 'bg-blue-100',   text: 'text-blue-600' },
-  green:  { border: 'border-green-500',  bg: 'bg-green-100',  text: 'text-green-600' },
+  blue: { border: 'border-blue-500', bg: 'bg-blue-100', text: 'text-blue-600' },
+  green: { border: 'border-green-500', bg: 'bg-green-100', text: 'text-green-600' },
   yellow: { border: 'border-yellow-500', bg: 'bg-yellow-100', text: 'text-yellow-600' },
   purple: { border: 'border-purple-500', bg: 'bg-purple-100', text: 'text-purple-600' },
-  red:    { border: 'border-red-500',    bg: 'bg-red-100',    text: 'text-red-600' },
+  red: { border: 'border-red-500', bg: 'bg-red-100', text: 'text-red-600' },
 };
 
 const StatCard = memo(({ icon: Icon, label, value, change, trend, color = 'blue' }) => {
@@ -55,15 +63,19 @@ const AnalyticsTab = memo(() => {
 
   // Calculate comprehensive stats
   const analytics = useMemo(() => {
-    const activePlots = (state.plots || []).filter(p => p.state !== 'empty');
-    const readyPlots = (state.plots || []).filter(p => p.state === 'ready');
-    const growingPlots = (state.plots || []).filter(p => p.state === 'growing' || p.state === 'planted');
-    const witheredPlots = (state.plots || []).filter(p => p.state === 'withered');
+    const activePlots = (state.plots || []).filter((p) => p.state !== 'empty');
+    const readyPlots = (state.plots || []).filter((p) => p.state === 'ready');
+    const growingPlots = (state.plots || []).filter(
+      (p) => p.state === 'growing' || p.state === 'planted'
+    );
+    const witheredPlots = (state.plots || []).filter((p) => p.state === 'withered');
 
-    const cropInventoryEntries = Object.entries(state.inventory || {})
-      .filter(([itemId, quantity]) => CROP_DATA[itemId] && Number(quantity) > 0);
-    const processedInventoryEntries = Object.entries(state.processedInventory || {})
-      .filter(([, quantity]) => Number(quantity) > 0);
+    const cropInventoryEntries = Object.entries(state.inventory || {}).filter(
+      ([itemId, quantity]) => CROP_DATA[itemId] && Number(quantity) > 0
+    );
+    const processedInventoryEntries = Object.entries(state.processedInventory || {}).filter(
+      ([, quantity]) => Number(quantity) > 0
+    );
 
     const processedProductValues = {
       flour: 28,
@@ -76,40 +88,50 @@ const AnalyticsTab = memo(() => {
 
     const totalHarvests = Number(state.milestones?.progress?.totalHarvests || 0);
     const daysPlayed = Number(
-      state.milestones?.progress?.daysPlayed
-      || state.almanac?.counters?.dayCount
-      || 0
+      state.milestones?.progress?.daysPlayed || state.almanac?.counters?.dayCount || 0
     );
     const cropStockValue = cropInventoryEntries.reduce((sum, [cropId, quantity]) => {
       const marketPrice = Number(state.inventory?.[`${cropId}_price`]);
       const fallbackPrice = Number(CROP_DATA[cropId]?.sellPrice || 0);
-      const unitPrice = Number.isFinite(marketPrice) && marketPrice > 0 ? marketPrice : fallbackPrice;
-      return sum + (Math.max(0, Number(quantity) || 0) * unitPrice);
+      const unitPrice =
+        Number.isFinite(marketPrice) && marketPrice > 0 ? marketPrice : fallbackPrice;
+      return sum + Math.max(0, Number(quantity) || 0) * unitPrice;
     }, 0);
-    const processedStockValue = processedInventoryEntries.reduce((sum, [productId, quantity]) => (
-      sum + (Math.max(0, Number(quantity) || 0) * (processedProductValues[productId] || 0))
-    ), 0);
-    const totalStockValue = cropStockValue + processedStockValue;
-    const totalStockUnits = cropInventoryEntries.reduce(
-      (sum, [, quantity]) => sum + Math.max(0, Number(quantity) || 0),
-      0
-    ) + processedInventoryEntries.reduce(
-      (sum, [, quantity]) => sum + Math.max(0, Number(quantity) || 0),
+    const processedStockValue = processedInventoryEntries.reduce(
+      (sum, [productId, quantity]) =>
+        sum + Math.max(0, Number(quantity) || 0) * (processedProductValues[productId] || 0),
       0
     );
+    const totalStockValue = cropStockValue + processedStockValue;
+    const totalStockUnits =
+      cropInventoryEntries.reduce(
+        (sum, [, quantity]) => sum + Math.max(0, Number(quantity) || 0),
+        0
+      ) +
+      processedInventoryEntries.reduce(
+        (sum, [, quantity]) => sum + Math.max(0, Number(quantity) || 0),
+        0
+      );
     const stockTypeCount = cropInventoryEntries.length + processedInventoryEntries.length;
 
     // Calculate efficiency metrics
-    const plotUtilization = state.plots.length > 0 ? (activePlots.length / state.plots.length) * 100 : 0;
-    const harvestReadiness = activePlots.length > 0 ? (readyPlots.length / activePlots.length) * 100 : 0;
-    const healthRate = activePlots.length > 0 ? ((activePlots.length - witheredPlots.length) / activePlots.length) * 100 : 100;
+    const plotUtilization =
+      state.plots.length > 0 ? (activePlots.length / state.plots.length) * 100 : 0;
+    const harvestReadiness =
+      activePlots.length > 0 ? (readyPlots.length / activePlots.length) * 100 : 0;
+    const healthRate =
+      activePlots.length > 0
+        ? ((activePlots.length - witheredPlots.length) / activePlots.length) * 100
+        : 100;
 
     // Crop diversity
-    const uniqueCrops = new Set(activePlots.map(p => p.crop?.id).filter(Boolean));
+    const uniqueCrops = new Set(activePlots.map((p) => p.crop?.id).filter(Boolean));
     const diversityScore = (uniqueCrops.size / 17) * 100; // Out of 17 total crops
 
     // Building efficiency
-    const buildingsOwned = Object.keys(state.buildings).filter(id => state.buildings[id]?.built).length;
+    const buildingsOwned = Object.keys(state.buildings).filter(
+      (id) => state.buildings[id]?.built
+    ).length;
     const buildingScore = (buildingsOwned / 6) * 100; // Out of 6 total buildings
 
     return {
@@ -135,14 +157,21 @@ const AnalyticsTab = memo(() => {
         level: state.level,
         xp: state.xp,
         coins: state.coins,
-        achievements: state.achievements?.filter(a => a.unlocked).length || 0,
+        achievements: state.achievements?.filter((a) => a.unlocked).length || 0,
         buildingsOwned,
       },
       efficiency: {
         diversityScore,
         buildingScore,
-        weatherImpact: state.weather === 'sunny' ? 20 : state.weather === 'rainy' ? 10 : state.weather === 'stormy' ? -20 : 0,
-      }
+        weatherImpact:
+          state.weather === 'sunny'
+            ? 20
+            : state.weather === 'rainy'
+              ? 10
+              : state.weather === 'stormy'
+                ? -20
+                : 0,
+      },
     };
   }, [state]);
 
@@ -156,14 +185,16 @@ const AnalyticsTab = memo(() => {
       .map(([cropId, count]) => ({ id: cropId, count: Number(count) || 0 }));
   }, [state.inventory]);
 
-  const overallScore = useMemo(() => (
-    Math.round((
-      analytics.plots.utilization * 0.3 +
-      analytics.performance.healthRate * 0.3 +
-      analytics.efficiency.diversityScore * 0.2 +
-      analytics.efficiency.buildingScore * 0.2
-    ))
-  ), [analytics]);
+  const overallScore = useMemo(
+    () =>
+      Math.round(
+        analytics.plots.utilization * 0.3 +
+          analytics.performance.healthRate * 0.3 +
+          analytics.efficiency.diversityScore * 0.2 +
+          analytics.efficiency.buildingScore * 0.2
+      ),
+    [analytics]
+  );
 
   const overallStatus = useMemo(() => {
     if (overallScore >= 80) return 'Outstanding! 🎉';
@@ -175,35 +206,63 @@ const AnalyticsTab = memo(() => {
   // Insights and recommendations
   const insights = useMemo(() => {
     const tips = [];
-    
+
     if (analytics.plots.utilization < 50) {
-      tips.push({ type: 'warning', message: '⚠️ Low plot utilization! Plant more crops to maximize earnings.', priority: 'high' });
+      tips.push({
+        type: 'warning',
+        message: '⚠️ Low plot utilization! Plant more crops to maximize earnings.',
+        priority: 'high',
+      });
     }
-    
+
     if (analytics.plots.ready >= 3) {
-      tips.push({ type: 'success', message: '🌾 You have crops ready to harvest! Collect them now for coins.', priority: 'high' });
+      tips.push({
+        type: 'success',
+        message: '🌾 You have crops ready to harvest! Collect them now for coins.',
+        priority: 'high',
+      });
     }
-    
+
     if (analytics.plots.withered >= 2) {
-      tips.push({ type: 'error', message: '💀 Multiple withered crops! Check water levels and weather protection.', priority: 'high' });
+      tips.push({
+        type: 'error',
+        message: '💀 Multiple withered crops! Check water levels and weather protection.',
+        priority: 'high',
+      });
     }
-    
+
     if (analytics.efficiency.diversityScore < 30) {
-      tips.push({ type: 'info', message: '🌱 Try growing different crops! Diversity unlocks achievements.', priority: 'medium' });
+      tips.push({
+        type: 'info',
+        message: '🌱 Try growing different crops! Diversity unlocks achievements.',
+        priority: 'medium',
+      });
     }
-    
+
     if (analytics.progression.buildingsOwned === 0 && state.coins > 150) {
-      tips.push({ type: 'success', message: '🏗️ You can afford a building! Water Well provides weather protection.', priority: 'high' });
+      tips.push({
+        type: 'success',
+        message: '🏗️ You can afford a building! Water Well provides weather protection.',
+        priority: 'high',
+      });
     }
-    
+
     if (analytics.performance.totalHarvests >= 50) {
-      tips.push({ type: 'success', message: '📦 Harvest volume is climbing. Keep the sell queue moving to avoid idle stock.', priority: 'low' });
+      tips.push({
+        type: 'success',
+        message: '📦 Harvest volume is climbing. Keep the sell queue moving to avoid idle stock.',
+        priority: 'low',
+      });
     }
-    
+
     if (state.weather === 'stormy' && !state.buildings?.greenhouse?.built) {
-      tips.push({ type: 'warning', message: '⛈️ Storm active! Consider building greenhouse for protection.', priority: 'medium' });
+      tips.push({
+        type: 'warning',
+        message: '⛈️ Storm active! Consider building greenhouse for protection.',
+        priority: 'medium',
+      });
     }
-    
+
     return tips.sort((a, b) => {
       const priority = { high: 0, medium: 1, low: 2 };
       return priority[a.priority] - priority[b.priority];
@@ -224,14 +283,17 @@ const AnalyticsTab = memo(() => {
                 Farm performance dashboard
               </h3>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/70">
-                Real-time metrics, stock value, and recommendations drawn directly from the live farm state.
+                Real-time metrics, stock value, and recommendations drawn directly from the live
+                farm state.
               </p>
             </div>
           </div>
 
           <div className="grid gap-2 sm:grid-cols-2 lg:min-w-[280px] lg:grid-cols-1">
             <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-white/60">Live snapshot</div>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-white/60">
+                Live snapshot
+              </div>
               <div className="mt-1 flex items-end justify-between gap-3">
                 <div>
                   <div className="text-3xl font-bold tabular-nums text-white">{overallScore}</div>
@@ -243,9 +305,12 @@ const AnalyticsTab = memo(() => {
               </div>
             </div>
             <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-white/60">Snapshot note</div>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-white/60">
+                Snapshot note
+              </div>
               <p className="mt-1 text-sm leading-relaxed text-white/75">
-                Plot usage, stock health, diversity, and buildings are weighted into the overall score.
+                Plot usage, stock health, diversity, and buildings are weighted into the overall
+                score.
               </p>
             </div>
           </div>
@@ -292,10 +357,13 @@ const AnalyticsTab = memo(() => {
               <div
                 key={idx}
                 className={`rounded-2xl border p-3 shadow-sm ${
-                  insight.type === 'success' ? 'bg-green-50 border-green-500' :
-                  insight.type === 'warning' ? 'bg-yellow-50 border-yellow-500' :
-                  insight.type === 'error' ? 'bg-red-50 border-red-500' :
-                  'bg-blue-50 border-blue-500'
+                  insight.type === 'success'
+                    ? 'bg-green-50 border-green-500'
+                    : insight.type === 'warning'
+                      ? 'bg-yellow-50 border-yellow-500'
+                      : insight.type === 'error'
+                        ? 'bg-red-50 border-red-500'
+                        : 'bg-blue-50 border-blue-500'
                 }`}
               >
                 <p className="text-sm">{insight.message}</p>
@@ -334,23 +402,23 @@ const AnalyticsTab = memo(() => {
               <span className="text-sm text-gray-600">Withered</span>
               <Badge className="bg-red-600">{analytics.plots.withered}</Badge>
             </div>
-            
+
             {/* Visual Progress Bar */}
             <div className="mt-4">
               <div className="text-xs text-gray-600 mb-1">Plot Status Distribution</div>
               <div className="h-4 bg-gray-200 rounded-full overflow-hidden flex">
-                <div 
-                  className="bg-yellow-500" 
+                <div
+                  className="bg-yellow-500"
                   style={{ width: `${(analytics.plots.ready / analytics.plots.total) * 100}%` }}
                   title="Ready"
                 />
-                <div 
-                  className="bg-green-500" 
+                <div
+                  className="bg-green-500"
                   style={{ width: `${(analytics.plots.growing / analytics.plots.total) * 100}%` }}
                   title="Growing"
                 />
-                <div 
-                  className="bg-red-500" 
+                <div
+                  className="bg-red-500"
                   style={{ width: `${(analytics.plots.withered / analytics.plots.total) * 100}%` }}
                   title="Withered"
                 />
@@ -373,11 +441,15 @@ const AnalyticsTab = memo(() => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Stored Units</span>
-              <span className="font-semibold">{analytics.performance.totalStockUnits.toLocaleString()}</span>
+              <span className="font-semibold">
+                {analytics.performance.totalStockUnits.toLocaleString()}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Stock Value</span>
-              <span className="font-semibold">{analytics.performance.totalStockValue.toLocaleString()}🪙</span>
+              <span className="font-semibold">
+                {analytics.performance.totalStockValue.toLocaleString()}🪙
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Queued Batches</span>
@@ -385,13 +457,17 @@ const AnalyticsTab = memo(() => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Harvest Readiness</span>
-              <span className={`font-semibold ${analytics.performance.harvestReadiness > 70 ? 'text-green-600' : 'text-yellow-600'}`}>
+              <span
+                className={`font-semibold ${analytics.performance.harvestReadiness > 70 ? 'text-green-600' : 'text-yellow-600'}`}
+              >
                 {Math.round(analytics.performance.harvestReadiness)}%
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Crop Health Rate</span>
-              <span className={`font-semibold ${analytics.performance.healthRate > 90 ? 'text-green-600' : 'text-yellow-600'}`}>
+              <span
+                className={`font-semibold ${analytics.performance.healthRate > 90 ? 'text-green-600' : 'text-yellow-600'}`}
+              >
                 {Math.round(analytics.performance.healthRate)}%
               </span>
             </div>
@@ -404,7 +480,10 @@ const AnalyticsTab = memo(() => {
           {topCrops.length > 0 ? (
             <div className="space-y-2">
               {topCrops.map((crop, idx) => (
-                <div key={crop.id} className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-slate-50/80 p-2">
+                <div
+                  key={crop.id}
+                  className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-slate-50/80 p-2"
+                >
                   <div className="flex items-center gap-2">
                     <Badge className="bg-amber-600 text-white">{idx + 1}</Badge>
                     <span className="text-sm capitalize">{crop.id}</span>
@@ -414,7 +493,9 @@ const AnalyticsTab = memo(() => {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500">No crops harvested yet. Start farming to see your top performers!</p>
+            <p className="text-sm text-gray-500">
+              No crops harvested yet. Start farming to see your top performers!
+            </p>
           )}
         </Card>
 
@@ -425,37 +506,47 @@ const AnalyticsTab = memo(() => {
             <div>
               <div className="flex justify-between mb-1">
                 <span className="text-sm text-gray-600">Crop Diversity</span>
-                <span className="text-sm font-semibold">{Math.round(analytics.efficiency.diversityScore)}%</span>
+                <span className="text-sm font-semibold">
+                  {Math.round(analytics.efficiency.diversityScore)}%
+                </span>
               </div>
               <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
                   style={{ width: `${analytics.efficiency.diversityScore}%` }}
                 />
               </div>
             </div>
-            
+
             <div>
               <div className="flex justify-between mb-1">
                 <span className="text-sm text-gray-600">Building Progress</span>
-                <span className="text-sm font-semibold">{Math.round(analytics.efficiency.buildingScore)}%</span>
+                <span className="text-sm font-semibold">
+                  {Math.round(analytics.efficiency.buildingScore)}%
+                </span>
               </div>
               <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-500"
                   style={{ width: `${analytics.efficiency.buildingScore}%` }}
                 />
               </div>
             </div>
-            
+
             <div className="pt-2 border-t">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Current Weather Impact</span>
-                <Badge className={
-                  analytics.efficiency.weatherImpact > 0 ? 'bg-green-600' :
-                  analytics.efficiency.weatherImpact < 0 ? 'bg-red-600' : 'bg-gray-600'
-                }>
-                  {analytics.efficiency.weatherImpact > 0 ? '+' : ''}{analytics.efficiency.weatherImpact}%
+                <Badge
+                  className={
+                    analytics.efficiency.weatherImpact > 0
+                      ? 'bg-green-600'
+                      : analytics.efficiency.weatherImpact < 0
+                        ? 'bg-red-600'
+                        : 'bg-gray-600'
+                  }
+                >
+                  {analytics.efficiency.weatherImpact > 0 ? '+' : ''}
+                  {analytics.efficiency.weatherImpact}%
                 </Badge>
               </div>
             </div>

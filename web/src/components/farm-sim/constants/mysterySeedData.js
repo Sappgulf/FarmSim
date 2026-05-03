@@ -8,7 +8,7 @@ export const SEED_RARITIES = {
     id: 'common',
     name: 'Common',
     color: '#9ca3af',
-    dropRate: 0.60, // 60%
+    dropRate: 0.6, // 60%
     emoji: '⚪',
   },
   UNCOMMON: {
@@ -22,7 +22,7 @@ export const SEED_RARITIES = {
     id: 'rare',
     name: 'Rare',
     color: '#3b82f6',
-    dropRate: 0.10, // 10%
+    dropRate: 0.1, // 10%
     emoji: '🔵',
   },
   EPIC: {
@@ -56,7 +56,7 @@ export const CROP_RARITY_MAP = {
   potato: 'common',
   parsnip: 'common',
   wheat: 'common',
-  
+
   // Uncommon (25%) - Level 2 crops
   cabbage: 'uncommon',
   corn: 'uncommon',
@@ -64,7 +64,7 @@ export const CROP_RARITY_MAP = {
   sunflower: 'uncommon',
   herb: 'uncommon',
   tomato: 'uncommon',
-  
+
   // Rare (10%) - Level 3 crops
   eggplant: 'rare',
   rice: 'rare',
@@ -73,11 +73,11 @@ export const CROP_RARITY_MAP = {
   chili: 'rare',
   cranberry: 'rare',
   pumpkin: 'rare',
-  
+
   // Epic (4%) - Level 4 crops
   grapes: 'epic',
   watermelon: 'epic',
-  
+
   // Legendary (1%) - Level 5 crops
   rose: 'legendary',
 };
@@ -90,7 +90,7 @@ export function rollMysterySeed() {
   const roll = Math.random();
   let cumulativeProbability = 0;
   let selectedRarity = 'common';
-  
+
   // Determine rarity based on drop rates
   for (const rarity of RARITY_LIST) {
     cumulativeProbability += rarity.dropRate;
@@ -99,7 +99,7 @@ export function rollMysterySeed() {
       break;
     }
   }
-  
+
   // Get all crops of this rarity
   const cropsOfRarity = Object.entries(CROP_RARITY_MAP)
     .filter(([_, rarity]) => rarity === selectedRarity)
@@ -107,10 +107,10 @@ export function rollMysterySeed() {
 
   const fallbackPool = Object.keys(CROP_RARITY_MAP);
   const selectedPool = cropsOfRarity.length > 0 ? cropsOfRarity : fallbackPool;
-  
+
   // Randomly select one crop from this rarity tier
   const cropId = selectedPool[Math.floor(Math.random() * selectedPool.length)];
-  
+
   return {
     cropId,
     rarity: selectedRarity,
@@ -163,19 +163,20 @@ export const MYSTERY_SEED_PACKS = {
  */
 export function rollMysterySeedWithGuarantee(minimumRarity) {
   const result = rollMysterySeed();
-  
+
   // Check if result meets minimum rarity
   const resultRarityIndex = RARITY_ORDER.indexOf(result.rarity);
   const minRarityIndex = RARITY_ORDER.indexOf(minimumRarity);
-  
+
   // If result is better than or equal to minimum, return it
   if (resultRarityIndex >= minRarityIndex) {
     return result;
   }
-  
+
   // Otherwise, reroll until we get the minimum or better
   let attempts = 0;
-  while (attempts < 100) { // Safety limit
+  while (attempts < 100) {
+    // Safety limit
     const reroll = rollMysterySeed();
     const rerollRarityIndex = RARITY_ORDER.indexOf(reroll.rarity);
     if (rerollRarityIndex >= minRarityIndex) {
@@ -183,14 +184,14 @@ export function rollMysterySeedWithGuarantee(minimumRarity) {
     }
     attempts++;
   }
-  
+
   // Fallback: return a crop of exact minimum rarity
   const fallbackCrops = Object.entries(CROP_RARITY_MAP)
     .filter(([_, rarity]) => rarity === minimumRarity)
     .map(([cropId]) => cropId);
-  
+
   const cropId = fallbackCrops[Math.floor(Math.random() * fallbackCrops.length)];
-  
+
   return {
     cropId,
     rarity: minimumRarity,

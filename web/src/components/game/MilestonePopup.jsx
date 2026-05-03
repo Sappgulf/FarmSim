@@ -60,7 +60,7 @@ export const MILESTONES = {
     subtitle: 'Reached a 10x harvest combo',
     emoji: '🔥',
     reward: 30,
-    message: 'Lightning fast harvesting! You\'re on fire!',
+    message: "Lightning fast harvesting! You're on fire!",
     color: 'orange',
   },
   hundred_coins: {
@@ -96,7 +96,7 @@ export const MILESTONES = {
     subtitle: 'You reached your first prestige level',
     emoji: '👑',
     reward: 100,
-    message: 'You\'ve proven yourself a master farmer! Enjoy your permanent bonuses.',
+    message: "You've proven yourself a master farmer! Enjoy your permanent bonuses.",
     color: 'gradient',
   },
   first_animal: {
@@ -134,12 +134,7 @@ const COLOR_CLASSES = {
   slate: 'from-slate-400 to-gray-600',
 };
 
-function MilestonePopupComponent({
-  milestone,
-  reward = 0,
-  onClose,
-  onClaim,
-}) {
+function MilestonePopupComponent({ milestone, reward = 0, onClose, onClaim }) {
   const [isVisible, setIsVisible] = useState(false);
   const [claimed, setClaimed] = useState(false);
   const [particles, setParticles] = useState([]);
@@ -199,10 +194,7 @@ function MilestonePopupComponent({
       `}
     >
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={handleClose}
-      />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
 
       {/* Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -248,26 +240,18 @@ function MilestonePopupComponent({
             <div className="absolute inset-0 text-6xl blur-lg opacity-50 animate-pulse">
               {milestoneData.emoji}
             </div>
-            <span className="text-6xl relative animate-bounce-slow">
-              {milestoneData.emoji}
-            </span>
+            <span className="text-6xl relative animate-bounce-slow">{milestoneData.emoji}</span>
           </div>
 
           {/* Title */}
-          <h2 className="text-2xl font-bold text-white drop-shadow-lg">
-            {milestoneData.title}
-          </h2>
-          <p className="text-white/90 text-sm mt-1">
-            {milestoneData.subtitle}
-          </p>
+          <h2 className="text-2xl font-bold text-white drop-shadow-lg">{milestoneData.title}</h2>
+          <p className="text-white/90 text-sm mt-1">{milestoneData.subtitle}</p>
         </div>
 
         {/* Content */}
         <div className="p-6 text-center">
           {/* Message */}
-          <p className="text-gray-600 mb-6 leading-relaxed">
-            {milestoneData.message}
-          </p>
+          <p className="text-gray-600 mb-6 leading-relaxed">{milestoneData.message}</p>
 
           {/* Reward */}
           {finalReward > 0 && (
@@ -278,9 +262,7 @@ function MilestonePopupComponent({
               </div>
               <div className="flex items-center justify-center gap-1 mt-2">
                 <Coins className="text-yellow-500" size={24} />
-                <span className="text-3xl font-bold text-amber-600">
-                  +{finalReward}
-                </span>
+                <span className="text-3xl font-bold text-amber-600">+{finalReward}</span>
               </div>
             </div>
           )}

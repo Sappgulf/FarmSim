@@ -6,7 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { getContentManager } from '../../../../content/ContentManager';
 import { TabHero, MetricTile } from './TabSurface';
 
-const toBuildingDefs = (items = []) => (
+const toBuildingDefs = (items = []) =>
   items.map((item) => {
     const costs = Array.isArray(item.costs) ? item.costs : [];
     const bonuses = Array.isArray(item.bonuses) ? item.bonuses : [];
@@ -27,41 +27,43 @@ const toBuildingDefs = (items = []) => (
         bonus: bonuses[idx + 1] || '',
       })),
     };
-  })
-);
+  });
 
-const toSynergies = (items = []) => (
+const toSynergies = (items = []) =>
   items.map((item) => ({
     ids: item.buildingIds || [],
     name: item.name,
     bonus: item.bonus || '',
     icon: item.icon || '✨',
-  }))
-);
+  }));
 
 const BuildingsTab = memo(() => {
   const { state, actions } = useGame();
   const content = getContentManager();
   const BUILDING_DEFS = useMemo(() => toBuildingDefs(content.buildings || []), [content.buildings]);
-  const SYNERGIES = useMemo(() => toSynergies(content.buildingSynergies || []), [content.buildingSynergies]);
+  const SYNERGIES = useMemo(
+    () => toSynergies(content.buildingSynergies || []),
+    [content.buildingSynergies]
+  );
 
   const getBuildingState = (id) => state.buildings[id] || null;
   const getBuildingLevel = (id) => state.buildings[id]?.level || 0;
 
   const activeSynergies = useMemo(() => {
-    return SYNERGIES.filter((syn) =>
-      syn.ids.every((id) => state.buildings[id]?.built)
-    );
+    return SYNERGIES.filter((syn) => syn.ids.every((id) => state.buildings[id]?.built));
   }, [state.buildings]);
 
-  const builtCount = useMemo(() =>
-    Object.keys(state.buildings).filter((id) => state.buildings[id]?.built).length,
+  const builtCount = useMemo(
+    () => Object.keys(state.buildings).filter((id) => state.buildings[id]?.built).length,
     [state.buildings]
   );
 
   const handleBuild = (building) => {
     if (building.requiredLevel && state.level < building.requiredLevel) {
-      actions.addNotification({ message: `Reach Level ${building.requiredLevel} to unlock ${building.name}!`, type: 'warning' });
+      actions.addNotification({
+        message: `Reach Level ${building.requiredLevel} to unlock ${building.name}!`,
+        type: 'warning',
+      });
       return;
     }
     if (state.buildings[building.id]?.built) {
@@ -69,7 +71,10 @@ const BuildingsTab = memo(() => {
       return;
     }
     if (state.coins < building.baseCost) {
-      actions.addNotification({ message: `Not enough coins! Need ${building.baseCost}`, type: 'error' });
+      actions.addNotification({
+        message: `Not enough coins! Need ${building.baseCost}`,
+        type: 'error',
+      });
       return;
     }
     actions.spendMoney(building.baseCost);
@@ -82,11 +87,19 @@ const BuildingsTab = memo(() => {
         const el = document.querySelector(`[data-building-id="${building.id}"]`);
         if (el) {
           const rect = el.getBoundingClientRect();
-          window.triggerParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, 'plant', { shake: false });
+          window.triggerParticleEffect(
+            rect.left + rect.width / 2,
+            rect.top + rect.height / 2,
+            'plant',
+            { shake: false }
+          );
         }
       }, 50);
     }
-    actions.addNotification({ message: `Built ${building.emoji} ${building.name}!`, type: 'success' });
+    actions.addNotification({
+      message: `Built ${building.emoji} ${building.name}!`,
+      type: 'success',
+    });
     actions.addXP(20, { source: 'milestone', label: 'Building Upgrade' });
   };
 
@@ -106,17 +119,25 @@ const BuildingsTab = memo(() => {
       ...state.buildings,
       [building.id]: { ...state.buildings[building.id], level: upgrade.level },
     });
-    actions.addNotification({ message: `${building.emoji} Upgraded to ${upgrade.label}!`, type: 'success' });
+    actions.addNotification({
+      message: `${building.emoji} Upgraded to ${upgrade.label}!`,
+      type: 'success',
+    });
     actions.addXP(25, { source: 'milestone', label: `${building.name} Upgrade` });
   };
 
   const getCategoryColor = (category) => {
     switch (category) {
-      case 'Production': return 'bg-green-50 border-green-200';
-      case 'Storage': return 'bg-blue-50 border-blue-200';
-      case 'Processing': return 'bg-purple-50 border-purple-200';
-      case 'Utility': return 'bg-orange-50 border-orange-200';
-      default: return 'bg-gray-50 border-gray-200';
+      case 'Production':
+        return 'bg-green-50 border-green-200';
+      case 'Storage':
+        return 'bg-blue-50 border-blue-200';
+      case 'Processing':
+        return 'bg-purple-50 border-purple-200';
+      case 'Utility':
+        return 'bg-orange-50 border-orange-200';
+      default:
+        return 'bg-gray-50 border-gray-200';
     }
   };
 
@@ -127,11 +148,11 @@ const BuildingsTab = memo(() => {
         tone="amber"
         title="Farm Buildings"
         description="Construct, upgrade, and stack synergies across your farm."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
             {builtCount}/{BUILDING_DEFS.length} built
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -164,10 +185,15 @@ const BuildingsTab = memo(() => {
           <h4 className="font-semibold mb-2 text-indigo-800">Active Synergies</h4>
           <div className="space-y-1.5">
             {activeSynergies.map((syn) => (
-              <div key={syn.name} className="flex items-center gap-2 text-sm p-2 bg-white/70 rounded-lg">
+              <div
+                key={syn.name}
+                className="flex items-center gap-2 text-sm p-2 bg-white/70 rounded-lg"
+              >
                 <span className="text-lg">{syn.icon}</span>
                 <span className="font-medium text-indigo-700">{syn.name}</span>
-                <Badge variant="outline" className="ml-auto text-[10px] text-indigo-600">{syn.bonus}</Badge>
+                <Badge variant="outline" className="ml-auto text-[10px] text-indigo-600">
+                  {syn.bonus}
+                </Badge>
               </div>
             ))}
           </div>
@@ -196,8 +222,8 @@ const BuildingsTab = memo(() => {
                   isBuilt
                     ? 'bg-green-50 border-green-300'
                     : isLocked
-                    ? 'bg-gray-50 border-gray-300 opacity-60'
-                    : getCategoryColor(building.category)
+                      ? 'bg-gray-50 border-gray-300 opacity-60'
+                      : getCategoryColor(building.category)
                 }`}
               >
                 <div className="flex justify-between items-start mb-2">
@@ -207,7 +233,9 @@ const BuildingsTab = memo(() => {
                       <div className="font-semibold text-lg flex items-center gap-2">
                         {building.name}
                         {building.requiredLevel && (
-                          <Badge variant="outline" className="text-xs">Lv.{building.requiredLevel}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            Lv.{building.requiredLevel}
+                          </Badge>
                         )}
                       </div>
                       <div className="text-xs text-gray-500">{building.category}</div>
@@ -215,7 +243,9 @@ const BuildingsTab = memo(() => {
                   </div>
                   <div className="text-right">
                     {isBuilt ? (
-                      <Badge className="bg-green-600">Lv.{currentLevel}/{building.maxLevel}</Badge>
+                      <Badge className="bg-green-600">
+                        Lv.{currentLevel}/{building.maxLevel}
+                      </Badge>
                     ) : isLocked ? (
                       <Badge className="bg-gray-400">Locked</Badge>
                     ) : (
@@ -243,7 +273,9 @@ const BuildingsTab = memo(() => {
                 {/* Active bonus for current level */}
                 {isBuilt && currentLevel >= 2 && (
                   <div className="text-xs text-green-700 mb-2 font-medium">
-                    Active: {building.upgrades.find((u) => u.level === currentLevel)?.bonus || building.benefit}
+                    Active:{' '}
+                    {building.upgrades.find((u) => u.level === currentLevel)?.bonus ||
+                      building.benefit}
                   </div>
                 )}
 
@@ -262,8 +294,8 @@ const BuildingsTab = memo(() => {
                         {isLocked
                           ? `Level ${building.requiredLevel}`
                           : canAfford
-                          ? 'Build Now'
-                          : `Need ${building.baseCost}`}
+                            ? 'Build Now'
+                            : `Need ${building.baseCost}`}
                       </Button>
                     </>
                   )}
@@ -278,7 +310,9 @@ const BuildingsTab = memo(() => {
                         onClick={() => handleUpgrade(building, nextUpgrade)}
                         size="sm"
                         disabled={state.coins < nextUpgrade.cost}
-                        className={state.coins >= nextUpgrade.cost ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                        className={
+                          state.coins >= nextUpgrade.cost ? 'bg-blue-600 hover:bg-blue-700' : ''
+                        }
                       >
                         {state.coins >= nextUpgrade.cost
                           ? `Upgrade ${nextUpgrade.cost}`
@@ -307,13 +341,20 @@ const BuildingsTab = memo(() => {
             const active = syn.ids.every((id) => state.buildings[id]?.built);
             const progress = syn.ids.filter((id) => state.buildings[id]?.built).length;
             return (
-              <div key={syn.name} className={`flex items-center justify-between p-2 rounded-lg ${active ? 'bg-green-50' : 'bg-white'}`}>
+              <div
+                key={syn.name}
+                className={`flex items-center justify-between p-2 rounded-lg ${active ? 'bg-green-50' : 'bg-white'}`}
+              >
                 <div className="flex items-center gap-2">
                   <span>{syn.icon}</span>
-                  <span className={active ? 'text-green-700 font-medium' : 'text-gray-600'}>{syn.name}</span>
+                  <span className={active ? 'text-green-700 font-medium' : 'text-gray-600'}>
+                    {syn.name}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">{progress}/{syn.ids.length}</span>
+                  <span className="text-xs text-gray-500">
+                    {progress}/{syn.ids.length}
+                  </span>
                   {active && <Badge className="bg-green-600 text-[10px]">{syn.bonus}</Badge>}
                 </div>
               </div>

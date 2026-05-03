@@ -26,10 +26,14 @@ const PACK_STRING_MODULES = import.meta.glob('@content/packs/**/strings.json', {
 const PACK_BUILDING_MODULES = import.meta.glob('@content/packs/**/buildings.json', { eager: true });
 const PACK_RESEARCH_MODULES = import.meta.glob('@content/packs/**/research.json', { eager: true });
 const PACK_GENETICS_MODULES = import.meta.glob('@content/packs/**/genetics.json', { eager: true });
-const PACK_LIVESTOCK_MODULES = import.meta.glob('@content/packs/**/livestock.json', { eager: true });
+const PACK_LIVESTOCK_MODULES = import.meta.glob('@content/packs/**/livestock.json', {
+  eager: true,
+});
 const PACK_PETS_MODULES = import.meta.glob('@content/packs/**/pets.json', { eager: true });
 const PACK_FISHING_MODULES = import.meta.glob('@content/packs/**/fishing.json', { eager: true });
-const PACK_CHALLENGE_MODULES = import.meta.glob('@content/packs/**/challenges.json', { eager: true });
+const PACK_CHALLENGE_MODULES = import.meta.glob('@content/packs/**/challenges.json', {
+  eager: true,
+});
 
 const CONTENT_TYPES = ['crops', 'decor', 'festivals', 'minigames', 'almanac', 'strings'];
 const PACK_ACCESS_VALUES = new Set(['free', 'premium']);
@@ -81,11 +85,7 @@ const normalizeDecor = (decor) => {
 
 const normalizeFestival = (festival) => {
   const seasonTags = normalizeTags(festival.seasonTags, festival.season ? [festival.season] : []);
-  const durationSeconds = clampNumber(
-    festival.durationSeconds ?? festival.duration,
-    0,
-    { min: 0 }
-  );
+  const durationSeconds = clampNumber(festival.durationSeconds ?? festival.duration, 0, { min: 0 });
   return {
     ...festival,
     seasonTags,
@@ -118,7 +118,9 @@ const normalizeBuilding = (entry) => ({
   icon: entry.icon || entry.emoji || '🏗️',
   requiredLevel: clampNumber(entry.requiredLevel, 1, { min: 1 }),
   maxLevel: clampNumber(entry.maxLevel, 1, { min: 1 }),
-  costs: Array.isArray(entry.costs) ? entry.costs.map((cost) => clampNumber(cost, 0, { min: 0 })) : [],
+  costs: Array.isArray(entry.costs)
+    ? entry.costs.map((cost) => clampNumber(cost, 0, { min: 0 }))
+    : [],
   bonuses: Array.isArray(entry.bonuses) ? entry.bonuses : [],
 });
 
@@ -223,11 +225,12 @@ const getPackPayload = (modules, basePath, filename) => {
 const normalizePackMeta = (pack) => {
   const access = PACK_ACCESS_VALUES.has(pack?.access) ? pack.access : 'free';
   const skuId = typeof pack?.skuId === 'string' ? pack.skuId : null;
-  const badgeLabel = typeof pack?.badgeLabel === 'string'
-    ? pack.badgeLabel
-    : access === 'premium'
-      ? 'Premium'
-      : null;
+  const badgeLabel =
+    typeof pack?.badgeLabel === 'string'
+      ? pack.badgeLabel
+      : access === 'premium'
+        ? 'Premium'
+        : null;
   return {
     ...pack,
     access,
@@ -390,7 +393,11 @@ const validateItems = (type, items, report, context) => {
         });
       }
       const windows = item.targetWindows || {};
-      if (!Number.isFinite(windows.gold) || !Number.isFinite(windows.silver) || !Number.isFinite(windows.bronze)) {
+      if (
+        !Number.isFinite(windows.gold) ||
+        !Number.isFinite(windows.silver) ||
+        !Number.isFinite(windows.bronze)
+      ) {
         report.warnings.push({
           type,
           issue: 'missing_target_windows',
@@ -445,7 +452,6 @@ const mergeItems = (baseItems, packItems, report, context, packId) => {
   return merged;
 };
 
-
 const validateSocialLiteSchemas = (report) => {
   MILESTONE_DEFINITIONS.forEach((milestone) => {
     if (!milestone?.id || !milestone?.type || !Number.isFinite(milestone?.target)) {
@@ -457,13 +463,27 @@ const validateSocialLiteSchemas = (report) => {
       });
     }
   });
-  const seedValidation = validateSeedPayload({ version: SEED_CODE_VERSION, season: 'spring', packs: [] });
+  const seedValidation = validateSeedPayload({
+    version: SEED_CODE_VERSION,
+    season: 'spring',
+    packs: [],
+  });
   if (!seedValidation.ok) {
-    report.errors.push({ type: 'seed_code', issue: 'seed_version', message: 'Seed code schema validation failed', context: 'seed' });
+    report.errors.push({
+      type: 'seed_code',
+      issue: 'seed_version',
+      message: 'Seed code schema validation failed',
+      context: 'seed',
+    });
   }
   const snapshotValidation = validateSnapshotPayload({ version: SNAPSHOT_VERSION, plots: [] });
   if (!snapshotValidation.ok) {
-    report.errors.push({ type: 'snapshot', issue: 'snapshot_schema', message: 'Snapshot schema validation failed', context: 'snapshot' });
+    report.errors.push({
+      type: 'snapshot',
+      issue: 'snapshot_schema',
+      message: 'Snapshot schema validation failed',
+      context: 'snapshot',
+    });
   }
 };
 

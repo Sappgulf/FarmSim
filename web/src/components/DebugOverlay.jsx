@@ -2,18 +2,27 @@
  * DebugOverlay Component
  * Shows FPS, entity count, state info - toggle with backtick (`) key
  */
-import React, { useState, useEffect, memo, useMemo } from 'react';
+import { useState, useEffect, memo, useMemo } from 'react';
 
 function DebugOverlayComponent({ gameState, farmState, weatherState }) {
   const [visible, setVisible] = useState(false);
   const [fps, setFps] = useState(0);
   const [memory, setMemory] = useState(null);
 
+  const [plotsWithCrops, totalPlots] = useMemo(() => {
+    const plots = Array.isArray(farmState?.plots) ? farmState.plots : [];
+    let withCrops = 0;
+    for (let i = 0; i < plots.length; i++) {
+      if (plots[i]?.crop) withCrops += 1;
+    }
+    return [withCrops, plots.length];
+  }, [farmState?.plots]);
+
   // Toggle with backtick key
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === '`') {
-        setVisible(v => !v);
+        setVisible((v) => !v);
       }
       if (e.key === 'Escape') {
         setVisible(false);
@@ -53,26 +62,23 @@ function DebugOverlayComponent({ gameState, farmState, weatherState }) {
 
   if (!visible) return null;
 
-  const [plotsWithCrops, totalPlots] = useMemo(() => {
-    const plots = Array.isArray(farmState?.plots) ? farmState.plots : [];
-    let withCrops = 0;
-    for (let i = 0; i < plots.length; i++) {
-      if (plots[i]?.crop) withCrops += 1;
-    }
-    return [withCrops, plots.length];
-  }, [farmState?.plots]);
-
   const levelLabel = gameState?.level ?? gameState?.levelId ?? 'none';
 
   return (
-    <div className="fixed bottom-20 left-2 z-50 bg-black/80 text-green-400 font-mono text-xs p-2 rounded-lg max-w-[220px]" role="status" aria-live="polite">
+    <div
+      className="fixed bottom-20 left-2 z-50 bg-black/80 text-green-400 font-mono text-xs p-2 rounded-lg max-w-[220px]"
+      role="status"
+      aria-live="polite"
+    >
       <div className="font-bold text-green-300 mb-1">Debug (` / Esc to close)</div>
       <div>FPS: {fps}</div>
       {memory !== null && <div>Memory: {memory}MB</div>}
       <div className="border-t border-green-800 mt-1 pt-1">
         <div>Coins: {gameState?.coins || 0}</div>
         <div>Level: {levelLabel}</div>
-        <div>Plots: {plotsWithCrops}/{totalPlots}</div>
+        <div>
+          Plots: {plotsWithCrops}/{totalPlots}
+        </div>
         <div>Season: {weatherState?.currentSeason || 'none'}</div>
         <div>Weather: {weatherState?.currentWeather || 'none'}</div>
       </div>

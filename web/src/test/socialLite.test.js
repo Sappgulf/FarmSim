@@ -1,12 +1,22 @@
 import { describe, it, expect } from 'vitest';
 import { decodeSeed, encodeSeed } from '../utils/seedCode';
-import { exportFarmSnapshot, validateSnapshotPayload, hydrateSnapshotPlots } from '../utils/farmSnapshot';
+import {
+  exportFarmSnapshot,
+  validateSnapshotPayload,
+  hydrateSnapshotPlots,
+} from '../utils/farmSnapshot';
 import { createMilestoneManager } from '../systems/milestones';
 import { MILESTONE_DEFINITIONS } from '../data/milestones';
 
 describe('Social Lite systems', () => {
   it('seed code roundtrip works', () => {
-    const code = encodeSeed({ version: 1, seed: 77, season: 'fall', packs: ['core'], theme: 'meadow' });
+    const code = encodeSeed({
+      version: 1,
+      seed: 77,
+      season: 'fall',
+      packs: ['core'],
+      theme: 'meadow',
+    });
     const decoded = decodeSeed(code);
     expect(decoded.error).toBeFalsy();
     expect(decoded.payload.season).toBe('fall');
@@ -31,7 +41,13 @@ describe('Social Lite systems', () => {
   });
 
   it('snapshot import validates and hydrates', () => {
-    const payload = exportFarmSnapshot({ farmName: 'A', farmTheme: 'meadow', season: { current: 'spring' }, almanac: { counters: { dayCount: 1 } }, plots: [{ state: 'ready', crop: { id: 'parsnip' }, growthStage: 3 }] });
+    const payload = exportFarmSnapshot({
+      farmName: 'A',
+      farmTheme: 'meadow',
+      season: { current: 'spring' },
+      almanac: { counters: { dayCount: 1 } },
+      plots: [{ state: 'ready', crop: { id: 'parsnip' }, growthStage: 3 }],
+    });
     expect(validateSnapshotPayload(payload).ok).toBe(true);
     const plots = hydrateSnapshotPlots(payload.plots);
     expect(plots[0].state).toBe('ready');

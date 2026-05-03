@@ -11,9 +11,7 @@ const PremiumLockModal = memo(() => {
   const lock = useGameSelector((state) => state.premiumLockPrompt || null);
   const debugEnabled = isDebugMode();
 
-  const packMeta = useMemo(() => (
-    lock?.packId ? getPackMeta(lock.packId) : null
-  ), [lock?.packId]);
+  const packMeta = useMemo(() => (lock?.packId ? getPackMeta(lock.packId) : null), [lock?.packId]);
 
   if (!lock) return null;
 
@@ -46,17 +44,10 @@ const PremiumLockModal = memo(() => {
           </div>
           <h2 className="mt-2 text-lg font-semibold text-amber-900">Premium Item</h2>
         </div>
-        <div className="p-4 text-sm text-gray-700">
-          This cosmetic isn’t owned on this device.
-        </div>
+        <div className="p-4 text-sm text-gray-700">This cosmetic isn’t owned on this device.</div>
         <div className="flex items-center justify-end gap-2 border-t border-amber-100 p-4">
           {debugEnabled && lock.packId && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleGrant}
-              data-qa="premium-lock-grant"
-            >
+            <Button size="sm" variant="outline" onClick={handleGrant} data-qa="premium-lock-grant">
               Grant Access
             </Button>
           )}

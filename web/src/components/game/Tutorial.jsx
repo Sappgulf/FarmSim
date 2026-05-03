@@ -63,11 +63,12 @@ function TutorialComponent({
           absolute bg-white rounded-xl shadow-2xl border border-gray-200 p-5 max-w-sm w-[90%]
           pointer-events-auto
           transition-all duration-300
-          ${isCenter
-            ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
-            : currentStep.position === 'top'
-              ? 'bottom-4 left-1/2 -translate-x-1/2'
-              : 'top-4 left-1/2 -translate-x-1/2'
+          ${
+            isCenter
+              ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
+              : currentStep.position === 'top'
+                ? 'bottom-4 left-1/2 -translate-x-1/2'
+                : 'top-4 left-1/2 -translate-x-1/2'
           }
         `}
       >
@@ -85,14 +86,10 @@ function TutorialComponent({
         </div>
 
         {/* Title */}
-        <h3 className="text-lg font-bold text-gray-900 mb-2">
-          {currentStep.title}
-        </h3>
+        <h3 className="text-lg font-bold text-gray-900 mb-2">{currentStep.title}</h3>
 
         {/* Content */}
-        <p className="text-gray-600 text-sm leading-relaxed mb-4">
-          {currentStep.content}
-        </p>
+        <p className="text-gray-600 text-sm leading-relaxed mb-4">{currentStep.content}</p>
 
         {/* Actions */}
         <div className="flex items-center justify-between gap-2">
@@ -104,10 +101,7 @@ function TutorialComponent({
             Skip
           </button>
 
-          <Button
-            onClick={onNext}
-            className="flex items-center gap-1"
-          >
+          <Button onClick={onNext} className="flex items-center gap-1">
             {tutorialStep === totalSteps - 1 ? 'Get Started' : 'Next'}
             <ChevronRight size={16} />
           </Button>

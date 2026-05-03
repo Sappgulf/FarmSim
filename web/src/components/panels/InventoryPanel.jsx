@@ -3,7 +3,15 @@
  * Display and manage inventory items
  */
 import React, { memo, useMemo } from 'react';
-import { Package, Leaf, Wrench, FlaskConical, ShoppingCart, ArrowRight, Sparkles } from 'lucide-react';
+import {
+  Package,
+  Leaf,
+  Wrench,
+  FlaskConical,
+  ShoppingCart,
+  ArrowRight,
+  Sparkles,
+} from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -73,9 +81,10 @@ function InventoryPanelComponent({
                   onClick={() => onSelectSeed?.(id)}
                   className={`
                     flex items-center gap-2 p-2 rounded-lg border text-left transition-all
-                    ${selectedSeed === id
-                      ? 'bg-green-100 border-green-400 ring-2 ring-green-400 ring-offset-1'
-                      : 'bg-slate-50 border-gray-200 hover:bg-slate-100'
+                    ${
+                      selectedSeed === id
+                        ? 'bg-green-100 border-green-400 ring-2 ring-green-400 ring-offset-1'
+                        : 'bg-slate-50 border-gray-200 hover:bg-slate-100'
                     }
                   `}
                 >
@@ -148,13 +157,14 @@ function InventoryPanelComponent({
               <div className="relative bg-white rounded-2xl p-4 shadow-lg flex items-center justify-center">
                 <Package size={40} className="text-amber-400 animate-bob" />
               </div>
-              <Sparkles className="absolute -top-1 -right-1 text-amber-400 animate-pulse" size={18} />
+              <Sparkles
+                className="absolute -top-1 -right-1 text-amber-400 animate-pulse"
+                size={18}
+              />
             </div>
 
             <h3 className="font-semibold text-gray-800 mb-1">Inventory Empty</h3>
-            <p className="text-sm text-gray-500 mb-4">
-              Your farming adventure starts at the shop!
-            </p>
+            <p className="text-sm text-gray-500 mb-4">Your farming adventure starts at the shop!</p>
 
             {onOpenShop && (
               <Button
@@ -163,7 +173,10 @@ function InventoryPanelComponent({
               >
                 <ShoppingCart size={16} className="mr-2" />
                 Visit Shop
-                <ArrowRight size={14} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight
+                  size={14}
+                  className="ml-2 group-hover:translate-x-1 transition-transform"
+                />
               </Button>
             )}
 

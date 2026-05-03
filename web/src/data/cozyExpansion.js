@@ -146,25 +146,66 @@ export const FARM_TITLES = {
     hint: 'Default title.',
   },
   golden_tender: { id: 'golden_tender', name: 'Golden Tender', hint: 'Witness Golden Crop.' },
-  stargazer_farm: { id: 'stargazer_farm', name: 'Stargazer Farm', hint: 'Witness Shooting Star Night.' },
-  dawn_harvester: { id: 'dawn_harvester', name: 'Dawn Harvester', hint: 'Witness Perfect Harvest Morning.' },
-  pathlight_keeper: { id: 'pathlight_keeper', name: 'Pathlight Keeper', hint: 'Complete Lantern Walk set.' },
+  stargazer_farm: {
+    id: 'stargazer_farm',
+    name: 'Stargazer Farm',
+    hint: 'Witness Shooting Star Night.',
+  },
+  dawn_harvester: {
+    id: 'dawn_harvester',
+    name: 'Dawn Harvester',
+    hint: 'Witness Perfect Harvest Morning.',
+  },
+  pathlight_keeper: {
+    id: 'pathlight_keeper',
+    name: 'Pathlight Keeper',
+    hint: 'Complete Lantern Walk set.',
+  },
   cozy_curator: { id: 'cozy_curator', name: 'Cozy Curator', hint: 'Complete Hearth Garden set.' },
   harvest_host: { id: 'harvest_host', name: 'Harvest Host', hint: 'Complete Harvest Border set.' },
-  twilight_tender: { id: 'twilight_tender', name: 'Twilight Tender', hint: 'Complete Twilight Grove set.' },
-  cottage_keeper: { id: 'cottage_keeper', name: 'Cottage Keeper', hint: 'Complete Cottage Corner set.' },
-  wildflower_warden: { id: 'wildflower_warden', name: 'Wildflower Warden', hint: 'Complete Wildflower Walk set.' },
-  estate_keeper: { id: 'estate_keeper', name: 'Estate Keeper', hint: 'Complete Grand Entrance set.' },
-  season_collector: { id: 'season_collector', name: 'Season Collector', hint: 'Complete Four Seasons set.' },
-  trinket_tender: { id: 'trinket_tender', name: 'Trinket Tender', hint: 'Complete Trinket Nook set.' },
-  almanac_whisperer: { id: 'almanac_whisperer', name: 'Almanac Whisperer', hint: 'Unlock many Almanac pages.' },
+  twilight_tender: {
+    id: 'twilight_tender',
+    name: 'Twilight Tender',
+    hint: 'Complete Twilight Grove set.',
+  },
+  cottage_keeper: {
+    id: 'cottage_keeper',
+    name: 'Cottage Keeper',
+    hint: 'Complete Cottage Corner set.',
+  },
+  wildflower_warden: {
+    id: 'wildflower_warden',
+    name: 'Wildflower Warden',
+    hint: 'Complete Wildflower Walk set.',
+  },
+  estate_keeper: {
+    id: 'estate_keeper',
+    name: 'Estate Keeper',
+    hint: 'Complete Grand Entrance set.',
+  },
+  season_collector: {
+    id: 'season_collector',
+    name: 'Season Collector',
+    hint: 'Complete Four Seasons set.',
+  },
+  trinket_tender: {
+    id: 'trinket_tender',
+    name: 'Trinket Tender',
+    hint: 'Complete Trinket Nook set.',
+  },
+  almanac_whisperer: {
+    id: 'almanac_whisperer',
+    name: 'Almanac Whisperer',
+    hint: 'Unlock many Almanac pages.',
+  },
 };
 
 export const WEEKLY_SPECIAL_DAY = {
   dayIndex: 5,
   id: 'market_glow_day',
   name: 'Market Glow Day',
-  boardCopy: 'Town Board: Market Glow Day! Pets are playful and decor spotlights feel extra cozy today.',
+  boardCopy:
+    'Town Board: Market Glow Day! Pets are playful and decor spotlights feel extra cozy today.',
 };
 
 export const TIME_OF_DAY_VISUALS = {

@@ -8,8 +8,15 @@ import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
 import { Badge } from '../ui/badge';
 import {
-  Heart, Coins, Clock, ShoppingCart, Sparkles,
-  Droplet, Apple, AlertTriangle, Check
+  Heart,
+  Coins,
+  Clock,
+  ShoppingCart,
+  Sparkles,
+  Droplet,
+  Apple,
+  AlertTriangle,
+  Check,
 } from 'lucide-react';
 import { LIVESTOCK } from '../../data/buildings';
 
@@ -77,23 +84,26 @@ function LivestockPanelComponent({
   }, {});
 
   // Handle buying an animal
-  const handleBuy = useCallback((type) => {
-    const livestock = LIVESTOCK[type];
-    if (!livestock) return;
+  const handleBuy = useCallback(
+    (type) => {
+      const livestock = LIVESTOCK[type];
+      if (!livestock) return;
 
-    const currentCount = (animalsByType[type] || []).length;
-    if (currentCount >= livestock.maxCount) {
-      addNotification?.(`Max ${livestock.name}s reached (${livestock.maxCount})!`, 'error');
-      return;
-    }
+      const currentCount = (animalsByType[type] || []).length;
+      if (currentCount >= livestock.maxCount) {
+        addNotification?.(`Max ${livestock.name}s reached (${livestock.maxCount})!`, 'error');
+        return;
+      }
 
-    if (coins < livestock.price) {
-      addNotification?.(`Need ${livestock.price} coins!`, 'error');
-      return;
-    }
+      if (coins < livestock.price) {
+        addNotification?.(`Need ${livestock.price} coins!`, 'error');
+        return;
+      }
 
-    onBuyAnimal?.(type);
-  }, [coins, animalsByType, onBuyAnimal, addNotification]);
+      onBuyAnimal?.(type);
+    },
+    [coins, animalsByType, onBuyAnimal, addNotification]
+  );
 
   return (
     <div className="space-y-4">
@@ -159,7 +169,9 @@ function LivestockPanelComponent({
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{livestock.emoji}</span>
                   <span className="text-base">{livestock.name}s</span>
-                  <Badge variant="outline">{animals.length}/{livestock.maxCount}</Badge>
+                  <Badge variant="outline">
+                    {animals.length}/{livestock.maxCount}
+                  </Badge>
                 </div>
               </CardTitle>
             </CardHeader>
@@ -263,9 +275,10 @@ function LivestockPanelComponent({
                   disabled={!canBuy}
                   className={`
                     p-3 rounded-lg border text-left transition-all
-                    ${canBuy
-                      ? 'border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 cursor-pointer'
-                      : 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
+                    ${
+                      canBuy
+                        ? 'border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 cursor-pointer'
+                        : 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
                     }
                   `}
                 >
@@ -273,9 +286,7 @@ function LivestockPanelComponent({
                     <span className="text-2xl">{livestock.emoji}</span>
                     <span className="font-medium text-sm">{livestock.name}</span>
                   </div>
-                  <div className="text-xs text-gray-500 mb-2">
-                    {livestock.description}
-                  </div>
+                  <div className="text-xs text-gray-500 mb-2">{livestock.description}</div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-400">
                       {owned}/{livestock.maxCount}
@@ -297,16 +308,17 @@ function LivestockPanelComponent({
           <CardContent className="py-8 text-center">
             {/* Animated egg */}
             <div className="relative mx-auto w-20 h-20 mb-4">
-              <div className="absolute inset-0 bg-amber-100/50 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+              <div
+                className="absolute inset-0 bg-amber-100/50 rounded-full animate-ping"
+                style={{ animationDuration: '2s' }}
+              />
               <div className="relative text-6xl animate-bob" style={{ animationDuration: '1.5s' }}>
                 🐣
               </div>
             </div>
 
             <h3 className="font-semibold text-amber-800 mb-1">No Animals Yet</h3>
-            <p className="text-sm text-amber-600 mb-4">
-              Animals provide steady passive income!
-            </p>
+            <p className="text-sm text-amber-600 mb-4">Animals provide steady passive income!</p>
 
             {/* Quick stats */}
             <div className="flex justify-center gap-4 mb-4">
@@ -324,9 +336,7 @@ function LivestockPanelComponent({
               </div>
             </div>
 
-            <p className="text-xs text-gray-400">
-              Choose an animal above to get started!
-            </p>
+            <p className="text-xs text-gray-400">Choose an animal above to get started!</p>
           </CardContent>
         </Card>
       )}

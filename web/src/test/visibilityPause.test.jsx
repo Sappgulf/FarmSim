@@ -65,7 +65,11 @@ describe('Visibility pause behavior', () => {
         <GameProvider>
           <TickProvider>
             <FarmSimCore />
-            <StateProbe onUpdate={(game) => { latest.current = game; }} />
+            <StateProbe
+              onUpdate={(game) => {
+                latest.current = game;
+              }}
+            />
           </TickProvider>
         </GameProvider>
       );

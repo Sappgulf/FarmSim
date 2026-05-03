@@ -60,9 +60,12 @@ function ProcessingPanelComponent({
   }, [selectedRecipe, quantity, hasWorkshop, onProcess, addNotification]);
 
   // Collect completed products
-  const handleCollect = useCallback((productId, index) => {
-    onCollect?.(productId, index);
-  }, [onCollect]);
+  const handleCollect = useCallback(
+    (productId, index) => {
+      onCollect?.(productId, index);
+    },
+    [onCollect]
+  );
 
   if (!hasWorkshop) {
     return (
@@ -148,9 +151,7 @@ function ProcessingPanelComponent({
       {/* Recipe selection */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-gray-700">
-            Available Recipes
-          </CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-700">Available Recipes</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-2">
@@ -161,11 +162,12 @@ function ProcessingPanelComponent({
                 disabled={!recipe.available}
                 className={`
                   flex items-center justify-between p-3 rounded-lg border transition-all text-left
-                  ${selectedRecipe?.inputId === recipe.inputId
-                    ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-200'
-                    : recipe.available
-                      ? 'border-gray-200 hover:border-amber-300 hover:bg-amber-50/50'
-                      : 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
+                  ${
+                    selectedRecipe?.inputId === recipe.inputId
+                      ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-200'
+                      : recipe.available
+                        ? 'border-gray-200 hover:border-amber-300 hover:bg-amber-50/50'
+                        : 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
                   }
                 `}
               >
@@ -217,7 +219,7 @@ function ProcessingPanelComponent({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     disabled={quantity <= 1}
                   >
                     -
@@ -226,7 +228,9 @@ function ProcessingPanelComponent({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setQuantity(q => Math.min(selectedRecipe.inventoryCount, q + 1))}
+                    onClick={() =>
+                      setQuantity((q) => Math.min(selectedRecipe.inventoryCount, q + 1))
+                    }
                     disabled={quantity >= selectedRecipe.inventoryCount}
                   >
                     +

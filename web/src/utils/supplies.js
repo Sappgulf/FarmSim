@@ -16,12 +16,7 @@ const clampInt = (value, fallback = 0) => {
  * This is intentionally deterministic and side-effect-free so UI + actions can
  * share the same logic and tests can lock it down.
  */
-export function planSupplyUsage({
-  inventoryCount,
-  coins,
-  unitCost,
-  requestedUnits,
-} = {}) {
+export function planSupplyUsage({ inventoryCount, coins, unitCost, requestedUnits } = {}) {
   const available = clampInt(inventoryCount, 0);
   const budget = clampInt(coins, 0);
   const cost = Math.max(1, clampInt(unitCost, 1));
@@ -43,4 +38,3 @@ export function planSupplyUsage({
     unitCost: cost,
   };
 }
-

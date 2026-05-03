@@ -33,9 +33,11 @@ const validateSaveState = (state) => {
       errors.push(`plots length ${state.plots.length} !== gridSize^2 (${expected}).`);
     }
   }
-  if (!state.settings || typeof state.settings !== 'object') errors.push('settings missing or invalid.');
+  if (!state.settings || typeof state.settings !== 'object')
+    errors.push('settings missing or invalid.');
   if (!state.season || typeof state.season !== 'object') errors.push('season missing or invalid.');
-  if (!state.entitlements || typeof state.entitlements !== 'object') errors.push('entitlements missing or invalid.');
+  if (!state.entitlements || typeof state.entitlements !== 'object')
+    errors.push('entitlements missing or invalid.');
   return errors;
 };
 
@@ -204,12 +206,14 @@ export const QA_TESTS = [
       if (!festival) {
         return { status: 'skip', reason: 'No festival data found.' };
       }
-      ctx.actions.updateActiveEvents([{
-        ...festival,
-        startedAt: Date.now(),
-        endsAt: Date.now() + 60000,
-        season: festival.season || 'spring',
-      }]);
+      ctx.actions.updateActiveEvents([
+        {
+          ...festival,
+          startedAt: Date.now(),
+          endsAt: Date.now() + 60000,
+          season: festival.season || 'spring',
+        },
+      ]);
       await ctx.switchToTab('events');
       const card = document.querySelector('[data-qa="festival-game-card"]');
       if (!card) {
@@ -272,7 +276,9 @@ export const QA_TESTS = [
       }
       const endMetrics = ctx.getDebugMetrics();
       if (endMetrics.listenerCount > startMetrics.listenerCount + 2) {
-        throw new Error(`Listener count leak: ${startMetrics.listenerCount} → ${endMetrics.listenerCount}`);
+        throw new Error(
+          `Listener count leak: ${startMetrics.listenerCount} → ${endMetrics.listenerCount}`
+        );
       }
       if (endMetrics.timerCount > startMetrics.timerCount + 2) {
         throw new Error(`Timer count leak: ${startMetrics.timerCount} → ${endMetrics.timerCount}`);
@@ -353,7 +359,10 @@ export const QA_TESTS = [
       ctx.actions.setFarmTheme('dusk');
       const second = await renderFarmCard(buildFarmCardData(ctx.state()), { returnCanvas: true });
       if (!second.canvas) throw new Error('Missing canvas for dusk render.');
-      const secondPixel = second.canvas.getContext('2d')?.getImageData(40, 40, 1, 1)?.data?.join(',');
+      const secondPixel = second.canvas
+        .getContext('2d')
+        ?.getImageData(40, 40, 1, 1)
+        ?.data?.join(',');
       if (firstPixel === secondPixel) {
         throw new Error('Theme swap did not change Farm Card colors.');
       }
@@ -601,7 +610,13 @@ export const QA_TESTS = [
       ctx.actions.setEntitlementMode('free');
       const plots = Array.isArray(ctx.state().plots) ? [...ctx.state().plots] : [];
       if (plots[0]) {
-        plots[0] = { ...plots[0], state: 'empty', decorationId: null, decorationPlacedAt: null, crop: null };
+        plots[0] = {
+          ...plots[0],
+          state: 'empty',
+          decorationId: null,
+          decorationPlacedAt: null,
+          crop: null,
+        };
         ctx.actions.updatePlots(plots);
         await ctx.sleep(50);
       }
@@ -682,10 +697,13 @@ export const QA_TESTS = [
       if (plot?.state === 'decor') {
         throw new Error('Locked premium decor did not revert to default.');
       }
-      const notice = ctx.state().notifications?.some((item) => (
-        item?.message?.includes('premium cosmetic')
-        || item?.message?.includes('premium cosmetic isn’t owned')
-      ));
+      const notice = ctx
+        .state()
+        .notifications?.some(
+          (item) =>
+            item?.message?.includes('premium cosmetic') ||
+            item?.message?.includes('premium cosmetic isn’t owned')
+        );
       if (!notice) {
         throw new Error('Fallback notice not shown for locked cosmetic.');
       }
@@ -719,7 +737,7 @@ export const QA_TESTS = [
       const beforeDays = ctx.state().almanac?.counters?.dayCount || 0;
       const base = Date.UTC(2025, 0, 1);
       for (let i = 0; i < 30; i += 1) {
-        const dayKey = getDayKey(base + (i * DAY_MS));
+        const dayKey = getDayKey(base + i * DAY_MS);
         ctx.actions.recordAlmanacEvent('day_rollover', { dayKey });
       }
       ctx.helpers.advanceChallengeDays(30);
@@ -730,7 +748,7 @@ export const QA_TESTS = [
         throw new Error(`Day counter mismatch: ${beforeDays} → ${afterDays}`);
       }
       const lastDayKey = ctx.state().almanac?.lastDayKey;
-      const expectedLast = getDayKey(base + (29 * DAY_MS));
+      const expectedLast = getDayKey(base + 29 * DAY_MS);
       if (lastDayKey !== expectedLast) {
         throw new Error(`Last day key mismatch: ${lastDayKey} (expected ${expectedLast})`);
       }
@@ -748,7 +766,7 @@ export const QA_TESTS = [
       }
       return { detail: '30 day rollover complete with stable counters.' };
     },
-  },,
+  },
   {
     id: 'seed_code_roundtrip',
     name: 'Seed Code Roundtrip',
@@ -768,7 +786,8 @@ export const QA_TESTS = [
     name: 'Ghost Visit Read-only',
     timeoutMs: 5000,
     run: async (ctx) => {
-      const { exportFarmSnapshot, hydrateSnapshotPlots } = await import('../../../utils/farmSnapshot');
+      const { exportFarmSnapshot, hydrateSnapshotPlots } =
+        await import('../../../utils/farmSnapshot');
       const snapshot = exportFarmSnapshot(ctx.state());
       ctx.actions.enterGhostVisit({ ...snapshot, plots: hydrateSnapshotPlots(snapshot.plots) });
       const before = ctx.state().coins;
@@ -787,7 +806,10 @@ export const QA_TESTS = [
     run: async (ctx) => {
       ctx.actions.recordMilestoneEvent?.('harvest', { count: 5 });
       const before = ctx.state().milestones?.progress?.totalHarvests || 0;
-      const saveResult = saveStateToStorage(ctx.state(), { key: QA_SAVE_KEY, backupKey: QA_BACKUP_SAVE_KEY });
+      const saveResult = saveStateToStorage(ctx.state(), {
+        key: QA_SAVE_KEY,
+        backupKey: QA_BACKUP_SAVE_KEY,
+      });
       if (!saveResult.success) throw new Error('Failed to save QA milestone state.');
       const loaded = loadSavedStateFromKey(QA_SAVE_KEY);
       if ((loaded?.milestones?.progress?.totalHarvests || 0) < before) {
@@ -795,8 +817,7 @@ export const QA_TESTS = [
       }
       return { detail: 'Milestone counters persisted across save/load.' };
     },
-  }
-
+  },
 ];
 
 export const QA_TEST_IDS = QA_TESTS.map((test) => test.id);

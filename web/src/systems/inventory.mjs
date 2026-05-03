@@ -12,7 +12,7 @@ export function applyInventoryDelta(inventory, item, delta) {
 }
 
 export function normalizeInventory(inv) {
-  if (!inv || typeof inv !== "object") return {};
+  if (!inv || typeof inv !== 'object') return {};
   const next = {};
   Object.entries(inv).forEach(([key, value]) => {
     const count = Number.isFinite(value) ? value : 0;

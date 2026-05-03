@@ -1,12 +1,12 @@
 /**
  * FEEDBACK POLISHER
  * Premium animation system for farming game feedback loops
- * 
+ *
  * Design Philosophy:
  * - Subtle luxury over arcade-carnival
  * - Perceived smoothness > raw performance
  * - Easing curves based on player perception studies (Juul 2010, Isbister 2016)
- * 
+ *
  * Easing Rationale:
  * - easeOutBack: Creates anticipation without overshoot (perceived as premium)
  * - easeInSine: Natural deceleration (matches organic growth perception)
@@ -16,34 +16,34 @@
 // DESIGNER CONFIG - Tweak without code changes
 export const FEEDBACK_CONFIG = {
   // Timing (ms) - Based on 60fps frame timing (16.67ms per frame)
-  entryDuration: 350,        // 21 frames - enough for smooth easing
-  settleDuration: 180,      // 11 frames - quick settle feels responsive
-  comboPulseDuration: 50,   // 3 frames - micro-feedback feels premium
-  comboFadeDelay: 1200,    // Auto-fade if no new combo within 1.2s
-  
+  entryDuration: 350, // 21 frames - enough for smooth easing
+  settleDuration: 180, // 11 frames - quick settle feels responsive
+  comboPulseDuration: 50, // 3 frames - micro-feedback feels premium
+  comboFadeDelay: 1200, // Auto-fade if no new combo within 1.2s
+
   // Amplitude - Subtlety is key (player perception threshold ~10px)
-  maxScale: 1.18,           // 18% overshoot - visible but not jarring
-  maxYOffset: 12,           // 12px max movement - stays within plot bounds
-  comboPulseScale: 1.08,    // 8% pulse - micro-feedback
-  
+  maxScale: 1.18, // 18% overshoot - visible but not jarring
+  maxYOffset: 12, // 12px max movement - stays within plot bounds
+  comboPulseScale: 1.08, // 8% pulse - micro-feedback
+
   // Sound
-  baseVolume: 0.30,         // 30% - audible but not aggressive
-  pitchStep: 0.05,          // +5% per combo step
-  maxPitchBoost: 0.25,      // Cap at +25% to avoid chipmunk effect
-  
+  baseVolume: 0.3, // 30% - audible but not aggressive
+  pitchStep: 0.05, // +5% per combo step
+  maxPitchBoost: 0.25, // Cap at +25% to avoid chipmunk effect
+
   // Coin arc
-  coinArcDuration: 450,     // 0.45s - smooth bezier arc
-  coinArcHeight: 60,        // Peak arc height in px
-  
+  coinArcDuration: 450, // 0.45s - smooth bezier arc
+  coinArcHeight: 60, // Peak arc height in px
+
   // Plant animation
-  seedDropDuration: 280,    // 0.28s - quick but visible
-  stemGrowDuration: 900,    // 0.9s - organic growth feel
-  leafFlickAt: 0.60,        // 60% growth - natural timing
-  
+  seedDropDuration: 280, // 0.28s - quick but visible
+  stemGrowDuration: 900, // 0.9s - organic growth feel
+  leafFlickAt: 0.6, // 60% growth - natural timing
+
   // Screen shake (disabled by default, only for 5x+ combo)
   shakeEnabled: false,
-  shakeThreshold: 5,         // Only shake at 5x combo or higher
-  shakeAmount: 1,           // 1px micro-shake - barely perceptible
+  shakeThreshold: 5, // Only shake at 5x combo or higher
+  shakeAmount: 1, // 1px micro-shake - barely perceptible
 };
 
 /**
@@ -53,13 +53,13 @@ export const FEEDBACK_CONFIG = {
 export const EASING = {
   // easeOutBack - Overshoot then settle (premium feel)
   easeOutBack: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-  
+
   // easeInSine - Natural deceleration
   easeInSine: 'cubic-bezier(0.47, 0, 0.745, 0.715)',
-  
+
   // easeOutQuad - Smooth deceleration
   easeOutQuad: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-  
+
   // easeInOutCubic - Balanced for transitions
   easeInOutCubic: 'cubic-bezier(0.65, 0, 0.35, 1)',
 };
@@ -78,10 +78,10 @@ export function bezierArc(t, startX, startY, endX, endY, height) {
   // Quadratic bezier with control point at peak
   const controlX = (startX + endX) / 2;
   const controlY = Math.min(startY, endY) - height;
-  
+
   const x = (1 - t) * (1 - t) * startX + 2 * (1 - t) * t * controlX + t * t * endX;
   const y = (1 - t) * (1 - t) * startY + 2 * (1 - t) * t * controlY + t * t * endY;
-  
+
   return { x, y };
 }
 
@@ -246,7 +246,7 @@ export class FeedbackPolisher {
    */
   spawnCoin(plotId, value, startPos, endPos) {
     const coinId = `coin_${plotId}_${Date.now()}`;
-    
+
     // Animate coin arc
     if (this.handlers.onCoinArc) {
       this.handlers.onCoinArc({
@@ -289,7 +289,7 @@ export class FeedbackPolisher {
 
     // Lerp towards target
     this.coinLerpValue = lerpCoinCounter(current, targetValue, deltaTime);
-    
+
     // Update coins (round for display)
     if (this.handlers.setCoins) {
       this.handlers.setCoins(Math.round(this.coinLerpValue));
@@ -334,4 +334,3 @@ export class FeedbackPolisher {
     }
   }
 }
-

@@ -7,8 +7,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import {
-  Leaf, ShoppingCart, Trophy, Dna, Building2, Settings, CloudSun,
-  Target, Package, RotateCcw, Volume2, VolumeX, HelpCircle, Crown, Factory
+  Leaf,
+  ShoppingCart,
+  Trophy,
+  Dna,
+  Building2,
+  Settings,
+  CloudSun,
+  Target,
+  Package,
+  RotateCcw,
+  Volume2,
+  VolumeX,
+  HelpCircle,
+  Crown,
+  Factory,
 } from 'lucide-react';
 
 // Hooks
@@ -53,30 +66,12 @@ import { ScrapbookPanel } from './panels/ScrapbookPanel';
 import { GRID_CONFIG, GAME_SETTINGS, LEVELS } from '../data/constants';
 import { BUILDINGS, LIVESTOCK, PROCESSING_RECIPES } from '../data/buildings';
 import { CROPS, QUALITY_TIERS } from '../data/crops';
-import { BLESSINGS, MEMORIES, MEMORY_CHAPTERS, MOOD_TIERS, WISHING_WELL } from '../data/identity';
+import { BLESSINGS, MEMORIES, MEMORY_CHAPTERS, WISHING_WELL } from '../data/identity';
 
 // Utils
 import { nowSec } from '../utils/time.mjs';
 import { loadGameSave, saveGameState, saveGameStateImmediate } from '../utils/save.mjs';
-
-const getMoodTierForPoints = (points) => {
-  let tier = MOOD_TIERS[0];
-  for (const candidate of MOOD_TIERS) {
-    if (points >= candidate.min) tier = candidate;
-  }
-  return tier;
-};
-
-const FEATURED_CROP_BY_SEASON = {
-  spring: 'carrot',
-  summer: 'corn',
-  fall: 'pumpkin',
-  winter: 'garlic',
-};
-
-const getFeaturedCropId = (season) => {
-  return FEATURED_CROP_BY_SEASON[season] || 'carrot';
-};
+import { getFeaturedCropId, getMoodTierForPoints } from '../utils/farmGameHelpers.mjs';
 
 export default function FarmGame() {
   // ------------ STATE MANAGEMENT ------------
@@ -84,11 +79,31 @@ export default function FarmGame() {
   // Core game state
   const gameState = useGameState();
   const {
-    coins, totalEarned, levelId, levelStatus, levelEndsAt, level, prestige, prestigeData,
-    tutorialComplete, tutorialStep, notifications, stats, levelStartedAt,
-    addCoins, spendCoins, addNotification, removeNotification, updateStats,
-    checkLevelProgress, startLevel, advanceTutorial, completeTutorial, doPrestige,
-    getSaveData: getGameSaveData, loadSaveData: loadGameSaveData,
+    coins,
+    totalEarned,
+    levelId,
+    levelStatus,
+    levelEndsAt,
+    level,
+    prestige,
+    prestigeData,
+    tutorialComplete,
+    tutorialStep,
+    notifications,
+    stats,
+    levelStartedAt,
+    addCoins,
+    spendCoins,
+    addNotification,
+    removeNotification,
+    updateStats,
+    checkLevelProgress,
+    startLevel,
+    advanceTutorial,
+    completeTutorial,
+    doPrestige,
+    getSaveData: getGameSaveData,
+    loadSaveData: loadGameSaveData,
   } = gameState;
 
   // Buildings state (before farm to provide bonuses)
@@ -136,23 +151,55 @@ export default function FarmGame() {
   }, [activeBlessing]);
 
   // Farm state
-  const farm = useFarm(addNotification, addCoins, updateStats, prestigeData, buildingBonuses, growthMultiplier);
+  const farm = useFarm(
+    addNotification,
+    addCoins,
+    updateStats,
+    prestigeData,
+    buildingBonuses,
+    growthMultiplier
+  );
   const {
-    gridSize, plots, selectedSeed, inventory, comboCount, comboMultiplier,
-    setSelectedSeed, setInventory,
-    plant, water, fertilize, harvest, treatPest, treatDisease, expandFarm, addToInventory,
-    getCropData, getPlotStatus,
-    getSaveData: getFarmSaveData, loadSaveData: loadFarmSaveData,
+    gridSize,
+    plots,
+    selectedSeed,
+    inventory,
+    comboCount,
+    comboMultiplier,
+    setSelectedSeed,
+    setInventory,
+    plant,
+    water,
+    fertilize,
+    harvest,
+    treatPest,
+    treatDisease,
+    expandFarm,
+    addToInventory,
+    getCropData,
+    getPlotStatus,
+    getSaveData: getFarmSaveData,
+    loadSaveData: loadFarmSaveData,
   } = farm;
 
   // Weather state
   const weather = useWeather(addNotification);
   const {
-    currentSeason, currentWeather, seasonData, weatherData, forecast,
-    seasonEndsAt: weatherSeasonEndsAt, weatherChangesAt,
-    changeWeather, changeSeason, generateForecast,
-    getGrowthModifier, doesWeatherWater, getDamageRisk,
-    getSaveData: getWeatherSaveData, loadSaveData: loadWeatherSaveData,
+    currentSeason,
+    currentWeather,
+    seasonData,
+    weatherData,
+    forecast,
+    seasonEndsAt: weatherSeasonEndsAt,
+    weatherChangesAt,
+    changeWeather,
+    changeSeason,
+    generateForecast,
+    getGrowthModifier,
+    doesWeatherWater,
+    getDamageRisk,
+    getSaveData: getWeatherSaveData,
+    loadSaveData: loadWeatherSaveData,
   } = weather;
 
   const featuredCropId = useMemo(() => getFeaturedCropId(currentSeason), [currentSeason]);
@@ -161,8 +208,15 @@ export default function FarmGame() {
   // Tutorial state
   const tutorial = useTutorial(tutorialComplete, tutorialStep, advanceTutorial, completeTutorial);
   const {
-    showTutorial, currentStep, totalSteps, progress: tutorialProgress, highlightedElement, hints,
-    nextStep: tutorialNextStep, skipTutorial, showHint,
+    showTutorial,
+    currentStep,
+    totalSteps,
+    progress: tutorialProgress,
+    highlightedElement,
+    hints,
+    nextStep: tutorialNextStep,
+    skipTutorial,
+    showHint,
   } = tutorial;
 
   // Celebrations
@@ -240,29 +294,35 @@ export default function FarmGame() {
       setStoryPulse(false);
     }, 2400);
   }, []);
-  useEffect(() => () => {
-    if (storyPulseTimeoutRef.current) {
-      clearTimeout(storyPulseTimeoutRef.current);
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      if (storyPulseTimeoutRef.current) {
+        clearTimeout(storyPulseTimeoutRef.current);
+      }
+    },
+    []
+  );
 
   // Mood helper (positive-only)
   const bumpMood = useCallback((amount = 1) => {
     if (amount <= 0) return;
-    setMoodPoints(prev => Math.min(prev + amount, 100));
+    setMoodPoints((prev) => Math.min(prev + amount, 100));
   }, []);
 
   // Memory unlock helper (idempotent)
-  const unlockMemory = useCallback((memoryId) => {
-    if (memoryFlagsRef.current[memoryId]) return false;
-    const memory = MEMORIES.find(m => m.id === memoryId);
-    setMemoryFlags(prev => ({ ...prev, [memoryId]: true }));
-    if (memory) {
-      addNotification(`📖 Memory saved: ${memory.title}`, 'info');
-    }
-    triggerStoryPulse();
-    return true;
-  }, [addNotification, triggerStoryPulse]);
+  const unlockMemory = useCallback(
+    (memoryId) => {
+      if (memoryFlagsRef.current[memoryId]) return false;
+      const memory = MEMORIES.find((m) => m.id === memoryId);
+      setMemoryFlags((prev) => ({ ...prev, [memoryId]: true }));
+      if (memory) {
+        addNotification(`📖 Memory saved: ${memory.title}`, 'info');
+      }
+      triggerStoryPulse();
+      return true;
+    },
+    [addNotification, triggerStoryPulse]
+  );
 
   // React to mood tier changes
   const prevMoodTierRef = useRef(moodTier.id);
@@ -285,7 +345,9 @@ export default function FarmGame() {
 
   const cozySuggestion = useMemo(() => {
     if (!philosophy) return '';
-    const cropLabel = featuredCropData ? `${featuredCropData.emoji} ${featuredCropId}` : 'a seasonal crop';
+    const cropLabel = featuredCropData
+      ? `${featuredCropData.emoji} ${featuredCropId}`
+      : 'a seasonal crop';
     if (philosophy === 'nature') {
       if (['rainy', 'stormy'].includes(currentWeather)) {
         return `Let the rain handle watering—plant ${cropLabel}.`;
@@ -299,8 +361,11 @@ export default function FarmGame() {
   }, [philosophy, currentWeather, currentSeason, featuredCropId, featuredCropData, seasonData]);
 
   const memoryTeaserData = useMemo(() => {
-    const unlockedCount = MEMORIES.reduce((count, memory) => count + (memoryFlags[memory.id] ? 1 : 0), 0);
-    const nextMemory = MEMORIES.find(memory => !memoryFlags[memory.id]);
+    const unlockedCount = MEMORIES.reduce(
+      (count, memory) => count + (memoryFlags[memory.id] ? 1 : 0),
+      0
+    );
+    const nextMemory = MEMORIES.find((memory) => !memoryFlags[memory.id]);
     if (!nextMemory) {
       return {
         memoryTeaser: 'All pages are complete. Your story feels whole.',
@@ -308,10 +373,15 @@ export default function FarmGame() {
       };
     }
 
-    const chapter = MEMORY_CHAPTERS.find(c => c.id === nextMemory.chapterId);
-    const chapterMemories = MEMORIES.filter(m => m.chapterId === nextMemory.chapterId);
-    const chapterUnlocked = chapterMemories.reduce((count, m) => count + (memoryFlags[m.id] ? 1 : 0), 0);
-    const chapterLabel = chapter ? `${chapterUnlocked}/${chapterMemories.length} ${chapter.name}` : '';
+    const chapter = MEMORY_CHAPTERS.find((c) => c.id === nextMemory.chapterId);
+    const chapterMemories = MEMORIES.filter((m) => m.chapterId === nextMemory.chapterId);
+    const chapterUnlocked = chapterMemories.reduce(
+      (count, m) => count + (memoryFlags[m.id] ? 1 : 0),
+      0
+    );
+    const chapterLabel = chapter
+      ? `${chapterUnlocked}/${chapterMemories.length} ${chapter.name}`
+      : '';
 
     return {
       memoryTeaser: nextMemory.hint,
@@ -324,7 +394,9 @@ export default function FarmGame() {
   const canWish = canWishToday && canAffordWish;
   const wishDisabledReason = !canWishToday
     ? 'The well is resting until tomorrow.'
-    : (!canAffordWish ? `Need ${WISHING_WELL.cost}🪙 to wish.` : '');
+    : !canAffordWish
+      ? `Need ${WISHING_WELL.cost}🪙 to wish.`
+      : '';
 
   // ============ GAME LOOP ============
 
@@ -362,7 +434,8 @@ export default function FarmGame() {
       // Windmill passive income (5 coins per minute)
       if (buildingBonuses.windmillIncome) {
         const timeSinceLastPayout = now - lastWindmillPayoutRef.current;
-        if (timeSinceLastPayout >= 60) { // Every minute
+        if (timeSinceLastPayout >= 60) {
+          // Every minute
           addCoins(buildingBonuses.windmillIncome, 'windmill');
           lastWindmillPayoutRef.current = now;
         }
@@ -387,7 +460,19 @@ export default function FarmGame() {
     }, GAME_SETTINGS.TICK_INTERVAL);
 
     return () => clearInterval(tickInterval);
-  }, [checkLevelProgress, weatherSeasonEndsAt, weatherChangesAt, changeSeason, changeWeather, doesWeatherWater, getDamageRisk, plots, water, buildingBonuses, addCoins]);
+  }, [
+    checkLevelProgress,
+    weatherSeasonEndsAt,
+    weatherChangesAt,
+    changeSeason,
+    changeWeather,
+    doesWeatherWater,
+    getDamageRisk,
+    plots,
+    water,
+    buildingBonuses,
+    addCoins,
+  ]);
 
   // Celebrate major milestones
   useEffect(() => {
@@ -404,7 +489,16 @@ export default function FarmGame() {
       }
     }
     prevLevelStatusRef.current = levelStatus;
-  }, [levelStatus, reducedMotion, fireConfetti, sound, flashGreen, level, levelId, claimedMilestones]);
+  }, [
+    levelStatus,
+    reducedMotion,
+    fireConfetti,
+    sound,
+    flashGreen,
+    level,
+    levelId,
+    claimedMilestones,
+  ]);
 
   // Check achievements periodically
   useEffect(() => {
@@ -424,7 +518,18 @@ export default function FarmGame() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [checkAchievements, stats, totalEarned, prestige, gridSize, buildings, discoveredHybrids, inventory, levelId, levelStatus]);
+  }, [
+    checkAchievements,
+    stats,
+    totalEarned,
+    prestige,
+    gridSize,
+    buildings,
+    discoveredHybrids,
+    inventory,
+    levelId,
+    levelStatus,
+  ]);
 
   // Track first plant milestone
   useEffect(() => {
@@ -459,18 +564,21 @@ export default function FarmGame() {
         const timeSinceProduct = now - (animal.lastProductAt || now);
         if (timeSinceProduct >= livestock.interval) {
           // Animal produced something!
-          setPendingProducts(prev => [...prev, {
-            animalId: animal.id,
-            type: livestock.product,
-            name: livestock.product.charAt(0).toUpperCase() + livestock.product.slice(1),
-            emoji: livestock.productEmoji,
-            value: livestock.value,
-          }]);
+          setPendingProducts((prev) => [
+            ...prev,
+            {
+              animalId: animal.id,
+              type: livestock.product,
+              name: livestock.product.charAt(0).toUpperCase() + livestock.product.slice(1),
+              emoji: livestock.productEmoji,
+              value: livestock.value,
+            },
+          ]);
 
           // Update animal's last production time
-          setOwnedAnimals(prev => prev.map((a, i) =>
-            i === index ? { ...a, lastProductAt: now } : a
-          ));
+          setOwnedAnimals((prev) =>
+            prev.map((a, i) => (i === index ? { ...a, lastProductAt: now } : a))
+          );
         }
       });
     }, 1000);
@@ -483,11 +591,11 @@ export default function FarmGame() {
     const interval = setInterval(() => {
       const now = Date.now();
 
-      setProcessingQueue(prev => {
+      setProcessingQueue((prev) => {
         const stillProcessing = [];
         const completed = [];
 
-        prev.forEach(item => {
+        prev.forEach((item) => {
           if (now >= item.startTime + item.duration * 1000) {
             completed.push(item);
           } else {
@@ -496,8 +604,11 @@ export default function FarmGame() {
         });
 
         if (completed.length > 0) {
-          setCompletedProducts(existing => [...existing, ...completed]);
-          addNotification(`${completed.map(c => c.emoji).join('')} Processing complete!`, 'success');
+          setCompletedProducts((existing) => [...existing, ...completed]);
+          addNotification(
+            `${completed.map((c) => c.emoji).join('')} Processing complete!`,
+            'success'
+          );
           sound.playSuccess();
         }
 
@@ -512,7 +623,7 @@ export default function FarmGame() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
-        setShowHelp(prev => {
+        setShowHelp((prev) => {
           if (!prev) {
             setHelpCategory('basics');
           }
@@ -532,7 +643,7 @@ export default function FarmGame() {
 
   // Day rollover handling (used for wishes + memories)
   const handleDayRollover = useCallback(() => {
-    setFarmDay(prev => prev + 1);
+    setFarmDay((prev) => prev + 1);
     if (activeBlessing) {
       setActiveBlessing(null);
       addNotification('🌅 The blessing fades with the new day.', 'info');
@@ -579,8 +690,10 @@ export default function FarmGame() {
         if (Number.isFinite(identity.farmDay)) setFarmDay(Math.max(1, identity.farmDay));
         if (Number.isFinite(identity.lastWishDay)) setLastWishDay(identity.lastWishDay);
         if (identity.activeBlessing) {
-          const blessing = BLESSINGS.find(b => b.id === identity.activeBlessing.id);
-          setActiveBlessing(blessing ? { ...blessing, ...identity.activeBlessing } : identity.activeBlessing);
+          const blessing = BLESSINGS.find((b) => b.id === identity.activeBlessing.id);
+          setActiveBlessing(
+            blessing ? { ...blessing, ...identity.activeBlessing } : identity.activeBlessing
+          );
         }
       }
     } else {
@@ -646,13 +759,16 @@ export default function FarmGame() {
 
   // ------------ HANDLERS ------------
 
-  const handleSelectPhilosophy = useCallback((philosophyId) => {
-    if (philosophyId === philosophy) return;
-    setPhilosophy(philosophyId);
-    addNotification('📌 Philosophy selected. Your story has a new direction.', 'info');
-    bumpMood(1);
-    triggerStoryPulse();
-  }, [addNotification, bumpMood, triggerStoryPulse, philosophy]);
+  const handleSelectPhilosophy = useCallback(
+    (philosophyId) => {
+      if (philosophyId === philosophy) return;
+      setPhilosophy(philosophyId);
+      addNotification('📌 Philosophy selected. Your story has a new direction.', 'info');
+      bumpMood(1);
+      triggerStoryPulse();
+    },
+    [addNotification, bumpMood, triggerStoryPulse, philosophy]
+  );
 
   const handleScrapbookOpen = useCallback(() => {
     setStoryPulse(false);
@@ -665,69 +781,86 @@ export default function FarmGame() {
     blessingNoticeRef.current = false;
   }, [activeBlessing?.id]);
 
-  const applyHarvestIdentity = useCallback((result) => {
-    if (!result) return;
+  const applyHarvestIdentity = useCallback(
+    (result) => {
+      if (!result) return;
 
-    bumpMood(1);
-    unlockMemory('first_harvest');
-
-    if (currentWeather === 'rainy') {
-      unlockMemory('first_rainy_harvest');
-    }
-
-    if (result.quality?.id >= QUALITY_TIERS.EXCELLENT.id) {
       bumpMood(1);
-    }
+      unlockMemory('first_harvest');
 
-    if (activeBlessing?.type === 'sell_bonus' && result.crop === featuredCropId) {
-      const bonus = Math.max(1, Math.round(result.value * activeBlessing.value));
-      addCoins(bonus, 'blessing');
-      if (!blessingNoticeRef.current) {
-        addNotification(`✨ Blessing bonus +${bonus}🪙`, 'success');
-        blessingNoticeRef.current = true;
+      if (currentWeather === 'rainy') {
+        unlockMemory('first_rainy_harvest');
       }
-    }
 
-    if (activeBlessing?.type === 'next_harvest_bonus' && !harvestBonusAppliedRef.current) {
-      const bonus = Math.max(1, Math.round(activeBlessing.value));
-      addCoins(bonus, 'blessing');
-      addNotification(`😊 Friendly faces tipped +${bonus}🪙`, 'success');
-      harvestBonusAppliedRef.current = true;
-      setActiveBlessing(null);
-    }
-  }, [activeBlessing, addCoins, addNotification, bumpMood, currentWeather, featuredCropId, unlockMemory]);
+      if (result.quality?.id >= QUALITY_TIERS.EXCELLENT.id) {
+        bumpMood(1);
+      }
+
+      if (activeBlessing?.type === 'sell_bonus' && result.crop === featuredCropId) {
+        const bonus = Math.max(1, Math.round(result.value * activeBlessing.value));
+        addCoins(bonus, 'blessing');
+        if (!blessingNoticeRef.current) {
+          addNotification(`✨ Blessing bonus +${bonus}🪙`, 'success');
+          blessingNoticeRef.current = true;
+        }
+      }
+
+      if (activeBlessing?.type === 'next_harvest_bonus' && !harvestBonusAppliedRef.current) {
+        const bonus = Math.max(1, Math.round(activeBlessing.value));
+        addCoins(bonus, 'blessing');
+        addNotification(`😊 Friendly faces tipped +${bonus}🪙`, 'success');
+        harvestBonusAppliedRef.current = true;
+        setActiveBlessing(null);
+      }
+    },
+    [
+      activeBlessing,
+      addCoins,
+      addNotification,
+      bumpMood,
+      currentWeather,
+      featuredCropId,
+      unlockMemory,
+    ]
+  );
 
   // Shop handlers
-  const handleBuySeeds = useCallback((seedId, qty) => {
-    const crop = CROPS[seedId];
-    if (!crop) return;
+  const handleBuySeeds = useCallback(
+    (seedId, qty) => {
+      const crop = CROPS[seedId];
+      if (!crop) return;
 
-    const totalCost = crop.shopPrice * qty;
-    if (spendCoins(totalCost)) {
-      addToInventory({ [seedId]: qty });
-      addNotification(`Bought ${qty} ${crop.emoji} ${seedId} seeds!`, 'success');
-      sound.playSuccess();
-      bumpMood(1);
-      unlockMemory('first_shop_purchase');
-    } else {
-      sound.playError();
-    }
-  }, [spendCoins, addToInventory, addNotification, sound, bumpMood, unlockMemory]);
+      const totalCost = crop.shopPrice * qty;
+      if (spendCoins(totalCost)) {
+        addToInventory({ [seedId]: qty });
+        addNotification(`Bought ${qty} ${crop.emoji} ${seedId} seeds!`, 'success');
+        sound.playSuccess();
+        bumpMood(1);
+        unlockMemory('first_shop_purchase');
+      } else {
+        sound.playError();
+      }
+    },
+    [spendCoins, addToInventory, addNotification, sound, bumpMood, unlockMemory]
+  );
 
-  const handleBuyTool = useCallback((toolId) => {
-    const tool = { fertilizer: 8, pesticide: 6, fungicide: 12 }[toolId];
-    if (!tool) return;
+  const handleBuyTool = useCallback(
+    (toolId) => {
+      const tool = { fertilizer: 8, pesticide: 6, fungicide: 12 }[toolId];
+      if (!tool) return;
 
-    if (spendCoins(tool)) {
-      addToInventory({ [toolId]: 1 });
-      addNotification(`Bought ${toolId}!`, 'success');
-      sound.playSuccess();
-      bumpMood(1);
-      unlockMemory('first_shop_purchase');
-    } else {
-      sound.playError();
-    }
-  }, [spendCoins, addToInventory, addNotification, sound, bumpMood, unlockMemory]);
+      if (spendCoins(tool)) {
+        addToInventory({ [toolId]: 1 });
+        addNotification(`Bought ${toolId}!`, 'success');
+        sound.playSuccess();
+        bumpMood(1);
+        unlockMemory('first_shop_purchase');
+      } else {
+        sound.playError();
+      }
+    },
+    [spendCoins, addToInventory, addNotification, sound, bumpMood, unlockMemory]
+  );
 
   const handleExpandFarm = useCallback(() => {
     const cost = GRID_CONFIG.EXPANSION_COSTS[gridSize + 1];
@@ -745,25 +878,38 @@ export default function FarmGame() {
     }
   }, [gridSize, spendCoins, expandFarm, reducedMotion, fireConfetti, sound, flashGreen]);
 
-  const handleBuyBuilding = useCallback((buildingId) => {
-    const building = BUILDINGS[buildingId];
-    if (!building || buildings.includes(buildingId)) return;
+  const handleBuyBuilding = useCallback(
+    (buildingId) => {
+      const building = BUILDINGS[buildingId];
+      if (!building || buildings.includes(buildingId)) return;
 
-    if (spendCoins(building.price)) {
-      setBuildings(prev => [...prev, buildingId]);
-      addNotification(`Built ${building.emoji} ${building.name}!`, 'success');
-      sound.playLevelUp();
-      flashPurple();
-      if (!reducedMotion) {
-        fireConfetti('medium');
+      if (spendCoins(building.price)) {
+        setBuildings((prev) => [...prev, buildingId]);
+        addNotification(`Built ${building.emoji} ${building.name}!`, 'success');
+        sound.playLevelUp();
+        flashPurple();
+        if (!reducedMotion) {
+          fireConfetti('medium');
+        }
+        bumpMood(2);
+        unlockMemory('first_shop_purchase');
+        unlockMemory('first_building');
+      } else {
+        sound.playError();
       }
-      bumpMood(2);
-      unlockMemory('first_shop_purchase');
-      unlockMemory('first_building');
-    } else {
-      sound.playError();
-    }
-  }, [buildings, spendCoins, addNotification, reducedMotion, fireConfetti, sound, flashPurple, bumpMood, unlockMemory]);
+    },
+    [
+      buildings,
+      spendCoins,
+      addNotification,
+      reducedMotion,
+      fireConfetti,
+      sound,
+      flashPurple,
+      bumpMood,
+      unlockMemory,
+    ]
+  );
 
   // Reset game
   const handleResetGame = useCallback(() => {
@@ -787,113 +933,150 @@ export default function FarmGame() {
   }, [completeTutorial]);
 
   // Milestone handlers
-  const handleMilestoneClaim = useCallback((reward) => {
-    if (currentMilestone && reward > 0) {
-      addCoins(reward, 'milestone');
-    }
-    if (currentMilestone) {
-      setClaimedMilestones(prev => [...prev, currentMilestone.id]);
-    }
-    setCurrentMilestone(null);
-  }, [currentMilestone, addCoins]);
+  const handleMilestoneClaim = useCallback(
+    (reward) => {
+      if (currentMilestone && reward > 0) {
+        addCoins(reward, 'milestone');
+      }
+      if (currentMilestone) {
+        setClaimedMilestones((prev) => [...prev, currentMilestone.id]);
+      }
+      setCurrentMilestone(null);
+    },
+    [currentMilestone, addCoins]
+  );
 
   // Livestock handlers
-  const handleBuyAnimal = useCallback((type) => {
-    const livestock = LIVESTOCK[type];
-    if (!livestock || coins < livestock.price) return;
+  const handleBuyAnimal = useCallback(
+    (type) => {
+      const livestock = LIVESTOCK[type];
+      if (!livestock || coins < livestock.price) return;
 
-    if (spendCoins(livestock.price)) {
-      const newAnimal = {
-        id: Date.now(),
-        type,
-        happiness: 100,
-        fedAt: Date.now() / 1000,
-        wateredAt: Date.now() / 1000,
-        lastProductAt: Date.now() / 1000,
-      };
-      setOwnedAnimals(prev => [...prev, newAnimal]);
-      addNotification(`Bought a ${livestock.emoji} ${livestock.name}!`, 'success');
-      sound.playSuccess();
+      if (spendCoins(livestock.price)) {
+        const newAnimal = {
+          id: Date.now(),
+          type,
+          happiness: 100,
+          fedAt: Date.now() / 1000,
+          wateredAt: Date.now() / 1000,
+          lastProductAt: Date.now() / 1000,
+        };
+        setOwnedAnimals((prev) => [...prev, newAnimal]);
+        addNotification(`Bought a ${livestock.emoji} ${livestock.name}!`, 'success');
+        sound.playSuccess();
 
-      // First animal milestone
-      if (ownedAnimals.length === 0 && !claimedMilestones.includes('first_animal')) {
-        setTimeout(() => setCurrentMilestone({ id: 'first_animal' }), 500);
+        // First animal milestone
+        if (ownedAnimals.length === 0 && !claimedMilestones.includes('first_animal')) {
+          setTimeout(() => setCurrentMilestone({ id: 'first_animal' }), 500);
+        }
       }
-    }
-  }, [coins, spendCoins, addNotification, sound, ownedAnimals.length, claimedMilestones]);
+    },
+    [coins, spendCoins, addNotification, sound, ownedAnimals.length, claimedMilestones]
+  );
 
-  const handleFeedAnimal = useCallback((animalId) => {
-    if (spendCoins(5)) {
-      setOwnedAnimals(prev => prev.map(a =>
-        a.id === animalId ? { ...a, fedAt: Date.now() / 1000, happiness: Math.min(100, (a.happiness || 50) + 20) } : a
-      ));
-      sound.playSuccess();
-    }
-  }, [spendCoins, sound]);
+  const handleFeedAnimal = useCallback(
+    (animalId) => {
+      if (spendCoins(5)) {
+        setOwnedAnimals((prev) =>
+          prev.map((a) =>
+            a.id === animalId
+              ? {
+                  ...a,
+                  fedAt: Date.now() / 1000,
+                  happiness: Math.min(100, (a.happiness || 50) + 20),
+                }
+              : a
+          )
+        );
+        sound.playSuccess();
+      }
+    },
+    [spendCoins, sound]
+  );
 
-  const handleWaterAnimal = useCallback((animalId) => {
-    if (spendCoins(2)) {
-      setOwnedAnimals(prev => prev.map(a =>
-        a.id === animalId ? { ...a, wateredAt: Date.now() / 1000, happiness: Math.min(100, (a.happiness || 50) + 10) } : a
-      ));
-      sound.playWater();
-    }
-  }, [spendCoins, sound]);
+  const handleWaterAnimal = useCallback(
+    (animalId) => {
+      if (spendCoins(2)) {
+        setOwnedAnimals((prev) =>
+          prev.map((a) =>
+            a.id === animalId
+              ? {
+                  ...a,
+                  wateredAt: Date.now() / 1000,
+                  happiness: Math.min(100, (a.happiness || 50) + 10),
+                }
+              : a
+          )
+        );
+        sound.playWater();
+      }
+    },
+    [spendCoins, sound]
+  );
 
-  const handleCollectProduct = useCallback((index) => {
-    const product = pendingProducts[index];
-    if (!product) return;
+  const handleCollectProduct = useCallback(
+    (index) => {
+      const product = pendingProducts[index];
+      if (!product) return;
 
-    addCoins(product.value, 'livestock');
-    setPendingProducts(prev => prev.filter((_, i) => i !== index));
-    sound.playCoin();
-    addNotification(`Collected ${product.emoji} for ${product.value} coins!`, 'success');
-  }, [pendingProducts, addCoins, sound, addNotification]);
+      addCoins(product.value, 'livestock');
+      setPendingProducts((prev) => prev.filter((_, i) => i !== index));
+      sound.playCoin();
+      addNotification(`Collected ${product.emoji} for ${product.value} coins!`, 'success');
+    },
+    [pendingProducts, addCoins, sound, addNotification]
+  );
 
   // Processing handlers
-  const handleStartProcessing = useCallback((inputId, quantity) => {
-    const recipe = PROCESSING_RECIPES[inputId];
-    const crop = CROPS[inputId];
-    if (!recipe || !crop) return;
+  const handleStartProcessing = useCallback(
+    (inputId, quantity) => {
+      const recipe = PROCESSING_RECIPES[inputId];
+      const crop = CROPS[inputId];
+      if (!recipe || !crop) return;
 
-    // Remove items from inventory
-    setInventory(prev => ({
-      ...prev,
-      [inputId]: Math.max(0, (prev[inputId] || 0) - quantity),
-    }));
+      // Remove items from inventory
+      setInventory((prev) => ({
+        ...prev,
+        [inputId]: Math.max(0, (prev[inputId] || 0) - quantity),
+      }));
 
-    // Add to processing queue
-    const processItem = {
-      inputId,
-      outputId: recipe.output,
-      name: recipe.name,
-      emoji: recipe.emoji,
-      quantity,
-      value: Math.floor(crop.baseValue * recipe.multiplier * quantity),
-      startTime: Date.now(),
-      duration: recipe.time * quantity,
-    };
+      // Add to processing queue
+      const processItem = {
+        inputId,
+        outputId: recipe.output,
+        name: recipe.name,
+        emoji: recipe.emoji,
+        quantity,
+        value: Math.floor(crop.baseValue * recipe.multiplier * quantity),
+        startTime: Date.now(),
+        duration: recipe.time * quantity,
+      };
 
-    setProcessingQueue(prev => [...prev, processItem]);
-    addNotification(`Started processing ${crop.emoji} → ${recipe.emoji}!`, 'info');
-    sound.playClick();
+      setProcessingQueue((prev) => [...prev, processItem]);
+      addNotification(`Started processing ${crop.emoji} → ${recipe.emoji}!`, 'info');
+      sound.playClick();
 
-    // First process milestone
-    if (processingQueue.length === 0 && !claimedMilestones.includes('first_process')) {
-      setTimeout(() => setCurrentMilestone({ id: 'first_process' }), 500);
-    }
-  }, [setInventory, addNotification, sound, processingQueue.length, claimedMilestones]);
+      // First process milestone
+      if (processingQueue.length === 0 && !claimedMilestones.includes('first_process')) {
+        setTimeout(() => setCurrentMilestone({ id: 'first_process' }), 500);
+      }
+    },
+    [setInventory, addNotification, sound, processingQueue.length, claimedMilestones]
+  );
 
-  const handleCollectProcessed = useCallback((productId, index) => {
-    const product = completedProducts[index];
-    if (!product) return;
+  const handleCollectProcessed = useCallback(
+    (productId, index) => {
+      const product = completedProducts[index];
+      if (!product) return;
 
-    addCoins(product.value, 'processing');
-    setCompletedProducts(prev => prev.filter((_, i) => i !== index));
-    sound.playCoin();
-    flashGold();
-    addNotification(`Collected ${product.emoji} for ${product.value} coins!`, 'success');
-  }, [completedProducts, addCoins, sound, flashGold, addNotification]);
+      addCoins(product.value, 'processing');
+      setCompletedProducts((prev) => prev.filter((_, i) => i !== index));
+      sound.playCoin();
+      flashGold();
+      addNotification(`Collected ${product.emoji} for ${product.value} coins!`, 'success');
+    },
+    [completedProducts, addCoins, sound, flashGold, addNotification]
+  );
 
   // Prestige handler
   const handlePrestige = useCallback(() => {
@@ -930,79 +1113,103 @@ export default function FarmGame() {
 
     unlockMemory('first_wish');
     triggerStoryPulse();
-  }, [canWishToday, spendCoins, farmDay, addNotification, sound, bumpMood, unlockMemory, triggerStoryPulse]);
+  }, [
+    canWishToday,
+    spendCoins,
+    farmDay,
+    addNotification,
+    sound,
+    bumpMood,
+    unlockMemory,
+    triggerStoryPulse,
+  ]);
 
   // Handle bottom nav tab change
-  const handleTabChange = useCallback((tabId) => {
-    if (tabId === 'menu') {
-      setMenuOpen(true);
-    } else {
-      setActiveTab(tabId);
-    }
-    sound.playClick();
-  }, [sound]);
+  const handleTabChange = useCallback(
+    (tabId) => {
+      if (tabId === 'menu') {
+        setMenuOpen(true);
+      } else {
+        setActiveTab(tabId);
+      }
+      sound.playClick();
+    },
+    [sound]
+  );
 
   // Sound-enabled plant handler
-  const handlePlant = useCallback((plotIndex) => {
-    const result = plant(plotIndex);
-    if (result) {
-      sound.playPlant();
-      bumpMood(1);
-      unlockMemory('first_seed');
-    }
-    return result;
-  }, [plant, sound, bumpMood, unlockMemory]);
+  const handlePlant = useCallback(
+    (plotIndex) => {
+      const result = plant(plotIndex);
+      if (result) {
+        sound.playPlant();
+        bumpMood(1);
+        unlockMemory('first_seed');
+      }
+      return result;
+    },
+    [plant, sound, bumpMood, unlockMemory]
+  );
 
   // Sound-enabled water handler
-  const handleWater = useCallback((plotIndex) => {
-    const result = water(plotIndex);
-    if (result) {
-      sound.playWater();
-      bumpMood(1);
-      unlockMemory('first_watering');
-    }
-    return result;
-  }, [water, sound, bumpMood, unlockMemory]);
+  const handleWater = useCallback(
+    (plotIndex) => {
+      const result = water(plotIndex);
+      if (result) {
+        sound.playWater();
+        bumpMood(1);
+        unlockMemory('first_watering');
+      }
+      return result;
+    },
+    [water, sound, bumpMood, unlockMemory]
+  );
 
   // Sound-enabled fertilize handler
-  const handleFertilize = useCallback((plotIndex) => {
-    const result = fertilize(plotIndex);
-    if (result) {
-      sound.playSuccess();
-    }
-    return result;
-  }, [fertilize, sound]);
-
-  const handleHarvest = useCallback((plotIndex) => {
-    const result = harvest(plotIndex);
-    if (!result) return result;
-
-    applyHarvestIdentity(result);
-
-    // Play harvest sound
-    sound.playHarvest();
-
-    // Play coin sound with pitch based on value
-    const pitch = Math.min(1 + (result.value / 100) * 0.5, 1.5);
-    setTimeout(() => sound.playCoin(pitch), 100);
-
-    const isGreatQuality = result.quality?.id >= QUALITY_TIERS.EXCELLENT.id;
-    const isBigWin = result.value >= 120;
-
-    if (result.mutation || isGreatQuality || isBigWin) {
-      flashGold();
-      if (!reducedMotion) {
-        fireConfetti(isBigWin ? 'high' : 'medium');
+  const handleFertilize = useCallback(
+    (plotIndex) => {
+      const result = fertilize(plotIndex);
+      if (result) {
+        sound.playSuccess();
       }
-    }
+      return result;
+    },
+    [fertilize, sound]
+  );
 
-    // Play combo sound if combo is building
-    if (comboCount > 1) {
-      setTimeout(() => sound.playCombo(Math.min(comboCount, 4)), 150);
-    }
+  const handleHarvest = useCallback(
+    (plotIndex) => {
+      const result = harvest(plotIndex);
+      if (!result) return result;
 
-    return result;
-  }, [harvest, applyHarvestIdentity, reducedMotion, fireConfetti, sound, flashGold, comboCount]);
+      applyHarvestIdentity(result);
+
+      // Play harvest sound
+      sound.playHarvest();
+
+      // Play coin sound with pitch based on value
+      const pitch = Math.min(1 + (result.value / 100) * 0.5, 1.5);
+      setTimeout(() => sound.playCoin(pitch), 100);
+
+      const isGreatQuality = result.quality?.id >= QUALITY_TIERS.EXCELLENT.id;
+      const isBigWin = result.value >= 120;
+
+      if (result.mutation || isGreatQuality || isBigWin) {
+        flashGold();
+        if (!reducedMotion) {
+          fireConfetti(isBigWin ? 'high' : 'medium');
+        }
+      }
+
+      // Play combo sound if combo is building
+      if (comboCount > 1) {
+        setTimeout(() => sound.playCombo(Math.min(comboCount, 4)), 150);
+      }
+
+      return result;
+    },
+    [harvest, applyHarvestIdentity, reducedMotion, fireConfetti, sound, flashGold, comboCount]
+  );
 
   // Harvest all ready crops
   const handleHarvestAll = useCallback(() => {
@@ -1042,7 +1249,19 @@ export default function FarmGame() {
         }
       }
     }
-  }, [plots, getPlotStatus, harvest, applyHarvestIdentity, addNotification, reducedMotion, fireConfetti, sound, flashGold, gridSize, unlockMemory]);
+  }, [
+    plots,
+    getPlotStatus,
+    harvest,
+    applyHarvestIdentity,
+    addNotification,
+    reducedMotion,
+    fireConfetti,
+    sound,
+    flashGold,
+    gridSize,
+    unlockMemory,
+  ]);
 
   // ------------ RENDER ------------
 
@@ -1051,12 +1270,7 @@ export default function FarmGame() {
 
   // If showing welcome screen
   if (showWelcome) {
-    return (
-      <WelcomeScreen
-        onStart={handleWelcomeStart}
-        onSkip={handleWelcomeSkip}
-      />
-    );
+    return <WelcomeScreen onStart={handleWelcomeStart} onSkip={handleWelcomeSkip} />;
   }
 
   return (
@@ -1079,10 +1293,7 @@ export default function FarmGame() {
       <div className="fixed inset-0 pointer-events-none mood-overlay z-0" />
 
       {/* Notifications */}
-      <NotificationStack
-        notifications={notifications}
-        onDismiss={removeNotification}
-      />
+      <NotificationStack notifications={notifications} onDismiss={removeNotification} />
 
       {/* Help Guide Modal */}
       <HelpGuide
@@ -1099,9 +1310,7 @@ export default function FarmGame() {
       />
 
       {/* Celebrations */}
-      {!reducedMotion && (
-        <Confetti trigger={confettiTrigger} intensity={confettiIntensity} />
-      )}
+      {!reducedMotion && <Confetti trigger={confettiTrigger} intensity={confettiIntensity} />}
 
       {/* Screen flash effects */}
       <ScreenFlash trigger={flashTrigger} color={flashColor} />
@@ -1257,10 +1466,7 @@ export default function FarmGame() {
               </TabsContent>
 
               <TabsContent value="achievements" className="mt-4">
-                <AchievementsPanel
-                  unlockedAchievements={unlockedAchievements}
-                  stats={stats}
-                />
+                <AchievementsPanel unlockedAchievements={unlockedAchievements} stats={stats} />
               </TabsContent>
 
               <TabsContent value="prestige" className="mt-4">
@@ -1307,7 +1513,7 @@ export default function FarmGame() {
                     <div>
                       <span className="text-sm font-medium mb-2 block">Quick Start Level</span>
                       <div className="flex flex-wrap gap-2">
-                        {LEVELS.map(L => (
+                        {LEVELS.map((L) => (
                           <Button
                             key={L.id}
                             variant="outline"
@@ -1409,10 +1615,7 @@ export default function FarmGame() {
           )}
 
           {activeTab === 'goals' && (
-            <AchievementsPanel
-              unlockedAchievements={unlockedAchievements}
-              stats={stats}
-            />
+            <AchievementsPanel unlockedAchievements={unlockedAchievements} stats={stats} />
           )}
 
           {activeTab === 'breeding' && (
@@ -1481,27 +1684,33 @@ export default function FarmGame() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <BottomNav
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* Menu Drawer */}
       <MenuDrawer
         isOpen={menuOpen}
         onClose={() => setMenuOpen(false)}
         soundEnabled={soundEnabled}
-        onToggleSound={() => setSoundEnabled(v => !v)}
+        onToggleSound={() => setSoundEnabled((v) => !v)}
         reducedMotion={reducedMotion}
-        onToggleReducedMotion={() => setReducedMotion(v => !v)}
+        onToggleReducedMotion={() => setReducedMotion((v) => !v)}
         coins={coins}
         prestige={prestige}
         levelId={levelId}
         onStartLevel={startLevel}
         onResetGame={handleResetGame}
-        onShowAchievements={() => { setActiveTab('achievements'); setMenuOpen(false); }}
-        onShowBreeding={() => { setActiveTab('breeding'); setMenuOpen(false); }}
-        onShowScrapbook={() => { setActiveTab('scrapbook'); setMenuOpen(false); }}
+        onShowAchievements={() => {
+          setActiveTab('achievements');
+          setMenuOpen(false);
+        }}
+        onShowBreeding={() => {
+          setActiveTab('breeding');
+          setMenuOpen(false);
+        }}
+        onShowScrapbook={() => {
+          setActiveTab('scrapbook');
+          setMenuOpen(false);
+        }}
         onShowHelp={handleShowHelp}
       />
 

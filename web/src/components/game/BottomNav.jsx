@@ -36,9 +36,10 @@ function BottomNavComponent({ activeTab, onTabChange, badges = {} }) {
                 flex-1 min-h-[56px] min-w-[56px]
                 transition-colors relative
                 touch-manipulation
-                ${isActive
-                  ? 'text-blue-600'
-                  : 'text-gray-500 active:text-gray-700 active:bg-gray-50'
+                ${
+                  isActive
+                    ? 'text-blue-600'
+                    : 'text-gray-500 active:text-gray-700 active:bg-gray-50'
                 }
               `}
               aria-label={item.label}
@@ -51,28 +52,29 @@ function BottomNavComponent({ activeTab, onTabChange, badges = {} }) {
 
               {/* Icon with badge */}
               <span className="relative">
-                <Icon
-                  size={22}
-                  className={isActive ? item.color : 'text-gray-500'}
-                />
+                <Icon size={22} className={isActive ? item.color : 'text-gray-500'} />
                 {badge && (
-                  <span className="
+                  <span
+                    className="
                     absolute -top-1 -right-1.5
                     min-w-[16px] h-4 px-1
                     flex items-center justify-center
                     text-[10px] font-bold text-white
                     bg-red-500 rounded-full
-                  ">
+                  "
+                  >
                     {badge > 99 ? '99+' : badge}
                   </span>
                 )}
               </span>
 
               {/* Label */}
-              <span className={`
+              <span
+                className={`
                 text-[10px] mt-1 font-medium
                 ${isActive ? 'text-blue-600' : 'text-gray-500'}
-              `}>
+              `}
+              >
                 {item.label}
               </span>
             </button>

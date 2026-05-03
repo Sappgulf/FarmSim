@@ -8,7 +8,7 @@ export const SEASONS = {
   SPRING: 'spring',
   SUMMER: 'summer',
   FALL: 'fall',
-  WINTER: 'winter'
+  WINTER: 'winter',
 };
 
 export const SEASON_CONFIG = {
@@ -21,13 +21,13 @@ export const SEASON_CONFIG = {
       primary: 'from-pink-100 to-green-100',
       accent: 'from-pink-200 to-green-200',
       text: 'text-green-700',
-      border: 'border-pink-300'
+      border: 'border-pink-300',
     },
     bonuses: {
       growthSpeed: 1.25, // 25% faster growth
       cropQuality: 1.0,
       marketPrices: 1.0,
-      diseaseResistance: 1.1 // 10% more resistant
+      diseaseResistance: 1.1, // 10% more resistant
     },
     weatherWeights: {
       sunny: 0.4,
@@ -36,10 +36,10 @@ export const SEASON_CONFIG = {
       stormy: 0.05,
       drought: 0,
       snow: 0,
-      windy: 0
+      windy: 0,
     },
     description: 'Perfect growing conditions! Crops grow 25% faster.',
-    icon: '🌷'
+    icon: '🌷',
   },
   [SEASONS.SUMMER]: {
     name: 'Summer',
@@ -50,13 +50,13 @@ export const SEASON_CONFIG = {
       primary: 'from-yellow-100 to-orange-100',
       accent: 'from-yellow-200 to-orange-200',
       text: 'text-orange-700',
-      border: 'border-yellow-300'
+      border: 'border-yellow-300',
     },
     bonuses: {
       growthSpeed: 1.15, // 15% faster growth
       cropQuality: 1.2, // 20% better quality
       marketPrices: 1.3, // 30% higher prices!
-      diseaseResistance: 0.9 // 10% less resistant
+      diseaseResistance: 0.9, // 10% less resistant
     },
     weatherWeights: {
       sunny: 0.6,
@@ -65,10 +65,10 @@ export const SEASON_CONFIG = {
       stormy: 0.05,
       drought: 0.1,
       snow: 0,
-      windy: 0
+      windy: 0,
     },
     description: 'Hot weather! Crops sell for 30% more, but watch for droughts.',
-    icon: '🌻'
+    icon: '🌻',
   },
   [SEASONS.FALL]: {
     name: 'Fall',
@@ -79,13 +79,13 @@ export const SEASON_CONFIG = {
       primary: 'from-orange-100 to-amber-100',
       accent: 'from-orange-200 to-amber-200',
       text: 'text-amber-700',
-      border: 'border-orange-300'
+      border: 'border-orange-300',
     },
     bonuses: {
       growthSpeed: 1.0, // Normal speed
       cropQuality: 1.3, // 30% better quality
       marketPrices: 1.4, // 40% higher prices! (harvest season)
-      diseaseResistance: 1.0
+      diseaseResistance: 1.0,
     },
     weatherWeights: {
       sunny: 0.3,
@@ -94,10 +94,10 @@ export const SEASON_CONFIG = {
       stormy: 0.1,
       drought: 0,
       snow: 0,
-      windy: 0.05
+      windy: 0.05,
     },
     description: 'Harvest season! Best prices (40% more) and quality (+30%).',
-    icon: '🎃'
+    icon: '🎃',
   },
   [SEASONS.WINTER]: {
     name: 'Winter',
@@ -108,13 +108,13 @@ export const SEASON_CONFIG = {
       primary: 'from-blue-100 to-slate-100',
       accent: 'from-blue-200 to-slate-200',
       text: 'text-blue-700',
-      border: 'border-blue-300'
+      border: 'border-blue-300',
     },
     bonuses: {
       growthSpeed: 0.7, // 30% slower growth
       cropQuality: 0.8, // 20% lower quality
       marketPrices: 1.1, // 10% higher (scarcity)
-      diseaseResistance: 1.3 // 30% more resistant (cold kills pests)
+      diseaseResistance: 1.3, // 30% more resistant (cold kills pests)
     },
     weatherWeights: {
       sunny: 0.2,
@@ -123,11 +123,11 @@ export const SEASON_CONFIG = {
       stormy: 0.05,
       drought: 0,
       snow: 0.2,
-      windy: 0.05
+      windy: 0.05,
     },
     description: 'Cold weather. Growth is 30% slower, but diseases are rare.',
-    icon: '⛄'
-  }
+    icon: '⛄',
+  },
 };
 
 export class SeasonSystem {
@@ -150,7 +150,7 @@ export class SeasonSystem {
       this.actions.updateSeason({
         current: currentSeason,
         lastChangeTime: this.gameState.season?.lastChangeTime || Date.now(),
-        config: config
+        config: config,
       });
       return;
     }
@@ -181,7 +181,10 @@ export class SeasonSystem {
 
     if (this.actions?.recordAlmanacEvent) {
       this.actions.recordAlmanacEvent('season_end', { season: currentSeason, nextSeason });
-      this.actions.recordAlmanacEvent('season_start', { season: nextSeason, previousSeason: currentSeason });
+      this.actions.recordAlmanacEvent('season_start', {
+        season: nextSeason,
+        previousSeason: currentSeason,
+      });
     }
 
     // Trigger visual season transition effect first
@@ -193,7 +196,7 @@ export class SeasonSystem {
     this.actions.updateSeason({
       current: nextSeason,
       lastChangeTime: Date.now(),
-      config: nextConfig
+      config: nextConfig,
     });
 
     // Trigger celebration particles
@@ -202,14 +205,14 @@ export class SeasonSystem {
       const centerY = window.innerHeight / 3;
       window.triggerParticleEffect(centerX, centerY, 'levelup', {
         text: `${nextConfig.emoji} ${nextConfig.name} has arrived!`,
-        shake: false
+        shake: false,
       });
     }
 
     // Add notification
     this.actions.addNotification({
       message: `${nextConfig.emoji} ${nextConfig.name} has begun! ${nextConfig.description}`,
-      type: 'success'
+      type: 'success',
     });
   }
 
@@ -235,18 +238,18 @@ export class SeasonSystem {
   getSeasonalWeather() {
     const config = this.getCurrentConfig();
     const weights = config.weatherWeights;
-    
+
     // Random weighted selection
     const random = Math.random();
     let cumulative = 0;
-    
+
     for (const [weather, weight] of Object.entries(weights)) {
       cumulative += weight;
       if (random <= cumulative) {
         return weather;
       }
     }
-    
+
     return 'sunny'; // Fallback
   }
 
@@ -256,11 +259,11 @@ export class SeasonSystem {
     const timeSinceLastChange = now - (this.gameState.season?.lastChangeTime || now);
     const config = this.getCurrentConfig();
     const timeRemaining = Math.max(0, config.duration - timeSinceLastChange);
-    
+
     return {
       milliseconds: timeRemaining,
       seconds: Math.floor(timeRemaining / 1000),
-      minutes: Math.floor(timeRemaining / 60000)
+      minutes: Math.floor(timeRemaining / 60000),
     };
   }
 }

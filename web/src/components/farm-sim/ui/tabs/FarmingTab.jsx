@@ -22,17 +22,22 @@ const FarmingTab = memo(() => {
 
   // Get crops available at player's level
   const availableCrops = useMemo(() => getCropsByLevel(state.level), [state.level]);
-  
-  // Filter by category
-  const crops = selectedCategory === 'all'
-    ? availableCrops
-    : availableCrops.filter(crop => crop.category === selectedCategory);
 
-  const cropList = useMemo(() => crops.map(crop => ({
-    ...crop,
-    value: crop.baseValue,
-    time: crop.growthTime,
-  })), [crops]);
+  // Filter by category
+  const crops =
+    selectedCategory === 'all'
+      ? availableCrops
+      : availableCrops.filter((crop) => crop.category === selectedCategory);
+
+  const cropList = useMemo(
+    () =>
+      crops.map((crop) => ({
+        ...crop,
+        value: crop.baseValue,
+        time: crop.growthTime,
+      })),
+    [crops]
+  );
 
   const farmStats = useMemo(() => {
     const totalPlots = plotsArray.length;
@@ -62,12 +67,14 @@ const FarmingTab = memo(() => {
       if (stateLabel !== 'empty' && stateLabel !== 'withered') {
         healthyPlots += 1;
       }
-      soilTotal += (plot?.soilFertility || 1.0);
+      soilTotal += plot?.soilFertility || 1.0;
     });
 
     const avgSoilFertilityLabel = `${Math.round((soilTotal / totalPlots) * 100)}%`;
     const efficiencyPercent = Math.round(
-      ((activePlots / totalPlots) * 0.5 + (activePlots > 0 ? healthyPlots / activePlots : 1) * 0.5) * 100
+      ((activePlots / totalPlots) * 0.5 +
+        (activePlots > 0 ? healthyPlots / activePlots : 1) * 0.5) *
+        100
     );
 
     return {
@@ -109,92 +116,100 @@ const FarmingTab = memo(() => {
     };
   }, [plotsArray]);
 
-  const handleSelectCrop = useCallback((cropId) => {
-    actions.setSelectedCrop(cropId);
-    actions.addNotification({
-      message: `Selected ${cropList.find(c => c.id === cropId)?.name}! Click empty plots to plant.`,
-      type: 'info'
-    });
-  }, [actions, cropList]);
+  const handleSelectCrop = useCallback(
+    (cropId) => {
+      actions.setSelectedCrop(cropId);
+      actions.addNotification({
+        message: `Selected ${cropList.find((c) => c.id === cropId)?.name}! Click empty plots to plant.`,
+        type: 'info',
+      });
+    },
+    [actions, cropList]
+  );
 
-  const handleBulkAction = useCallback((action) => {
-    switch (action) {
-      case 'Water All':
-        actions.waterAllPlots();
-        actions.addNotification({
-          message: `💧 Watered all plots!`,
-          type: 'success'
-        });
-        break;
-      case 'Harvest All':
-        const readyCount = farmStats.readyPlots;
-        if (readyCount > 0) {
-          actions.harvestAllReadyCrops();
+  const handleBulkAction = useCallback(
+    (action) => {
+      switch (action) {
+        case 'Water All':
+          actions.waterAllPlots();
           actions.addNotification({
-            message: `🌾 Harvested ${readyCount} crops!`,
-            type: 'success'
+            message: `💧 Watered all plots!`,
+            type: 'success',
           });
-        } else {
-          actions.addNotification({
-            message: `No crops ready to harvest!`,
-            type: 'info'
-          });
-        }
-        break;
-      case 'Fertilize All':
-        {
-          const result = actions.fertilizeAllPlots?.();
-          if (!result || !result.applied) {
+          break;
+        case 'Harvest All':
+          const readyCount = farmStats.readyPlots;
+          if (readyCount > 0) {
+            actions.harvestAllReadyCrops();
             actions.addNotification({
-              message: `Not enough fertilizer or coins. Fertilizer costs ${SUPPLY_UNIT_COSTS.fertilizer}🪙 each in the shop.`,
-              type: 'error'
+              message: `🌾 Harvested ${readyCount} crops!`,
+              type: 'success',
             });
-            break;
-          }
-          const parts = [];
-          if (result.usedFromInventory) parts.push(`used ${result.usedFromInventory} fertilizer`);
-          if (result.boughtUnits) parts.push(`bought ${result.boughtUnits} (-${result.coinCost}🪙)`);
-          actions.addNotification({
-            message: `🌱 Fertilized ${result.applied} plots${parts.length ? ` (${parts.join(', ')})` : ''}!`,
-            type: 'success'
-          });
-        }
-        break;
-      case 'Pesticide All':
-        {
-          const diseasedCount = plotsArray.filter(p => p.disease).length;
-          if (diseasedCount === 0) {
+          } else {
             actions.addNotification({
-              message: `No diseased crops to treat!`,
-              type: 'info'
+              message: `No crops ready to harvest!`,
+              type: 'info',
             });
-            break;
           }
+          break;
+        case 'Fertilize All':
+          {
+            const result = actions.fertilizeAllPlots?.();
+            if (!result || !result.applied) {
+              actions.addNotification({
+                message: `Not enough fertilizer or coins. Fertilizer costs ${SUPPLY_UNIT_COSTS.fertilizer}🪙 each in the shop.`,
+                type: 'error',
+              });
+              break;
+            }
+            const parts = [];
+            if (result.usedFromInventory) parts.push(`used ${result.usedFromInventory} fertilizer`);
+            if (result.boughtUnits)
+              parts.push(`bought ${result.boughtUnits} (-${result.coinCost}🪙)`);
+            actions.addNotification({
+              message: `🌱 Fertilized ${result.applied} plots${parts.length ? ` (${parts.join(', ')})` : ''}!`,
+              type: 'success',
+            });
+          }
+          break;
+        case 'Pesticide All':
+          {
+            const diseasedCount = plotsArray.filter((p) => p.disease).length;
+            if (diseasedCount === 0) {
+              actions.addNotification({
+                message: `No diseased crops to treat!`,
+                type: 'info',
+              });
+              break;
+            }
 
-          const result = actions.treatAllDiseases?.();
-          if (!result || !result.applied) {
+            const result = actions.treatAllDiseases?.();
+            if (!result || !result.applied) {
+              actions.addNotification({
+                message: `Not enough pesticide or coins. Pesticide costs ${SUPPLY_UNIT_COSTS.pesticide}🪙 each in the shop.`,
+                type: 'error',
+              });
+              break;
+            }
+            const parts = [];
+            if (result.usedFromInventory) parts.push(`used ${result.usedFromInventory} pesticide`);
+            if (result.boughtUnits)
+              parts.push(`bought ${result.boughtUnits} (-${result.coinCost}🪙)`);
             actions.addNotification({
-              message: `Not enough pesticide or coins. Pesticide costs ${SUPPLY_UNIT_COSTS.pesticide}🪙 each in the shop.`,
-              type: 'error'
+              message: `🐛 Treated ${result.applied} diseased crops${parts.length ? ` (${parts.join(', ')})` : ''}!`,
+              type: 'success',
             });
-            break;
           }
-          const parts = [];
-          if (result.usedFromInventory) parts.push(`used ${result.usedFromInventory} pesticide`);
-          if (result.boughtUnits) parts.push(`bought ${result.boughtUnits} (-${result.coinCost}🪙)`);
+          break;
+        default:
           actions.addNotification({
-            message: `🐛 Treated ${result.applied} diseased crops${parts.length ? ` (${parts.join(', ')})` : ''}!`,
-            type: 'success'
+            message: `${action} action completed!`,
+            type: 'info',
           });
-        }
-        break;
-      default:
-        actions.addNotification({
-          message: `${action} action completed!`,
-          type: 'info'
-        });
-    }
-  }, [actions, farmStats.readyPlots, plotsArray]);
+      }
+    },
+    [actions, farmStats.readyPlots, plotsArray]
+  );
 
   const advisorCard = useMemo(() => {
     if (plotInsights.diseasedPlots > 0) {
@@ -231,7 +246,10 @@ const FarmingTab = memo(() => {
       };
     }
     if (plotInsights.emptyPlots > 0) {
-      const focusName = dailyFocus?.crop?.name || cropList.find((crop) => crop.id === state.selectedCrop)?.name || 'your selected crop';
+      const focusName =
+        dailyFocus?.crop?.name ||
+        cropList.find((crop) => crop.id === state.selectedCrop)?.name ||
+        'your selected crop';
       return {
         title: 'Planting Opportunity',
         emoji: '🌱',
@@ -245,15 +263,25 @@ const FarmingTab = memo(() => {
     return {
       title: 'Farm Flow Stable',
       emoji: '✨',
-      detail: plotInsights.activeGrowingPlots > 0
-        ? `${plotInsights.activeGrowingPlots} crop${plotInsights.activeGrowingPlots === 1 ? '' : 's'} are growing smoothly. Keep rotating crops to maintain long-term fertility.`
-        : 'Everything looks healthy. Keep rotating crops to maintain long-term fertility.',
+      detail:
+        plotInsights.activeGrowingPlots > 0
+          ? `${plotInsights.activeGrowingPlots} crop${plotInsights.activeGrowingPlots === 1 ? '' : 's'} are growing smoothly. Keep rotating crops to maintain long-term fertility.`
+          : 'Everything looks healthy. Keep rotating crops to maintain long-term fertility.',
       cta: 'Refresh Soil',
       action: 'Fertilize All',
       cardClass: 'from-violet-50 to-indigo-50 border-violet-200',
       buttonClass: 'bg-violet-600 hover:bg-violet-700 text-white',
     };
-  }, [cropList, dailyFocus?.crop?.name, plotInsights.activeGrowingPlots, plotInsights.diseasedPlots, plotInsights.emptyPlots, plotInsights.readyPlots, plotInsights.thirstyPlots, state.selectedCrop]);
+  }, [
+    cropList,
+    dailyFocus?.crop?.name,
+    plotInsights.activeGrowingPlots,
+    plotInsights.diseasedPlots,
+    plotInsights.emptyPlots,
+    plotInsights.readyPlots,
+    plotInsights.thirstyPlots,
+    state.selectedCrop,
+  ]);
 
   const runAdvisorAction = useCallback(() => {
     if (advisorCard.action === 'SELECT_CROP') {
@@ -265,7 +293,14 @@ const FarmingTab = memo(() => {
       return;
     }
     handleBulkAction(advisorCard.action);
-  }, [advisorCard.action, cropList, dailyFocus?.cropId, handleBulkAction, handleSelectCrop, state.selectedCrop]);
+  }, [
+    advisorCard.action,
+    cropList,
+    dailyFocus?.cropId,
+    handleBulkAction,
+    handleSelectCrop,
+    state.selectedCrop,
+  ]);
 
   return (
     <div className="space-y-4">
@@ -298,7 +333,8 @@ const FarmingTab = memo(() => {
             <div>
               <h3 className="font-semibold text-slate-900">Daily market focus</h3>
               <p className="text-sm text-slate-600">
-                Today, {dailyFocus.crop.emoji} {dailyFocus.crop.name} sells for +{Math.round((dailyFocus.bonusMultiplier - 1) * 100)}%.
+                Today, {dailyFocus.crop.emoji} {dailyFocus.crop.name} sells for +
+                {Math.round((dailyFocus.bonusMultiplier - 1) * 100)}%.
               </p>
             </div>
             <Button
@@ -330,7 +366,7 @@ const FarmingTab = memo(() => {
             All ({availableCrops.length})
           </Button>
           {Object.values(CROP_CATEGORIES).map((category) => {
-            const count = availableCrops.filter(c => c.category === category).length;
+            const count = availableCrops.filter((c) => c.category === category).length;
             if (count === 0) return null;
             return (
               <Button
@@ -387,7 +423,10 @@ const FarmingTab = memo(() => {
           </Button>
         </div>
         <div className="mt-3 text-[11px] text-slate-500">
-          Hotkeys: <kbd className="px-1 py-0.5 bg-gray-100 rounded">W</kbd> water, <kbd className="px-1 py-0.5 bg-gray-100 rounded">H</kbd> harvest, <kbd className="px-1 py-0.5 bg-gray-100 rounded">F</kbd> fertilize, <kbd className="px-1 py-0.5 bg-gray-100 rounded">T</kbd> treat
+          Hotkeys: <kbd className="px-1 py-0.5 bg-gray-100 rounded">W</kbd> water,{' '}
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded">H</kbd> harvest,{' '}
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded">F</kbd> fertilize,{' '}
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded">T</kbd> treat
         </div>
       </Card>
 
@@ -395,9 +434,13 @@ const FarmingTab = memo(() => {
       <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-semibold text-slate-900">Select crop to plant</h3>
-          <Badge variant="outline" className="bg-white/80 text-slate-600">{cropList.length} available</Badge>
+          <Badge variant="outline" className="bg-white/80 text-slate-600">
+            {cropList.length} available
+          </Badge>
         </div>
-        <p className="mb-3 text-xs text-slate-600">Click a crop, then click empty plots on your farm</p>
+        <p className="mb-3 text-xs text-slate-600">
+          Click a crop, then click empty plots on your farm
+        </p>
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {cropList.length === 0 ? (
             <div className="text-center py-10">
@@ -406,19 +449,20 @@ const FarmingTab = memo(() => {
               <p className="text-xs text-slate-500 mt-1">Level up to discover new seeds.</p>
             </div>
           ) : (
-            cropList.map(crop => {
+            cropList.map((crop) => {
               const isSelected = state.selectedCrop === crop.id;
               const isDailyFocusCrop = dailyFocus?.cropId === crop.id;
               return (
-                <div 
-                  key={crop.id} 
+                <div
+                  key={crop.id}
                   className={`
                     flex items-center justify-between rounded-2xl border p-3 cursor-pointer transition-all
-                    ${isSelected 
-                      ? 'bg-green-50 border-green-500 shadow-md' 
-                      : isDailyFocusCrop
-                        ? 'bg-amber-50 border-amber-200 hover:bg-amber-100'
-                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                    ${
+                      isSelected
+                        ? 'bg-green-50 border-green-500 shadow-md'
+                        : isDailyFocusCrop
+                          ? 'bg-amber-50 border-amber-200 hover:bg-amber-100'
+                          : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                     }
                   `}
                   onClick={() => handleSelectCrop(crop.id)}
@@ -434,9 +478,7 @@ const FarmingTab = memo(() => {
                           </Badge>
                         )}
                         {isDailyFocusCrop && (
-                          <Badge className="text-[10px] px-1 py-0 bg-amber-600">
-                            Focus
-                          </Badge>
+                          <Badge className="text-[10px] px-1 py-0 bg-amber-600">Focus</Badge>
                         )}
                       </div>
                       <div className="text-xs text-slate-600">
@@ -447,9 +489,7 @@ const FarmingTab = memo(() => {
                       </div>
                     </div>
                   </div>
-                  {isSelected && (
-                    <Badge className="bg-green-600">✓ Selected</Badge>
-                  )}
+                  {isSelected && <Badge className="bg-green-600">✓ Selected</Badge>}
                 </div>
               );
             })
@@ -463,37 +503,26 @@ const FarmingTab = memo(() => {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm">Active Plots</span>
-            <Badge variant="outline">
-              {`${farmStats.activePlots}/${farmStats.totalPlots}`}
-            </Badge>
+            <Badge variant="outline">{`${farmStats.activePlots}/${farmStats.totalPlots}`}</Badge>
           </div>
 
           <div className="flex justify-between items-center">
             <span className="text-sm">Ready to Harvest</span>
-            <Badge variant="outline">
-              {farmStats.readyPlots}
-            </Badge>
+            <Badge variant="outline">{farmStats.readyPlots}</Badge>
           </div>
           {hasSoilAnalyzer && (
             <div className="flex justify-between items-center">
               <span className="text-sm">Avg Soil Fertility</span>
-              <Badge variant="outline">
-                {farmStats.avgSoilFertilityLabel}
-              </Badge>
+              <Badge variant="outline">{farmStats.avgSoilFertilityLabel}</Badge>
             </div>
           )}
 
           <div>
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm">Farm Efficiency</span>
-              <span className="text-sm font-medium">
-                {`${farmStats.efficiencyPercent}%`}
-              </span>
+              <span className="text-sm font-medium">{`${farmStats.efficiencyPercent}%`}</span>
             </div>
-            <Progress
-              value={farmStats.efficiencyPercent}
-              className="h-2"
-            />
+            <Progress value={farmStats.efficiencyPercent} className="h-2" />
           </div>
         </div>
       </Card>

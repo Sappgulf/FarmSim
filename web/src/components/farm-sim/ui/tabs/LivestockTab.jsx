@@ -17,9 +17,9 @@ const LivestockTab = memo(() => {
   const soundSystem = systems?.soundSystem;
 
   const livestock = {
-    animals: (state.livestock?.animals) || [],
-    capacity: (state.livestock?.capacity) || 10,
-    totalProduced: (state.livestock?.totalProduced) || 0
+    animals: state.livestock?.animals || [],
+    capacity: state.livestock?.capacity || 10,
+    totalProduced: state.livestock?.totalProduced || 0,
   };
 
   // Safety check for LIVESTOCK_TYPES
@@ -55,7 +55,7 @@ const LivestockTab = memo(() => {
     avgHealth: 0,
     avgHappiness: 0,
     readyProducts: 0,
-    dailyCost: 0
+    dailyCost: 0,
   };
 
   const handleBuyAnimal = (typeId) => {
@@ -63,7 +63,7 @@ const LivestockTab = memo(() => {
       console.error('[farm]', 'LivestockTab: livestockSystem not available');
       actions.addNotification({
         message: 'Livestock system not ready yet',
-        type: 'error'
+        type: 'error',
       });
       return;
     }
@@ -79,7 +79,7 @@ const LivestockTab = memo(() => {
         soundSystem?.playErrorSound();
         actions.addNotification({
           message: result.message,
-          type: 'error'
+          type: 'error',
         });
         console.warn('[farm]', 'Failed to buy animal:', result.message);
       }
@@ -87,7 +87,7 @@ const LivestockTab = memo(() => {
       console.error('[farm]', 'LivestockTab: Error buying animal', error);
       actions.addNotification({
         message: 'Error buying animal',
-        type: 'error'
+        type: 'error',
       });
     }
   };
@@ -122,7 +122,7 @@ const LivestockTab = memo(() => {
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 3;
         window.triggerParticleEffect(centerX, centerY, 'harvest', {
-          value: result.value
+          value: result.value,
         });
       }
     }
@@ -167,11 +167,11 @@ const LivestockTab = memo(() => {
         tone="amber"
         title="Livestock Management"
         description="Raise animals, manage capacity, and keep production moving."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
             {stats.totalAnimals} animals
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 md:grid-cols-4">
           <MetricTile
@@ -252,7 +252,7 @@ const LivestockTab = memo(() => {
         </h4>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {Object.values(LIVESTOCK_TYPES).map(animalType => {
+          {Object.values(LIVESTOCK_TYPES).map((animalType) => {
             const canAfford = state.coins >= animalType.cost;
             const hasSpace = stats.spaceUsed + animalType.requirements.space <= stats.capacity;
             const meetsLevel = state.level >= animalType.requirements.level;
@@ -261,18 +261,17 @@ const LivestockTab = memo(() => {
             return (
               <Card
                 key={animalType.id}
-                className={`p-3 cursor-pointer transition-all duration-200 ${canBuy
+                className={`p-3 cursor-pointer transition-all duration-200 ${
+                  canBuy
                     ? 'hover:shadow-lg hover:scale-105 hover:border-green-300 bg-white border-2 border-transparent'
                     : 'opacity-50 bg-gray-50 cursor-not-allowed'
-                  }`}
+                }`}
                 onClick={() => canBuy && handleBuyAnimal(animalType.id)}
               >
                 <div className="text-center">
                   <div className="text-4xl mb-2">{animalType.emoji}</div>
                   <div className="font-bold text-gray-800">{animalType.name}</div>
-                  <div className="text-xs text-gray-600 mb-2">
-                    {animalType.description}
-                  </div>
+                  <div className="text-xs text-gray-600 mb-2">{animalType.description}</div>
 
                   <div className="text-sm space-y-1 mb-2">
                     <div className="flex justify-between text-xs">
@@ -334,9 +333,12 @@ const LivestockTab = memo(() => {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {livestock.animals.map(animal => {
+            {livestock.animals.map((animal) => {
               const timeSinceProduction = (Date.now() - animal.lastProduction) / 1000;
-              const productionProgress = Math.min(100, (timeSinceProduction / animal.type.productionTime) * 100);
+              const productionProgress = Math.min(
+                100,
+                (timeSinceProduction / animal.type.productionTime) * 100
+              );
 
               return (
                 <Card

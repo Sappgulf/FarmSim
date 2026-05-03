@@ -9,15 +9,15 @@
 import { useEffect, useCallback } from 'react';
 
 const TAB_KEYS = {
-    '1': 'farming',
-    '2': 'inventory',
-    '3': 'shop',
-    '4': 'buildings',
-    '5': 'research',
-    '6': 'genetics',
-    '7': 'weather',
-    '8': 'pets',
-    '9': 'livestock',
+  1: 'farming',
+  2: 'inventory',
+  3: 'shop',
+  4: 'buildings',
+  5: 'research',
+  6: 'genetics',
+  7: 'weather',
+  8: 'pets',
+  9: 'livestock',
 };
 
 const TEXT_INPUT_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
@@ -30,81 +30,90 @@ const TEXT_INPUT_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
  * @param {() => void} [options.onQuickSave] - Ctrl/Cmd+S callback (optional)
  * @param {() => void} [options.onTogglePause] - Space callback (optional)
  */
-export function useKeyboardShortcuts({ enabled, onTabChange, onBulkAction, onQuickSave, onTogglePause }) {
-    const handleKeyDown = useCallback((e) => {
-        if (!enabled) return;
+export function useKeyboardShortcuts({
+  enabled,
+  onTabChange,
+  onBulkAction,
+  onQuickSave,
+  onTogglePause,
+}) {
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (!enabled) return;
 
-        const target = e.target;
-        const tag = target?.tagName;
-        const isTextField = (tag && TEXT_INPUT_TAGS.has(tag)) || Boolean(target?.isContentEditable);
+      const target = e.target;
+      const tag = target?.tagName;
+      const isTextField = (tag && TEXT_INPUT_TAGS.has(tag)) || Boolean(target?.isContentEditable);
 
-        // Quick save: Ctrl/Cmd + S (allow Ctrl/Cmd, block Alt).
-        if (
-            onQuickSave &&
-            (e.ctrlKey || e.metaKey) &&
-            !e.altKey &&
-            (e.key === 's' || e.key === 'S')
-        ) {
-            if (isTextField) return;
-            if (e.repeat) return;
-            e.preventDefault();
-            onQuickSave();
-            return;
-        }
-
-        // Ignore when typing in inputs/textareas/contenteditable
+      // Quick save: Ctrl/Cmd + S (allow Ctrl/Cmd, block Alt).
+      if (
+        onQuickSave &&
+        (e.ctrlKey || e.metaKey) &&
+        !e.altKey &&
+        (e.key === 's' || e.key === 'S')
+      ) {
         if (isTextField) return;
-
-        // Avoid repeated firing when keys are held down.
         if (e.repeat) return;
+        e.preventDefault();
+        onQuickSave();
+        return;
+      }
 
-        // Ignore if modifier keys are held (Ctrl, Meta, Alt)
-        if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // Ignore when typing in inputs/textareas/contenteditable
+      if (isTextField) return;
 
-        const key = e.key;
+      // Avoid repeated firing when keys are held down.
+      if (e.repeat) return;
 
-        // Pause/resume: Space (avoid stealing space from focused buttons/links)
-        if (onTogglePause && (e.code === 'Space' || key === ' ')) {
-            if (tag === 'BUTTON' || tag === 'A') return;
+      // Ignore if modifier keys are held (Ctrl, Meta, Alt)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      const key = e.key;
+
+      // Pause/resume: Space (avoid stealing space from focused buttons/links)
+      if (onTogglePause && (e.code === 'Space' || key === ' ')) {
+        if (tag === 'BUTTON' || tag === 'A') return;
+        e.preventDefault();
+        onTogglePause();
+        return;
+      }
+
+      // Tab switching: 1-9
+      const tabId = TAB_KEYS[key];
+      if (tabId) {
+        e.preventDefault();
+        onTabChange(tabId);
+        return;
+      }
+
+      // Bulk actions (uppercase or lowercase)
+      if (onBulkAction) {
+        const lower = key.toLowerCase();
+        switch (lower) {
+          case 'w':
             e.preventDefault();
-            onTogglePause();
+            onBulkAction('water');
+            return;
+          case 'h':
+            e.preventDefault();
+            onBulkAction('harvest');
+            return;
+          case 'f':
+            e.preventDefault();
+            onBulkAction('fertilize');
+            return;
+          case 't':
+            e.preventDefault();
+            onBulkAction('treat');
             return;
         }
+      }
+    },
+    [enabled, onTabChange, onBulkAction, onQuickSave, onTogglePause]
+  );
 
-        // Tab switching: 1-9
-        const tabId = TAB_KEYS[key];
-        if (tabId) {
-            e.preventDefault();
-            onTabChange(tabId);
-            return;
-        }
-
-        // Bulk actions (uppercase or lowercase)
-        if (onBulkAction) {
-            const lower = key.toLowerCase();
-            switch (lower) {
-                case 'w':
-                    e.preventDefault();
-                    onBulkAction('water');
-                    return;
-                case 'h':
-                    e.preventDefault();
-                    onBulkAction('harvest');
-                    return;
-                case 'f':
-                    e.preventDefault();
-                    onBulkAction('fertilize');
-                    return;
-                case 't':
-                    e.preventDefault();
-                    onBulkAction('treat');
-                    return;
-            }
-        }
-    }, [enabled, onTabChange, onBulkAction, onQuickSave, onTogglePause]);
-
-    useEffect(() => {
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [handleKeyDown]);
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 }

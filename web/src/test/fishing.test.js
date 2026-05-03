@@ -65,7 +65,6 @@ describe('FishingSystem', () => {
     expect(actions.addToInventory).toHaveBeenCalledWith(success.fish.id, 1);
   });
 
-
   it('applies early-game tuning while rewarding catch streak mastery', () => {
     const makeCatchState = () => ({
       fish: {
@@ -103,7 +102,6 @@ describe('FishingSystem', () => {
     expect(earlyValue).toBeLessThan(lateStreakValue);
   });
 
-
   it('applies lucky lure bonus to rare catch weighting', () => {
     state.inventory = { lucky_lure: 1 };
     system = new FishingSystem(state, actions);
@@ -126,7 +124,8 @@ describe('FishingSystem', () => {
 
     expect(escaped.escaped).toBe(true);
     expect(actions.updateFishing).toHaveBeenCalled();
-    const latestUpdate = actions.updateFishing.mock.calls[actions.updateFishing.mock.calls.length - 1][0];
+    const latestUpdate =
+      actions.updateFishing.mock.calls[actions.updateFishing.mock.calls.length - 1][0];
     expect(latestUpdate.stats.streak).toBe(0);
     expect(latestUpdate.stats.escapes).toBeGreaterThan(0);
   });

@@ -26,7 +26,7 @@ export function formatDisplayText(text) {
   return text
     .toLowerCase()
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
 
@@ -175,7 +175,9 @@ export function formatTrait(traitName, value, isPercentage = false) {
   const displayName = formatDisplayText(traitName);
   const displayValue = isPercentage
     ? formatPercentage(value)
-    : (typeof value === 'number' ? value : value);
+    : typeof value === 'number'
+      ? value
+      : value;
 
   return `${displayName}: ${displayValue}`;
 }
@@ -190,7 +192,7 @@ export function formatTrait(traitName, value, isPercentage = false) {
 export function formatKeyDisplay(key) {
   return {
     key: key,
-    display: formatDisplayText(key)
+    display: formatDisplayText(key),
   };
 }
 
@@ -201,5 +203,5 @@ export function formatKeyDisplay(key) {
  */
 export function formatKeysForDisplay(keys) {
   if (!Array.isArray(keys)) return [];
-  return keys.map(key => formatKeyDisplay(key));
+  return keys.map((key) => formatKeyDisplay(key));
 }

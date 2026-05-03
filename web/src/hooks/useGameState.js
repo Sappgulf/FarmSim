@@ -10,11 +10,11 @@ const INITIAL_STATE = {
   coins: 50,
   score: 0,
   totalEarned: 0,
-  name: "My Farm",
+  name: 'My Farm',
   prestige: 0,
   skillPoints: 0,
-  levelId: "lvl1",
-  levelStatus: "playing",
+  levelId: 'lvl1',
+  levelStatus: 'playing',
   levelEndsAt: 0,
   levelStartedAt: 0,
   tutorialComplete: false,
@@ -55,7 +55,7 @@ export function useGameState() {
   });
 
   // Get current level data
-  const level = LEVELS.find(l => l.id === levelId);
+  const level = LEVELS.find((l) => l.id === levelId);
   const prestigeData = PRESTIGE_LEVELS[prestige] || PRESTIGE_LEVELS[0];
 
   /**
@@ -69,12 +69,10 @@ export function useGameState() {
    */
   const addNotification = useCallback((message, type = 'info', options = {}) => {
     const id = ++notificationIdRef.current;
-    
+
     // Support legacy signature: addNotification(msg, type, durationMs)
-    const opts = typeof options === 'number' 
-      ? { duration: options }
-      : options;
-    
+    const opts = typeof options === 'number' ? { duration: options } : options;
+
     const notification = {
       id,
       message,
@@ -83,9 +81,9 @@ export function useGameState() {
       duration: opts.duration, // Let component use default if undefined
       sticky: opts.sticky || false,
     };
-    
+
     // Keep max 10 notifications in queue (older ones removed first)
-    setNotifications(prev => [...prev.slice(-9), notification]);
+    setNotifications((prev) => [...prev.slice(-9), notification]);
 
     // Auto-dismiss is now handled by NotificationStack component
     // This prevents timer leaks and allows proper cleanup
@@ -95,30 +93,36 @@ export function useGameState() {
 
   // Remove notification
   const removeNotification = useCallback((id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   }, []);
 
   // Add coins with prestige multiplier
-  const addCoins = useCallback((amount, source = 'unknown') => {
-    const multipliedAmount = Math.round(amount * prestigeData.multiplier);
-    setCoins(prev => prev + multipliedAmount);
-    setTotalEarned(prev => prev + multipliedAmount);
-    return multipliedAmount;
-  }, [prestigeData.multiplier]);
+  const addCoins = useCallback(
+    (amount, source = 'unknown') => {
+      const multipliedAmount = Math.round(amount * prestigeData.multiplier);
+      setCoins((prev) => prev + multipliedAmount);
+      setTotalEarned((prev) => prev + multipliedAmount);
+      return multipliedAmount;
+    },
+    [prestigeData.multiplier]
+  );
 
   // Spend coins
-  const spendCoins = useCallback((amount) => {
-    if (coins >= amount) {
-      setCoins(prev => prev - amount);
-      return true;
-    }
-    addNotification(`Not enough coins! Need ${amount}`, 'error');
-    return false;
-  }, [coins, addNotification]);
+  const spendCoins = useCallback(
+    (amount) => {
+      if (coins >= amount) {
+        setCoins((prev) => prev - amount);
+        return true;
+      }
+      addNotification(`Not enough coins! Need ${amount}`, 'error');
+      return false;
+    },
+    [coins, addNotification]
+  );
 
   // Update statistics
   const updateStats = useCallback((key, increment = 1) => {
-    setStats(prev => ({ ...prev, [key]: (prev[key] || 0) + increment }));
+    setStats((prev) => ({ ...prev, [key]: (prev[key] || 0) + increment }));
   }, []);
 
   // Check level completion
@@ -131,10 +135,10 @@ export function useGameState() {
     if (level && coins >= level.targetCoins) {
       setLevelStatus('won');
       addNotification(`🎉 Level Complete! +${level.reward} coins`, 'success');
-      setCoins(prev => prev + level.reward);
+      setCoins((prev) => prev + level.reward);
 
       // Auto-advance to next level after delay
-      const currentIndex = LEVELS.findIndex(l => l.id === levelId);
+      const currentIndex = LEVELS.findIndex((l) => l.id === levelId);
       const nextLevel = LEVELS[currentIndex + 1];
       if (nextLevel && nextLevel.id !== 'endless') {
         setTimeout(() => {
@@ -154,39 +158,48 @@ export function useGameState() {
   }, [levelStatus, levelId, coins, level, levelEndsAt, addNotification]);
 
   // Start a specific level
-  const startLevel = useCallback((newLevelId) => {
-    const newLevel = LEVELS.find(l => l.id === newLevelId);
-    if (!newLevel) return;
+  const startLevel = useCallback(
+    (newLevelId) => {
+      const newLevel = LEVELS.find((l) => l.id === newLevelId);
+      if (!newLevel) return;
 
-    setLevelId(newLevelId);
-    if (newLevelId === 'endless') {
-      setLevelEndsAt(0);
-    } else {
-      setLevelEndsAt(nowSec() + newLevel.minutes * 60);
-    }
-    setLevelStartedAt(nowSec());
-    setLevelStatus('playing');
-    addNotification(`🎯 Starting ${newLevel.label}`, 'info');
-  }, [addNotification]);
+      setLevelId(newLevelId);
+      if (newLevelId === 'endless') {
+        setLevelEndsAt(0);
+      } else {
+        setLevelEndsAt(nowSec() + newLevel.minutes * 60);
+      }
+      setLevelStartedAt(nowSec());
+      setLevelStatus('playing');
+      addNotification(`🎯 Starting ${newLevel.label}`, 'info');
+    },
+    [addNotification]
+  );
 
   // Prestige (reset with bonuses)
   const doPrestige = useCallback(() => {
     const nextPrestige = PRESTIGE_LEVELS[prestige + 1];
     if (!nextPrestige || totalEarned < nextPrestige.requirement) {
-      addNotification(`Need ${nextPrestige?.requirement || '???'} total coins to prestige`, 'error');
+      addNotification(
+        `Need ${nextPrestige?.requirement || '???'} total coins to prestige`,
+        'error'
+      );
       return false;
     }
 
-    setPrestige(prev => prev + 1);
+    setPrestige((prev) => prev + 1);
     setCoins(50);
-    setSkillPoints(prev => prev + 5);
-    addNotification(`🌟 Prestiged to ${nextPrestige.name}! Multiplier: ${nextPrestige.multiplier}x`, 'success');
+    setSkillPoints((prev) => prev + 5);
+    addNotification(
+      `🌟 Prestiged to ${nextPrestige.name}! Multiplier: ${nextPrestige.multiplier}x`,
+      'success'
+    );
     return true;
   }, [prestige, totalEarned, addNotification]);
 
   // Advance tutorial
   const advanceTutorial = useCallback(() => {
-    setTutorialStep(prev => prev + 1);
+    setTutorialStep((prev) => prev + 1);
   }, []);
 
   const completeTutorial = useCallback(() => {
@@ -195,21 +208,38 @@ export function useGameState() {
   }, [addNotification]);
 
   // Get save data
-  const getSaveData = useCallback(() => ({
-    coins,
-    score,
-    totalEarned,
-    name,
-    prestige,
-    skillPoints,
-    levelId,
-    levelStatus,
-    levelEndsAt,
-    levelStartedAt,
-    tutorialComplete,
-    tutorialStep,
-    stats,
-  }), [coins, score, totalEarned, name, prestige, skillPoints, levelId, levelStatus, levelEndsAt, levelStartedAt, tutorialComplete, tutorialStep, stats]);
+  const getSaveData = useCallback(
+    () => ({
+      coins,
+      score,
+      totalEarned,
+      name,
+      prestige,
+      skillPoints,
+      levelId,
+      levelStatus,
+      levelEndsAt,
+      levelStartedAt,
+      tutorialComplete,
+      tutorialStep,
+      stats,
+    }),
+    [
+      coins,
+      score,
+      totalEarned,
+      name,
+      prestige,
+      skillPoints,
+      levelId,
+      levelStatus,
+      levelEndsAt,
+      levelStartedAt,
+      tutorialComplete,
+      tutorialStep,
+      stats,
+    ]
+  );
 
   // Load save data
   const loadSaveData = useCallback((data) => {

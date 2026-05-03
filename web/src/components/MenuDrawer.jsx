@@ -4,8 +4,19 @@
  */
 import React, { memo, useEffect, useCallback } from 'react';
 import {
-  X, Settings, Trophy, Dna, RotateCcw, Volume2, VolumeX,
-  HelpCircle, Info, Moon, Sun, Accessibility, BookOpen
+  X,
+  Settings,
+  Trophy,
+  Dna,
+  RotateCcw,
+  Volume2,
+  VolumeX,
+  HelpCircle,
+  Info,
+  Moon,
+  Sun,
+  Accessibility,
+  BookOpen,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { LEVELS } from '../data/constants';
@@ -50,7 +61,9 @@ function MenuDrawerComponent({
     } else {
       document.body.style.overflow = '';
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -76,7 +89,9 @@ function MenuDrawerComponent({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 id="menu-title" className="text-lg font-bold text-gray-900">Menu</h2>
+          <h2 id="menu-title" className="text-lg font-bold text-gray-900">
+            Menu
+          </h2>
           <button
             onClick={onClose}
             className="p-2 -mr-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
@@ -98,21 +113,30 @@ function MenuDrawerComponent({
               icon={Trophy}
               label="Achievements"
               sublabel="Track your progress"
-              onClick={() => { onShowAchievements?.(); onClose(); }}
+              onClick={() => {
+                onShowAchievements?.();
+                onClose();
+              }}
             />
 
             <MenuButton
               icon={Dna}
               label="Breeding Lab"
               sublabel="Create hybrid crops"
-              onClick={() => { onShowBreeding?.(); onClose(); }}
+              onClick={() => {
+                onShowBreeding?.();
+                onClose();
+              }}
             />
 
             <MenuButton
               icon={BookOpen}
               label="Scrapbook"
               sublabel="Memories & chapters"
-              onClick={() => { onShowScrapbook?.(); onClose(); }}
+              onClick={() => {
+                onShowScrapbook?.();
+                onClose();
+              }}
             />
           </div>
 
@@ -143,15 +167,19 @@ function MenuDrawerComponent({
               Quick Start Level
             </h3>
             <div className="flex flex-wrap gap-2">
-              {LEVELS.map(L => (
+              {LEVELS.map((L) => (
                 <button
                   key={L.id}
-                  onClick={() => { onStartLevel?.(L.id); onClose(); }}
+                  onClick={() => {
+                    onStartLevel?.(L.id);
+                    onClose();
+                  }}
                   className={`
                     px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                    ${levelId === L.id
-                      ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-300'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ${
+                      levelId === L.id
+                        ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-300'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }
                   `}
                 >
@@ -171,14 +199,20 @@ function MenuDrawerComponent({
               icon={HelpCircle}
               label="How to Play"
               sublabel="Tutorial & tips"
-              onClick={() => { onShowHelp?.('basics'); onClose(); }}
+              onClick={() => {
+                onShowHelp?.('basics');
+                onClose();
+              }}
             />
 
             <MenuButton
               icon={Info}
               label="About"
               sublabel="Version 5.0.0"
-              onClick={() => { onShowHelp?.('about'); onClose(); }}
+              onClick={() => {
+                onShowHelp?.('about');
+                onClose();
+              }}
             />
           </div>
 
@@ -187,12 +221,7 @@ function MenuDrawerComponent({
             <h3 className="text-xs font-semibold text-red-500 uppercase tracking-wider mb-3">
               Danger Zone
             </h3>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={onResetGame}
-              className="w-full"
-            >
+            <Button variant="destructive" size="sm" onClick={onResetGame} className="w-full">
               <RotateCcw size={16} className="mr-2" />
               Reset All Progress
             </Button>
@@ -235,14 +264,18 @@ function ToggleButton({ icon: Icon, label, enabled, onToggle }) {
         </div>
         <span className="font-medium text-gray-900">{label}</span>
       </div>
-      <div className={`
+      <div
+        className={`
         w-11 h-6 rounded-full transition-colors relative
         ${enabled ? 'bg-emerald-500' : 'bg-gray-300'}
-      `}>
-        <div className={`
+      `}
+      >
+        <div
+          className={`
           absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform
           ${enabled ? 'translate-x-6' : 'translate-x-1'}
-        `} />
+        `}
+        />
       </div>
     </button>
   );

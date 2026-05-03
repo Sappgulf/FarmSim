@@ -7,10 +7,30 @@ import { Leaf, Droplet, Sun, Coins, ChevronRight, Sparkles } from 'lucide-react'
 import { Button } from '../ui/button';
 
 const FEATURES = [
-  { icon: Leaf, label: "Grow Crops", desc: "Plant and nurture various crops", color: "text-green-500" },
-  { icon: Droplet, label: "Manage Weather", desc: "Adapt to changing seasons", color: "text-blue-500" },
-  { icon: Sun, label: "Build Your Farm", desc: "Expand with buildings & animals", color: "text-yellow-500" },
-  { icon: Coins, label: "Earn Rewards", desc: "Complete goals and prestige", color: "text-amber-500" },
+  {
+    icon: Leaf,
+    label: 'Grow Crops',
+    desc: 'Plant and nurture various crops',
+    color: 'text-green-500',
+  },
+  {
+    icon: Droplet,
+    label: 'Manage Weather',
+    desc: 'Adapt to changing seasons',
+    color: 'text-blue-500',
+  },
+  {
+    icon: Sun,
+    label: 'Build Your Farm',
+    desc: 'Expand with buildings & animals',
+    color: 'text-yellow-500',
+  },
+  {
+    icon: Coins,
+    label: 'Earn Rewards',
+    desc: 'Complete goals and prestige',
+    color: 'text-amber-500',
+  },
 ];
 
 function WelcomeScreenComponent({ onStart, onSkip }) {
@@ -23,22 +43,31 @@ function WelcomeScreenComponent({ onStart, onSkip }) {
     const timers = [];
 
     // Stage 0 -> 1 (show features)
-    timers.push(setTimeout(() => {
-      setStage(1);
-      setShowFeatures(true);
-    }, 1500));
+    timers.push(
+      setTimeout(() => {
+        setStage(1);
+        setShowFeatures(true);
+      }, 1500)
+    );
 
     // Animate features appearing
     FEATURES.forEach((_, i) => {
-      timers.push(setTimeout(() => {
-        setFeatureIndex(i + 1);
-      }, 1800 + i * 300));
+      timers.push(
+        setTimeout(
+          () => {
+            setFeatureIndex(i + 1);
+          },
+          1800 + i * 300
+        )
+      );
     });
 
     // Stage 1 -> 2 (ready to start)
-    timers.push(setTimeout(() => {
-      setStage(2);
-    }, 3200));
+    timers.push(
+      setTimeout(() => {
+        setStage(2);
+      }, 3200)
+    );
 
     return () => timers.forEach(clearTimeout);
   }, []);
@@ -65,13 +94,18 @@ function WelcomeScreenComponent({ onStart, onSkip }) {
 
         {/* Gradient orbs */}
         <div className="absolute top-1/4 -left-20 w-64 h-64 bg-yellow-400/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-emerald-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div
+          className="absolute bottom-1/4 -right-20 w-80 h-80 bg-emerald-300/20 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: '1s' }}
+        />
       </div>
 
       {/* Main content */}
       <div className="relative z-10 text-center px-6 max-w-md w-full">
         {/* Logo and title */}
-        <div className={`transition-all duration-700 ${stage >= 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        <div
+          className={`transition-all duration-700 ${stage >= 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        >
           {/* Farm icon */}
           <div className="relative mx-auto w-24 h-24 mb-6">
             <div className="absolute inset-0 bg-white/20 rounded-2xl rotate-6" />
@@ -80,16 +114,15 @@ function WelcomeScreenComponent({ onStart, onSkip }) {
               <span className="text-5xl animate-bounce-slow">🌾</span>
             </div>
             {/* Sparkle effects */}
-            <Sparkles className="absolute -top-2 -right-2 text-yellow-300 animate-pulse" size={24} />
+            <Sparkles
+              className="absolute -top-2 -right-2 text-yellow-300 animate-pulse"
+              size={24}
+            />
           </div>
 
           {/* Title */}
-          <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
-            FarmSim
-          </h1>
-          <p className="text-emerald-100 text-lg mb-8">
-            Build Your Dream Farm
-          </p>
+          <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">FarmSim</h1>
+          <p className="text-emerald-100 text-lg mb-8">Build Your Dream Farm</p>
         </div>
 
         {/* Features grid */}
@@ -114,13 +147,18 @@ function WelcomeScreenComponent({ onStart, onSkip }) {
         )}
 
         {/* Start button */}
-        <div className={`transition-all duration-500 ${stage >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        <div
+          className={`transition-all duration-500 ${stage >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        >
           <Button
             onClick={onStart}
             className="w-full bg-white text-emerald-600 hover:bg-emerald-50 font-bold text-lg py-6 shadow-xl hover:shadow-2xl transition-all group"
           >
             Start Farming
-            <ChevronRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
+            <ChevronRight
+              className="ml-2 group-hover:translate-x-1 transition-transform"
+              size={20}
+            />
           </Button>
 
           <button

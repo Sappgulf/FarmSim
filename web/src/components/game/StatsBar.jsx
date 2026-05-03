@@ -3,7 +3,19 @@
  * Top header showing coins, level, weather, season
  */
 import React, { memo, useMemo, useState, useEffect, useRef } from 'react';
-import { Coins, Target, TrendingUp, Zap, Crown, HelpCircle, Clock, Sun, Moon, Sunrise, Sunset } from 'lucide-react';
+import {
+  Coins,
+  Target,
+  TrendingUp,
+  Zap,
+  Crown,
+  HelpCircle,
+  Clock,
+  Sun,
+  Moon,
+  Sunrise,
+  Sunset,
+} from 'lucide-react';
 import { formatTimeRemaining } from '../../utils/time.mjs';
 import { nowSec } from '../../utils/time.mjs';
 
@@ -46,22 +58,18 @@ function AnimatedCounter({ value, duration = 300 }) {
     }
   }, [value, duration]);
 
-  const animationClass = isAnimating ? (value > prevValueRef.current ? 'counter-bump' : 'shake') : '';
+  const animationClass = isAnimating
+    ? value > prevValueRef.current
+      ? 'counter-bump'
+      : 'shake'
+    : '';
 
-  return (
-    <span className={`inline-block ${animationClass}`}>
-      {displayValue.toLocaleString()}
-    </span>
-  );
+  return <span className={`inline-block ${animationClass}`}>{displayValue.toLocaleString()}</span>;
 }
 
 // Coin icon with spin animation
 function AnimatedCoinIcon({ spinning }) {
-  return (
-    <span className={`inline-flex ${spinning ? 'coin-icon-spin' : ''}`}>
-      🪙
-    </span>
-  );
+  return <span className={`inline-flex ${spinning ? 'coin-icon-spin' : ''}`}>🪙</span>;
 }
 
 function StatsBarComponent({
@@ -88,8 +96,8 @@ function StatsBarComponent({
   const timeRemaining = levelEndsAt > 0 ? formatTimeRemaining(levelEndsAt, now) : null;
   const progress = level ? Math.min((coins / level.targetCoins) * 100, 100) : 0;
 
-  const isLowTime = levelEndsAt > 0 && (levelEndsAt - now) < 60;
-  const isVeryLowTime = levelEndsAt > 0 && (levelEndsAt - now) < 30;
+  const isLowTime = levelEndsAt > 0 && levelEndsAt - now < 60;
+  const isVeryLowTime = levelEndsAt > 0 && levelEndsAt - now < 30;
 
   // Track coin changes for animation
   const [coinSpinning, setCoinSpinning] = useState(false);
@@ -123,13 +131,17 @@ function StatsBarComponent({
 
         {/* Weather & Season - Enhanced */}
         <div className="flex items-center gap-2">
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${seasonData?.bgColor || 'bg-gray-50'} border ${seasonData?.borderColor || 'border-gray-200'} shadow-sm`}>
+          <div
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${seasonData?.bgColor || 'bg-gray-50'} border ${seasonData?.borderColor || 'border-gray-200'} shadow-sm`}
+          >
             <span className="text-xl drop-shadow-sm">{seasonData?.emoji}</span>
             <span className={`text-sm font-semibold ${seasonData?.color || 'text-gray-600'}`}>
               {seasonData?.name}
             </span>
           </div>
-          <div className={`flex items-center gap-1 px-3 py-1.5 rounded-xl ${weatherData?.bgColor || 'bg-gray-50'} shadow-sm border border-gray-100`}>
+          <div
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl ${weatherData?.bgColor || 'bg-gray-50'} shadow-sm border border-gray-100`}
+          >
             <span className="text-xl drop-shadow-sm animate-pulse-slow">{weatherData?.emoji}</span>
           </div>
         </div>
@@ -145,13 +157,16 @@ function StatsBarComponent({
 
         {/* Time of Day */}
         {timeDisplay && currentPeriod && (
-          <div className={`
+          <div
+            className={`
             flex items-center gap-1.5 px-3 py-1.5 rounded-xl shadow-sm border
-            ${currentPeriod.id === 'night'
-              ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-              : 'bg-amber-50 border-amber-200 text-amber-700'
+            ${
+              currentPeriod.id === 'night'
+                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                : 'bg-amber-50 border-amber-200 text-amber-700'
             }
-          `}>
+          `}
+          >
             {currentPeriod.id === 'dawn' && <Sunrise size={14} />}
             {currentPeriod.id === 'morning' && <Sun size={14} />}
             {currentPeriod.id === 'afternoon' && <Sun size={14} />}
@@ -207,10 +222,12 @@ function StatsBarComponent({
                 <AnimatedCounter value={coins} /> / {level.targetCoins}
               </span>
               {timeRemaining && (
-                <span className={`
+                <span
+                  className={`
                   font-mono text-sm px-3 py-1 rounded-lg font-semibold transition-all duration-300
                   ${isVeryLowTime ? 'bg-red-100 text-red-700 animate-pulse' : isLowTime ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}
-                `}>
+                `}
+                >
                   {timeRemaining}
                 </span>
               )}
@@ -239,7 +256,8 @@ function StatsBarComponent({
           <span className="text-2xl rainbow-shimmer">♾️</span>
           <span className="text-sm font-semibold text-purple-700">Endless Mode</span>
           <span className="text-sm text-purple-600 ml-auto font-bold">
-            Total: <AnimatedCounter value={coins} />🪙
+            Total: <AnimatedCounter value={coins} />
+            🪙
           </span>
         </div>
       )}

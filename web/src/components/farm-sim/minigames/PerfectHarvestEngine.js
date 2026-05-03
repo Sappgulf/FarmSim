@@ -7,7 +7,15 @@ const createRng = (seed) => {
 };
 
 class PerfectHarvestGame {
-  constructor({ onUpdate, onEnd, speed, zoneWidth, sweetSpot, reducedMotion, deterministicSeed } = {}) {
+  constructor({
+    onUpdate,
+    onEnd,
+    speed,
+    zoneWidth,
+    sweetSpot,
+    reducedMotion,
+    deterministicSeed,
+  } = {}) {
     this.onUpdate = onUpdate;
     this.onEnd = onEnd;
     this.active = false;
@@ -54,7 +62,8 @@ class PerfectHarvestGame {
     const deltaSeconds = Math.min(0.05, (time - this.lastFrameTime) / 1000);
     this.lastFrameTime = time;
 
-    const nextPosition = this.state.position + (this.state.direction * this.state.speed * deltaSeconds);
+    const nextPosition =
+      this.state.position + this.state.direction * this.state.speed * deltaSeconds;
     if (nextPosition >= 1) {
       this.state.position = 1;
       this.state.direction = -1;

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { applyXpTuning, getLevelFromXp, getXpForLevel } from '../components/farm-sim/systems/progression';
+import {
+  applyXpTuning,
+  getLevelFromXp,
+  getXpForLevel,
+} from '../components/farm-sim/systems/progression';
 import { migrateSaveData } from '../components/farm-sim/context/GamePersistence';
 
 describe('progression tuning', () => {
@@ -17,7 +21,12 @@ describe('progression tuning', () => {
     let first = 0;
     let ninth = 0;
     for (let i = 1; i <= 9; i += 1) {
-      const result = applyXpTuning(12, { source: 'harvest', cropId: 'parsnip' }, tracker, '2026-02-06');
+      const result = applyXpTuning(
+        12,
+        { source: 'harvest', cropId: 'parsnip' },
+        tracker,
+        '2026-02-06'
+      );
       tracker = result.tracker;
       if (i === 1) first = result.grantedXp;
       if (i === 9) ninth = result.grantedXp;
@@ -29,7 +38,12 @@ describe('progression tuning', () => {
     let tracker = {};
     let total = 0;
     for (let i = 0; i < 15; i += 1) {
-      const result = applyXpTuning(20, { source: 'minigame', minigameId: 'fishing', skillFactor: 1 }, tracker, '2026-02-06');
+      const result = applyXpTuning(
+        20,
+        { source: 'minigame', minigameId: 'fishing', skillFactor: 1 },
+        tracker,
+        '2026-02-06'
+      );
       tracker = result.tracker;
       total += result.grantedXp;
     }
@@ -37,7 +51,14 @@ describe('progression tuning', () => {
   });
 
   it('migrates old saves with valid level/xp and tracker defaults', () => {
-    const migrated = migrateSaveData({ saveVersion: 13, xp: 5000, level: 1, coins: 200, gridSize: 3, plots: [] });
+    const migrated = migrateSaveData({
+      saveVersion: 13,
+      xp: 5000,
+      level: 1,
+      coins: 200,
+      gridSize: 3,
+      plots: [],
+    });
     expect(migrated.level).toBeGreaterThanOrEqual(getLevelFromXp(5000));
     expect(migrated.progressionXpTracker).toBeDefined();
     expect(migrated.progressionXpTracker.milestoneDailyXp).toBe(0);

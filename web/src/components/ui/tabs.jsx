@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
-export function Tabs({ defaultValue, value, onValueChange, children, className = "" }) {
+export function Tabs({ defaultValue, value, onValueChange, children, className = '' }) {
   const [activeTab, setActiveTab] = useState(defaultValue || value);
-  
+
   const handleValueChange = (newValue) => {
     setActiveTab(newValue);
     if (onValueChange) {
@@ -15,12 +15,12 @@ export function Tabs({ defaultValue, value, onValueChange, children, className =
 
   return (
     <div className={className}>
-      {React.Children.map(children, child => {
+      {React.Children.map(children, (child) => {
         // Only pass props to React components, not DOM elements
         if (React.isValidElement(child) && typeof child.type !== 'string') {
-          return React.cloneElement(child, { 
-            activeTab: currentTab, 
-            onValueChange: handleValueChange 
+          return React.cloneElement(child, {
+            activeTab: currentTab,
+            onValueChange: handleValueChange,
           });
         }
         return child;
@@ -29,12 +29,13 @@ export function Tabs({ defaultValue, value, onValueChange, children, className =
   );
 }
 
-export function TabsList({ children, className = "", activeTab, onValueChange }) {
+export function TabsList({ children, className = '', activeTab, onValueChange }) {
   const layoutOverride = /\b(grid|flex|inline-flex|block|flow-root)\b/.test(className);
-  const baseClasses = "items-center justify-start rounded-xl bg-slate-100/80 backdrop-blur-sm p-1.5 text-slate-600 shadow-inner";
-  const layoutClasses = layoutOverride ? "" : "flex flex-wrap gap-1.5";
+  const baseClasses =
+    'items-center justify-start rounded-xl bg-slate-100/80 backdrop-blur-sm p-1.5 text-slate-600 shadow-inner';
+  const layoutClasses = layoutOverride ? '' : 'flex flex-wrap gap-1.5';
   const tabValues = React.Children.toArray(children)
-    .filter((child) => React.isValidElement(child) && typeof child.type !== "string")
+    .filter((child) => React.isValidElement(child) && typeof child.type !== 'string')
     .map((child) => child.props?.value)
     .filter((tabValue) => tabValue !== undefined && tabValue !== null);
 
@@ -44,7 +45,7 @@ export function TabsList({ children, className = "", activeTab, onValueChange })
       aria-orientation="horizontal"
       className={`${layoutClasses} ${baseClasses} ${className}`.trim()}
     >
-      {React.Children.map(children, child => {
+      {React.Children.map(children, (child) => {
         // Only pass props to React components, not DOM elements
         if (React.isValidElement(child) && typeof child.type !== 'string') {
           return React.cloneElement(child, { activeTab, onValueChange, tabValues });
@@ -58,7 +59,7 @@ export function TabsList({ children, className = "", activeTab, onValueChange })
 export function TabsTrigger({
   value,
   children,
-  className = "",
+  className = '',
   activeTab,
   onValueChange,
   tabValues = [],
@@ -69,12 +70,12 @@ export function TabsTrigger({
   const focusTab = (tabValue) => {
     const focusAction = () => {
       const tab = document.getElementById(`tab-${tabValue}`);
-      if (tab && typeof tab.focus === "function") {
+      if (tab && typeof tab.focus === 'function') {
         tab.focus();
       }
     };
 
-    if (typeof requestAnimationFrame === "function") {
+    if (typeof requestAnimationFrame === 'function') {
       requestAnimationFrame(focusAction);
       return;
     }
@@ -94,13 +95,13 @@ export function TabsTrigger({
     if (!tabValues.length || currentIndex < 0) return;
 
     let nextValue = null;
-    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
       nextValue = tabValues[(currentIndex + 1) % tabValues.length];
-    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
       nextValue = tabValues[(currentIndex - 1 + tabValues.length) % tabValues.length];
-    } else if (event.key === "Home") {
+    } else if (event.key === 'Home') {
       nextValue = tabValues[0];
-    } else if (event.key === "End") {
+    } else if (event.key === 'End') {
       nextValue = tabValues[tabValues.length - 1];
     }
 
@@ -119,8 +120,8 @@ export function TabsTrigger({
       tabIndex={isActive ? 0 : -1}
       className={`inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 touch-manipulation ${
         isActive
-          ? "bg-white text-emerald-700 shadow-md ring-1 ring-emerald-100"
-          : "text-slate-600 hover:bg-white/70 hover:text-slate-900 active:scale-95"
+          ? 'bg-white text-emerald-700 shadow-md ring-1 ring-emerald-100'
+          : 'text-slate-600 hover:bg-white/70 hover:text-slate-900 active:scale-95'
       } ${className}`}
       onClick={() => selectTab(value)}
       onKeyDown={handleKeyDown}
@@ -130,9 +131,9 @@ export function TabsTrigger({
   );
 }
 
-export function TabsContent({ value, children, className = "", activeTab }) {
+export function TabsContent({ value, children, className = '', activeTab }) {
   if (activeTab !== value) return null;
-  
+
   return (
     <div
       role="tabpanel"

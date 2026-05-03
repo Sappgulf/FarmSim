@@ -20,7 +20,7 @@ export const DISEASE_TYPES = {
     name: 'Aphid Infestation',
     emoji: '🐜',
     description: 'Tiny insects that drain nutrients from crops',
-    spreadChance: 0.20, // 20% chance to spread
+    spreadChance: 0.2, // 20% chance to spread
     yieldPenalty: 0.3, // Reduces harvest by 30%
     visualColor: '#228B22', // Forest green
     favorableWeather: ['sunny'],
@@ -32,7 +32,7 @@ export const DISEASE_TYPES = {
     name: 'Root Rot',
     emoji: '🦴',
     description: 'Waterlogged soil causes roots to decay',
-    spreadChance: 0.10, // 10% chance to spread
+    spreadChance: 0.1, // 10% chance to spread
     yieldPenalty: 0.6, // Reduces harvest by 60%
     visualColor: '#4B0082', // Indigo
     favorableWeather: ['rainy', 'stormy'],
@@ -126,24 +126,24 @@ export const CURE_ITEMS = {
  */
 export function calculateDiseaseRisk(weather, plotHealth = 1.0, adjacentDiseased = 0) {
   const risks = {};
-  
-  Object.values(DISEASE_TYPES).forEach(disease => {
+
+  Object.values(DISEASE_TYPES).forEach((disease) => {
     let baseRisk = 0.0075; // 0.75% base chance per disease-check tick
-    
+
     // Weather modifier
     if (disease.favorableWeather.includes(weather)) {
       baseRisk *= 2.0; // Double risk in favorable weather
     }
-    
+
     // Health modifier (low health = more vulnerable)
-    baseRisk *= (2.0 - plotHealth); // 0.5 health = 3x risk
-    
+    baseRisk *= 2.0 - plotHealth; // 0.5 health = 3x risk
+
     // Adjacent disease pressure
     baseRisk += adjacentDiseased * 0.03; // +3% per adjacent diseased plot
-    
+
     risks[disease.id] = Math.min(baseRisk, 0.5); // Cap at 50% max
   });
-  
+
   return risks;
 }
 
@@ -157,7 +157,7 @@ export function getAdjacentPlots(plotIndex, gridSize) {
   const row = Math.floor(plotIndex / gridSize);
   const col = plotIndex % gridSize;
   const adjacent = [];
-  
+
   // Up
   if (row > 0) adjacent.push((row - 1) * gridSize + col);
   // Down
@@ -166,7 +166,7 @@ export function getAdjacentPlots(plotIndex, gridSize) {
   if (col > 0) adjacent.push(row * gridSize + (col - 1));
   // Right
   if (col < gridSize - 1) adjacent.push(row * gridSize + (col + 1));
-  
+
   return adjacent;
 }
 

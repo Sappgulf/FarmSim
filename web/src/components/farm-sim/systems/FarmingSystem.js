@@ -15,7 +15,7 @@ import { getDifficultyModifier } from './progression';
 /**
  * Farming System - Handles crop growth, planting, harvesting
  * SIMPLIFIED AND FIXED - Growth calculated from timestamp, no complex timing
- * 
+ *
  * @class FarmingSystem
  */
 export class FarmingSystem {
@@ -86,7 +86,7 @@ export class FarmingSystem {
 
     // PERF: Throttle growth scans (UI doesn't benefit from 10Hz state churn).
     // Keep this low enough for short crops, but high enough to reduce work.
-    if (this.lastGrowthUpdate && (now - this.lastGrowthUpdate < 250)) {
+    if (this.lastGrowthUpdate && now - this.lastGrowthUpdate < 250) {
       return;
     }
     this.lastGrowthUpdate = now;
@@ -116,7 +116,7 @@ export class FarmingSystem {
       stormy: { growthModifier: 0.8 },
       drought: { growthModifier: 0.6 },
       snow: { growthModifier: 0.3 },
-      windy: { growthModifier: 0.9 }
+      windy: { growthModifier: 0.9 },
     };
     const currentWeatherEffects = weatherEffects[weather] || weatherEffects.sunny;
     const weatherModifier = currentWeatherEffects.growthModifier;
@@ -143,13 +143,18 @@ export class FarmingSystem {
       const difficulty = getDifficultyModifier(level);
       const effectiveGrowthTime =
         (baseGrowthTime * difficulty.growthTime) /
-        (plotWeatherModifier * seasonBonus * greenhouseGrowthBonus * hydroponicsGrowthBonus * growthBoost);
+        (plotWeatherModifier *
+          seasonBonus *
+          greenhouseGrowthBonus *
+          hydroponicsGrowthBonus *
+          growthBoost);
 
       // Crop rotation bonus: +5% growth speed per unique predecessor in last 3 crops
       const rotationHistory = Array.isArray(plot.rotationHistory) ? plot.rotationHistory : [];
       const predecessors = rotationHistory.slice(0, -1); // exclude current crop (last entry)
-      const uniquePredecessors = new Set(predecessors.filter((id) => id !== (plot.crop.id || ''))).size;
-      const rotationBonus = 1 + (uniquePredecessors * 0.05); // +5% per unique, max +15%
+      const uniquePredecessors = new Set(predecessors.filter((id) => id !== (plot.crop.id || '')))
+        .size;
+      const rotationBonus = 1 + uniquePredecessors * 0.05; // +5% per unique, max +15%
       const rotatedGrowthTime = effectiveGrowthTime / rotationBonus;
 
       const progress = Math.min(1.0, timeSincePlanted / rotatedGrowthTime);
@@ -161,7 +166,7 @@ export class FarmingSystem {
       let nextPlot = null;
 
       // Check if ready to harvest - use a more lenient threshold
-      if (progress >= 0.90) {
+      if (progress >= 0.9) {
         if (isDevelopmentMode()) {
           console.debug('[farm]', `🌾 ${plot.crop.name} ready`, {
             progress,
@@ -184,7 +189,8 @@ export class FarmingSystem {
         const shouldUpdate = stageChanged || plot.state !== 'growing';
 
         if (shouldUpdate) {
-          if (Math.random() < 0.01) { // Log 1% of the time
+          if (Math.random() < 0.01) {
+            // Log 1% of the time
             if (isDevelopmentMode()) {
               console.debug(
                 '[farm]',
@@ -223,7 +229,7 @@ export class FarmingSystem {
 
     const now = Date.now();
     // PERF: wither/overripe checks don't need to run at high frequency.
-    if (this.lastWitherCheck && (now - this.lastWitherCheck < 1000)) {
+    if (this.lastWitherCheck && now - this.lastWitherCheck < 1000) {
       return;
     }
     this.lastWitherCheck = now;
@@ -324,7 +330,13 @@ export class FarmingSystem {
    */
   plantCrop(plotIndex, cropData) {
     // Safety checks
-    if (!cropData || !this.gameState || !this.gameState.plots || plotIndex < 0 || plotIndex >= this.gameState.plots.length) {
+    if (
+      !cropData ||
+      !this.gameState ||
+      !this.gameState.plots ||
+      plotIndex < 0 ||
+      plotIndex >= this.gameState.plots.length
+    ) {
       return false;
     }
 
@@ -344,7 +356,8 @@ export class FarmingSystem {
 
     // Plant crop — record rotation history for diversity bonus
     const plantedAt = Date.now();
-    const shouldBoostFirstCrop = !this.gameState.memoryFlags?.first_seed && !this.gameState.onboardingSkipped;
+    const shouldBoostFirstCrop =
+      !this.gameState.memoryFlags?.first_seed && !this.gameState.onboardingSkipped;
     const updatedPlots = [...this.gameState.plots];
     const fertilityFloor = getPostHarvestFertilityFloor(this.gameState.inventory);
 
@@ -367,8 +380,12 @@ export class FarmingSystem {
     };
 
     if (isDevelopmentMode()) {
-      const uniquePast = new Set(prevHistory.filter(id => id !== cropData.id)).size;
-      console.debug('[farm]', `Planted ${cropData.name}`, { plotIndex, growthTime: cropData.growthTime, rotationUnique: uniquePast });
+      const uniquePast = new Set(prevHistory.filter((id) => id !== cropData.id)).size;
+      console.debug('[farm]', `Planted ${cropData.name}`, {
+        plotIndex,
+        growthTime: cropData.growthTime,
+        rotationUnique: uniquePast,
+      });
     }
 
     this.actions.updatePlots(updatedPlots);
@@ -384,7 +401,12 @@ export class FarmingSystem {
    */
   harvestCrop(plotIndex) {
     // Safety checks
-    if (!this.gameState || !this.gameState.plots || plotIndex < 0 || plotIndex >= this.gameState.plots.length) {
+    if (
+      !this.gameState ||
+      !this.gameState.plots ||
+      plotIndex < 0 ||
+      plotIndex >= this.gameState.plots.length
+    ) {
       return false;
     }
 
@@ -407,12 +429,16 @@ export class FarmingSystem {
     // Add coins and XP for harvest
     this.actions.earnMoney(harvestValue, 'harvest');
     // REBALANCED: Consistent 15% XP rate across all harvest methods
-    this.actions.addXP(Math.floor(harvestValue * 0.15), { source: 'harvest', cropId: crop.id, label: `Harvest ${crop.name}` });
+    this.actions.addXP(Math.floor(harvestValue * 0.15), {
+      source: 'harvest',
+      cropId: crop.id,
+      label: `Harvest ${crop.name}`,
+    });
 
     // Update inventory
     const updatedInventory = {
       ...this.gameState.inventory,
-      [crop.id]: (this.gameState.inventory[crop.id] || 0) + 1
+      [crop.id]: (this.gameState.inventory[crop.id] || 0) + 1,
     };
     this.actions.updateInventory(updatedInventory);
 
@@ -440,14 +466,22 @@ export class FarmingSystem {
   // Water a plot
   waterPlot(plotIndex) {
     // Safety checks
-    if (!this.gameState || !this.gameState.plots || plotIndex < 0 || plotIndex >= this.gameState.plots.length) {
+    if (
+      !this.gameState ||
+      !this.gameState.plots ||
+      plotIndex < 0 ||
+      plotIndex >= this.gameState.plots.length
+    ) {
       return;
     }
 
     const updatedPlots = [...this.gameState.plots];
     updatedPlots[plotIndex] = {
       ...updatedPlots[plotIndex],
-      waterLevel: Math.min(100, (updatedPlots[plotIndex].waterLevel || 0) + 25 + getWateringBonus(this.gameState.inventory))
+      waterLevel: Math.min(
+        100,
+        (updatedPlots[plotIndex].waterLevel || 0) + 25 + getWateringBonus(this.gameState.inventory)
+      ),
     };
 
     this.actions.updatePlots(updatedPlots);
@@ -461,9 +495,9 @@ export class FarmingSystem {
     }
 
     const waterBonus = getWateringBonus(this.gameState.inventory);
-    const updatedPlots = this.gameState.plots.map(plot => ({
+    const updatedPlots = this.gameState.plots.map((plot) => ({
       ...plot,
-      waterLevel: Math.min(100, (plot.waterLevel || 0) + 25 + waterBonus)
+      waterLevel: Math.min(100, (plot.waterLevel || 0) + 25 + waterBonus),
     }));
 
     this.actions.updatePlots(updatedPlots);
@@ -472,7 +506,12 @@ export class FarmingSystem {
   // Fertilize a plot
   fertilizePlot(plotIndex) {
     // Safety checks
-    if (!this.gameState || !this.gameState.plots || plotIndex < 0 || plotIndex >= this.gameState.plots.length) {
+    if (
+      !this.gameState ||
+      !this.gameState.plots ||
+      plotIndex < 0 ||
+      plotIndex >= this.gameState.plots.length
+    ) {
       return;
     }
 
@@ -488,7 +527,7 @@ export class FarmingSystem {
       ...updatedPlots[plotIndex],
       soilFertility: Math.min(1.5, (updatedPlots[plotIndex].soilFertility || 1.0) + 0.3),
       waterLevel: Math.min(100, (updatedPlots[plotIndex].waterLevel || 0) + 10), // Fertilizer helps water retention
-      fertilizer: (updatedPlots[plotIndex].fertilizer || 0) + 1
+      fertilizer: (updatedPlots[plotIndex].fertilizer || 0) + 1,
     };
 
     this.actions.updatePlots(updatedPlots);

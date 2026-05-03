@@ -33,8 +33,7 @@ export const getAllCrops = () => CROP_LIST;
 export const getCropsByCategory = (category) =>
   CROP_LIST.filter((crop) => crop.category === category);
 
-export const getCropsBySeason = (season) =>
-  CROP_LIST.filter((crop) => crop.season === season);
+export const getCropsBySeason = (season) => CROP_LIST.filter((crop) => crop.season === season);
 
 export const getCropsByLevel = (playerLevel) =>
   CROP_LIST.filter((crop) => crop.level <= playerLevel);

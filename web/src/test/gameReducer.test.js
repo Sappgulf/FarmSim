@@ -3,7 +3,6 @@ import { gameReducer, initialState } from '../components/farm-sim/context/GameRe
 import { GAME_ACTIONS } from '../components/farm-sim/context/GameActions';
 
 describe('gameReducer economy guards', () => {
-
   it('bootstraps a starter kit without pre-harvest stockpile bloat', () => {
     expect(initialState.inventory).toMatchObject({
       lettuce: 4,

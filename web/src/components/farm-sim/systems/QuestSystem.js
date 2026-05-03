@@ -14,31 +14,127 @@ export const QUEST_TYPES = {
 
 export const QUEST_TEMPLATES = [
   // Harvest quests
-  { type: QUEST_TYPES.HARVEST, description: 'Harvest {count} crops', target: 10, reward: 50, difficulty: 'easy' },
-  { type: QUEST_TYPES.HARVEST, description: 'Harvest {count} {crop} crops', target: 5, reward: 75, difficulty: 'medium', requiresCrop: true },
-  { type: QUEST_TYPES.HARVEST, description: 'Harvest {count} crops without any withering', target: 15, reward: 100, difficulty: 'hard', special: 'no_wither' },
-  
+  {
+    type: QUEST_TYPES.HARVEST,
+    description: 'Harvest {count} crops',
+    target: 10,
+    reward: 50,
+    difficulty: 'easy',
+  },
+  {
+    type: QUEST_TYPES.HARVEST,
+    description: 'Harvest {count} {crop} crops',
+    target: 5,
+    reward: 75,
+    difficulty: 'medium',
+    requiresCrop: true,
+  },
+  {
+    type: QUEST_TYPES.HARVEST,
+    description: 'Harvest {count} crops without any withering',
+    target: 15,
+    reward: 100,
+    difficulty: 'hard',
+    special: 'no_wither',
+  },
+
   // Planting quests
-  { type: QUEST_TYPES.PLANT, description: 'Plant {count} seeds', target: 8, reward: 40, difficulty: 'easy' },
-  { type: QUEST_TYPES.PLANT, description: 'Fill all your plots with crops', target: 1, reward: 80, difficulty: 'medium', special: 'fill_all' },
-  { type: QUEST_TYPES.PLANT, description: 'Plant {count} different crop types', target: 5, reward: 100, difficulty: 'hard', special: 'diversity' },
-  
+  {
+    type: QUEST_TYPES.PLANT,
+    description: 'Plant {count} seeds',
+    target: 8,
+    reward: 40,
+    difficulty: 'easy',
+  },
+  {
+    type: QUEST_TYPES.PLANT,
+    description: 'Fill all your plots with crops',
+    target: 1,
+    reward: 80,
+    difficulty: 'medium',
+    special: 'fill_all',
+  },
+  {
+    type: QUEST_TYPES.PLANT,
+    description: 'Plant {count} different crop types',
+    target: 5,
+    reward: 100,
+    difficulty: 'hard',
+    special: 'diversity',
+  },
+
   // Economic quests
-  { type: QUEST_TYPES.EARN, description: 'Earn {count} coins from harvests', target: 200, reward: 75, difficulty: 'easy' },
-  { type: QUEST_TYPES.EARN, description: 'Earn {count} coins total', target: 500, reward: 150, difficulty: 'medium' },
-  { type: QUEST_TYPES.SPEND, description: 'Spend {count} coins on crops', target: 100, reward: 60, difficulty: 'easy' },
-  
+  {
+    type: QUEST_TYPES.EARN,
+    description: 'Earn {count} coins from harvests',
+    target: 200,
+    reward: 75,
+    difficulty: 'easy',
+  },
+  {
+    type: QUEST_TYPES.EARN,
+    description: 'Earn {count} coins total',
+    target: 500,
+    reward: 150,
+    difficulty: 'medium',
+  },
+  {
+    type: QUEST_TYPES.SPEND,
+    description: 'Spend {count} coins on crops',
+    target: 100,
+    reward: 60,
+    difficulty: 'easy',
+  },
+
   // Building quests
-  { type: QUEST_TYPES.BUILD, description: 'Build any structure', target: 1, reward: 100, difficulty: 'medium' },
-  { type: QUEST_TYPES.BUILD, description: 'Own {count} buildings', target: 3, reward: 200, difficulty: 'hard' },
-  
+  {
+    type: QUEST_TYPES.BUILD,
+    description: 'Build any structure',
+    target: 1,
+    reward: 100,
+    difficulty: 'medium',
+  },
+  {
+    type: QUEST_TYPES.BUILD,
+    description: 'Own {count} buildings',
+    target: 3,
+    reward: 200,
+    difficulty: 'hard',
+  },
+
   // Level quests
-  { type: QUEST_TYPES.LEVEL, description: 'Reach level {count}', target: 5, reward: 150, difficulty: 'medium' },
-  { type: QUEST_TYPES.LEVEL, description: 'Gain {count} XP', target: 100, reward: 75, difficulty: 'easy' },
-  
+  {
+    type: QUEST_TYPES.LEVEL,
+    description: 'Reach level {count}',
+    target: 5,
+    reward: 150,
+    difficulty: 'medium',
+  },
+  {
+    type: QUEST_TYPES.LEVEL,
+    description: 'Gain {count} XP',
+    target: 100,
+    reward: 75,
+    difficulty: 'easy',
+  },
+
   // Weather quests
-  { type: QUEST_TYPES.WEATHER, description: 'Harvest during rainy weather', target: 3, reward: 80, difficulty: 'medium', special: 'rainy_harvest' },
-  { type: QUEST_TYPES.WEATHER, description: 'Survive a storm without crop damage', target: 1, reward: 120, difficulty: 'hard', special: 'storm_survive' },
+  {
+    type: QUEST_TYPES.WEATHER,
+    description: 'Harvest during rainy weather',
+    target: 3,
+    reward: 80,
+    difficulty: 'medium',
+    special: 'rainy_harvest',
+  },
+  {
+    type: QUEST_TYPES.WEATHER,
+    description: 'Survive a storm without crop damage',
+    target: 1,
+    reward: 120,
+    difficulty: 'hard',
+    special: 'storm_survive',
+  },
 ];
 
 /**
@@ -53,34 +149,34 @@ export function generateDailyQuests(playerLevel, seed = Date.now()) {
     seed = (seed * 9301 + 49297) % 233280;
     return (seed / 233280) * max;
   };
-  
+
   // Select quests based on player level
-  const availableQuests = QUEST_TEMPLATES.filter(q => {
+  const availableQuests = QUEST_TEMPLATES.filter((q) => {
     if (q.difficulty === 'easy') return true;
     if (q.difficulty === 'medium') return playerLevel >= 3;
     if (q.difficulty === 'hard') return playerLevel >= 6;
     return false;
   });
-  
+
   // Pick 3 random quests (1 easy, 1 medium, 1 hard if available)
-  const easyQuests = availableQuests.filter(q => q.difficulty === 'easy');
-  const mediumQuests = availableQuests.filter(q => q.difficulty === 'medium');
-  const hardQuests = availableQuests.filter(q => q.difficulty === 'hard');
-  
+  const easyQuests = availableQuests.filter((q) => q.difficulty === 'easy');
+  const mediumQuests = availableQuests.filter((q) => q.difficulty === 'medium');
+  const hardQuests = availableQuests.filter((q) => q.difficulty === 'hard');
+
   const selectedQuests = [];
-  
+
   // Pick 1 easy
   if (easyQuests.length > 0) {
     const idx = Math.floor(random(easyQuests.length));
     selectedQuests.push({ ...easyQuests[idx] });
   }
-  
+
   // Pick 1 medium
   if (mediumQuests.length > 0) {
     const idx = Math.floor(random(mediumQuests.length));
     selectedQuests.push({ ...mediumQuests[idx] });
   }
-  
+
   // Pick 1 hard (or medium if hard not available)
   if (hardQuests.length > 0) {
     const idx = Math.floor(random(hardQuests.length));
@@ -89,7 +185,7 @@ export function generateDailyQuests(playerLevel, seed = Date.now()) {
     const idx = Math.floor(random(mediumQuests.length));
     selectedQuests.push({ ...mediumQuests[idx] });
   }
-  
+
   // Add IDs and initialize progress
   return selectedQuests.map((quest, idx) => ({
     ...quest,
@@ -107,10 +203,10 @@ export function generateDailyQuests(playerLevel, seed = Date.now()) {
  */
 export function shouldResetDaily(lastResetTime) {
   if (!lastResetTime) return true;
-  
+
   const now = new Date();
   const last = new Date(lastResetTime);
-  
+
   // Check if different calendar day
   return (
     now.getDate() !== last.getDate() ||
@@ -127,11 +223,11 @@ export function shouldResetDaily(lastResetTime) {
  * @returns {Array} - Updated quests
  */
 export function updateQuestProgress(quests, actionType, actionData = {}) {
-  return quests.map(quest => {
+  return quests.map((quest) => {
     if (quest.completed) return quest;
-    
+
     let newProgress = quest.progress;
-    
+
     switch (quest.type) {
       case QUEST_TYPES.HARVEST:
         if (actionType === 'harvest') {
@@ -144,7 +240,7 @@ export function updateQuestProgress(quests, actionType, actionData = {}) {
           }
         }
         break;
-        
+
       case QUEST_TYPES.PLANT:
         if (actionType === 'plant') {
           if (quest.special === 'diversity') {
@@ -159,25 +255,25 @@ export function updateQuestProgress(quests, actionType, actionData = {}) {
           }
         }
         break;
-        
+
       case QUEST_TYPES.EARN:
         if (actionType === 'earn_coins') {
           newProgress += actionData.amount || 0;
         }
         break;
-        
+
       case QUEST_TYPES.SPEND:
         if (actionType === 'spend_coins') {
           newProgress += actionData.amount || 0;
         }
         break;
-        
+
       case QUEST_TYPES.BUILD:
         if (actionType === 'build') {
           newProgress = actionData.buildingCount || newProgress + 1;
         }
         break;
-        
+
       case QUEST_TYPES.LEVEL:
         if (actionType === 'level_up') {
           newProgress = actionData.level || 0;
@@ -185,7 +281,7 @@ export function updateQuestProgress(quests, actionType, actionData = {}) {
           newProgress += actionData.amount || 0;
         }
         break;
-        
+
       case QUEST_TYPES.WEATHER:
         if (actionType === 'harvest' && quest.special === 'rainy_harvest') {
           if (actionData.weather === 'rainy') {
@@ -198,10 +294,10 @@ export function updateQuestProgress(quests, actionType, actionData = {}) {
         }
         break;
     }
-    
+
     // Check if completed
     const completed = newProgress >= quest.target;
-    
+
     return {
       ...quest,
       progress: Math.min(newProgress, quest.target),
@@ -231,4 +327,3 @@ export default {
   updateQuestProgress,
   getStreakBonus,
 };
-

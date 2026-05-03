@@ -66,13 +66,15 @@ const ChallengesTab = memo(() => {
     };
   }, [state.dailyChallengeProgress, weekKey]);
 
-  const isChallengeSetValid = useMemo(() => (
-    dailyChallenges.length > 0 &&
-    dailyChallenges.every((challenge) => (
-      typeof challenge?.type === 'string' &&
-      Number.isFinite(Number(challenge?.target))
-    ))
-  ), [dailyChallenges]);
+  const isChallengeSetValid = useMemo(
+    () =>
+      dailyChallenges.length > 0 &&
+      dailyChallenges.every(
+        (challenge) =>
+          typeof challenge?.type === 'string' && Number.isFinite(Number(challenge?.target))
+      ),
+    [dailyChallenges]
+  );
 
   useEffect(() => {
     const shouldRebuild = !isChallengeSetValid || challengeSetDayKey !== dayKey;
@@ -90,36 +92,45 @@ const ChallengesTab = memo(() => {
     });
   }, [actions, challengeSetDayKey, dayKey, isChallengeSetValid, state.level]);
 
-  const challengesWithProgress = useMemo(() => (
-    dailyChallenges.map((challenge) => {
-      const progress = getDailyOperationProgress(state, challenge);
-      const target = Math.max(1, Math.floor(Number(challenge?.target) || 1));
-      return {
-        ...challenge,
-        progress,
-        target,
-        completed: Boolean(challenge?.claimed) || progress >= target,
-      };
-    })
-  ), [dailyChallenges, state]);
+  const challengesWithProgress = useMemo(
+    () =>
+      dailyChallenges.map((challenge) => {
+        const progress = getDailyOperationProgress(state, challenge);
+        const target = Math.max(1, Math.floor(Number(challenge?.target) || 1));
+        return {
+          ...challenge,
+          progress,
+          target,
+          completed: Boolean(challenge?.claimed) || progress >= target,
+        };
+      }),
+    [dailyChallenges, state]
+  );
 
-  const allClaimed = challengesWithProgress.length > 0 && challengesWithProgress.every((challenge) => challenge.claimed);
+  const allClaimed =
+    challengesWithProgress.length > 0 &&
+    challengesWithProgress.every((challenge) => challenge.claimed);
   const claimedCount = challengesWithProgress.filter((challenge) => challenge.claimed).length;
-  const canRefresh = !allClaimed && state.coins >= REFRESH_COST && !dailyChallenges.some((challenge) => challenge.rerolledToday);
+  const canRefresh =
+    !allClaimed &&
+    state.coins >= REFRESH_COST &&
+    !dailyChallenges.some((challenge) => challenge.rerolledToday);
 
   const handleClaim = (challengeId) => {
-    const targetChallenge = challengesWithProgress.find((challenge) => challenge.id === challengeId);
+    const targetChallenge = challengesWithProgress.find(
+      (challenge) => challenge.id === challengeId
+    );
     if (!targetChallenge || targetChallenge.claimed || !targetChallenge.completed) {
       return;
     }
 
-    const allClaimedBefore = dailyChallenges.length > 0 && dailyChallenges.every((challenge) => challenge.claimed);
-    const updatedChallenges = dailyChallenges.map((challenge) => (
-      challenge.id === challengeId
-        ? { ...challenge, claimed: true, completed: true }
-        : challenge
-    ));
-    const allClaimedAfter = updatedChallenges.length > 0 && updatedChallenges.every((challenge) => challenge.claimed);
+    const allClaimedBefore =
+      dailyChallenges.length > 0 && dailyChallenges.every((challenge) => challenge.claimed);
+    const updatedChallenges = dailyChallenges.map((challenge) =>
+      challenge.id === challengeId ? { ...challenge, claimed: true, completed: true } : challenge
+    );
+    const allClaimedAfter =
+      updatedChallenges.length > 0 && updatedChallenges.every((challenge) => challenge.claimed);
 
     const rewardCoins = Math.floor((targetChallenge.reward?.coins || 0) * streakMultiplier);
     const rewardXp = Math.floor((targetChallenge.reward?.xp || 0) * streakMultiplier);
@@ -130,9 +141,10 @@ const ChallengesTab = memo(() => {
 
     if (!allClaimedBefore && allClaimedAfter) {
       actions.updateChallengeStreak((state.challengeStreak || 0) + 1);
-      const nextWeeklyState = weeklyOpsState.weekKey === weekKey
-        ? weeklyOpsState
-        : { weekKey, completedDays: [], claimedTiers: [] };
+      const nextWeeklyState =
+        weeklyOpsState.weekKey === weekKey
+          ? weeklyOpsState
+          : { weekKey, completedDays: [], claimedTiers: [] };
       const completedDays = nextWeeklyState.completedDays.includes(dayKey)
         ? nextWeeklyState.completedDays
         : [...nextWeeklyState.completedDays, dayKey];
@@ -220,11 +232,11 @@ const ChallengesTab = memo(() => {
         tone="amber"
         title="Daily Operations"
         description="Rotating goals that reward planning, growth, and consistency."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
             🔥 Streak: {state.challengeStreak || 0}
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -267,7 +279,10 @@ const ChallengesTab = memo(() => {
         <div className="space-y-3">
           {challengesWithProgress.map((challenge) => {
             const styles = getDifficultyStyles(challenge.difficulty);
-            const progressPercent = Math.min(100, Math.round((challenge.progress / challenge.target) * 100));
+            const progressPercent = Math.min(
+              100,
+              Math.round((challenge.progress / challenge.target) * 100)
+            );
 
             return (
               <Card
@@ -287,7 +302,9 @@ const ChallengesTab = memo(() => {
                 </div>
 
                 <div className="flex justify-between text-xs text-slate-600 mb-1">
-                  <span>Progress: {challenge.progress}/{challenge.target}</span>
+                  <span>
+                    Progress: {challenge.progress}/{challenge.target}
+                  </span>
                   <span>{progressPercent}%</span>
                 </div>
                 <Progress value={progressPercent} className="mb-3" />
@@ -319,7 +336,9 @@ const ChallengesTab = memo(() => {
         <h4 className="font-semibold mb-2">📊 Progress Snapshot</h4>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="p-2 bg-white rounded-2xl text-center shadow-sm">
-            <div className="font-bold text-emerald-700">{claimedCount}/{challengesWithProgress.length}</div>
+            <div className="font-bold text-emerald-700">
+              {claimedCount}/{challengesWithProgress.length}
+            </div>
             <div className="text-gray-600">Claimed Today</div>
           </div>
           <div className="p-2 bg-white rounded-2xl text-center shadow-sm">
@@ -339,7 +358,10 @@ const ChallengesTab = memo(() => {
             const reached = weeklyOpsState.completedDays.length >= milestone.days;
             const claimed = weeklyOpsState.claimedTiers.includes(milestone.days);
             return (
-              <div key={milestone.days} className="p-3 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <div
+                key={milestone.days}
+                className="p-3 rounded-2xl bg-white border border-slate-200 shadow-sm"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <div className="font-medium text-sm text-slate-900">
@@ -358,7 +380,9 @@ const ChallengesTab = memo(() => {
                       onClick={() => handleClaimWeeklyMilestone(milestone.days)}
                       disabled={!reached}
                     >
-                      {reached ? 'Claim' : `${weeklyOpsState.completedDays.length}/${milestone.days}`}
+                      {reached
+                        ? 'Claim'
+                        : `${weeklyOpsState.completedDays.length}/${milestone.days}`}
                     </Button>
                   )}
                 </div>

@@ -33,13 +33,13 @@ function ScrapbookPanelComponent({
   const filteredMemories = useMemo(() => {
     const list = [...memories].sort((a, b) => (a.order || 0) - (b.order || 0));
     if (activeChapter === 'all') return list;
-    return list.filter(memory => memory.chapterId === activeChapter);
+    return list.filter((memory) => memory.chapterId === activeChapter);
   }, [memories, activeChapter]);
 
   const chapterProgress = useMemo(() => {
     const progress = {};
     sortedChapters.forEach((chapter) => {
-      const chapterMemories = memories.filter(m => m.chapterId === chapter.id);
+      const chapterMemories = memories.filter((m) => m.chapterId === chapter.id);
       const unlocked = chapterMemories.reduce((count, m) => count + (memoryFlags[m.id] ? 1 : 0), 0);
       progress[chapter.id] = {
         total: chapterMemories.length,
@@ -72,11 +72,13 @@ function ScrapbookPanelComponent({
           <div className="rounded-lg border border-emerald-100 bg-emerald-50/40 p-3 text-sm text-gray-700">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-xs uppercase tracking-wide text-gray-500">Farm Card Spotlight</div>
+                <div className="text-xs uppercase tracking-wide text-gray-500">
+                  Farm Card Spotlight
+                </div>
                 <div className="mt-1 font-semibold">
                   {spotlight?.mode === 'latest'
                     ? 'Latest Memory (auto)'
-                    : (spotlightMemory?.title || 'Select a memory')}
+                    : spotlightMemory?.title || 'Select a memory'}
                 </div>
                 <div className="text-xs text-gray-600">
                   {spotlight?.mode === 'latest'
@@ -128,7 +130,7 @@ function ScrapbookPanelComponent({
         {/* Chapter Summary */}
         {activeChapter !== 'all' && (
           <div className="text-sm text-gray-600">
-            {sortedChapters.find(c => c.id === activeChapter)?.description}
+            {sortedChapters.find((c) => c.id === activeChapter)?.description}
           </div>
         )}
 
@@ -163,7 +165,9 @@ function ScrapbookPanelComponent({
                         onClick={() => onOpenAlmanac?.(relatedAlmanacId)}
                         className="mt-2 text-[10px] font-semibold text-emerald-600 hover:text-emerald-700"
                       >
-                        {relatedAlmanacUnlocked ? 'Open related Almanac page' : 'Related Almanac page (locked)'}
+                        {relatedAlmanacUnlocked
+                          ? 'Open related Almanac page'
+                          : 'Related Almanac page (locked)'}
                       </button>
                     )}
                   </div>
@@ -172,14 +176,20 @@ function ScrapbookPanelComponent({
                       {onSetSpotlight && (
                         <button
                           type="button"
-                          onClick={() => onSetSpotlight({ mode: 'favorite', type: 'memory', id: memory.id })}
+                          onClick={() =>
+                            onSetSpotlight({ mode: 'favorite', type: 'memory', id: memory.id })
+                          }
                           className={`text-[10px] px-2 py-1 rounded-full border ${
-                            spotlight?.mode === 'favorite' && spotlight?.type === 'memory' && spotlight?.id === memory.id
+                            spotlight?.mode === 'favorite' &&
+                            spotlight?.type === 'memory' &&
+                            spotlight?.id === memory.id
                               ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
                               : 'bg-white text-emerald-600 border-emerald-100 hover:bg-emerald-50'
                           }`}
                         >
-                          {spotlight?.mode === 'favorite' && spotlight?.type === 'memory' && spotlight?.id === memory.id
+                          {spotlight?.mode === 'favorite' &&
+                          spotlight?.type === 'memory' &&
+                          spotlight?.id === memory.id
                             ? 'Spotlighted'
                             : 'Set Spotlight'}
                         </button>

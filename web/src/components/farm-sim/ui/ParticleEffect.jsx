@@ -17,15 +17,19 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1 }) =>
 
   useEffect(() => {
     // Generate particles with variety ONCE
-    const rawCount = Math.round((type === 'harvest' ? 60 : type === 'levelup' ? 100 : 25) * Math.max(0.6, intensity));
+    const rawCount = Math.round(
+      (type === 'harvest' ? 60 : type === 'levelup' ? 100 : 25) * Math.max(0.6, intensity)
+    );
     const particleCount = Math.min(MAX_PARTICLES_PER_BURST, Math.max(8, rawCount));
 
     particlesRef.current = Array.from({ length: particleCount }, (_, i) => {
       const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
-      const baseVelocity = (type === 'harvest' ? 120 : type === 'levelup' ? 80 : 60) * Math.max(0.75, intensity);
+      const baseVelocity =
+        (type === 'harvest' ? 120 : type === 'levelup' ? 80 : 60) * Math.max(0.75, intensity);
       const velocityVariation = Math.random() * 80;
       const velocity = baseVelocity + velocityVariation;
-      const upwardBias = (type === 'levelup' ? -120 : type === 'harvest' ? -50 : -40) * Math.max(0.8, intensity);
+      const upwardBias =
+        (type === 'levelup' ? -120 : type === 'harvest' ? -50 : -40) * Math.max(0.8, intensity);
 
       return {
         id: i,
@@ -34,10 +38,20 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1 }) =>
         vx: Math.cos(angle) * velocity,
         vy: Math.sin(angle) * velocity + upwardBias,
         life: 1,
-        size: type === 'harvest' ? 12 + Math.random() * 8 : type === 'levelup' ? 10 + Math.random() * 6 : 6 + Math.random() * 4,
+        size:
+          type === 'harvest'
+            ? 12 + Math.random() * 8
+            : type === 'levelup'
+              ? 10 + Math.random() * 6
+              : 6 + Math.random() * 4,
         rotation: Math.random() * 360,
         rotationSpeed: (Math.random() - 0.5) * 30,
-        color: type === 'levelup' ? ['#fbbf24', '#ef4444', '#3b82f6', '#10b981', '#a855f7', '#ec4899'][Math.floor(Math.random() * 6)] : null,
+        color:
+          type === 'levelup'
+            ? ['#fbbf24', '#ef4444', '#3b82f6', '#10b981', '#a855f7', '#ec4899'][
+                Math.floor(Math.random() * 6)
+              ]
+            : null,
         delay: Math.random() * 0.1,
       };
     });
@@ -59,7 +73,7 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1 }) =>
       }
 
       // Direct DOM manipulation - NO REACT RENDERS HERE
-      particlesRef.current.forEach(p => {
+      particlesRef.current.forEach((p) => {
         const domNode = domRefs.current[p.id];
         if (!domNode) return;
 
@@ -77,7 +91,7 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1 }) =>
         const gravity = (type === 'levelup' ? 12 : 15) * (2 - Math.min(1.25, intensity));
 
         p.x += p.vx * 0.016;
-        p.y += p.vy * 0.016 + (gravity * actualProgress * 60);
+        p.y += p.vy * 0.016 + gravity * actualProgress * 60;
         p.rotation += p.rotationSpeed * (1 - actualProgress * 0.5);
         p.life = 1 - lifeProgress;
 
@@ -101,7 +115,8 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1 }) =>
 
   // Helper for styles (static stuff)
   const getParticleStaticStyle = (p) => {
-    const isEmoji = (type === 'harvest' && p.id % 5 === 0) || (type === 'levelup' && p.id % 3 === 0);
+    const isEmoji =
+      (type === 'harvest' && p.id % 5 === 0) || (type === 'levelup' && p.id % 3 === 0);
 
     const baseStyle = {
       position: 'absolute',
@@ -138,7 +153,7 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1 }) =>
     const colors = {
       water: '#3b82f6',
       fertilize: '#10b981',
-      plant: '#84cc16'
+      plant: '#84cc16',
     };
     return {
       ...baseStyle,
@@ -163,13 +178,13 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1 }) =>
         top: `${y}px`,
         width: '0px',
         height: '0px',
-        overflow: 'visible' // Allow particles to fly out
+        overflow: 'visible', // Allow particles to fly out
       }}
     >
-      {particlesRef.current.map(p => (
+      {particlesRef.current.map((p) => (
         <div
           key={p.id}
-          ref={el => domRefs.current[p.id] = el}
+          ref={(el) => (domRefs.current[p.id] = el)}
           style={getParticleStaticStyle(p)}
         >
           {getParticleContent(p)}
@@ -257,16 +272,38 @@ export const ParticleEffectsManager = memo(function ParticleEffectsManager({
     window.triggerParticleEffect = (x, y, type, options = {}) => {
       if (!particleFxRef.current) return;
 
-      setEffects(prev => {
+      setEffects((prev) => {
         // PERF: Cap concurrent effects to prevent FPS drops
         if (prev.length >= MAX_CONCURRENT_EFFECTS) {
           // Remove oldest effect to make room
           const trimmed = prev.slice(1);
           const id = Date.now() + Math.random();
-          return [...trimmed, { id, x, y, type, text: options.text, value: options.value, intensity: options.intensity || 1 }];
+          return [
+            ...trimmed,
+            {
+              id,
+              x,
+              y,
+              type,
+              text: options.text,
+              value: options.value,
+              intensity: options.intensity || 1,
+            },
+          ];
         }
         const id = Date.now() + Math.random();
-        return [...prev, { id, x, y, type, text: options.text, value: options.value, intensity: options.intensity || 1 }];
+        return [
+          ...prev,
+          {
+            id,
+            x,
+            y,
+            type,
+            text: options.text,
+            value: options.value,
+            intensity: options.intensity || 1,
+          },
+        ];
       });
 
       const osReducedMotion =
@@ -295,12 +332,12 @@ export const ParticleEffectsManager = memo(function ParticleEffectsManager({
   }, []);
 
   const handleEffectComplete = (id) => {
-    setEffects(prev => prev.filter(e => e.id !== id));
+    setEffects((prev) => prev.filter((e) => e.id !== id));
   };
 
   return (
     <>
-      {effects.map(effect => (
+      {effects.map((effect) => (
         <ParticleEffect
           key={effect.id}
           x={effect.x}
@@ -319,4 +356,3 @@ export const ParticleEffectsManager = memo(function ParticleEffectsManager({
 ParticleEffectsManager.displayName = 'ParticleEffectsManager';
 
 export default ParticleEffect;
-

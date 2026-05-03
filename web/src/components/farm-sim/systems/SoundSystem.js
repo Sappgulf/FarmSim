@@ -59,7 +59,7 @@ export class SoundSystem {
     if (!this.enabled || !this.audioContext) return;
 
     this.duckMusic();
-    
+
     // Check if AudioContext is running - don't access currentTime if suspended
     // This prevents browser warnings about AudioContext not being allowed to start
     if (this.audioContext.state === 'suspended') {
@@ -96,9 +96,9 @@ export class SoundSystem {
    */
   playPlantSound() {
     if (!this.enabled || !this.audioContext) return;
-    
+
     const now = this.audioContext.currentTime;
-    
+
     // Two quick ascending tones
     this.createSound(300, 'sine', 0.08);
     setTimeout(() => {
@@ -115,21 +115,21 @@ export class SoundSystem {
     this.duckMusic();
 
     const now = this.audioContext.currentTime;
-    
+
     // Pop sound
     const osc1 = this.audioContext.createOscillator();
     const gain1 = this.audioContext.createGain();
-    
+
     osc1.connect(gain1);
     gain1.connect(this.audioContext.destination);
-    
+
     osc1.type = 'square';
     osc1.frequency.setValueAtTime(100, now);
     osc1.frequency.exponentialRampToValueAtTime(50, now + 0.1);
-    
+
     gain1.gain.setValueAtTime(this.volume * 0.3, now);
     gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-    
+
     osc1.start(now);
     osc1.stop(now + 0.1);
 
@@ -151,32 +151,32 @@ export class SoundSystem {
     this.duckMusic();
 
     const now = this.audioContext.currentTime;
-    
+
     // Create noise-like sound for water
     const bufferSize = this.audioContext.sampleRate * 0.2;
     const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
     const data = buffer.getChannelData(0);
-    
+
     // Generate filtered noise
     for (let i = 0; i < bufferSize; i++) {
       data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
     }
-    
+
     const source = this.audioContext.createBufferSource();
     const filter = this.audioContext.createBiquadFilter();
     const gainNode = this.audioContext.createGain();
-    
+
     source.buffer = buffer;
     filter.type = 'lowpass';
     filter.frequency.value = 800;
-    
+
     source.connect(filter);
     filter.connect(gainNode);
     gainNode.connect(this.audioContext.destination);
-    
+
     gainNode.gain.setValueAtTime(this.volume * 0.2, now);
     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-    
+
     source.start(now);
   }
 
@@ -185,7 +185,7 @@ export class SoundSystem {
    */
   playFertilizeSound() {
     if (!this.enabled || !this.audioContext) return;
-    
+
     // Quick series of high-pitched tones
     const frequencies = [600, 700, 800, 750, 650];
     frequencies.forEach((freq, index) => {
@@ -200,7 +200,7 @@ export class SoundSystem {
    */
   playMoneySound() {
     if (!this.enabled || !this.audioContext) return;
-    
+
     this.createSound(440, 'sine', 0.1);
     setTimeout(() => {
       this.createSound(880, 'sine', 0.15);
@@ -215,15 +215,15 @@ export class SoundSystem {
    */
   playLevelUpSound() {
     if (!this.enabled || !this.audioContext) return;
-    
+
     const melody = [
-      { freq: 523, time: 0 },    // C
-      { freq: 659, time: 100 },  // E
-      { freq: 784, time: 200 },  // G
+      { freq: 523, time: 0 }, // C
+      { freq: 659, time: 100 }, // E
+      { freq: 784, time: 200 }, // G
       { freq: 1047, time: 300 }, // C (high)
     ];
-    
-    melody.forEach(note => {
+
+    melody.forEach((note) => {
       setTimeout(() => {
         this.createSound(note.freq, 'triangle', 0.25);
       }, note.time);
@@ -235,9 +235,9 @@ export class SoundSystem {
    */
   playAchievementSound() {
     if (!this.enabled || !this.audioContext) return;
-    
+
     const now = this.audioContext.currentTime;
-    
+
     // Ascending arpeggio
     const notes = [392, 494, 587, 784]; // G, B, D, G
     notes.forEach((freq, index) => {
@@ -256,21 +256,21 @@ export class SoundSystem {
     this.duckMusic();
 
     const now = this.audioContext.currentTime;
-    
+
     // Deep thud
     const osc = this.audioContext.createOscillator();
     const gain = this.audioContext.createGain();
-    
+
     osc.connect(gain);
     gain.connect(this.audioContext.destination);
-    
+
     osc.type = 'square';
     osc.frequency.setValueAtTime(80, now);
     osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
-    
+
     gain.gain.setValueAtTime(this.volume * 0.5, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-    
+
     osc.start(now);
     osc.stop(now + 0.3);
 
@@ -285,9 +285,9 @@ export class SoundSystem {
    */
   playErrorSound() {
     if (!this.enabled || !this.audioContext) return;
-    
+
     const now = this.audioContext.currentTime;
-    
+
     // Descending tones
     this.createSound(300, 'sawtooth', 0.1);
     setTimeout(() => {
@@ -330,7 +330,7 @@ export class SoundSystem {
   playWeatherSound(weatherType) {
     if (!this.enabled || !this.audioContext) return;
     const normalizedWeatherType = normalizeWeatherType(weatherType);
-    
+
     switch (normalizedWeatherType) {
       case 'rainy':
       case 'stormy':
@@ -356,7 +356,7 @@ export class SoundSystem {
    */
   playNotificationSound(type = 'info') {
     if (!this.enabled || !this.audioContext) return;
-    
+
     switch (type) {
       case 'success':
         this.createSound(800, 'sine', 0.1);

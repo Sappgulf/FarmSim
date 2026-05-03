@@ -59,53 +59,64 @@ const InventoryTab = memo(() => {
     market_terminal: '📈',
   };
 
-  const inventoryItems = useMemo(() => (
-    Object.entries(state.inventory || {}).filter(([itemId, qty]) => (
-      !itemId.endsWith('_price') && Number(qty) > 0
-    ))
-  ), [state.inventory]);
+  const inventoryItems = useMemo(
+    () =>
+      Object.entries(state.inventory || {}).filter(
+        ([itemId, qty]) => !itemId.endsWith('_price') && Number(qty) > 0
+      ),
+    [state.inventory]
+  );
 
-  const cropItems = useMemo(() => (
-    inventoryItems.filter(([itemId]) => Boolean(CROP_DATA[itemId]))
-  ), [inventoryItems]);
+  const cropItems = useMemo(
+    () => inventoryItems.filter(([itemId]) => Boolean(CROP_DATA[itemId])),
+    [inventoryItems]
+  );
 
-  const decorationItems = useMemo(() => (
-    inventoryItems.filter(([itemId]) => Boolean(DECORATION_DATA[itemId]))
-  ), [inventoryItems]);
+  const decorationItems = useMemo(
+    () => inventoryItems.filter(([itemId]) => Boolean(DECORATION_DATA[itemId])),
+    [inventoryItems]
+  );
 
-  const utilityItems = useMemo(() => (
-    inventoryItems.filter(([itemId]) => !CROP_DATA[itemId] && !DECORATION_DATA[itemId])
-  ), [inventoryItems]);
+  const utilityItems = useMemo(
+    () => inventoryItems.filter(([itemId]) => !CROP_DATA[itemId] && !DECORATION_DATA[itemId]),
+    [inventoryItems]
+  );
 
-  const totalItems = useMemo(() => (
-    inventoryItems.reduce((sum, [_, qty]) => sum + (Number(qty) || 0), 0)
-  ), [inventoryItems]);
+  const totalItems = useMemo(
+    () => inventoryItems.reduce((sum, [_, qty]) => sum + (Number(qty) || 0), 0),
+    [inventoryItems]
+  );
 
-  const totalValue = useMemo(() => (
-    inventoryItems.reduce((sum, [itemId, qty]) => {
-      if (CROP_DATA[itemId]) {
-        const unitPrice = getUnitSellPriceForCrop(state, itemId);
-        const bonusMultiplier = dailyFocus?.cropId === itemId
-          ? Number(dailyFocus.bonusMultiplier || 1)
-          : 1;
-        return sum + Math.floor(unitPrice * (Number(qty) || 0) * bonusMultiplier);
-      }
-      return sum + (Number(qty) || 0) * 5;
-    }, 0)
-  ), [inventoryItems, state, dailyFocus]);
+  const totalValue = useMemo(
+    () =>
+      inventoryItems.reduce((sum, [itemId, qty]) => {
+        if (CROP_DATA[itemId]) {
+          const unitPrice = getUnitSellPriceForCrop(state, itemId);
+          const bonusMultiplier =
+            dailyFocus?.cropId === itemId ? Number(dailyFocus.bonusMultiplier || 1) : 1;
+          return sum + Math.floor(unitPrice * (Number(qty) || 0) * bonusMultiplier);
+        }
+        return sum + (Number(qty) || 0) * 5;
+      }, 0),
+    [inventoryItems, state, dailyFocus]
+  );
 
-  const cropSellSummary = useMemo(() => (
-    cropItems.reduce((summary, [cropId, quantity]) => {
-      const qty = Number(quantity) || 0;
-      const unitPrice = getUnitSellPriceForCrop(state, cropId);
-      const bonusMultiplier = dailyFocus?.cropId === cropId
-        ? Number(dailyFocus.bonusMultiplier || 1)
-        : 1;
-      summary.totalQuantity += qty;
-      summary.totalEarnings += Math.floor(unitPrice * qty * bonusMultiplier);
-      return summary;
-    }, { totalQuantity: 0, totalEarnings: 0 })
-  ), [cropItems, state, dailyFocus]);
+  const cropSellSummary = useMemo(
+    () =>
+      cropItems.reduce(
+        (summary, [cropId, quantity]) => {
+          const qty = Number(quantity) || 0;
+          const unitPrice = getUnitSellPriceForCrop(state, cropId);
+          const bonusMultiplier =
+            dailyFocus?.cropId === cropId ? Number(dailyFocus.bonusMultiplier || 1) : 1;
+          summary.totalQuantity += qty;
+          summary.totalEarnings += Math.floor(unitPrice * qty * bonusMultiplier);
+          return summary;
+        },
+        { totalQuantity: 0, totalEarnings: 0 }
+      ),
+    [cropItems, state, dailyFocus]
+  );
 
   const handleSellCrop = (cropId, quantity) => {
     const result = actions.sellInventoryCrop(cropId, quantity);
@@ -146,11 +157,11 @@ const InventoryTab = memo(() => {
         tone="sky"
         title="Inventory Storage"
         description="Track stored crops, supplies, and decor before deciding what to sell or place."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-sky-700 border-sky-200">
             {totalItems} items
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -183,7 +194,8 @@ const InventoryTab = memo(() => {
             <div>
               <h4 className="font-semibold text-slate-900">Daily market focus</h4>
               <p className="text-sm text-slate-600">
-                Sell {dailyFocus.crop.emoji} {dailyFocus.crop.name} for +{Math.round((dailyFocus.bonusMultiplier - 1) * 100)}% today.
+                Sell {dailyFocus.crop.emoji} {dailyFocus.crop.name} for +
+                {Math.round((dailyFocus.bonusMultiplier - 1) * 100)}% today.
               </p>
             </div>
             <Badge className="bg-amber-600 text-white">
@@ -198,7 +210,7 @@ const InventoryTab = memo(() => {
         title="Crops"
         description="Sell stored harvests or clear space for fresh planting."
         tone="emerald"
-        action={(
+        action={
           <Button
             size="sm"
             variant="outline"
@@ -208,7 +220,7 @@ const InventoryTab = memo(() => {
           >
             Sell All ({cropSellSummary.totalEarnings}🪙)
           </Button>
-        )}
+        }
       >
         {cropItems.length === 0 ? (
           <TabEmptyState
@@ -388,7 +400,7 @@ const InventoryTab = memo(() => {
                         actions.setDecorationMode(true);
                         actions.addNotification({
                           message: `🪴 Selected ${decor?.name || 'decor'} for placement.`,
-                          type: 'info'
+                          type: 'info',
                         });
                       }}
                     >
@@ -404,7 +416,11 @@ const InventoryTab = memo(() => {
 
       {/* Tips */}
       {inventoryItems.length > 0 && (
-        <TabSection title="Tips" description="Small reminders for keeping storage efficient." tone="slate">
+        <TabSection
+          title="Tips"
+          description="Small reminders for keeping storage efficient."
+          tone="slate"
+        >
           <ul className="space-y-1 text-sm text-slate-700">
             <li>• Use quick-sell to free storage and reinvest into seeds</li>
             <li>• Market prices update over time, so selling windows can vary</li>

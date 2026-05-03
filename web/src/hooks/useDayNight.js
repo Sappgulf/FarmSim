@@ -17,7 +17,7 @@ export const TIME_PERIODS = {
     effects: {
       growthBonus: 1.1,
       qualityBonus: 0.05,
-    }
+    },
   },
   morning: {
     id: 'morning',
@@ -30,7 +30,7 @@ export const TIME_PERIODS = {
     effects: {
       growthBonus: 1.2,
       qualityBonus: 0.1,
-    }
+    },
   },
   afternoon: {
     id: 'afternoon',
@@ -43,7 +43,7 @@ export const TIME_PERIODS = {
     effects: {
       growthBonus: 1.0,
       harvestBonus: 1.1,
-    }
+    },
   },
   evening: {
     id: 'evening',
@@ -56,7 +56,7 @@ export const TIME_PERIODS = {
     effects: {
       harvestBonus: 1.15,
       qualityBonus: 0.08,
-    }
+    },
   },
   night: {
     id: 'night',
@@ -70,7 +70,7 @@ export const TIME_PERIODS = {
       growthBonus: 0.8,
       healingBonus: 1.5, // Crops recover from damage faster
       pestChance: 0.5, // Fewer pests at night
-    }
+    },
   },
 };
 
@@ -136,10 +136,10 @@ export function useDayNight(useRealTime = false) {
       const realSecondsPerGameMinute = GAME_HOUR_DURATION / 60;
       const gameMinutesPassed = delta / 1000 / realSecondsPerGameMinute;
 
-      setGameMinute(prev => {
+      setGameMinute((prev) => {
         const newMinute = prev + gameMinutesPassed;
         if (newMinute >= 60) {
-          setGameHour(h => (h + Math.floor(newMinute / 60)) % 24);
+          setGameHour((h) => (h + Math.floor(newMinute / 60)) % 24);
           return newMinute % 60;
         }
         return newMinute;
@@ -150,9 +150,12 @@ export function useDayNight(useRealTime = false) {
   }, [useRealTime]);
 
   // Check if it's a specific time period
-  const isPeriod = useCallback((periodId) => {
-    return currentPeriod.id === periodId;
-  }, [currentPeriod]);
+  const isPeriod = useCallback(
+    (periodId) => {
+      return currentPeriod.id === periodId;
+    },
+    [currentPeriod]
+  );
 
   // Get current effects
   const getEffects = useCallback(() => {
@@ -183,10 +186,13 @@ export function useDayNight(useRealTime = false) {
   }, []);
 
   // Save/load
-  const getSaveData = useCallback(() => ({
-    gameHour,
-    gameMinute,
-  }), [gameHour, gameMinute]);
+  const getSaveData = useCallback(
+    () => ({
+      gameHour,
+      gameMinute,
+    }),
+    [gameHour, gameMinute]
+  );
 
   const loadSaveData = useCallback((data) => {
     if (data?.gameHour !== undefined) setGameHour(data.gameHour);

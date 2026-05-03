@@ -16,13 +16,14 @@ export class WeatherSystem {
     const hasGreenhouse = this.gameState.buildings?.greenhouse?.built;
     const hasWell = this.gameState.buildings?.well?.built;
     const hasMiniGreenhouse = (this.gameState.inventory?.greenhouse || 0) > 0;
-    const protection = (hasGreenhouse ? 0.7 : 0) + (hasWell ? 0.3 : 0) + (hasMiniGreenhouse ? 0.25 : 0);
+    const protection =
+      (hasGreenhouse ? 0.7 : 0) + (hasWell ? 0.3 : 0) + (hasMiniGreenhouse ? 0.25 : 0);
     return Math.min(1, protection);
   }
 
   getAdjustedGrowthModifier(baseModifier, protection) {
     if (baseModifier < 1.0) {
-      return 1.0 - ((1.0 - baseModifier) * (1 - protection));
+      return 1.0 - (1.0 - baseModifier) * (1 - protection);
     }
     return baseModifier;
   }
@@ -33,7 +34,7 @@ export class WeatherSystem {
       console.error('[farm] WeatherSystem: update() called with null/undefined state');
       return;
     }
-    
+
     this.gameState = currentState;
 
     const now = Date.now();
@@ -83,12 +84,13 @@ export class WeatherSystem {
 
     for (let i = 0; i < 3; i++) {
       const randomWeather = weatherWeights
-        ? this.pickWeightedWeather(weatherWeights) || fallbackWeatherTypes[Math.floor(Math.random() * fallbackWeatherTypes.length)]
+        ? this.pickWeightedWeather(weatherWeights) ||
+          fallbackWeatherTypes[Math.floor(Math.random() * fallbackWeatherTypes.length)]
         : fallbackWeatherTypes[Math.floor(Math.random() * fallbackWeatherTypes.length)];
       forecast.push({
         type: randomWeather,
         duration: Math.floor(Math.random() * 20) + 15, // 15-35 seconds
-        effects: this.getWeatherEffects(randomWeather)
+        effects: this.getWeatherEffects(randomWeather),
       });
     }
 
@@ -97,7 +99,9 @@ export class WeatherSystem {
 
   pickWeightedWeather(weights) {
     if (!weights || typeof weights !== 'object') return null;
-    const entries = Object.entries(weights).filter(([, weight]) => typeof weight === 'number' && weight > 0);
+    const entries = Object.entries(weights).filter(
+      ([, weight]) => typeof weight === 'number' && weight > 0
+    );
     if (!entries.length) return null;
 
     const random = Math.random();
@@ -115,13 +119,13 @@ export class WeatherSystem {
 
   applyImmediateWeatherEffects(weather) {
     const effects = this.getWeatherEffects(weather);
-    
+
     // Safety check
     if (!this.gameState || !Array.isArray(this.gameState.plots)) {
       console.warn('[farm] WeatherSystem: No valid plots array for immediate weather effects');
       return;
     }
-    
+
     // Check building protections
     const hasGreenhouse = this.gameState.buildings?.greenhouse?.built;
     const hasWell = this.gameState.buildings?.well?.built;
@@ -129,17 +133,18 @@ export class WeatherSystem {
     const weatherProtection = this.getWeatherProtection();
 
     // Apply to all plots - only modify weather-related properties, not growth state
-    const updatedPlots = this.gameState.plots.map(plot => {
+    const updatedPlots = this.gameState.plots.map((plot) => {
       if (plot.state === 'empty') return plot;
 
       let updatedPlot = { ...plot };
-      
+
       // Water level changes (well reduces water drain/adds water)
       if (effects.waterChange) {
         const waterBonus = hasWell ? 5 : 0;
-        updatedPlot.waterLevel = Math.max(0, Math.min(100,
-          updatedPlot.waterLevel + effects.waterChange + waterBonus
-        ));
+        updatedPlot.waterLevel = Math.max(
+          0,
+          Math.min(100, updatedPlot.waterLevel + effects.waterChange + waterBonus)
+        );
       }
 
       // Set weather modifier (greenhouse reduces negative effects)
@@ -149,7 +154,9 @@ export class WeatherSystem {
 
       // Disease risk (barn reduces disease risk)
       const diseaseReduction = hasBarn ? 0.5 : 0;
-      const actualDiseaseRisk = effects.diseaseRisk ? effects.diseaseRisk * (1 - diseaseReduction) : 0;
+      const actualDiseaseRisk = effects.diseaseRisk
+        ? effects.diseaseRisk * (1 - diseaseReduction)
+        : 0;
       if (actualDiseaseRisk && Math.random() < actualDiseaseRisk) {
         updatedPlot.disease = 'weather-induced';
       }
@@ -163,28 +170,31 @@ export class WeatherSystem {
             updatedPlot.state = 'withered';
             updatedPlot.witheredAt = Date.now();
             updatedPlot.weatherDamage = true; // Mark as weather-damaged for visual feedback
-            
+
             // Trigger notification for storm damage
-            if (this.actions.addNotification && Math.random() < 0.3) { // Only sometimes to avoid spam
+            if (this.actions.addNotification && Math.random() < 0.3) {
+              // Only sometimes to avoid spam
               this.actions.addNotification({
                 message: `⚡ Storm damaged ${updatedPlot.crop?.emoji || '🌾'} ${updatedPlot.crop?.name || 'crop'}!`,
-                type: 'warning'
+                type: 'warning',
               });
             }
           }
         }
       }
-      
+
       // Mark current weather on plot for visual feedback
       updatedPlot.currentWeather = weather;
 
       return updatedPlot;
     });
 
-    if (updatedPlots.some((plot, index) => {
-      const originalPlot = this.gameState.plots?.[index];
-      return originalPlot && plot !== originalPlot;
-    })) {
+    if (
+      updatedPlots.some((plot, index) => {
+        const originalPlot = this.gameState.plots?.[index];
+        return originalPlot && plot !== originalPlot;
+      })
+    ) {
       this.actions.updatePlots(updatedPlots);
     }
   }
@@ -207,7 +217,7 @@ export class WeatherSystem {
     }
     this.lastWeatherEffectUpdate = now;
     const elapsedSeconds = elapsedMs / 1000;
-    
+
     // Continuous weather effects - called periodically
     const effects = this.getWeatherEffects(this.gameState.weather || 'sunny');
     const hasWell = this.gameState.buildings?.well?.built;
@@ -216,7 +226,7 @@ export class WeatherSystem {
     const weatherProtection = this.getWeatherProtection();
 
     // Only apply gradual changes, not state-changing effects
-    const updatedPlots = this.gameState.plots.map(plot => {
+    const updatedPlots = this.gameState.plots.map((plot) => {
       if (plot.state === 'empty') return plot;
 
       let updatedPlot = plot;
@@ -258,7 +268,7 @@ export class WeatherSystem {
             if (this.actions.addNotification && Math.random() < 0.3) {
               this.actions.addNotification({
                 message: `🏜️💧 ${updatedPlot.crop?.emoji || '🌾'} ${updatedPlot.crop?.name || 'Crop'} withered from extreme drought!`,
-                type: 'warning'
+                type: 'warning',
               });
             }
           }
@@ -266,7 +276,10 @@ export class WeatherSystem {
       }
 
       // Ensure weather modifier and marker are set if needed
-      const nextWeatherModifier = this.getAdjustedGrowthModifier(effects.growthModifier || 1.0, weatherProtection);
+      const nextWeatherModifier = this.getAdjustedGrowthModifier(
+        effects.growthModifier || 1.0,
+        weatherProtection
+      );
       if (plot.weatherModifier !== nextWeatherModifier) {
         ensureClone();
         updatedPlot.weatherModifier = nextWeatherModifier;
@@ -293,45 +306,45 @@ export class WeatherSystem {
         waterDrainRate: 0.4, // Gentle water drain in sun
         growthModifier: 1.2, // Faster growth in sun
         diseaseRisk: 0.02, // Low disease risk
-        description: 'Fast growth, moderate water needs'
+        description: 'Fast growth, moderate water needs',
       },
       rainy: {
         waterChange: 8, // Water crops when raining
         growthModifier: 1.1, // Moderate growth boost
         diseaseRisk: 0.05, // Higher disease risk
-        description: 'Automatic watering, higher disease risk'
+        description: 'Automatic watering, higher disease risk',
       },
       cloudy: {
         waterDrainRate: 0.5, // Slow water drain
         growthModifier: 1.0, // Normal growth
         diseaseRisk: 0.01, // Very low disease risk
-        description: 'Normal conditions'
+        description: 'Normal conditions',
       },
       stormy: {
         waterChange: 4, // Some water from storm
         growthModifier: 0.8, // Slower growth in storms
         diseaseRisk: 0.1, // High disease risk
         damageRisk: 0.05, // Chance of crop damage
-        description: 'Slow growth, high disease risk, possible damage'
+        description: 'Slow growth, high disease risk, possible damage',
       },
       drought: {
         waterDrainRate: 1.2, // Moderate water drain in drought
         growthModifier: 0.6, // Very slow growth
         diseaseRisk: 0.08, // High disease risk
-        description: 'Very dry, crops struggle without irrigation'
+        description: 'Very dry, crops struggle without irrigation',
       },
       snow: {
         waterChange: 2, // Snow provides some water
         growthModifier: 0.3, // Very slow growth in snow
         diseaseRisk: 0.0, // No disease in snow
-        description: 'Freezing conditions, minimal growth'
+        description: 'Freezing conditions, minimal growth',
       },
       windy: {
         waterDrainRate: 1.2, // Slightly higher drain
         growthModifier: 0.9, // Slightly slower growth
         diseaseRisk: 0.03, // Moderate disease risk
-        description: 'Windy conditions, minor effects'
-      }
+        description: 'Windy conditions, minor effects',
+      },
     };
 
     return effects[weather] || effects.cloudy;
@@ -345,9 +358,7 @@ export class WeatherSystem {
     return {
       type: this.gameState.weather,
       effects: this.getWeatherEffects(this.gameState.weather),
-      timeRemaining: Math.max(0,
-        this.weatherCycleDuration - (Date.now() - this.lastWeatherChange)
-      )
+      timeRemaining: Math.max(0, this.weatherCycleDuration - (Date.now() - this.lastWeatherChange)),
     };
   }
 }

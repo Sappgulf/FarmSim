@@ -23,17 +23,21 @@ export const validateSnapshotPayload = (payload = {}) => {
   const warnings = [];
   if (!payload || typeof payload !== 'object') errors.push('Snapshot missing.');
   if (!Array.isArray(payload.plots)) errors.push('Snapshot plots missing.');
-  if (payload.version !== SNAPSHOT_VERSION) warnings.push('Snapshot version differs; best-effort import applied.');
+  if (payload.version !== SNAPSHOT_VERSION)
+    warnings.push('Snapshot version differs; best-effort import applied.');
   return { ok: errors.length === 0, errors, warnings };
 };
 
-export const hydrateSnapshotPlots = (plots = []) => plots.map((plot, index) => ({
-  id: index,
-  state: plot?.state || 'empty',
-  crop: plot?.cropId ? { id: plot.cropId, name: plot.cropId, emoji: '🌱', growthTime: 10, stages: 3 } : null,
-  decorationId: typeof plot?.decorationId === 'string' ? plot.decorationId : null,
-  growthStage: Number.isFinite(plot?.growthStage) ? plot.growthStage : 0,
-  waterLevel: 100,
-  soilFertility: 1,
-  progress: plot?.state === 'ready' ? 1 : 0,
-}));
+export const hydrateSnapshotPlots = (plots = []) =>
+  plots.map((plot, index) => ({
+    id: index,
+    state: plot?.state || 'empty',
+    crop: plot?.cropId
+      ? { id: plot.cropId, name: plot.cropId, emoji: '🌱', growthTime: 10, stages: 3 }
+      : null,
+    decorationId: typeof plot?.decorationId === 'string' ? plot.decorationId : null,
+    growthStage: Number.isFinite(plot?.growthStage) ? plot.growthStage : 0,
+    waterLevel: 100,
+    soilFertility: 1,
+    progress: plot?.state === 'ready' ? 1 : 0,
+  }));

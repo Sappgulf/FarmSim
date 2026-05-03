@@ -28,7 +28,7 @@ function BreedingPanelComponent({
       id,
       ...recipe,
       discovered: discoveredHybrids.includes(id),
-      unlocked: prestige >= (recipe.unlockLevel - 1),
+      unlocked: prestige >= recipe.unlockLevel - 1,
     }));
   }, [discoveredHybrids, prestige]);
 
@@ -71,23 +71,17 @@ function BreedingPanelComponent({
                 <span className="text-purple-600">{activeBreeding.progress}%</span>
               </div>
               <Progress value={activeBreeding.progress} className="h-2" />
-              <p className="text-xs text-purple-600">
-                Breeding in progress...
-              </p>
+              <p className="text-xs text-purple-600">Breeding in progress...</p>
             </div>
           ) : (
-            <p className="text-sm text-purple-600">
-              Select a recipe below to start breeding
-            </p>
+            <p className="text-sm text-purple-600">Select a recipe below to start breeding</p>
           )}
         </div>
 
         {/* Discovery Stats */}
         <div className="flex gap-2">
           <div className="flex-1 bg-amber-50 rounded-lg p-3 border border-amber-200 text-center">
-            <div className="text-2xl font-bold text-amber-600">
-              {discoveredHybrids.length}
-            </div>
+            <div className="text-2xl font-bold text-amber-600">{discoveredHybrids.length}</div>
             <div className="text-xs text-amber-700">Discovered</div>
           </div>
           <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-200 text-center">
@@ -111,11 +105,12 @@ function BreedingPanelComponent({
                 key={recipe.id}
                 className={`
                   p-3 rounded-lg border transition-all cursor-pointer
-                  ${recipe.discovered
-                    ? 'bg-green-50 border-green-200'
-                    : recipe.unlocked
-                      ? 'bg-white border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'
-                      : 'bg-gray-100 border-gray-200 opacity-60'
+                  ${
+                    recipe.discovered
+                      ? 'bg-green-50 border-green-200'
+                      : recipe.unlocked
+                        ? 'bg-white border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'
+                        : 'bg-gray-100 border-gray-200 opacity-60'
                   }
                   ${isSelected ? 'ring-2 ring-purple-400' : ''}
                 `}
@@ -127,13 +122,9 @@ function BreedingPanelComponent({
                     <div>
                       <div className="font-medium text-sm flex items-center gap-1">
                         {recipe.name}
-                        {recipe.discovered && (
-                          <Check size={14} className="text-green-500" />
-                        )}
+                        {recipe.discovered && <Check size={14} className="text-green-500" />}
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {recipe.description}
-                      </div>
+                      <div className="text-xs text-gray-500">{recipe.description}</div>
                     </div>
                   </div>
 
@@ -188,11 +179,8 @@ function BreedingPanelComponent({
                     {/* Traits */}
                     {recipe.traits && (
                       <div className="flex gap-1 mt-2 flex-wrap">
-                        {recipe.traits.map(trait => (
-                          <Badge
-                            key={trait}
-                            className="text-[10px] bg-purple-100 text-purple-700"
-                          >
+                        {recipe.traits.map((trait) => (
+                          <Badge key={trait} className="text-[10px] bg-purple-100 text-purple-700">
                             {formatDisplayLabel(trait)}
                           </Badge>
                         ))}

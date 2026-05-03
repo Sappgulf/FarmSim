@@ -14,7 +14,7 @@ class GameErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     this.setState({
       error: error,
-      errorInfo: errorInfo
+      errorInfo: errorInfo,
     });
 
     // Log error for debugging
@@ -26,7 +26,11 @@ class GameErrorBoundary extends React.Component {
     this.setState({ hasError: false, error: null, errorInfo: null });
 
     // Optionally clear save data if corrupted
-    if (window.confirm('Would you like to reset your save data? This might fix the error but will delete your progress.')) {
+    if (
+      window.confirm(
+        'Would you like to reset your save data? This might fix the error but will delete your progress.'
+      )
+    ) {
       clearFarmCache({ preserveKeys: [] });
       window.location.reload();
     }

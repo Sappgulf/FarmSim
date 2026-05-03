@@ -19,28 +19,28 @@ const NotificationItem = memo(({ notification, onClose }) => {
           bgColor: 'bg-green-50',
           borderColor: 'border-green-200',
           icon: <CheckCircle className="w-4 h-4 text-green-600" />,
-          textColor: 'text-green-800'
+          textColor: 'text-green-800',
         };
       case 'error':
         return {
           bgColor: 'bg-red-50',
           borderColor: 'border-red-200',
           icon: <AlertCircle className="w-4 h-4 text-red-600" />,
-          textColor: 'text-red-800'
+          textColor: 'text-red-800',
         };
       case 'warning':
         return {
           bgColor: 'bg-yellow-50',
           borderColor: 'border-yellow-200',
           icon: <AlertTriangle className="w-4 h-4 text-yellow-600" />,
-          textColor: 'text-yellow-800'
+          textColor: 'text-yellow-800',
         };
       default:
         return {
           bgColor: 'bg-blue-50',
           borderColor: 'border-blue-200',
           icon: <Info className="w-4 h-4 text-blue-600" />,
-          textColor: 'text-blue-800'
+          textColor: 'text-blue-800',
         };
     }
   };
@@ -108,9 +108,7 @@ const NotificationItem = memo(({ notification, onClose }) => {
       onPointerCancel={startTimer}
     >
       <div className="flex items-start gap-2.5">
-        <div className="flex-shrink-0 mt-0.5 p-1.5 rounded-lg bg-white/50">
-          {style.icon}
-        </div>
+        <div className="flex-shrink-0 mt-0.5 p-1.5 rounded-lg bg-white/50">{style.icon}</div>
 
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-semibold ${style.textColor} leading-snug`}>
@@ -118,9 +116,7 @@ const NotificationItem = memo(({ notification, onClose }) => {
           </p>
 
           {notification.details && (
-            <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-              {notification.details}
-            </p>
+            <p className="text-xs text-gray-600 mt-1 leading-relaxed">{notification.details}</p>
           )}
         </div>
 
@@ -146,28 +142,31 @@ NotificationItem.displayName = 'NotificationItem';
 // Main Notification System Component
 const NotificationSystem = memo(() => {
   const actions = useGameActions();
-  const notifications = useGameSelector((state) => (Array.isArray(state.notifications) ? state.notifications : []));
-  const visibleNotifications = useMemo(
-    () => notifications.slice(0, MAX_VISIBLE),
-    [notifications],
+  const notifications = useGameSelector((state) =>
+    Array.isArray(state.notifications) ? state.notifications : []
   );
+  const visibleNotifications = useMemo(() => notifications.slice(0, MAX_VISIBLE), [notifications]);
   const overflowCount = notifications.length - visibleNotifications.length;
 
-  const handleCloseNotification = useCallback((id) => {
-    logDebugAction('notification_close', { id });
-    actions.clearNotification(id);
-  }, [actions]);
+  const handleCloseNotification = useCallback(
+    (id) => {
+      logDebugAction('notification_close', { id });
+      actions.clearNotification(id);
+    },
+    [actions]
+  );
 
   useEffect(() => {
     if (notifications.length === 0) {
       return undefined;
     }
-    const hasExpiringNotifications = notifications.some((notification) => (
-      notification
-      && !notification.sticky
-      && !notification.important
-      && Number.isFinite(Number(notification.timestamp))
-    ));
+    const hasExpiringNotifications = notifications.some(
+      (notification) =>
+        notification &&
+        !notification.sticky &&
+        !notification.important &&
+        Number.isFinite(Number(notification.timestamp))
+    );
     if (!hasExpiringNotifications) {
       return undefined;
     }
@@ -211,19 +210,14 @@ const NotificationSystem = memo(() => {
               transform: `translateY(${index * 2}px)`,
             }}
           >
-            <NotificationItem
-              notification={notification}
-              onClose={handleCloseNotification}
-            />
+            <NotificationItem notification={notification} onClose={handleCloseNotification} />
           </div>
         ))}
 
         {/* Show notification count if more than 4 */}
         {overflowCount > 0 && (
           <Card className="p-2 bg-gray-50/90 backdrop-blur-sm border border-gray-200 text-center rounded-xl shadow-sm">
-            <p className="text-xs text-gray-600 font-medium">
-              +{overflowCount} more notifications
-            </p>
+            <p className="text-xs text-gray-600 font-medium">+{overflowCount} more notifications</p>
           </Card>
         )}
       </div>

@@ -9,28 +9,32 @@ const CommunityNotifications = ({ notifications, onDismiss }) => {
         <div
           key={index}
           className={`p-3 rounded-lg shadow-lg border-l-4 bg-white ${
-            notification.type === 'trade' ? 'border-blue-500' :
-            notification.type === 'event' ? 'border-green-500' :
-            notification.type === 'challenge' ? 'border-purple-500' :
-            'border-gray-500'
+            notification.type === 'trade'
+              ? 'border-blue-500'
+              : notification.type === 'event'
+                ? 'border-green-500'
+                : notification.type === 'challenge'
+                  ? 'border-purple-500'
+                  : 'border-gray-500'
           }`}
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-lg">
-                  {notification.type === 'trade' ? '🤝' :
-                   notification.type === 'event' ? '🎪' :
-                   notification.type === 'challenge' ? '🏆' :
-                   '📢'}
+                  {notification.type === 'trade'
+                    ? '🤝'
+                    : notification.type === 'event'
+                      ? '🎪'
+                      : notification.type === 'challenge'
+                        ? '🏆'
+                        : '📢'}
                 </span>
                 <span className="font-semibold text-sm">{notification.title}</span>
               </div>
               <p className="text-xs text-gray-600">{notification.message}</p>
               {notification.reward && (
-                <div className="mt-1 text-xs text-green-600">
-                  Reward: {notification.reward}
-                </div>
+                <div className="mt-1 text-xs text-green-600">Reward: {notification.reward}</div>
               )}
             </div>
             <button

@@ -45,7 +45,7 @@ export const ACHIEVEMENTS = [
     reward: { coins: 500, xp: 200 },
     rarity: 'rare',
   },
-  
+
   // === HARVEST ACHIEVEMENTS ===
   {
     id: 'first_harvest',
@@ -408,25 +408,27 @@ export const ACHIEVEMENT_RARITIES = {
  * Get achievements by category
  */
 export const getAchievementsByCategory = (category) => {
-  return ACHIEVEMENTS.filter(a => a.category === category);
+  return ACHIEVEMENTS.filter((a) => a.category === category);
 };
 
 /**
  * Get achievement by ID
  */
 export const getAchievement = (id) => {
-  return ACHIEVEMENTS.find(a => a.id === id);
+  return ACHIEVEMENTS.find((a) => a.id === id);
 };
 
 /**
  * Calculate total achievement rewards
  */
 export const getTotalAchievementRewards = () => {
-  return ACHIEVEMENTS.reduce((total, achievement) => ({
-    coins: total.coins + achievement.reward.coins,
-    xp: total.xp + achievement.reward.xp,
-  }), { coins: 0, xp: 0 });
+  return ACHIEVEMENTS.reduce(
+    (total, achievement) => ({
+      coins: total.coins + achievement.reward.coins,
+      xp: total.xp + achievement.reward.xp,
+    }),
+    { coins: 0, xp: 0 }
+  );
 };
 
 export default ACHIEVEMENTS;
-

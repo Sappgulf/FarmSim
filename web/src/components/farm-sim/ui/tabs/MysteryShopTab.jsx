@@ -4,7 +4,12 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Sparkles, Gift, TrendingUp } from 'lucide-react';
-import { MYSTERY_SEED_PACKS, rollMysterySeed, rollMysterySeedWithGuarantee, getRarityColor } from '../../constants/mysterySeedData';
+import {
+  MYSTERY_SEED_PACKS,
+  rollMysterySeed,
+  rollMysterySeedWithGuarantee,
+  getRarityColor,
+} from '../../constants/mysterySeedData';
 import { CROP_DATA } from '../../constants/cropData';
 import { TabHero, MetricTile } from './TabSurface';
 
@@ -16,7 +21,9 @@ const MysteryShopTab = memo(() => {
   const [lastReveals, setLastReveals] = useState([]);
   const [isRevealing, setIsRevealing] = useState(false);
   const [revealAnimation, setRevealAnimation] = useState(null);
-  const guaranteedPackCount = Object.values(MYSTERY_SEED_PACKS).filter((pack) => pack.guaranteedRarity).length;
+  const guaranteedPackCount = Object.values(MYSTERY_SEED_PACKS).filter(
+    (pack) => pack.guaranteedRarity
+  ).length;
 
   const handleBuyPack = (pack) => {
     if (state.coins < pack.cost) {
@@ -28,7 +35,7 @@ const MysteryShopTab = memo(() => {
     }
 
     // Roll the mystery seed
-    const result = pack.guaranteedRarity 
+    const result = pack.guaranteedRarity
       ? rollMysterySeedWithGuarantee(pack.guaranteedRarity)
       : rollMysterySeed();
 
@@ -68,7 +75,7 @@ const MysteryShopTab = memo(() => {
       });
 
       // Add to recent reveals
-      setLastReveals(prev => [
+      setLastReveals((prev) => [
         {
           ...result,
           crop,
@@ -96,11 +103,11 @@ const MysteryShopTab = memo(() => {
         tone="violet"
         title="Mystery Seed Shop"
         description="Open packs, chase rarities, and let the reveal animation do the work."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-violet-700 border-violet-200">
             {lastReveals.length} revealed
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -150,7 +157,9 @@ const MysteryShopTab = memo(() => {
               key={pack.id}
               className="p-4 border-2 bg-white/90 shadow-sm hover:shadow-lg transition-all"
               style={{
-                borderColor: pack.guaranteedRarity ? getRarityColor(pack.guaranteedRarity) : '#9ca3af',
+                borderColor: pack.guaranteedRarity
+                  ? getRarityColor(pack.guaranteedRarity)
+                  : '#9ca3af',
               }}
             >
               <div className="text-center mb-3">
@@ -182,7 +191,10 @@ const MysteryShopTab = memo(() => {
                 disabled={state.coins < pack.cost || isRevealing}
                 className="w-full"
                 style={{
-                  backgroundColor: state.coins >= pack.cost && !isRevealing ? getRarityColor(pack.guaranteedRarity || 'common') : undefined,
+                  backgroundColor:
+                    state.coins >= pack.cost && !isRevealing
+                      ? getRarityColor(pack.guaranteedRarity || 'common')
+                      : undefined,
                 }}
               >
                 {state.coins >= pack.cost ? '🎰 Try Luck' : `Need ${pack.cost}🪙`}
@@ -197,33 +209,23 @@ const MysteryShopTab = memo(() => {
         <h4 className="font-semibold mb-3">📊 Drop Rates</h4>
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <span className="text-sm flex items-center gap-2">
-              ⚪ Common
-            </span>
+            <span className="text-sm flex items-center gap-2">⚪ Common</span>
             <Badge variant="outline">60%</Badge>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm flex items-center gap-2">
-              🟢 Uncommon
-            </span>
+            <span className="text-sm flex items-center gap-2">🟢 Uncommon</span>
             <Badge variant="outline">25%</Badge>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm flex items-center gap-2">
-              🔵 Rare
-            </span>
+            <span className="text-sm flex items-center gap-2">🔵 Rare</span>
             <Badge variant="outline">10%</Badge>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm flex items-center gap-2">
-              🟣 Epic
-            </span>
+            <span className="text-sm flex items-center gap-2">🟣 Epic</span>
             <Badge variant="outline">4%</Badge>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm flex items-center gap-2">
-              🟡 Legendary
-            </span>
+            <span className="text-sm flex items-center gap-2">🟡 Legendary</span>
             <Badge variant="outline">1%</Badge>
           </div>
         </div>
@@ -255,9 +257,7 @@ const MysteryShopTab = memo(() => {
                     </div>
                   </div>
                 </div>
-                {idx === 0 && (
-                  <Badge className="bg-green-600 animate-pulse">NEW</Badge>
-                )}
+                {idx === 0 && <Badge className="bg-green-600 animate-pulse">NEW</Badge>}
               </div>
             ))}
           </div>

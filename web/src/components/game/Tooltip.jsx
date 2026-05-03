@@ -11,45 +11,45 @@ import { formatDisplayLabel } from '../../utils/textFormat';
 
 // Flavor text for crops
 const CROP_DESCRIPTIONS = {
-  carrot: "A crunchy orange root vegetable. Quick to grow and always in demand at the market.",
-  potato: "The humble potato - versatile and filling. Grows well in cooler weather.",
-  corn: "Tall golden stalks perfect for summer fields. Valuable and satisfying to harvest.",
-  tomato: "Juicy red tomatoes bursting with flavor. A summer garden staple.",
-  strawberry: "Sweet ruby-red berries that fetch premium prices. Worth the wait!",
-  pumpkin: "The king of the fall harvest. Takes time but the payout is legendary.",
-  sunflower: "Bright and cheerful flowers that follow the sun. Bees love them!",
-  lettuce: "Crisp leafy greens that grow lightning fast. Perfect for quick profits.",
-  bellPepper: "Colorful peppers that add crunch to any dish. Summer favorite.",
+  carrot: 'A crunchy orange root vegetable. Quick to grow and always in demand at the market.',
+  potato: 'The humble potato - versatile and filling. Grows well in cooler weather.',
+  corn: 'Tall golden stalks perfect for summer fields. Valuable and satisfying to harvest.',
+  tomato: 'Juicy red tomatoes bursting with flavor. A summer garden staple.',
+  strawberry: 'Sweet ruby-red berries that fetch premium prices. Worth the wait!',
+  pumpkin: 'The king of the fall harvest. Takes time but the payout is legendary.',
+  sunflower: 'Bright and cheerful flowers that follow the sun. Bees love them!',
+  lettuce: 'Crisp leafy greens that grow lightning fast. Perfect for quick profits.',
+  bellPepper: 'Colorful peppers that add crunch to any dish. Summer favorite.',
   garlic: "Pungent bulbs with natural pest-repelling properties. Fall's hidden gem.",
   // Mutations
-  golden_carrot: "A rare golden variety with enhanced nutritional value!",
-  super_carrot: "Genetically superior carrot that grows incredibly fast.",
-  frost_potato: "Hardy potato that thrives even in freezing conditions.",
-  rainbow_corn: "Spectacular multicolored kernels that dazzle and delight.",
-  giant_corn: "Massive ears of corn that tower above the rest!",
-  golden_tomato: "Luxurious golden tomatoes sought by gourmet chefs.",
-  golden_strawberry: "Exquisite golden berries - the crown jewel of any farm.",
-  giant_pumpkin: "A legendary pumpkin of enormous proportions!",
-  golden_sunflower: "Radiant golden petals that shimmer in the light.",
-  dragon_pepper: "Fiery legendary pepper with an otherworldly kick!",
+  golden_carrot: 'A rare golden variety with enhanced nutritional value!',
+  super_carrot: 'Genetically superior carrot that grows incredibly fast.',
+  frost_potato: 'Hardy potato that thrives even in freezing conditions.',
+  rainbow_corn: 'Spectacular multicolored kernels that dazzle and delight.',
+  giant_corn: 'Massive ears of corn that tower above the rest!',
+  golden_tomato: 'Luxurious golden tomatoes sought by gourmet chefs.',
+  golden_strawberry: 'Exquisite golden berries - the crown jewel of any farm.',
+  giant_pumpkin: 'A legendary pumpkin of enormous proportions!',
+  golden_sunflower: 'Radiant golden petals that shimmer in the light.',
+  dragon_pepper: 'Fiery legendary pepper with an otherworldly kick!',
 };
 
 // Building tips
 const BUILDING_TIPS = {
-  barn: "Tip: Store your most valuable crops here for bonus value.",
-  greenhouse: "Tip: Perfect for growing winter crops year-round.",
+  barn: 'Tip: Store your most valuable crops here for bonus value.',
+  greenhouse: 'Tip: Perfect for growing winter crops year-round.',
   silo: "Tip: Works best when you're actively harvesting.",
-  workshop: "Tip: Process crops into goods for 2-4x the base value!",
-  windmill: "Tip: Passive income adds up - check back often!",
-  beehive: "Tip: Place near flowers for maximum pollination.",
-  well: "Tip: Saves time on watering during dry spells.",
-  compost: "Tip: Converts harvested waste into free fertilizer.",
+  workshop: 'Tip: Process crops into goods for 2-4x the base value!',
+  windmill: 'Tip: Passive income adds up - check back often!',
+  beehive: 'Tip: Place near flowers for maximum pollination.',
+  well: 'Tip: Saves time on watering during dry spells.',
+  compost: 'Tip: Converts harvested waste into free fertilizer.',
 };
 
 function TooltipContent({ type, data, children }) {
   if (type === 'crop') {
     const crop = ALL_CROPS[data.id] || data;
-    const description = CROP_DESCRIPTIONS[data.id] || "A valuable crop.";
+    const description = CROP_DESCRIPTIONS[data.id] || 'A valuable crop.';
     const family = CROP_FAMILIES[crop.family];
     const growTime = crop.stages * crop.secondsPerStage;
 
@@ -67,9 +67,7 @@ function TooltipContent({ type, data, children }) {
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-600 mb-3 leading-relaxed">
-          {description}
-        </p>
+        <p className="text-sm text-gray-600 mb-3 leading-relaxed">{description}</p>
 
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-2 mb-3">
@@ -97,9 +95,7 @@ function TooltipContent({ type, data, children }) {
             <div className="flex items-center gap-1 font-medium text-emerald-700 mb-1">
               {family.emoji} {crop.family.charAt(0).toUpperCase() + crop.family.slice(1)} Family
             </div>
-            <div className="text-emerald-600">
-              Benefit: {formatDisplayLabel(family.benefit)}
-            </div>
+            <div className="text-emerald-600">Benefit: {formatDisplayLabel(family.benefit)}</div>
           </div>
         )}
 
@@ -109,7 +105,7 @@ function TooltipContent({ type, data, children }) {
             <TrendingUp size={12} /> Possible Qualities:
           </div>
           <div className="flex gap-1">
-            {Object.values(QUALITY_TIERS).map(tier => (
+            {Object.values(QUALITY_TIERS).map((tier) => (
               <span key={tier.id} className={`${tier.color} px-1.5 py-0.5 bg-gray-100 rounded`}>
                 {tier.name} ({tier.multiplier}x)
               </span>
@@ -136,9 +132,7 @@ function TooltipContent({ type, data, children }) {
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-600 mb-3 leading-relaxed">
-          {building.description}
-        </p>
+        <p className="text-sm text-gray-600 mb-3 leading-relaxed">{building.description}</p>
 
         {/* Stats */}
         <div className="space-y-2 mb-3">
@@ -172,14 +166,12 @@ function TooltipContent({ type, data, children }) {
     return (
       <div className="min-w-[180px]">
         <div className="flex items-center gap-2 mb-2">
-          <span className={`font-bold ${tier.color}`}>{tier.emoji || '○'} {tier.name}</span>
+          <span className={`font-bold ${tier.color}`}>
+            {tier.emoji || '○'} {tier.name}
+          </span>
         </div>
-        <p className="text-sm text-gray-600 mb-2">
-          {tier.multiplier}x coin multiplier on harvest
-        </p>
-        <div className="text-xs text-gray-500">
-          Better quality = more coins!
-        </div>
+        <p className="text-sm text-gray-600 mb-2">{tier.multiplier}x coin multiplier on harvest</p>
+        <div className="text-xs text-gray-500">Better quality = more coins!</div>
       </div>
     );
   }
@@ -276,34 +268,35 @@ function TooltipComponent({
         {children}
       </div>
 
-      {isVisible && createPortal(
-        <div
-          className={`
+      {isVisible &&
+        createPortal(
+          <div
+            className={`
             fixed z-[200] pointer-events-none
             bg-white rounded-xl shadow-2xl border border-gray-200 p-4
             animate-tooltip-in
             ${getPositionClasses()}
           `}
-          style={{
-            top: tooltipPosition.top,
-            left: tooltipPosition.left,
-          }}
-        >
-          {content || <TooltipContent type={type} data={data} />}
+            style={{
+              top: tooltipPosition.top,
+              left: tooltipPosition.left,
+            }}
+          >
+            {content || <TooltipContent type={type} data={data} />}
 
-          {/* Arrow */}
-          <div
-            className={`
+            {/* Arrow */}
+            <div
+              className={`
               absolute w-3 h-3 bg-white border-gray-200 rotate-45
               ${position === 'top' ? 'bottom-[-6px] left-1/2 -translate-x-1/2 border-r border-b' : ''}
               ${position === 'bottom' ? 'top-[-6px] left-1/2 -translate-x-1/2 border-l border-t' : ''}
               ${position === 'left' ? 'right-[-6px] top-1/2 -translate-y-1/2 border-r border-t' : ''}
               ${position === 'right' ? 'left-[-6px] top-1/2 -translate-y-1/2 border-l border-b' : ''}
             `}
-          />
-        </div>,
-        document.body
-      )}
+            />
+          </div>,
+          document.body
+        )}
 
       <style>{`
         @keyframes tooltip-in {

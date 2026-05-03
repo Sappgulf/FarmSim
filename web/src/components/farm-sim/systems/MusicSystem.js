@@ -19,7 +19,7 @@ export class MusicSystem {
     this.currentNote = 0;
     this.duckMultiplier = 1;
     this.duckTimeout = null;
-    
+
     this.initializeAudioContext();
   }
 
@@ -94,29 +94,29 @@ export class MusicSystem {
           { pitch: 659, duration: 0.5 }, // E5
           { pitch: 587, duration: 0.5 }, // D5
           { pitch: 523, duration: 1.0 }, // C5
-          { pitch: 0, duration: 0.5 },   // Rest
+          { pitch: 0, duration: 0.5 }, // Rest
         ],
         bassNotes: [262, 196, 349, 262], // C3, G2, F3, C3
         tempo: 120,
         instrument: 'sine',
-        mood: 'cheerful'
+        mood: 'cheerful',
       },
       summer: {
         // Warm, lazy melody
         notes: [
           { pitch: 392, duration: 0.75 }, // G4
           { pitch: 440, duration: 0.75 }, // A4
-          { pitch: 494, duration: 0.5 },  // B4
-          { pitch: 523, duration: 1.0 },  // C5
+          { pitch: 494, duration: 0.5 }, // B4
+          { pitch: 523, duration: 1.0 }, // C5
           { pitch: 440, duration: 0.75 }, // A4
           { pitch: 392, duration: 0.75 }, // G4
-          { pitch: 349, duration: 1.0 },  // F4
-          { pitch: 0, duration: 0.5 },    // Rest
+          { pitch: 349, duration: 1.0 }, // F4
+          { pitch: 0, duration: 0.5 }, // Rest
         ],
         bassNotes: [196, 220, 247, 196],
         tempo: 100,
         instrument: 'triangle',
-        mood: 'relaxed'
+        mood: 'relaxed',
       },
       fall: {
         // Contemplative, warm melody
@@ -133,25 +133,25 @@ export class MusicSystem {
         bassNotes: [220, 247, 262, 220],
         tempo: 90,
         instrument: 'triangle',
-        mood: 'nostalgic'
+        mood: 'nostalgic',
       },
       winter: {
         // Gentle, crystalline melody
         notes: [
-          { pitch: 659, duration: 0.5 },  // E5
-          { pitch: 698, duration: 0.5 },  // F5
+          { pitch: 659, duration: 0.5 }, // E5
+          { pitch: 698, duration: 0.5 }, // F5
           { pitch: 784, duration: 0.75 }, // G5
           { pitch: 659, duration: 0.75 }, // E5
-          { pitch: 587, duration: 0.5 },  // D5
-          { pitch: 523, duration: 0.5 },  // C5
-          { pitch: 587, duration: 1.0 },  // D5
-          { pitch: 0, duration: 0.5 },    // Rest
+          { pitch: 587, duration: 0.5 }, // D5
+          { pitch: 523, duration: 0.5 }, // C5
+          { pitch: 587, duration: 1.0 }, // D5
+          { pitch: 0, duration: 0.5 }, // Rest
         ],
         bassNotes: [262, 294, 330, 262],
         tempo: 80,
         instrument: 'sine',
-        mood: 'calm'
-      }
+        mood: 'calm',
+      },
     };
 
     return melodies[season] || melodies.spring;
@@ -160,7 +160,7 @@ export class MusicSystem {
   // Create a musical note
   playNote(frequency, duration, time = 0, type = 'sine') {
     if (!this.enabled || !this.audioContext || frequency === 0) return;
-    
+
     // Check if AudioContext is running - don't access currentTime if suspended
     // This prevents browser warnings about AudioContext not being allowed to start
     if (this.audioContext.state === 'suspended') {
@@ -168,29 +168,29 @@ export class MusicSystem {
     }
 
     const now = this.audioContext.currentTime + time;
-    
+
     // Oscillator for melody
     const oscillator = this.audioContext.createOscillator();
     const gainNode = this.audioContext.createGain();
-    
+
     oscillator.connect(gainNode);
     gainNode.connect(this.audioContext.destination);
-    
+
     oscillator.type = type;
     oscillator.frequency.value = frequency;
-    
+
     // ADSR envelope for natural sound
     const attackTime = 0.05;
     const decayTime = 0.1;
     const sustainLevel = this.volume * 0.7;
     const releaseTime = 0.1;
-    
+
     gainNode.gain.setValueAtTime(0, now);
     gainNode.gain.linearRampToValueAtTime(this.volume, now + attackTime);
     gainNode.gain.linearRampToValueAtTime(sustainLevel, now + attackTime + decayTime);
     gainNode.gain.setValueAtTime(sustainLevel, now + duration - releaseTime);
     gainNode.gain.linearRampToValueAtTime(0, now + duration);
-    
+
     oscillator.start(now);
     oscillator.stop(now + duration);
   }
@@ -198,7 +198,7 @@ export class MusicSystem {
   // Schedule next note in the melody
   scheduleNote() {
     if (!this.enabled || !this.audioContext) return;
-    
+
     // Check if AudioContext is running - don't access currentTime if suspended
     if (this.audioContext.state === 'suspended') {
       return; // AudioContext hasn't been resumed yet (needs user gesture)
@@ -206,10 +206,10 @@ export class MusicSystem {
 
     const melody = this.getSeasonalMelody(this.currentSeason);
     const secondsPerBeat = 60.0 / melody.tempo;
-    
+
     while (this.nextNoteTime < this.audioContext.currentTime + this.scheduleAheadTime) {
       const note = melody.notes[this.currentNote % melody.notes.length];
-      
+
       if (note.pitch > 0) {
         this.playNote(
           note.pitch,
@@ -217,7 +217,7 @@ export class MusicSystem {
           this.nextNoteTime - this.audioContext.currentTime,
           melody.instrument
         );
-        
+
         // Add subtle bass note every 4 beats
         if (this.currentNote % 4 === 0) {
           const bassIndex = Math.floor(this.currentNote / 4) % melody.bassNotes.length;
@@ -229,7 +229,7 @@ export class MusicSystem {
           );
         }
       }
-      
+
       this.nextNoteTime += note.duration * secondsPerBeat;
       this.currentNote++;
     }
@@ -238,9 +238,9 @@ export class MusicSystem {
   // Main music loop
   scheduler() {
     if (!this.isPlaying) return;
-    
+
     this.scheduleNote();
-    
+
     // Schedule next check
     setTimeout(() => {
       this.scheduler();
@@ -250,9 +250,9 @@ export class MusicSystem {
   // Start playing music
   async play() {
     if (!this.enabled || !this.audioContext) return;
-    
+
     await this.resume();
-    
+
     if (!this.isPlaying) {
       this.isPlaying = true;
       this.currentNote = 0;

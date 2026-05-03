@@ -95,7 +95,7 @@ export const buildCozyGoals = (state, content, dayKey = getDayKey(), { maxGoals 
   const availableGoals = candidates.filter((goal) => goal.available);
   const shuffled = stableShuffle(availableGoals, dayKey);
   const desiredCount = Math.min(maxGoals, Math.max(2, shuffled.length));
-  return shuffled.slice(0, desiredCount).map(({ available, ...goal }) => goal);
+  return shuffled.slice(0, desiredCount).map(({ available: _avail, ...goal }) => goal);
 };
 
 export const isCozyGoalSatisfied = (goal, eventType, eventData = {}, content, state) => {

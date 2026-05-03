@@ -9,7 +9,7 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
   const normalizedWeather = normalizeWeatherType(weather);
   const [isTransitioning, setIsTransitioning] = React.useState(false);
   const prevWeatherRef = React.useRef(normalizedWeather);
-  
+
   // Detect weather change and trigger transition
   React.useEffect(() => {
     if (prevWeatherRef.current !== normalizedWeather) {
@@ -21,13 +21,20 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
       return () => clearTimeout(timer);
     }
   }, [normalizedWeather]);
-  
+
   // Generate particle elements based on weather type
   const particles = useMemo(() => {
     if (!normalizedWeather || normalizedWeather === 'sunny') return [];
 
-    const particleCount = normalizedWeather === 'stormy' ? 100 : normalizedWeather === 'rainy' ? 60 : normalizedWeather === 'snow' ? 50 : 30;
-    
+    const particleCount =
+      normalizedWeather === 'stormy'
+        ? 100
+        : normalizedWeather === 'rainy'
+          ? 60
+          : normalizedWeather === 'snow'
+            ? 50
+            : 30;
+
     return Array.from({ length: Math.floor(particleCount * intensity) }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
@@ -43,7 +50,9 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
   }
 
   return (
-    <div className={`absolute inset-0 pointer-events-none overflow-hidden z-10 transition-opacity duration-500 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+    <div
+      className={`absolute inset-0 pointer-events-none overflow-hidden z-10 transition-opacity duration-500 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
+    >
       {normalizedWeather === 'rainy' && (
         <>
           {particles.map((particle) => (
@@ -98,7 +107,6 @@ const WeatherEffects = memo(({ weather, intensity = 1 }) => {
           ))}
         </>
       )}
-
     </div>
   );
 });

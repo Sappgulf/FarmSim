@@ -21,9 +21,7 @@ const StatTile = ({ value, label, tone = 'emerald' }) => (
     <div className={`text-lg font-bold tabular-nums ${TONE_CLASSES[tone] || TONE_CLASSES.emerald}`}>
       {value}
     </div>
-    <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-      {label}
-    </div>
+    <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
   </div>
 );
 

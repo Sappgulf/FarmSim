@@ -42,10 +42,7 @@ const fromBase64 = (value) => {
 
 const base64UrlEncode = (value) => {
   const json = JSON.stringify(value);
-  return toBase64(encodeUtf8(json))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
+  return toBase64(encodeUtf8(json)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 };
 
 const base64UrlDecode = (encoded) => {
@@ -83,7 +80,13 @@ export const validateSeedPayload = (payload = {}) => {
   return { ok: errors.length === 0, errors, warnings };
 };
 
-export const encodeSeed = ({ version = 1, seed = null, season = 'spring', packs = [], theme = null } = {}) => {
+export const encodeSeed = ({
+  version = 1,
+  seed = null,
+  season = 'spring',
+  packs = [],
+  theme = null,
+} = {}) => {
   const payload = {
     version,
     seed: Number.isFinite(seed) ? Math.floor(seed) : null,

@@ -224,7 +224,7 @@ const sounds = {
     osc2.connect(gain);
     gain.connect(ctx.destination);
 
-    osc.frequency.setValueAtTime(523, ctx.currentTime);  // C5
+    osc.frequency.setValueAtTime(523, ctx.currentTime); // C5
     osc2.frequency.setValueAtTime(659, ctx.currentTime); // E5
     osc.type = 'sine';
     osc2.type = 'sine';

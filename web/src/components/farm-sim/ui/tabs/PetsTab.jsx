@@ -10,74 +10,74 @@ import { TabHero, MetricTile } from './TabSurface';
 // Pet types from original system
 const PET_TYPES = {
   dog: {
-    name: "Farm Dog",
-    emoji: "🐕",
+    name: 'Farm Dog',
+    emoji: '🐕',
     cost: 200,
     maxLevel: 5,
-    traits: ["pest_detection", "security", "loyalty"],
+    traits: ['pest_detection', 'security', 'loyalty'],
     bonuses: {
       pest_prevention: 0.3,
       theft_protection: 0.5,
-      happiness_boost: 0.1
+      happiness_boost: 0.1,
     },
     needs: {
-      food: { type: "pet_food", consumption: 1, interval: 3600 },
-      play: { type: "attention", consumption: 1, interval: 7200 },
-      health: { type: "vet_care", consumption: 1, interval: 86400 }
+      food: { type: 'pet_food', consumption: 1, interval: 3600 },
+      play: { type: 'attention', consumption: 1, interval: 7200 },
+      health: { type: 'vet_care', consumption: 1, interval: 86400 },
     },
     levelBonuses: {
       1: { pest_prevention: 0.1 },
       2: { pest_prevention: 0.15, security: 0.1 },
       3: { pest_prevention: 0.2, security: 0.15, loyalty: 0.1 },
       4: { pest_prevention: 0.25, security: 0.2, loyalty: 0.15 },
-      5: { pest_prevention: 0.3, security: 0.25, loyalty: 0.2 }
-    }
+      5: { pest_prevention: 0.3, security: 0.25, loyalty: 0.2 },
+    },
   },
   cat: {
-    name: "Farm Cat",
-    emoji: "🐱",
+    name: 'Farm Cat',
+    emoji: '🐱',
     cost: 150,
     maxLevel: 5,
-    traits: ["pest_hunter", "independence", "curiosity"],
+    traits: ['pest_hunter', 'independence', 'curiosity'],
     bonuses: {
       pest_elimination: 0.4,
       crop_quality: 0.15,
-      luck_boost: 0.05
+      luck_boost: 0.05,
     },
     needs: {
-      food: { type: "pet_food", consumption: 1, interval: 4800 },
-      play: { type: "attention", consumption: 1, interval: 10800 },
-      health: { type: "vet_care", consumption: 1, interval: 86400 }
+      food: { type: 'pet_food', consumption: 1, interval: 4800 },
+      play: { type: 'attention', consumption: 1, interval: 10800 },
+      health: { type: 'vet_care', consumption: 1, interval: 86400 },
     },
     levelBonuses: {
       1: { pest_elimination: 0.2 },
       2: { pest_elimination: 0.25, crop_quality: 0.05 },
       3: { pest_elimination: 0.3, crop_quality: 0.1, luck_boost: 0.02 },
       4: { pest_elimination: 0.35, crop_quality: 0.12, luck_boost: 0.03 },
-      5: { pest_elimination: 0.4, crop_quality: 0.15, luck_boost: 0.05 }
-    }
+      5: { pest_elimination: 0.4, crop_quality: 0.15, luck_boost: 0.05 },
+    },
   },
   chicken: {
-    name: "Farm Chicken",
-    emoji: "🐔",
+    name: 'Farm Chicken',
+    emoji: '🐔',
     cost: 100,
     maxLevel: 3,
-    traits: ["egg_production", "pest_control", "fertilizer_production"],
+    traits: ['egg_production', 'pest_control', 'fertilizer_production'],
     bonuses: {
       daily_eggs: 2,
       pest_reduction: 0.2,
-      fertilizer_production: 1
+      fertilizer_production: 1,
     },
     needs: {
-      food: { type: "grain", consumption: 2, interval: 3600 },
-      shelter: { type: "coop", consumption: 0, interval: 0 }
+      food: { type: 'grain', consumption: 2, interval: 3600 },
+      shelter: { type: 'coop', consumption: 0, interval: 0 },
     },
     levelBonuses: {
       1: { daily_eggs: 1 },
       2: { daily_eggs: 2, fertilizer_production: 0.5 },
-      3: { daily_eggs: 3, fertilizer_production: 1, pest_reduction: 0.2 }
-    }
-  }
+      3: { daily_eggs: 3, fertilizer_production: 1, pest_reduction: 0.2 },
+    },
+  },
 };
 
 // Aggregate all pet bonuses into a single summary
@@ -85,7 +85,7 @@ export const getPetBonuses = (pets) => {
   const bonuses = {};
   if (!Array.isArray(pets)) return bonuses;
 
-  pets.forEach(pet => {
+  pets.forEach((pet) => {
     const petData = PET_TYPES[pet.type];
     if (!petData) return;
 
@@ -128,7 +128,7 @@ const PetsTab = memo(() => {
   const petSupplies = state.inventory.petSupplies || {
     pet_food: 5,
     attention: 3,
-    vet_care: 2
+    vet_care: 2,
   };
 
   const activeBonuses = useMemo(() => getPetBonuses(state.pets), [state.pets]);
@@ -150,7 +150,7 @@ const PetsTab = memo(() => {
         lastFed: Date.now(),
         lastPlayed: Date.now(),
         lastVetVisit: Date.now(),
-        experience: 0
+        experience: 0,
       };
       actions.updatePets([...state.pets, newPet]);
       actions.addXP(20);
@@ -161,7 +161,7 @@ const PetsTab = memo(() => {
   };
 
   const handleCarePet = (petId, careType) => {
-    const pet = state.pets.find(p => p.id === petId);
+    const pet = state.pets.find((p) => p.id === petId);
     if (!pet) return;
 
     const petData = PET_TYPES[pet.type];
@@ -169,7 +169,7 @@ const PetsTab = memo(() => {
     if (!need) return;
 
     if (petSupplies[need.type] >= need.consumption) {
-      const updatedPets = state.pets.map(p => {
+      const updatedPets = state.pets.map((p) => {
         if (p.id !== petId) return p;
         let updatedPet = { ...p };
 
@@ -197,7 +197,7 @@ const PetsTab = memo(() => {
           updatedPet.experience = 0;
           actions.addNotification({
             message: `${updatedPet.name} leveled up to ${updatedPet.level}!`,
-            type: 'success'
+            type: 'success',
           });
           actions.addXP(15);
         }
@@ -211,8 +211,8 @@ const PetsTab = memo(() => {
         ...state.inventory,
         petSupplies: {
           ...petSupplies,
-          [need.type]: petSupplies[need.type] - need.consumption
-        }
+          [need.type]: petSupplies[need.type] - need.consumption,
+        },
       };
       actions.updateInventory(updatedInventory);
       actions.recordCozyGoalEvent('pet_cared', { petId, careType });
@@ -221,7 +221,7 @@ const PetsTab = memo(() => {
     } else {
       actions.addNotification({
         message: `Not enough ${formatDisplayLabel(need.type)} supplies!`,
-        type: 'warning'
+        type: 'warning',
       });
     }
   };
@@ -236,11 +236,14 @@ const PetsTab = memo(() => {
         ...state.inventory,
         petSupplies: {
           ...petSupplies,
-          [supplyType]: petSupplies[supplyType] + quantity
-        }
+          [supplyType]: petSupplies[supplyType] + quantity,
+        },
       };
       actions.updateInventory(updatedInventory);
-      actions.addNotification({ message: `Bought ${quantity} ${formatDisplayLabel(supplyType)}!`, type: 'success' });
+      actions.addNotification({
+        message: `Bought ${quantity} ${formatDisplayLabel(supplyType)}!`,
+        type: 'success',
+      });
     } else {
       actions.addNotification({ message: 'Not enough coins!', type: 'error' });
     }
@@ -267,11 +270,11 @@ const PetsTab = memo(() => {
         tone="violet"
         title="Farm Companions"
         description="Adopt loyal helpers, keep them happy, and earn cozy farm bonuses."
-        badge={(
+        badge={
           <Badge variant="secondary" className="shrink-0 bg-white/80 text-violet-700">
             {state.pets.length} Pets
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -309,7 +312,9 @@ const PetsTab = memo(() => {
                 <div key={key} className="flex items-center gap-2 p-2 bg-white/70 rounded text-sm">
                   <span>{info.emoji}</span>
                   <span className="text-gray-700">{info.label}</span>
-                  <span className="ml-auto font-semibold text-amber-700">{formatBonusValue(key, value)}</span>
+                  <span className="ml-auto font-semibold text-amber-700">
+                    {formatBonusValue(key, value)}
+                  </span>
                 </div>
               );
             })}
@@ -335,7 +340,10 @@ const PetsTab = memo(() => {
           </div>
           <div className="grid grid-cols-1 gap-3">
             {Object.entries(PET_TYPES).map(([petType, pet]) => (
-              <div key={petType} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg bg-white/70">
+              <div
+                key={petType}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg bg-white/70"
+              >
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{pet.emoji || '🐾'}</span>
                   <div>
@@ -367,16 +375,19 @@ const PetsTab = memo(() => {
       {state.pets.length > 0 && (
         <div className="space-y-4">
           <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50">
-            <h3 className="font-semibold mb-3 text-green-800">🐾 Your Pets ({state.pets.length})</h3>
+            <h3 className="font-semibold mb-3 text-green-800">
+              🐾 Your Pets ({state.pets.length})
+            </h3>
             <div className="space-y-3">
-              {state.pets.map(pet => {
+              {state.pets.map((pet) => {
                 const petData = PET_TYPES[pet.type];
                 const healthStatus = getHealthStatus(pet.health);
                 const petIcon = petData?.emoji || '🐾';
                 const expForNext = pet.level * 100;
-                const expPct = petData && pet.level < petData.maxLevel
-                  ? Math.min(100, Math.round((pet.experience / expForNext) * 100))
-                  : 100;
+                const expPct =
+                  petData && pet.level < petData.maxLevel
+                    ? Math.min(100, Math.round((pet.experience / expForNext) * 100))
+                    : 100;
 
                 return (
                   <Card key={pet.id} className="p-3">
@@ -386,10 +397,12 @@ const PetsTab = memo(() => {
                         <div>
                           <div className="font-semibold text-gray-900">{pet.name}</div>
                           <div className="text-sm text-gray-600">
-                            {petData?.name || 'Pet'} • Level {pet.level}{petData && pet.level >= petData.maxLevel ? ' (MAX)' : ''}
+                            {petData?.name || 'Pet'} • Level {pet.level}
+                            {petData && pet.level >= petData.maxLevel ? ' (MAX)' : ''}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
-                            Mood: {getHappinessEmoji(pet.happiness)} {Math.round(pet.happiness)}% happy
+                            Mood: {getHappinessEmoji(pet.happiness)} {Math.round(pet.happiness)}%
+                            happy
                           </div>
                         </div>
                       </div>
@@ -424,7 +437,9 @@ const PetsTab = memo(() => {
                       <div>
                         <div className="flex justify-between mb-1">
                           <span>XP</span>
-                          <span>{pet.experience}/{expForNext}</span>
+                          <span>
+                            {pet.experience}/{expForNext}
+                          </span>
                         </div>
                         <Progress value={expPct} className="h-2" />
                       </div>
@@ -480,28 +495,52 @@ const PetsTab = memo(() => {
           <Card className="p-4 bg-slate-50/80">
             <h3 className="font-semibold mb-3 text-blue-800">🛍️ Pet Supplies</h3>
             <div className="grid grid-cols-3 gap-3 mb-4 text-sm">
-              <MetricTile tone="amber" label="Food" value={petSupplies.pet_food} hint="Feed the pack" icon="🍖" />
-              <MetricTile tone="rose" label="Attention" value={petSupplies.attention} hint="Play sessions" icon="❤️" />
-              <MetricTile tone="sky" label="Vet Care" value={petSupplies.vet_care} hint="Health visits" icon="🏥" />
+              <MetricTile
+                tone="amber"
+                label="Food"
+                value={petSupplies.pet_food}
+                hint="Feed the pack"
+                icon="🍖"
+              />
+              <MetricTile
+                tone="rose"
+                label="Attention"
+                value={petSupplies.attention}
+                hint="Play sessions"
+                icon="❤️"
+              />
+              <MetricTile
+                tone="sky"
+                label="Vet Care"
+                value={petSupplies.vet_care}
+                hint="Health visits"
+                icon="🏥"
+              />
             </div>
             <div className="flex gap-2">
               <Button
                 onClick={() => handleBuySupplies('pet_food', 20)}
-                size="sm" variant="outline" className="text-xs flex-1"
+                size="sm"
+                variant="outline"
+                className="text-xs flex-1"
                 disabled={state.coins < 20}
               >
                 Buy Food (20🪙)
               </Button>
               <Button
                 onClick={() => handleBuySupplies('attention', 15)}
-                size="sm" variant="outline" className="text-xs flex-1"
+                size="sm"
+                variant="outline"
+                className="text-xs flex-1"
                 disabled={state.coins < 15}
               >
                 Buy Attention (15🪙)
               </Button>
               <Button
                 onClick={() => handleBuySupplies('vet_care', 30)}
-                size="sm" variant="outline" className="text-xs flex-1"
+                size="sm"
+                variant="outline"
+                className="text-xs flex-1"
                 disabled={state.coins < 30}
               >
                 Vet Care (30🪙)
@@ -522,7 +561,9 @@ const PetsTab = memo(() => {
                   disabled={state.coins < pet.cost}
                   className="justify-between"
                 >
-                  <span>{pet.emoji} Adopt {pet.name}</span>
+                  <span>
+                    {pet.emoji} Adopt {pet.name}
+                  </span>
                   <span>{pet.cost}🪙</span>
                 </Button>
               ))}

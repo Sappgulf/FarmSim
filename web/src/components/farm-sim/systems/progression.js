@@ -65,22 +65,27 @@ export const getXpProgress = (xp, level) => {
 
 export const getProgressionBand = (level) => {
   const safeLevel = Math.max(1, clampInt(level, 1, 1));
-  return PROGRESSION_BANDS.find((band) => safeLevel >= band.minLevel && safeLevel <= band.maxLevel)
-    || PROGRESSION_BANDS[PROGRESSION_BANDS.length - 1];
+  return (
+    PROGRESSION_BANDS.find((band) => safeLevel >= band.minLevel && safeLevel <= band.maxLevel) ||
+    PROGRESSION_BANDS[PROGRESSION_BANDS.length - 1]
+  );
 };
 
 const DIFFICULTY_MODIFIERS = {
   onboarding: { growthTime: 1, resourceCost: 1, rarityPatience: 1, minigameWindow: 1 },
-  early_intent: { growthTime: 1.04, resourceCost: 1.04, rarityPatience: 0.98, minigameWindow: 0.98 },
+  early_intent: {
+    growthTime: 1.04,
+    resourceCost: 1.04,
+    rarityPatience: 0.98,
+    minigameWindow: 0.98,
+  },
   mid_depth: { growthTime: 1.08, resourceCost: 1.08, rarityPatience: 0.96, minigameWindow: 0.95 },
   mastery: { growthTime: 1.12, resourceCost: 1.1, rarityPatience: 0.94, minigameWindow: 0.93 },
   prestige: { growthTime: 1.14, resourceCost: 1.1, rarityPatience: 0.94, minigameWindow: 0.92 },
 };
 
 export const getDifficultyModifier = (levelOrBand) => {
-  const bandId = typeof levelOrBand === 'string'
-    ? levelOrBand
-    : getProgressionBand(levelOrBand).id;
+  const bandId = typeof levelOrBand === 'string' ? levelOrBand : getProgressionBand(levelOrBand).id;
   return DIFFICULTY_MODIFIERS[bandId] || DIFFICULTY_MODIFIERS.onboarding;
 };
 
@@ -105,7 +110,12 @@ export const getEconomySinkModifier = (level) => {
   return 1.12;
 };
 
-export const applyXpTuning = (requestedXp, sourceMeta = {}, tracker = {}, dayKey = 'unknown-day') => {
+export const applyXpTuning = (
+  requestedXp,
+  sourceMeta = {},
+  tracker = {},
+  dayKey = 'unknown-day'
+) => {
   const baseRequested = clampInt(requestedXp, 0, 0);
   if (baseRequested <= 0) {
     return { grantedXp: 0, tracker };
@@ -227,7 +237,6 @@ export const remapXpToCurrentCurve = (xp, level = 1) => {
   const remapped = newFloor + Math.floor(newSpan * legacyProgress);
   return Math.max(remapped, newFloor);
 };
-
 
 export const getLevelBandRewards = (level) => {
   const safeLevel = Math.max(1, Math.floor(Number(level) || 1));

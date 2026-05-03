@@ -65,9 +65,8 @@ export const FARM_THEMES = [
   },
 ];
 
-export const getFarmTheme = (themeId) => (
-  FARM_THEMES.find((theme) => theme.id === themeId) || FARM_THEMES[0]
-);
+export const getFarmTheme = (themeId) =>
+  FARM_THEMES.find((theme) => theme.id === themeId) || FARM_THEMES[0];
 
 export const getFarmThemeVars = (theme) => ({
   '--farm-theme-accent': theme?.palette?.accent,

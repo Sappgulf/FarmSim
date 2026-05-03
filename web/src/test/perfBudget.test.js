@@ -9,20 +9,29 @@ describe('Performance Budget', () => {
       const plotCount = gridSize * gridSize;
       const now = Date.now();
 
-      const crop = { id: 'carrot', name: 'Carrot', growthTime: 30, stages: 3, baseValue: 3, emoji: '🥕' };
-      const plots = Array(plotCount).fill(null).map((_, id) => ({
-        id,
-        state: 'growing',
-        crop,
-        plantedAt: now - 10_000,
-        growthStage: 1,
-        progress: 0.1,
-        waterLevel: 100,
-        soilFertility: 1,
-        rotationHistory: [],
-        weatherModifier: 1,
-        growthBoost: 1,
-      }));
+      const crop = {
+        id: 'carrot',
+        name: 'Carrot',
+        growthTime: 30,
+        stages: 3,
+        baseValue: 3,
+        emoji: '🥕',
+      };
+      const plots = Array(plotCount)
+        .fill(null)
+        .map((_, id) => ({
+          id,
+          state: 'growing',
+          crop,
+          plantedAt: now - 10_000,
+          growthStage: 1,
+          progress: 0.1,
+          waterLevel: 100,
+          soilFertility: 1,
+          rotationHistory: [],
+          weatherModifier: 1,
+          growthBoost: 1,
+        }));
 
       const state = {
         plots,
@@ -48,7 +57,7 @@ describe('Performance Budget', () => {
 
       const start = performance.now();
       for (let i = 0; i < iterations; i += 1) {
-        vi.setSystemTime(now + (i * 300)); // bypass growth throttle for each update pass
+        vi.setSystemTime(now + i * 300); // bypass growth throttle for each update pass
         system.update(state);
       }
       const totalMs = performance.now() - start;

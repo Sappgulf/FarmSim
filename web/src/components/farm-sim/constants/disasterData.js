@@ -142,26 +142,26 @@ export const DISASTER_PROTECTIONS = {
  */
 export function calculateDisasterRisk(weather, farmLevel = 1, hasProtection = false) {
   const risks = {};
-  
-  Object.values(DISASTER_TYPES).forEach(disaster => {
+
+  Object.values(DISASTER_TYPES).forEach((disaster) => {
     let baseRisk = disaster.occurrenceChance;
-    
+
     // Weather modifier
     if (disaster.favorableWeather.includes(weather)) {
       baseRisk *= 3.0; // Triple risk in favorable weather
     }
-    
+
     // Farm level modifier (higher level = slightly more at risk)
-    baseRisk *= (1 + farmLevel * 0.1);
-    
+    baseRisk *= 1 + farmLevel * 0.1;
+
     // Protection modifier
     if (hasProtection) {
       baseRisk *= 0.5; // Halve risk if any protection exists
     }
-    
+
     risks[disaster.id] = baseRisk;
   });
-  
+
   return risks;
 }
 
@@ -173,8 +173,8 @@ export function calculateDisasterRisk(weather, farmLevel = 1, hasProtection = fa
  */
 export function calculateProtection(disasterId, protections = {}) {
   let totalProtection = 0;
-  
-  Object.values(DISASTER_PROTECTIONS).forEach(protection => {
+
+  Object.values(DISASTER_PROTECTIONS).forEach((protection) => {
     if (protections[protection.id]) {
       // Check if this protection works for this disaster
       if (protection.protection && protection.protection[disasterId]) {
@@ -182,7 +182,7 @@ export function calculateProtection(disasterId, protections = {}) {
       }
     }
   });
-  
+
   return Math.min(totalProtection, 0.95); // Cap at 95% protection
 }
 
@@ -195,29 +195,33 @@ export function calculateProtection(disasterId, protections = {}) {
 export function estimateDisasterDamage(disasterId, farmState) {
   const disaster = DISASTER_TYPES[disasterId];
   if (!disaster) return 0;
-  
+
   let estimatedDamage = 0;
-  
+
   // Crop value loss
-  const activePlots = farmState.plots.filter(p => 
-    p.state === 'growing' || p.state === 'planted' || p.state === 'ready'
+  const activePlots = farmState.plots.filter(
+    (p) => p.state === 'growing' || p.state === 'planted' || p.state === 'ready'
   );
   const avgCropValue = 20; // Average crop value estimate
-  estimatedDamage += activePlots.length * avgCropValue * disaster.effects.cropDestruction * disaster.damageChance;
-  
+  estimatedDamage +=
+    activePlots.length * avgCropValue * disaster.effects.cropDestruction * disaster.damageChance;
+
   // Direct coin loss
   if (disaster.effects.coinLoss) {
     estimatedDamage += farmState.coins * disaster.effects.coinLoss;
   }
-  
+
   // Inventory loss
   if (disaster.effects.inventoryLoss) {
-    const inventoryValue = Object.entries(farmState.inventory || {}).reduce((sum, [cropId, amount]) => {
-      return sum + (amount * avgCropValue);
-    }, 0);
+    const inventoryValue = Object.entries(farmState.inventory || {}).reduce(
+      (sum, [cropId, amount]) => {
+        return sum + amount * avgCropValue;
+      },
+      0
+    );
     estimatedDamage += inventoryValue * disaster.effects.inventoryLoss;
   }
-  
+
   return Math.floor(estimatedDamage);
 }
 
@@ -228,4 +232,3 @@ export default {
   calculateProtection,
   estimateDisasterDamage,
 };
-

@@ -3,7 +3,11 @@ import { useGameActions, useGameSelector, useGameStore } from '../context/GameCo
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { isDebugMode, logDebugAction } from '../../../utils/debugTools';
-import { getContentManager, printContentReport, revalidateContent } from '../../../content/ContentManager';
+import {
+  getContentManager,
+  printContentReport,
+  revalidateContent,
+} from '../../../content/ContentManager';
 import { TAB_IDS } from './GameSidebar';
 import { ENTITLEMENT_MODES, isPremiumModeEnabled } from '../entitlements/EntitlementManager';
 import {
@@ -18,15 +22,19 @@ import {
 const DebugStressPanel = memo(() => {
   const actions = useGameActions();
   const store = useGameStore();
-  const entitlementMode = useGameSelector((state) => state.entitlements?.mode || ENTITLEMENT_MODES.FREE_MODE);
-  const entitlementPacks = useGameSelector((state) => (
+  const entitlementMode = useGameSelector(
+    (state) => state.entitlements?.mode || ENTITLEMENT_MODES.FREE_MODE
+  );
+  const entitlementPacks = useGameSelector((state) =>
     Array.isArray(state.entitlements?.packs) ? state.entitlements.packs : []
-  ));
+  );
   const debugEnabled = isDebugMode();
   const [tabStressRunning, setTabStressRunning] = useState(false);
   const tabStressRef = useRef(null);
   const content = getContentManager();
-  const premiumModeEnabled = isPremiumModeEnabled({ entitlements: { mode: entitlementMode, packs: entitlementPacks } });
+  const premiumModeEnabled = isPremiumModeEnabled({
+    entitlements: { mode: entitlementMode, packs: entitlementPacks },
+  });
   const packs = content?.packs || [];
 
   useEffect(() => {
@@ -89,12 +97,22 @@ const DebugStressPanel = memo(() => {
   return (
     <div className="fixed bottom-24 left-2 right-2 sm:right-auto sm:w-80 z-[9998]">
       <Card className="bg-black/85 text-white border border-gray-700 shadow-xl p-3 space-y-2">
-        <div className="text-xs font-semibold tracking-wide text-gray-200">🧪 Debug Stress Panel</div>
+        <div className="text-xs font-semibold tracking-wide text-gray-200">
+          🧪 Debug Stress Panel
+        </div>
         <div className="grid grid-cols-2 gap-2 text-xs">
-          <Button size="sm" className="h-10" onClick={() => fillAllPlots(store.getState(), actions, 'planted')}>
+          <Button
+            size="sm"
+            className="h-10"
+            onClick={() => fillAllPlots(store.getState(), actions, 'planted')}
+          >
             Fill Plots
           </Button>
-          <Button size="sm" className="h-10" onClick={() => fillAllPlots(store.getState(), actions, 'ready')}>
+          <Button
+            size="sm"
+            className="h-10"
+            onClick={() => fillAllPlots(store.getState(), actions, 'ready')}
+          >
             Ready Plots
           </Button>
           <Button size="sm" className="h-10" onClick={actions.harvestAllReadyCrops}>
@@ -103,10 +121,18 @@ const DebugStressPanel = memo(() => {
           <Button size="sm" className="h-10" onClick={() => spawnNotifications(actions, 50)}>
             +50 Notifs
           </Button>
-          <Button size="sm" className="h-10" onClick={() => clearNotifications(store.getState(), actions)}>
+          <Button
+            size="sm"
+            className="h-10"
+            onClick={() => clearNotifications(store.getState(), actions)}
+          >
             Clear Notifs
           </Button>
-          <Button size="sm" className="h-10" onClick={tabStressRunning ? stopTabStress : startTabStress}>
+          <Button
+            size="sm"
+            className="h-10"
+            onClick={tabStressRunning ? stopTabStress : startTabStress}
+          >
             {tabStressRunning ? 'Stop Tabs' : 'Stress Tabs'}
           </Button>
           <Button size="sm" className="h-10" onClick={() => placeBuildings(actions)}>
@@ -115,7 +141,11 @@ const DebugStressPanel = memo(() => {
           <Button size="sm" className="h-10" onClick={() => clearBuildings(actions)}>
             Clear Builds
           </Button>
-          <Button size="sm" className="h-10 col-span-2" onClick={() => advanceChallengeDays(store.getState(), actions, 30)}>
+          <Button
+            size="sm"
+            className="h-10 col-span-2"
+            onClick={() => advanceChallengeDays(store.getState(), actions, 30)}
+          >
             Advance 30 Days
           </Button>
           <Button size="sm" className="h-10" onClick={revalidateContentNow}>
@@ -132,9 +162,11 @@ const DebugStressPanel = memo(() => {
             <Button
               size="sm"
               className="h-7 px-2 text-[10px]"
-              onClick={() => actions.setEntitlementMode(
-                premiumModeEnabled ? ENTITLEMENT_MODES.FREE_MODE : ENTITLEMENT_MODES.PREMIUM_MODE
-              )}
+              onClick={() =>
+                actions.setEntitlementMode(
+                  premiumModeEnabled ? ENTITLEMENT_MODES.FREE_MODE : ENTITLEMENT_MODES.PREMIUM_MODE
+                )
+              }
             >
               {premiumModeEnabled ? 'Disable' : 'Enable'}
             </Button>
@@ -155,11 +187,11 @@ const DebugStressPanel = memo(() => {
                     <Button
                       size="sm"
                       className="h-7 px-2 text-[10px]"
-                      onClick={() => (
+                      onClick={() =>
                         isUnlocked
                           ? actions.revokePackEntitlement(pack.id)
                           : actions.grantPackEntitlement(pack.id)
-                      )}
+                      }
                     >
                       {isUnlocked ? 'Revoke' : 'Grant'}
                     </Button>

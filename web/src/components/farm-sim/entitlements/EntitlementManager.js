@@ -15,21 +15,20 @@ const DEFAULT_ENTITLEMENTS = {
   },
 };
 
-const ensureObject = (value, fallback = {}) => (
-  value && typeof value === 'object' && !Array.isArray(value) ? value : fallback
-);
+const ensureObject = (value, fallback = {}) =>
+  value && typeof value === 'object' && !Array.isArray(value) ? value : fallback;
 
 export const normalizeEntitlements = (entitlements) => {
   const base = entitlements && typeof entitlements === 'object' ? entitlements : {};
-  const mode = base.mode === ENTITLEMENT_MODES.PREMIUM_MODE
-    ? ENTITLEMENT_MODES.PREMIUM_MODE
-    : ENTITLEMENT_MODES.FREE_MODE;
-  const packs = Array.isArray(base.packs)
-    ? base.packs.filter((id) => typeof id === 'string')
-    : [];
+  const mode =
+    base.mode === ENTITLEMENT_MODES.PREMIUM_MODE
+      ? ENTITLEMENT_MODES.PREMIUM_MODE
+      : ENTITLEMENT_MODES.FREE_MODE;
+  const packs = Array.isArray(base.packs) ? base.packs.filter((id) => typeof id === 'string') : [];
   const lockedCosmetics = ensureObject(base.lockedCosmetics, {});
   const lockedDecor = ensureObject(lockedCosmetics.decor, {});
-  const farmTheme = typeof lockedCosmetics.farmTheme === 'string' ? lockedCosmetics.farmTheme : null;
+  const farmTheme =
+    typeof lockedCosmetics.farmTheme === 'string' ? lockedCosmetics.farmTheme : null;
 
   return {
     ...DEFAULT_ENTITLEMENTS,
@@ -52,17 +51,17 @@ export const getEntitlementMode = (state) => {
   return getEntitlementsState(state).mode;
 };
 
-export const isPremiumModeEnabled = (state) => (
-  getEntitlementMode(state) === ENTITLEMENT_MODES.PREMIUM_MODE
-);
+export const isPremiumModeEnabled = (state) =>
+  getEntitlementMode(state) === ENTITLEMENT_MODES.PREMIUM_MODE;
 
 export const listUnlockedPacks = (state) => getEntitlementsState(state).packs;
 
 export const setEntitlementMode = (entitlements, mode) => ({
   ...normalizeEntitlements(entitlements),
-  mode: mode === ENTITLEMENT_MODES.PREMIUM_MODE
-    ? ENTITLEMENT_MODES.PREMIUM_MODE
-    : ENTITLEMENT_MODES.FREE_MODE,
+  mode:
+    mode === ENTITLEMENT_MODES.PREMIUM_MODE
+      ? ENTITLEMENT_MODES.PREMIUM_MODE
+      : ENTITLEMENT_MODES.FREE_MODE,
 });
 
 export const grantEntitlement = (entitlements, packId) => {
@@ -87,9 +86,7 @@ export const getPackMeta = (packId) => {
   return content?.packsById?.[packId] || null;
 };
 
-export const getPackAccess = (packId) => (
-  getPackMeta(packId)?.access || 'free'
-);
+export const getPackAccess = (packId) => getPackMeta(packId)?.access || 'free';
 
 export const getItemEntitlementInfo = (itemId, type) => {
   if (!itemId) return null;

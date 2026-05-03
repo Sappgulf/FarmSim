@@ -14,21 +14,17 @@ const TickContext = createContext(0);
  * @param {number} [props.interval=1000] - Tick interval in ms (default 1 second)
  */
 export function TickProvider({ children, interval = 1000 }) {
-    const [tick, setTick] = useState(0);
+  const [tick, setTick] = useState(0);
 
-    useEffect(() => {
-        const id = setInterval(() => {
-            setTick(t => t + 1);
-        }, interval);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setTick((t) => t + 1);
+    }, interval);
 
-        return () => clearInterval(id);
-    }, [interval]);
+    return () => clearInterval(id);
+  }, [interval]);
 
-    return (
-        <TickContext.Provider value={tick}>
-            {children}
-        </TickContext.Provider>
-    );
+  return <TickContext.Provider value={tick}>{children}</TickContext.Provider>;
 }
 
 /**
@@ -36,7 +32,7 @@ export function TickProvider({ children, interval = 1000 }) {
  * @returns {number} Current tick count (increments every interval)
  */
 export function useTick() {
-    return useContext(TickContext);
+  return useContext(TickContext);
 }
 
 export default TickContext;

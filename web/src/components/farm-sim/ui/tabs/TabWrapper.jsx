@@ -13,10 +13,7 @@ function TabWrapper({ children, panelKey = 'panel' }) {
 
   return (
     <TabErrorBoundary>
-      <div
-        key={panelKey}
-        className={reducedMotion ? '' : 'animate-tab-panel-in'}
-      >
+      <div key={panelKey} className={reducedMotion ? '' : 'animate-tab-panel-in'}>
         {children}
       </div>
     </TabErrorBoundary>

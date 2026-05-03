@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
@@ -21,48 +21,23 @@ const FishingTab = memo(() => {
 
   const fishing = {
     pond: {
-      level: (state.fishing?.pond?.level) || 1,
-      population: (state.fishing?.pond?.population) || 100,
-      maxPopulation: (state.fishing?.pond?.maxPopulation) || 100
+      level: state.fishing?.pond?.level || 1,
+      population: state.fishing?.pond?.population || 100,
+      maxPopulation: state.fishing?.pond?.maxPopulation || 100,
     },
     stats: {
-      totalCaught: (state.fishing?.stats?.totalCaught) || 0,
-      totalValue: (state.fishing?.stats?.totalValue) || 0,
-      largestFish: (state.fishing?.stats?.largestFish) || 0,
-      byType: (state.fishing?.stats?.byType) || {}
-    }
+      totalCaught: state.fishing?.stats?.totalCaught || 0,
+      totalValue: state.fishing?.stats?.totalValue || 0,
+      largestFish: state.fishing?.stats?.largestFish || 0,
+      byType: state.fishing?.stats?.byType || {},
+    },
   };
 
-  // Safety check for imports
-  if (!FISH_TYPES || !POND_UPGRADES || typeof FISH_TYPES !== 'object' || typeof POND_UPGRADES !== 'object') {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="text-4xl mb-3">⚠️</div>
-          <div className="text-lg font-semibold text-red-700">Error Loading Fishing Data</div>
-          <div className="text-sm text-red-500 mt-2">FISH_TYPES or POND_UPGRADES failed to import</div>
-        </div>
-      </div>
-    );
-  }
-
-  // If system isn't available yet, show loading
-  if (!fishingSystem) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="text-4xl mb-3">🎣</div>
-          <div className="text-lg font-semibold text-gray-700">Loading Fishing System...</div>
-          <div className="text-sm text-gray-500 mt-2">Please wait a moment</div>
-        </div>
-      </div>
-    );
-  }
-
-  const stats = fishingSystem.getStats() || fishing.stats;
-  const pondLevel = fishing.pond.level || 1;
-  const currentUpgrade = POND_UPGRADES[Object.keys(POND_UPGRADES)[pondLevel - 1]];
-  const nextUpgrade = POND_UPGRADES[Object.keys(POND_UPGRADES)[pondLevel]];
+  const invalidImports =
+    !FISH_TYPES ||
+    !POND_UPGRADES ||
+    typeof FISH_TYPES !== 'object' ||
+    typeof POND_UPGRADES !== 'object';
 
   const stopReelHold = useCallback(() => {
     if (reelHoldTimerRef.current) {
@@ -71,27 +46,30 @@ const FishingTab = memo(() => {
     }
   }, []);
 
-  const resolveMiniGameResult = useCallback((result) => {
-    stopReelHold();
-    setIsPlaying(false);
-    setGameState(null);
+  const resolveMiniGameResult = useCallback(
+    (result) => {
+      stopReelHold();
+      setIsPlaying(false);
+      setGameState(null);
 
-    if (!result) return;
+      if (!result) return;
 
-    if (result.caught) {
-      soundSystem?.playHarvestSound();
-      if (typeof window.triggerParticleEffect === 'function') {
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 3;
-        window.triggerParticleEffect(centerX, centerY, 'harvest', {
-          text: `🎣 ${result.quality || 'Catch'}! +$${result.value}`,
-          value: result.value
-        });
+      if (result.caught) {
+        soundSystem?.playHarvestSound();
+        if (typeof window.triggerParticleEffect === 'function') {
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 3;
+          window.triggerParticleEffect(centerX, centerY, 'harvest', {
+            text: `🎣 ${result.quality || 'Catch'}! +$${result.value}`,
+            value: result.value,
+          });
+        }
+      } else if (result.escaped) {
+        soundSystem?.playFishEscapeSound();
       }
-    } else if (result.escaped) {
-      soundSystem?.playFishEscapeSound();
-    }
-  }, [soundSystem, stopReelHold]);
+    },
+    [soundSystem, stopReelHold]
+  );
 
   // Mini-game loop
   useEffect(() => {
@@ -124,12 +102,74 @@ const FishingTab = memo(() => {
     };
   }, [fishingSystem, isPlaying, resolveMiniGameResult, stopReelHold]);
 
+  const startReelHold = useCallback(
+    (direction) => {
+      if (!isPlaying) return;
+      handleReelRef.current(direction);
+      stopReelHold();
+      reelHoldTimerRef.current = setInterval(() => {
+        handleReelRef.current(direction);
+      }, 85);
+    },
+    [isPlaying, stopReelHold]
+  );
+
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const handleKeyPress = (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        handleReelRef.current('left');
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        handleReelRef.current('right');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isPlaying]);
+
+  useEffect(() => () => stopReelHold(), [stopReelHold]);
+
+  // Safety check for imports
+  if (invalidImports) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="text-4xl mb-3">⚠️</div>
+          <div className="text-lg font-semibold text-red-700">Error Loading Fishing Data</div>
+          <div className="text-sm text-red-500 mt-2">
+            FISH_TYPES or POND_UPGRADES failed to import
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If system isn't available yet, show loading
+  if (!fishingSystem) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="text-4xl mb-3">🎣</div>
+          <div className="text-lg font-semibold text-gray-700">Loading Fishing System...</div>
+          <div className="text-sm text-gray-500 mt-2">Please wait a moment</div>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = fishingSystem.getStats() || fishing.stats;
+  const pondLevel = fishing.pond.level || 1;
+  const currentUpgrade = POND_UPGRADES[Object.keys(POND_UPGRADES)[pondLevel - 1]];
+  const nextUpgrade = POND_UPGRADES[Object.keys(POND_UPGRADES)[pondLevel]];
+
   const handleCastLine = () => {
     if (!fishingSystem) {
       console.error('[farm]', 'FishingTab: fishingSystem not available');
       actions.addNotification({
         message: 'Fishing system not ready yet',
-        type: 'error'
+        type: 'error',
       });
       return;
     }
@@ -145,22 +185,22 @@ const FishingTab = memo(() => {
         // Add excitement notification
         actions.addNotification({
           message: `🎣 Hooked a ${result.catch.fish.name}! Keep it in the safe zone!`,
-          type: 'info'
+          type: 'info',
         });
       } else {
         soundSystem?.playErrorSound();
         actions.addNotification({
           message: result.message,
-          type: 'warning'
+          type: 'warning',
         });
-        console.warn('[farm]', 'FishingTab: Failed to cast line', result.message);
+        console.error('[farm]', 'FishingTab: Failed to cast line', result.message);
       }
     } catch (error) {
       console.error('[farm]', 'FishingTab: Error casting line', error);
       soundSystem?.playErrorSound();
       actions.addNotification({
         message: 'Error casting line',
-        type: 'error'
+        type: 'error',
       });
     }
   };
@@ -180,15 +220,6 @@ const FishingTab = memo(() => {
 
   handleReelRef.current = handleReel;
 
-  const startReelHold = useCallback((direction) => {
-    if (!isPlaying) return;
-    handleReelRef.current(direction);
-    stopReelHold();
-    reelHoldTimerRef.current = setInterval(() => {
-      handleReelRef.current(direction);
-    }, 85);
-  }, [isPlaying, stopReelHold]);
-
   const handleUpgradePond = () => {
     if (!fishingSystem) return;
 
@@ -199,23 +230,6 @@ const FishingTab = memo(() => {
       soundSystem?.playErrorSound();
     }
   };
-
-  useEffect(() => {
-    if (!isPlaying) return;
-
-    const handleKeyPress = (e) => {
-      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-        handleReelRef.current('left');
-      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-        handleReelRef.current('right');
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isPlaying]);
-
-  useEffect(() => () => stopReelHold(), [stopReelHold]);
 
   const getRarityColor = (rarity) => {
     if (rarity <= 0.01) return 'text-purple-600 font-bold'; // Legendary
@@ -233,7 +247,7 @@ const FishingTab = memo(() => {
     return <Badge className="bg-gray-500">Common</Badge>;
   };
 
-  const safeZoneWidth = Math.max(10, ((gameState?.zoneHalfWidth || 0.1) * 200));
+  const safeZoneWidth = Math.max(10, (gameState?.zoneHalfWidth || 0.1) * 200);
   const tensionPercent = Math.floor((gameState?.lineTension || 0) * 100);
 
   return (
@@ -243,11 +257,11 @@ const FishingTab = memo(() => {
         tone="sky"
         title="Fishing Dock"
         description="Cast, reel, and keep the line in the safe zone for a clean catch."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-sky-700 border-sky-200">
             Level {pondLevel}
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <MetricTile
@@ -329,7 +343,9 @@ const FishingTab = memo(() => {
             >
               <div className="text-center">
                 <div className="font-bold">Upgrade Pond</div>
-                <div className="text-xs">{nextUpgrade.name} • ${nextUpgrade.cost}</div>
+                <div className="text-xs">
+                  {nextUpgrade.name} • ${nextUpgrade.cost}
+                </div>
               </div>
             </Button>
           )}
@@ -343,7 +359,8 @@ const FishingTab = memo(() => {
             <div className="text-7xl mb-4 animate-bounce-slow">🎣</div>
             <h3 className="mb-2 text-2xl font-semibold text-white">Ready to fish?</h3>
             <p className="mb-6 text-sm text-sky-100/80">
-              Cast your line and catch rare species! Use A/D keys or hold controls to reel with precision.
+              Cast your line and catch rare species! Use A/D keys or hold controls to reel with
+              precision.
             </p>
             <Button
               onClick={handleCastLine}
@@ -356,7 +373,8 @@ const FishingTab = memo(() => {
             </Button>
             {fishing.pond.population < 10 && (
               <p className="mt-3 text-xs font-semibold text-red-300">
-                ⚠️ Not enough fish in pond. Wait for population to recover ({Math.floor(fishing.pond.population)}/10).
+                ⚠️ Not enough fish in pond. Wait for population to recover (
+                {Math.floor(fishing.pond.population)}/10).
               </p>
             )}
           </div>
@@ -367,9 +385,7 @@ const FishingTab = memo(() => {
           <div className="relative z-10">
             <div className="text-center mb-4">
               <div className="text-5xl mb-2">{gameState?.fish.emoji}</div>
-              <div className="text-xl font-semibold text-white">
-                {gameState?.fish.name} Hooked!
-              </div>
+              <div className="text-xl font-semibold text-white">{gameState?.fish.name} Hooked!</div>
               <div className="text-sm text-sky-100/80">
                 Size: {gameState?.size}cm • Base Value: ${gameState?.fish.baseValue}
               </div>
@@ -393,7 +409,9 @@ const FishingTab = memo(() => {
                 <Progress
                   value={tensionPercent}
                   className="h-5"
-                  variant={tensionPercent >= 75 ? 'health' : tensionPercent >= 50 ? 'energy' : 'growth'}
+                  variant={
+                    tensionPercent >= 75 ? 'health' : tensionPercent >= 50 ? 'energy' : 'growth'
+                  }
                 />
               </div>
             </div>
@@ -408,8 +426,8 @@ const FishingTab = memo(() => {
               <div
                 className="absolute top-0 bottom-0 bg-gradient-to-r from-emerald-400/80 via-green-300/70 to-emerald-400/80 border-x-2 border-emerald-200 shadow-lg transition-all duration-100"
                 style={{
-                  left: `${((gameState?.fishPosition || 0.5) * 100) - (safeZoneWidth / 2)}%`,
-                  width: `${safeZoneWidth}%`
+                  left: `${(gameState?.fishPosition || 0.5) * 100 - safeZoneWidth / 2}%`,
+                  width: `${safeZoneWidth}%`,
                 }}
               >
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-emerald-200 font-bold text-xs">
@@ -421,7 +439,7 @@ const FishingTab = memo(() => {
                 className="absolute top-2 text-2xl transition-all duration-100"
                 style={{
                   left: `${(gameState?.fishPosition || 0.5) * 100}%`,
-                  transform: 'translateX(-50%)'
+                  transform: 'translateX(-50%)',
                 }}
               >
                 {gameState?.fish.emoji}
@@ -431,7 +449,7 @@ const FishingTab = memo(() => {
                 className="absolute bottom-2 w-9 h-16 sm:w-10 sm:h-20 bg-gradient-to-b from-amber-300 to-yellow-500 rounded-lg border-4 border-amber-600 transition-all duration-75 shadow-xl"
                 style={{
                   left: `${reelPosition * 100}%`,
-                  transform: `translateX(-50%) ${gameState?.inZone ? 'rotate(0deg)' : 'rotate(-4deg)'}`
+                  transform: `translateX(-50%) ${gameState?.inZone ? 'rotate(0deg)' : 'rotate(-4deg)'}`,
                 }}
               >
                 <div className="text-center text-2xl sm:text-3xl leading-none mt-1 sm:mt-2">🎣</div>
@@ -493,10 +511,24 @@ const FishingTab = memo(() => {
 
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm bg-white/10 rounded-2xl p-3 backdrop-blur-sm border border-white/10">
                 <div className="text-white font-semibold">
-                  Quality Window: <span className="text-emerald-300">{Math.floor(((gameState?.qualityWindowMs || 0) / Math.max(1, gameState?.elapsedMs || 1)) * 100)}%</span>
+                  Quality Window:{' '}
+                  <span className="text-emerald-300">
+                    {Math.floor(
+                      ((gameState?.qualityWindowMs || 0) / Math.max(1, gameState?.elapsedMs || 1)) *
+                        100
+                    )}
+                    %
+                  </span>
                 </div>
                 <div className="text-white font-semibold">
-                  Time: <span className="text-red-300">{Math.max(0, Math.ceil(((gameState?.timeLimit || 0) - (gameState?.elapsedMs || 0)) / 1000))}s</span>
+                  Time:{' '}
+                  <span className="text-red-300">
+                    {Math.max(
+                      0,
+                      Math.ceil(((gameState?.timeLimit || 0) - (gameState?.elapsedMs || 0)) / 1000)
+                    )}
+                    s
+                  </span>
                 </div>
               </div>
 
@@ -524,31 +556,28 @@ const FishingTab = memo(() => {
         tone="sky"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          {Object.values(FISH_TYPES).map(fish => {
+          {Object.values(FISH_TYPES).map((fish) => {
             const caughtCount = stats.byType[fish.id] || 0;
             const isCaught = caughtCount > 0;
 
             return (
               <Card
                 key={fish.id}
-                className={`p-3 transition-all duration-200 ${isCaught
+                className={`p-3 transition-all duration-200 ${
+                  isCaught
                     ? 'bg-white hover:shadow-lg hover:scale-105 border-2 border-transparent hover:border-blue-200'
                     : 'bg-gray-100 opacity-50'
-                  }`}
+                }`}
               >
                 <div className="text-center">
-                  <div className="text-4xl mb-2">
-                    {isCaught ? fish.emoji : '❓'}
-                  </div>
+                  <div className="text-4xl mb-2">{isCaught ? fish.emoji : '❓'}</div>
                   <div className={`font-bold ${getRarityColor(fish.rarity)}`}>
                     {isCaught ? fish.name : '???'}
                   </div>
 
                   {isCaught && (
                     <>
-                      <div className="text-xs text-gray-600 mb-2">
-                        {fish.description}
-                      </div>
+                      <div className="text-xs text-gray-600 mb-2">{fish.description}</div>
 
                       <div className="flex items-center justify-center gap-2 mb-2">
                         {getRarityBadge(fish.rarity)}
@@ -557,13 +586,13 @@ const FishingTab = memo(() => {
                       <div className="text-sm space-y-1">
                         <div className="flex justify-between text-xs">
                           <span>Value:</span>
-                          <span className="font-bold text-green-600">
-                            ${fish.baseValue}
-                          </span>
+                          <span className="font-bold text-green-600">${fish.baseValue}</span>
                         </div>
                         <div className="flex justify-between text-xs">
                           <span>Size:</span>
-                          <span>{fish.size.min}-{fish.size.max}cm</span>
+                          <span>
+                            {fish.size.min}-{fish.size.max}cm
+                          </span>
                         </div>
                         <div className="flex justify-between text-xs">
                           <span>Caught:</span>
@@ -573,11 +602,7 @@ const FishingTab = memo(() => {
                     </>
                   )}
 
-                  {!isCaught && (
-                    <div className="text-xs text-gray-500">
-                      Not yet discovered
-                    </div>
-                  )}
+                  {!isCaught && <div className="text-xs text-gray-500">Not yet discovered</div>}
                 </div>
               </Card>
             );

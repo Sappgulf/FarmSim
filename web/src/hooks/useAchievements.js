@@ -11,105 +11,122 @@ export function useAchievements(addNotification, playSound, fireConfetti) {
   const checkQueueRef = useRef([]);
 
   // Unlock an achievement
-  const unlockAchievement = useCallback((achievementId) => {
-    setUnlockedAchievements(prev => {
-      if (prev.includes(achievementId)) return prev;
+  const unlockAchievement = useCallback(
+    (achievementId) => {
+      setUnlockedAchievements((prev) => {
+        if (prev.includes(achievementId)) return prev;
 
-      const achievement = ACHIEVEMENTS.find(a => a.id === achievementId);
-      if (!achievement) return prev;
+        const achievement = ACHIEVEMENTS.find((a) => a.id === achievementId);
+        if (!achievement) return prev;
 
-      // Show notification
-      if (addNotification) {
-        addNotification(
-          `${achievement.icon} Achievement Unlocked: ${achievement.name}! +${achievement.reward}`,
-          'success'
-        );
-      }
+        // Show notification
+        if (addNotification) {
+          addNotification(
+            `${achievement.icon} Achievement Unlocked: ${achievement.name}! +${achievement.reward}`,
+            'success'
+          );
+        }
 
-      // Play sound and effects
-      if (playSound) playSound();
-      if (fireConfetti) fireConfetti('medium');
+        // Play sound and effects
+        if (playSound) playSound();
+        if (fireConfetti) fireConfetti('medium');
 
-      // Set recent unlock for celebration
-      setRecentUnlock(achievement);
-      setTimeout(() => setRecentUnlock(null), 3000);
+        // Set recent unlock for celebration
+        setRecentUnlock(achievement);
+        setTimeout(() => setRecentUnlock(null), 3000);
 
-      return [...prev, achievementId];
-    });
-  }, [addNotification, playSound, fireConfetti]);
+        return [...prev, achievementId];
+      });
+    },
+    [addNotification, playSound, fireConfetti]
+  );
 
   // Check achievements based on current state
-  const checkAchievements = useCallback((gameState) => {
-    const {
-      stats = {},
-      totalEarned = 0,
-      prestige = 0,
-      gridSize = 3,
-      buildings = [],
-      discoveredHybrids = [],
-      inventory = {},
-      levelId,
-      levelStatus,
-      levelStartedAt,
-    } = gameState;
+  const checkAchievements = useCallback(
+    (gameState) => {
+      const {
+        stats = {},
+        totalEarned = 0,
+        prestige = 0,
+        gridSize = 3,
+        buildings = [],
+        discoveredHybrids = [],
+        inventory = {},
+        levelId,
+        levelStatus,
+        levelStartedAt,
+      } = gameState;
 
-    const checks = [];
+      const checks = [];
 
-    // FARMING ACHIEVEMENTS
-    if (stats.totalHarvests >= 1) checks.push('first_harvest');
-    if (stats.totalHarvests >= 25) checks.push('mass_producer');
-    if (stats.totalHarvests >= 100) checks.push('centurion');
-    if (stats.qualityHarvests >= 5) checks.push('quality_farmer');
-    if (gridSize >= 5) checks.push('field_master');
+      // FARMING ACHIEVEMENTS
+      if (stats.totalHarvests >= 1) checks.push('first_harvest');
+      if (stats.totalHarvests >= 25) checks.push('mass_producer');
+      if (stats.totalHarvests >= 100) checks.push('centurion');
+      if (stats.qualityHarvests >= 5) checks.push('quality_farmer');
+      if (gridSize >= 5) checks.push('field_master');
 
-    // ECONOMY ACHIEVEMENTS
-    if (totalEarned >= 300) checks.push('coin_collector');
-    if (totalEarned >= 800) checks.push('millionaire');
-    if (totalEarned >= 1000) checks.push('thousand_coins');
+      // ECONOMY ACHIEVEMENTS
+      if (totalEarned >= 300) checks.push('coin_collector');
+      if (totalEarned >= 800) checks.push('millionaire');
+      if (totalEarned >= 1000) checks.push('thousand_coins');
 
-    // PROGRESSION ACHIEVEMENTS
-    if (prestige >= 1) checks.push('prestige_pioneer');
-    if (prestige >= 3) checks.push('master_farmer');
+      // PROGRESSION ACHIEVEMENTS
+      if (prestige >= 1) checks.push('prestige_pioneer');
+      if (prestige >= 3) checks.push('master_farmer');
 
-    // BUILDING ACHIEVEMENTS
-    if (buildings.length >= 1) checks.push('first_building');
-    if (buildings.length >= 5) checks.push('farm_empire');
+      // BUILDING ACHIEVEMENTS
+      if (buildings.length >= 1) checks.push('first_building');
+      if (buildings.length >= 5) checks.push('farm_empire');
 
-    // ENVIRONMENTAL ACHIEVEMENTS
-    if (stats.weatherSurvived >= 3) checks.push('weathered');
-    if (stats.cropsPlanted >= 5) checks.push('season_expert'); // Simplified check
+      // ENVIRONMENTAL ACHIEVEMENTS
+      if (stats.weatherSurvived >= 3) checks.push('weathered');
+      if (stats.cropsPlanted >= 5) checks.push('season_expert'); // Simplified check
 
-    // CHALLENGE ACHIEVEMENTS
-    if (stats.pestsEliminated >= 10) checks.push('pest_controller');
-    if (stats.diseasesCured >= 15) checks.push('disease_fighter');
+      // CHALLENGE ACHIEVEMENTS
+      if (stats.pestsEliminated >= 10) checks.push('pest_controller');
+      if (stats.diseasesCured >= 15) checks.push('disease_fighter');
 
-    // BREEDING ACHIEVEMENTS
-    if (discoveredHybrids.length >= 1) checks.push('first_hybrid');
-    if (discoveredHybrids.length >= 3) checks.push('mutation_hunter');
+      // BREEDING ACHIEVEMENTS
+      if (discoveredHybrids.length >= 1) checks.push('first_hybrid');
+      if (discoveredHybrids.length >= 3) checks.push('mutation_hunter');
 
-    // Speed farmer check (Level 1 in under 4 minutes)
-    if (levelId === 'lvl1' && levelStatus === 'won' && levelStartedAt) {
-      const now = Math.floor(Date.now() / 1000);
-      const elapsed = now - levelStartedAt;
-      if (elapsed < 240) checks.push('speed_farmer');
-    }
-
-    // Check for legend (all achievements)
-    const allOtherAchievements = ACHIEVEMENTS.filter(a => a.id !== 'farm_legend').map(a => a.id);
-    const hasAll = allOtherAchievements.every(id => unlockedAchievements.includes(id) || checks.includes(id));
-    if (hasAll) checks.push('farm_legend');
-
-    // Unlock any new achievements
-    checks.forEach(id => {
-      if (!unlockedAchievements.includes(id)) {
-        unlockAchievement(id);
+      // Speed farmer check (Level 1 in under 4 minutes)
+      if (levelId === 'lvl1' && levelStatus === 'won' && levelStartedAt) {
+        const now = Math.floor(Date.now() / 1000);
+        const elapsed = now - levelStartedAt;
+        if (elapsed < 240) checks.push('speed_farmer');
       }
-    });
-  }, [unlockedAchievements, unlockAchievement]);
+
+      // Check for legend (all achievements)
+      const allOtherAchievements = ACHIEVEMENTS.filter((a) => a.id !== 'farm_legend').map(
+        (a) => a.id
+      );
+      const hasAll = allOtherAchievements.every(
+        (id) => unlockedAchievements.includes(id) || checks.includes(id)
+      );
+      if (hasAll) checks.push('farm_legend');
+
+      // Unlock any new achievements
+      checks.forEach((id) => {
+        if (!unlockedAchievements.includes(id)) {
+          unlockAchievement(id);
+        }
+      });
+    },
+    [unlockedAchievements, unlockAchievement]
+  );
 
   // Get achievement progress
   const getAchievementProgress = useCallback((achievementId, gameState) => {
-    const { stats = {}, totalEarned = 0, buildings = [], discoveredHybrids = [], gridSize = 3, prestige = 0 } = gameState;
+    const {
+      stats = {},
+      totalEarned = 0,
+      buildings = [],
+      discoveredHybrids = [],
+      gridSize = 3,
+      prestige = 0,
+    } = gameState;
 
     switch (achievementId) {
       case 'first_harvest':
@@ -154,7 +171,7 @@ export function useAchievements(addNotification, playSound, fireConfetti) {
   // Get total reward from unlocked achievements
   const getTotalReward = useCallback(() => {
     return unlockedAchievements.reduce((total, id) => {
-      const achievement = ACHIEVEMENTS.find(a => a.id === id);
+      const achievement = ACHIEVEMENTS.find((a) => a.id === id);
       return total + (achievement?.reward || 0);
     }, 0);
   }, [unlockedAchievements]);
@@ -165,9 +182,12 @@ export function useAchievements(addNotification, playSound, fireConfetti) {
   }, [unlockedAchievements]);
 
   // Save/load
-  const getSaveData = useCallback(() => ({
-    unlockedAchievements,
-  }), [unlockedAchievements]);
+  const getSaveData = useCallback(
+    () => ({
+      unlockedAchievements,
+    }),
+    [unlockedAchievements]
+  );
 
   const loadSaveData = useCallback((data) => {
     if (data?.unlockedAchievements) {

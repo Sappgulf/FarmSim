@@ -8,40 +8,140 @@ import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
 import { Badge } from '../ui/badge';
 import {
-  Crown, Star, Zap, TrendingUp, Lock, Check, Gift,
-  Sparkles, ChevronRight, AlertTriangle, Coins
+  Crown,
+  Star,
+  Zap,
+  TrendingUp,
+  Lock,
+  Check,
+  Gift,
+  Sparkles,
+  ChevronRight,
+  AlertTriangle,
+  Coins,
 } from 'lucide-react';
 import { PRESTIGE_LEVELS, PRESTIGE_BONUSES } from '../../data/constants';
 
 // Prestige unlockables
 const PRESTIGE_UNLOCKS = {
   1: [
-    { type: 'bonus', name: 'Coin Multiplier', value: '1.15x', icon: Coins, desc: 'All earnings increased' },
-    { type: 'feature', name: 'Quality Boost', value: '+3%', icon: Star, desc: 'Better crop quality chance' },
-    { type: 'recipe', name: 'Super Carrot', icon: () => <span>🥕✨</span>, desc: 'Breeding recipe unlocked' },
+    {
+      type: 'bonus',
+      name: 'Coin Multiplier',
+      value: '1.15x',
+      icon: Coins,
+      desc: 'All earnings increased',
+    },
+    {
+      type: 'feature',
+      name: 'Quality Boost',
+      value: '+3%',
+      icon: Star,
+      desc: 'Better crop quality chance',
+    },
+    {
+      type: 'recipe',
+      name: 'Super Carrot',
+      icon: () => <span>🥕✨</span>,
+      desc: 'Breeding recipe unlocked',
+    },
   ],
   2: [
-    { type: 'bonus', name: 'Coin Multiplier', value: '1.35x', icon: Coins, desc: 'All earnings increased' },
+    {
+      type: 'bonus',
+      name: 'Coin Multiplier',
+      value: '1.35x',
+      icon: Coins,
+      desc: 'All earnings increased',
+    },
     { type: 'feature', name: 'Growth Speed', value: '+8%', icon: Zap, desc: 'Faster crop growth' },
-    { type: 'recipe', name: 'Rainbow Corn', icon: () => <span>🌽🌈</span>, desc: 'Breeding recipe unlocked' },
-    { type: 'feature', name: 'Mutation Boost', value: '+15%', icon: Sparkles, desc: 'Higher mutation chance' },
+    {
+      type: 'recipe',
+      name: 'Rainbow Corn',
+      icon: () => <span>🌽🌈</span>,
+      desc: 'Breeding recipe unlocked',
+    },
+    {
+      type: 'feature',
+      name: 'Mutation Boost',
+      value: '+15%',
+      icon: Sparkles,
+      desc: 'Higher mutation chance',
+    },
   ],
   3: [
-    { type: 'bonus', name: 'Coin Multiplier', value: '1.6x', icon: Coins, desc: 'All earnings increased' },
-    { type: 'feature', name: 'Quality Boost', value: '+9%', icon: Star, desc: 'Better crop quality chance' },
-    { type: 'recipe', name: 'Golden Tomato', icon: () => <span>🍅✨</span>, desc: 'Breeding recipe unlocked' },
-    { type: 'feature', name: 'Auto-Water', value: 'Enhanced', icon: () => <span>💧</span>, desc: 'Wells water 50% faster' },
+    {
+      type: 'bonus',
+      name: 'Coin Multiplier',
+      value: '1.6x',
+      icon: Coins,
+      desc: 'All earnings increased',
+    },
+    {
+      type: 'feature',
+      name: 'Quality Boost',
+      value: '+9%',
+      icon: Star,
+      desc: 'Better crop quality chance',
+    },
+    {
+      type: 'recipe',
+      name: 'Golden Tomato',
+      icon: () => <span>🍅✨</span>,
+      desc: 'Breeding recipe unlocked',
+    },
+    {
+      type: 'feature',
+      name: 'Auto-Water',
+      value: 'Enhanced',
+      icon: () => <span>💧</span>,
+      desc: 'Wells water 50% faster',
+    },
   ],
   4: [
-    { type: 'bonus', name: 'Coin Multiplier', value: '2.0x', icon: Coins, desc: 'All earnings increased' },
+    {
+      type: 'bonus',
+      name: 'Coin Multiplier',
+      value: '2.0x',
+      icon: Coins,
+      desc: 'All earnings increased',
+    },
     { type: 'feature', name: 'Growth Speed', value: '+24%', icon: Zap, desc: 'Faster crop growth' },
-    { type: 'recipe', name: 'Frost Potato', icon: () => <span>🥔❄️</span>, desc: 'Breeding recipe unlocked' },
-    { type: 'feature', name: 'Perfect Chance', value: '+12%', icon: Star, desc: 'Higher perfect quality' },
+    {
+      type: 'recipe',
+      name: 'Frost Potato',
+      icon: () => <span>🥔❄️</span>,
+      desc: 'Breeding recipe unlocked',
+    },
+    {
+      type: 'feature',
+      name: 'Perfect Chance',
+      value: '+12%',
+      icon: Star,
+      desc: 'Higher perfect quality',
+    },
   ],
   5: [
-    { type: 'bonus', name: 'Coin Multiplier', value: '2.5x', icon: Coins, desc: 'Maximum earnings boost' },
-    { type: 'feature', name: 'All Bonuses', value: 'MAX', icon: Crown, desc: 'All bonuses maxed out' },
-    { type: 'recipe', name: 'Dragon Pepper', icon: () => <span>🌶️🔥</span>, desc: 'Legendary recipe unlocked' },
+    {
+      type: 'bonus',
+      name: 'Coin Multiplier',
+      value: '2.5x',
+      icon: Coins,
+      desc: 'Maximum earnings boost',
+    },
+    {
+      type: 'feature',
+      name: 'All Bonuses',
+      value: 'MAX',
+      icon: Crown,
+      desc: 'All bonuses maxed out',
+    },
+    {
+      type: 'recipe',
+      name: 'Dragon Pepper',
+      icon: () => <span>🌶️🔥</span>,
+      desc: 'Legendary recipe unlocked',
+    },
     { type: 'feature', name: 'Legend Status', value: '👑', icon: Crown, desc: 'You are a legend!' },
   ],
 };
@@ -73,7 +173,7 @@ function PrestigePanelComponent({
     const level = prestige;
     return {
       coinMultiplier: currentPrestige.multiplier,
-      growthSpeed: 1 + (level * PRESTIGE_BONUSES.growth_speed),
+      growthSpeed: 1 + level * PRESTIGE_BONUSES.growth_speed,
       qualityChance: level * PRESTIGE_BONUSES.quality_chance,
       mutationBoost: level * 0.05,
     };
@@ -108,17 +208,23 @@ function PrestigePanelComponent({
             <div className="bg-white/60 rounded-lg p-2 text-center">
               <Zap size={16} className="mx-auto text-blue-500 mb-1" />
               <div className="text-xs text-gray-500">Growth</div>
-              <div className="font-bold text-blue-700">+{Math.round((currentBonuses.growthSpeed - 1) * 100)}%</div>
+              <div className="font-bold text-blue-700">
+                +{Math.round((currentBonuses.growthSpeed - 1) * 100)}%
+              </div>
             </div>
             <div className="bg-white/60 rounded-lg p-2 text-center">
               <Star size={16} className="mx-auto text-purple-500 mb-1" />
               <div className="text-xs text-gray-500">Quality</div>
-              <div className="font-bold text-purple-700">+{Math.round(currentBonuses.qualityChance * 100)}%</div>
+              <div className="font-bold text-purple-700">
+                +{Math.round(currentBonuses.qualityChance * 100)}%
+              </div>
             </div>
             <div className="bg-white/60 rounded-lg p-2 text-center">
               <Sparkles size={16} className="mx-auto text-pink-500 mb-1" />
               <div className="text-xs text-gray-500">Mutations</div>
-              <div className="font-bold text-pink-700">+{Math.round(currentBonuses.mutationBoost * 100)}%</div>
+              <div className="font-bold text-pink-700">
+                +{Math.round(currentBonuses.mutationBoost * 100)}%
+              </div>
             </div>
           </div>
 
@@ -165,12 +271,16 @@ function PrestigePanelComponent({
                         ${canPrestige ? 'bg-green-100' : 'bg-gray-100'}
                       `}
                     >
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${canPrestige ? 'bg-green-200' : 'bg-gray-200'}`}>
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center ${canPrestige ? 'bg-green-200' : 'bg-gray-200'}`}
+                      >
                         {typeof Icon === 'function' ? <Icon /> : <Icon size={14} />}
                       </div>
                       <div className="flex-1">
                         <span className="font-medium">{unlock.name}</span>
-                        {unlock.value && <span className="text-green-600 ml-1">{unlock.value}</span>}
+                        {unlock.value && (
+                          <span className="text-green-600 ml-1">{unlock.value}</span>
+                        )}
                       </div>
                     </div>
                   );
@@ -198,7 +308,9 @@ function PrestigePanelComponent({
             {canPrestige && (
               <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-start gap-2">
                 <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
-                <span>Prestiging resets your coins to 50, but you keep all bonuses permanently!</span>
+                <span>
+                  Prestiging resets your coins to 50, but you keep all bonuses permanently!
+                </span>
               </div>
             )}
           </CardContent>
@@ -237,10 +349,12 @@ function PrestigePanelComponent({
                     ${isCurrent ? 'bg-amber-100 border border-amber-300' : isUnlocked ? 'bg-green-50' : 'bg-gray-50'}
                   `}
                 >
-                  <div className={`
+                  <div
+                    className={`
                     w-8 h-8 rounded-full flex items-center justify-center text-lg
                     ${isUnlocked ? 'bg-green-100' : 'bg-gray-200'}
-                  `}>
+                  `}
+                  >
                     {isUnlocked ? level.emoji : <Lock size={14} className="text-gray-400" />}
                   </div>
                   <div className="flex-1">

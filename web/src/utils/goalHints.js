@@ -41,7 +41,11 @@ export const getNextGoalFromCounts = ({
     return { id: 'harvest', text: `Harvest ${ready} crop${ready > 1 ? 's' : ''}`, emoji: '🌾' };
   }
   if (empty > 0 && coins >= minSeedCost) {
-    return { id: 'plant', text: `Plant ${Math.min(empty, 3)} seed${empty > 1 ? 's' : ''}`, emoji: '🌱' };
+    return {
+      id: 'plant',
+      text: `Plant ${Math.min(empty, 3)} seed${empty > 1 ? 's' : ''}`,
+      emoji: '🌱',
+    };
   }
   if (active > 0) {
     return { id: 'wait', text: 'Let crops grow a little longer', emoji: '⏳' };
@@ -78,19 +82,31 @@ export const getPlanSuggestions = (state, maxSuggestions = 2) => {
   if (suggestions.length >= maxSuggestions) return suggestions;
 
   if (primary.id !== 'harvest' && ready > 0) {
-    suggestions.push({ id: 'harvest', text: `Harvest ${ready} crop${ready > 1 ? 's' : ''}`, emoji: '🌾' });
+    suggestions.push({
+      id: 'harvest',
+      text: `Harvest ${ready} crop${ready > 1 ? 's' : ''}`,
+      emoji: '🌾',
+    });
     return suggestions.slice(0, maxSuggestions);
   }
 
   if (primary.id !== 'plant' && empty > 0 && state?.coins >= minSeedCost) {
-    suggestions.push({ id: 'plant', text: `Plant ${Math.min(empty, 2)} seed${empty > 1 ? 's' : ''}`, emoji: '🌱' });
+    suggestions.push({
+      id: 'plant',
+      text: `Plant ${Math.min(empty, 2)} seed${empty > 1 ? 's' : ''}`,
+      emoji: '🌱',
+    });
     return suggestions.slice(0, maxSuggestions);
   }
 
   if (state?.coins >= 5) {
     suggestions.push({ id: 'shop', text: 'Peek at the Shop for quick boosts', emoji: '🛒' });
   } else {
-    suggestions.push({ id: 'board', text: 'Check the Town Board for today’s insight', emoji: '📌' });
+    suggestions.push({
+      id: 'board',
+      text: 'Check the Town Board for today’s insight',
+      emoji: '📌',
+    });
   }
 
   return suggestions.slice(0, maxSuggestions);

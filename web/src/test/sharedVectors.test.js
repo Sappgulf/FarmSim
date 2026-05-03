@@ -13,9 +13,9 @@ const mapToCanonical = (mapObj) => {
 };
 
 const stateHash = (state) => {
-  const tileToken = (state.tiles || []).map((tile) => (
-    tile?.cropId ? `${tile.cropId}@${tile.plantedDay}` : '-'
-  )).join('|');
+  const tileToken = (state.tiles || [])
+    .map((tile) => (tile?.cropId ? `${tile.cropId}@${tile.plantedDay}` : '-'))
+    .join('|');
   const canonical = [
     `day=${state.day}`,
     `coins=${state.coins}`,

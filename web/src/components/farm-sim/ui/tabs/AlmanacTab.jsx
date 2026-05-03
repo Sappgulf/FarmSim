@@ -15,7 +15,9 @@ import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 const AlmanacTab = memo(() => {
   const { state, actions } = useGame();
-  const [openSections, setOpenSections] = useState(() => ALMANAC_SECTIONS.map(section => section.id));
+  const [openSections, setOpenSections] = useState(() =>
+    ALMANAC_SECTIONS.map((section) => section.id)
+  );
   const reduceMotion = state.settings?.reducedMotion;
 
   const pagesBySection = useMemo(() => {
@@ -42,18 +44,16 @@ const AlmanacTab = memo(() => {
   const activeTheme = getFarmTheme(state.farmTheme);
 
   const toggleSection = (sectionId) => {
-    setOpenSections((prev) => (
-      prev.includes(sectionId)
-        ? prev.filter(id => id !== sectionId)
-        : [...prev, sectionId]
-    ));
+    setOpenSections((prev) =>
+      prev.includes(sectionId) ? prev.filter((id) => id !== sectionId) : [...prev, sectionId]
+    );
   };
 
   const handleSelectPhilosophy = (philosophyId) => {
     actions.setPhilosophy(philosophyId);
     actions.recordAlmanacEvent('philosophy_selected', { philosophyId });
     actions.addNotification({
-      message: `📌 Philosophy set: ${PHILOSOPHIES.find(p => p.id === philosophyId)?.name || philosophyId}`,
+      message: `📌 Philosophy set: ${PHILOSOPHIES.find((p) => p.id === philosophyId)?.name || philosophyId}`,
       type: 'info',
     });
   };
@@ -65,11 +65,11 @@ const AlmanacTab = memo(() => {
         tone="emerald"
         title="Farm Almanac"
         description="A living journal of what your farm has learned."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-emerald-700 border-emerald-200">
             {totalUnlocked}/{ALMANAC_PAGES.length} pages
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -89,7 +89,11 @@ const AlmanacTab = memo(() => {
           <MetricTile
             tone="violet"
             label="Philosophy"
-            value={state.philosophy ? PHILOSOPHIES.find((p) => p.id === state.philosophy)?.name || 'Chosen' : 'Unset'}
+            value={
+              state.philosophy
+                ? PHILOSOPHIES.find((p) => p.id === state.philosophy)?.name || 'Chosen'
+                : 'Unset'
+            }
             hint="Guides the almanac voice"
             icon="🧭"
           />
@@ -107,9 +111,13 @@ const AlmanacTab = memo(() => {
             value={state.cozyExpansion?.farmTitles?.activeId || 'home_grower'}
             onChange={(event) => actions.setActiveFarmTitle(event.target.value)}
           >
-            {Object.values(FARM_TITLES).filter((title) => state.cozyExpansion?.farmTitles?.unlocked?.[title.id]).map((title) => (
-              <option key={title.id} value={title.id}>{title.name}</option>
-            ))}
+            {Object.values(FARM_TITLES)
+              .filter((title) => state.cozyExpansion?.farmTitles?.unlocked?.[title.id])
+              .map((title) => (
+                <option key={title.id} value={title.id}>
+                  {title.name}
+                </option>
+              ))}
           </select>
         </div>
       </TabSection>
@@ -118,11 +126,13 @@ const AlmanacTab = memo(() => {
         title="Farm Philosophy"
         description="Almanac voice shifts with your guiding outlook."
         tone="amber"
-        action={state.philosophy ? (
-          <Badge className="bg-amber-100 text-amber-700">
-            {PHILOSOPHIES.find(p => p.id === state.philosophy)?.name || 'Chosen'}
-          </Badge>
-        ) : null}
+        action={
+          state.philosophy ? (
+            <Badge className="bg-amber-100 text-amber-700">
+              {PHILOSOPHIES.find((p) => p.id === state.philosophy)?.name || 'Chosen'}
+            </Badge>
+          ) : null
+        }
       >
         <div className="flex flex-wrap gap-2">
           {PHILOSOPHIES.map((philosophy) => (
@@ -142,16 +152,23 @@ const AlmanacTab = memo(() => {
         title="Farm Identity"
         description="Set a name and theme for your Farm Card."
         tone="emerald"
-        action={(
-          <Badge variant="outline" className="theme-accent-bg theme-accent-border border theme-accent-text">
+        action={
+          <Badge
+            variant="outline"
+            className="theme-accent-bg theme-accent-border border theme-accent-text"
+          >
             {activeTheme.name}
           </Badge>
-        )}
+        }
       >
         <div className="space-y-3">
           <div className="rounded-lg border theme-accent-border theme-accent-bg px-3 py-2">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Live Farm Card Identity</div>
-            <div className="text-sm font-semibold">{(state.farmName || 'Willowbrook Farm').trim() || 'Willowbrook Farm'}</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+              Live Farm Card Identity
+            </div>
+            <div className="text-sm font-semibold">
+              {(state.farmName || 'Willowbrook Farm').trim() || 'Willowbrook Farm'}
+            </div>
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-500">Farm Name</label>
@@ -197,7 +214,9 @@ const AlmanacTab = memo(() => {
           </Button>
           <Button
             size="sm"
-            variant={spotlight.mode === 'favorite' && spotlight.type === 'almanac' ? 'default' : 'outline'}
+            variant={
+              spotlight.mode === 'favorite' && spotlight.type === 'almanac' ? 'default' : 'outline'
+            }
             onClick={() => {
               const firstPage = unlockedPages[0]?.id || null;
               actions.setSpotlight({ mode: 'favorite', type: 'almanac', id: firstPage });
@@ -213,7 +232,9 @@ const AlmanacTab = memo(() => {
             <select
               className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
               value={spotlight.id || ''}
-              onChange={(event) => actions.setSpotlight({ mode: 'favorite', type: 'almanac', id: event.target.value })}
+              onChange={(event) =>
+                actions.setSpotlight({ mode: 'favorite', type: 'almanac', id: event.target.value })
+              }
             >
               {unlockedPages.map((page) => (
                 <option key={page.id} value={page.id}>
@@ -244,23 +265,33 @@ const AlmanacTab = memo(() => {
               description="Harvest more crops to reveal flavor traits."
             />
           )}
-          {Object.entries(state.cozyExpansion?.cropTraits?.discoveredByCrop || {}).map(([cropId, traitId]) => {
-            const trait = CROP_TRAITS[traitId];
-            return (
-              <div key={cropId} className="rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2 text-sm">
-                <span className="font-semibold">{cropId}</span>: {trait?.icon || '🌿'} {trait?.name || traitId}
-                <span className="ml-1 text-xs text-gray-600">{trait?.flavor}</span>
-              </div>
-            );
-          })}
+          {Object.entries(state.cozyExpansion?.cropTraits?.discoveredByCrop || {}).map(
+            ([cropId, traitId]) => {
+              const trait = CROP_TRAITS[traitId];
+              return (
+                <div
+                  key={cropId}
+                  className="rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2 text-sm"
+                >
+                  <span className="font-semibold">{cropId}</span>: {trait?.icon || '🌿'}{' '}
+                  {trait?.name || traitId}
+                  <span className="ml-1 text-xs text-gray-600">{trait?.flavor}</span>
+                </div>
+              );
+            }
+          )}
         </div>
       </TabSection>
 
       {ALMANAC_SECTIONS.map((section) => {
         const sectionPages = pagesBySection[section.id] || [];
-        const unlockedCount = sectionPages.filter(page => state.almanac?.unlocked?.[page.id]).length;
+        const unlockedCount = sectionPages.filter(
+          (page) => state.almanac?.unlocked?.[page.id]
+        ).length;
         const isOpen = openSections.includes(section.id);
-        const motionClass = reduceMotion ? '' : 'transition-opacity transition-transform duration-200';
+        const motionClass = reduceMotion
+          ? ''
+          : 'transition-opacity transition-transform duration-200';
 
         return (
           <Card key={section.id} className="p-4">
@@ -279,7 +310,9 @@ const AlmanacTab = memo(() => {
                 <Badge variant="outline" className="text-xs">
                   {unlockedCount}/{sectionPages.length}
                 </Badge>
-                <span className={`text-sm ${isOpen ? 'rotate-180' : ''} ${reduceMotion ? '' : 'transition-transform'}`}>
+                <span
+                  className={`text-sm ${isOpen ? 'rotate-180' : ''} ${reduceMotion ? '' : 'transition-transform'}`}
+                >
                   ▾
                 </span>
               </div>
@@ -287,7 +320,9 @@ const AlmanacTab = memo(() => {
 
             <div
               className={`${isOpen ? 'mt-4 max-h-[1200px]' : 'mt-0 max-h-0'} overflow-hidden ${motionClass} ${
-                isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'
+                isOpen
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 -translate-y-1 pointer-events-none'
               }`}
             >
               <div className="space-y-3">
@@ -315,7 +350,9 @@ const AlmanacTab = memo(() => {
                           <div className="text-xs text-gray-600 mt-1">
                             {unlocked
                               ? getAlmanacText(page, state.philosophy)
-                              : (showHint ? page.hint : 'Keep exploring to reveal this entry.')}
+                              : showHint
+                                ? page.hint
+                                : 'Keep exploring to reveal this entry.'}
                           </div>
                           {unlocked && dateUnlocked && (
                             <div className="text-[10px] text-gray-400 mt-1">

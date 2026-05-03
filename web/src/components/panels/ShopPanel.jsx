@@ -50,12 +50,11 @@ function ShopPanelComponent({
   }, [buildings]);
 
   // Expansion cost
-  const expansionCost = gridSize < GRID_CONFIG.MAX_SIZE
-    ? GRID_CONFIG.EXPANSION_COSTS[gridSize + 1] || 999
-    : null;
+  const expansionCost =
+    gridSize < GRID_CONFIG.MAX_SIZE ? GRID_CONFIG.EXPANSION_COSTS[gridSize + 1] || 999 : null;
 
   const handleQuantityChange = (itemId, delta) => {
-    setQuantities(prev => ({
+    setQuantities((prev) => ({
       ...prev,
       [itemId]: Math.max(1, (prev[itemId] || 1) + delta),
     }));
@@ -179,11 +178,7 @@ function ShopPanelComponent({
                     <Badge variant="outline" className="text-xs">
                       {owned} owned
                     </Badge>
-                    <Button
-                      size="sm"
-                      onClick={() => onBuyTool?.(tool.id)}
-                      disabled={!canAfford}
-                    >
+                    <Button size="sm" onClick={() => onBuyTool?.(tool.id)} disabled={!canAfford}>
                       {tool.shopPrice}🪙
                     </Button>
                   </div>
@@ -255,9 +250,7 @@ function ShopPanelComponent({
                   </Button>
                 </>
               ) : (
-                <Badge className="bg-purple-100 text-purple-700">
-                  Maximum Size Reached!
-                </Badge>
+                <Badge className="bg-purple-100 text-purple-700">Maximum Size Reached!</Badge>
               )}
             </div>
 
@@ -268,7 +261,9 @@ function ShopPanelComponent({
                 <div className="text-xs text-gray-500">New plots</div>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg text-center">
-                <div className="font-bold text-blue-600">+{Math.round(((gridSize + 1) * 2 - 1) * 15)}🪙</div>
+                <div className="font-bold text-blue-600">
+                  +{Math.round(((gridSize + 1) * 2 - 1) * 15)}🪙
+                </div>
                 <div className="text-xs text-gray-500">Potential earnings</div>
               </div>
             </div>

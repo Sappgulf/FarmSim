@@ -72,15 +72,20 @@ const TAB_CONFIG_BY_ID = Object.fromEntries(TAB_CONFIGS.map((tab) => [tab.id, ta
 // Game Sidebar Component - Now accepts controlled props
 const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   const actions = useGameActions();
-  const keyboardShortcutsEnabled = useGameSelector((state) => state.settings?.keyboardShortcuts !== false);
+  const keyboardShortcutsEnabled = useGameSelector(
+    (state) => state.settings?.keyboardShortcuts !== false
+  );
   const paused = useGameSelector((state) => Boolean(state.gameLoop?.paused));
   const inventoryCount = useGameSelector((state) => {
     const inventory = state.inventory || {};
     let total = 0;
     for (const qty of Object.values(inventory)) {
-      const count = typeof qty === 'number'
-        ? qty
-        : (typeof qty === 'object' && qty !== null ? (qty.count || qty.quantity || 0) : 0);
+      const count =
+        typeof qty === 'number'
+          ? qty
+          : typeof qty === 'object' && qty !== null
+            ? qty.count || qty.quantity || 0
+            : 0;
       total += Number(count) || 0;
     }
     return total;
@@ -99,23 +104,37 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   const [internalTab, setInternalTab] = useState('farming');
   const activeTab = controlledTab ?? internalTab;
 
-  const handleTabChange = useCallback((tabId) => {
-    if (onTabChange) {
-      onTabChange(tabId);
-    } else {
-      setInternalTab(tabId);
-    }
-  }, [onTabChange]);
+  const handleTabChange = useCallback(
+    (tabId) => {
+      if (onTabChange) {
+        onTabChange(tabId);
+      } else {
+        setInternalTab(tabId);
+      }
+    },
+    [onTabChange]
+  );
 
   // Keyboard shortcuts: 1-9 for tabs, W/H/F/T for bulk actions
-  const handleBulkAction = useCallback((action) => {
-    switch (action) {
-      case 'water': actions.waterAllPlots?.(); break;
-      case 'harvest': actions.harvestAllReadyCrops?.(); break;
-      case 'fertilize': actions.fertilizeAllPlots?.(); break;
-      case 'treat': actions.treatAllDiseases?.(); break;
-    }
-  }, [actions]);
+  const handleBulkAction = useCallback(
+    (action) => {
+      switch (action) {
+        case 'water':
+          actions.waterAllPlots?.();
+          break;
+        case 'harvest':
+          actions.harvestAllReadyCrops?.();
+          break;
+        case 'fertilize':
+          actions.fertilizeAllPlots?.();
+          break;
+        case 'treat':
+          actions.treatAllDiseases?.();
+          break;
+      }
+    },
+    [actions]
+  );
 
   const handleQuickSave = useCallback(() => {
     try {
@@ -176,7 +195,11 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
       return <IconComponent className="icon-16" aria-hidden="true" />;
     }
     if (fallbackEmoji) {
-      return <span className="text-base" aria-hidden="true">{fallbackEmoji}</span>;
+      return (
+        <span className="text-base" aria-hidden="true">
+          {fallbackEmoji}
+        </span>
+      );
     }
     return <Circle className="icon-16" aria-hidden="true" />;
   };
@@ -190,16 +213,17 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         {/* Tab Navigation - Premium styled scrollable grid */}
         <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 p-2.5">
           <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-smart scrollbar-gutter-stable">
-            {TAB_CONFIGS.map(tab => (
+            {TAB_CONFIGS.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 data-onboard={tab.id === 'events' ? 'events-tab' : undefined}
                 className={`
                   text-xs px-2.5 py-2 rounded-lg transition-all duration-200 text-left touch-manipulation
-                  ${activeTab === tab.id
-                    ? 'bg-white text-emerald-700 font-semibold shadow-md ring-1 ring-emerald-100 scale-[1.02]'
-                    : 'bg-transparent text-gray-600 hover:bg-white/70 hover:text-gray-900 active:scale-95'
+                  ${
+                    activeTab === tab.id
+                      ? 'bg-white text-emerald-700 font-semibold shadow-md ring-1 ring-emerald-100 scale-[1.02]'
+                      : 'bg-transparent text-gray-600 hover:bg-white/70 hover:text-gray-900 active:scale-95'
                   }
                 `}
               >
@@ -226,29 +250,21 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
       <div className="mt-4 p-3 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border border-gray-100/50">
         <div className="grid grid-cols-4 gap-2 text-xs">
           <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
-            <div className="font-bold text-emerald-700 text-sm">
-              {inventoryCount}
-            </div>
+            <div className="font-bold text-emerald-700 text-sm">{inventoryCount}</div>
             <div className="text-gray-500 text-xs font-medium">Items</div>
           </div>
           <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
-            <div className="font-bold text-amber-600 text-sm">
-              {builtCount}
-            </div>
+            <div className="font-bold text-amber-600 text-sm">{builtCount}</div>
             <div className="text-gray-500 text-xs font-medium">Built</div>
           </div>
-	          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
-	            <div className="font-bold text-blue-600 text-sm">
-	              {animalCount}
-	            </div>
-	            <div className="text-gray-500 text-xs font-medium">Animals</div>
-	          </div>
-	          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
-	            <div className="font-bold text-purple-600 text-sm">
-	              {reputation}
-	            </div>
-	            <div className="text-gray-500 text-xs font-medium">Rep</div>
-	          </div>
+          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
+            <div className="font-bold text-blue-600 text-sm">{animalCount}</div>
+            <div className="text-gray-500 text-xs font-medium">Animals</div>
+          </div>
+          <div className="text-center p-2 rounded-lg bg-white/60 shadow-sm">
+            <div className="font-bold text-purple-600 text-sm">{reputation}</div>
+            <div className="text-gray-500 text-xs font-medium">Rep</div>
+          </div>
         </div>
       </div>
     </Card>

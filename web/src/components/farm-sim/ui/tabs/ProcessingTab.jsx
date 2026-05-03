@@ -15,91 +15,105 @@ const FACILITY_LEVELS = {
   3: { timeMultiplier: 0.5, valueMultiplier: 1.5, label: 'Advanced' },
 };
 
-const getUpgradeCost = (currentLevel, baseCost) =>
-  Math.floor(baseCost * (currentLevel + 1) * 0.8);
+const getUpgradeCost = (currentLevel, baseCost) => Math.floor(baseCost * (currentLevel + 1) * 0.8);
 
 // Processing facilities with chain recipes added
 const PROCESSING_FACILITIES = {
   flour_mill: {
     id: 'flour_mill',
-    name: "Flour Mill",
-    emoji: "🏭",
-    description: "Process wheat into flour",
+    name: 'Flour Mill',
+    emoji: '🏭',
+    description: 'Process wheat into flour',
     cost: 400,
-    input: "wheat",
-    output: "flour",
+    input: 'wheat',
+    output: 'flour',
     ratio: 2,
     value_multiplier: 2.8,
-    time: 45
+    time: 45,
   },
   juice_press: {
     id: 'juice_press',
-    name: "Juice Press",
-    emoji: "🧃",
-    description: "Process fruits into juice",
+    name: 'Juice Press',
+    emoji: '🧃',
+    description: 'Process fruits into juice',
     cost: 300,
-    input: "apple",
-    output: "apple_juice",
+    input: 'apple',
+    output: 'apple_juice',
     ratio: 3,
     value_multiplier: 2.5,
-    time: 35
+    time: 35,
   },
   oil_press: {
     id: 'oil_press',
-    name: "Oil Press",
-    emoji: "🫒",
-    description: "Extract oil from seeds",
+    name: 'Oil Press',
+    emoji: '🫒',
+    description: 'Extract oil from seeds',
     cost: 500,
-    input: "sunflower",
-    output: "sunflower_oil",
+    input: 'sunflower',
+    output: 'sunflower_oil',
     ratio: 3,
     value_multiplier: 3.2,
-    time: 75
+    time: 75,
   },
   preservation_facility: {
     id: 'preservation_facility',
-    name: "Preservation Facility",
-    emoji: "🥫",
-    description: "Preserve crops for longer storage",
+    name: 'Preservation Facility',
+    emoji: '🥫',
+    description: 'Preserve crops for longer storage',
     cost: 600,
-    input: "any",
-    output: "preserved",
+    input: 'any',
+    output: 'preserved',
     ratio: 1,
     value_multiplier: 2.0,
     time: 90,
-    storage_bonus: 15
+    storage_bonus: 15,
   },
   bakery: {
     id: 'bakery',
-    name: "Bakery",
-    emoji: "🍞",
-    description: "Bake flour into bread (chain recipe)",
+    name: 'Bakery',
+    emoji: '🍞',
+    description: 'Bake flour into bread (chain recipe)',
     cost: 700,
-    input: "flour",
-    inputSource: "processed",
-    output: "bread",
+    input: 'flour',
+    inputSource: 'processed',
+    output: 'bread',
     ratio: 2,
     value_multiplier: 4.5,
-    time: 60
+    time: 60,
   },
   jam_kitchen: {
     id: 'jam_kitchen',
-    name: "Jam Kitchen",
-    emoji: "🍓",
-    description: "Cook any fruit into artisan jam",
+    name: 'Jam Kitchen',
+    emoji: '🍓',
+    description: 'Cook any fruit into artisan jam',
     cost: 550,
-    input: "any_fruit",
-    output: "jam",
+    input: 'any_fruit',
+    output: 'jam',
     ratio: 4,
     value_multiplier: 3.8,
-    time: 50
-  }
+    time: 50,
+  },
 };
 
-const FRUIT_CROPS = new Set(['apple', 'strawberry', 'blueberry', 'grape', 'melon', 'watermelon', 'cherry', 'peach', 'pear', 'orange', 'lemon', 'pineapple', 'banana', 'cranberry']);
+const FRUIT_CROPS = new Set([
+  'apple',
+  'strawberry',
+  'blueberry',
+  'grape',
+  'melon',
+  'watermelon',
+  'cherry',
+  'peach',
+  'pear',
+  'orange',
+  'lemon',
+  'pineapple',
+  'banana',
+  'cranberry',
+]);
 
 const getAnyCropInput = (inventory, ratio, preferredCrop) => {
-  const preferredAmount = preferredCrop ? (inventory[preferredCrop] || 0) : 0;
+  const preferredAmount = preferredCrop ? inventory[preferredCrop] || 0 : 0;
   if (preferredCrop && CROP_DATA[preferredCrop] && preferredAmount >= ratio) {
     return preferredCrop;
   }
@@ -145,34 +159,34 @@ const ProcessingTab = memo(() => {
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
-      const completedItems = processingQueue.filter(item =>
-        item.finishTime && now >= item.finishTime
+      const completedItems = processingQueue.filter(
+        (item) => item.finishTime && now >= item.finishTime
       );
 
       if (completedItems.length > 0) {
         const completedIds = new Set(completedItems.map((item) => item.id));
         const completedFacilityIds = new Set(completedItems.map((item) => item.facilityId));
 
-        actions.updateProcessedInventory((currentInventory) => (
+        actions.updateProcessedInventory((currentInventory) =>
           mergeCompletedProducts(currentInventory, completedItems)
-        ));
+        );
 
-        actions.updateProcessingQueue((currentQueue) => (
+        actions.updateProcessingQueue((currentQueue) =>
           (currentQueue || []).filter((item) => !completedIds.has(item.id))
-        ));
+        );
 
-        actions.updateProcessingFacilities((currentFacilities) => (
-          (currentFacilities || []).map((facility) => (
+        actions.updateProcessingFacilities((currentFacilities) =>
+          (currentFacilities || []).map((facility) =>
             completedFacilityIds.has(facility.id)
               ? { ...facility, isProcessing: false, currentRecipe: null, finishTime: null }
               : facility
-          ))
-        ));
+          )
+        );
 
-        completedItems.forEach(item => {
+        completedItems.forEach((item) => {
           actions.addNotification({
             message: `Processing complete! Produced ${item.quantity} ${formatDisplayLabel(item.output)}`,
-            type: 'success'
+            type: 'success',
           });
         });
       }
@@ -183,7 +197,7 @@ const ProcessingTab = memo(() => {
 
   const buyProcessingFacility = (facilityId) => {
     const facility = PROCESSING_FACILITIES[facilityId];
-    if (processingFacilities.some(f => f.id === facilityId)) {
+    if (processingFacilities.some((f) => f.id === facilityId)) {
       actions.addNotification({ message: 'You already own this facility!', type: 'warning' });
       return;
     }
@@ -199,10 +213,10 @@ const ProcessingTab = memo(() => {
       isProcessing: false,
       currentRecipe: null,
       finishTime: null,
-      level: 1
+      level: 1,
     };
     actions.updateProcessingFacilities((currentFacilities) => [
-      ...((currentFacilities || [])),
+      ...(currentFacilities || []),
       newFacility,
     ]);
     actions.addNotification({ message: `Purchased ${facility.name}!`, type: 'success' });
@@ -210,7 +224,7 @@ const ProcessingTab = memo(() => {
   };
 
   const upgradeFacility = (facilityId) => {
-    const facility = processingFacilities.find(f => f.id === facilityId);
+    const facility = processingFacilities.find((f) => f.id === facilityId);
     if (!facility) return;
 
     const currentLevel = facility.level || 1;
@@ -227,14 +241,14 @@ const ProcessingTab = memo(() => {
     }
 
     actions.spendMoney(cost);
-    const updatedFacilities = processingFacilities.map(f =>
+    const updatedFacilities = processingFacilities.map((f) =>
       f.id === facilityId ? { ...f, level: currentLevel + 1 } : f
     );
     actions.updateProcessingFacilities(updatedFacilities);
     const nextTier = FACILITY_LEVELS[currentLevel + 1];
     actions.addNotification({
       message: `${facilityData.name} upgraded to ${nextTier.label}! Faster processing & better value.`,
-      type: 'success'
+      type: 'success',
     });
     actions.addXP(25);
   };
@@ -267,7 +281,7 @@ const ProcessingTab = memo(() => {
   };
 
   const startProcessing = (facilityId) => {
-    const facility = processingFacilities.find(f => f.id === facilityId);
+    const facility = processingFacilities.find((f) => f.id === facilityId);
     if (!facility || facility.isProcessing) {
       if (facility?.isProcessing) {
         actions.addNotification({ message: 'Facility is already processing!', type: 'warning' });
@@ -280,14 +294,17 @@ const ProcessingTab = memo(() => {
     const resolved = resolveInput(facility, facilityData);
 
     if (!resolved) {
-      const inputLabel = facilityData.inputSource === 'processed'
-        ? formatDisplayLabel(facilityData.input)
-        : facilityData.input === 'any_fruit'
-          ? 'fruit'
-          : facilityData.input === 'any' ? 'crop' : facilityData.input;
+      const inputLabel =
+        facilityData.inputSource === 'processed'
+          ? formatDisplayLabel(facilityData.input)
+          : facilityData.input === 'any_fruit'
+            ? 'fruit'
+            : facilityData.input === 'any'
+              ? 'crop'
+              : facilityData.input;
       actions.addNotification({
         message: `Not enough ${inputLabel}! Need ${facilityData.ratio}`,
-        type: 'error'
+        type: 'error',
       });
       return;
     }
@@ -296,18 +313,21 @@ const ProcessingTab = memo(() => {
     if (resolved.source === 'processed') {
       actions.updateProcessedInventory((currentInventory) => ({
         ...(currentInventory || {}),
-        [resolved.cropId]: Math.max(0, Number(currentInventory?.[resolved.cropId] || 0) - facilityData.ratio),
+        [resolved.cropId]: Math.max(
+          0,
+          Number(currentInventory?.[resolved.cropId] || 0) - facilityData.ratio
+        ),
       }));
     } else {
       actions.updateInventory({
         ...state.inventory,
-        [resolved.cropId]: (state.inventory[resolved.cropId] || 0) - facilityData.ratio
+        [resolved.cropId]: (state.inventory[resolved.cropId] || 0) - facilityData.ratio,
       });
     }
 
     const effectiveTime = getEffectiveTime(facilityData.time, level);
     const outputQuantity = 1;
-    const finishTime = Date.now() + (effectiveTime * 1000);
+    const finishTime = Date.now() + effectiveTime * 1000;
     const processingItem = {
       id: Date.now(),
       facilityId,
@@ -316,35 +336,40 @@ const ProcessingTab = memo(() => {
       quantity: outputQuantity,
       startTime: Date.now(),
       finishTime,
-      effectiveTime
+      effectiveTime,
     };
 
-    const updatedFacilities = processingFacilities.map(f =>
-      f.id === facilityId ? {
-        ...f, isProcessing: true, currentRecipe: facilityData.output, finishTime
-      } : f
+    const updatedFacilities = processingFacilities.map((f) =>
+      f.id === facilityId
+        ? {
+            ...f,
+            isProcessing: true,
+            currentRecipe: facilityData.output,
+            finishTime,
+          }
+        : f
     );
     actions.updateProcessingFacilities(updatedFacilities);
     actions.updateProcessingQueue((currentQueue) => [...(currentQueue || []), processingItem]);
     actions.addNotification({
       message: `Started processing ${formatDisplayLabel(facilityData.output)} in ${facilityData.name}`,
-      type: 'info'
+      type: 'info',
     });
   };
 
   const collectProcessedItem = (itemId) => {
-    const item = processingQueue.find(p => p.id === itemId);
+    const item = processingQueue.find((p) => p.id === itemId);
     if (!item) return;
     actions.updateProcessedInventory((currentInventory) => ({
       ...(currentInventory || {}),
       [item.output]: Math.max(0, Number(currentInventory?.[item.output] || 0)) + item.quantity,
     }));
-    actions.updateProcessingQueue((currentQueue) => (
+    actions.updateProcessingQueue((currentQueue) =>
       (currentQueue || []).filter((queueItem) => queueItem.id !== itemId)
-    ));
+    );
     actions.addNotification({
       message: `Collected ${item.quantity} ${formatDisplayLabel(item.output)}`,
-      type: 'success'
+      type: 'success',
     });
   };
 
@@ -354,10 +379,12 @@ const ProcessingTab = memo(() => {
       actions.addNotification({ message: 'Not enough items to sell!', type: 'error' });
       return;
     }
-    const facility = Object.values(PROCESSING_FACILITIES).find(f => f.output === itemType);
+    const facility = Object.values(PROCESSING_FACILITIES).find((f) => f.output === itemType);
     const basePrice = facility ? Math.floor(facility.value_multiplier * 10) : 20;
     // Apply level bonus if facility is owned
-    const ownedFacility = (state.processingFacilities || []).find(f => PROCESSING_FACILITIES[f.id]?.output === itemType);
+    const ownedFacility = (state.processingFacilities || []).find(
+      (f) => PROCESSING_FACILITIES[f.id]?.output === itemType
+    );
     const level = ownedFacility?.level || 1;
     const effectivePrice = Math.floor(basePrice * (FACILITY_LEVELS[level]?.valueMultiplier || 1));
     const totalValue = effectivePrice * quantity;
@@ -370,7 +397,7 @@ const ProcessingTab = memo(() => {
     actions.addXP(Math.floor(totalValue * 0.05));
     actions.addNotification({
       message: `Sold ${quantity} ${formatDisplayLabel(itemType)} for ${totalValue}🪙`,
-      type: 'success'
+      type: 'success',
     });
   };
 
@@ -398,11 +425,11 @@ const ProcessingTab = memo(() => {
         tone="amber"
         title="Processing Hub"
         description="Turn crops into higher-value goods, manage the queue, and sell the finished stock."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
             {ownedFacilities.length} facilities
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -437,17 +464,25 @@ const ProcessingTab = memo(() => {
       >
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {Object.entries(PROCESSING_FACILITIES).map(([id, facility]) => {
-            const owned = ownedFacilities.some(f => f.id === id);
+            const owned = ownedFacilities.some((f) => f.id === id);
             const isChain = !!facility.inputSource;
             return (
-              <Card key={id} className={`overflow-hidden p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${owned ? 'border-emerald-200/70 bg-emerald-50/60' : 'border-slate-200/70 bg-white/90'}`}>
+              <Card
+                key={id}
+                className={`overflow-hidden p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${owned ? 'border-emerald-200/70 bg-emerald-50/60' : 'border-slate-200/70 bg-white/90'}`}
+              >
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{facility.emoji}</span>
                     <div>
                       <span className="font-medium text-slate-900">{facility.name}</span>
                       {isChain && (
-                        <Badge variant="outline" className="ml-2 text-[10px] bg-purple-50 text-purple-700">Chain</Badge>
+                        <Badge
+                          variant="outline"
+                          className="ml-2 text-[10px] bg-purple-50 text-purple-700"
+                        >
+                          Chain
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -455,7 +490,15 @@ const ProcessingTab = memo(() => {
                 </div>
                 <p className="mb-2 text-sm text-slate-600">{facility.description}</p>
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-                  <span>Input: {facility.input === 'any' ? 'Any crop' : facility.input === 'any_fruit' ? 'Any fruit' : formatDisplayLabel(facility.input)}{isChain ? ' (processed)' : ''}</span>
+                  <span>
+                    Input:{' '}
+                    {facility.input === 'any'
+                      ? 'Any crop'
+                      : facility.input === 'any_fruit'
+                        ? 'Any fruit'
+                        : formatDisplayLabel(facility.input)}
+                    {isChain ? ' (processed)' : ''}
+                  </span>
                   <span>Output: {formatDisplayLabel(facility.output)}</span>
                   <span>Ratio: {facility.ratio}:1</span>
                 </div>
@@ -487,7 +530,7 @@ const ProcessingTab = memo(() => {
           tone="sky"
         >
           <div className="space-y-3">
-            {ownedFacilities.map(facility => {
+            {ownedFacilities.map((facility) => {
               const status = getFacilityStatus(facility);
               const facilityData = PROCESSING_FACILITIES[facility.id];
               if (!facilityData) return null;
@@ -499,14 +542,20 @@ const ProcessingTab = memo(() => {
               const canUpgrade = level < 3;
               const upgradeCost = canUpgrade ? getUpgradeCost(level, facilityData.cost) : 0;
 
-              const inputLabel = facilityData.inputSource === 'processed'
-                ? formatDisplayLabel(facilityData.input)
-                : facilityData.input === 'any_fruit'
-                  ? 'fruit'
-                  : facilityData.input === 'any' ? 'crop' : facilityData.input;
+              const inputLabel =
+                facilityData.inputSource === 'processed'
+                  ? formatDisplayLabel(facilityData.input)
+                  : facilityData.input === 'any_fruit'
+                    ? 'fruit'
+                    : facilityData.input === 'any'
+                      ? 'crop'
+                      : facilityData.input;
 
               return (
-                <Card key={facility.id} className={`overflow-hidden p-3 shadow-sm ${status.bgColor}`}>
+                <Card
+                  key={facility.id}
+                  className={`overflow-hidden p-3 shadow-sm ${status.bgColor}`}
+                >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{facilityData.emoji}</span>
@@ -517,15 +566,16 @@ const ProcessingTab = memo(() => {
                         </Badge>
                       </div>
                     </div>
-                    <Badge className={status.color}>
-                      {status.status}
-                    </Badge>
+                    <Badge className={status.color}>{status.status}</Badge>
                   </div>
 
                   {/* Level info */}
                   <div className="mb-2 flex flex-wrap gap-2 text-xs text-slate-500">
                     <span>Time: {effectiveTime}s</span>
-                    <span>Value: x{getEffectiveValueMultiplier(facilityData.value_multiplier, level).toFixed(1)}</span>
+                    <span>
+                      Value: x
+                      {getEffectiveValueMultiplier(facilityData.value_multiplier, level).toFixed(1)}
+                    </span>
                   </div>
 
                   {facility.isProcessing && (
@@ -535,7 +585,10 @@ const ProcessingTab = memo(() => {
                         <span>{getTimeLeft(facility.finishTime)}</span>
                       </div>
                       <Progress
-                        value={Math.max(0, 100 - ((facility.finishTime - Date.now()) / (effectiveTime * 1000)) * 100)}
+                        value={Math.max(
+                          0,
+                          100 - ((facility.finishTime - Date.now()) / (effectiveTime * 1000)) * 100
+                        )}
                         className="h-2"
                       />
                     </div>
@@ -551,8 +604,7 @@ const ProcessingTab = memo(() => {
                       >
                         {!canStartProcessing
                           ? `Need ${facilityData.ratio} ${inputLabel}`
-                          : 'Start Processing'
-                        }
+                          : 'Start Processing'}
                       </Button>
                       {canUpgrade && (
                         <Button
@@ -589,11 +641,13 @@ const ProcessingTab = memo(() => {
           tone="violet"
         >
           <div className="space-y-2">
-            {processingQueue.map(item => (
+            {processingQueue.map((item) => (
               <Card key={item.id} className="border-slate-200/70 bg-white/90 p-2 shadow-sm">
                 <div className="flex justify-between items-center">
                   <div>
-                    <span className="font-medium text-slate-900">{formatDisplayLabel(item.output)}</span>
+                    <span className="font-medium text-slate-900">
+                      {formatDisplayLabel(item.output)}
+                    </span>
                     <span className="ml-2 text-sm text-slate-600">(x{item.quantity})</span>
                   </div>
                   {Date.now() >= item.finishTime ? (
@@ -618,7 +672,7 @@ const ProcessingTab = memo(() => {
       )}
 
       {/* Processed Products Inventory */}
-      {Object.keys(processedInventory).some(k => (processedInventory[k] || 0) > 0) ? (
+      {Object.keys(processedInventory).some((k) => (processedInventory[k] || 0) > 0) ? (
         <TabSection
           title="Processed products"
           description="Finished stock ready to sell."
@@ -627,30 +681,50 @@ const ProcessingTab = memo(() => {
           <div className="space-y-2">
             {Object.entries(processedInventory).map(([product, quantity]) => {
               if (quantity <= 0) return null;
-              const facility = Object.values(PROCESSING_FACILITIES).find(f => f.output === product);
-              const ownedF = ownedFacilities.find(f => PROCESSING_FACILITIES[f.id]?.output === product);
+              const facility = Object.values(PROCESSING_FACILITIES).find(
+                (f) => f.output === product
+              );
+              const ownedF = ownedFacilities.find(
+                (f) => PROCESSING_FACILITIES[f.id]?.output === product
+              );
               const level = ownedF?.level || 1;
               const basePrice = facility ? Math.floor(facility.value_multiplier * 10) : 20;
-              const sellPrice = Math.floor(basePrice * (FACILITY_LEVELS[level]?.valueMultiplier || 1));
+              const sellPrice = Math.floor(
+                basePrice * (FACILITY_LEVELS[level]?.valueMultiplier || 1)
+              );
 
               return (
                 <Card key={product} className="border-slate-200/70 bg-white/90 p-3 shadow-sm">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div>
-                      <span className="font-medium text-slate-900">{formatDisplayLabel(product)}</span>
+                      <span className="font-medium text-slate-900">
+                        {formatDisplayLabel(product)}
+                      </span>
                       <span className="ml-2 text-sm text-slate-600">
                         Stock: {quantity} • {sellPrice}🪙/ea
                       </span>
                     </div>
                     <div className="flex gap-2">
-                      <Button onClick={() => sellProcessedItem(product, 1)} size="sm" variant="outline">
+                      <Button
+                        onClick={() => sellProcessedItem(product, 1)}
+                        size="sm"
+                        variant="outline"
+                      >
                         Sell 1
                       </Button>
-                      <Button onClick={() => sellProcessedItem(product, Math.min(quantity, 5))} size="sm" variant="outline">
+                      <Button
+                        onClick={() => sellProcessedItem(product, Math.min(quantity, 5))}
+                        size="sm"
+                        variant="outline"
+                      >
                         Sell {Math.min(quantity, 5)}
                       </Button>
                       {quantity > 5 && (
-                        <Button onClick={() => sellProcessedItem(product, quantity)} size="sm" variant="outline">
+                        <Button
+                          onClick={() => sellProcessedItem(product, quantity)}
+                          size="sm"
+                          variant="outline"
+                        >
                           Sell All
                         </Button>
                       )}
@@ -687,7 +761,10 @@ const ProcessingTab = memo(() => {
           <MetricTile
             tone="emerald"
             label="In Stock"
-            value={Object.values(processedInventory).reduce((sum, qty) => sum + Math.max(0, qty || 0), 0)}
+            value={Object.values(processedInventory).reduce(
+              (sum, qty) => sum + Math.max(0, qty || 0),
+              0
+            )}
             hint="Finished quantity"
             icon="📦"
           />

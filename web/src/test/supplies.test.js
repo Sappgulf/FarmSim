@@ -44,4 +44,3 @@ describe('supplies', () => {
     expect(planned.coinCost).toBe(0);
   });
 });
-

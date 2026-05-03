@@ -21,11 +21,14 @@ function FarmGridComponent({
   disabled = false,
 }) {
   // Calculate grid layout
-  const gridStyle = useMemo(() => ({
-    display: 'grid',
-    gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
-    gap: '0.5rem',
-  }), [gridSize]);
+  const gridStyle = useMemo(
+    () => ({
+      display: 'grid',
+      gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+      gap: '0.5rem',
+    }),
+    [gridSize]
+  );
 
   // Count ready crops
   const readyCrops = useMemo(() => {
@@ -59,7 +62,17 @@ function FarmGridComponent({
         />
       );
     });
-  }, [plots, getPlotStatus, onPlant, onHarvest, onWater, onTreatPest, onTreatDisease, onFertilize, disabled]);
+  }, [
+    plots,
+    getPlotStatus,
+    onPlant,
+    onHarvest,
+    onWater,
+    onTreatPest,
+    onTreatDisease,
+    onFertilize,
+    disabled,
+  ]);
 
   return (
     <div className="space-y-3">

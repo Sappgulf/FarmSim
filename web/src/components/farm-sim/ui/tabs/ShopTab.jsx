@@ -40,35 +40,163 @@ const ShopTab = memo(() => {
 
   const filteredDecor = useMemo(() => {
     if (decorCategory === 'all') return decorationList;
-    return decorationList.filter((item) =>
-      item.category === decorCategory || item.tags?.includes(decorCategory)
+    return decorationList.filter(
+      (item) => item.category === decorCategory || item.tags?.includes(decorCategory)
     );
   }, [decorationList, decorCategory]);
 
-  const shopItems = useMemo(() => ({
-    supplies: [
-      { id: 'fertilizer', name: 'Fertilizer', emoji: '🌱', cost: SUPPLY_UNIT_COSTS.fertilizer, description: 'Consumable supply for fertilizing plots', effect: 'Use in Farming quick actions' },
-      { id: 'pesticide', name: 'Pesticide', emoji: '🐛', cost: SUPPLY_UNIT_COSTS.pesticide, description: 'Consumable supply for treating diseased crops', effect: 'Use in Farming quick actions' },
-      { id: 'water_boost', name: 'Water Boost', emoji: '💧', cost: 5, description: 'Maintains water level', effect: '+100% water' },
-    ],
-    tools: [
-      { id: 'watering_can', name: 'Watering Can', emoji: '🚿', cost: 40, description: 'Improves watering actions', effect: '+10 water per use', unique: true },
-      { id: 'quality_seeds', name: 'Quality Seeds', emoji: '🌰', cost: 25, description: 'Premium seeds for higher yields', effect: '+20% harvest value', unique: true },
-      { id: 'sprinkler', name: 'Sprinkler', emoji: '💦', cost: 100, description: 'Automated irrigation system', effect: '+6 water every 12s', unique: true },
-      { id: 'rain_collector', name: 'Rain Collector', emoji: '🛢️', cost: 170, description: 'Boosts sprinkler pressure and cadence', effect: 'Sprinklers: +4 water, faster cycle', unique: true },
-      { id: 'precision_hoe', name: 'Precision Hoe', emoji: '⛏️', cost: 140, description: 'Cleaner rows reduce seed waste', effect: '-10% seed costs', unique: true },
-      { id: 'drone_harvester', name: 'Drone Harvester', emoji: '🛸', cost: 420, description: 'Automates small batches of harvesting', effect: 'Auto-harvest up to 2 ready plots', unique: true },
-      { id: 'lucky_lure', name: 'Lucky Lure Kit', emoji: '🪝', cost: 220, description: 'Premium lure kit that attracts rare fish', effect: '+35% rare fish odds', unique: true },
-    ],
-    upgrades: [
-      { id: 'soil_analyzer', name: 'Soil Analyzer', emoji: '🔬', cost: 150, description: 'Reveals soil and yield details', effect: 'Est. harvest value', unique: true },
-      { id: 'greenhouse', name: 'Mini Greenhouse', emoji: '🏡', cost: 300, description: 'Softens harsh weather impacts', effect: '-25% weather penalties', unique: true },
-      { id: 'compost_bin', name: 'Compost Bin', emoji: '🗑️', cost: 75, description: 'Restore soil fertility faster', effect: '+50% fertility regen', unique: true },
-      { id: 'hydroponics_rack', name: 'Hydroponics Rack', emoji: '🧫', cost: 260, description: 'Circulating roots boost indoor growth', effect: '+8% crop growth speed', unique: true },
-      { id: 'soil_nanites', name: 'Soil Nanites', emoji: '⚙️', cost: 360, description: 'Microscopic bots preserve topsoil', effect: 'Higher post-harvest fertility floor', unique: true },
-      { id: 'market_terminal', name: 'Market Terminal', emoji: '📈', cost: 390, description: 'AI market edge for better sell prices', effect: '+10% harvest value', unique: true },
-    ],
-  }), []);
+  const shopItems = useMemo(
+    () => ({
+      supplies: [
+        {
+          id: 'fertilizer',
+          name: 'Fertilizer',
+          emoji: '🌱',
+          cost: SUPPLY_UNIT_COSTS.fertilizer,
+          description: 'Consumable supply for fertilizing plots',
+          effect: 'Use in Farming quick actions',
+        },
+        {
+          id: 'pesticide',
+          name: 'Pesticide',
+          emoji: '🐛',
+          cost: SUPPLY_UNIT_COSTS.pesticide,
+          description: 'Consumable supply for treating diseased crops',
+          effect: 'Use in Farming quick actions',
+        },
+        {
+          id: 'water_boost',
+          name: 'Water Boost',
+          emoji: '💧',
+          cost: 5,
+          description: 'Maintains water level',
+          effect: '+100% water',
+        },
+      ],
+      tools: [
+        {
+          id: 'watering_can',
+          name: 'Watering Can',
+          emoji: '🚿',
+          cost: 40,
+          description: 'Improves watering actions',
+          effect: '+10 water per use',
+          unique: true,
+        },
+        {
+          id: 'quality_seeds',
+          name: 'Quality Seeds',
+          emoji: '🌰',
+          cost: 25,
+          description: 'Premium seeds for higher yields',
+          effect: '+20% harvest value',
+          unique: true,
+        },
+        {
+          id: 'sprinkler',
+          name: 'Sprinkler',
+          emoji: '💦',
+          cost: 100,
+          description: 'Automated irrigation system',
+          effect: '+6 water every 12s',
+          unique: true,
+        },
+        {
+          id: 'rain_collector',
+          name: 'Rain Collector',
+          emoji: '🛢️',
+          cost: 170,
+          description: 'Boosts sprinkler pressure and cadence',
+          effect: 'Sprinklers: +4 water, faster cycle',
+          unique: true,
+        },
+        {
+          id: 'precision_hoe',
+          name: 'Precision Hoe',
+          emoji: '⛏️',
+          cost: 140,
+          description: 'Cleaner rows reduce seed waste',
+          effect: '-10% seed costs',
+          unique: true,
+        },
+        {
+          id: 'drone_harvester',
+          name: 'Drone Harvester',
+          emoji: '🛸',
+          cost: 420,
+          description: 'Automates small batches of harvesting',
+          effect: 'Auto-harvest up to 2 ready plots',
+          unique: true,
+        },
+        {
+          id: 'lucky_lure',
+          name: 'Lucky Lure Kit',
+          emoji: '🪝',
+          cost: 220,
+          description: 'Premium lure kit that attracts rare fish',
+          effect: '+35% rare fish odds',
+          unique: true,
+        },
+      ],
+      upgrades: [
+        {
+          id: 'soil_analyzer',
+          name: 'Soil Analyzer',
+          emoji: '🔬',
+          cost: 150,
+          description: 'Reveals soil and yield details',
+          effect: 'Est. harvest value',
+          unique: true,
+        },
+        {
+          id: 'greenhouse',
+          name: 'Mini Greenhouse',
+          emoji: '🏡',
+          cost: 300,
+          description: 'Softens harsh weather impacts',
+          effect: '-25% weather penalties',
+          unique: true,
+        },
+        {
+          id: 'compost_bin',
+          name: 'Compost Bin',
+          emoji: '🗑️',
+          cost: 75,
+          description: 'Restore soil fertility faster',
+          effect: '+50% fertility regen',
+          unique: true,
+        },
+        {
+          id: 'hydroponics_rack',
+          name: 'Hydroponics Rack',
+          emoji: '🧫',
+          cost: 260,
+          description: 'Circulating roots boost indoor growth',
+          effect: '+8% crop growth speed',
+          unique: true,
+        },
+        {
+          id: 'soil_nanites',
+          name: 'Soil Nanites',
+          emoji: '⚙️',
+          cost: 360,
+          description: 'Microscopic bots preserve topsoil',
+          effect: 'Higher post-harvest fertility floor',
+          unique: true,
+        },
+        {
+          id: 'market_terminal',
+          name: 'Market Terminal',
+          emoji: '📈',
+          cost: 390,
+          description: 'AI market edge for better sell prices',
+          effect: '+10% harvest value',
+          unique: true,
+        },
+      ],
+    }),
+    []
+  );
 
   const triggerHighlight = useCallback((itemId) => {
     if (highlightTimerRef.current) {
@@ -80,76 +208,91 @@ const ShopTab = memo(() => {
     }, 900);
   }, []);
 
-  const handlePurchase = useCallback((item) => {
-    if (DECORATION_DATA[item.id]) {
-      const entitlementInfo = getItemEntitlementInfo(item.id, 'decor');
-      if (premiumModeEnabled && entitlementInfo?.access === 'premium' && !isItemUnlocked(state, item.id, 'decor')) {
-        actions.showPremiumLockPrompt({
-          itemId: item.id,
-          packId: entitlementInfo?.packId || null,
-          badgeLabel: entitlementInfo?.badgeLabel || null,
-        });
+  const handlePurchase = useCallback(
+    (item) => {
+      if (DECORATION_DATA[item.id]) {
+        const entitlementInfo = getItemEntitlementInfo(item.id, 'decor');
+        if (
+          premiumModeEnabled &&
+          entitlementInfo?.access === 'premium' &&
+          !isItemUnlocked(state, item.id, 'decor')
+        ) {
+          actions.showPremiumLockPrompt({
+            itemId: item.id,
+            packId: entitlementInfo?.packId || null,
+            badgeLabel: entitlementInfo?.badgeLabel || null,
+          });
+          return;
+        }
+      }
+      const ownedCount = state.inventory[item.id] || 0;
+      if (item.unique && ownedCount > 0) {
+        actions.addNotification({ message: `${item.name} already owned.`, type: 'info' });
         return;
       }
-    }
-    const ownedCount = state.inventory[item.id] || 0;
-    if (item.unique && ownedCount > 0) {
-      actions.addNotification({ message: `${item.name} already owned.`, type: 'info' });
-      return;
-    }
-    if (state.coins >= item.cost) {
-      actions.spendMoney(item.cost);
-      actions.updateInventory({
-        ...state.inventory,
-        [item.id]: (state.inventory[item.id] || 0) + 1,
-      });
-      actions.addNotification({ message: `Purchased ${item.emoji} ${item.name}!`, type: 'success' });
-      triggerHighlight(item.id);
+      if (state.coins >= item.cost) {
+        actions.spendMoney(item.cost);
+        actions.updateInventory({
+          ...state.inventory,
+          [item.id]: (state.inventory[item.id] || 0) + 1,
+        });
+        actions.addNotification({
+          message: `Purchased ${item.emoji} ${item.name}!`,
+          type: 'success',
+        });
+        triggerHighlight(item.id);
 
-      if (DECORATION_DATA[item.id]) {
-        actions.recordMemoryEvent('shop_decor_purchase');
-        actions.recordCozyGoalEvent('shop_decor_purchase', { itemId: item.id });
+        if (DECORATION_DATA[item.id]) {
+          actions.recordMemoryEvent('shop_decor_purchase');
+          actions.recordCozyGoalEvent('shop_decor_purchase', { itemId: item.id });
+        }
+      } else {
+        actions.addNotification({ message: `Not enough coins! Need ${item.cost}`, type: 'error' });
       }
-    } else {
-      actions.addNotification({ message: `Not enough coins! Need ${item.cost}`, type: 'error' });
-    }
-  }, [state, actions, premiumModeEnabled, triggerHighlight]);
+    },
+    [state, actions, premiumModeEnabled, triggerHighlight]
+  );
 
-  const renderShopItem = useCallback((item, bgClass) => {
-    const ownedCount = state.inventory[item.id] || 0;
-    const isOwned = item.unique && ownedCount > 0;
-    const isHighlighted = highlightedItemId === item.id;
-    return (
-      <div
-        key={item.id}
-        className={`flex flex-col gap-3 rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white sm:flex-row sm:items-center sm:justify-between ${bgClass} ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}
-      >
-        <div className="flex items-start gap-3 flex-1">
-          <span className="text-2xl">{item.emoji}</span>
-          <div className="flex-1">
-            <div className="font-medium text-slate-900">{item.name}</div>
-            <div className="text-xs text-gray-600">{item.description}</div>
-            {item.effect && <div className="text-xs text-green-600 font-medium mt-0.5">{item.effect}</div>}
+  const renderShopItem = useCallback(
+    (item, bgClass) => {
+      const ownedCount = state.inventory[item.id] || 0;
+      const isOwned = item.unique && ownedCount > 0;
+      const isHighlighted = highlightedItemId === item.id;
+      return (
+        <div
+          key={item.id}
+          className={`flex flex-col gap-3 rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white sm:flex-row sm:items-center sm:justify-between ${bgClass} ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}
+        >
+          <div className="flex items-start gap-3 flex-1">
+            <span className="text-2xl">{item.emoji}</span>
+            <div className="flex-1">
+              <div className="font-medium text-slate-900">{item.name}</div>
+              <div className="text-xs text-gray-600">{item.description}</div>
+              {item.effect && (
+                <div className="text-xs text-green-600 font-medium mt-0.5">{item.effect}</div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-2 sm:justify-end">
+            {ownedCount > 0 && (
+              <Badge variant="outline" className="text-[10px]">
+                {item.unique ? 'Owned' : `x${ownedCount}`}
+              </Badge>
+            )}
+            <Button
+              onClick={() => handlePurchase(item)}
+              size="sm"
+              disabled={state.coins < item.cost || isOwned}
+              className="min-w-[72px] shrink-0"
+            >
+              {isOwned ? 'Owned' : `${item.cost}`}
+            </Button>
           </div>
         </div>
-        <div className="flex items-center justify-between gap-2 sm:justify-end">
-          {ownedCount > 0 && (
-            <Badge variant="outline" className="text-[10px]">
-              {item.unique ? 'Owned' : `x${ownedCount}`}
-            </Badge>
-          )}
-          <Button
-            onClick={() => handlePurchase(item)}
-            size="sm"
-            disabled={state.coins < item.cost || isOwned}
-            className="min-w-[72px] shrink-0"
-          >
-            {isOwned ? 'Owned' : `${item.cost}`}
-          </Button>
-        </div>
-      </div>
-    );
-  }, [state.inventory, state.coins, highlightedItemId, handlePurchase]);
+      );
+    },
+    [state.inventory, state.coins, highlightedItemId, handlePurchase]
+  );
 
   return (
     <div className="space-y-4">
@@ -158,11 +301,11 @@ const ShopTab = memo(() => {
         tone="amber"
         title="Farm Shop"
         description="Buy supplies, tools, upgrades, and decor without bouncing between screens."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
             {state.coins}🪙
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -231,50 +374,58 @@ const ShopTab = memo(() => {
               title="No decor in this category"
               description="Try a different filter or keep shopping."
             />
-          ) : filteredDecor.map((item, index) => {
-            const ownedCount = state.inventory[item.id] || 0;
-            const isHighlighted = highlightedItemId === item.id;
-            const entitlementInfo = getItemEntitlementInfo(item.id, 'decor');
-            const isPremium = premiumModeEnabled && entitlementInfo?.access === 'premium';
-            return (
-              <div
-                key={item.id}
-                className={`flex flex-col gap-3 rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white sm:flex-row sm:items-center sm:justify-between ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}
-                style={{ animationDelay: `${Math.min(index, 6) * 40}ms` }}
-              >
-                <div className="flex items-start gap-3 flex-1">
+          ) : (
+            filteredDecor.map((item, index) => {
+              const ownedCount = state.inventory[item.id] || 0;
+              const isHighlighted = highlightedItemId === item.id;
+              const entitlementInfo = getItemEntitlementInfo(item.id, 'decor');
+              const isPremium = premiumModeEnabled && entitlementInfo?.access === 'premium';
+              return (
+                <div
+                  key={item.id}
+                  className={`flex flex-col gap-3 rounded-2xl border border-white/80 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white sm:flex-row sm:items-center sm:justify-between ${isHighlighted ? 'ring-2 ring-amber-200' : ''}`}
+                  style={{ animationDelay: `${Math.min(index, 6) * 40}ms` }}
+                >
+                  <div className="flex items-start gap-3 flex-1">
                     <span className="text-2xl">{item.emoji}</span>
                     <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium">{item.name}</span>
-                      {isPremium && (
-                        <Badge variant="warning" className="text-[10px]" data-qa={`premium-badge-${item.id}`}>
-                          {entitlementInfo?.badgeLabel || 'Premium'}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-600">{item.description}</div>
-                    <div className="text-xs text-rose-600 font-medium mt-0.5 capitalize">
-                      {item.category} &middot; {item.rarity}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{item.name}</span>
+                        {isPremium && (
+                          <Badge
+                            variant="warning"
+                            className="text-[10px]"
+                            data-qa={`premium-badge-${item.id}`}
+                          >
+                            {entitlementInfo?.badgeLabel || 'Premium'}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-600">{item.description}</div>
+                      <div className="text-xs text-rose-600 font-medium mt-0.5 capitalize">
+                        {item.category} &middot; {item.rarity}
+                      </div>
                     </div>
                   </div>
+                  <div className="flex flex-row flex-wrap items-center justify-between gap-2 sm:flex-col sm:items-end sm:justify-start">
+                    {ownedCount > 0 && (
+                      <Badge variant="outline" className="text-[10px]">
+                        x{ownedCount}
+                      </Badge>
+                    )}
+                    <Button
+                      onClick={() => handlePurchase(item)}
+                      size="sm"
+                      disabled={state.coins < item.cost}
+                      className="ml-2"
+                    >
+                      {item.cost}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex flex-row flex-wrap items-center justify-between gap-2 sm:flex-col sm:items-end sm:justify-start">
-                  {ownedCount > 0 && (
-                    <Badge variant="outline" className="text-[10px]">x{ownedCount}</Badge>
-                  )}
-                  <Button
-                    onClick={() => handlePurchase(item)}
-                    size="sm"
-                    disabled={state.coins < item.cost}
-                    className="ml-2"
-                  >
-                    {item.cost}
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </TabSection>
 

@@ -1,6 +1,6 @@
 /**
  * Centralized Logging Utility
- * 
+ *
  * Provides consistent logging across the application with environment-aware
  * output levels and prefixed messages for better debugging.
  */
@@ -9,7 +9,7 @@ const LOG_LEVELS = {
   ERROR: 0,
   WARN: 1,
   INFO: 2,
-  DEBUG: 3
+  DEBUG: 3,
 };
 
 const CURRENT_LOG_LEVEL = import.meta.env.PROD ? LOG_LEVELS.WARN : LOG_LEVELS.DEBUG;
@@ -87,4 +87,3 @@ export function createLogger(context) {
 
 // Export default logger for general use
 export default new Logger('FarmLife');
-

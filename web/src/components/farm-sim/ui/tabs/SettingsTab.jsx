@@ -36,8 +36,12 @@ const SettingsTab = memo(() => {
   const settings = useGameSelector((state) => state.settings || {});
   const paused = useGameSelector((state) => Boolean(state.gameLoop?.paused));
   const fps = useGameSelector((state) => state.gameLoop?.fps || 0);
-  const [soundVolume, setSoundVolume] = useState(() => readStoredVolume(SOUND_VOLUME_KEY, DEFAULT_SOUND_VOLUME));
-  const [musicVolume, setMusicVolume] = useState(() => readStoredVolume(MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME, 0.5));
+  const [soundVolume, setSoundVolume] = useState(() =>
+    readStoredVolume(SOUND_VOLUME_KEY, DEFAULT_SOUND_VOLUME)
+  );
+  const [musicVolume, setMusicVolume] = useState(() =>
+    readStoredVolume(MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME, 0.5)
+  );
 
   const soundEnabled = settings.soundEnabled !== false;
   const musicEnabled = settings.musicEnabled !== false;
@@ -52,9 +56,12 @@ const SettingsTab = memo(() => {
   const fastMode = Boolean(settings.fastMode);
   const particleEffects = settings.particleEffects !== false;
 
-  const addNotification = useCallback((message, type) => {
-    actions.addNotification({ message, type });
-  }, [actions]);
+  const addNotification = useCallback(
+    (message, type) => {
+      actions.addNotification({ message, type });
+    },
+    [actions]
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -83,7 +90,7 @@ const SettingsTab = memo(() => {
   const handleToggleSound = useCallback(() => {
     const newState = !soundEnabled;
     actions.updateSettings({
-      soundEnabled: newState
+      soundEnabled: newState,
     });
 
     // Update sound system
@@ -101,7 +108,7 @@ const SettingsTab = memo(() => {
   const handleToggleMusic = useCallback(() => {
     const newState = !musicEnabled;
     actions.updateSettings({
-      musicEnabled: newState
+      musicEnabled: newState,
     });
 
     // Update music system
@@ -138,7 +145,7 @@ const SettingsTab = memo(() => {
   const handleToggleAnimations = useCallback(() => {
     const nextValue = !animationsEnabled;
     actions.updateSettings({
-      animationsEnabled: nextValue
+      animationsEnabled: nextValue,
     });
     addNotification(`Animations ${nextValue ? 'enabled' : 'disabled'}`, 'info');
   }, [actions, addNotification, animationsEnabled]);
@@ -146,50 +153,50 @@ const SettingsTab = memo(() => {
   const handleToggleAutoSave = useCallback(() => {
     const nextValue = !autoSaveEnabled;
     actions.updateSettings({
-      autoSave: nextValue
+      autoSave: nextValue,
     });
     addNotification(`Auto-save ${nextValue ? 'enabled' : 'disabled'}`, 'info');
   }, [actions, addNotification, autoSaveEnabled]);
 
   const handleToggleShowFps = useCallback(() => {
     actions.updateSettings({
-      showFPS: !showFPS
+      showFPS: !showFPS,
     });
   }, [actions, showFPS]);
 
   const handleToggleReducedMotion = useCallback(() => {
     actions.updateSettings({
-      reducedMotion: !reducedMotion
+      reducedMotion: !reducedMotion,
     });
   }, [actions, reducedMotion]);
 
   const handleToggleTooltips = useCallback(() => {
     actions.updateSettings({
-      showTooltips: !showTooltips
+      showTooltips: !showTooltips,
     });
   }, [actions, showTooltips]);
 
   const handleToggleAlmanacHints = useCallback(() => {
     actions.updateSettings({
-      showAlmanacHints: !showAlmanacHints
+      showAlmanacHints: !showAlmanacHints,
     });
   }, [actions, showAlmanacHints]);
 
   const handleToggleWelcomeBackSummary = useCallback(() => {
     actions.updateSettings({
-      showWelcomeBackSummary: !showWelcomeBackSummary
+      showWelcomeBackSummary: !showWelcomeBackSummary,
     });
   }, [actions, showWelcomeBackSummary]);
 
   const handleToggleFastMode = useCallback(() => {
     actions.updateSettings({
-      fastMode: !fastMode
+      fastMode: !fastMode,
     });
   }, [actions, fastMode]);
 
   const handleToggleParticleEffects = useCallback(() => {
     actions.updateSettings({
-      particleEffects: !particleEffects
+      particleEffects: !particleEffects,
     });
   }, [actions, particleEffects]);
 
@@ -226,7 +233,11 @@ const SettingsTab = memo(() => {
   }, [actions, addNotification]);
 
   const handleResetGame = useCallback(() => {
-    if (window.confirm('Reset your farm to a fresh start? This cannot be undone. New saves include a small starter kit (seeds + crop care tools).')) {
+    if (
+      window.confirm(
+        'Reset your farm to a fresh start? This cannot be undone. New saves include a small starter kit (seeds + crop care tools).'
+      )
+    ) {
       try {
         const result = clearFarmCache({ preserveKeys: [] });
         if (!result.success) {
@@ -335,7 +346,8 @@ const SettingsTab = memo(() => {
             </div>
             <h3 className="text-lg font-semibold text-slate-900">Game controls</h3>
             <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
-              Save routines, runtime controls, audio, and accessibility preferences all live in one place.
+              Save routines, runtime controls, audio, and accessibility preferences all live in one
+              place.
             </p>
           </div>
 
@@ -364,10 +376,7 @@ const SettingsTab = memo(() => {
                   {paused ? 'Game is paused' : 'Game is running'}
                 </div>
               </div>
-              <Button
-                onClick={handleTogglePause}
-                variant={paused ? 'default' : 'outline'}
-              >
+              <Button onClick={handleTogglePause} variant={paused ? 'default' : 'outline'}>
                 {paused ? 'Resume' : 'Pause'}
               </Button>
             </div>
@@ -462,7 +471,10 @@ const SettingsTab = memo(() => {
             ['Fertilize All', 'F'],
             ['Treat Diseases', 'T'],
           ].map(([label, shortcut]) => (
-            <div key={label} className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-sm">
+            <div
+              key={label}
+              className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-sm"
+            >
               <span className="text-slate-700">{label}</span>
               <Badge variant="outline" className="font-mono bg-slate-50/80 text-slate-600">
                 {shortcut}
@@ -480,16 +492,13 @@ const SettingsTab = memo(() => {
             </div>
             <h4 className="text-base font-semibold text-slate-900">Farm tour replay</h4>
           </div>
-          <Button
-            onClick={handleResetTutorial}
-            variant="outline"
-            size="sm"
-          >
+          <Button onClick={handleResetTutorial} variant="outline" size="sm">
             Replay
           </Button>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
-          Re-run the spotlight tour; we&apos;ll jump you back to the Farm tab so cues line up with the grid.
+          Re-run the spotlight tour; we&apos;ll jump you back to the Farm tab so cues line up with
+          the grid.
         </p>
       </Card>
 
@@ -501,11 +510,7 @@ const SettingsTab = memo(() => {
             </div>
             <h4 className="text-base font-semibold text-slate-900">Add to home screen</h4>
           </div>
-          <Button
-            onClick={handleInstallApp}
-            variant="outline"
-            size="sm"
-          >
+          <Button onClick={handleInstallApp} variant="outline" size="sm">
             Install
           </Button>
         </div>
@@ -537,22 +542,34 @@ const SettingsTab = memo(() => {
           </div>
         </div>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          A modular farm simulation with sound, background music, livestock, fishing, and a growing set of systems that can be tuned without losing the cozy feel.
+          A modular farm simulation with sound, background music, livestock, fishing, and a growing
+          set of systems that can be tuned without losing the cozy feel.
         </p>
 
         <div className="mt-4 border-t border-emerald-100 pt-4">
           <p className="text-sm font-semibold text-emerald-800">Recent upgrades</p>
           <ul className="mt-2 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Weekly Operations milestone rewards</li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Streak-based challenge reward boosts</li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Daily Market Focus bonus crop loop</li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Reworked Daily Operations board with reroll</li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Sidebar mounts only active tab content</li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">Notification Center with saved history</li>
+            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
+              Weekly Operations milestone rewards
+            </li>
+            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
+              Streak-based challenge reward boosts
+            </li>
+            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
+              Daily Market Focus bonus crop loop
+            </li>
+            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
+              Reworked Daily Operations board with reroll
+            </li>
+            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
+              Sidebar mounts only active tab content
+            </li>
+            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
+              Notification Center with saved history
+            </li>
           </ul>
         </div>
       </Card>
-
     </div>
   );
 });

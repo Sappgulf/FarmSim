@@ -10,7 +10,7 @@ export function ScreenFlash({ trigger, color = 'gold' }) {
 
   useEffect(() => {
     if (trigger > 0) {
-      setKey(k => k + 1);
+      setKey((k) => k + 1);
       setIsVisible(true);
       const timer = setTimeout(() => setIsVisible(false), 400);
       return () => clearTimeout(timer);
@@ -41,7 +41,7 @@ export function useScreenFlash() {
 
   const flash = useCallback((flashColor = 'gold') => {
     setColor(flashColor);
-    setTrigger(t => t + 1);
+    setTrigger((t) => t + 1);
   }, []);
 
   const flashGold = useCallback(() => flash('gold'), [flash]);

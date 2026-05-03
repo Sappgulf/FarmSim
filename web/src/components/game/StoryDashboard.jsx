@@ -23,10 +23,12 @@ function StoryDashboardComponent({
   wishDisabledReason,
   onWish,
 }) {
-  const philosophyLabel = PHILOSOPHIES.find(p => p.id === philosophy)?.name || null;
+  const philosophyLabel = PHILOSOPHIES.find((p) => p.id === philosophy)?.name || null;
   const wishLabel = canWish
     ? `Wish (${wishCost}🪙)`
-    : (wishDisabledReason?.includes('Need') ? `Need ${wishCost}🪙` : 'Resting');
+    : wishDisabledReason?.includes('Need')
+      ? `Need ${wishCost}🪙`
+      : 'Resting';
 
   return (
     <Card className="border-2 border-amber-100 bg-white/90 backdrop-blur">
@@ -50,7 +52,8 @@ function StoryDashboardComponent({
           <div className="text-2xl">{moodTier?.emoji || '🌿'}</div>
           <div>
             <div className="text-sm font-semibold">
-              Today&apos;s vibe: <span className="mood-accent-text">{moodTier?.name || 'Calm'}</span>
+              Today&apos;s vibe:{' '}
+              <span className="mood-accent-text">{moodTier?.name || 'Calm'}</span>
             </div>
             <div className="text-xs text-gray-600">{vibeLine}</div>
           </div>
@@ -67,7 +70,9 @@ function StoryDashboardComponent({
             </div>
           ) : (
             <div className="space-y-2">
-              <div className="text-sm text-gray-700">Choose a farm philosophy to guide suggestions.</div>
+              <div className="text-sm text-gray-700">
+                Choose a farm philosophy to guide suggestions.
+              </div>
               <div className="flex flex-wrap gap-2">
                 {PHILOSOPHIES.map((p) => (
                   <Button
@@ -108,13 +113,13 @@ function StoryDashboardComponent({
               </div>
               {activeBlessing ? (
                 <div className="text-sm text-gray-800">
-                  <span className="font-semibold">{activeBlessing.emoji} {activeBlessing.name}</span>
+                  <span className="font-semibold">
+                    {activeBlessing.emoji} {activeBlessing.name}
+                  </span>
                   <div className="text-xs text-gray-600">{activeBlessing.description}</div>
                 </div>
               ) : (
-                <div className="text-sm text-gray-700">
-                  Make a wish for a cozy blessing today.
-                </div>
+                <div className="text-sm text-gray-700">Make a wish for a cozy blessing today.</div>
               )}
               {!canWish && !activeBlessing && (
                 <div className="text-[11px] text-gray-500">{wishDisabledReason}</div>
@@ -133,12 +138,7 @@ function StoryDashboardComponent({
         </div>
 
         {onOpenScrapbook && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onOpenScrapbook}
-            className="w-full"
-          >
+          <Button size="sm" variant="outline" onClick={onOpenScrapbook} className="w-full">
             Open Scrapbook
           </Button>
         )}

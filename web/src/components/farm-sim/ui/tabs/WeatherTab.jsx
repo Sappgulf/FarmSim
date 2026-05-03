@@ -9,40 +9,46 @@ import { getWeatherMeta, normalizeWeatherType } from '../../constants/weatherDat
 // Weather prediction patterns from original system
 const WEATHER_PATTERNS = [
   {
-    pattern: ["sunny", "sunny", "cloudy"],
-    nextWeather: "rainy",
+    pattern: ['sunny', 'sunny', 'cloudy'],
+    nextWeather: 'rainy',
     confidence: 0.8,
-    hint: "Three day pattern suggests incoming rain"
+    hint: 'Three day pattern suggests incoming rain',
   },
   {
-    pattern: ["rainy", "cloudy"],
-    nextWeather: "sunny",
+    pattern: ['rainy', 'cloudy'],
+    nextWeather: 'sunny',
     confidence: 0.7,
-    hint: "Rain clearing leads to sunshine"
+    hint: 'Rain clearing leads to sunshine',
   },
   {
-    pattern: ["windy", "windy"],
-    nextWeather: "stormy",
+    pattern: ['windy', 'windy'],
+    nextWeather: 'stormy',
     confidence: 0.9,
-    hint: "Strong winds often bring storms"
+    hint: 'Strong winds often bring storms',
   },
   {
-    pattern: ["sunny", "sunny", "windy"],
-    nextWeather: "drought",
+    pattern: ['sunny', 'sunny', 'windy'],
+    nextWeather: 'drought',
     confidence: 0.6,
-    hint: "Extended dry winds may trigger drought"
-  }
+    hint: 'Extended dry winds may trigger drought',
+  },
 ];
 
 const WEATHER_PREDICTION_REWARDS = {
   perfect: { coins: 100, xp: 50, accuracy: 1.0 },
   good: { coins: 60, xp: 30, accuracy: 0.8 },
   okay: { coins: 30, xp: 15, accuracy: 0.6 },
-  poor: { coins: 10, xp: 5, accuracy: 0.4 }
+  poor: { coins: 10, xp: 5, accuracy: 0.4 },
 };
 
 const PREDICTION_OPTIONS = Array.from(
-  new Set(['sunny', 'rainy', 'stormy', 'cloudy', ...WEATHER_PATTERNS.map((pattern) => pattern.nextWeather)])
+  new Set([
+    'sunny',
+    'rainy',
+    'stormy',
+    'cloudy',
+    ...WEATHER_PATTERNS.map((pattern) => pattern.nextWeather),
+  ])
 );
 
 const WeatherTab = memo(() => {
@@ -53,7 +59,7 @@ const WeatherTab = memo(() => {
     selectedPrediction: null,
     hint: '',
     correctWeather: null,
-    result: null
+    result: null,
   });
 
   const startPredictionGame = () => {
@@ -61,7 +67,7 @@ const WeatherTab = memo(() => {
     if (!state.weatherForecast || state.weatherForecast.length < 3) {
       actions.addNotification({
         message: 'Need more weather history to predict!',
-        type: 'warning'
+        type: 'warning',
       });
       return;
     }
@@ -75,7 +81,7 @@ const WeatherTab = memo(() => {
       selectedPrediction: null,
       hint: randomPattern.hint,
       correctWeather: randomPattern.nextWeather,
-      result: null
+      result: null,
     });
   };
 
@@ -87,8 +93,8 @@ const WeatherTab = memo(() => {
 
     if (isCorrect) {
       // Determine reward based on confidence
-      const pattern = WEATHER_PATTERNS.find(p =>
-        p.pattern.join(',') === predictionGame.currentPattern.join(',')
+      const pattern = WEATHER_PATTERNS.find(
+        (p) => p.pattern.join(',') === predictionGame.currentPattern.join(',')
       );
       const confidence = pattern?.confidence || 0.5;
 
@@ -99,21 +105,26 @@ const WeatherTab = memo(() => {
 
     // Grant rewards
     actions.earnMoney(reward.coins);
-    actions.addXP(reward.xp, { source: 'minigame', minigameId: 'weather_prediction', skillFactor: reward.accuracy || 0, label: 'Weather Prediction' });
+    actions.addXP(reward.xp, {
+      source: 'minigame',
+      minigameId: 'weather_prediction',
+      skillFactor: reward.accuracy || 0,
+      label: 'Weather Prediction',
+    });
 
-    setPredictionGame(prev => ({
+    setPredictionGame((prev) => ({
       ...prev,
       selectedPrediction: predictedWeather,
       result: {
         correct: isCorrect,
         reward: reward,
-        actualWeather: predictionGame.correctWeather
-      }
+        actualWeather: predictionGame.correctWeather,
+      },
     }));
 
     // Auto-close after 3 seconds
     setTimeout(() => {
-      setPredictionGame(prev => ({ ...prev, active: false }));
+      setPredictionGame((prev) => ({ ...prev, active: false }));
     }, 3000);
   };
 
@@ -143,7 +154,9 @@ const WeatherTab = memo(() => {
       <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-cyan-50/40 p-4">
         <div className="flex justify-between items-center">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600">Weather</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600">
+              Weather
+            </div>
             <h3 className="text-lg font-semibold text-slate-900">Current weather</h3>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-3xl">{getWeatherEmoji(state.weather)}</span>
@@ -181,7 +194,10 @@ const WeatherTab = memo(() => {
           <h4 className="mb-3 font-semibold text-slate-900">3-day forecast</h4>
           <div className="flex gap-2">
             {state.weatherForecast.slice(0, 3).map((forecast, index) => (
-              <div key={index} className="flex-1 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-center shadow-sm">
+              <div
+                key={index}
+                className="flex-1 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-center shadow-sm"
+              >
                 <div className="text-lg">{getWeatherEmoji(forecast.type)}</div>
                 <div className="text-xs capitalize text-slate-600">{forecast.type}</div>
                 <div className="text-xs text-slate-500">{forecast.duration}s</div>
@@ -194,7 +210,9 @@ const WeatherTab = memo(() => {
       {/* Weather Prediction Game */}
       <Card className="overflow-hidden border-violet-200/70 bg-gradient-to-br from-white via-violet-50/30 to-pink-50/40 p-4">
         <div className="mb-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-600">Challenge</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-600">
+            Challenge
+          </div>
           <h4 className="font-semibold text-slate-900">Weather prediction</h4>
         </div>
 
@@ -218,14 +236,12 @@ const WeatherTab = memo(() => {
               </div>
 
               {/* Hint */}
-              <div className="mb-4 text-xs italic text-slate-600">
-                💡 {predictionGame.hint}
-              </div>
+              <div className="mb-4 text-xs italic text-slate-600">💡 {predictionGame.hint}</div>
 
               {/* Prediction Buttons */}
               {!predictionGame.result && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {PREDICTION_OPTIONS.map(weather => (
+                  {PREDICTION_OPTIONS.map((weather) => (
                     <Button
                       key={weather}
                       onClick={() => makePrediction(weather)}
@@ -241,12 +257,16 @@ const WeatherTab = memo(() => {
 
               {/* Result */}
               {predictionGame.result && (
-                <div className={`rounded-2xl border p-3 ${predictionGame.result.correct ? 'border-green-200 bg-green-50/80' : 'border-red-200 bg-red-50/80'}`}>
+                <div
+                  className={`rounded-2xl border p-3 ${predictionGame.result.correct ? 'border-green-200 bg-green-50/80' : 'border-red-200 bg-red-50/80'}`}
+                >
                   <div className="text-lg mb-1">
-                    {predictionGame.result.correct ? '✅' : '❌'} {predictionGame.result.correct ? 'Correct!' : 'Wrong!'}
+                    {predictionGame.result.correct ? '✅' : '❌'}{' '}
+                    {predictionGame.result.correct ? 'Correct!' : 'Wrong!'}
                   </div>
                   <div className="text-sm">
-                    Actual: {getWeatherEmoji(predictionGame.result.actualWeather)} {predictionGame.result.actualWeather}
+                    Actual: {getWeatherEmoji(predictionGame.result.actualWeather)}{' '}
+                    {predictionGame.result.actualWeather}
                   </div>
                   <div className="text-sm font-semibold text-green-600">
                     +{predictionGame.result.reward.coins}🪙 +{predictionGame.result.reward.xp} XP
@@ -265,9 +285,7 @@ const WeatherTab = memo(() => {
               🎮 Start Prediction Game
             </Button>
             {(!state.weatherForecast || state.weatherForecast.length < 3) && (
-              <div className="text-xs text-slate-500">
-                Need 3+ weather history entries to play
-              </div>
+              <div className="text-xs text-slate-500">Need 3+ weather history entries to play</div>
             )}
           </div>
         )}
@@ -278,15 +296,15 @@ const WeatherTab = memo(() => {
         <h4 className="mb-3 font-semibold text-slate-900">Weather statistics</h4>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-center shadow-sm">
-            <div className="font-semibold text-gray-800">
-              {state.weatherForecast?.length || 0}
-            </div>
+            <div className="font-semibold text-gray-800">{state.weatherForecast?.length || 0}</div>
             <div className="text-slate-600">Forecasts seen</div>
           </div>
           <div className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-center shadow-sm">
             <div className="font-semibold text-gray-800">
               {state.weatherForecast
-                ? state.weatherForecast.filter((f) => normalizeWeatherType(f.type) === normalizeWeatherType(state.weather)).length
+                ? state.weatherForecast.filter(
+                    (f) => normalizeWeatherType(f.type) === normalizeWeatherType(state.weather)
+                  ).length
                 : 0}
             </div>
             <div className="text-slate-600">Current streak</div>

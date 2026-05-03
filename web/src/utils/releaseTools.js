@@ -106,16 +106,21 @@ const getSaveLoadStatus = () => {
     id: 'save_load',
     label: 'Save/load verification',
     status: loaded ? 'pass' : 'fail',
-    detail: loaded ? 'Latest save loaded without migration errors.' : 'Save failed to load/migrate.',
+    detail: loaded
+      ? 'Latest save loaded without migration errors.'
+      : 'Save failed to load/migrate.',
   });
 };
 
-const getVersionStatus = () => buildGate({
-  id: 'semver',
-  label: 'APP_VERSION format',
-  status: SEMVER_REGEX.test(APP_VERSION) ? 'pass' : 'fail',
-  detail: SEMVER_REGEX.test(APP_VERSION) ? `APP_VERSION ${APP_VERSION} is valid semver.` : `APP_VERSION ${APP_VERSION} is invalid.`,
-});
+const getVersionStatus = () =>
+  buildGate({
+    id: 'semver',
+    label: 'APP_VERSION format',
+    status: SEMVER_REGEX.test(APP_VERSION) ? 'pass' : 'fail',
+    detail: SEMVER_REGEX.test(APP_VERSION)
+      ? `APP_VERSION ${APP_VERSION} is valid semver.`
+      : `APP_VERSION ${APP_VERSION} is invalid.`,
+  });
 
 export const getReleaseGateSummary = () => {
   const gates = [
@@ -139,12 +144,14 @@ export const canRelease = () => {
     const summary = {
       version: APP_VERSION,
       status: 'fail',
-      gates: [buildGate({
-        id: 'release_mode',
-        label: 'Release gate runner',
-        status: 'skip',
-        detail: 'Release mode active; run gates in development mode.',
-      })],
+      gates: [
+        buildGate({
+          id: 'release_mode',
+          label: 'Release gate runner',
+          status: 'skip',
+          detail: 'Release mode active; run gates in development mode.',
+        }),
+      ],
     };
     console.info('[release]', 'Release gates skipped: release mode active.', summary);
     return summary;

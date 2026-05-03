@@ -3,9 +3,10 @@ import { getDayKey } from '../systems/almanac';
 
 export const DAILY_FOCUS_BONUS_MULTIPLIER = 1.25;
 
-const buildDaySeed = (dayKey = '') => (
-  String(dayKey).split('').reduce((seed, char) => seed + char.charCodeAt(0), 0)
-);
+const buildDaySeed = (dayKey = '') =>
+  String(dayKey)
+    .split('')
+    .reduce((seed, char) => seed + char.charCodeAt(0), 0);
 
 export const getEligibleDailyFocusCrops = (level = 1) => {
   const numericLevel = Math.max(1, Math.floor(Number(level) || 1));

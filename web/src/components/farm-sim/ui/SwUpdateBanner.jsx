@@ -37,7 +37,13 @@ const SwUpdateBanner = memo(() => {
         A new version finished downloading. Reload to avoid mismatched bundles.
       </p>
       <div className="flex flex-wrap justify-end gap-2">
-        <Button type="button" variant="outline" size="sm" className="min-h-[38px]" onClick={handleDismiss}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="min-h-[38px]"
+          onClick={handleDismiss}
+        >
           Later
         </Button>
         <Button type="button" size="sm" className="min-h-[38px]" onClick={handleReload}>

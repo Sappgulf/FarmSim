@@ -11,15 +11,16 @@ export const getMarketTerminalMultiplier = (inventory) =>
   hasUpgrade(inventory, 'market_terminal') ? 1.1 : 1.0;
 
 export const getHarvestMultiplier = (inventory) =>
-  BASE_HARVEST_MULTIPLIER * getQualitySeedsMultiplier(inventory) * getMarketTerminalMultiplier(inventory);
+  BASE_HARVEST_MULTIPLIER *
+  getQualitySeedsMultiplier(inventory) *
+  getMarketTerminalMultiplier(inventory);
 
 export const calculateHarvestValue = (baseValue = 10, soilFertility = 1.0, inventory = {}) => {
   const fertility = Number.isFinite(soilFertility) ? soilFertility : 1.0;
   return Math.floor((baseValue || 10) * fertility * getHarvestMultiplier(inventory));
 };
 
-export const getWateringBonus = (inventory) =>
-  hasUpgrade(inventory, 'watering_can') ? 10 : 0;
+export const getWateringBonus = (inventory) => (hasUpgrade(inventory, 'watering_can') ? 10 : 0);
 
 export const getCompostRegenMultiplier = (inventory) =>
   hasUpgrade(inventory, 'compost_bin') ? 1.5 : 1.0;
@@ -36,21 +37,18 @@ export const getMiniGreenhouseGrowthBonus = (inventory) =>
 export const getSprinklerConfig = (inventory) =>
   hasUpgrade(inventory, 'sprinkler')
     ? {
-      intervalMs: hasUpgrade(inventory, 'rain_collector') ? 10000 : 12000,
-      waterAmount: hasUpgrade(inventory, 'rain_collector') ? 10 : 6,
-    }
+        intervalMs: hasUpgrade(inventory, 'rain_collector') ? 10000 : 12000,
+        waterAmount: hasUpgrade(inventory, 'rain_collector') ? 10 : 6,
+      }
     : null;
 
 export const getSeedCostMultiplier = (inventory) =>
   hasUpgrade(inventory, 'precision_hoe') ? 0.9 : 1.0;
 
 export const getAutoHarvestConfig = (inventory) =>
-  hasUpgrade(inventory, 'drone_harvester')
-    ? { intervalMs: 15000, maxPlotsPerTick: 2 }
-    : null;
+  hasUpgrade(inventory, 'drone_harvester') ? { intervalMs: 15000, maxPlotsPerTick: 2 } : null;
 
 export const getPostHarvestFertilityFloor = (inventory) =>
   hasUpgrade(inventory, 'soil_nanites') ? 0.65 : 0.5;
 
-export const getSoilAnalyzerEnabled = (inventory) =>
-  hasUpgrade(inventory, 'soil_analyzer');
+export const getSoilAnalyzerEnabled = (inventory) => hasUpgrade(inventory, 'soil_analyzer');

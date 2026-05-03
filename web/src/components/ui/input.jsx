@@ -1,6 +1,6 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef } from 'react';
 
-export const Input = forwardRef(function Input({ className = "", type = "text", ...props }, ref) {
+export const Input = forwardRef(function Input({ className = '', type = 'text', ...props }, ref) {
   return (
     <input
       type={type}

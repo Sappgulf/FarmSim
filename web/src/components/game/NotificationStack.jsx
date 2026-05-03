@@ -1,7 +1,7 @@
 /**
  * NotificationStack Component
  * Displays toast notifications with smooth animations
- * 
+ *
  * Features:
  * - Auto-dismiss after configurable duration (default 4s)
  * - "sticky" notifications that don't auto-dismiss
@@ -100,15 +100,15 @@ function NotificationComponent({ notification, onDismiss, index }) {
   // Handle manual dismiss with exit animation
   const handleDismiss = useCallback(() => {
     if (isExiting) return;
-    
+
     // Clear any pending auto-dismiss
     if (dismissTimerRef.current) {
       clearTimeout(dismissTimerRef.current);
       dismissTimerRef.current = null;
     }
-    
+
     setIsExiting(true);
-    
+
     // After exit animation, remove from state
     exitTimerRef.current = setTimeout(() => {
       onDismiss?.(notification.id);
@@ -120,7 +120,7 @@ function NotificationComponent({ notification, onDismiss, index }) {
     if (isSticky) return;
 
     const duration = notification.duration || AUTO_DISMISS_MS;
-    
+
     dismissTimerRef.current = setTimeout(() => {
       handleDismiss();
     }, duration);
@@ -138,7 +138,7 @@ function NotificationComponent({ notification, onDismiss, index }) {
   }, [isSticky, notification.duration, handleDismiss]);
 
   // Animation duration for progress bar (matches dismiss timer)
-  const progressDuration = isSticky ? 0 : (notification.duration || AUTO_DISMISS_MS);
+  const progressDuration = isSticky ? 0 : notification.duration || AUTO_DISMISS_MS;
 
   return (
     <div
@@ -147,10 +147,7 @@ function NotificationComponent({ notification, onDismiss, index }) {
         shadow-lg ${style.glow} backdrop-blur-sm
         ${style.bg}
         transform transition-all duration-200 ease-out
-        ${isExiting
-          ? 'opacity-0 translate-x-8 scale-95'
-          : 'opacity-100 translate-x-0 scale-100'
-        }
+        ${isExiting ? 'opacity-0 translate-x-8 scale-95' : 'opacity-100 translate-x-0 scale-100'}
       `}
       style={{
         animation: `slideInRight 0.3s ease-out ${index * 50}ms both`,
@@ -159,10 +156,12 @@ function NotificationComponent({ notification, onDismiss, index }) {
       aria-live="polite"
     >
       {/* Icon */}
-      <div className={`
+      <div
+        className={`
         p-1.5 rounded-full bg-white/70 shadow-sm flex-shrink-0
         ${type === 'coins' || type === 'harvest' ? 'animate-pulse' : ''}
-      `}>
+      `}
+      >
         <Icon size={18} className={style.iconColor} />
       </div>
 
@@ -196,7 +195,7 @@ function NotificationComponent({ notification, onDismiss, index }) {
         <div className="absolute bottom-0 left-0 right-0 h-1 overflow-hidden rounded-b-xl bg-black/5">
           <div
             className="h-full bg-black/15 animate-shrink-progress origin-left"
-            style={{ 
+            style={{
               animationDuration: `${progressDuration}ms`,
               animationPlayState: isExiting ? 'paused' : 'running',
             }}
@@ -206,8 +205,10 @@ function NotificationComponent({ notification, onDismiss, index }) {
 
       {/* Sticky indicator */}
       {isSticky && (
-        <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-400 animate-pulse" 
-             title="This notification won't auto-dismiss" />
+        <div
+          className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-400 animate-pulse"
+          title="This notification won't auto-dismiss"
+        />
       )}
     </div>
   );
@@ -222,7 +223,7 @@ function NotificationStackComponent({ notifications, onDismiss }) {
   const hiddenCount = Math.max(0, notifications.length - maxVisible);
 
   return (
-    <div 
+    <div
       className="
         fixed z-50
         flex flex-col gap-2
@@ -244,28 +245,23 @@ function NotificationStackComponent({ notifications, onDismiss }) {
       aria-label="Notifications"
     >
       {visibleNotifications.map((notification, index) => (
-        <div 
-          key={notification.id} 
-          className="pointer-events-auto relative"
-        >
-          <NotificationComponent
-            notification={notification}
-            onDismiss={onDismiss}
-            index={index}
-          />
+        <div key={notification.id} className="pointer-events-auto relative">
+          <NotificationComponent notification={notification} onDismiss={onDismiss} index={index} />
         </div>
       ))}
-      
+
       {/* Overflow indicator */}
       {hiddenCount > 0 && (
-        <div className="
+        <div
+          className="
           pointer-events-none
           text-center text-xs font-medium
           text-gray-600 bg-white/80 
           rounded-full px-3 py-1
           shadow-sm backdrop-blur-sm
           self-center
-        ">
+        "
+        >
           +{hiddenCount} more notification{hiddenCount > 1 ? 's' : ''}
         </div>
       )}

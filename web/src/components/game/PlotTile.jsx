@@ -16,11 +16,20 @@ const GROWTH_EMOJIS = {
 const triggerHaptic = (pattern = 'light') => {
   if (!navigator.vibrate) return;
   switch (pattern) {
-    case 'light': navigator.vibrate(10); break;
-    case 'medium': navigator.vibrate(25); break;
-    case 'heavy': navigator.vibrate([30, 20, 30]); break;
-    case 'success': navigator.vibrate([10, 50, 20]); break;
-    default: navigator.vibrate(10);
+    case 'light':
+      navigator.vibrate(10);
+      break;
+    case 'medium':
+      navigator.vibrate(25);
+      break;
+    case 'heavy':
+      navigator.vibrate([30, 20, 30]);
+      break;
+    case 'success':
+      navigator.vibrate([10, 50, 20]);
+      break;
+    default:
+      navigator.vibrate(10);
   }
 };
 
@@ -31,7 +40,9 @@ function CoinBurst({ isActive, isBig = false }) {
   const coinCount = isBig ? 8 : 6;
 
   return (
-    <div className={`absolute inset-0 pointer-events-none overflow-visible z-20 ${isBig ? 'coin-burst-big' : ''}`}>
+    <div
+      className={`absolute inset-0 pointer-events-none overflow-visible z-20 ${isBig ? 'coin-burst-big' : ''}`}
+    >
       {[...Array(coinCount)].map((_, i) => (
         <span
           key={i}
@@ -299,24 +310,40 @@ function PlotTileComponent({
     triggerHaptic('light');
     setTimeout(() => setShowWaterSplash(false), 600);
     onWater?.(index);
-  }, [disabled, plot.crop, plot.hasPest, plot.hasDisease, status, index, onPlant, onTreatPest, onTreatDisease, onHarvest, onWater, cropData]);
+  }, [
+    disabled,
+    plot.crop,
+    plot.hasPest,
+    plot.hasDisease,
+    status,
+    index,
+    onPlant,
+    onTreatPest,
+    onTreatDisease,
+    onHarvest,
+    onWater,
+    cropData,
+  ]);
 
   // Handle long press for fertilize
-  const handleContextMenu = useCallback((e) => {
-    e.preventDefault();
-    if (plot.crop && status !== 'ready' && !plot.hasPest && !plot.hasDisease) {
-      onFertilize?.(index);
-      setShowSparkle(true);
-      setShowFertilizerGlow(true);
-      triggerHaptic('medium');
-      setTimeout(() => {
-        setShowSparkle(false);
-      }, 600);
-      setTimeout(() => {
-        setShowFertilizerGlow(false);
-      }, 2000);
-    }
-  }, [plot.crop, plot.hasPest, plot.hasDisease, status, index, onFertilize]);
+  const handleContextMenu = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (plot.crop && status !== 'ready' && !plot.hasPest && !plot.hasDisease) {
+        onFertilize?.(index);
+        setShowSparkle(true);
+        setShowFertilizerGlow(true);
+        triggerHaptic('medium');
+        setTimeout(() => {
+          setShowSparkle(false);
+        }, 600);
+        setTimeout(() => {
+          setShowFertilizerGlow(false);
+        }, 2000);
+      }
+    },
+    [plot.crop, plot.hasPest, plot.hasDisease, status, index, onFertilize]
+  );
 
   // Base classes
   const baseClasses = `
@@ -332,15 +359,18 @@ function PlotTileComponent({
 
   // State-specific classes with enhanced styling
   const stateClasses = {
-    empty: 'bg-gradient-to-br from-amber-100/90 to-amber-200/70 border-amber-300 hover:border-amber-400 hover:shadow-md hover:shadow-amber-200/50',
-    growing: 'bg-gradient-to-br from-green-100/90 to-emerald-100/70 border-green-300 hover:border-green-400 hover:shadow-md hover:shadow-green-200/50',
-    ready: 'bg-gradient-to-br from-emerald-100 to-green-200/80 border-emerald-400 shadow-lg shadow-emerald-300/50 ready-glow',
+    empty:
+      'bg-gradient-to-br from-amber-100/90 to-amber-200/70 border-amber-300 hover:border-amber-400 hover:shadow-md hover:shadow-amber-200/50',
+    growing:
+      'bg-gradient-to-br from-green-100/90 to-emerald-100/70 border-green-300 hover:border-green-400 hover:shadow-md hover:shadow-green-200/50',
+    ready:
+      'bg-gradient-to-br from-emerald-100 to-green-200/80 border-emerald-400 shadow-lg shadow-emerald-300/50 ready-glow',
     pest: 'bg-gradient-to-br from-red-100/90 to-red-200/70 border-red-400 infested',
     disease: 'bg-gradient-to-br from-purple-100/90 to-purple-200/70 border-purple-400 diseased',
   };
 
   // Watered indicator
-  const isWatered = plot.wateredAt && (Date.now() / 1000 - plot.wateredAt) < 30;
+  const isWatered = plot.wateredAt && Date.now() / 1000 - plot.wateredAt < 30;
 
   // Fertilized indicator
   const isFertilized = plot.fertilizedCount > 0;
@@ -349,7 +379,11 @@ function PlotTileComponent({
   const isPollinated = plot.pollinated;
 
   // Dynamic scale based on state
-  const scaleClass = isPressed ? 'scale-95' : status === 'ready' ? 'hover:scale-105' : 'hover:scale-102';
+  const scaleClass = isPressed
+    ? 'scale-95'
+    : status === 'ready'
+      ? 'hover:scale-105'
+      : 'hover:scale-102';
 
   return (
     <div
@@ -374,14 +408,16 @@ function PlotTileComponent({
       <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-black/5 to-white/20 pointer-events-none" />
 
       {/* Main emoji display */}
-      <span className={`
+      <span
+        className={`
         relative z-10
         transition-transform duration-200
         ${status === 'ready' ? 'float-idle' : ''}
         ${visualState === 'growing' ? 'growing-breathe' : ''}
         ${showCoinBurst ? 'harvest-burst' : ''}
         drop-shadow-sm
-      `}>
+      `}
+      >
         {displayEmoji}
       </span>
 
@@ -409,17 +445,26 @@ function PlotTileComponent({
       {/* Status indicators - Enhanced */}
       <div className="absolute top-1 right-1 flex gap-0.5">
         {isWatered && (
-          <span className="w-5 h-5 flex items-center justify-center bg-blue-100/90 rounded-full shadow-sm border border-blue-200" title="Watered">
+          <span
+            className="w-5 h-5 flex items-center justify-center bg-blue-100/90 rounded-full shadow-sm border border-blue-200"
+            title="Watered"
+          >
             <Droplets size={11} className="text-blue-500" />
           </span>
         )}
         {isFertilized && (
-          <span className="w-5 h-5 flex items-center justify-center bg-yellow-100/90 rounded-full shadow-sm border border-yellow-200 text-[9px]" title="Fertilized">
+          <span
+            className="w-5 h-5 flex items-center justify-center bg-yellow-100/90 rounded-full shadow-sm border border-yellow-200 text-[9px]"
+            title="Fertilized"
+          >
             ✨
           </span>
         )}
         {isPollinated && (
-          <span className="w-5 h-5 flex items-center justify-center bg-amber-100/90 rounded-full shadow-sm border border-amber-200 text-[9px] animate-bee-buzz" title="Pollinated">
+          <span
+            className="w-5 h-5 flex items-center justify-center bg-amber-100/90 rounded-full shadow-sm border border-amber-200 text-[9px] animate-bee-buzz"
+            title="Pollinated"
+          >
             🐝
           </span>
         )}

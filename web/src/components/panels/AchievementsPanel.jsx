@@ -9,16 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Progress } from '../ui/progress';
 import { ACHIEVEMENTS, ACHIEVEMENT_CATEGORIES } from '../../data/achievements';
 
-function AchievementsPanelComponent({
-  unlockedAchievements = [],
-  stats = {},
-  onClaimReward,
-}) {
+function AchievementsPanelComponent({ unlockedAchievements = [], stats = {}, onClaimReward }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Calculate progress for each achievement
   const achievementsWithProgress = useMemo(() => {
-    return ACHIEVEMENTS.map(achievement => {
+    return ACHIEVEMENTS.map((achievement) => {
       const unlocked = unlockedAchievements.includes(achievement.id);
       let progress = 0;
       let target = 1;
@@ -65,14 +61,14 @@ function AchievementsPanelComponent({
   // Filter by category
   const filteredAchievements = useMemo(() => {
     if (selectedCategory === 'all') return achievementsWithProgress;
-    return achievementsWithProgress.filter(a => a.category === selectedCategory);
+    return achievementsWithProgress.filter((a) => a.category === selectedCategory);
   }, [achievementsWithProgress, selectedCategory]);
 
   // Stats
   const totalUnlocked = unlockedAchievements.length;
   const totalAchievements = ACHIEVEMENTS.length;
   const totalRewards = achievementsWithProgress
-    .filter(a => a.unlocked)
+    .filter((a) => a.unlocked)
     .reduce((sum, a) => sum + a.reward, 0);
 
   return (
@@ -110,9 +106,10 @@ function AchievementsPanelComponent({
             onClick={() => setSelectedCategory('all')}
             className={`
               px-2 py-1 text-xs rounded-full transition-colors
-              ${selectedCategory === 'all'
-                ? 'bg-gray-800 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ${
+                selectedCategory === 'all'
+                  ? 'bg-gray-800 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }
             `}
           >
@@ -124,9 +121,10 @@ function AchievementsPanelComponent({
               onClick={() => setSelectedCategory(id)}
               className={`
                 px-2 py-1 text-xs rounded-full transition-colors
-                ${selectedCategory === id
-                  ? cat.color
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ${
+                  selectedCategory === id
+                    ? cat.color
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }
               `}
             >
@@ -145,33 +143,37 @@ function AchievementsPanelComponent({
                 key={achievement.id}
                 className={`
                   p-3 rounded-lg border transition-all
-                  ${achievement.unlocked
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-gray-50 border-gray-200'
+                  ${
+                    achievement.unlocked
+                      ? 'bg-green-50 border-green-200'
+                      : 'bg-gray-50 border-gray-200'
                   }
                 `}
               >
                 <div className="flex items-start gap-3">
                   {/* Icon */}
-                  <div className={`
+                  <div
+                    className={`
                     w-10 h-10 rounded-lg flex items-center justify-center text-xl
-                    ${achievement.unlocked
-                      ? 'bg-green-100'
-                      : 'bg-gray-200'
-                    }
-                  `}>
-                    {achievement.unlocked ? achievement.icon : <Lock size={18} className="text-gray-400" />}
+                    ${achievement.unlocked ? 'bg-green-100' : 'bg-gray-200'}
+                  `}
+                  >
+                    {achievement.unlocked ? (
+                      achievement.icon
+                    ) : (
+                      <Lock size={18} className="text-gray-400" />
+                    )}
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className={`font-medium text-sm ${achievement.unlocked ? 'text-green-800' : 'text-gray-700'}`}>
+                      <span
+                        className={`font-medium text-sm ${achievement.unlocked ? 'text-green-800' : 'text-gray-700'}`}
+                      >
                         {achievement.name}
                       </span>
-                      {achievement.unlocked && (
-                        <Check size={14} className="text-green-500" />
-                      )}
+                      {achievement.unlocked && <Check size={14} className="text-green-500" />}
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">{achievement.desc}</p>
 
@@ -179,7 +181,9 @@ function AchievementsPanelComponent({
                     {!achievement.unlocked && achievement.target > 1 && (
                       <div className="mt-2">
                         <div className="flex justify-between text-xs text-gray-500 mb-1">
-                          <span>{achievement.progress}/{achievement.target}</span>
+                          <span>
+                            {achievement.progress}/{achievement.target}
+                          </span>
                           <span>{Math.round(achievement.percent)}%</span>
                         </div>
                         <Progress value={achievement.percent} className="h-1.5" />

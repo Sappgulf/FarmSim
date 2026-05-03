@@ -42,4 +42,3 @@ export const ensureWeeklyVisits = (weeklyVisits, dayKey = getDayKey(), weekKey =
     claimedTiers,
   };
 };
-

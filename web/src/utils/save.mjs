@@ -1,5 +1,15 @@
-import { clamp } from "./gameMath.mjs";
-import { normalizeInventory } from "../systems/inventory.mjs";
+/**
+ * Legacy FarmGame localStorage helpers (`farmSim_save_v3`).
+ *
+ * The enhanced farm shell (tabs, progression, entitlements) persists via
+ * {@link ../components/farm-sim/context/GamePersistence.js} (`farm_sim_enhanced_v2`).
+ * Both stacks can coexist; do not merge keys without a migration plan.
+ */
+import { clamp } from './gameMath.mjs';
+import { normalizeInventory } from '../systems/inventory.mjs';
+import { createLogger } from './logger.js';
+
+const log = createLogger('farm');
 
 // Default save configuration
 export const SAVE_CONFIG = {
@@ -14,7 +24,7 @@ function normalizeNumber(value, fallback = 0) {
 }
 
 export function normalizeSaveData(raw, { minSize, maxSize, version }) {
-  if (!raw || typeof raw !== "object") return null;
+  if (!raw || typeof raw !== 'object') return null;
   const saveVersion = raw.version ?? 1;
   const acceptedVersions = new Set([1, 3, version]);
   if (!acceptedVersions.has(saveVersion)) return null;
@@ -24,11 +34,11 @@ export function normalizeSaveData(raw, { minSize, maxSize, version }) {
   normalized.score = Math.max(0, normalizeNumber(raw.score, 0));
   normalized.totalEarned = Math.max(0, normalizeNumber(raw.totalEarned, 0));
 
-  if (typeof raw.gridSize === "number") {
+  if (typeof raw.gridSize === 'number') {
     normalized.gridSize = clamp(raw.gridSize, minSize, maxSize);
   }
 
-  if (Array.isArray(raw.plots) && typeof normalized.gridSize === "number") {
+  if (Array.isArray(raw.plots) && typeof normalized.gridSize === 'number') {
     normalized.plots = raw.plots.slice(0, normalized.gridSize * normalized.gridSize);
   }
 
@@ -39,7 +49,7 @@ export function normalizeSaveData(raw, { minSize, maxSize, version }) {
   if (Array.isArray(raw.availableOrders)) {
     normalized.availableOrders = raw.availableOrders;
   }
-  if (raw.activeOrder && typeof raw.activeOrder === "object") {
+  if (raw.activeOrder && typeof raw.activeOrder === 'object') {
     normalized.activeOrder = raw.activeOrder;
   }
   if (Number.isFinite(raw.ordersCompleted)) {
@@ -56,7 +66,7 @@ export function normalizeSaveData(raw, { minSize, maxSize, version }) {
 }
 
 export function loadSave({ key, minSize, maxSize, version }) {
-  if (typeof window === "undefined" || !window.localStorage) return null;
+  if (typeof window === 'undefined' || !window.localStorage) return null;
   const raw = localStorage.getItem(key);
   if (!raw) return null;
 
@@ -67,8 +77,10 @@ export function loadSave({ key, minSize, maxSize, version }) {
     try {
       localStorage.setItem(`${key}_corrupt_${Date.now()}`, raw);
       localStorage.removeItem(key);
-    } catch {}
-    if (import.meta.env.DEV) console.debug("[farm] loadSave parse error:", e);
+    } catch {
+      /* ignore backup/localStorage failures */
+    }
+    if (import.meta.env.DEV) log.debug('loadSave parse error:', e);
     return null;
   }
 
@@ -77,11 +89,11 @@ export function loadSave({ key, minSize, maxSize, version }) {
 
 export function saveState({ key, data }) {
   try {
-    if (typeof window !== "undefined" && window.localStorage) {
+    if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem(key, JSON.stringify(data));
     }
   } catch (e) {
-    if (import.meta.env.DEV) console.debug("[farm] saveState error:", e);
+    if (import.meta.env.DEV) log.debug('saveState error:', e);
   }
 }
 

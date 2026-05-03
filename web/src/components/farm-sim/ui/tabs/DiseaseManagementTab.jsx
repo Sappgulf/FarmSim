@@ -16,14 +16,14 @@ const DiseaseManagementTab = memo(() => {
 
   // Calculate disease statistics
   const diseaseStats = useMemo(() => {
-    const diseasedPlots = (state.plots || []).filter(p => p.disease);
+    const diseasedPlots = (state.plots || []).filter((p) => p.disease);
     const diseaseTypes = {};
 
-    diseasedPlots.forEach(plot => {
+    diseasedPlots.forEach((plot) => {
       diseaseTypes[plot.disease] = (diseaseTypes[plot.disease] || 0) + 1;
     });
 
-    const totalPlots = (state.plots || []).filter(p => p.state !== 'empty').length;
+    const totalPlots = (state.plots || []).filter((p) => p.state !== 'empty').length;
     const healthyPlots = totalPlots - diseasedPlots.length;
     const healthPercent = totalPlots > 0 ? (healthyPlots / totalPlots) * 100 : 100;
 
@@ -42,8 +42,8 @@ const DiseaseManagementTab = memo(() => {
     if (!cureItem) return;
 
     // Find first diseased plot that this cure can fix
-    const targetPlotIndex = state.plots.findIndex(plot =>
-      plot.disease && cureItem.cures.includes(plot.disease)
+    const targetPlotIndex = state.plots.findIndex(
+      (plot) => plot.disease && cureItem.cures.includes(plot.disease)
     );
 
     if (targetPlotIndex === -1) {
@@ -87,7 +87,7 @@ const DiseaseManagementTab = memo(() => {
   // Handle universal cure (cure all)
   const handleCureAll = () => {
     const universalCure = CURE_ITEMS.universal_cure;
-    const diseasedPlots = (state.plots || []).filter(p => p.disease);
+    const diseasedPlots = (state.plots || []).filter((p) => p.disease);
 
     if (diseasedPlots.length === 0) {
       actions.addNotification({
@@ -106,7 +106,7 @@ const DiseaseManagementTab = memo(() => {
     }
 
     // Cure all diseased plots
-    const updatedPlots = state.plots.map(plot => {
+    const updatedPlots = state.plots.map((plot) => {
       if (plot.disease) {
         return {
           ...plot,
@@ -150,11 +150,11 @@ const DiseaseManagementTab = memo(() => {
         tone="rose"
         title="Disease Management"
         description="Protect crops from infections, cure outbreaks, and keep the farm healthy."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-rose-700 border-rose-200">
             {Math.round(diseaseStats.healthPercent)}% healthy
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -194,9 +194,7 @@ const DiseaseManagementTab = memo(() => {
           <div className="flex items-center gap-3">
             <Shield className="w-8 h-8 text-green-600 flex-shrink-0" />
             <div>
-              <div className="font-semibold text-green-800 text-lg">
-                🌿 All Crops Healthy!
-              </div>
+              <div className="font-semibold text-green-800 text-lg">🌿 All Crops Healthy!</div>
               <p className="text-sm text-green-600 mt-1">
                 No diseases detected. Keep your soil watered and your barn built to stay protected.
               </p>
@@ -209,7 +207,8 @@ const DiseaseManagementTab = memo(() => {
             <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
             <div className="flex-1">
               <div className="font-semibold text-red-800 mb-2">
-                ⚠️ {diseaseStats.totalDiseased} Active Infection{diseaseStats.totalDiseased > 1 ? 's' : ''}!
+                ⚠️ {diseaseStats.totalDiseased} Active Infection
+                {diseaseStats.totalDiseased > 1 ? 's' : ''}!
               </div>
               <div className="text-sm text-red-700 space-y-1">
                 {Object.entries(diseaseStats.diseaseTypes).map(([diseaseId, count]) => {
@@ -253,33 +252,30 @@ const DiseaseManagementTab = memo(() => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {Object.values(CURE_ITEMS).map((cureItem) => {
             const canAfford = state.coins >= cureItem.cost;
-            const hasMatchingDisease = state.plots.some(plot =>
-              plot.disease && cureItem.cures.includes(plot.disease)
+            const hasMatchingDisease = state.plots.some(
+              (plot) => plot.disease && cureItem.cures.includes(plot.disease)
             );
             const isUniversal = cureItem.id === 'universal_cure';
 
             return (
               <Card
                 key={cureItem.id}
-                className={`p-3 border-2 transition-all ${hasMatchingDisease && canAfford
-                  ? 'border-green-400 bg-green-50'
-                  : isUniversal
-                    ? 'border-purple-400 bg-purple-50'
-                    : 'border-gray-200'
-                  }`}
+                className={`p-3 border-2 transition-all ${
+                  hasMatchingDisease && canAfford
+                    ? 'border-green-400 bg-green-50'
+                    : isUniversal
+                      ? 'border-purple-400 bg-purple-50'
+                      : 'border-gray-200'
+                }`}
               >
                 <div className="flex items-start gap-3">
                   <span className="text-3xl">{cureItem.emoji}</span>
                   <div className="flex-1">
-                    <div className="font-semibold text-gray-800 mb-1">
-                      {cureItem.name}
-                    </div>
-                    <p className="text-xs text-gray-600 mb-2">
-                      {cureItem.description}
-                    </p>
+                    <div className="font-semibold text-gray-800 mb-1">{cureItem.name}</div>
+                    <p className="text-xs text-gray-600 mb-2">{cureItem.description}</p>
 
                     <div className="flex flex-wrap gap-1 mb-2">
-                      {cureItem.cures.map(diseaseId => {
+                      {cureItem.cures.map((diseaseId) => {
                         const disease = DISEASE_TYPES[diseaseId];
                         return disease ? (
                           <Badge key={diseaseId} variant="outline" className="text-xs">
@@ -294,10 +290,14 @@ const DiseaseManagementTab = memo(() => {
                         {cureItem.cost}🪙
                       </span>
                       <Button
-                        onClick={() => isUniversal ? handleCureAll() : handleApplyCure(cureItem.id)}
+                        onClick={() =>
+                          isUniversal ? handleCureAll() : handleApplyCure(cureItem.id)
+                        }
                         size="sm"
                         disabled={!canAfford || (!hasMatchingDisease && !isUniversal)}
-                        className={canAfford && hasMatchingDisease ? 'bg-green-600 hover:bg-green-700' : ''}
+                        className={
+                          canAfford && hasMatchingDisease ? 'bg-green-600 hover:bg-green-700' : ''
+                        }
                       >
                         {!canAfford
                           ? `Need ${cureItem.cost}🪙`
@@ -305,8 +305,7 @@ const DiseaseManagementTab = memo(() => {
                             ? 'No Target'
                             : isUniversal
                               ? '✨ Cure All'
-                              : '💊 Apply'
-                        }
+                              : '💊 Apply'}
                       </Button>
                     </div>
                   </div>
@@ -356,9 +355,15 @@ const DiseaseManagementTab = memo(() => {
 
                     <div className="mt-2 flex items-center gap-2 text-xs text-gray-600">
                       <span>Favorable:</span>
-                      {disease.favorableWeather.map(w => (
+                      {disease.favorableWeather.map((w) => (
                         <Badge key={w} variant="outline" className="text-xs">
-                          {w === 'sunny' ? '☀️' : w === 'rainy' ? '🌧️' : w === 'cloudy' ? '☁️' : '⛈️'}
+                          {w === 'sunny'
+                            ? '☀️'
+                            : w === 'rainy'
+                              ? '🌧️'
+                              : w === 'cloudy'
+                                ? '☁️'
+                                : '⛈️'}
                           {w}
                         </Badge>
                       ))}
@@ -375,7 +380,9 @@ const DiseaseManagementTab = memo(() => {
       <Card className="p-4 bg-blue-50 border-blue-200">
         <h4 className="font-semibold mb-2 text-blue-800">💡 Disease Prevention Tips</h4>
         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
-          <li>Disease checks happen at randomized intervals, so outbreaks feel less predictable.</li>
+          <li>
+            Disease checks happen at randomized intervals, so outbreaks feel less predictable.
+          </li>
           <li>Diseases spread to adjacent plots - treat infections quickly!</li>
           <li>Low water and poor soil health increase disease risk</li>
           <li>Build a Barn to reduce disease chance by 50%</li>

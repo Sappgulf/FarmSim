@@ -41,14 +41,9 @@ class TabErrorBoundary extends React.Component {
             </p>
             <details className="text-left bg-white p-4 rounded mb-4">
               <summary className="cursor-pointer font-semibold">Error Details</summary>
-              <pre className="mt-2 text-xs overflow-auto">
-                {this.state.error?.stack}
-              </pre>
+              <pre className="mt-2 text-xs overflow-auto">{this.state.error?.stack}</pre>
             </details>
-            <Button
-              onClick={this.handleReset}
-              variant="destructive"
-            >
+            <Button onClick={this.handleReset} variant="destructive">
               Try Again
             </Button>
           </div>
@@ -62,4 +57,3 @@ class TabErrorBoundary extends React.Component {
 }
 
 export default TabErrorBoundary;
-

@@ -13,7 +13,7 @@ export const FISH_TYPES = {
     baseValue: 20,
     difficulty: 1,
     size: { min: 5, max: 15 },
-    description: 'A typical pond fish'
+    description: 'A typical pond fish',
   },
   UNCOMMON: {
     id: 'uncommon',
@@ -23,7 +23,7 @@ export const FISH_TYPES = {
     baseValue: 40,
     difficulty: 2,
     size: { min: 10, max: 25 },
-    description: 'A feisty bass'
+    description: 'A feisty bass',
   },
   RARE: {
     id: 'rare',
@@ -33,7 +33,7 @@ export const FISH_TYPES = {
     baseValue: 80,
     difficulty: 3,
     size: { min: 20, max: 40 },
-    description: 'A beautiful trout'
+    description: 'A beautiful trout',
   },
   KOI: {
     id: 'koi',
@@ -43,7 +43,7 @@ export const FISH_TYPES = {
     baseValue: 110,
     difficulty: 3,
     size: { min: 22, max: 45 },
-    description: 'A graceful koi with shimmering scales'
+    description: 'A graceful koi with shimmering scales',
   },
   EPIC: {
     id: 'epic',
@@ -53,7 +53,7 @@ export const FISH_TYPES = {
     baseValue: 150,
     difficulty: 4,
     size: { min: 30, max: 60 },
-    description: 'A prized salmon'
+    description: 'A prized salmon',
   },
   LEGENDARY: {
     id: 'legendary',
@@ -63,7 +63,7 @@ export const FISH_TYPES = {
     baseValue: 500,
     difficulty: 5,
     size: { min: 40, max: 100 },
-    description: 'A legendary golden koi!'
+    description: 'A legendary golden koi!',
   },
   MYTHIC: {
     id: 'mythic',
@@ -73,8 +73,8 @@ export const FISH_TYPES = {
     baseValue: 900,
     difficulty: 5,
     size: { min: 55, max: 120 },
-    description: 'A mythic eel seen only under calm moonlight'
-  }
+    description: 'A mythic eel seen only under calm moonlight',
+  },
 };
 
 export const POND_UPGRADES = {
@@ -83,7 +83,7 @@ export const POND_UPGRADES = {
     capacity: 3,
     regenRate: 1,
     cost: 0,
-    name: 'Basic Pond'
+    name: 'Basic Pond',
   },
   IMPROVED: {
     level: 2,
@@ -91,7 +91,7 @@ export const POND_UPGRADES = {
     regenRate: 1.5,
     cost: 500,
     name: 'Improved Pond',
-    rarityBonus: 1.1
+    rarityBonus: 1.1,
   },
   ADVANCED: {
     level: 3,
@@ -99,7 +99,7 @@ export const POND_UPGRADES = {
     regenRate: 2,
     cost: 1500,
     name: 'Advanced Pond',
-    rarityBonus: 1.25
+    rarityBonus: 1.25,
   },
   MASTER: {
     level: 4,
@@ -107,8 +107,8 @@ export const POND_UPGRADES = {
     regenRate: 3,
     cost: 5000,
     name: 'Master Pond',
-    rarityBonus: 1.5
-  }
+    rarityBonus: 1.5,
+  },
 };
 
 const QUALITY_TIERS = [
@@ -151,7 +151,6 @@ export class FishingSystem {
     };
   }
 
-
   getRareCatchBonus() {
     const inventory = this.gameState?.inventory || {};
     return inventory.lucky_lure > 0 ? 1.35 : 1;
@@ -176,18 +175,17 @@ export class FishingSystem {
     if (pond.population < pond.maxPopulation) {
       const newPopulation = Math.min(
         pond.maxPopulation,
-        pond.population + (upgrade.regenRate * deltaTimeSec / 60)
+        pond.population + (upgrade.regenRate * deltaTimeSec) / 60
       );
 
       this.actions.updateFishing({
         ...this.gameState.fishing,
         pond: {
           ...pond,
-          population: newPopulation
-        }
+          population: newPopulation,
+        },
       });
     }
-
   }
 
   /**
@@ -202,7 +200,10 @@ export class FishingSystem {
     const pond = this.gameState.fishing.pond;
 
     if (pond.population < 10) {
-      return { success: false, message: 'Not enough fish in pond. Wait for population to recover.' };
+      return {
+        success: false,
+        message: 'Not enough fish in pond. Wait for population to recover.',
+      };
     }
 
     if (this.activeCatch) {
@@ -213,7 +214,9 @@ export class FishingSystem {
     const now = Date.now();
     const assist = this.getPondAssist();
     const fishDifficulty = clamp(hookedFish.difficulty || 1, 1, 5);
-    const size = Math.floor(Math.random() * (hookedFish.size.max - hookedFish.size.min + 1) + hookedFish.size.min);
+    const size = Math.floor(
+      Math.random() * (hookedFish.size.max - hookedFish.size.min + 1) + hookedFish.size.min
+    );
     const zoneHalfWidth = clamp(0.16 - fishDifficulty * 0.014 + assist.zoneBonus, 0.08, 0.18);
 
     this.activeCatch = {
@@ -223,7 +226,7 @@ export class FishingSystem {
       startTime: now,
       lastStepTime: now,
       elapsedMs: 0,
-      timeLimit: 7800 + (fishDifficulty * 1900),
+      timeLimit: 7800 + fishDifficulty * 1900,
       playerPosition: 0.5,
       fishPosition: Math.random() * 0.8 + 0.1,
       fishVelocity: (Math.random() - 0.5) * 0.35,
@@ -241,8 +244,8 @@ export class FishingSystem {
       ...this.gameState.fishing,
       pond: {
         ...this.gameState.fishing.pond,
-        population: Math.max(0, this.gameState.fishing.pond.population - 5)
-      }
+        population: Math.max(0, this.gameState.fishing.pond.population - 5),
+      },
     });
 
     return { success: true, catch: this.getActiveCatch() };
@@ -260,7 +263,7 @@ export class FishingSystem {
 
     const fishArray = Object.values(FISH_TYPES).map((fish) => {
       const isRareTier = fish.rarity <= 0.1;
-      const adjustedWeight = fish.rarity * (isRareTier ? (rarityBonus * lureBonus) : 1.0);
+      const adjustedWeight = fish.rarity * (isRareTier ? rarityBonus * lureBonus : 1.0);
       return { fish, weight: adjustedWeight };
     });
 
@@ -287,9 +290,10 @@ export class FishingSystem {
     if (!this.activeCatch) return { success: false };
 
     const now = Date.now();
-    const timeDelta = Number.isFinite(deltaMs) && deltaMs > 0
-      ? clamp(deltaMs, 16, 350)
-      : clamp(now - this.activeCatch.lastStepTime, 16, 350);
+    const timeDelta =
+      Number.isFinite(deltaMs) && deltaMs > 0
+        ? clamp(deltaMs, 16, 350)
+        : clamp(now - this.activeCatch.lastStepTime, 16, 350);
 
     this.activeCatch.lastStepTime = now;
     this.activeCatch.elapsedMs += timeDelta;
@@ -300,7 +304,8 @@ export class FishingSystem {
     const dartChance = 0.035 + this.activeCatch.difficulty * 0.01;
 
     if (Math.random() < dartChance) {
-      this.activeCatch.fishVelocity += (Math.random() < 0.5 ? -1 : 1) * (0.25 + this.activeCatch.difficulty * 0.06);
+      this.activeCatch.fishVelocity +=
+        (Math.random() < 0.5 ? -1 : 1) * (0.25 + this.activeCatch.difficulty * 0.06);
     }
 
     this.activeCatch.fishVelocity += drift * dt + (Math.random() - 0.5) * 0.25 * dt;
@@ -323,10 +328,12 @@ export class FishingSystem {
     this.activeCatch.distance = distance;
 
     if (inZone) {
-      const control = 1 - (distance / Math.max(0.001, this.activeCatch.zoneHalfWidth));
-      const progressGain = dt * (0.16 + this.activeCatch.difficulty * 0.045)
-        * (0.65 + control)
-        * (1 + this.activeCatch.assist.progressBonus);
+      const control = 1 - distance / Math.max(0.001, this.activeCatch.zoneHalfWidth);
+      const progressGain =
+        dt *
+        (0.16 + this.activeCatch.difficulty * 0.045) *
+        (0.65 + control) *
+        (1 + this.activeCatch.assist.progressBonus);
 
       this.activeCatch.progress = clamp(this.activeCatch.progress + progressGain, 0, 1);
       this.activeCatch.lineTension = clamp(
@@ -401,14 +408,20 @@ export class FishingSystem {
     const size = catchState.size;
     const sizeRange = Math.max(1, fish.size.max - fish.size.min);
 
-    const timeRatio = clamp(1 - (catchState.elapsedMs / catchState.timeLimit), 0, 1);
-    const controlRatio = clamp(catchState.qualityWindowMs / Math.max(1, catchState.elapsedMs), 0, 1);
+    const timeRatio = clamp(1 - catchState.elapsedMs / catchState.timeLimit, 0, 1);
+    const controlRatio = clamp(
+      catchState.qualityWindowMs / Math.max(1, catchState.elapsedMs),
+      0,
+      1
+    );
     const tensionScore = 1 - catchState.lineTension;
     const qualityScore = clamp(0.45 * controlRatio + 0.35 * timeRatio + 0.2 * tensionScore, 0, 1);
 
-    const qualityTier = QUALITY_TIERS.find((tier) => qualityScore >= tier.min) || QUALITY_TIERS[QUALITY_TIERS.length - 1];
-    const sizeMultiplier = 1 + ((size - fish.size.min) / sizeRange);
-    const difficultyMultiplier = 1 + (catchState.difficulty * 0.35);
+    const qualityTier =
+      QUALITY_TIERS.find((tier) => qualityScore >= tier.min) ||
+      QUALITY_TIERS[QUALITY_TIERS.length - 1];
+    const sizeMultiplier = 1 + (size - fish.size.min) / sizeRange;
+    const difficultyMultiplier = 1 + catchState.difficulty * 0.35;
     const level = this.gameState?.progression?.level || 1;
     const earlyCatchTuning = level < 6 ? 0.86 : 1;
     const projectedStreak = (this.gameState?.fishing?.stats?.streak || 0) + 1;
@@ -416,12 +429,24 @@ export class FishingSystem {
 
     const value = Math.max(
       1,
-      Math.floor(fish.baseValue * sizeMultiplier * difficultyMultiplier * qualityTier.multiplier * earlyCatchTuning * streakBonus)
+      Math.floor(
+        fish.baseValue *
+          sizeMultiplier *
+          difficultyMultiplier *
+          qualityTier.multiplier *
+          earlyCatchTuning *
+          streakBonus
+      )
     );
-    const xpReward = Math.max(2, Math.floor((fish.difficulty * 4) + (qualityScore * 8)));
+    const xpReward = Math.max(2, Math.floor(fish.difficulty * 4 + qualityScore * 8));
 
     this.actions.earnMoney(value);
-    this.actions.addXP(xpReward, { source: 'minigame', minigameId: 'fishing', skillFactor: qualityScore, label: 'Fishing Catch' });
+    this.actions.addXP(xpReward, {
+      source: 'minigame',
+      minigameId: 'fishing',
+      skillFactor: qualityScore,
+      label: 'Fishing Catch',
+    });
     this.actions.addToInventory(fish.id, 1);
 
     const previousStats = this.gameState.fishing.stats || {};
@@ -437,18 +462,18 @@ export class FishingSystem {
       lastCatchAt: Date.now(),
       byType: {
         ...(previousStats.byType || {}),
-        [fish.id]: ((previousStats.byType || {})[fish.id] || 0) + 1
-      }
+        [fish.id]: ((previousStats.byType || {})[fish.id] || 0) + 1,
+      },
     };
 
     this.actions.updateFishing({
       ...this.gameState.fishing,
-      stats: newStats
+      stats: newStats,
     });
 
     this.actions.addNotification({
       message: `${fish.emoji} ${qualityTier.label} catch: ${fish.name} (${size}cm) +$${value} +${xpReward} XP${qualityTier.label === 'Perfect' ? ' • Bonus payout!' : ''}`,
-      type: 'success'
+      type: 'success',
     });
 
     const result = {
@@ -471,11 +496,12 @@ export class FishingSystem {
     if (!this.activeCatch) return { success: false };
 
     const fish = this.activeCatch.fish;
-    const reasonLabel = reason === 'line_snap'
-      ? 'The line snapped'
-      : reason === 'timeout'
-        ? 'The fish tired you out'
-        : 'The fish got away';
+    const reasonLabel =
+      reason === 'line_snap'
+        ? 'The line snapped'
+        : reason === 'timeout'
+          ? 'The fish tired you out'
+          : 'The fish got away';
 
     const previousStats = this.gameState.fishing.stats || {};
     this.actions.updateFishing({
@@ -491,7 +517,7 @@ export class FishingSystem {
 
     this.actions.addNotification({
       message: `${fish.emoji} ${reasonLabel}!`,
-      type: 'warning'
+      type: 'warning',
     });
 
     const result = {
@@ -527,13 +553,13 @@ export class FishingSystem {
       pond: {
         ...this.gameState.fishing.pond,
         level: currentLevel + 1,
-        maxPopulation: 100 + (currentLevel * 50)
-      }
+        maxPopulation: 100 + currentLevel * 50,
+      },
     });
 
     this.actions.addNotification({
       message: `🎣 Pond upgraded to ${nextUpgrade.name}!`,
-      type: 'success'
+      type: 'success',
     });
 
     return { success: true, upgrade: nextUpgrade };
@@ -549,7 +575,7 @@ export class FishingSystem {
     if (this.activeCatch) {
       this.actions.addNotification({
         message: '🎣 Stopped fishing',
-        type: 'info'
+        type: 'info',
       });
       this.activeCatch = null;
     }
@@ -568,7 +594,7 @@ export class FishingSystem {
         lastCatchQuality: null,
         byType: {},
         pondLevel: 1,
-        pondPopulation: 0
+        pondPopulation: 0,
       };
     }
 
@@ -582,7 +608,7 @@ export class FishingSystem {
       lastCatchQuality: this.gameState.fishing?.stats?.lastCatchQuality || null,
       byType: this.gameState.fishing?.stats?.byType || {},
       pondLevel: this.gameState.fishing?.pond?.level || 1,
-      pondPopulation: Math.floor(this.gameState.fishing?.pond?.population || 0)
+      pondPopulation: Math.floor(this.gameState.fishing?.pond?.population || 0),
     };
   }
 }

@@ -62,7 +62,7 @@ export const clearBuildings = (actions) => {
 
 export const advanceChallengeDays = (state, actions, days = 30) => {
   const safeDays = Math.max(0, Number(days) || 0);
-  actions.updateLastChallengeReset(Date.now() - (safeDays * DAY_MS));
+  actions.updateLastChallengeReset(Date.now() - safeDays * DAY_MS);
   actions.updateChallengeStreak((state.challengeStreak || 0) + safeDays);
   actions.setDailyChallenges([]);
   actions.updateDailyQuests(null);

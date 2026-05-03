@@ -45,7 +45,9 @@ const PerfHud = memo(() => {
       const metrics = window.__farmPerfMetrics || {};
       const fps = Number(window.__currentFPS || metrics.avgFps || 0);
       const updateMs = Number(window.__lastUpdateTime || metrics.updateTime || 0);
-      const renderMs = Number(metrics.renderTime || Math.max(0, (metrics.avgFrameTime || 0) - updateMs));
+      const renderMs = Number(
+        metrics.renderTime || Math.max(0, (metrics.avgFrameTime || 0) - updateMs)
+      );
       const next = {
         fps: Number.isFinite(fps) ? fps : 0,
         updateMs: Number.isFinite(updateMs) ? updateMs : 0,

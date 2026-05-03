@@ -15,7 +15,7 @@ export const getDayKey = (timestamp = Date.now()) => {
 
 export const getSeasonBit = (season) => {
   const index = ALMANAC_SEASONS.indexOf(season);
-  return index >= 0 ? (1 << index) : 0;
+  return index >= 0 ? 1 << index : 0;
 };
 
 export const countBits = (mask = 0) => {

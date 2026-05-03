@@ -6,12 +6,7 @@ import React, { memo, useMemo, useState } from 'react';
 import { ChevronRight, Sparkles } from 'lucide-react';
 import { CROPS } from '../../data/crops';
 
-function SeedTrayComponent({
-  inventory,
-  selectedSeed,
-  onSelectSeed,
-  onOpenShop,
-}) {
+function SeedTrayComponent({ inventory, selectedSeed, onSelectSeed, onOpenShop }) {
   const [pressedSeed, setPressedSeed] = useState(null);
 
   // Get seeds with stock
@@ -64,9 +59,10 @@ function SeedTrayComponent({
                   w-18 h-18 rounded-xl border-2 transition-all duration-200
                   touch-manipulation transform-gpu
                   ${isPressed ? 'scale-90' : 'active:scale-95'}
-                  ${isSelected
-                    ? 'bg-gradient-to-br from-emerald-50 to-green-100 border-emerald-400 shadow-lg shadow-emerald-200/50 scale-105'
-                    : 'bg-gradient-to-br from-gray-50 to-slate-100 border-gray-200 hover:border-emerald-300 hover:shadow-md hover:scale-102'
+                  ${
+                    isSelected
+                      ? 'bg-gradient-to-br from-emerald-50 to-green-100 border-emerald-400 shadow-lg shadow-emerald-200/50 scale-105'
+                      : 'bg-gradient-to-br from-gray-50 to-slate-100 border-gray-200 hover:border-emerald-300 hover:shadow-md hover:scale-102'
                   }
                 `}
                 style={{ width: '72px', height: '72px' }}
@@ -78,21 +74,26 @@ function SeedTrayComponent({
                   <div className="absolute inset-0 rounded-xl bg-emerald-400/10 animate-pulse" />
                 )}
 
-                <span className={`text-3xl drop-shadow-sm transition-transform duration-200 ${isSelected ? 'scale-110' : ''}`}>
+                <span
+                  className={`text-3xl drop-shadow-sm transition-transform duration-200 ${isSelected ? 'scale-110' : ''}`}
+                >
                   {seed.emoji}
                 </span>
 
                 {/* Stock badge */}
-                <span className={`
+                <span
+                  className={`
                   absolute -bottom-1 left-1/2 -translate-x-1/2
                   text-[11px] font-bold px-2 py-0.5 rounded-full
-                  ${isSelected
-                    ? 'bg-emerald-500 text-white shadow-md'
-                    : isLowStock
-                      ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                      : 'bg-gray-200 text-gray-600'
+                  ${
+                    isSelected
+                      ? 'bg-emerald-500 text-white shadow-md'
+                      : isLowStock
+                        ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                        : 'bg-gray-200 text-gray-600'
                   }
-                `}>
+                `}
+                >
                   {seed.count}
                 </span>
 
@@ -137,9 +138,7 @@ function SeedTrayComponent({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-gray-800 capitalize">
-                  {selectedSeed}
-                </span>
+                <span className="text-sm font-bold text-gray-800 capitalize">{selectedSeed}</span>
                 {CROPS[selectedSeed].rarity === 'rare' && (
                   <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
                     <Sparkles size={8} />

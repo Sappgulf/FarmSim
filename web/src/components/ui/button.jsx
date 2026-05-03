@@ -1,18 +1,21 @@
-import React, { useRef, useState, useCallback, forwardRef } from "react";
+import React, { useRef, useState, useCallback, forwardRef } from 'react';
 
 /**
  * Premium Button component with juicy animations and ripple effects
  */
-export const Button = forwardRef(function Button({
-  children,
-  onClick,
-  type = "button",
-  variant = "default",
-  size = "default",
-  className = "",
-  juicy = false,
-  ...props
-}, forwardedRef) {
+export const Button = forwardRef(function Button(
+  {
+    children,
+    onClick,
+    type = 'button',
+    variant = 'default',
+    size = 'default',
+    className = '',
+    juicy = false,
+    ...props
+  },
+  forwardedRef
+) {
   const buttonRef = useRef(null);
   const [isPressed, setIsPressed] = useState(false);
 
@@ -84,23 +87,25 @@ export const Button = forwardRef(function Button({
   };
 
   const sizes = {
-    default: "h-10 py-2 px-4",
-    sm: "h-8 px-3 text-xs",
-    lg: "h-12 px-6 text-base font-bold",
-    xl: "h-14 px-8 text-lg font-bold",
-    icon: "h-10 w-10 p-0",
-    "icon-sm": "h-8 w-8 p-0",
+    default: 'h-10 py-2 px-4',
+    sm: 'h-8 px-3 text-xs',
+    lg: 'h-12 px-6 text-base font-bold',
+    xl: 'h-14 px-8 text-lg font-bold',
+    icon: 'h-10 w-10 p-0',
+    'icon-sm': 'h-8 w-8 p-0',
   };
 
   const createRipple = useCallback((event) => {
     const button = buttonRef.current;
     if (!button) return;
 
-    const ripple = document.createElement("span");
+    const ripple = document.createElement('span');
     const rect = button.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
-    const hasPointerPosition = Number.isFinite(event?.clientX) && Number.isFinite(event?.clientY)
-      && (event.clientX !== 0 || event.clientY !== 0);
+    const hasPointerPosition =
+      Number.isFinite(event?.clientX) &&
+      Number.isFinite(event?.clientY) &&
+      (event.clientX !== 0 || event.clientY !== 0);
     const centerX = rect.width / 2 - size / 2;
     const centerY = rect.height / 2 - size / 2;
     const x = hasPointerPosition ? event.clientX - rect.left - size / 2 : centerX;
@@ -123,12 +128,15 @@ export const Button = forwardRef(function Button({
     setTimeout(() => ripple.remove(), 600);
   }, []);
 
-  const handleClick = useCallback((event) => {
-    setIsPressed(true);
-    setTimeout(() => setIsPressed(false), 150);
-    createRipple(event);
-    onClick?.(event);
-  }, [onClick, createRipple]);
+  const handleClick = useCallback(
+    (event) => {
+      setIsPressed(true);
+      setTimeout(() => setIsPressed(false), 150);
+      createRipple(event);
+      onClick?.(event);
+    },
+    [onClick, createRipple]
+  );
 
   return (
     <button

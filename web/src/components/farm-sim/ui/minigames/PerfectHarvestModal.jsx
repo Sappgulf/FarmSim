@@ -48,9 +48,10 @@ export default function PerfectHarvestModal({
 
   const activeRule = ruleSet || DEFAULT_RULE;
   const rounds = Math.max(1, Math.min(activeRule.rounds || 1, 3));
-  const speedCurve = Array.isArray(activeRule.speedCurve) && activeRule.speedCurve.length
-    ? activeRule.speedCurve
-    : DEFAULT_RULE.speedCurve;
+  const speedCurve =
+    Array.isArray(activeRule.speedCurve) && activeRule.speedCurve.length
+      ? activeRule.speedCurve
+      : DEFAULT_RULE.speedCurve;
   const windows = activeRule.targetWindows || DEFAULT_RULE.targetWindows;
   const zoneWidth = Math.min(0.3, (windows.bronze || 0.1) * 2);
   const panelClass = activeRule.theme?.panel || DEFAULT_RULE.theme.panel;
@@ -141,11 +142,12 @@ export default function PerfectHarvestModal({
       setRoundIndex(roundIndex + 1);
       setHasStarted(false);
       triggerFeedback(result.tier);
-      playSfx(result.tier === 'miss' ? (sfx.miss || 'error') : (sfx.hit || 'harvest'));
+      playSfx(result.tier === 'miss' ? sfx.miss || 'error' : sfx.hit || 'harvest');
       return;
     }
 
-    const averageDistance = nextResults.reduce((sum, entry) => sum + entry.distance, 0) / nextResults.length;
+    const averageDistance =
+      nextResults.reduce((sum, entry) => sum + entry.distance, 0) / nextResults.length;
     const tier = getTierForDistance(averageDistance, windows);
     setFinalTier(tier);
     onComplete?.(tier, {
@@ -154,7 +156,7 @@ export default function PerfectHarvestModal({
       ruleId: activeRule.id,
     });
     triggerFeedback(tier);
-    playSfx(tier === 'miss' ? (sfx.miss || 'error') : (sfx.hit || 'harvest'));
+    playSfx(tier === 'miss' ? sfx.miss || 'error' : sfx.hit || 'harvest');
     playSfx(sfx.reward || 'money');
   };
 
@@ -190,14 +192,18 @@ export default function PerfectHarvestModal({
   };
 
   const barPosition = engineState?.position ?? 0;
-  const zoneLeft = Math.max(0, ((engineState?.sweetSpot ?? 0.5) - (engineState?.zoneWidth ?? zoneWidth) / 2) * 100);
+  const zoneLeft = Math.max(
+    0,
+    ((engineState?.sweetSpot ?? 0.5) - (engineState?.zoneWidth ?? zoneWidth) / 2) * 100
+  );
   const zoneWidthPct = (engineState?.zoneWidth ?? zoneWidth) * 100;
   const roundLabel = `Round ${Math.min(roundIndex + 1, rounds)} of ${rounds}`;
-  const feedbackClass = feedback === 'hit'
-    ? 'ring-2 ring-emerald-300/80'
-    : feedback === 'miss'
-      ? 'ring-2 ring-rose-300/80'
-      : '';
+  const feedbackClass =
+    feedback === 'hit'
+      ? 'ring-2 ring-emerald-300/80'
+      : feedback === 'miss'
+        ? 'ring-2 ring-rose-300/80'
+        : '';
 
   return (
     <div
@@ -205,7 +211,7 @@ export default function PerfectHarvestModal({
       data-qa="festival-game-modal"
     >
       <Card className="w-full max-w-md rounded-2xl border border-white/40 bg-white/95 p-5 shadow-2xl animate-overlay-card">
-        <div className={`rounded-xl bg-gradient-to-r ${panelClass} p-3`}> 
+        <div className={`rounded-xl bg-gradient-to-r ${panelClass} p-3`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-lg font-semibold text-emerald-800">
               <span className="text-lg">{icon}</span>
@@ -225,7 +231,8 @@ export default function PerfectHarvestModal({
           <div className="mt-2 flex items-center justify-between text-xs text-emerald-700">
             <span>{roundLabel}</span>
             <span className="flex items-center gap-1">
-              <Trophy className="icon-14" /> {finalTier ? RESULT_COPY[finalTier].title : 'Aim for Gold'}
+              <Trophy className="icon-14" />{' '}
+              {finalTier ? RESULT_COPY[finalTier].title : 'Aim for Gold'}
             </span>
           </div>
         </div>
@@ -251,19 +258,24 @@ export default function PerfectHarvestModal({
         </div>
 
         {finalTier ? (
-          <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3 text-sm text-emerald-800" aria-live="polite">
+          <div
+            className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3 text-sm text-emerald-800"
+            aria-live="polite"
+          >
             <div className="font-semibold">{RESULT_COPY[finalTier].title}</div>
             <div className="text-xs text-emerald-700">{RESULT_COPY[finalTier].helper}</div>
             {rewardSummary && (
-              <div className="mt-2 text-xs text-emerald-700">
-                Reward: {rewardSummary.text}
-              </div>
+              <div className="mt-2 text-xs text-emerald-700">Reward: {rewardSummary.text}</div>
             )}
           </div>
         ) : (
           <div className="mt-4 flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <Button className="flex-1" onClick={hasStarted ? handleStop : handleStart} data-qa="festival-game-start">
+              <Button
+                className="flex-1"
+                onClick={hasStarted ? handleStop : handleStart}
+                data-qa="festival-game-start"
+              >
                 {hasStarted ? 'Stop' : 'Start'}
               </Button>
               <Button

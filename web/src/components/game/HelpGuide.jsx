@@ -5,8 +5,23 @@
 import React, { memo, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  X, Search, Book, Leaf, Droplet, Sun, Cloud, Building2, Coins,
-  Trophy, Dna, Zap, HelpCircle, ChevronRight, ExternalLink, Sparkles, Info
+  X,
+  Search,
+  Book,
+  Leaf,
+  Droplet,
+  Sun,
+  Cloud,
+  Building2,
+  Coins,
+  Trophy,
+  Dna,
+  Zap,
+  HelpCircle,
+  ChevronRight,
+  ExternalLink,
+  Sparkles,
+  Info,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { CROPS, CROP_FAMILIES, QUALITY_TIERS, RARITY_COLORS } from '../../data/crops';
@@ -316,19 +331,17 @@ function HelpGuideComponent({ isOpen, onClose, initialCategory = 'basics' }) {
 
   // Filter sections based on search
   const filteredSections = searchQuery
-    ? currentContent.sections.filter(s =>
-        s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.content.toLowerCase().includes(searchQuery.toLowerCase())
+    ? currentContent.sections.filter(
+        (s) =>
+          s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          s.content.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : currentContent.sections;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative m-4 flex flex-col bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-auto overflow-hidden">
@@ -338,10 +351,7 @@ function HelpGuideComponent({ isOpen, onClose, initialCategory = 'basics' }) {
             <Book size={24} />
             <h2 className="text-xl font-bold">Farm Guide</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -374,9 +384,10 @@ function HelpGuideComponent({ isOpen, onClose, initialCategory = 'basics' }) {
                   }}
                   className={`
                     w-full flex items-center gap-2 px-4 py-3 text-left text-sm transition-colors
-                    ${selectedCategory === cat.id
-                      ? 'bg-white border-r-2 border-emerald-500 font-medium'
-                      : 'hover:bg-gray-100'
+                    ${
+                      selectedCategory === cat.id
+                        ? 'bg-white border-r-2 border-emerald-500 font-medium'
+                        : 'hover:bg-gray-100'
                     }
                   `}
                 >
@@ -389,9 +400,7 @@ function HelpGuideComponent({ isOpen, onClose, initialCategory = 'basics' }) {
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">
-              {currentContent.title}
-            </h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">{currentContent.title}</h3>
 
             {filteredSections.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
@@ -407,9 +416,9 @@ function HelpGuideComponent({ isOpen, onClose, initialCategory = 'basics' }) {
                       {section.title}
                     </h4>
                     <div className="prose prose-sm max-w-none text-gray-600 whitespace-pre-line leading-relaxed">
-                      {section.content.split('**').map((part, j) =>
-                        j % 2 === 1 ? <strong key={j}>{part}</strong> : part
-                      )}
+                      {section.content
+                        .split('**')
+                        .map((part, j) => (j % 2 === 1 ? <strong key={j}>{part}</strong> : part))}
                     </div>
                   </div>
                 ))}
@@ -420,7 +429,8 @@ function HelpGuideComponent({ isOpen, onClose, initialCategory = 'basics' }) {
 
         {/* Footer */}
         <div className="p-3 border-t bg-gray-50 text-center text-xs text-gray-500">
-          Press <kbd className="px-1.5 py-0.5 bg-gray-200 rounded">?</kbd> to open this guide anytime
+          Press <kbd className="px-1.5 py-0.5 bg-gray-200 rounded">?</kbd> to open this guide
+          anytime
         </div>
       </div>
     </div>,

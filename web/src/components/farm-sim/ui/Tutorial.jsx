@@ -165,8 +165,16 @@ const Tutorial = memo(() => {
     const dx = event.clientX - dragStateRef.current.startX;
     const dy = event.clientY - dragStateRef.current.startY;
 
-    const nextLeft = clamp(dragStateRef.current.originLeft + dx, margin, viewportWidth - cardWidth - margin);
-    const nextTop = clamp(dragStateRef.current.originTop + dy, margin, viewportHeight - cardHeight - margin);
+    const nextLeft = clamp(
+      dragStateRef.current.originLeft + dx,
+      margin,
+      viewportWidth - cardWidth - margin
+    );
+    const nextTop = clamp(
+      dragStateRef.current.originTop + dy,
+      margin,
+      viewportHeight - cardHeight - margin
+    );
 
     setManualPosition({ left: nextLeft, top: nextTop, width: cardWidth });
   };
@@ -176,7 +184,11 @@ const Tutorial = memo(() => {
   };
 
   const handleSkip = () => {
-    actions.updateOnboarding({ onboardingSkipped: true, onboardingStep: totalSteps, onboardingSeen: true });
+    actions.updateOnboarding({
+      onboardingSkipped: true,
+      onboardingStep: totalSteps,
+      onboardingSeen: true,
+    });
   };
 
   if (!shouldShow || !currentStep || !position) return null;

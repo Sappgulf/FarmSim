@@ -1,8 +1,10 @@
 export const createMilestoneManager = (definitions = []) => {
   const milestones = definitions;
 
-  const evaluateUnlocks = (progress = {}, unlocked = {}) => milestones
-    .filter((m) => !unlocked[m.id] && Number(progress[m.type] || 0) >= Number(m.target || 0));
+  const evaluateUnlocks = (progress = {}, unlocked = {}) =>
+    milestones.filter(
+      (m) => !unlocked[m.id] && Number(progress[m.type] || 0) >= Number(m.target || 0)
+    );
 
   return {
     registerMilestones: () => milestones,

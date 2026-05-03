@@ -66,7 +66,6 @@ export function useAutoSave({ stateRef, dispatchRef, actionsRef, paused, autoSav
                 }
               }
             } catch (error) {
-              // eslint-disable-next-line no-console
               console.error('[farm] Auto-save failed:', error);
             }
           };
@@ -77,7 +76,6 @@ export function useAutoSave({ stateRef, dispatchRef, actionsRef, paused, autoSav
             deferredAutoSaveRef.current = setTimeout(saveToStorage, 0);
           }
         } catch (error) {
-          // eslint-disable-next-line no-console
           console.error('[farm] Auto-save serialization failed:', error);
         }
       }, 2000);

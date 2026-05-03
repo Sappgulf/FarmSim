@@ -11,11 +11,7 @@ import {
   logDebugAction,
 } from '../../../utils/debugTools';
 import { canRelease } from '../../../utils/releaseTools';
-import {
-  QA_BACKUP_SAVE_KEY,
-  QA_SAVE_KEY,
-  clearSaveKey,
-} from '../context/GamePersistence';
+import { QA_BACKUP_SAVE_KEY, QA_SAVE_KEY, clearSaveKey } from '../context/GamePersistence';
 import {
   advanceChallengeDays,
   clearBuildings,
@@ -61,68 +57,82 @@ const QAModePanel = memo(() => {
 
   const sleep = useCallback((ms) => new Promise((resolve) => setTimeout(resolve, ms)), []);
 
-  const waitForPanel = useCallback(async (tabId, timeoutMs = 1500) => {
-    const start = performance.now();
-    while (performance.now() - start < timeoutMs) {
-      const panel = document.getElementById(`panel-${tabId}`);
-      if (panel) return panel;
-      await sleep(50);
-    }
-    return null;
-  }, [sleep]);
+  const waitForPanel = useCallback(
+    async (tabId, timeoutMs = 1500) => {
+      const start = performance.now();
+      while (performance.now() - start < timeoutMs) {
+        const panel = document.getElementById(`panel-${tabId}`);
+        if (panel) return panel;
+        await sleep(50);
+      }
+      return null;
+    },
+    [sleep]
+  );
 
-  const switchToTab = useCallback(async (tabId) => {
-    if (typeof window === 'undefined' || typeof window.switchToTab !== 'function') {
-      throw new Error('window.switchToTab not available');
-    }
-    window.switchToTab(tabId);
-    const panel = await waitForPanel(tabId);
-    if (!panel) {
-      throw new Error(`Tab panel not found for ${tabId}`);
-    }
-    return panel;
-  }, [waitForPanel]);
+  const switchToTab = useCallback(
+    async (tabId) => {
+      if (typeof window === 'undefined' || typeof window.switchToTab !== 'function') {
+        throw new Error('window.switchToTab not available');
+      }
+      window.switchToTab(tabId);
+      const panel = await waitForPanel(tabId);
+      if (!panel) {
+        throw new Error(`Tab panel not found for ${tabId}`);
+      }
+      return panel;
+    },
+    [waitForPanel]
+  );
 
-  const helpers = useMemo(() => ({
-    fillAllPlots: (status) => fillAllPlots(getState(), actions, status),
-    spawnNotifications: (count) => spawnNotifications(actions, count),
-    clearNotifications: () => clearNotifications(getState(), actions),
-    placeBuildings: () => placeBuildings(actions),
-    clearBuildings: () => clearBuildings(actions),
-    advanceChallengeDays: (days) => advanceChallengeDays(getState(), actions, days),
-  }), [actions, getState]);
+  const helpers = useMemo(
+    () => ({
+      fillAllPlots: (status) => fillAllPlots(getState(), actions, status),
+      spawnNotifications: (count) => spawnNotifications(actions, count),
+      clearNotifications: () => clearNotifications(getState(), actions),
+      placeBuildings: () => placeBuildings(actions),
+      clearBuildings: () => clearBuildings(actions),
+      advanceChallengeDays: (days) => advanceChallengeDays(getState(), actions, days),
+    }),
+    [actions, getState]
+  );
 
-  const getDebugMetricsSafe = useCallback(() => (
-    getDebugMetrics() || {
-      timerCount: 0,
-      listenerCount: 0,
-      consoleErrorCount: 0,
-      consoleWarnCount: 0,
-      lastError: null,
-    }
-  ), []);
-
-  const getPerfSnapshot = useCallback((label) => {
-    const perf = typeof window !== 'undefined' ? window.__farmPerfMetrics : null;
-    const debug = getDebugMetricsSafe();
-    const snapshotState = getState() || {};
-    return {
-      label,
-      timestamp: new Date().toISOString(),
-      fpsAvg: Math.round(perf?.avgFps || window.__currentFPS || 0),
-      frameAvgMs: Number(perf?.avgFrameTime || 0),
-      frameWorstMs: Number(perf?.worstFrameTime || 0),
-      updateMs: Number(perf?.updateTime || window.__lastUpdateTime || 0),
-      renderMs: Number(perf?.renderTime || 0),
-      memoryMb: Number(perf?.memory || 0),
-      counts: {
-        plots: snapshotState.plots?.length || 0,
-        notifications: snapshotState.notifications?.length || 0,
-        timers: debug.timerCount || 0,
-        listeners: debug.listenerCount || 0,
+  const getDebugMetricsSafe = useCallback(
+    () =>
+      getDebugMetrics() || {
+        timerCount: 0,
+        listenerCount: 0,
+        consoleErrorCount: 0,
+        consoleWarnCount: 0,
+        lastError: null,
       },
-    };
-  }, [getDebugMetricsSafe, getState]);
+    []
+  );
+
+  const getPerfSnapshot = useCallback(
+    (label) => {
+      const perf = typeof window !== 'undefined' ? window.__farmPerfMetrics : null;
+      const debug = getDebugMetricsSafe();
+      const snapshotState = getState() || {};
+      return {
+        label,
+        timestamp: new Date().toISOString(),
+        fpsAvg: Math.round(perf?.avgFps || window.__currentFPS || 0),
+        frameAvgMs: Number(perf?.avgFrameTime || 0),
+        frameWorstMs: Number(perf?.worstFrameTime || 0),
+        updateMs: Number(perf?.updateTime || window.__lastUpdateTime || 0),
+        renderMs: Number(perf?.renderTime || 0),
+        memoryMb: Number(perf?.memory || 0),
+        counts: {
+          plots: snapshotState.plots?.length || 0,
+          notifications: snapshotState.notifications?.length || 0,
+          timers: debug.timerCount || 0,
+          listeners: debug.listenerCount || 0,
+        },
+      };
+    },
+    [getDebugMetricsSafe, getState]
+  );
 
   const buildReport = useCallback((summary, testResults) => {
     const lines = [];
@@ -130,7 +140,9 @@ const QAModePanel = memo(() => {
     lines.push(`Date: ${new Date().toISOString()}`);
     if (summary) {
       lines.push(`Suite Status: ${summary.status.toUpperCase()}`);
-      lines.push(`Totals: ${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped`);
+      lines.push(
+        `Totals: ${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped`
+      );
     }
     if (summary?.metrics?.start) {
       lines.push(`Suite Start Metrics: ${JSON.stringify(summary.metrics.start)}`);
@@ -141,7 +153,9 @@ const QAModePanel = memo(() => {
     lines.push('');
     lines.push('## Test Results');
     testResults.forEach((result) => {
-      lines.push(`- [${result.status.toUpperCase()}] ${result.name} (${result.durationMs}ms) @ ${result.startedAt}`);
+      lines.push(
+        `- [${result.status.toUpperCase()}] ${result.name} (${result.durationMs}ms) @ ${result.startedAt}`
+      );
       if (result.errors?.length) {
         lines.push(`  Errors: ${result.errors.map((err) => err.message || err).join(' | ')}`);
       }
@@ -164,139 +178,156 @@ const QAModePanel = memo(() => {
     return lines.join('\n');
   }, []);
 
-  const runTest = useCallback(async (test, testBaselineState) => {
-    const startedAt = new Date().toISOString();
-    const logs = [];
-    const log = (message) => {
-      logs.push({ time: new Date().toISOString(), message });
-    };
+  const runTest = useCallback(
+    async (test, testBaselineState) => {
+      const startedAt = new Date().toISOString();
+      const logs = [];
+      const log = (message) => {
+        logs.push({ time: new Date().toISOString(), message });
+      };
 
-    clearConsoleEvents();
-    clearDebugError();
+      clearConsoleEvents();
+      clearDebugError();
 
-    if (testBaselineState) {
-      actions.debugLoadState?.(testBaselineState);
-      await sleep(50);
-    }
+      if (testBaselineState) {
+        actions.debugLoadState?.(testBaselineState);
+        await sleep(50);
+      }
 
-    const ctx = {
-      state: getState,
+      const ctx = {
+        state: getState,
+        actions,
+        systems: systemsRef.current,
+        helpers,
+        sleep,
+        switchToTab,
+        waitForPanel,
+        log,
+        getDebugMetrics: getDebugMetricsSafe,
+      };
+
+      const metricsStart = getPerfSnapshot('test-start');
+      const startTime = performance.now();
+      let status = 'pass';
+      let detail = null;
+      let errors = [];
+
+      try {
+        const runPromise = test.run(ctx);
+        const timeoutMs = test.timeoutMs || 10000;
+        const result = await Promise.race([
+          runPromise,
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Test timeout')), timeoutMs)
+          ),
+        ]);
+        if (result?.status === 'skip') {
+          status = 'skip';
+          detail = result.reason || 'Skipped';
+        } else {
+          detail = result?.detail || null;
+        }
+      } catch (error) {
+        status = 'fail';
+        errors.push(error);
+      }
+
+      const consoleEvents = getConsoleEvents();
+      const debugMetrics = getDebugMetricsSafe();
+      if (debugMetrics.lastError) {
+        status = 'fail';
+        errors.push(new Error(`Unhandled error: ${debugMetrics.lastError.message}`));
+      }
+      if (consoleEvents.errors.length > 0) {
+        status = 'fail';
+        errors = errors.concat(
+          consoleEvents.errors.map((entry) => new Error(entry.message || 'Console error'))
+        );
+      }
+
+      const durationMs = Math.round(performance.now() - startTime);
+      const metricsEnd = getPerfSnapshot('test-end');
+
+      return {
+        id: test.id,
+        name: test.name,
+        status,
+        startedAt,
+        durationMs,
+        logs,
+        errors,
+        detail,
+        console: consoleEvents,
+        metrics: { start: metricsStart, end: metricsEnd },
+      };
+    },
+    [
       actions,
-      systems: systemsRef.current,
+      getDebugMetricsSafe,
+      getPerfSnapshot,
+      getState,
       helpers,
       sleep,
       switchToTab,
       waitForPanel,
-      log,
-      getDebugMetrics: getDebugMetricsSafe,
-    };
+    ]
+  );
 
-    const metricsStart = getPerfSnapshot('test-start');
-    const startTime = performance.now();
-    let status = 'pass';
-    let detail = null;
-    let errors = [];
+  const runTests = useCallback(
+    async (testIds) => {
+      if (running) return;
+      setRunning(true);
+      setResults([]);
+      setSuiteSummary(null);
+      setActiveTestId(null);
 
-    try {
-      const runPromise = test.run(ctx);
-      const timeoutMs = test.timeoutMs || 10000;
-      const result = await Promise.race([
-        runPromise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Test timeout')), timeoutMs)),
-      ]);
-      if (result?.status === 'skip') {
-        status = 'skip';
-        detail = result.reason || 'Skipped';
-      } else {
-        detail = result?.detail || null;
+      const originalState = cloneState(getState());
+      const testBaseline = cloneState(originalState);
+      testBaseline.settings = { ...testBaseline.settings, autoSave: false };
+      testBaseline.gameLoop = { ...testBaseline.gameLoop, paused: true };
+
+      actions.debugLoadState?.(testBaseline);
+      await sleep(80);
+
+      logDebugAction('qa_suite_start', { tests: testIds });
+
+      const suiteMetricsStart = getPerfSnapshot('suite-start');
+      const selectedTests = QA_TESTS.filter((test) => testIds.includes(test.id));
+      const nextResults = [];
+
+      for (const test of selectedTests) {
+        setActiveTestId(test.id);
+        const result = await runTest(test, testBaseline);
+        nextResults.push(result);
+        setResults([...nextResults]);
       }
-    } catch (error) {
-      status = 'fail';
-      errors.push(error);
-    }
 
-    const consoleEvents = getConsoleEvents();
-    const debugMetrics = getDebugMetricsSafe();
-    if (debugMetrics.lastError) {
-      status = 'fail';
-      errors.push(new Error(`Unhandled error: ${debugMetrics.lastError.message}`));
-    }
-    if (consoleEvents.errors.length > 0) {
-      status = 'fail';
-      errors = errors.concat(
-        consoleEvents.errors.map((entry) => new Error(entry.message || 'Console error'))
-      );
-    }
+      const suiteMetricsEnd = getPerfSnapshot('suite-end');
+      const failed = nextResults.filter((res) => res.status === 'fail').length;
+      const skipped = nextResults.filter((res) => res.status === 'skip').length;
+      const passed = nextResults.filter((res) => res.status === 'pass').length;
+      const summary = {
+        status: failed > 0 ? 'fail' : 'pass',
+        passed,
+        failed,
+        skipped,
+        metrics: { start: suiteMetricsStart, end: suiteMetricsEnd },
+      };
 
-    const durationMs = Math.round(performance.now() - startTime);
-    const metricsEnd = getPerfSnapshot('test-end');
+      setSuiteSummary(summary);
+      setActiveTestId(null);
+      if (typeof window !== 'undefined') {
+        window.__farmQaLastSummary = summary;
+      }
 
-    return {
-      id: test.id,
-      name: test.name,
-      status,
-      startedAt,
-      durationMs,
-      logs,
-      errors,
-      detail,
-      console: consoleEvents,
-      metrics: { start: metricsStart, end: metricsEnd },
-    };
-  }, [actions, getDebugMetricsSafe, getPerfSnapshot, getState, helpers, sleep, switchToTab, waitForPanel]);
+      actions.debugLoadState?.(originalState);
+      await sleep(80);
+      logDebugAction('qa_suite_end', summary);
 
-  const runTests = useCallback(async (testIds) => {
-    if (running) return;
-    setRunning(true);
-    setResults([]);
-    setSuiteSummary(null);
-    setActiveTestId(null);
-
-    const originalState = cloneState(getState());
-    const testBaseline = cloneState(originalState);
-    testBaseline.settings = { ...testBaseline.settings, autoSave: false };
-    testBaseline.gameLoop = { ...testBaseline.gameLoop, paused: true };
-
-    actions.debugLoadState?.(testBaseline);
-    await sleep(80);
-
-    logDebugAction('qa_suite_start', { tests: testIds });
-
-    const suiteMetricsStart = getPerfSnapshot('suite-start');
-    const selectedTests = QA_TESTS.filter((test) => testIds.includes(test.id));
-    const nextResults = [];
-
-    for (const test of selectedTests) {
-      setActiveTestId(test.id);
-      const result = await runTest(test, testBaseline);
-      nextResults.push(result);
-      setResults([...nextResults]);
-    }
-
-    const suiteMetricsEnd = getPerfSnapshot('suite-end');
-    const failed = nextResults.filter((res) => res.status === 'fail').length;
-    const skipped = nextResults.filter((res) => res.status === 'skip').length;
-    const passed = nextResults.filter((res) => res.status === 'pass').length;
-    const summary = {
-      status: failed > 0 ? 'fail' : 'pass',
-      passed,
-      failed,
-      skipped,
-      metrics: { start: suiteMetricsStart, end: suiteMetricsEnd },
-    };
-
-    setSuiteSummary(summary);
-    setActiveTestId(null);
-    if (typeof window !== 'undefined') {
-      window.__farmQaLastSummary = summary;
-    }
-
-    actions.debugLoadState?.(originalState);
-    await sleep(80);
-    logDebugAction('qa_suite_end', summary);
-
-    setRunning(false);
-  }, [actions, getPerfSnapshot, getState, runTest, running, sleep]);
+      setRunning(false);
+    },
+    [actions, getPerfSnapshot, getState, runTest, running, sleep]
+  );
 
   const handleCopyReport = useCallback(async () => {
     try {
@@ -379,8 +410,17 @@ const QAModePanel = memo(() => {
               ? `Suite: ${suiteSummary.passed} pass / ${suiteSummary.failed} fail / ${suiteSummary.skipped} skip`
               : 'No QA runs yet.'}
           </span>
-          <Button size="sm" variant="ghost" onClick={handleCopyReport} className="h-7 px-2 text-[11px]">
-            {copyStatus === 'copied' ? 'Copied' : copyStatus === 'failed' ? 'Copy failed' : 'Copy Report'}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleCopyReport}
+            className="h-7 px-2 text-[11px]"
+          >
+            {copyStatus === 'copied'
+              ? 'Copied'
+              : copyStatus === 'failed'
+                ? 'Copy failed'
+                : 'Copy Report'}
           </Button>
         </div>
 
@@ -401,9 +441,15 @@ const QAModePanel = memo(() => {
 
         <div className="max-h-64 overflow-auto space-y-2 pr-1">
           {results.map((result) => (
-            <details key={result.id} className="rounded-lg border border-slate-700 bg-slate-950/60 p-2">
-              <summary className={`cursor-pointer text-xs font-semibold ${STATUS_COLORS[result.status] || 'text-slate-200'}`}>
-                {result.status.toUpperCase()} • {result.name} • {result.durationMs}ms • {result.startedAt}
+            <details
+              key={result.id}
+              className="rounded-lg border border-slate-700 bg-slate-950/60 p-2"
+            >
+              <summary
+                className={`cursor-pointer text-xs font-semibold ${STATUS_COLORS[result.status] || 'text-slate-200'}`}
+              >
+                {result.status.toUpperCase()} • {result.name} • {result.durationMs}ms •{' '}
+                {result.startedAt}
               </summary>
               <div className="mt-2 space-y-1 text-[11px] text-slate-300">
                 <div>Started: {result.startedAt}</div>
@@ -439,10 +485,14 @@ const QAModePanel = memo(() => {
                   </div>
                 )}
                 {result.metrics?.start && (
-                  <div className="text-slate-400">Metrics Start: {JSON.stringify(result.metrics.start)}</div>
+                  <div className="text-slate-400">
+                    Metrics Start: {JSON.stringify(result.metrics.start)}
+                  </div>
                 )}
                 {result.metrics?.end && (
-                  <div className="text-slate-400">Metrics End: {JSON.stringify(result.metrics.end)}</div>
+                  <div className="text-slate-400">
+                    Metrics End: {JSON.stringify(result.metrics.end)}
+                  </div>
                 )}
               </div>
             </details>
@@ -450,10 +500,20 @@ const QAModePanel = memo(() => {
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={handleReleaseCheck}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-[11px]"
+            onClick={handleReleaseCheck}
+          >
             Check Release Gates
           </Button>
-          <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={handleClearQaData}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-[11px]"
+            onClick={handleClearQaData}
+          >
             Clear QA Data
           </Button>
         </div>

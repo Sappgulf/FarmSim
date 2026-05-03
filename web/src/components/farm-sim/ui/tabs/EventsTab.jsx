@@ -37,7 +37,13 @@ const FALLBACK_RULE_SET = {
 
 const WELCOME_BACK_GAP_HOURS = 6;
 const DAILY_DELIGHT_COINS = 5;
-const FESTIVAL_PARTICIPATION_COST_BY_BAND = { onboarding: 0, early_intent: 2, mid_depth: 3, mastery: 4, prestige: 4 };
+const FESTIVAL_PARTICIPATION_COST_BY_BAND = {
+  onboarding: 0,
+  early_intent: 2,
+  mid_depth: 3,
+  mastery: 4,
+  prestige: 4,
+};
 const WEEKLY_VISIT_TIERS = [
   { visits: 2, reward: { decorId: 'cozy_bench' }, label: 'Cozy Bench' },
   { visits: 4, reward: { decorId: 'birdbath' }, label: 'Birdbath' },
@@ -53,11 +59,9 @@ const selectFestivalRuleSet = (rules = [], activeEvent, season) => {
     const matchById = list.find((rule) => rule.festivalIds?.includes(activeEvent.id));
     if (matchById) return matchById;
 
-    const tags = new Set([
-      activeEvent.season,
-      ...(activeEvent.seasonTags || []),
-      season,
-    ].filter(Boolean));
+    const tags = new Set(
+      [activeEvent.season, ...(activeEvent.seasonTags || []), season].filter(Boolean)
+    );
     const matchByTag = list.find((rule) => rule.seasonTags?.some((tag) => tags.has(tag)));
     if (matchByTag) return matchByTag;
   }
@@ -102,10 +106,10 @@ const EventsTab = memo(() => {
     const initialDayKey = getDayKey();
     const lastSessionAt = welcomeBackSnapshot.lastSessionAt;
     const hasGap = lastSessionAt
-      ? (Date.now() - lastSessionAt) >= WELCOME_BACK_GAP_HOURS * 60 * 60 * 1000
+      ? Date.now() - lastSessionAt >= WELCOME_BACK_GAP_HOURS * 60 * 60 * 1000
       : false;
     const alreadyShown = welcomeBackSnapshot.lastWelcomeBackDayKey === initialDayKey;
-    return (state.settings?.showWelcomeBackSummary !== false) && hasGap && !alreadyShown;
+    return state.settings?.showWelcomeBackSummary !== false && hasGap && !alreadyShown;
   });
   const [showPerfectHarvest, setShowPerfectHarvest] = useState(false);
   const [lastReward, setLastReward] = useState(null);
@@ -133,8 +137,8 @@ const EventsTab = memo(() => {
   }, []);
 
   const currentSeason = deriveActiveSeason(state);
-  const seasonEvents = content.festivals.filter((event) =>
-    event.season === currentSeason || event.seasonTags?.includes(currentSeason)
+  const seasonEvents = content.festivals.filter(
+    (event) => event.season === currentSeason || event.seasonTags?.includes(currentSeason)
   );
 
   // Trigger random seasonal event
@@ -145,7 +149,7 @@ const EventsTab = memo(() => {
     if (state.activeSeasonalEvents && state.activeSeasonalEvents.length > 0) {
       actions.addNotification({
         message: 'An event is already active!',
-        type: 'warning'
+        type: 'warning',
       });
       return;
     }
@@ -155,7 +159,7 @@ const EventsTab = memo(() => {
     const eventWithTimer = {
       ...randomEvent,
       startedAt: Date.now(),
-      endsAt: Date.now() + (randomEvent.durationSeconds * 1000),
+      endsAt: Date.now() + randomEvent.durationSeconds * 1000,
       season: currentSeason,
     };
 
@@ -164,9 +168,12 @@ const EventsTab = memo(() => {
 
     actions.addNotification({
       message: `${randomEvent.emoji} ${randomEvent.name} has begun!`,
-      type: 'success'
+      type: 'success',
     });
-    actions.recordAlmanacEvent('festival_start', { eventId: randomEvent.id, season: currentSeason });
+    actions.recordAlmanacEvent('festival_start', {
+      eventId: randomEvent.id,
+      season: currentSeason,
+    });
 
     // Auto-end event after duration
     const timeoutId = setTimeout(() => {
@@ -183,18 +190,24 @@ const EventsTab = memo(() => {
 
     // Grant rewards
     actions.earnMoney(activeEvent.rewards.coins, 'daily_reward');
-    actions.addXP(Math.floor(activeEvent.rewards.coins * 0.5), { source: 'daily_reward', label: 'Festival Reward' });
+    actions.addXP(Math.floor(activeEvent.rewards.coins * 0.5), {
+      source: 'daily_reward',
+      label: 'Festival Reward',
+    });
 
     // Add to event history
     const completedEvent = {
       ...activeEvent,
       completedAt: Date.now(),
-      rewards: activeEvent.rewards
+      rewards: activeEvent.rewards,
     };
 
-    setEventHistory(prev => [completedEvent, ...prev.slice(0, 9)]); // Keep last 10
+    setEventHistory((prev) => [completedEvent, ...prev.slice(0, 9)]); // Keep last 10
     actions.recordMemoryEvent('festival_attended', { eventId: activeEvent.id });
-    actions.recordAlmanacEvent('festival_attended', { eventId: activeEvent.id, season: activeEvent.season });
+    actions.recordAlmanacEvent('festival_attended', {
+      eventId: activeEvent.id,
+      season: activeEvent.season,
+    });
 
     // Clear active event
     actions.updateActiveEvents([]);
@@ -206,7 +219,7 @@ const EventsTab = memo(() => {
 
     actions.addNotification({
       message: `${activeEvent.emoji} ${activeEvent.name} ended! +${activeEvent.rewards.coins}🪙`,
-      type: 'success'
+      type: 'success',
     });
   };
 
@@ -219,10 +232,14 @@ const EventsTab = memo(() => {
 
   const getRarityColor = (rarity) => {
     switch (rarity) {
-      case 'epic': return 'border-purple-500 bg-purple-50 text-purple-700';
-      case 'rare': return 'border-blue-500 bg-blue-50 text-blue-700';
-      case 'uncommon': return 'border-green-500 bg-green-50 text-green-700';
-      default: return 'border-gray-500 bg-gray-50 text-gray-700';
+      case 'epic':
+        return 'border-purple-500 bg-purple-50 text-purple-700';
+      case 'rare':
+        return 'border-blue-500 bg-blue-50 text-blue-700';
+      case 'uncommon':
+        return 'border-green-500 bg-green-50 text-green-700';
+      default:
+        return 'border-gray-500 bg-gray-50 text-gray-700';
     }
   };
 
@@ -238,16 +255,26 @@ const EventsTab = memo(() => {
   const cozyGoals = state.cozyGoals?.lastGeneratedGoals?.goals || [];
   const completedCozyGoals = new Set(state.cozyGoals?.completedGoalIds || []);
   const minigameState = state.minigames?.festivalGame || state.minigames?.perfectHarvest || {};
-  const reducedMotion = state.settings?.reducedMotion === true || state.settings?.animationsEnabled === false;
+  const reducedMotion =
+    state.settings?.reducedMotion === true || state.settings?.animationsEnabled === false;
   const baseRuleSet = selectFestivalRuleSet(content.minigames, activeEvent, currentSeason);
   const minigameDifficulty = getDifficultyModifier(getProgressionBand(state.level || 1).id);
   const activeRuleSet = {
     ...baseRuleSet,
     targetWindows: {
       ...baseRuleSet.targetWindows,
-      gold: Math.max(0.04, (baseRuleSet.targetWindows?.gold || 0.05) * minigameDifficulty.minigameWindow),
-      silver: Math.max(0.07, (baseRuleSet.targetWindows?.silver || 0.08) * minigameDifficulty.minigameWindow),
-      bronze: Math.max(0.09, (baseRuleSet.targetWindows?.bronze || 0.1) * minigameDifficulty.minigameWindow),
+      gold: Math.max(
+        0.04,
+        (baseRuleSet.targetWindows?.gold || 0.05) * minigameDifficulty.minigameWindow
+      ),
+      silver: Math.max(
+        0.07,
+        (baseRuleSet.targetWindows?.silver || 0.08) * minigameDifficulty.minigameWindow
+      ),
+      bronze: Math.max(
+        0.09,
+        (baseRuleSet.targetWindows?.bronze || 0.1) * minigameDifficulty.minigameWindow
+      ),
     },
   };
   const playLimitLabel = getPlayLimitLabel(activeRuleSet, activeEvent);
@@ -256,18 +283,27 @@ const EventsTab = memo(() => {
   const playedToday = minigameState.lastPlayedDayKey === dayKey;
   const playedSameFestivalDay = playedFestival && playedToday;
   const canPlayFestivalGame = activeEvent
-    ? (playLimit === 'festival' ? !playedFestival : !playedSameFestivalDay)
-    : (playLimit === 'daily' ? !playedToday : !playedToday);
+    ? playLimit === 'festival'
+      ? !playedFestival
+      : !playedSameFestivalDay
+    : playLimit === 'daily'
+      ? !playedToday
+      : !playedToday;
   const onboardingActive = !state.onboardingSkipped && (state.onboardingStep || 0) < 3;
   const isFirstDay = (state.almanac?.counters?.dayCount || 0) <= 0;
   const farmCardSpotlight = buildFarmCardData(state).spotlight;
   const activeTitleId = state.cozyExpansion?.farmTitles?.activeId || 'home_grower';
   const activeTitleName = FARM_TITLES[activeTitleId]?.name || FARM_TITLES.home_grower.name;
-  const weeklySpecialToday = new Date(`${dayKey}T00:00:00`).getDay() === WEEKLY_SPECIAL_DAY.dayIndex;
+  const weeklySpecialToday =
+    new Date(`${dayKey}T00:00:00`).getDay() === WEEKLY_SPECIAL_DAY.dayIndex;
   const readyCropsCount = (state.plots || []).filter((plot) => plot?.state === 'ready').length;
   const lastSeenSeason = welcomeBackSnapshot.lastSeenSeason || state.season?.current || 'spring';
   const lastSeenDayCount = Math.max(1, welcomeBackSnapshot.lastSeenGameDay || 1);
-  const weeklyVisits = state.retention?.weeklyVisits || { weekKey: null, days: [], claimedTiers: [] };
+  const weeklyVisits = state.retention?.weeklyVisits || {
+    weekKey: null,
+    days: [],
+    claimedTiers: [],
+  };
   const weeklyVisitCount = weeklyVisits.days?.length || 0;
   const weeklyClaimedTiers = new Set(weeklyVisits.claimedTiers || []);
   const dailyDelightClaimed = state.retention?.lastDailyDelightClaimDate === dayKey;
@@ -280,10 +316,14 @@ const EventsTab = memo(() => {
       highlights.push(`Seasonal events ready: ${seasonEvents.length} ${currentSeason} picks`);
     }
     if (readyCropsCount > 0) {
-      highlights.push(`${readyCropsCount} crop${readyCropsCount === 1 ? '' : 's'} ready to harvest`);
+      highlights.push(
+        `${readyCropsCount} crop${readyCropsCount === 1 ? '' : 's'} ready to harvest`
+      );
     }
     if (newPackHighlights.length > 0) {
-      highlights.push(`${newPackHighlights.length} new pack highlight${newPackHighlights.length === 1 ? '' : 's'}`);
+      highlights.push(
+        `${newPackHighlights.length} new pack highlight${newPackHighlights.length === 1 ? '' : 's'}`
+      );
     }
     return highlights.slice(0, 2);
   }, [activeEvent, seasonEvents.length, currentSeason, readyCropsCount, newPackHighlights.length]);
@@ -307,11 +347,14 @@ const EventsTab = memo(() => {
   const planSuggestions = getPlanSuggestions(state, 2);
   const nextMemory = MEMORIES.find((memory) => !state.memoryFlags?.[memory.id]);
   const nextAlmanac = ALMANAC_PAGES.find((page) => !state.almanac?.unlocked?.[page.id]);
-  const closeToTeaser = nextMemory?.hint || nextAlmanac?.hint || 'All pages are complete. Your story feels whole.';
-  const shopSnippet = state.coins >= 5
-    ? 'Boosts and daily decor picks are ready in the Shop.'
-    : 'Shop boosts unlock once you have a few more coins.';
-  const vibeLine = state.season?.config?.description || 'The farm feels calm and ready for small wins.';
+  const closeToTeaser =
+    nextMemory?.hint || nextAlmanac?.hint || 'All pages are complete. Your story feels whole.';
+  const shopSnippet =
+    state.coins >= 5
+      ? 'Boosts and daily decor picks are ready in the Shop.'
+      : 'Shop boosts unlock once you have a few more coins.';
+  const vibeLine =
+    state.season?.config?.description || 'The farm feels calm and ready for small wins.';
 
   const handleDismissWelcomeBack = () => {
     setShowWelcomeBack(false);
@@ -375,7 +418,11 @@ const EventsTab = memo(() => {
       summaryParts.push(`+${reward.coins}🪙`);
     }
     if (reward.reputation) {
-      const currentSocial = stateRef.current.social || { friends: [], reputation: 0, marketListings: [] };
+      const currentSocial = stateRef.current.social || {
+        friends: [],
+        reputation: 0,
+        marketListings: [],
+      };
       actions.updateSocial({
         ...currentSocial,
         reputation: (currentSocial.reputation || 0) + reward.reputation,
@@ -433,11 +480,11 @@ const EventsTab = memo(() => {
         tone="amber"
         title="Events Board"
         description="Seasonal events, town-board prompts, and small daily reasons to return."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-amber-700 border-amber-200">
             {seasonEvents.length} seasonal events
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -445,7 +492,15 @@ const EventsTab = memo(() => {
             label="Season"
             value={currentSeason}
             hint={vibeLine}
-            icon={currentSeason === 'spring' ? '🌸' : currentSeason === 'summer' ? '☀️' : currentSeason === 'autumn' ? '🍂' : '❄️'}
+            icon={
+              currentSeason === 'spring'
+                ? '🌸'
+                : currentSeason === 'summer'
+                  ? '☀️'
+                  : currentSeason === 'autumn'
+                    ? '🍂'
+                    : '❄️'
+            }
           />
           <MetricTile
             tone="emerald"
@@ -465,7 +520,10 @@ const EventsTab = memo(() => {
       </TabHero>
 
       {newPackHighlights.length > 0 && (
-        <Card className="overflow-hidden border-rose-200/70 bg-gradient-to-br from-white via-rose-50/30 to-amber-50/40 p-4" data-qa="whats-new-card">
+        <Card
+          className="overflow-hidden border-rose-200/70 bg-gradient-to-br from-white via-rose-50/30 to-amber-50/40 p-4"
+          data-qa="whats-new-card"
+        >
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-slate-900">{whatsNewTitle}</h3>
@@ -501,12 +559,16 @@ const EventsTab = memo(() => {
       )}
 
       {showWelcomeBack && (
-        <Card className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-rose-50/40 p-4" data-qa="welcome-back-card">
+        <Card
+          className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-rose-50/40 p-4"
+          data-qa="welcome-back-card"
+        >
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-slate-900">Welcome back</h3>
               <p className="text-sm text-slate-600">
-                Last time: Day {lastSeenDayCount}, {lastSeenSeason.charAt(0).toUpperCase() + lastSeenSeason.slice(1)}
+                Last time: Day {lastSeenDayCount},{' '}
+                {lastSeenSeason.charAt(0).toUpperCase() + lastSeenSeason.slice(1)}
               </p>
             </div>
             <Button
@@ -532,7 +594,9 @@ const EventsTab = memo(() => {
                   ))}
                 </ul>
               ) : (
-                <div className="mt-1 text-xs text-amber-700">Your farm is calm and ready for a gentle return.</div>
+                <div className="mt-1 text-xs text-amber-700">
+                  Your farm is calm and ready for a gentle return.
+                </div>
               )}
             </div>
             <div className="text-xs text-amber-700">
@@ -542,7 +606,10 @@ const EventsTab = memo(() => {
         </Card>
       )}
 
-      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-amber-50/20 to-emerald-50/40 p-4" data-qa="daily-delight-card">
+      <Card
+        className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-amber-50/20 to-emerald-50/40 p-4"
+        data-qa="daily-delight-card"
+      >
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">Daily delight</h3>
@@ -569,11 +636,16 @@ const EventsTab = memo(() => {
         </div>
       </Card>
 
-      <Card className="overflow-hidden border-sky-200/70 bg-slate-50/80 p-4" data-qa="weekly-visits-card">
+      <Card
+        className="overflow-hidden border-sky-200/70 bg-slate-50/80 p-4"
+        data-qa="weekly-visits-card"
+      >
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">Weekly visits</h3>
-            <p className="text-sm text-slate-600">Cosmetic-only thank-yous for gentle consistency.</p>
+            <p className="text-sm text-slate-600">
+              Cosmetic-only thank-yous for gentle consistency.
+            </p>
           </div>
           <Badge variant="outline" className="bg-white/80 text-slate-600">
             {weeklyVisitCount} visit{weeklyVisitCount === 1 ? '' : 's'}
@@ -602,7 +674,7 @@ const EventsTab = memo(() => {
                   className="h-8 px-3 text-[11px]"
                   data-qa={`weekly-visit-claim-${tier.visits}`}
                 >
-                  {isClaimed ? 'Claimed' : (isEligible ? 'Claim' : 'Locked')}
+                  {isClaimed ? 'Claimed' : isEligible ? 'Claim' : 'Locked'}
                 </Button>
               </div>
             );
@@ -668,7 +740,10 @@ const EventsTab = memo(() => {
                     <span>{goal.text}</span>
                   </div>
                   {isCompleted && (
-                    <Badge variant="outline" className="bg-emerald-100 text-emerald-700 text-[10px]">
+                    <Badge
+                      variant="outline"
+                      className="bg-emerald-100 text-emerald-700 text-[10px]"
+                    >
                       Complete
                     </Badge>
                   )}
@@ -686,7 +761,9 @@ const EventsTab = memo(() => {
               <h3 className="text-lg font-semibold text-rose-800">✨ Weekly Special Day</h3>
               <p className="text-sm text-rose-700">{WEEKLY_SPECIAL_DAY.boardCopy}</p>
             </div>
-            <Badge variant="outline" className="bg-rose-100 text-rose-700">Town Board</Badge>
+            <Badge variant="outline" className="bg-rose-100 text-rose-700">
+              Town Board
+            </Badge>
           </div>
         </Card>
       )}
@@ -703,14 +780,14 @@ const EventsTab = memo(() => {
           </Badge>
         </div>
         <div className="mt-3 text-sm text-gray-700">
-          {almanacInsight
-            ? (
-              <>
-                <span className="font-semibold">{almanacInsight.page.title}:</span> {almanacInsight.text}
-              </>
-            )
-            : 'No Almanac pages yet. Keep farming to uncover gentle insights.'
-          }
+          {almanacInsight ? (
+            <>
+              <span className="font-semibold">{almanacInsight.page.title}:</span>{' '}
+              {almanacInsight.text}
+            </>
+          ) : (
+            'No Almanac pages yet. Keep farming to uncover gentle insights.'
+          )}
         </div>
       </Card>
 
@@ -728,18 +805,25 @@ const EventsTab = memo(() => {
           <div className="text-xs uppercase tracking-wide text-gray-500">Spotlight</div>
           <div className="mt-1 font-semibold">{farmCardSpotlight.title}</div>
           <div className="text-sm text-gray-600">{farmCardSpotlight.text}</div>
-          <div className="mt-2 text-xs text-gray-500">Current Title: <span className="font-semibold text-gray-700">{activeTitleName}</span></div>
+          <div className="mt-2 text-xs text-gray-500">
+            Current Title: <span className="font-semibold text-gray-700">{activeTitleName}</span>
+          </div>
         </div>
       </Card>
 
-      <Card className="p-4 bg-gradient-to-r from-emerald-50 to-lime-50 border-emerald-200" data-qa="festival-game-card">
+      <Card
+        className="p-4 bg-gradient-to-r from-emerald-50 to-lime-50 border-emerald-200"
+        data-qa="festival-game-card"
+      >
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-emerald-800">
-              {activeRuleSet?.theme?.icon || '🏮'} {activeEvent ? 'Festival Game Live' : 'Town Board Challenge'}
+              {activeRuleSet?.theme?.icon || '🏮'}{' '}
+              {activeEvent ? 'Festival Game Live' : 'Town Board Challenge'}
             </h3>
             <p className="text-sm text-emerald-700">
-              {activeRuleSet?.instructions || 'Stop the marker in the sweet spot for a cozy reward.'}
+              {activeRuleSet?.instructions ||
+                'Stop the marker in the sweet spot for a cozy reward.'}
             </p>
           </div>
           <Badge variant="outline" className="bg-emerald-100 text-emerald-700">
@@ -773,8 +857,8 @@ const EventsTab = memo(() => {
         </div>
         {lastReward && (
           <div className="mt-3 rounded-lg border border-emerald-100 bg-white/70 p-2 text-xs text-emerald-800">
-            Last result: <span className="font-semibold capitalize">{lastReward.tier}</span> •
-            {' '}{lastReward.mode === 'festival' ? 'Festival' : 'Board'}
+            Last result: <span className="font-semibold capitalize">{lastReward.tier}</span> •{' '}
+            {lastReward.mode === 'festival' ? 'Festival' : 'Board'}
             {lastReward.text ? ` • ${lastReward.text}` : ''}
           </div>
         )}
@@ -786,9 +870,14 @@ const EventsTab = memo(() => {
           <div>
             <h3 className="text-lg font-semibold text-slate-900">Seasonal events</h3>
             <p className="text-sm capitalize text-slate-600">
-              Current Season: {currentSeason} {currentSeason === 'spring' ? '🌸' :
-                                              currentSeason === 'summer' ? '☀️' :
-                                              currentSeason === 'autumn' ? '🍂' : '❄️'}
+              Current Season: {currentSeason}{' '}
+              {currentSeason === 'spring'
+                ? '🌸'
+                : currentSeason === 'summer'
+                  ? '☀️'
+                  : currentSeason === 'autumn'
+                    ? '🍂'
+                    : '❄️'}
             </p>
           </div>
           <Badge variant="outline" className="bg-white/80 text-slate-600">
@@ -819,9 +908,7 @@ const EventsTab = memo(() => {
                 <p className="text-sm text-slate-600">{activeEvent.description}</p>
               </div>
             </div>
-            <Badge className={getRarityColor(activeEvent.rarity)}>
-              {activeEvent.rarity}
-            </Badge>
+            <Badge className={getRarityColor(activeEvent.rarity)}>{activeEvent.rarity}</Badge>
           </div>
 
           <div className="mb-3">
@@ -830,7 +917,9 @@ const EventsTab = memo(() => {
               <span className="font-mono">{getEventTimeLeft(activeEvent)}</span>
             </div>
             <Progress
-              value={((activeEvent.endsAt - Date.now()) / (activeEvent.durationSeconds * 1000)) * 100}
+              value={
+                ((activeEvent.endsAt - Date.now()) / (activeEvent.durationSeconds * 1000)) * 100
+              }
               className="h-2"
             />
           </div>
@@ -838,12 +927,19 @@ const EventsTab = memo(() => {
           {/* Event Effects */}
           <div className="grid grid-cols-2 gap-2 text-sm">
             {Object.entries(activeEvent.effects).map(([effect, value]) => (
-              <div key={effect} className="flex justify-between rounded-2xl border border-white/80 bg-white/85 p-2 shadow-sm">
+              <div
+                key={effect}
+                className="flex justify-between rounded-2xl border border-white/80 bg-white/85 p-2 shadow-sm"
+              >
                 <span className="capitalize">{formatDisplayLabel(effect)}:</span>
                 <span className="font-semibold">
-                  {typeof value === 'boolean' ? (value ? '✓' : '✗') :
-                   typeof value === 'number' && value > 1 ? `+${Math.round((value - 1) * 100)}%` :
-                   value}
+                  {typeof value === 'boolean'
+                    ? value
+                      ? '✓'
+                      : '✗'
+                    : typeof value === 'number' && value > 1
+                      ? `+${Math.round((value - 1) * 100)}%`
+                      : value}
                 </span>
               </div>
             ))}
@@ -868,9 +964,7 @@ const EventsTab = memo(() => {
               🎲 Trigger {currentSeason} Event
             </Button>
             {seasonEvents.length === 0 && (
-              <p className="text-xs text-gray-500 mt-2">
-                No events available for this season
-              </p>
+              <p className="text-xs text-gray-500 mt-2">No events available for this season</p>
             )}
           </div>
         </Card>
@@ -881,8 +975,11 @@ const EventsTab = memo(() => {
         <h4 className="mb-3 font-semibold text-slate-900">Available {currentSeason} events</h4>
 
         <div className="space-y-3">
-          {seasonEvents.map(event => (
-            <div key={event.id} className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 shadow-sm">
+          {seasonEvents.map((event) => (
+            <div
+              key={event.id}
+              className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 shadow-sm"
+            >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">{event.emoji}</span>
@@ -913,9 +1010,14 @@ const EventsTab = memo(() => {
         ) : (
           <div className="space-y-2">
             {eventHistory.slice(0, 5).map((event, index) => (
-              <div key={index} className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-2 text-sm shadow-sm">
+              <div
+                key={index}
+                className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-2 text-sm shadow-sm"
+              >
                 <div className="flex justify-between items-center">
-                  <span>{event.emoji} {event.name}</span>
+                  <span>
+                    {event.emoji} {event.name}
+                  </span>
                   <span className="text-green-600 font-semibold">+{event.rewards.coins}🪙</span>
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
@@ -931,10 +1033,18 @@ const EventsTab = memo(() => {
       <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-indigo-50/40 p-4">
         <h4 className="mb-2 font-semibold text-slate-900">Season information</h4>
         <div className="space-y-1 text-sm text-slate-700">
-          <p><strong>Spring (Mar-May):</strong> Focus on planting and growth bonuses</p>
-          <p><strong>Summer (Jun-Aug):</strong> Harvest festivals and heat events</p>
-          <p><strong>Autumn (Sep-Nov):</strong> Epic festivals and crop bonuses</p>
-          <p><strong>Winter (Dec-Feb):</strong> Frost resistance and greenhouse boosts</p>
+          <p>
+            <strong>Spring (Mar-May):</strong> Focus on planting and growth bonuses
+          </p>
+          <p>
+            <strong>Summer (Jun-Aug):</strong> Harvest festivals and heat events
+          </p>
+          <p>
+            <strong>Autumn (Sep-Nov):</strong> Epic festivals and crop bonuses
+          </p>
+          <p>
+            <strong>Winter (Dec-Feb):</strong> Frost resistance and greenhouse boosts
+          </p>
         </div>
       </Card>
     </div>

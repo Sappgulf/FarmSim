@@ -4,10 +4,10 @@
 
 export const PRESTIGE_TIERS = [
   { tier: 1, required: 10, name: 'Farmhand', emoji: '🌱', bonus: 0.05 },
-  { tier: 2, required: 25, name: 'Farmer', emoji: '👨‍🌾', bonus: 0.10 },
+  { tier: 2, required: 25, name: 'Farmer', emoji: '👨‍🌾', bonus: 0.1 },
   { tier: 3, required: 50, name: 'Master Farmer', emoji: '🏅', bonus: 0.15 },
   { tier: 4, required: 100, name: 'Farm Baron', emoji: '👑', bonus: 0.25 },
-  { tier: 5, required: 200, name: 'Agricultural Legend', emoji: '🌟', bonus: 0.40 },
+  { tier: 5, required: 200, name: 'Agricultural Legend', emoji: '🌟', bonus: 0.4 },
 ];
 
 export const LEGACY_BONUSES = {
@@ -156,18 +156,20 @@ export const HEIRLOOM_SEEDS = {
 export function getPrestigeInfo(currentLevel) {
   const minLevel = 10; // Minimum level to prestige
   const canPrestige = currentLevel >= minLevel;
-  
+
   // Calculate legacy points earned
   const basePoints = Math.floor(currentLevel / 2); // 1 point per 2 levels
   const bonusPoints = Math.max(0, currentLevel - 20) * 2; // Bonus after level 20
   const totalPoints = basePoints + bonusPoints;
-  
+
   return {
     canPrestige,
     minLevel,
     currentLevel,
     legacyPoints: totalPoints,
-    nextTier: PRESTIGE_TIERS.find(t => t.required > currentLevel) || PRESTIGE_TIERS[PRESTIGE_TIERS.length - 1],
+    nextTier:
+      PRESTIGE_TIERS.find((t) => t.required > currentLevel) ||
+      PRESTIGE_TIERS[PRESTIGE_TIERS.length - 1],
   };
 }
 
@@ -182,13 +184,13 @@ export function applyLegacyBonus(legacyBonuses, bonusType, baseValue) {
   if (!legacyBonuses || !legacyBonuses[bonusType]) {
     return baseValue;
   }
-  
+
   const bonus = LEGACY_BONUSES[bonusType];
   if (!bonus) return baseValue;
-  
+
   const level = legacyBonuses[bonusType];
   const totalBonus = bonus.bonusPerLevel * level;
-  
+
   // Different bonus types apply differently
   if (bonusType === 'starting_coins') {
     return baseValue + totalBonus; // Additive
@@ -205,7 +207,7 @@ export function applyLegacyBonus(legacyBonuses, bonusType, baseValue) {
  * @returns {number} - Total multiplier
  */
 export function getPrestigeMultiplier(prestigeTier) {
-  const tier = PRESTIGE_TIERS.find(t => t.tier === prestigeTier);
+  const tier = PRESTIGE_TIERS.find((t) => t.tier === prestigeTier);
   if (!tier) return 1.0;
   return 1.0 + tier.bonus;
 }
@@ -218,4 +220,3 @@ export default {
   applyLegacyBonus,
   getPrestigeMultiplier,
 };
-

@@ -16,11 +16,14 @@ describe('clearFarmCache', () => {
   });
 
   it('creates an export payload with the current save version and timestamp', () => {
-    const payload = createSavePayload({
-      coins: 250,
-      gameLoop: { paused: false },
-      notifications: [{ id: 'n1', message: 'hello' }],
-    }, 12345);
+    const payload = createSavePayload(
+      {
+        coins: 250,
+        gameLoop: { paused: false },
+        notifications: [{ id: 'n1', message: 'hello' }],
+      },
+      12345
+    );
 
     expect(payload.saveVersion).toBe(SAVE_VERSION);
     expect(payload.notifications).toEqual([]);
@@ -89,13 +92,15 @@ describe('clearFarmCache', () => {
     expect(localStorage.getItem('farmSim_welcomed')).toBeNull();
     expect(localStorage.getItem('farmSim_feature_flag')).toBeNull();
     expect(localStorage.getItem('external_app_pref')).toBe('keep');
-    expect(result.removedKeys).toEqual(expect.arrayContaining([
-      BACKUP_SAVE_KEY,
-      QA_SAVE_KEY,
-      QA_BACKUP_SAVE_KEY,
-      'farmSim_welcomed',
-      'farmSim_feature_flag',
-    ]));
+    expect(result.removedKeys).toEqual(
+      expect.arrayContaining([
+        BACKUP_SAVE_KEY,
+        QA_SAVE_KEY,
+        QA_BACKUP_SAVE_KEY,
+        'farmSim_welcomed',
+        'farmSim_feature_flag',
+      ])
+    );
   });
 
   it('supports full cleanup when no keys are preserved', () => {

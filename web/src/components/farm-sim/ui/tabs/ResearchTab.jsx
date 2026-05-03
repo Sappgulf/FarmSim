@@ -17,41 +17,44 @@ const UNLOCK_NAMES = {
   trend_analysis: 'Trend Analysis',
   weather_immunity: 'Weather Immunity',
   fertility_boost: 'Fertility Boost',
-  basic_automation: 'Basic Automation'
+  basic_automation: 'Basic Automation',
 };
 
 // Helper function to format unlock names
 const formatUnlocks = (unlocks) => {
-  return unlocks.map(id => UNLOCK_NAMES[id] || formatDisplayLabel(id)).join(', ');
+  return unlocks.map((id) => UNLOCK_NAMES[id] || formatDisplayLabel(id)).join(', ');
 };
 
 // Helper function to format research names (for prerequisites)
 const formatResearchNames = (ids, namesById = {}) => {
-  return ids.map(id => namesById[id] || formatDisplayLabel(id)).join(', ');
+  return ids.map((id) => namesById[id] || formatDisplayLabel(id)).join(', ');
 };
 
-const buildResearchMap = (items = []) => (
-  Object.fromEntries(items.map((item) => [
-    item.id,
-    {
-      id: item.id,
-      name: item.name,
-      emoji: item.emoji || item.icon || '🔬',
-      description: item.description || '',
-      cost: Number(item.cost || 0),
-      time: Number(item.durationSeconds || 0),
-      unlocks: Array.isArray(item.unlocks) ? item.unlocks : [],
-      prerequisites: Array.isArray(item.prerequisites) ? item.prerequisites : [],
-      category: item.category || 'general',
-    }
-  ]))
-);
+const buildResearchMap = (items = []) =>
+  Object.fromEntries(
+    items.map((item) => [
+      item.id,
+      {
+        id: item.id,
+        name: item.name,
+        emoji: item.emoji || item.icon || '🔬',
+        description: item.description || '',
+        cost: Number(item.cost || 0),
+        time: Number(item.durationSeconds || 0),
+        unlocks: Array.isArray(item.unlocks) ? item.unlocks : [],
+        prerequisites: Array.isArray(item.prerequisites) ? item.prerequisites : [],
+        category: item.category || 'general',
+      },
+    ])
+  );
 
 const ResearchTab = memo(() => {
   const { state, actions } = useGame();
   const content = getContentManager();
   const RESEARCH_PROJECTS = buildResearchMap(content.research || []);
-  const RESEARCH_NAMES = Object.fromEntries(Object.values(RESEARCH_PROJECTS).map((entry) => [entry.id, entry.name]));
+  const RESEARCH_NAMES = Object.fromEntries(
+    Object.values(RESEARCH_PROJECTS).map((entry) => [entry.id, entry.name])
+  );
 
   // Use research state from global state
   const activeResearch = state.research?.active || null;
@@ -82,14 +85,14 @@ const ResearchTab = memo(() => {
     if (!research) return;
 
     // Check prerequisites
-    const hasPrerequisites = research.prerequisites.every(prereq =>
+    const hasPrerequisites = research.prerequisites.every((prereq) =>
       state.research?.completed?.includes(prereq)
     );
 
     if (!hasPrerequisites) {
       actions.addNotification({
         message: 'Prerequisites not met!',
-        type: 'error'
+        type: 'error',
       });
       return;
     }
@@ -98,7 +101,7 @@ const ResearchTab = memo(() => {
     if (state.coins < research.cost) {
       actions.addNotification({
         message: 'Not enough coins!',
-        type: 'error'
+        type: 'error',
       });
       return;
     }
@@ -110,13 +113,13 @@ const ResearchTab = memo(() => {
     const updatedResearch = {
       ...state.research,
       active: researchId,
-      startTime: Date.now()
+      startTime: Date.now(),
     };
     actions.updateResearch(updatedResearch);
 
     actions.addNotification({
       message: `Started researching ${research.name}`,
-      type: 'info'
+      type: 'info',
     });
   };
 
@@ -134,22 +137,19 @@ const ResearchTab = memo(() => {
       ...state.research,
       completed: [...(state.research?.completed || []), researchId],
       active: null,
-      startTime: null
+      startTime: null,
     };
     actions.updateResearch(updatedResearch);
 
     actions.addNotification({
       message: `Research completed: ${research.name}! +${xpReward} XP`,
-      type: 'success'
+      type: 'success',
     });
   };
 
   const projectCount = Object.keys(RESEARCH_PROJECTS).length;
   const completedCount = state.research?.completed?.length || 0;
-  const labFullyComplete =
-    projectCount > 0 &&
-    completedCount >= projectCount &&
-    !activeResearch;
+  const labFullyComplete = projectCount > 0 && completedCount >= projectCount && !activeResearch;
 
   const getResearchProgress = (researchId) => {
     if (activeResearch !== researchId || !researchStartTime) return 0;
@@ -169,9 +169,7 @@ const ResearchTab = memo(() => {
     if (state.research?.completed?.includes(researchId)) return false;
 
     // Check prerequisites
-    return research.prerequisites.every(prereq =>
-      state.research?.completed?.includes(prereq)
-    );
+    return research.prerequisites.every((prereq) => state.research?.completed?.includes(prereq));
   };
 
   const isResearching = (researchId) => {
@@ -188,7 +186,7 @@ const ResearchTab = memo(() => {
     const research = RESEARCH_PROJECTS[researchId];
     if (!research) return '';
     const elapsed = Date.now() - researchStartTime;
-    const remaining = Math.max(0, (Math.max(1, research.time) * 10) - elapsed);
+    const remaining = Math.max(0, Math.max(1, research.time) * 10 - elapsed);
     const minutes = Math.floor(remaining / 60000);
     const seconds = Math.floor((remaining % 60000) / 1000);
 
@@ -197,11 +195,16 @@ const ResearchTab = memo(() => {
 
   const getCategoryColor = (category) => {
     switch (category) {
-      case 'genetics': return 'border-purple-500 bg-purple-50';
-      case 'technology': return 'border-blue-500 bg-blue-50';
-      case 'economics': return 'border-green-500 bg-green-50';
-      case 'agriculture': return 'border-yellow-500 bg-yellow-50';
-      default: return 'border-gray-500 bg-gray-50';
+      case 'genetics':
+        return 'border-purple-500 bg-purple-50';
+      case 'technology':
+        return 'border-blue-500 bg-blue-50';
+      case 'economics':
+        return 'border-green-500 bg-green-50';
+      case 'agriculture':
+        return 'border-yellow-500 bg-yellow-50';
+      default:
+        return 'border-gray-500 bg-gray-50';
     }
   };
 
@@ -212,11 +215,11 @@ const ResearchTab = memo(() => {
         tone="sky"
         title="Research Laboratory"
         description="Track projects, unlock upgrades, and keep the lab moving."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-sky-700 border-sky-200">
             {activeResearch ? '🔄 Researching' : '⏸️ Idle'}
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -253,10 +256,10 @@ const ResearchTab = memo(() => {
           <div className="flex items-center gap-3 mb-3">
             <span className="text-2xl">{RESEARCH_PROJECTS[activeResearch].emoji}</span>
             <div className="flex-1">
-              <div className="font-semibold text-slate-900">{RESEARCH_PROJECTS[activeResearch].name}</div>
-              <div className="text-sm text-gray-600">
-                Time Left: {getTimeLeft(activeResearch)}
+              <div className="font-semibold text-slate-900">
+                {RESEARCH_PROJECTS[activeResearch].name}
               </div>
+              <div className="text-sm text-gray-600">Time Left: {getTimeLeft(activeResearch)}</div>
             </div>
           </div>
 
@@ -279,81 +282,86 @@ const ResearchTab = memo(() => {
             tone="violet"
             title="Research tree complete"
             description="You've finished every lab project for now. Check Achievements or the Almanac for your next milestones."
-            action={(
+            action={
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="min-h-[44px]"
-                onClick={() => typeof window.switchToTab === 'function' && window.switchToTab('achievements')}
+                onClick={() =>
+                  typeof window.switchToTab === 'function' && window.switchToTab('achievements')
+                }
               >
                 Open Achievements
               </Button>
-            )}
+            }
           />
         ) : (
-        <div className="space-y-3">
-          {Object.entries(RESEARCH_PROJECTS).map(([id, research]) => {
-            const available = canResearch(id);
-            const completed = isCompleted(id);
-            const researching = isResearching(id);
+          <div className="space-y-3">
+            {Object.entries(RESEARCH_PROJECTS).map(([id, research]) => {
+              const available = canResearch(id);
+              const completed = isCompleted(id);
+              const researching = isResearching(id);
 
-            return (
-              <Card key={id} className={`p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${getCategoryColor(research.category)}`}>
-                <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{research.emoji}</span>
-                    <span className="font-medium text-slate-900">{research.name}</span>
+              return (
+                <Card
+                  key={id}
+                  className={`p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${getCategoryColor(research.category)}`}
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{research.emoji}</span>
+                      <span className="font-medium text-slate-900">{research.name}</span>
+                    </div>
+
+                    <div className="flex gap-1">
+                      {completed && <Badge className="bg-green-500">✓ Done</Badge>}
+                      {researching && <Badge className="bg-blue-500">🔄 Active</Badge>}
+                      {!available && !completed && <Badge variant="outline">🔒 Locked</Badge>}
+                    </div>
                   </div>
 
-                  <div className="flex gap-1">
-                    {completed && <Badge className="bg-green-500">✓ Done</Badge>}
-                    {researching && <Badge className="bg-blue-500">🔄 Active</Badge>}
-                    {!available && !completed && <Badge variant="outline">🔒 Locked</Badge>}
+                  <p className="text-sm text-gray-600 mb-2">{research.description}</p>
+
+                  <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
+                    <span>Cost: {research.cost}🪙</span>
+                    <span>Time: {Math.round(research.time / 60)}m</span>
                   </div>
-                </div>
 
-                <p className="text-sm text-gray-600 mb-2">{research.description}</p>
+                  {/* Prerequisites */}
+                  {research.prerequisites.length > 0 && (
+                    <div className="text-xs text-gray-600 mb-2">
+                      Requires: {formatResearchNames(research.prerequisites, RESEARCH_NAMES)}
+                    </div>
+                  )}
 
-                <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
-                  <span>Cost: {research.cost}🪙</span>
-                  <span>Time: {Math.round(research.time / 60)}m</span>
-                </div>
+                  {/* Unlocks */}
+                  {research.unlocks.length > 0 && (
+                    <div className="text-xs text-green-600 mb-2">
+                      Unlocks: {formatUnlocks(research.unlocks)}
+                    </div>
+                  )}
 
-                {/* Prerequisites */}
-                {research.prerequisites.length > 0 && (
-                  <div className="text-xs text-gray-600 mb-2">
-                    Requires: {formatResearchNames(research.prerequisites, RESEARCH_NAMES)}
-                  </div>
-                )}
+                  {!completed && !researching && (
+                    <Button
+                      onClick={() => startResearch(id)}
+                      size="sm"
+                      disabled={!available || state.coins < research.cost}
+                      className="w-full min-h-[44px]"
+                    >
+                      {available ? 'Start Research' : 'Prerequisites Required'}
+                    </Button>
+                  )}
 
-                {/* Unlocks */}
-                {research.unlocks.length > 0 && (
-                  <div className="text-xs text-green-600 mb-2">
-                    Unlocks: {formatUnlocks(research.unlocks)}
-                  </div>
-                )}
-
-                {!completed && !researching && (
-                  <Button
-                    onClick={() => startResearch(id)}
-                    size="sm"
-                    disabled={!available || state.coins < research.cost}
-                    className="w-full min-h-[44px]"
-                  >
-                    {available ? 'Start Research' : 'Prerequisites Required'}
-                  </Button>
-                )}
-
-                {researching && (
-                  <div className="text-center text-sm text-blue-600 font-medium">
-                    Researching... ({getTimeLeft(id)})
-                  </div>
-                )}
-              </Card>
-            );
-          })}
-        </div>
+                  {researching && (
+                    <div className="text-center text-sm text-blue-600 font-medium">
+                      Researching... ({getTimeLeft(id)})
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
         )}
       </TabSection>
 

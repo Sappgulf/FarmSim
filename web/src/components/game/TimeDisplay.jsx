@@ -33,13 +33,16 @@ function TimeDisplayComponent({ timeDisplay, currentPeriod, compact = false }) {
   }
 
   return (
-    <div className={`
+    <div
+      className={`
       flex items-center gap-2 px-3 py-1.5 rounded-lg
-      ${currentPeriod?.id === 'night'
-        ? 'bg-indigo-100 text-indigo-700'
-        : 'bg-amber-50 text-amber-700'
+      ${
+        currentPeriod?.id === 'night'
+          ? 'bg-indigo-100 text-indigo-700'
+          : 'bg-amber-50 text-amber-700'
       }
-    `}>
+    `}
+    >
       {getPeriodIcon()}
       <div className="flex flex-col">
         <span className="font-mono text-sm font-medium">{timeDisplay}</span>
@@ -48,7 +51,10 @@ function TimeDisplayComponent({ timeDisplay, currentPeriod, compact = false }) {
       {currentPeriod?.effects && (
         <div className="ml-2 pl-2 border-l border-current/20 text-xs opacity-75">
           {currentPeriod.effects.growthBonus && currentPeriod.effects.growthBonus !== 1 && (
-            <div>{currentPeriod.effects.growthBonus > 1 ? '+' : ''}{Math.round((currentPeriod.effects.growthBonus - 1) * 100)}% growth</div>
+            <div>
+              {currentPeriod.effects.growthBonus > 1 ? '+' : ''}
+              {Math.round((currentPeriod.effects.growthBonus - 1) * 100)}% growth
+            </div>
           )}
           {currentPeriod.effects.harvestBonus && currentPeriod.effects.harvestBonus !== 1 && (
             <div>+{Math.round((currentPeriod.effects.harvestBonus - 1) * 100)}% harvest</div>

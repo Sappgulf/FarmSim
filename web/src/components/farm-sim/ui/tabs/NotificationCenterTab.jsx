@@ -53,14 +53,16 @@ const NotificationCenterTab = memo(() => {
   const [activeFilter, setActiveFilter] = useState('all');
 
   const history = useMemo(
-    () => (Array.isArray(state.notificationHistory) ? [...state.notificationHistory].reverse() : []),
+    () =>
+      Array.isArray(state.notificationHistory) ? [...state.notificationHistory].reverse() : [],
     [state.notificationHistory]
   );
   const activeNotifications = Array.isArray(state.notifications) ? state.notifications : [];
 
-  const filteredHistory = useMemo(() => (
-    history.filter((entry) => activeFilter === 'all' || entry.type === activeFilter)
-  ), [history, activeFilter]);
+  const filteredHistory = useMemo(
+    () => history.filter((entry) => activeFilter === 'all' || entry.type === activeFilter),
+    [history, activeFilter]
+  );
 
   const clearActiveNotifications = () => {
     activeNotifications.forEach((entry) => actions.clearNotification(entry.id));
@@ -73,11 +75,11 @@ const NotificationCenterTab = memo(() => {
         tone="sky"
         title="Notification Center"
         description="Recent updates, alerts, and the full event trail from your farm."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-sky-700 border-sky-200">
             {history.length} saved
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -95,7 +97,9 @@ const NotificationCenterTab = memo(() => {
             icon="✨"
           />
           <div className="flex flex-col gap-2 rounded-2xl border border-white/70 bg-white/90 px-3 py-3 shadow-sm">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Actions</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+              Actions
+            </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Button
                 variant="outline"
@@ -141,11 +145,7 @@ const NotificationCenterTab = memo(() => {
         </div>
       </TabSection>
 
-      <TabSection
-        title="History"
-        description="A running log of recent farm messages."
-        tone="slate"
-      >
+      <TabSection title="History" description="A running log of recent farm messages." tone="slate">
         {filteredHistory.length === 0 ? (
           <TabEmptyState
             icon="📭"
@@ -159,10 +159,7 @@ const NotificationCenterTab = memo(() => {
               const style = TYPE_STYLES[entry.type] || TYPE_STYLES.info;
               const Icon = style.icon;
               return (
-                <div
-                  key={entry.id}
-                  className={`border rounded-lg p-3 ${style.bg} ${style.border}`}
-                >
+                <div key={entry.id} className={`border rounded-lg p-3 ${style.bg} ${style.border}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-2">
                       <Icon className={`w-4 h-4 mt-0.5 ${style.text}`} />

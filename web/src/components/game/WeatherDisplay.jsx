@@ -147,8 +147,10 @@ function WeatherParticles({ weather }) {
             {/* Dark storm clouds effect */}
             <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-600/20 to-transparent" />
             {/* Thunder rumble effect - subtle border pulse */}
-            <div className="absolute inset-0 border-2 border-purple-400/0 rounded-xl animate-pulse"
-                 style={{ animationDuration: '4s' }} />
+            <div
+              className="absolute inset-0 border-2 border-purple-400/0 rounded-xl animate-pulse"
+              style={{ animationDuration: '4s' }}
+            />
           </>
         );
       case 'cloudy':
@@ -267,7 +269,8 @@ function WeatherDisplayComponent({
       {/* Current Weather */}
       <div className="relative flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          <div className={`
+          <div
+            className={`
             text-5xl p-3 rounded-2xl bg-white/90 shadow-lg
             ${weatherData?.bgColor || 'bg-gray-100'}
             ${currentWeather === 'sunny' ? 'animate-pulse-slow' : ''}
@@ -275,7 +278,8 @@ function WeatherDisplayComponent({
             ${currentWeather === 'rainy' ? 'shadow-blue-200/50' : ''}
             ${currentWeather === 'stormy' ? 'shadow-purple-200/50' : ''}
             transition-all duration-300
-          `}>
+          `}
+          >
             <span className="drop-shadow-md">{weatherData?.emoji || '☀️'}</span>
           </div>
           <div>
@@ -289,17 +293,17 @@ function WeatherDisplayComponent({
         </div>
 
         {/* Season badge - Enhanced */}
-        <div className={`
+        <div
+          className={`
           px-4 py-2 rounded-xl border-2 shadow-md
           bg-white/80 backdrop-blur-sm
           ${seasonData?.borderColor || 'border-gray-200'}
           transition-all duration-300 hover:scale-105
-        `}>
+        `}
+        >
           <div className="flex items-center gap-2">
             <span className="text-2xl drop-shadow-sm">{seasonData?.emoji}</span>
-            <span className={`text-sm font-bold ${seasonData?.color}`}>
-              {seasonData?.name}
-            </span>
+            <span className={`text-sm font-bold ${seasonData?.color}`}>{seasonData?.name}</span>
           </div>
         </div>
       </div>
@@ -327,7 +331,9 @@ function WeatherDisplayComponent({
                   title={dayWeather.name}
                 >
                   <span className="text-xl drop-shadow-sm">{dayWeather.emoji}</span>
-                  <span className="text-[10px] font-semibold text-gray-500 mt-1">+{index + 1}d</span>
+                  <span className="text-[10px] font-semibold text-gray-500 mt-1">
+                    +{index + 1}d
+                  </span>
                 </div>
               );
             })}

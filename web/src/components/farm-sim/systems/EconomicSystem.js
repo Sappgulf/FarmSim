@@ -16,9 +16,9 @@ export class EconomicSystem {
       console.error('[farm] EconomicSystem: update() called with null/undefined state');
       return;
     }
-    
+
     this.state = currentState;
-    
+
     const now = Date.now();
 
     if (now - this.lastMarketUpdate > this.marketUpdateInterval) {
@@ -36,12 +36,12 @@ export class EconomicSystem {
       console.warn('[farm] EconomicSystem: No state or inventory available');
       return;
     }
-    
+
     // Simple market fluctuation system
     const crops = ['carrot', 'potato', 'corn', 'tomato'];
     const updatedInventory = { ...this.state.inventory };
 
-    crops.forEach(crop => {
+    crops.forEach((crop) => {
       // Random price fluctuation (-20% to +30%)
       const fluctuation = (Math.random() - 0.4) * 0.5;
       const basePrice = this.getBasePrice(crop);
@@ -64,7 +64,7 @@ export class EconomicSystem {
     if (!this.state) {
       return this.getBasePrice(cropType);
     }
-    
+
     const basePrice = this.getBasePrice(cropType);
     const marketPrice = (this.state.inventory || {})[`${cropType}_price`] || basePrice;
 
@@ -79,7 +79,7 @@ export class EconomicSystem {
       carrot: 12,
       potato: 15,
       corn: 22,
-      tomato: 28
+      tomato: 28,
     };
 
     return prices[cropType] || 10;
@@ -94,12 +94,12 @@ export class EconomicSystem {
       console.warn('[farm] EconomicSystem: No state available for sellCrops');
       return { success: false, message: 'State not available' };
     }
-    
+
     // Update inventory
     const currentInventory = this.state.inventory || {};
     const updatedInventory = {
       ...currentInventory,
-      [cropType]: Math.max(0, (currentInventory[cropType] || 0) - quantity)
+      [cropType]: Math.max(0, (currentInventory[cropType] || 0) - quantity),
     };
 
     this.actions.updateInventory(updatedInventory);
@@ -107,7 +107,7 @@ export class EconomicSystem {
 
     return {
       earnings: totalValue,
-      valuePerUnit: valuePerUnit
+      valuePerUnit: valuePerUnit,
     };
   }
 
@@ -120,7 +120,7 @@ export class EconomicSystem {
     return {
       trends: this.getMarketTrends(),
       prices: this.getCurrentPrices(),
-      recommendations: this.getTradingRecommendations()
+      recommendations: this.getTradingRecommendations(),
     };
   }
 
@@ -130,8 +130,8 @@ export class EconomicSystem {
       overall: 'stable',
       recommendations: [
         'Consider selling high-value crops when prices peak',
-        'Stock up on supplies during price dips'
-      ]
+        'Stock up on supplies during price dips',
+      ],
     };
   }
 
@@ -140,12 +140,12 @@ export class EconomicSystem {
     if (!this.state) {
       return {};
     }
-    
+
     const crops = ['carrot', 'potato', 'corn', 'tomato'];
     const prices = {};
     const inventory = this.state.inventory || {};
 
-    crops.forEach(crop => {
+    crops.forEach((crop) => {
       prices[crop] = inventory[`${crop}_price`] || this.getBasePrice(crop);
     });
 

@@ -36,9 +36,9 @@ describe('Regression evidence', () => {
 
   it('persists inventory-only progress in autosave de-duplication', () => {
     vi.useFakeTimers();
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => (
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) =>
       setTimeout(() => callback(performance.now()), 16)
-    ));
+    );
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => clearTimeout(id));
 
     const { result, unmount } = renderHook(() => useGame(), { wrapper: GameProvider });

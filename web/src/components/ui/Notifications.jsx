@@ -20,8 +20,8 @@ export function Notifications({ notifications, onDismiss }) {
   };
 
   const getNotificationStyles = (type) => {
-    const baseStyles = "border backdrop-blur-sm shadow-lg";
-    
+    const baseStyles = 'border backdrop-blur-sm shadow-lg';
+
     switch (type) {
       case 'success':
         return `${baseStyles} bg-green-50/90 border-green-200 text-green-800`;
@@ -48,9 +48,7 @@ export function Notifications({ notifications, onDismiss }) {
         >
           {getNotificationIcon(notification.type)}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium leading-relaxed">
-              {notification.message}
-            </p>
+            <p className="text-sm font-medium leading-relaxed">{notification.message}</p>
             {notification.timestamp && (
               <p className="text-xs opacity-75 mt-1">
                 {new Date(notification.timestamp * 1000).toLocaleTimeString()}
@@ -78,29 +76,32 @@ export function Notifications({ notifications, onDismiss }) {
 export function useNotifications() {
   const [notifications, setNotifications] = React.useState([]);
 
-  const addNotification = (message, type = "info", duration = 4000) => {
+  const addNotification = (message, type = 'info', duration = 4000) => {
     const id = Date.now() + Math.random();
     const timestamp = Math.floor(Date.now() / 1000);
-    
-    setNotifications(prev => [...prev, { 
-      id, 
-      message, 
-      type, 
-      timestamp 
-    }]);
-    
+
+    setNotifications((prev) => [
+      ...prev,
+      {
+        id,
+        message,
+        type,
+        timestamp,
+      },
+    ]);
+
     // Auto-remove after duration
     if (duration > 0) {
       setTimeout(() => {
-        setNotifications(prev => prev.filter(n => n.id !== id));
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
       }, duration);
     }
-    
+
     return id;
   };
 
   const removeNotification = (id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   const clearNotifications = () => {
@@ -111,6 +112,6 @@ export function useNotifications() {
     notifications,
     addNotification,
     removeNotification,
-    clearNotifications
+    clearNotifications,
   };
 }

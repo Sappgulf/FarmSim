@@ -10,10 +10,11 @@ const OPERATIONS = [
     target: (level) => 12 + level * 2,
     reward: (level) => ({ coins: 45 + level * 5, xp: 25 + level * 4 }),
     description: (target) => `Store ${target} crops in inventory`,
-    progress: (state) => Object.entries(state?.inventory || {}).reduce((sum, [itemId, qty]) => {
-      if (!CROP_DATA[itemId]) return sum;
-      return sum + (Math.max(0, Math.floor(Number(qty) || 0)));
-    }, 0),
+    progress: (state) =>
+      Object.entries(state?.inventory || {}).reduce((sum, [itemId, qty]) => {
+        if (!CROP_DATA[itemId]) return sum;
+        return sum + Math.max(0, Math.floor(Number(qty) || 0));
+      }, 0),
   },
   {
     id: 'active_plots',
@@ -23,9 +24,10 @@ const OPERATIONS = [
     target: (level) => Math.min(20, 4 + level),
     reward: (level) => ({ coins: 40 + level * 5, xp: 20 + level * 4 }),
     description: (target) => `Keep ${target} plots actively growing`,
-    progress: (state) => (state?.plots || []).filter((plot) => (
-      plot?.state === 'planted' || plot?.state === 'growing' || plot?.state === 'ready'
-    )).length,
+    progress: (state) =>
+      (state?.plots || []).filter(
+        (plot) => plot?.state === 'planted' || plot?.state === 'growing' || plot?.state === 'ready'
+      ).length,
   },
   {
     id: 'ready_harvest',
@@ -45,7 +47,8 @@ const OPERATIONS = [
     target: (level) => Math.min(8, 1 + Math.floor(level / 2)),
     reward: (level) => ({ coins: 80 + level * 10, xp: 45 + level * 7 }),
     description: (target) => `Own ${target} built structures`,
-    progress: (state) => Object.values(state?.buildings || {}).filter((entry) => entry?.built).length,
+    progress: (state) =>
+      Object.values(state?.buildings || {}).filter((entry) => entry?.built).length,
   },
   {
     id: 'animal_caretaker',
@@ -69,9 +72,10 @@ const OPERATIONS = [
   },
 ];
 
-const buildSeed = (value) => (
-  String(value).split('').reduce((seed, char) => seed + char.charCodeAt(0), 0)
-);
+const buildSeed = (value) =>
+  String(value)
+    .split('')
+    .reduce((seed, char) => seed + char.charCodeAt(0), 0);
 
 const clampLevel = (level) => Math.max(1, Math.floor(Number(level) || 1));
 
@@ -121,15 +125,14 @@ export const getDailyOperationProgress = (state, challenge) => {
   return Math.max(0, Math.floor(Number(operation.progress(state)) || 0));
 };
 
-export const markDailyOperationCompletion = (state, challenges = []) => (
+export const markDailyOperationCompletion = (state, challenges = []) =>
   challenges.map((challenge) => {
     const progress = getDailyOperationProgress(state, challenge);
     return {
       ...challenge,
       completed: challenge.claimed || progress >= (challenge.target || 0),
     };
-  })
-);
+  });
 
 export const getResetCountdownLabel = (lastResetTime) => {
   const now = Date.now();

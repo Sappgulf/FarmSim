@@ -8,24 +8,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs';
 import { getContentManager } from '../../../../content/ContentManager';
 import { TabHero, MetricTile, TabEmptyState } from './TabSurface';
 
-const buildBreedingRecipes = (items = []) => (
-  Object.fromEntries(items.map((item) => [
-    item.id,
-    {
-      name: item.name,
-      emoji: item.emoji || item.icon || '🧬',
-      parents: [item.parentA, item.parentB],
-      growthTime: 60,
-      baseValue: 35,
-      shopPrice: 50,
-      quality: 1.5 + (Math.max(1, Number(item.levelRequirement || 1)) / 20),
-      description: item.notes || '',
-      traits: [],
-      unlockLevel: Number(item.levelRequirement || 1),
-      outputId: item.outputCropID || item.id,
-    },
-  ]))
-);
+const buildBreedingRecipes = (items = []) =>
+  Object.fromEntries(
+    items.map((item) => [
+      item.id,
+      {
+        name: item.name,
+        emoji: item.emoji || item.icon || '🧬',
+        parents: [item.parentA, item.parentB],
+        growthTime: 60,
+        baseValue: 35,
+        shopPrice: 50,
+        quality: 1.5 + Math.max(1, Number(item.levelRequirement || 1)) / 20,
+        description: item.notes || '',
+        traits: [],
+        unlockLevel: Number(item.levelRequirement || 1),
+        outputId: item.outputCropID || item.id,
+      },
+    ])
+  );
 
 const GeneticsTab = memo(() => {
   const { state, actions } = useGame();
@@ -64,7 +65,7 @@ const GeneticsTab = memo(() => {
     return {
       key: recipeKey,
       recipe: BREEDING_RECIPES[recipeKey],
-      unlocked: BREEDING_RECIPES[recipeKey].unlockLevel <= state.level
+      unlocked: BREEDING_RECIPES[recipeKey].unlockLevel <= state.level,
     };
   }, [selectedParent1, selectedParent2, state.level]);
 
@@ -84,7 +85,7 @@ const GeneticsTab = memo(() => {
     if (!matchedRecipe) {
       actions.addNotification({
         message: 'No breeding recipe found for these crops!',
-        type: 'warning'
+        type: 'warning',
       });
       return;
     }
@@ -92,7 +93,7 @@ const GeneticsTab = memo(() => {
     if (!matchedRecipe.unlocked) {
       actions.addNotification({
         message: `Reach level ${matchedRecipe.recipe.unlockLevel} to unlock this hybrid.`,
-        type: 'warning'
+        type: 'warning',
       });
       return;
     }
@@ -104,16 +105,18 @@ const GeneticsTab = memo(() => {
     if (missingParents.length > 0) {
       actions.addNotification({
         message: `Not enough ${missingParents.join(' or ')} to breed!`,
-        type: 'error'
+        type: 'error',
       });
       return;
     }
 
     const updatedInventory = {
       ...state.inventory,
-      [selectedParent1]: (state.inventory[selectedParent1] || 0) - (requiredParents[selectedParent1] || 0),
-      [selectedParent2]: (state.inventory[selectedParent2] || 0) - (requiredParents[selectedParent2] || 0),
-      [matchedRecipe.recipe.outputId]: (state.inventory[matchedRecipe.recipe.outputId] || 0) + 1
+      [selectedParent1]:
+        (state.inventory[selectedParent1] || 0) - (requiredParents[selectedParent1] || 0),
+      [selectedParent2]:
+        (state.inventory[selectedParent2] || 0) - (requiredParents[selectedParent2] || 0),
+      [matchedRecipe.recipe.outputId]: (state.inventory[matchedRecipe.recipe.outputId] || 0) + 1,
     };
     actions.updateInventory(updatedInventory);
 
@@ -121,7 +124,7 @@ const GeneticsTab = memo(() => {
 
     actions.addNotification({
       message: `Successfully bred ${matchedRecipe.recipe.name}!`,
-      type: 'success'
+      type: 'success',
     });
 
     setSelectedParent1(null);
@@ -149,11 +152,11 @@ const GeneticsTab = memo(() => {
         tone="violet"
         title="Genetics Laboratory"
         description="Breed crops, reveal hybrids, and preview trait combinations."
-        badge={(
+        badge={
           <Badge variant="outline" className="bg-white/80 text-violet-700 border-violet-200">
             {discoveredHybridCount} hybrids
           </Badge>
-        )}
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricTile
@@ -163,13 +166,7 @@ const GeneticsTab = memo(() => {
             hint="Progression gates hybrid tiers"
             icon="🧪"
           />
-          <MetricTile
-            tone="sky"
-            label="XP"
-            value={state.xp}
-            hint="Overall progression"
-            icon="✨"
-          />
+          <MetricTile tone="sky" label="XP" value={state.xp} hint="Overall progression" icon="✨" />
           <MetricTile
             tone="emerald"
             label="Discovered"
@@ -199,56 +196,62 @@ const GeneticsTab = memo(() => {
                 icon="🌾"
                 title="No crops in inventory"
                 description="Harvest from your plots first. Then choose two crops here as parents to chase hybrid recipes."
-                action={(
+                action={
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     className="min-h-[44px]"
-                    onClick={() => typeof window.switchToTab === 'function' && window.switchToTab('farming')}
+                    onClick={() =>
+                      typeof window.switchToTab === 'function' && window.switchToTab('farming')
+                    }
                   >
                     Open Farm
                   </Button>
-                )}
+                }
               />
             ) : (
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Parent 1</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {availableCrops.map(crop => (
-                    <Button
-                      key={crop}
-                      variant={selectedParent1 === crop ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedParent1(crop)}
-                      className="text-xs justify-between"
-                    >
-                      <span>{formatDisplayLabel(crop)}</span>
-                      <span className="text-[10px] text-muted-foreground">{state.inventory[crop] || 0}</span>
-                    </Button>
-                  ))}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Parent 1</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {availableCrops.map((crop) => (
+                      <Button
+                        key={crop}
+                        variant={selectedParent1 === crop ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedParent1(crop)}
+                        className="text-xs justify-between"
+                      >
+                        <span>{formatDisplayLabel(crop)}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {state.inventory[crop] || 0}
+                        </span>
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Parent 2</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {availableCrops.map(crop => (
-                    <Button
-                      key={crop}
-                      variant={selectedParent2 === crop ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedParent2(crop)}
-                      className="text-xs justify-between"
-                    >
-                      <span>{formatDisplayLabel(crop)}</span>
-                      <span className="text-[10px] text-muted-foreground">{state.inventory[crop] || 0}</span>
-                    </Button>
-                  ))}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Parent 2</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {availableCrops.map((crop) => (
+                      <Button
+                        key={crop}
+                        variant={selectedParent2 === crop ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedParent2(crop)}
+                        className="text-xs justify-between"
+                      >
+                        <span>{formatDisplayLabel(crop)}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {state.inventory[crop] || 0}
+                        </span>
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
             )}
 
             {/* Breeding Preview */}
@@ -268,12 +271,13 @@ const GeneticsTab = memo(() => {
                           <div className="font-semibold">{recipe.name}</div>
                           <div className="text-sm text-gray-600 mb-2">{recipe.description}</div>
                           <div className="text-xs text-gray-500 mb-2">
-                            Requires {Object.entries(requiredParents).map(([parent, count]) => (
-                              `${count}× ${formatDisplayLabel(parent)}`
-                            )).join(' + ')}
+                            Requires{' '}
+                            {Object.entries(requiredParents)
+                              .map(([parent, count]) => `${count}× ${formatDisplayLabel(parent)}`)
+                              .join(' + ')}
                           </div>
                           <div className="flex justify-center gap-2 mb-3">
-                            {recipe.traits.map(trait => (
+                            {recipe.traits.map((trait) => (
                               <Badge key={trait} variant="outline" className="text-xs">
                                 {formatDisplayLabel(trait)}
                               </Badge>
@@ -317,7 +321,10 @@ const GeneticsTab = memo(() => {
                 const unlocked = recipe.unlockLevel <= state.level;
 
                 return (
-                  <Card key={key} className={`p-3 ${unlocked ? 'bg-white' : 'bg-gray-50 opacity-60'}`}>
+                  <Card
+                    key={key}
+                    className={`p-3 ${unlocked ? 'bg-white' : 'bg-gray-50 opacity-60'}`}
+                  >
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{recipe.emoji}</span>
@@ -325,7 +332,7 @@ const GeneticsTab = memo(() => {
                           <div className="font-semibold">{recipe.name}</div>
                           <div className="text-sm text-gray-600">{recipe.description}</div>
                           <div className="flex gap-1 mt-1">
-                            {recipe.traits.map(trait => (
+                            {recipe.traits.map((trait) => (
                               <Badge key={trait} variant="outline" className="text-xs">
                                 {formatDisplayLabel(trait)}
                               </Badge>
@@ -335,10 +342,7 @@ const GeneticsTab = memo(() => {
                       </div>
 
                       <div className="text-right">
-                        <Badge
-                          variant="outline"
-                          className={getRarityColor(recipe.quality)}
-                        >
+                        <Badge variant="outline" className={getRarityColor(recipe.quality)}>
                           {getRarityLabel(recipe.quality)}
                         </Badge>
                         <div className="text-sm mt-1">
@@ -348,7 +352,9 @@ const GeneticsTab = memo(() => {
                               <div className="text-green-600">Value: {recipe.baseValue}🪙</div>
                             </>
                           ) : (
-                            <div className="text-gray-500">Unlock at level {recipe.unlockLevel}</div>
+                            <div className="text-gray-500">
+                              Unlock at level {recipe.unlockLevel}
+                            </div>
                           )}
                         </div>
                       </div>

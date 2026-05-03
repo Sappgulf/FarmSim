@@ -26,23 +26,23 @@ function WeatherPredictionComponent({
   // Analyze patterns for hints
   const getHint = useCallback(() => {
     if (weatherHistory.length < 2) {
-      return "Not enough weather data yet. Keep farming!";
+      return 'Not enough weather data yet. Keep farming!';
     }
 
-    const recentWeather = weatherHistory.slice(-3).map(h => h.weather);
+    const recentWeather = weatherHistory.slice(-3).map((h) => h.weather);
 
     // Pattern-based hints
-    if (recentWeather.every(w => w === 'sunny')) {
-      return "Extended sunny periods often lead to clouds or heat waves...";
+    if (recentWeather.every((w) => w === 'sunny')) {
+      return 'Extended sunny periods often lead to clouds or heat waves...';
     }
     if (recentWeather.includes('cloudy') && recentWeather.includes('windy')) {
-      return "Clouds and wind together often signal incoming rain...";
+      return 'Clouds and wind together often signal incoming rain...';
     }
-    if (recentWeather.filter(w => w === 'rainy').length >= 2) {
-      return "The rain seems to be clearing up soon!";
+    if (recentWeather.filter((w) => w === 'rainy').length >= 2) {
+      return 'The rain seems to be clearing up soon!';
     }
 
-    return "Weather patterns can be unpredictable. Trust your instincts!";
+    return 'Weather patterns can be unpredictable. Trust your instincts!';
   }, [weatherHistory]);
 
   // Handle prediction submission
@@ -88,9 +88,7 @@ function WeatherPredictionComponent({
           <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
             <div className="text-sm text-blue-700 mb-2">Current Weather</div>
             <div className="flex items-center gap-3">
-              <span className="text-4xl">
-                {WEATHER_TYPES[currentWeather]?.emoji || '☀️'}
-              </span>
+              <span className="text-4xl">{WEATHER_TYPES[currentWeather]?.emoji || '☀️'}</span>
               <div>
                 <div className="font-semibold">
                   {WEATHER_TYPES[currentWeather]?.name || 'Unknown'}
@@ -115,9 +113,7 @@ function WeatherPredictionComponent({
                         className="flex-1 text-center p-2 bg-gray-50 rounded-lg"
                         title={WEATHER_TYPES[h.weather]?.name}
                       >
-                        <span className="text-xl">
-                          {WEATHER_TYPES[h.weather]?.emoji || '❓'}
-                        </span>
+                        <span className="text-xl">{WEATHER_TYPES[h.weather]?.emoji || '❓'}</span>
                       </div>
                     ))}
                   </div>
@@ -149,9 +145,10 @@ function WeatherPredictionComponent({
                         className={`
                           p-3 rounded-xl border-2 transition-all
                           flex flex-col items-center gap-1
-                          ${isSelected
-                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          ${
+                            isSelected
+                              ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                           }
                         `}
                       >
@@ -192,10 +189,12 @@ function WeatherPredictionComponent({
           ) : (
             /* Result screen */
             <div className="text-center py-4">
-              <div className={`
+              <div
+                className={`
                 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4
                 ${result.correct ? 'bg-green-100' : 'bg-orange-100'}
-              `}>
+              `}
+              >
                 {result.correct ? (
                   <Check size={32} className="text-green-600" />
                 ) : (
@@ -203,36 +202,29 @@ function WeatherPredictionComponent({
                 )}
               </div>
 
-              <h3 className={`text-xl font-bold mb-2 ${result.correct ? 'text-green-700' : 'text-orange-700'}`}>
+              <h3
+                className={`text-xl font-bold mb-2 ${result.correct ? 'text-green-700' : 'text-orange-700'}`}
+              >
                 {result.correct ? 'Correct!' : 'Not quite!'}
               </h3>
 
               <p className="text-gray-600 mb-4">
                 {result.correct
-                  ? "Your weather intuition is impressive!"
-                  : `The actual weather was ${WEATHER_TYPES[currentWeather]?.name || 'unknown'}`
-                }
+                  ? 'Your weather intuition is impressive!'
+                  : `The actual weather was ${WEATHER_TYPES[currentWeather]?.name || 'unknown'}`}
               </p>
 
               {result.reward > 0 && (
                 <Badge className="bg-amber-100 text-amber-700 text-lg py-1 px-3 mb-4">
-                  <Award size={16} className="inline mr-1" />
-                  +{result.reward}🪙
+                  <Award size={16} className="inline mr-1" />+{result.reward}🪙
                 </Badge>
               )}
 
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={onClose}
-                  className="flex-1"
-                >
+                <Button variant="outline" onClick={onClose} className="flex-1">
                   Close
                 </Button>
-                <Button
-                  onClick={handlePlayAgain}
-                  className="flex-1"
-                >
+                <Button onClick={handlePlayAgain} className="flex-1">
                   Predict Again
                 </Button>
               </div>

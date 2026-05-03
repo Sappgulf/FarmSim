@@ -1,5 +1,10 @@
 import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
-import { GameProvider, useGameActions, useGameSelector, useGameStore } from '../context/GameContext';
+import {
+  GameProvider,
+  useGameActions,
+  useGameSelector,
+  useGameStore,
+} from '../context/GameContext';
 import { TickProvider } from '../context/TickContext';
 
 // Import modular components
@@ -52,11 +57,17 @@ export function FarmSimCore() {
   const musicEnabled = useGameSelector((state) => state.settings?.musicEnabled !== false);
   const soundEnabled = useGameSelector((state) => state.settings?.soundEnabled !== false);
   const reducedMotionEnabled = useGameSelector((state) => state.settings?.reducedMotion === true);
-  const particleEffectsEnabled = useGameSelector((state) => state.settings?.particleEffects !== false);
+  const particleEffectsEnabled = useGameSelector(
+    (state) => state.settings?.particleEffects !== false
+  );
   const seasonCurrent = useGameSelector((state) => state.season?.current || 'spring');
   const seasonConfig = useGameSelector((state) => state.season?.config || null);
-  const cozyVisualWeather = useGameSelector((state) => state.cozyExpansion?.visualState?.weather || null);
-  const hasCozyVisualWeather = useGameSelector((state) => Boolean(state.cozyExpansion?.visualState?.weather));
+  const cozyVisualWeather = useGameSelector(
+    (state) => state.cozyExpansion?.visualState?.weather || null
+  );
+  const hasCozyVisualWeather = useGameSelector((state) =>
+    Boolean(state.cozyExpansion?.visualState?.weather)
+  );
   const dayCount = useGameSelector((state) => state.almanac?.counters?.dayCount || 0);
   const farmThemeId = useGameSelector((state) => state.farmTheme || null);
   const weather = useGameSelector((state) => state.weather || 'sunny');
@@ -81,9 +92,8 @@ export function FarmSimCore() {
     return 'day';
   };
 
-  const findSectionForTab = (tabId) => (
-    Object.values(NAV_SECTIONS).find((section) => section.tabs.includes(tabId))?.id || null
-  );
+  const findSectionForTab = (tabId) =>
+    Object.values(NAV_SECTIONS).find((section) => section.tabs.includes(tabId))?.id || null;
 
   // Handle section change
   const handleSectionChange = (sectionId) => {
@@ -167,7 +177,7 @@ export function FarmSimCore() {
       livestockSystem,
       fishingSystem,
       soundSystem,
-      musicSystem
+      musicSystem,
     };
 
     // Only update if systems actually changed (by reference)
@@ -184,7 +194,6 @@ export function FarmSimCore() {
       actionsRef.current.setSystems(newSystems);
     }
     // Removed actions from dependencies - using ref instead to prevent infinite loop
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [farmingSystem, livestockSystem, fishingSystem, soundSystem, musicSystem]);
 
   // System update loop - Optimized with requestAnimationFrame for better timing
@@ -227,7 +236,10 @@ export function FarmSimCore() {
         if (isDevelopmentMode()) {
           window.__farmPerf = window.__farmPerf || { loops: 0, maxUpdateMs: 0 };
           window.__farmPerf.loops += 1;
-          window.__farmPerf.maxUpdateMs = Math.max(window.__farmPerf.maxUpdateMs, window.__lastUpdateTime);
+          window.__farmPerf.maxUpdateMs = Math.max(
+            window.__farmPerf.maxUpdateMs,
+            window.__lastUpdateTime
+          );
         }
 
         lastUpdateTime = currentTime - (deltaTime % targetFrameTime); // Maintain frame timing
@@ -245,7 +257,19 @@ export function FarmSimCore() {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [paused, store, seasonSystem, farmingSystem, weatherSystem, economicSystem, achievementSystem, diseaseSystem, disasterSystem, livestockSystem, fishingSystem]);
+  }, [
+    paused,
+    store,
+    seasonSystem,
+    farmingSystem,
+    weatherSystem,
+    economicSystem,
+    achievementSystem,
+    diseaseSystem,
+    disasterSystem,
+    livestockSystem,
+    fishingSystem,
+  ]);
 
   // Initialize sound and music systems
   useEffect(() => {
@@ -330,7 +354,7 @@ export function FarmSimCore() {
 
   // Get season colors for theming
   const seasonColors = seasonConfig?.colors || {
-    primary: 'from-green-50 to-blue-50'
+    primary: 'from-green-50 to-blue-50',
   };
 
   // Enhanced season transition effect
@@ -457,19 +481,25 @@ export function FarmSimCore() {
         }
       }
 
-      const fadeTimer = setTimeout(() => {
-        overlay.style.opacity = '0';
-        icon.style.opacity = '0';
-        text.style.opacity = '0';
-        desc.style.opacity = '0';
-        icon.style.transform = 'translate(-50%, -50%) scale(0.5)';
-        text.style.transform = 'translate(-50%, -50%) scale(0.5)';
+      const fadeTimer = setTimeout(
+        () => {
+          overlay.style.opacity = '0';
+          icon.style.opacity = '0';
+          text.style.opacity = '0';
+          desc.style.opacity = '0';
+          icon.style.transform = 'translate(-50%, -50%) scale(0.5)';
+          text.style.transform = 'translate(-50%, -50%) scale(0.5)';
 
-        const cleanupTimer = setTimeout(() => {
-          clearActiveTransition();
-        }, prefersReducedMotion ? 400 : 1500);
-        activeTimers.push(cleanupTimer);
-      }, prefersReducedMotion ? 1200 : 2500);
+          const cleanupTimer = setTimeout(
+            () => {
+              clearActiveTransition();
+            },
+            prefersReducedMotion ? 400 : 1500
+          );
+          activeTimers.push(cleanupTimer);
+        },
+        prefersReducedMotion ? 1200 : 2500
+      );
 
       activeTimers.push(fadeTimer);
     };
@@ -533,7 +563,9 @@ export function FarmSimCore() {
       )}
 
       {/* Game Header */}
-      <div className="relative z-20"><GameHeader /></div>
+      <div className="relative z-20">
+        <GameHeader />
+      </div>
 
       {ghostVisitActive && (
         <div className="relative z-30 mx-2 sm:mx-4 mt-2 max-w-7xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] lg:mx-auto rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-800">

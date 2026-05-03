@@ -40,10 +40,10 @@ export function useTutorial(tutorialComplete, tutorialStep, advanceTutorial, com
   const showHint = useCallback((message, target = null, duration = 5000) => {
     const id = Date.now();
     const hint = { id, message, target };
-    setHints(prev => [...prev, hint]);
+    setHints((prev) => [...prev, hint]);
 
     setTimeout(() => {
-      setHints(prev => prev.filter(h => h.id !== id));
+      setHints((prev) => prev.filter((h) => h.id !== id));
     }, duration);
 
     return id;
@@ -51,7 +51,7 @@ export function useTutorial(tutorialComplete, tutorialStep, advanceTutorial, com
 
   // Dismiss hint
   const dismissHint = useCallback((id) => {
-    setHints(prev => prev.filter(h => h.id !== id));
+    setHints((prev) => prev.filter((h) => h.id !== id));
   }, []);
 
   // Update highlighted element when step changes
@@ -64,29 +64,32 @@ export function useTutorial(tutorialComplete, tutorialStep, advanceTutorial, com
   }, [currentStep]);
 
   // Trigger hints based on game state (can be called from main component)
-  const checkForHints = useCallback((gameState) => {
-    if (tutorialComplete) return;
+  const checkForHints = useCallback(
+    (gameState) => {
+      if (tutorialComplete) return;
 
-    const { coins, plots, inventory } = gameState || {};
+      const { coins, plots, inventory } = gameState || {};
 
-    // Hint: Low on seeds
-    if (inventory && Object.values(inventory).filter(v => v > 0).length === 0) {
-      showHint("💡 You're out of seeds! Visit the shop to buy more.", 'shop-tab');
-    }
-
-    // Hint: Crops ready to harvest
-    if (plots) {
-      const readyPlots = plots.filter(p => p.status === 'ready');
-      if (readyPlots.length > 2) {
-        showHint("🌾 Multiple crops ready! Click them to harvest.", 'farm-grid');
+      // Hint: Low on seeds
+      if (inventory && Object.values(inventory).filter((v) => v > 0).length === 0) {
+        showHint("💡 You're out of seeds! Visit the shop to buy more.", 'shop-tab');
       }
-    }
 
-    // Hint: Lots of coins, suggest upgrades
-    if (coins > 100 && !inventory?.fertilizer) {
-      showHint("💡 Try buying fertilizer to speed up growth!", 'shop-tab');
-    }
-  }, [tutorialComplete, showHint]);
+      // Hint: Crops ready to harvest
+      if (plots) {
+        const readyPlots = plots.filter((p) => p.status === 'ready');
+        if (readyPlots.length > 2) {
+          showHint('🌾 Multiple crops ready! Click them to harvest.', 'farm-grid');
+        }
+      }
+
+      // Hint: Lots of coins, suggest upgrades
+      if (coins > 100 && !inventory?.fertilizer) {
+        showHint('💡 Try buying fertilizer to speed up growth!', 'shop-tab');
+      }
+    },
+    [tutorialComplete, showHint]
+  );
 
   return {
     // State

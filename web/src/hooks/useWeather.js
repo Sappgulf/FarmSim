@@ -2,22 +2,24 @@
  * Weather Hook
  * Manages weather system, seasons, and environmental effects
  */
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { SEASONS, SEASON_DATA, WEATHER_TYPES, GAME_SETTINGS } from '../data/constants';
 import { nowSec } from '../utils/time.mjs';
 
 const WEATHER_PROBABILITIES = {
-  spring: { sunny: 0.35, cloudy: 0.25, rainy: 0.30, stormy: 0.05, windy: 0.05 },
-  summer: { sunny: 0.50, cloudy: 0.15, rainy: 0.15, stormy: 0.10, drought: 0.10 },
-  fall: { sunny: 0.30, cloudy: 0.30, rainy: 0.25, stormy: 0.10, windy: 0.05 },
-  winter: { sunny: 0.20, cloudy: 0.35, rainy: 0.15, frost: 0.20, windy: 0.10 },
+  spring: { sunny: 0.35, cloudy: 0.25, rainy: 0.3, stormy: 0.05, windy: 0.05 },
+  summer: { sunny: 0.5, cloudy: 0.15, rainy: 0.15, stormy: 0.1, drought: 0.1 },
+  fall: { sunny: 0.3, cloudy: 0.3, rainy: 0.25, stormy: 0.1, windy: 0.05 },
+  winter: { sunny: 0.2, cloudy: 0.35, rainy: 0.15, frost: 0.2, windy: 0.1 },
 };
 
 export function useWeather(addNotification) {
   const [currentSeason, setCurrentSeason] = useState('spring');
   const [currentWeather, setCurrentWeather] = useState('sunny');
   const [seasonEndsAt, setSeasonEndsAt] = useState(() => nowSec() + GAME_SETTINGS.SEASON_DURATION);
-  const [weatherChangesAt, setWeatherChangesAt] = useState(() => nowSec() + GAME_SETTINGS.WEATHER_CHANGE_INTERVAL);
+  const [weatherChangesAt, setWeatherChangesAt] = useState(
+    () => nowSec() + GAME_SETTINGS.WEATHER_CHANGE_INTERVAL
+  );
   const [forecast, setForecast] = useState([]);
   const [weatherHistory, setWeatherHistory] = useState([]);
 
@@ -26,19 +28,22 @@ export function useWeather(addNotification) {
   const weatherData = WEATHER_TYPES[currentWeather] || WEATHER_TYPES.sunny;
 
   // Generate random weather based on season
-  const generateWeather = useCallback((season = currentSeason) => {
-    const probs = WEATHER_PROBABILITIES[season] || WEATHER_PROBABILITIES.spring;
-    const roll = Math.random();
-    let cumulative = 0;
+  const generateWeather = useCallback(
+    (season = currentSeason) => {
+      const probs = WEATHER_PROBABILITIES[season] || WEATHER_PROBABILITIES.spring;
+      const roll = Math.random();
+      let cumulative = 0;
 
-    for (const [weather, prob] of Object.entries(probs)) {
-      cumulative += prob;
-      if (roll <= cumulative) {
-        return weather;
+      for (const [weather, prob] of Object.entries(probs)) {
+        cumulative += prob;
+        if (roll <= cumulative) {
+          return weather;
+        }
       }
-    }
-    return 'sunny';
-  }, [currentSeason]);
+      return 'sunny';
+    },
+    [currentSeason]
+  );
 
   // Generate forecast
   const generateForecast = useCallback(() => {
@@ -54,51 +59,57 @@ export function useWeather(addNotification) {
   }, [generateWeather]);
 
   // Change weather
-  const changeWeather = useCallback((forceWeather = null) => {
-    const newWeather = forceWeather || generateWeather();
-    const oldWeather = currentWeather;
+  const changeWeather = useCallback(
+    (forceWeather = null) => {
+      const newWeather = forceWeather || generateWeather();
+      const oldWeather = currentWeather;
 
-    setCurrentWeather(newWeather);
-    setWeatherChangesAt(nowSec() + GAME_SETTINGS.WEATHER_CHANGE_INTERVAL);
+      setCurrentWeather(newWeather);
+      setWeatherChangesAt(nowSec() + GAME_SETTINGS.WEATHER_CHANGE_INTERVAL);
 
-    // Record history
-    setWeatherHistory(prev => [...prev.slice(-10), { weather: oldWeather, timestamp: nowSec() }]);
+      // Record history
+      setWeatherHistory((prev) => [
+        ...prev.slice(-10),
+        { weather: oldWeather, timestamp: nowSec() },
+      ]);
 
-    // Notify on significant weather changes
-    const weatherInfo = WEATHER_TYPES[newWeather];
-    if (newWeather !== oldWeather && weatherInfo) {
-      const isHarmful = ['stormy', 'drought', 'frost'].includes(newWeather);
-      addNotification?.(
-        `${weatherInfo.emoji} Weather: ${weatherInfo.name}`,
-        isHarmful ? 'warning' : 'info'
-      );
-    }
+      // Notify on significant weather changes
+      const weatherInfo = WEATHER_TYPES[newWeather];
+      if (newWeather !== oldWeather && weatherInfo) {
+        const isHarmful = ['stormy', 'drought', 'frost'].includes(newWeather);
+        addNotification?.(
+          `${weatherInfo.emoji} Weather: ${weatherInfo.name}`,
+          isHarmful ? 'warning' : 'info'
+        );
+      }
 
-    return newWeather;
-  }, [generateWeather, currentWeather, addNotification]);
+      return newWeather;
+    },
+    [generateWeather, currentWeather, addNotification]
+  );
 
   // Change season
-  const changeSeason = useCallback((forceSeason = null) => {
-    const currentIndex = SEASONS.indexOf(currentSeason);
-    const newSeason = forceSeason || SEASONS[(currentIndex + 1) % SEASONS.length];
+  const changeSeason = useCallback(
+    (forceSeason = null) => {
+      const currentIndex = SEASONS.indexOf(currentSeason);
+      const newSeason = forceSeason || SEASONS[(currentIndex + 1) % SEASONS.length];
 
-    setCurrentSeason(newSeason);
-    setSeasonEndsAt(nowSec() + GAME_SETTINGS.SEASON_DURATION);
+      setCurrentSeason(newSeason);
+      setSeasonEndsAt(nowSec() + GAME_SETTINGS.SEASON_DURATION);
 
-    const newSeasonData = SEASON_DATA[newSeason];
-    addNotification?.(
-      `${newSeasonData.emoji} ${newSeasonData.name} has begun!`,
-      'info'
-    );
+      const newSeasonData = SEASON_DATA[newSeason];
+      addNotification?.(`${newSeasonData.emoji} ${newSeasonData.name} has begun!`, 'info');
 
-    // Generate new forecast for the season
-    generateForecast();
+      // Generate new forecast for the season
+      generateForecast();
 
-    // Change weather to match new season
-    changeWeather();
+      // Change weather to match new season
+      changeWeather();
 
-    return newSeason;
-  }, [currentSeason, addNotification, generateForecast, changeWeather]);
+      return newSeason;
+    },
+    [currentSeason, addNotification, generateForecast, changeWeather]
+  );
 
   // Calculate growth modifier based on weather and season
   const getGrowthModifier = useCallback(() => {
@@ -168,16 +179,19 @@ export function useWeather(addNotification) {
     return target;
   }, []);
 
-  const submitPrediction = useCallback((prediction) => {
-    if (!predictionGame.active) return null;
+  const submitPrediction = useCallback(
+    (prediction) => {
+      if (!predictionGame.active) return null;
 
-    const correct = prediction === currentWeather;
-    const reward = correct ? predictionGame.reward : 0;
+      const correct = prediction === currentWeather;
+      const reward = correct ? predictionGame.reward : 0;
 
-    setPredictionGame({ active: false, targetWeather: null, reward: 0 });
+      setPredictionGame({ active: false, targetWeather: null, reward: 0 });
 
-    return { correct, reward };
-  }, [predictionGame, currentWeather]);
+      return { correct, reward };
+    },
+    [predictionGame, currentWeather]
+  );
 
   // Time remaining displays
   const getSeasonTimeRemaining = useCallback(() => {
@@ -189,13 +203,16 @@ export function useWeather(addNotification) {
   }, [weatherChangesAt]);
 
   // Save data
-  const getSaveData = useCallback(() => ({
-    currentSeason,
-    currentWeather,
-    seasonEndsAt,
-    weatherChangesAt,
-    weatherHistory,
-  }), [currentSeason, currentWeather, seasonEndsAt, weatherChangesAt, weatherHistory]);
+  const getSaveData = useCallback(
+    () => ({
+      currentSeason,
+      currentWeather,
+      seasonEndsAt,
+      weatherChangesAt,
+      weatherHistory,
+    }),
+    [currentSeason, currentWeather, seasonEndsAt, weatherChangesAt, weatherHistory]
+  );
 
   // Load save data
   const loadSaveData = useCallback((data) => {

@@ -21,7 +21,7 @@ const getMoodPoints = (state) => {
   const memoryCount = countUnlocked(state.memoryFlags || {});
   const almanacCount = countUnlocked(state.almanac?.unlocked || {});
   const cozyCount = state.cozyGoals?.completedGoalIds?.length || 0;
-  return (memoryCount * 8) + (almanacCount * 4) + (cozyCount * 6);
+  return memoryCount * 8 + almanacCount * 4 + cozyCount * 6;
 };
 
 const getMoodTier = (state) => {
@@ -35,10 +35,12 @@ const getMoodTier = (state) => {
 
 const getLatestMemoryId = (state) => {
   if (state.lastUnlockedMemoryId) return state.lastUnlockedMemoryId;
-  const unlocked = new Set(Object.keys(state.memoryFlags || {}).filter((id) => state.memoryFlags?.[id]));
-  const sorted = MEMORIES
-    .filter((memory) => unlocked.has(memory.id))
-    .sort((a, b) => (a.order || 0) - (b.order || 0));
+  const unlocked = new Set(
+    Object.keys(state.memoryFlags || {}).filter((id) => state.memoryFlags?.[id])
+  );
+  const sorted = MEMORIES.filter((memory) => unlocked.has(memory.id)).sort(
+    (a, b) => (a.order || 0) - (b.order || 0)
+  );
   return sorted[sorted.length - 1]?.id || null;
 };
 
@@ -93,7 +95,9 @@ const getSpotlightContent = (state) => {
   const crop = getCropById(cropId);
   return {
     title: 'Featured Crop',
-    text: crop ? `${crop.name}: ${crop.description || 'A steady favorite on the farm.'}` : 'A steady favorite on the farm.',
+    text: crop
+      ? `${crop.name}: ${crop.description || 'A steady favorite on the farm.'}`
+      : 'A steady favorite on the farm.',
     icon: crop?.emoji || '🌱',
   };
 };
@@ -165,12 +169,15 @@ const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, maxLines) => {
     limited[limited.length - 1] = `${last}…`;
   }
   limited.forEach((line, index) => {
-    ctx.fillText(line, x, y + (index * lineHeight));
+    ctx.fillText(line, x, y + index * lineHeight);
   });
   return limited.length;
 };
 
-export const renderFarmCard = async (data, { size = FARM_CARD_SIZE, returnCanvas = false } = {}) => {
+export const renderFarmCard = async (
+  data,
+  { size = FARM_CARD_SIZE, returnCanvas = false } = {}
+) => {
   await new Promise((resolve) => {
     if (typeof requestAnimationFrame === 'function') {
       requestAnimationFrame(resolve);
@@ -194,7 +201,7 @@ export const renderFarmCard = async (data, { size = FARM_CARD_SIZE, returnCanvas
   ctx.fillRect(0, 0, size, size);
 
   const padding = 70;
-  const cardSize = size - (padding * 2);
+  const cardSize = size - padding * 2;
   drawRoundedRect(ctx, padding, padding, cardSize, cardSize, 48);
   ctx.fillStyle = palette.card;
   ctx.fill();
@@ -211,7 +218,11 @@ export const renderFarmCard = async (data, { size = FARM_CARD_SIZE, returnCanvas
 
   ctx.font = '600 30px "Inter", "Segoe UI", sans-serif';
   ctx.fillStyle = palette.muted;
-  ctx.fillText(`${data.season.charAt(0).toUpperCase() + data.season.slice(1)} • Day ${data.dayCount}`, headerX, cursorY + 80);
+  ctx.fillText(
+    `${data.season.charAt(0).toUpperCase() + data.season.slice(1)} • Day ${data.dayCount}`,
+    headerX,
+    cursorY + 80
+  );
   ctx.fillText(`Title: ${data.activeFarmTitle}`, headerX, cursorY + 118);
 
   const pillX = padding + cardSize - 260;
@@ -261,7 +272,15 @@ export const renderFarmCard = async (data, { size = FARM_CARD_SIZE, returnCanvas
 
   ctx.fillStyle = palette.muted;
   ctx.font = '500 26px "Inter", "Segoe UI", sans-serif';
-  drawWrappedText(ctx, spotlight.text, highlightX + 32, highlightY + 96, highlightWidth - 64, 36, 4);
+  drawWrappedText(
+    ctx,
+    spotlight.text,
+    highlightX + 32,
+    highlightY + 96,
+    highlightWidth - 64,
+    36,
+    4
+  );
 
   const footerY = padding + cardSize - 64;
   ctx.fillStyle = palette.muted;
