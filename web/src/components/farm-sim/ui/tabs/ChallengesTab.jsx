@@ -13,7 +13,7 @@ import {
   getResetCountdownLabel,
 } from '../../../../utils/challengesBoard';
 import { logDebugAction } from '../../../../utils/debugTools';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabEmptyState } from './TabSurface';
 
 const REFRESH_COST = 90;
 const WEEKLY_MILESTONES = [
@@ -256,10 +256,13 @@ const ChallengesTab = memo(() => {
       </TabHero>
 
       {challengesWithProgress.length === 0 ? (
-        <Card className="p-6 text-center">
-          <div className="text-4xl mb-2">🎯</div>
-          <p className="text-gray-600">Generating daily operations...</p>
-        </Card>
+        <TabEmptyState
+          tone="amber"
+          icon="🎯"
+          title="Daily board is syncing"
+          description="Operations appear here automatically. Switch tabs briefly if this message stays—a fresh set will load for today."
+          className="border-amber-100/70"
+        />
       ) : (
         <div className="space-y-3">
           {challengesWithProgress.map((challenge) => {

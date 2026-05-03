@@ -1,4 +1,4 @@
-const CACHE_NAME = 'farmsim-v5.2.0';
+const CACHE_NAME = 'farmsim-v5.5.4';
 const ASSETS = [
   './',
   './index.html',

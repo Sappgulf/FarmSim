@@ -69,6 +69,8 @@ import {
 } from '../../../utils/cozyGoals';
 import { SUPPLY_UNIT_COSTS, planSupplyUsage } from '../../../utils/supplies';
 import { updateQuestProgress } from '../systems/QuestSystem';
+import { useAutoSave } from './useAutoSave';
+import { useVisibilityPause } from './useVisibilityPause';
 
 const rollChance = (chance = 0) => Math.random() < chance;
 
@@ -171,26 +173,6 @@ export function GameProvider({ children }) {
     applyCosmeticFallbacks(stateToCheck)
   );
 
-  // Debounced auto-save management
-  const autoSaveTimeoutRef = useRef(null);
-  const deferredAutoSaveRef = useRef(null);
-  const idleAutoSaveRef = useRef(null);
-  const lastSaveStateRef = useRef('');
-
-  const buildAutoSaveSignature = useCallback((stateToSave) => {
-    if (!stateToSave || typeof stateToSave !== 'object') return '';
-    const { gameLoop, ...rest } = stateToSave;
-    return JSON.stringify({
-      ...rest,
-      // Notifications are intentionally excluded from persisted payloads.
-      notifications: [],
-      gameLoop: {
-        paused: Boolean(gameLoop?.paused),
-        pauseReason: typeof gameLoop?.pauseReason === 'string' ? gameLoop.pauseReason : null,
-      },
-    });
-  }, []);
-
   useEffect(() => {
     initDebugTools();
   }, []);
@@ -201,134 +183,14 @@ export function GameProvider({ children }) {
     return () => detachReleaseTools();
   }, []);
 
-  useEffect(() => {
-    const wasPausedRef = { current: false };
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        wasPausedRef.current = stateRef.current.gameLoop?.paused || false;
-        if (!stateRef.current.gameLoop?.paused) {
-          dispatchRef.current({
-            type: GAME_ACTIONS.UPDATE_GAME_LOOP,
-            payload: { paused: true, pausedAt: Date.now(), pauseReason: 'hidden' },
-          });
-        }
-      } else if (!wasPausedRef.current) {
-        dispatchRef.current({
-          type: GAME_ACTIONS.UPDATE_GAME_LOOP,
-          payload: { paused: false, pauseReason: null },
-        });
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  const debouncedAutoSave = useCallback((stateToSave) => {
-    if (autoSaveTimeoutRef.current) {
-      clearTimeout(autoSaveTimeoutRef.current);
-    }
-    if (deferredAutoSaveRef.current) {
-      clearTimeout(deferredAutoSaveRef.current);
-      deferredAutoSaveRef.current = null;
-    }
-    if (idleAutoSaveRef.current && typeof cancelIdleCallback !== 'undefined') {
-      cancelIdleCallback(idleAutoSaveRef.current);
-      idleAutoSaveRef.current = null;
-    }
-
-    const stateSignature = buildAutoSaveSignature(stateToSave);
-
-    if (stateSignature === lastSaveStateRef.current) return;
-
-    autoSaveTimeoutRef.current = setTimeout(() => {
-      try {
-        const saveToStorage = () => {
-          idleAutoSaveRef.current = null;
-          deferredAutoSaveRef.current = null;
-
-          try {
-            const latestState = stateRef.current;
-            if (!latestState?.settings?.autoSave) return;
-
-            const latestSignature = buildAutoSaveSignature(latestState);
-            if (latestSignature === lastSaveStateRef.current) return;
-
-            const saveResult = saveStateToStorage(latestState, { key: SAVE_KEY, backupKey: BACKUP_SAVE_KEY });
-            if (saveResult.success) {
-              lastSaveStateRef.current = latestSignature;
-              if (dispatchRef.current) {
-                dispatchRef.current({
-                  type: GAME_ACTIONS.UPDATE_GAME_LOOP,
-                  payload: { lastSaveTime: saveResult.timestamp },
-                });
-              }
-            }
-          } catch (error) {
-            console.error('[farm] Auto-save failed:', error);
-          }
-        };
-
-        if (typeof requestIdleCallback !== 'undefined') {
-          idleAutoSaveRef.current = requestIdleCallback(saveToStorage, { timeout: 1000 });
-        } else {
-          deferredAutoSaveRef.current = setTimeout(saveToStorage, 0);
-        }
-      } catch (error) {
-        console.error('[farm] Auto-save serialization failed:', error);
-      }
-    }, 2000);
-  }, [buildAutoSaveSignature]);
-
-  // Performance loops: FPS monitoring and Auto-save trigger
-  const fpsRef = useRef(60);
-  useEffect(() => {
-    if (state.gameLoop.paused) return;
-
-    let frameCount = 0;
-    let lastFPSUpdate = performance.now();
-    let lastAutoSaveCheck = Date.now();
-    let animationFrameId = null;
-
-    const masterGameLoop = (currentTime) => {
-      const currentState = stateRef.current;
-      if (currentState.gameLoop.paused) return;
-
-      frameCount++;
-      if (currentTime - lastFPSUpdate >= 1000) {
-        const fps = Math.round((frameCount * 1000) / (currentTime - lastFPSUpdate));
-        fpsRef.current = fps;
-        window.__currentFPS = fps;
-        frameCount = 0;
-        lastFPSUpdate = currentTime;
-      }
-
-      const now = Date.now();
-      if (currentState.settings.autoSave && (now - lastAutoSaveCheck >= 30000)) {
-        const dayKey = getDayKey();
-        if (dayKey !== currentState.almanac?.lastDayKey) {
-          actionsRef.current?.recordAlmanacEvent('day_rollover', { dayKey });
-          actionsRef.current?.recordCozyExpansionEvent('day_rollover', { dayKey });
-          actionsRef.current?.recordRetentionVisit(dayKey, now);
-          actionsRef.current?.recordMilestoneEvent('day_advance', { dayKey });
-        }
-        debouncedAutoSave(currentState);
-        lastAutoSaveCheck = now;
-      }
-
-      animationFrameId = requestAnimationFrame(masterGameLoop);
-    };
-
-    animationFrameId = requestAnimationFrame(masterGameLoop);
-
-    return () => {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
-      if (deferredAutoSaveRef.current) clearTimeout(deferredAutoSaveRef.current);
-      if (idleAutoSaveRef.current && typeof cancelIdleCallback !== 'undefined') {
-        cancelIdleCallback(idleAutoSaveRef.current);
-      }
-    };
-  }, [state.gameLoop.paused, state.settings.autoSave, debouncedAutoSave]);
+  useVisibilityPause({ stateRef, dispatchRef });
+  useAutoSave({
+    stateRef,
+    dispatchRef,
+    actionsRef,
+    paused: state.gameLoop.paused,
+    autoSaveEnabled: state.settings.autoSave,
+  });
 
   // System management (bridging React state with external game systems)
   const [systems, setSystemsState] = useState({});

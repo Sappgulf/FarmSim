@@ -63,7 +63,7 @@ export class MusicSystem {
     this.volume = this.baseVolume * this.duckMultiplier;
   }
 
-  duckForSfx(durationMs = 600, multiplier = 0.5) {
+  duckForSfx(durationMs = 850, multiplier = 0.5) {
     this.duckMultiplier = Math.min(this.duckMultiplier, multiplier);
     this.volume = this.baseVolume * this.duckMultiplier;
     if (this.duckTimeout) {

@@ -6,7 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs';
 import { getContentManager } from '../../../../content/ContentManager';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabEmptyState } from './TabSurface';
 
 const buildBreedingRecipes = (items = []) => (
   Object.fromEntries(items.map((item) => [
@@ -194,9 +194,23 @@ const GeneticsTab = memo(() => {
 
             {/* Parent Selection */}
             {availableCrops.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-600">
-                Grow or harvest crops to unlock breeding options.
-              </div>
+              <TabEmptyState
+                tone="violet"
+                icon="🌾"
+                title="No crops in inventory"
+                description="Harvest from your plots first. Then choose two crops here as parents to chase hybrid recipes."
+                action={(
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="min-h-[44px]"
+                    onClick={() => typeof window.switchToTab === 'function' && window.switchToTab('farming')}
+                  >
+                    Open Farm
+                  </Button>
+                )}
+              />
             ) : (
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>

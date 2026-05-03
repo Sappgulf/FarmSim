@@ -58,21 +58,39 @@ const AnimatedNumber = memo(({ value, duration = 500 }) => {
 
 AnimatedNumber.displayName = 'AnimatedNumber';
 
-const LastSaveTime = memo(({ lastSavedAt, autoSave }) => {
+const LastSaveTime = memo(({ lastSavedAt, autoSave, reducedMotion }) => {
   useTick();
   const currentTime = Date.now();
+  const [justSaved, setJustSaved] = useState(false);
+  const prevSavedRef = useRef(lastSavedAt);
+
+  useEffect(() => {
+    if (lastSavedAt && prevSavedRef.current !== lastSavedAt) {
+      prevSavedRef.current = lastSavedAt;
+      if (!reducedMotion) {
+        setJustSaved(true);
+        const t = setTimeout(() => setJustSaved(false), 900);
+        return () => clearTimeout(t);
+      }
+    }
+    prevSavedRef.current = lastSavedAt;
+  }, [lastSavedAt, reducedMotion]);
 
   const getTimeSinceLastSave = () => {
     if (!lastSavedAt) {
-      return autoSave ? 'Waiting...' : 'Not saved yet';
+      return autoSave ? 'waiting for first save…' : 'not saved yet';
     }
     const seconds = Math.max(0, Math.floor((currentTime - lastSavedAt) / 1000));
-    if (seconds < 10) return 'Just now';
+    if (seconds < 10) return 'just now';
     if (seconds < 60) return `${seconds}s ago`;
     return `${Math.floor(seconds / 60)}m ago`;
   };
 
-  return <span>Auto-saved {getTimeSinceLastSave()}</span>;
+  return (
+    <span className={`transition-colors duration-300 ${justSaved ? 'font-semibold text-emerald-600' : ''}`}>
+      Saved {getTimeSinceLastSave()}
+    </span>
+  );
 });
 
 LastSaveTime.displayName = 'LastSaveTime';
@@ -125,6 +143,7 @@ const GameHeader = memo(() => {
   const farmNameRaw = useGameSelector((state) => state.farmName || '');
   const weatherForecast = useGameSelector((state) => Array.isArray(state.weatherForecast) ? state.weatherForecast : []);
   const autoSaveEnabled = useGameSelector((state) => Boolean(state.settings?.autoSave));
+  const reducedMotion = useGameSelector((state) => state.settings?.reducedMotion === true);
   const lastSavedAt = useGameSelector((state) => state.gameLoop?.lastSaveTime || null);
   const plots = useGameSelector((state) => (Array.isArray(state.plots) ? state.plots : []));
 
@@ -363,7 +382,7 @@ const GameHeader = memo(() => {
 
             {/* Dropdown panel */}
             {showStatsDropdown && (
-              <div id="farm-stats-dropdown" className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 animate-fade-in" role="dialog" aria-label="Farm stats">
+              <div id="farm-stats-dropdown" className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 animate-overlay-card" role="dialog" aria-label="Farm stats">
                 <div className="p-3">
                   <h3 className="font-semibold text-sm mb-2 text-gray-700">📊 Farm Statistics</h3>
                   <div className="space-y-2 text-xs">
@@ -498,7 +517,7 @@ const GameHeader = memo(() => {
 	        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
 	          <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
 	            <Calendar className="w-3 h-3" />
-	            <LastSaveTime lastSavedAt={lastSavedAt} autoSave={autoSaveEnabled} />
+	            <LastSaveTime lastSavedAt={lastSavedAt} autoSave={autoSaveEnabled} reducedMotion={reducedMotion} />
 	          </div>
 	        </div>
 	      )}

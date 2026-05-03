@@ -111,7 +111,9 @@ export class SoundSystem {
    */
   playHarvestSound() {
     if (!this.enabled || !this.audioContext) return;
-    
+
+    this.duckMusic();
+
     const now = this.audioContext.currentTime;
     
     // Pop sound
@@ -145,7 +147,9 @@ export class SoundSystem {
    */
   playWaterSound() {
     if (!this.enabled || !this.audioContext) return;
-    
+
+    this.duckMusic();
+
     const now = this.audioContext.currentTime;
     
     // Create noise-like sound for water
@@ -248,7 +252,9 @@ export class SoundSystem {
    */
   playBuildSound() {
     if (!this.enabled || !this.audioContext) return;
-    
+
+    this.duckMusic();
+
     const now = this.audioContext.currentTime;
     
     // Deep thud

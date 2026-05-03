@@ -6,7 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { LIVESTOCK_TYPES } from '../../systems/LivestockSystem';
 import { isDevelopmentMode } from '../../../../config/release';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabEmptyState } from './TabSurface';
 
 const LivestockTab = memo(() => {
   const { state, actions, systems } = useGame();
@@ -325,11 +325,13 @@ const LivestockTab = memo(() => {
         </h4>
 
         {livestock.animals.length === 0 ? (
-          <div className="text-center py-10 px-4">
-            <div className="text-5xl mb-3">🐄</div>
-            <p className="font-semibold text-gray-700 mb-1">Your barn is empty</p>
-            <p className="text-sm text-gray-500 mb-4">Purchase your first animal above to start collecting products and earning extra income!</p>
-          </div>
+          <TabEmptyState
+            tone="amber"
+            icon="🐄"
+            title="Your barn is quiet"
+            description="Grab your first animal from Buy Animals below when you have space and coins—you’ll unlock milk, eggs, wool, and more."
+            className="border-amber-100/80 bg-amber-50/30"
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {livestock.animals.map(animal => {

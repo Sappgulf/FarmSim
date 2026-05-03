@@ -1,23 +1,23 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, forwardRef } from "react";
 
 /**
  * Premium Button component with juicy animations and ripple effects
  */
-export function Button({ 
-  children, 
-  onClick, 
+export const Button = forwardRef(function Button({
+  children,
+  onClick,
   type = "button",
-  variant = "default", 
-  size = "default", 
-  className = "", 
+  variant = "default",
+  size = "default",
+  className = "",
   juicy = false,
-  ...props 
-}) {
+  ...props
+}, forwardedRef) {
   const buttonRef = useRef(null);
   const [isPressed, setIsPressed] = useState(false);
-  
+
   const baseClasses = `
-    relative overflow-hidden inline-flex items-center justify-center 
+    relative overflow-hidden inline-flex items-center justify-center
     rounded-xl text-sm font-semibold
     transition-all duration-200 ease-out
     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
@@ -27,7 +27,7 @@ export function Button({
     ${juicy ? 'btn-juicy' : ''}
     ${isPressed ? 'scale-95' : 'active:scale-95'}
   `;
-  
+
   const variants = {
     default: `
       bg-gradient-to-br from-emerald-500 to-emerald-600 text-white
@@ -133,7 +133,14 @@ export function Button({
   return (
     <button
       type={type}
-      ref={buttonRef}
+      ref={(node) => {
+        buttonRef.current = node;
+        if (typeof forwardedRef === 'function') {
+          forwardedRef(node);
+        } else if (forwardedRef) {
+          forwardedRef.current = node;
+        }
+      }}
       className={`${baseClasses} ${variants[variant] || variants.default} ${sizes[size] || sizes.default} ${className}`}
       onClick={handleClick}
       {...props}
@@ -141,4 +148,4 @@ export function Button({
       {children}
     </button>
   );
-}
+});

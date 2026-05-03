@@ -6,7 +6,7 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { formatDisplayLabel } from '../../../../utils/textFormat';
 import { getContentManager } from '../../../../content/ContentManager';
-import { TabHero, MetricTile, TabSection } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 // Mapping for unlock IDs to user-friendly names
 const UNLOCK_NAMES = {
@@ -144,6 +144,13 @@ const ResearchTab = memo(() => {
     });
   };
 
+  const projectCount = Object.keys(RESEARCH_PROJECTS).length;
+  const completedCount = state.research?.completed?.length || 0;
+  const labFullyComplete =
+    projectCount > 0 &&
+    completedCount >= projectCount &&
+    !activeResearch;
+
   const getResearchProgress = (researchId) => {
     if (activeResearch !== researchId || !researchStartTime) return 0;
 
@@ -266,6 +273,25 @@ const ResearchTab = memo(() => {
         description="Pick the next project that matters most to your farm."
         tone="sky"
       >
+        {labFullyComplete ? (
+          <TabEmptyState
+            icon="🏆"
+            tone="violet"
+            title="Research tree complete"
+            description="You've finished every lab project for now. Check Achievements or the Almanac for your next milestones."
+            action={(
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="min-h-[44px]"
+                onClick={() => typeof window.switchToTab === 'function' && window.switchToTab('achievements')}
+              >
+                Open Achievements
+              </Button>
+            )}
+          />
+        ) : (
         <div className="space-y-3">
           {Object.entries(RESEARCH_PROJECTS).map(([id, research]) => {
             const available = canResearch(id);
@@ -328,6 +354,7 @@ const ResearchTab = memo(() => {
             );
           })}
         </div>
+        )}
       </TabSection>
 
       <TabSection

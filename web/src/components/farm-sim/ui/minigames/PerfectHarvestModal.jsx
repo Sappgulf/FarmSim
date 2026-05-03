@@ -200,8 +200,11 @@ export default function PerfectHarvestModal({
       : '';
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-4 py-6" data-qa="festival-game-modal">
-      <Card className="w-full max-w-md rounded-2xl border border-white/40 bg-white/95 p-5 shadow-2xl">
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-4 py-6 animate-overlay-backdrop"
+      data-qa="festival-game-modal"
+    >
+      <Card className="w-full max-w-md rounded-2xl border border-white/40 bg-white/95 p-5 shadow-2xl animate-overlay-card">
         <div className={`rounded-xl bg-gradient-to-r ${panelClass} p-3`}> 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-lg font-semibold text-emerald-800">

@@ -1,4 +1,7 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useRef } from 'react';
+
+/** HARD CAP per burst keeps DOM + physics work predictable under rapid harvest spam */
+const MAX_PARTICLES_PER_BURST = 52;
 
 /**
  * Particle Effect Component
@@ -14,7 +17,8 @@ const ParticleEffect = memo(({ x, y, type, onComplete, text, intensity = 1 }) =>
 
   useEffect(() => {
     // Generate particles with variety ONCE
-    const particleCount = Math.round((type === 'harvest' ? 60 : type === 'levelup' ? 100 : 25) * Math.max(0.6, intensity));
+    const rawCount = Math.round((type === 'harvest' ? 60 : type === 'levelup' ? 100 : 25) * Math.max(0.6, intensity));
+    const particleCount = Math.min(MAX_PARTICLES_PER_BURST, Math.max(8, rawCount));
 
     particlesRef.current = Array.from({ length: particleCount }, (_, i) => {
       const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
@@ -223,8 +227,21 @@ const triggerScreenShake = (intensity = 1) => {
 /**
  * Particle Effects Manager Component
  * Manages multiple particle effects with performance cap
+ * @param {{ reducedMotion?: boolean, particleEffectsEnabled?: boolean }} props
  */
-export const ParticleEffectsManager = memo(() => {
+export const ParticleEffectsManager = memo(function ParticleEffectsManager({
+  reducedMotion = false,
+  particleEffectsEnabled = true,
+} = {}) {
+  const reducedMotionRef = useRef(reducedMotion);
+  const particleFxRef = useRef(particleEffectsEnabled);
+  useEffect(() => {
+    reducedMotionRef.current = reducedMotion;
+  }, [reducedMotion]);
+  useEffect(() => {
+    particleFxRef.current = particleEffectsEnabled;
+  }, [particleEffectsEnabled]);
+
   const [effects, setEffects] = useState([]);
 
   // PERF: Max concurrent effects to prevent FPS drops during rapid harvesting
@@ -238,6 +255,8 @@ export const ParticleEffectsManager = memo(() => {
   // Expose method to trigger effects globally
   useEffect(() => {
     window.triggerParticleEffect = (x, y, type, options = {}) => {
+      if (!particleFxRef.current) return;
+
       setEffects(prev => {
         // PERF: Cap concurrent effects to prevent FPS drops
         if (prev.length >= MAX_CONCURRENT_EFFECTS) {
@@ -250,8 +269,16 @@ export const ParticleEffectsManager = memo(() => {
         return [...prev, { id, x, y, type, text: options.text, value: options.value, intensity: options.intensity || 1 }];
       });
 
+      const osReducedMotion =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       // Trigger screen shake for harvest and levelup (very subtle!)
-      if ((type === 'harvest' || type === 'levelup') && options.shake !== false) {
+      if (
+        (type === 'harvest' || type === 'levelup') &&
+        options.shake !== false &&
+        !reducedMotionRef.current &&
+        !osReducedMotion
+      ) {
         // REBALANCED: Level up shake is now very gentle (0.5 instead of 1.5)
         triggerScreenShake(type === 'levelup' ? 0.5 : 0.2); // Much gentler shake
       }

@@ -66,4 +66,6 @@ build_output*.txt
 final_build_output.txt
 latest_build.txt
 xcode_err.txt
+ios/build_log*.txt
+ios/build_output*.txt
 .vercel

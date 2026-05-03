@@ -215,7 +215,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         {/* Active tab only: avoids creating all tab panels on each render. */}
         <TabsContent key={activeConfig.id} value={activeConfig.id} className="mt-4">
           <Suspense fallback={<TabLoader />}>
-            <TabWrapper>
+            <TabWrapper panelKey={activeConfig.id}>
               <ActiveTabComponent />
             </TabWrapper>
           </Suspense>

@@ -1,6 +1,6 @@
 # 🌾 FarmLife - Advanced Farm Simulation Game
 
-**Version: 4.2.0** - *Major Content Update: Livestock, Fishing, Sound & Music*
+**Version: 5.5.4** - *Major Content Update: Livestock, Fishing, Sound & Music*
 
 A comprehensive React-based farm simulation game featuring a clean modular architecture, advanced genetic breeding systems, dynamic weather mechanics with real-time visual effects, sophisticated agricultural management tools, processing plants, research systems, pet management, daily quests, seasonal cycles, livestock management, fishing mini-games, procedural sound effects, dynamic background music, and premium visual polish with particle effects and animations.
 
@@ -859,4 +859,4 @@ For questions or issues:
 
 **Made with 💚 by passionate game developers**
 
-*Version 4.2.0 - October 2025*
+*Version 5.5.4 - May 2026*

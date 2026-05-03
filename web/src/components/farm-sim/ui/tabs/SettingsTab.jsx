@@ -304,7 +304,10 @@ const SettingsTab = memo(() => {
 
   const handleResetTutorial = useCallback(() => {
     actions.resetOnboarding();
-    addNotification('🎓 Tutorial reset! It will show again shortly.', 'success');
+    if (typeof window !== 'undefined' && typeof window.switchToTab === 'function') {
+      window.switchToTab('farming');
+    }
+    addNotification('Farm tour restarted — follow the prompts on your farm.', 'success');
   }, [actions, addNotification]);
 
   const handleInstallApp = useCallback(() => {
@@ -475,18 +478,18 @@ const SettingsTab = memo(() => {
             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-600">
               Onboarding
             </div>
-            <h4 className="text-base font-semibold text-slate-900">Tutorial reset</h4>
+            <h4 className="text-base font-semibold text-slate-900">Farm tour replay</h4>
           </div>
           <Button
             onClick={handleResetTutorial}
             variant="outline"
             size="sm"
           >
-            Reset
+            Replay
           </Button>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
-          Show the onboarding tutorial again if you want a fresh walkthrough.
+          Re-run the spotlight tour; we&apos;ll jump you back to the Farm tab so cues line up with the grid.
         </p>
       </Card>
 

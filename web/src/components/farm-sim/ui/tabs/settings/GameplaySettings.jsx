@@ -26,7 +26,7 @@ export const GameplaySettings = memo(({
     {
       key: 'auto-save',
       title: 'Auto-Save',
-      description: 'Persist progress every 30 seconds.',
+      description: 'Persists progress in the background while you play (about every 30s when the game is running).',
       enabled: autoSaveEnabled,
       onToggle: handleToggleAutoSave,
     },

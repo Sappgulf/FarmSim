@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState } from 'react';
+import React, { memo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from '../../../ui/tabs';
 import { ScrapbookPanel } from '../../../panels/ScrapbookPanel';
 import { MEMORIES, MEMORY_CHAPTERS } from '../../../../data/identity';
 import { ALMANAC_MEMORY_LINKS } from '../../../../data/almanac';
-import { TabHero, MetricTile } from './TabSurface';
+import { TabHero, MetricTile, TabEmptyState } from './TabSurface';
 
 // Achievement data from original system
 const ACHIEVEMENTS = [
@@ -240,23 +240,35 @@ const AchievementsTab = memo(() => {
       </TabHero>
 
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 gap-1 rounded-2xl bg-slate-50/80 p-1.5 h-auto">
+        <TabsList className="grid w-full grid-cols-3 gap-1 rounded-2xl bg-slate-50/80 p-1.5 h-auto">
           <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="farming">🌾 Farming</TabsTrigger>
-          <TabsTrigger value="economy">💰 Economy</TabsTrigger>
-          <TabsTrigger value="progression">📈 Progression</TabsTrigger>
-        </TabsList>
-
-        <TabsList className="grid w-full grid-cols-4 gap-1 rounded-2xl bg-slate-50/80 p-1.5 h-auto">
-          <TabsTrigger value="environment">🌱 Environment</TabsTrigger>
+          <TabsTrigger value="farming">🌾 Farm</TabsTrigger>
+          <TabsTrigger value="economy">💰 Econ</TabsTrigger>
+          <TabsTrigger value="progression">📈 Skill</TabsTrigger>
+          <TabsTrigger value="environment">🌱 Eco</TabsTrigger>
           <TabsTrigger value="challenge">🎯 Challenge</TabsTrigger>
           <TabsTrigger value="social">👥 Social</TabsTrigger>
-          <TabsTrigger value="milestone">🏆 Milestone</TabsTrigger>
+          <TabsTrigger value="specialized">⭐ Spec</TabsTrigger>
+          <TabsTrigger value="milestone">🏆 Goal</TabsTrigger>
         </TabsList>
 
         {/* Achievement List */}
         <div className="mt-4 space-y-3 max-h-96 overflow-y-auto">
-          {filteredAchievements.map(achievement => {
+          {filteredAchievements.length === 0 ? (
+            <TabEmptyState
+              tone="amber"
+              icon="🔍"
+              title="Nothing in this filter"
+              description="Try another category or return to All to see every milestone you can pursue."
+              className="border-amber-100/70"
+              action={(
+                <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => setSelectedCategory('all')}>
+                  Show all
+                </Button>
+              )}
+            />
+          ) : (
+            filteredAchievements.map(achievement => {
             const isUnlocked = state.achievements.find(a => a.id === achievement.id)?.unlocked;
             const progress = getAchievementProgress(achievement);
             const canClaim = progress >= 100 && !isUnlocked;
@@ -311,7 +323,8 @@ const AchievementsTab = memo(() => {
                 </div>
               </Card>
             );
-          })}
+          })
+          )}
         </div>
       </Tabs>
 

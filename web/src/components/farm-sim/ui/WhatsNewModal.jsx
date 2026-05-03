@@ -37,8 +37,8 @@ const WhatsNewModal = memo(() => {
   const title = content.strings?.ui?.whatsNewTitle || "What's New";
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4 py-6">
-      <Card className="w-full max-w-lg bg-white shadow-xl">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4 py-6 animate-overlay-backdrop">
+      <Card className="w-full max-w-lg bg-white shadow-xl animate-overlay-card">
         <div className="border-b border-emerald-100 p-4">
           <div className="text-xs uppercase tracking-wide text-emerald-600">{releaseNotes.title}</div>
           <h2 className="mt-1 text-lg font-semibold text-emerald-900">✨ {title}</h2>

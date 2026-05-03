@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import FarmSim from "./components/farm-sim/core/FarmSim";
 import GameErrorBoundary from "./components/GameErrorBoundary";
 import "./index.css";
+import { registerFarmServiceWorker } from "./utils/registerFarmServiceWorker";
 
 // Global error capture buffer for QA and postmortems
 window.__farmErrorBuffer = window.__farmErrorBuffer || [];
@@ -48,8 +49,7 @@ if ("serviceWorker" in navigator) {
       return;
     }
 
-    // Production: register service worker
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
+    registerFarmServiceWorker("./sw.js").catch(() => {});
   });
 }
 

@@ -33,10 +33,10 @@ const PremiumLockModal = memo(() => {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4 py-6"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4 py-6 animate-overlay-backdrop"
       data-qa="premium-lock-modal"
     >
-      <Card className="w-full max-w-sm bg-white shadow-xl">
+      <Card className="w-full max-w-sm bg-white shadow-xl animate-overlay-card">
         <div className="border-b border-amber-100 p-4">
           <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-amber-600">
             <Badge variant="warning" className="text-[10px]">

@@ -5,7 +5,7 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { FISH_TYPES, POND_UPGRADES } from '../../systems/FishingSystem';
-import { TabHero, MetricTile, TabSection } from './TabSurface';
+import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';
 
 const FishingTab = memo(() => {
   const { state, actions, systems } = useGame();
@@ -287,6 +287,15 @@ const FishingTab = memo(() => {
           />
         </div>
       </TabHero>
+
+      {stats.totalCaught === 0 && (
+        <TabEmptyState
+          icon="🐟"
+          tone="sky"
+          title="No catches yet — the pond is yours"
+          description="Cast below when fish population looks healthy (10+ shown on the gauge). Stay in the safe zone while reeling for cleaner catches."
+        />
+      )}
 
       {/* Pond Upgrade */}
       <Card className="overflow-hidden border-emerald-200/70 bg-slate-50/80 p-4 shadow-sm transition-all hover:shadow-md">

@@ -8,13 +8,14 @@ import FarmGrid from '../ui/FarmGrid';
 import GameSidebar from '../ui/GameSidebar';
 import NavBar, { NAV_SECTIONS } from '../ui/NavBar';
 import NotificationSystem from '../ui/NotificationSystem';
+import SwUpdateBanner from '../ui/SwUpdateBanner';
 import { ParticleEffectsManager } from '../ui/ParticleEffect';
-import FPSCounter from '../ui/FPSCounter';
-import PerfHud from '../ui/PerfHud';
-import Tutorial from '../ui/Tutorial';
-import WhatsNewModal from '../ui/WhatsNewModal';
-import PremiumLockModal from '../ui/PremiumLockModal';
-import WeatherEffects from '../ui/WeatherEffects';
+const FPSCounter = lazy(() => import('../ui/FPSCounter'));
+const PerfHud = lazy(() => import('../ui/PerfHud'));
+const Tutorial = lazy(() => import('../ui/Tutorial'));
+const WhatsNewModal = lazy(() => import('../ui/WhatsNewModal'));
+const PremiumLockModal = lazy(() => import('../ui/PremiumLockModal'));
+const WeatherEffects = lazy(() => import('../ui/WeatherEffects'));
 import { logDebugAction } from '../../../utils/debugTools';
 import { getFarmTheme, getFarmThemeVars } from '../../../data/farmThemes';
 import { isDevelopmentMode, shouldShowDebugTools } from '../../../config/release';
@@ -51,6 +52,7 @@ export function FarmSimCore() {
   const musicEnabled = useGameSelector((state) => state.settings?.musicEnabled !== false);
   const soundEnabled = useGameSelector((state) => state.settings?.soundEnabled !== false);
   const reducedMotionEnabled = useGameSelector((state) => state.settings?.reducedMotion === true);
+  const particleEffectsEnabled = useGameSelector((state) => state.settings?.particleEffects !== false);
   const seasonCurrent = useGameSelector((state) => state.season?.current || 'spring');
   const seasonConfig = useGameSelector((state) => state.season?.config || null);
   const cozyVisualWeather = useGameSelector((state) => state.cozyExpansion?.visualState?.weather || null);
@@ -519,7 +521,9 @@ export function FarmSimCore() {
       {!reducedMotionEnabled && timePeriod === 'night' && (
         <div className="ambient-vfx ambient-vfx--night" aria-hidden="true" />
       )}
-      <WeatherEffects weather={cozyVisualWeather || weather} intensity={0.45} />
+      <Suspense fallback={null}>
+        <WeatherEffects weather={cozyVisualWeather || weather} intensity={0.45} />
+      </Suspense>
 
       {/* Performance monitoring (dev only) */}
       {isDevelopmentMode() && (
@@ -563,12 +567,28 @@ export function FarmSimCore() {
       {/* Notification System - Mobile positioned above NavBar */}
       <NotificationSystem />
 
-      {/* Particle Effects System */}
-      <ParticleEffectsManager />
+      <SwUpdateBanner />
 
-      {/* FPS Overlay */}
-      <FPSCounter />
-      <PerfHud />
+      {/* Particle Effects System */}
+      <ParticleEffectsManager
+        reducedMotion={reducedMotionEnabled}
+        particleEffectsEnabled={particleEffectsEnabled}
+      />
+
+      <Suspense fallback={null}>
+        {/* FPS Overlay */}
+        <FPSCounter />
+        <PerfHud />
+
+        {/* Onboarding Tutorial (auto-shows for new players) */}
+        <Tutorial />
+
+        {/* What's New modal (once per app version) */}
+        <WhatsNewModal />
+
+        {/* Premium lock modal (premium mode only) */}
+        <PremiumLockModal />
+      </Suspense>
 
       {debugToolsAllowed && (
         <Suspense fallback={null}>
@@ -582,15 +602,6 @@ export function FarmSimCore() {
           {debugQueryEnabled ? <QAModePanel /> : null}
         </Suspense>
       )}
-
-      {/* Onboarding Tutorial (auto-shows for new players) */}
-      <Tutorial />
-
-      {/* What's New modal (once per app version) */}
-      <WhatsNewModal />
-
-      {/* Premium lock modal (premium mode only) */}
-      <PremiumLockModal />
     </div>
   );
 }
