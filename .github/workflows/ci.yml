@@ -35,6 +35,14 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Install Playwright (Chromium only)
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E smoke (Playwright)
+        run: npm run test:e2e
+        env:
+          CI: true
+
   ios:
     runs-on: macos-latest
     steps:
