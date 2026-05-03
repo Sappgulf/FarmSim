@@ -7,21 +7,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import {
-  Leaf,
   ShoppingCart,
   Trophy,
-  Dna,
   Building2,
   Settings,
-  CloudSun,
-  Target,
-  Package,
   RotateCcw,
   Volume2,
   VolumeX,
-  HelpCircle,
   Crown,
   Factory,
+  Beef,
 } from 'lucide-react';
 
 // Hooks
@@ -34,6 +29,8 @@ import { useAchievements } from '../hooks/useAchievements';
 import { useDayNight } from '../hooks/useDayNight';
 import { useLegacyFarmGamePersistence } from '../hooks/useLegacyFarmGamePersistence';
 import { useFarmGameIdentity } from '../hooks/useFarmGameIdentity';
+import { useFarmGameLivestockProductionTick } from '../hooks/useFarmGameLivestockProductionTick';
+import { useFarmGameProcessingQueueTick } from '../hooks/useFarmGameProcessingQueueTick';
 
 // Game Components
 import { FarmGrid } from './game/FarmGrid';
@@ -49,9 +46,8 @@ import { ScreenFlash, useScreenFlash } from './game/ScreenFlash';
 import { DebugOverlay } from './DebugOverlay';
 import { MenuDrawer } from './MenuDrawer';
 import { WelcomeScreen } from './game/WelcomeScreen';
-import { MilestonePopup, MILESTONES } from './game/MilestonePopup';
+import { MilestonePopup } from './game/MilestonePopup';
 import { HelpGuide } from './game/HelpGuide';
-import { TimeDisplay } from './game/TimeDisplay';
 import { StoryDashboard } from './game/StoryDashboard';
 
 // Panels
@@ -93,7 +89,6 @@ export default function FarmGame() {
     tutorialStep,
     notifications,
     stats,
-    levelStartedAt,
     addCoins,
     spendCoins,
     addNotification,
@@ -127,7 +122,6 @@ export default function FarmGame() {
     changeWeather,
     changeSeason,
     generateForecast,
-    getGrowthModifier,
     doesWeatherWater,
     getDamageRisk,
     getSaveData: getWeatherSaveData,
@@ -213,10 +207,8 @@ export default function FarmGame() {
     totalSteps,
     progress: tutorialProgress,
     highlightedElement,
-    hints,
     nextStep: tutorialNextStep,
     skipTutorial,
-    showHint,
   } = tutorial;
 
   // Celebrations
@@ -268,7 +260,7 @@ export default function FarmGame() {
 
   // Day/night cycle
   const dayNight = useDayNight(false);
-  const { currentPeriod, timeDisplay, getEffects, getVisuals, gameHour } = dayNight;
+  const { currentPeriod, timeDisplay, getVisuals, gameHour } = dayNight;
 
   // Achievement tracking
   const achievementSystem = useAchievements(
@@ -277,6 +269,9 @@ export default function FarmGame() {
     (intensity) => !reducedMotion && fireConfetti(intensity)
   );
   const { unlockedAchievements, checkAchievements } = achievementSystem;
+
+  useFarmGameLivestockProductionTick(ownedAnimals, setOwnedAnimals, setPendingProducts);
+  useFarmGameProcessingQueueTick(setProcessingQueue, setCompletedProducts, addNotification, sound);
 
   // ============ GAME LOOP ============
 
@@ -330,11 +325,7 @@ export default function FarmGame() {
           .filter(({ plot }) => plot.crop && !plot.hasPest && !plot.hasDisease);
 
         if (cropsWithPlants.length > 0) {
-          const target = cropsWithPlants[Math.floor(Math.random() * cropsWithPlants.length)];
-          // Apply pest or disease based on weather
-          if (Math.random() < 0.5) {
-            // This would need to update plots state - handled separately
-          }
+          // Placeholder: apply pest/disease to a random crop plot (needs plot state updates)
         }
       }
     }, GAME_SETTINGS.TICK_INTERVAL);
@@ -409,6 +400,7 @@ export default function FarmGame() {
     inventory,
     levelId,
     levelStatus,
+    gameState.levelStartedAt,
   ]);
 
   // Track first plant milestone
@@ -431,73 +423,6 @@ export default function FarmGame() {
       setCurrentMilestone({ id: 'first_building' });
     }
   }, [buildings.length, claimedMilestones]);
-
-  // Livestock production tick
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now() / 1000;
-
-      ownedAnimals.forEach((animal, index) => {
-        const livestock = LIVESTOCK[animal.type];
-        if (!livestock) return;
-
-        const timeSinceProduct = now - (animal.lastProductAt || now);
-        if (timeSinceProduct >= livestock.interval) {
-          // Animal produced something!
-          setPendingProducts((prev) => [
-            ...prev,
-            {
-              animalId: animal.id,
-              type: livestock.product,
-              name: livestock.product.charAt(0).toUpperCase() + livestock.product.slice(1),
-              emoji: livestock.productEmoji,
-              value: livestock.value,
-            },
-          ]);
-
-          // Update animal's last production time
-          setOwnedAnimals((prev) =>
-            prev.map((a, i) => (i === index ? { ...a, lastProductAt: now } : a))
-          );
-        }
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [ownedAnimals]);
-
-  // Processing tick
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-
-      setProcessingQueue((prev) => {
-        const stillProcessing = [];
-        const completed = [];
-
-        prev.forEach((item) => {
-          if (now >= item.startTime + item.duration * 1000) {
-            completed.push(item);
-          } else {
-            stillProcessing.push(item);
-          }
-        });
-
-        if (completed.length > 0) {
-          setCompletedProducts((existing) => [...existing, ...completed]);
-          addNotification(
-            `${completed.map((c) => c.emoji).join('')} Processing complete!`,
-            'success'
-          );
-          sound.playSuccess();
-        }
-
-        return stillProcessing;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [addNotification, sound]);
 
   // Help guide keyboard shortcut
   useEffect(() => {
@@ -616,6 +541,7 @@ export default function FarmGame() {
       currentWeather,
       featuredCropId,
       unlockMemory,
+      setActiveBlessing,
     ]
   );
 
@@ -917,6 +843,8 @@ export default function FarmGame() {
     bumpMood,
     unlockMemory,
     triggerStoryPulse,
+    setActiveBlessing,
+    setLastWishDay,
   ]);
 
   // Handle bottom nav tab change
@@ -1213,9 +1141,12 @@ export default function FarmGame() {
             />
 
             <Tabs value={rightTab} onValueChange={setRightTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="shop" title="Shop">
                   <ShoppingCart size={16} />
+                </TabsTrigger>
+                <TabsTrigger value="livestock" title="Livestock">
+                  <Beef size={16} />
                 </TabsTrigger>
                 <TabsTrigger value="process" title="Processing">
                   <Factory size={16} />
@@ -1244,6 +1175,19 @@ export default function FarmGame() {
                   onBuyTool={handleBuyTool}
                   onExpandFarm={handleExpandFarm}
                   onBuyBuilding={handleBuyBuilding}
+                />
+              </TabsContent>
+
+              <TabsContent value="livestock" className="mt-4">
+                <LivestockPanel
+                  coins={coins}
+                  ownedAnimals={ownedAnimals}
+                  pendingProducts={pendingProducts}
+                  onBuyAnimal={handleBuyAnimal}
+                  onFeedAnimal={handleFeedAnimal}
+                  onWaterAnimal={handleWaterAnimal}
+                  onCollectProduct={handleCollectProduct}
+                  addNotification={addNotification}
                 />
               </TabsContent>
 
@@ -1409,6 +1353,19 @@ export default function FarmGame() {
             />
           )}
 
+          {activeTab === 'livestock' && (
+            <LivestockPanel
+              coins={coins}
+              ownedAnimals={ownedAnimals}
+              pendingProducts={pendingProducts}
+              onBuyAnimal={handleBuyAnimal}
+              onFeedAnimal={handleFeedAnimal}
+              onWaterAnimal={handleWaterAnimal}
+              onCollectProduct={handleCollectProduct}
+              addNotification={addNotification}
+            />
+          )}
+
           {activeTab === 'goals' && (
             <AchievementsPanel unlockedAchievements={unlockedAchievements} stats={stats} />
           )}
@@ -1500,6 +1457,10 @@ export default function FarmGame() {
         }}
         onShowBreeding={() => {
           setActiveTab('breeding');
+          setMenuOpen(false);
+        }}
+        onShowLivestock={() => {
+          setActiveTab('livestock');
           setMenuOpen(false);
         }}
         onShowScrapbook={() => {

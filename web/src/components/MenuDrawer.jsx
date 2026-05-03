@@ -17,6 +17,7 @@ import {
   Sun,
   Accessibility,
   BookOpen,
+  Beef,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { LEVELS } from '../data/constants';
@@ -38,6 +39,7 @@ function MenuDrawerComponent({
   onResetGame,
   onShowAchievements,
   onShowBreeding,
+  onShowLivestock,
   onShowScrapbook,
   onShowStats,
   onShowHelp,
@@ -125,6 +127,16 @@ function MenuDrawerComponent({
               sublabel="Create hybrid crops"
               onClick={() => {
                 onShowBreeding?.();
+                onClose();
+              }}
+            />
+
+            <MenuButton
+              icon={Beef}
+              label="Livestock"
+              sublabel="Animals & passive income"
+              onClick={() => {
+                onShowLivestock?.();
                 onClose();
               }}
             />
