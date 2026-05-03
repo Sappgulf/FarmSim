@@ -2,10 +2,9 @@
  * MenuDrawer Component
  * Slide-out drawer for settings, achievements, breeding, and other secondary actions
  */
-import React, { memo, useEffect, useCallback } from 'react';
+import React, { memo, useEffect } from 'react';
 import {
   X,
-  Settings,
   Trophy,
   Dna,
   RotateCcw,
@@ -13,8 +12,6 @@ import {
   VolumeX,
   HelpCircle,
   Info,
-  Moon,
-  Sun,
   Accessibility,
   BookOpen,
   Beef,
@@ -31,8 +28,6 @@ function MenuDrawerComponent({
   reducedMotion,
   onToggleReducedMotion,
   // Game state
-  coins,
-  prestige,
   levelId,
   // Actions
   onStartLevel,
@@ -41,7 +36,6 @@ function MenuDrawerComponent({
   onShowBreeding,
   onShowLivestock,
   onShowScrapbook,
-  onShowStats,
   onShowHelp,
 }) {
   // Close on escape key

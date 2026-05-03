@@ -1446,8 +1446,6 @@ export default function FarmGame() {
         onToggleSound={() => setSoundEnabled((v) => !v)}
         reducedMotion={reducedMotion}
         onToggleReducedMotion={() => setReducedMotion((v) => !v)}
-        coins={coins}
-        prestige={prestige}
         levelId={levelId}
         onStartLevel={startLevel}
         onResetGame={handleResetGame}
