@@ -462,7 +462,11 @@ const FishingTab = memo(() => {
             </div>
 
             <div className="space-y-3">
-              <div className="flex gap-3 justify-center">
+              <div
+                className="flex gap-3 justify-center"
+                role="group"
+                aria-label="Reel left or right during fishing"
+              >
                 <Button
                   onClick={() => handleReel('left')}
                   onMouseDown={() => startReelHold('left')}

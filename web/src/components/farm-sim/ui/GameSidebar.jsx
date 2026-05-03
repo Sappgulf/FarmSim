@@ -32,11 +32,23 @@ const ExpandTab = lazy(() => import('./tabs/ExpandTab'));
 const SettingsTab = lazy(() => import('./tabs/SettingsTab'));
 const NotificationCenterTab = lazy(() => import('./tabs/NotificationCenterTab'));
 
-// Loading fallback component
+// Loading fallback for lazy panels (accessible + lightweight)
 const TabLoader = () => (
-  <div className="flex items-center justify-center p-8">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-    <span className="ml-3 text-gray-600">Loading...</span>
+  <div
+    className="flex flex-col items-center justify-center gap-3 p-8"
+    role="status"
+    aria-busy="true"
+    aria-label="Loading panel"
+  >
+    <div className="h-9 w-full max-w-xs animate-pulse rounded-lg bg-emerald-100/80" />
+    <div className="h-9 w-full max-w-md animate-pulse rounded-lg bg-slate-100/90" />
+    <div className="flex items-center gap-2 text-sm text-slate-600">
+      <div
+        className="h-8 w-8 shrink-0 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"
+        aria-hidden={true}
+      />
+      <span>Loading panel…</span>
+    </div>
   </div>
 );
 

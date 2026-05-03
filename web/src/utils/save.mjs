@@ -3,6 +3,7 @@
  *
  * The enhanced farm shell (tabs, progression, entitlements) persists via
  * {@link ../components/farm-sim/context/GamePersistence.js} (`farm_sim_enhanced_v2`).
+ * Key index: {@link ../save/storageInventory.js}.
  * Both stacks can coexist; do not merge keys without a migration plan.
  */
 import { clamp } from './gameMath.mjs';

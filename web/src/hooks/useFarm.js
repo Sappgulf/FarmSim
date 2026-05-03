@@ -378,7 +378,7 @@ export function useFarm(
 
   // Expand farm
   const expandFarm = useCallback(
-    (cost) => {
+    (_cost) => {
       if (gridSize >= GRID_CONFIG.MAX_SIZE) {
         addNotification?.('Farm is at maximum size!', 'error');
         return false;

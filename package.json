@@ -12,6 +12,7 @@
     "test:watch": "npm --prefix web run test:watch",
     "lint": "npm --prefix web run lint",
     "qa:full": "npm --prefix web run qa:full",
+    "test:e2e": "npm --prefix web run test:e2e",
     "smoke-test": "npm --prefix web run smoke-test",
     "install:web": "npm --prefix web install",
     "ios:gen": "make -C ios ios-gen",

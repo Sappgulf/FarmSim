@@ -2,8 +2,8 @@
  * Core Game State Hook
  * Manages main game state, saves, and global game logic
  */
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { LEVELS, GAME_SETTINGS, PRESTIGE_LEVELS } from '../data/constants';
+import { useState, useCallback, useRef } from 'react';
+import { LEVELS, PRESTIGE_LEVELS } from '../data/constants';
 import { nowSec } from '../utils/time.mjs';
 
 const INITIAL_STATE = {
@@ -98,7 +98,7 @@ export function useGameState() {
 
   // Add coins with prestige multiplier
   const addCoins = useCallback(
-    (amount, source = 'unknown') => {
+    (amount, _source = 'unknown') => {
       const multipliedAmount = Math.round(amount * prestigeData.multiplier);
       setCoins((prev) => prev + multipliedAmount);
       setTotalEarned((prev) => prev + multipliedAmount);

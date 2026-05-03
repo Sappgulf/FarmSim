@@ -3,6 +3,7 @@
  *
  * Canonical persistence for the enhanced `farm-sim` UI. The legacy `FarmGame` route
  * uses {@link ../../../utils/save.mjs} (`farmSim_save_v3`); see that module for the split.
+ * Key index: {@link ../../../save/storageInventory.js}.
  */
 import { isDevelopmentMode } from '../../../config/release';
 import { normalizeEntitlements } from '../entitlements/EntitlementManager';

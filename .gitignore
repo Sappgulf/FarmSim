@@ -56,6 +56,11 @@ temp/
 # Local Codex sub-agent artifacts
 .subagents/
 
+# Playwright
+web/test-results/
+web/playwright-report/
+web/blob-report/
+
 # iOS generated/build artifacts
 ios/FarmSim.xcodeproj/
 ios/GameCore/.build/

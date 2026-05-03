@@ -2,14 +2,12 @@
  * Achievement Tracking Hook
  * Detects and unlocks achievements based on game state
  */
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { ACHIEVEMENTS } from '../data/achievements';
 
 export function useAchievements(addNotification, playSound, fireConfetti) {
   const [unlockedAchievements, setUnlockedAchievements] = useState([]);
   const [recentUnlock, setRecentUnlock] = useState(null);
-  const checkQueueRef = useRef([]);
-
   // Unlock an achievement
   const unlockAchievement = useCallback(
     (achievementId) => {
@@ -51,7 +49,7 @@ export function useAchievements(addNotification, playSound, fireConfetti) {
         gridSize = 3,
         buildings = [],
         discoveredHybrids = [],
-        inventory = {},
+        inventory: _inventory,
         levelId,
         levelStatus,
         levelStartedAt,

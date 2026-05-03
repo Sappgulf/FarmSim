@@ -32,6 +32,7 @@ import { useTutorial } from '../hooks/useTutorial';
 import { useSound } from '../hooks/useSound';
 import { useAchievements } from '../hooks/useAchievements';
 import { useDayNight } from '../hooks/useDayNight';
+import { useLegacyFarmGamePersistence } from '../hooks/useLegacyFarmGamePersistence';
 
 // Game Components
 import { FarmGrid } from './game/FarmGrid';
@@ -70,8 +71,8 @@ import { BLESSINGS, MEMORIES, MEMORY_CHAPTERS, WISHING_WELL } from '../data/iden
 
 // Utils
 import { nowSec } from '../utils/time.mjs';
-import { loadGameSave, saveGameState, saveGameStateImmediate } from '../utils/save.mjs';
 import { getFeaturedCropId, getMoodTierForPoints } from '../utils/farmGameHelpers.mjs';
+import { computeBuildingBonuses } from '../utils/buildingBonuses.mjs';
 
 export default function FarmGame() {
   // ------------ STATE MANAGEMENT ------------
@@ -110,26 +111,7 @@ export default function FarmGame() {
   const [buildings, setBuildings] = useState([]);
 
   // Calculate building bonuses
-  const buildingBonuses = useMemo(() => {
-    const bonuses = {};
-    // Barn: +20% harvest value
-    if (buildings.includes('barn')) {
-      bonuses.barnBonus = 0.2;
-    }
-    // Greenhouse: 50% faster growth (applied in FarmGrid)
-    if (buildings.includes('greenhouse')) {
-      bonuses.greenhouseBonus = 0.5;
-    }
-    // Beehive: +25% quality chance (applied in quality calc)
-    if (buildings.includes('beehive')) {
-      bonuses.beehiveBonus = 0.25;
-    }
-    // Windmill: +5 coins/min (handled in game loop)
-    if (buildings.includes('windmill')) {
-      bonuses.windmillIncome = 5;
-    }
-    return bonuses;
-  }, [buildings]);
+  const buildingBonuses = useMemo(() => computeBuildingBonuses(buildings), [buildings]);
 
   // ============ IDENTITY SYSTEM (Mood / Memory / Philosophy) ============
   const [philosophy, setPhilosophy] = useState(null);
@@ -667,95 +649,37 @@ export default function FarmGame() {
     prevHourRef.current = gameHour;
   }, [gameHour, handleDayRollover]);
 
-  // ============ SAVE/LOAD ============
-
-  // Load save on mount
-  useEffect(() => {
-    const savedData = loadGameSave();
-    if (savedData) {
-      loadGameSaveData(savedData.gameState);
-      loadFarmSaveData(savedData.farm);
-      loadWeatherSaveData(savedData.weather);
-      if (savedData.buildings) setBuildings(savedData.buildings);
-      if (savedData.achievements) achievementSystem.loadSaveData(savedData.achievements);
-      if (savedData.discoveredHybrids) setDiscoveredHybrids(savedData.discoveredHybrids);
-      if (savedData.dayNight) dayNight.loadSaveData(savedData.dayNight);
-      if (savedData.ownedAnimals) setOwnedAnimals(savedData.ownedAnimals);
-      if (savedData.claimedMilestones) setClaimedMilestones(savedData.claimedMilestones);
-      if (savedData.identity) {
-        const identity = savedData.identity;
-        if (identity.philosophy) setPhilosophy(identity.philosophy);
-        if (Number.isFinite(identity.moodPoints)) setMoodPoints(identity.moodPoints);
-        if (identity.memoryFlags) setMemoryFlags(identity.memoryFlags);
-        if (Number.isFinite(identity.farmDay)) setFarmDay(Math.max(1, identity.farmDay));
-        if (Number.isFinite(identity.lastWishDay)) setLastWishDay(identity.lastWishDay);
-        if (identity.activeBlessing) {
-          const blessing = BLESSINGS.find((b) => b.id === identity.activeBlessing.id);
-          setActiveBlessing(
-            blessing ? { ...blessing, ...identity.activeBlessing } : identity.activeBlessing
-          );
-        }
-      }
-    } else {
-      // New game - initialize
-      generateForecast();
-    }
-  }, []);
-
-  // Auto-save
-  useEffect(() => {
-    const createSaveData = () => ({
-      gameState: getGameSaveData(),
-      farm: getFarmSaveData(),
-      weather: getWeatherSaveData(),
-      buildings,
-      achievements: achievementSystem.getSaveData(),
-      discoveredHybrids,
-      dayNight: dayNight.getSaveData(),
-      ownedAnimals,
-      claimedMilestones,
-      identity: {
-        philosophy,
-        moodPoints,
-        memoryFlags,
-        farmDay,
-        lastWishDay,
-        activeBlessing,
-      },
-      savedAt: nowSec(),
-    });
-
-    const saveInterval = setInterval(() => {
-      saveGameState(createSaveData());
-    }, GAME_SETTINGS.AUTO_SAVE_INTERVAL);
-
-    // Save immediately before page unload
-    const handleBeforeUnload = () => {
-      saveGameStateImmediate(createSaveData());
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      clearInterval(saveInterval);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [
-    getGameSaveData,
-    getFarmSaveData,
-    getWeatherSaveData,
-    buildings,
-    discoveredHybrids,
-    ownedAnimals,
-    claimedMilestones,
+  useLegacyFarmGamePersistence({
     achievementSystem,
-    dayNight,
-    philosophy,
-    moodPoints,
-    memoryFlags,
-    farmDay,
-    lastWishDay,
     activeBlessing,
-  ]);
+    buildings,
+    claimedMilestones,
+    dayNight,
+    discoveredHybrids,
+    farmDay,
+    generateForecast,
+    getFarmSaveData,
+    getGameSaveData,
+    getWeatherSaveData,
+    lastWishDay,
+    loadFarmSaveData,
+    loadGameSaveData,
+    loadWeatherSaveData,
+    memoryFlags,
+    moodPoints,
+    ownedAnimals,
+    philosophy,
+    setActiveBlessing,
+    setBuildings,
+    setClaimedMilestones,
+    setDiscoveredHybrids,
+    setFarmDay,
+    setLastWishDay,
+    setMemoryFlags,
+    setMoodPoints,
+    setOwnedAnimals,
+    setPhilosophy,
+  });
 
   // ------------ HANDLERS ------------
 

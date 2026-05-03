@@ -3,6 +3,9 @@
  * Generates satisfying sounds without external audio files
  */
 import { useCallback, useRef, useEffect } from 'react';
+import { createLogger } from '../utils/logger.js';
+
+const soundLog = createLogger('sound');
 
 // Audio context singleton
 let audioContext = null;
@@ -287,7 +290,7 @@ export function useSound(enabled = true) {
       }
     } catch (e) {
       // Audio might not be available
-      console.debug('Sound playback failed:', e);
+      soundLog.debug('Sound playback failed:', e);
     }
   }, []);
 

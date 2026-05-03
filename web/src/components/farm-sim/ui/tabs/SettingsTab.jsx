@@ -15,6 +15,7 @@ import { APP_VERSION, getReleaseModeLabel } from '../../../../config/release';
 // Subcomponents
 import { AudioSettings } from './settings/AudioSettings';
 import { SaveLoadSettings } from './settings/SaveLoadSettings';
+import { OfflineUpdatesInfo } from './settings/OfflineUpdatesInfo';
 import { GameplaySettings } from './settings/GameplaySettings';
 import { GameStats } from './settings/GameStats';
 
@@ -407,6 +408,8 @@ const SettingsTab = memo(() => {
         handleClearCache={handleClearCache}
         handleResetGame={handleResetGame}
       />
+
+      <OfflineUpdatesInfo />
 
       <GameplaySettings
         autoSaveEnabled={autoSaveEnabled}

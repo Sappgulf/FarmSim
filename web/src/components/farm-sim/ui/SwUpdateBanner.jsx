@@ -46,7 +46,13 @@ const SwUpdateBanner = memo(() => {
         >
           Later
         </Button>
-        <Button type="button" size="sm" className="min-h-[38px]" onClick={handleReload}>
+        <Button
+          type="button"
+          size="sm"
+          className="min-h-[38px]"
+          onClick={handleReload}
+          aria-label="Reload page to apply update"
+        >
           Reload
         </Button>
       </div>

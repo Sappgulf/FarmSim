@@ -27,6 +27,12 @@ export const SaveLoadSettings = memo(
               Save
             </div>
             <h4 className="text-base font-semibold text-slate-900">Save and load tools</h4>
+            <p className="mt-1 max-w-xl text-xs text-slate-600">
+              Export/Import use the{' '}
+              <span className="font-medium text-slate-800">main farm save</span> in this app. The
+              classic grid experience may use a separate browser slot; keep JSON backups if you play
+              both.
+            </p>
           </div>
           <Badge variant="outline" className="bg-white/80 text-slate-600">
             Safe
@@ -37,6 +43,7 @@ export const SaveLoadSettings = memo(
           {actions.map((action) => (
             <Button
               key={action.label}
+              type="button"
               onClick={action.onClick}
               className="justify-start gap-2"
               variant={action.variant}
@@ -47,12 +54,18 @@ export const SaveLoadSettings = memo(
           ))}
           <div className="sm:col-span-2 border-t border-slate-200/80 pt-3">
             <div className="grid gap-2 sm:grid-cols-2">
-              <Button onClick={handleClearCache} className="justify-start gap-2" variant="outline">
+              <Button
+                type="button"
+                onClick={handleClearCache}
+                className="justify-start gap-2"
+                variant="outline"
+              >
                 <span aria-hidden="true">🗑️</span>
                 Clear Cache
               </Button>
 
               <Button
+                type="button"
                 onClick={handleResetGame}
                 className="justify-start gap-2 bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-400 hover:to-red-600"
                 variant="destructive"
