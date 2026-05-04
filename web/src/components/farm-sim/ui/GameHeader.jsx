@@ -152,6 +152,7 @@ const GameHeader = memo(() => {
   const reducedMotion = useGameSelector((state) => state.settings?.reducedMotion === true);
   const lastSavedAt = useGameSelector((state) => state.gameLoop?.lastSaveTime || null);
   const plots = useGameSelector((state) => (Array.isArray(state.plots) ? state.plots : []));
+  const dayCount = useGameSelector((state) => state.almanac?.counters?.dayCount || 0);
 
   const [showStatsDropdown, setShowStatsDropdown] = useState(false);
   const statsDropdownRef = useRef(null);
@@ -223,6 +224,11 @@ const GameHeader = memo(() => {
     const parts = String(achievementSummaryKey || '0|0').split('|');
     return [Number(parts[0]) || 0, Number(parts[1]) || 0];
   }, [achievementSummaryKey]);
+  const recentXpRows = useMemo(() => {
+    const events = Array.isArray(recentXpEvents) ? recentXpEvents : [];
+    const count = Math.min(3, events.length);
+    return events.slice(-count).reverse();
+  }, [recentXpEvents]);
   const weatherForecastStrip = useMemo(() => {
     const forecastItems = weatherForecast.slice(0, 3).map((forecastItem, index) => {
       const meta = getWeatherMeta(forecastItem?.type || 'sunny');
@@ -267,6 +273,16 @@ const GameHeader = memo(() => {
     setShowStatsDropdown(false);
   }, []);
 
+  const daySummary = useMemo(
+    () => ({
+      day: `Day ${dayCount}`,
+      ready: readyPlotCount,
+      active: activePlotCount,
+      empty: emptyPlotCount,
+    }),
+    [dayCount, readyPlotCount, activePlotCount, emptyPlotCount]
+  );
+
   useEffect(() => {
     const handlePointerDown = (event) => {
       if (statsDropdownRef.current && !statsDropdownRef.current.contains(event.target)) {
@@ -294,6 +310,12 @@ const GameHeader = memo(() => {
       <div className="max-w-7xl mx-auto flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         {/* Left side - Game title and basic stats */}
         <div className="flex items-center justify-between lg:justify-start gap-2 sm:gap-4 lg:gap-6 w-full lg:w-auto">
+          <a
+            href="#farm-main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 z-50 bg-emerald-900 text-white px-3 py-2 rounded-lg text-xs"
+          >
+            Skip to farm board
+          </a>
           <button
             type="button"
             onClick={() => openRelatedTab('farming')}
@@ -324,6 +346,7 @@ const GameHeader = memo(() => {
               onClick={() => openRelatedTab('shop')}
               className="flex items-center gap-1.5 group bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 px-2 sm:px-3 py-1.5 rounded-xl transition-all shadow-sm border border-amber-200/50"
               title="Open Shop"
+              aria-label={`Open Shop, ${coins} coins`}
             >
               <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 group-hover:animate-spin filter drop-shadow-sm" />
               <span className="font-bold text-amber-700 text-sm sm:text-base coin-display">
@@ -337,6 +360,7 @@ const GameHeader = memo(() => {
                 onClick={() => openRelatedTab('analytics')}
                 className="flex items-center gap-1 hover:bg-blue-50 px-2 py-1 rounded transition"
                 title="Open Analytics"
+                aria-label={`Open Analytics, ${xp} XP`}
               >
                 <Star className="w-4 h-4 text-blue-600" />
                 <span className="font-semibold text-gray-900 text-sm">
@@ -353,12 +377,16 @@ const GameHeader = memo(() => {
                   Leveling slows as your farm matures.
                 </div>
               </div>
+              <p className="mt-1 text-[10px] text-gray-500 leading-snug" aria-live="polite">
+                {daySummary.day}: {daySummary.ready} ready, {daySummary.active} growing, {daySummary.empty} empty
+              </p>
             </div>
 
             <button
               type="button"
               onClick={() => openRelatedTab('achievements')}
               title="Open Achievements"
+              aria-label={`Open Achievements, level ${level}`}
             >
               <Badge
                 variant="outline"
@@ -387,6 +415,7 @@ const GameHeader = memo(() => {
               className="flex items-center gap-1 min-h-[40px]"
               aria-expanded={showStatsDropdown}
               aria-controls="farm-stats-dropdown"
+              aria-label="Toggle farm statistics panel"
             >
               <TrendingUp className="w-3 h-3" />
               <span className="text-xs hidden sm:inline">Stats</span>
@@ -418,24 +447,21 @@ const GameHeader = memo(() => {
                       <span className="text-gray-600">Cosmetic Tokens:</span>
                       <span className="font-semibold">{formatNumber(cosmeticTokens || 0)}</span>
                     </div>
-                    {(recentXpEvents || []).length > 0 && (
+                    {recentXpRows.length > 0 && (
                       <div className="pt-1 border-t border-gray-100">
                         <div className="text-[11px] font-semibold text-gray-600 mb-1">
                           Recent XP
                         </div>
                         <div className="space-y-0.5">
-                          {(recentXpEvents || [])
-                            .slice()
-                            .reverse()
-                            .map((event) => (
-                              <div
-                                key={event.id}
-                                className="text-[11px] text-gray-600 flex justify-between"
-                              >
-                                <span className="truncate pr-2">{event.source}</span>
-                                <span>+{event.amount}</span>
-                              </div>
-                            ))}
+                          {recentXpRows.map((event) => (
+                            <div
+                              key={event.id}
+                              className="text-[11px] text-gray-600 flex justify-between"
+                            >
+                              <span className="truncate pr-2">{event.source}</span>
+                              <span>+{event.amount}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
@@ -465,6 +491,7 @@ const GameHeader = memo(() => {
               onClick={() => openRelatedTab('events')}
               className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-all group relative shadow-md hover:shadow-lg"
               title="Open Events"
+              aria-label={`Open Events for ${season.config.name}`}
               style={{
                 boxShadow:
                   '0 2px 8px rgba(168, 85, 247, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
@@ -532,6 +559,7 @@ const GameHeader = memo(() => {
             onClick={() => openRelatedTab('achievements')}
             className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition min-h-[40px]"
             title="Open Achievements"
+            aria-label={`Open Achievements, ${unlockedAchievements} unlocked`}
           >
             <Trophy className="w-4 h-4 text-yellow-600" />
             <span className="text-sm font-medium text-gray-700">
@@ -544,7 +572,11 @@ const GameHeader = memo(() => {
       {/* Auto-save indicator */}
       {autoSaveEnabled && (
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
-          <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+          <div
+            className="text-xs text-gray-400 mt-1 flex items-center gap-1"
+            aria-live="polite"
+            role="status"
+          >
             <Calendar className="w-3 h-3" />
             <LastSaveTime
               lastSavedAt={lastSavedAt}

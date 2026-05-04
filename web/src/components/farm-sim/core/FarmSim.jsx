@@ -566,7 +566,11 @@ export function FarmSimCore() {
       )}
 
       {/* Main Game Area - Mobile Optimized with bottom padding for NavBar */}
-      <div className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4">
+      <main
+        id="farm-main-content"
+        className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4"
+        aria-label="Farm gameplay and controls"
+      >
         {/* Farm Grid - Full width on mobile, larger on desktop */}
         <div className="w-full lg:flex-1 order-2 lg:order-1">
           <FarmGrid />
@@ -576,7 +580,7 @@ export function FarmSimCore() {
         <div className="w-full lg:w-80 xl:w-96 order-1 lg:order-2">
           <GameSidebar activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
-      </div>
+      </main>
 
       {/* Bottom Navigation Bar - Fixed on mobile */}
       <div className="fixed bottom-0 left-0 right-0 lg:relative z-40">

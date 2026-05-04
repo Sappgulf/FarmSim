@@ -1,4 +1,4 @@
-import React, { memo, useState, useMemo, useCallback, useEffect } from 'react';
+import React, { memo, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   BarChart3,
   BookOpen,
@@ -154,6 +154,7 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
     Array.isArray(state.notifications) ? state.notifications.length : 0
   );
   const [showSubTabs, setShowSubTabs] = useState(false);
+  const subTabRefs = useRef({});
   const sections = useMemo(() => Object.values(NAV_SECTIONS), []);
   const activeSectionConfig = useMemo(
     () => (activeSection ? NAV_SECTIONS[activeSection] : null),
@@ -162,6 +163,10 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
   const activeTabInfo = TAB_INFO[activeTab];
   const activeSectionHasMultipleTabs = Boolean(
     activeSectionConfig && activeSectionConfig.tabs.length > 1
+  );
+  const activeSectionTabs = useMemo(
+    () => activeSectionConfig?.tabs || [],
+    [activeSectionConfig]
   );
 
   useEffect(() => {
@@ -203,8 +208,66 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
     [onSectionChange, onTabChange, showSubTabs]
   );
 
+  const handleSubTabKeyDown = useCallback(
+    (event, index) => {
+      if (!activeSectionHasMultipleTabs || activeSectionTabs.length <= 1) return;
+
+      const lastIndex = activeSectionTabs.length - 1;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        const nextIndex = index === lastIndex ? 0 : index + 1;
+        const nextId = activeSectionTabs[nextIndex];
+        if (nextId && subTabRefs.current[nextId]) {
+          subTabRefs.current[nextId].focus();
+        }
+        if (activeSectionTabs[nextIndex]) {
+          onTabChange(activeSectionTabs[nextIndex]);
+        }
+      }
+
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        const nextIndex = index === 0 ? lastIndex : index - 1;
+        const nextId = activeSectionTabs[nextIndex];
+        if (nextId && subTabRefs.current[nextId]) {
+          subTabRefs.current[nextId].focus();
+        }
+        if (activeSectionTabs[nextIndex]) {
+          onTabChange(activeSectionTabs[nextIndex]);
+        }
+      }
+
+      if (event.key === 'Home') {
+        event.preventDefault();
+        const firstId = activeSectionTabs[0];
+        if (firstId && subTabRefs.current[firstId]) {
+          subTabRefs.current[firstId].focus();
+        }
+        if (firstId) {
+          onTabChange(firstId);
+        }
+      }
+
+      if (event.key === 'End') {
+        event.preventDefault();
+        const lastId = activeSectionTabs[lastIndex];
+        if (lastId && subTabRefs.current[lastId]) {
+          subTabRefs.current[lastId].focus();
+        }
+        if (lastId) {
+          onTabChange(lastId);
+        }
+      }
+    },
+    [activeSectionHasMultipleTabs, activeSectionTabs, onTabChange]
+  );
+
   return (
-    <nav className="bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-2xl mobile-scroll relative">
+    <nav
+      className="bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-2xl mobile-scroll relative"
+      role="navigation"
+      aria-label="Game section navigation"
+    >
       {activeSectionHasMultipleTabs && (
         <div className="px-3 pt-2 pb-1 border-b border-gray-100/80 bg-gradient-to-r from-emerald-50/70 to-teal-50/60">
           <button
@@ -232,19 +295,32 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
         <div
           id={`subtabs-${activeSection}`}
           className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 px-2 py-2.5 animate-tab-slide-in"
+          role="tablist"
+          aria-label={`${activeSectionConfig.label} sub-tabs`}
         >
           <div className="flex gap-1.5 overflow-x-auto scrollbar-smart scrollbar-gutter-stable">
-            {activeSectionConfig.tabs.map((tabId) => {
+            {activeSectionConfig.tabs.map((tabId, index) => {
               const tabInfo = TAB_INFO[tabId];
               const isActive = activeTab === tabId;
               const TabIcon = tabInfo?.icon;
               return (
                 <button
                   key={tabId}
+                  ref={(element) => {
+                    if (element) {
+                      subTabRefs.current[tabId] = element;
+                    } else {
+                      delete subTabRefs.current[tabId];
+                    }
+                  }}
                   onClick={() => onTabChange(tabId)}
                   data-onboard={tabId === 'events' ? 'events-tab' : undefined}
+                  role="tab"
+                  aria-selected={isActive}
+                  tabIndex={isActive ? 0 : -1}
                   aria-current={isActive ? 'page' : undefined}
                   aria-label={tabInfo?.label || tabId}
+                  onKeyDown={(event) => handleSubTabKeyDown(event, index)}
                   className={`
                     flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold
                     whitespace-nowrap transition-all duration-200 touch-manipulation
@@ -287,6 +363,8 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
               aria-expanded={sectionHasMultipleTabs ? sectionSubTabsVisible : undefined}
               aria-controls={sectionHasMultipleTabs ? sectionSubTabsId : undefined}
               aria-label={`${section.label}. ${section.description}${sectionHasMultipleTabs ? `, ${section.tabs.length} tabs` : ''}`}
+              role="tab"
+              aria-selected={isActive}
               className={`
                 relative flex flex-col items-center justify-center
                 min-w-[64px] min-h-[60px] px-2 py-1.5 rounded-2xl

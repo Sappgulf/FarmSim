@@ -1,10 +1,10 @@
-import React, { memo, useState, lazy, Suspense, useCallback, useEffect, useRef } from 'react';
+import React, { memo, useState, lazy, Suspense, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useGameActions, useGameSelector } from '../context/GameContext';
 import { Tabs, TabsContent } from '../../ui/tabs';
 import { Card } from '../../ui/card';
 import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 import TabWrapper from './tabs/TabWrapper';
-import { TAB_INFO } from './NavBar';
+import { NAV_SECTIONS, TAB_INFO } from './NavBar';
 import { Circle } from 'lucide-react';
 
 // Lazy load tab components for better performance
@@ -78,6 +78,19 @@ const TAB_CONFIGS = [
   { id: 'notifications', label: 'Inbox', component: NotificationCenterTab },
 ];
 
+const TAB_BY_SECTION = (() => {
+  const map = {};
+  Object.values(NAV_SECTIONS).forEach((section) => {
+    for (let i = 0; i < section.tabs.length; i++) {
+      map[section.tabs[i]] = section.id;
+    }
+  });
+  return map;
+})();
+
+const getActiveSectionLabel = (tabId) => NAV_SECTIONS[TAB_BY_SECTION[tabId]]?.label || 'Farm';
+const getSectionTabIds = (tabId) => NAV_SECTIONS[TAB_BY_SECTION[tabId]]?.tabs || null;
+
 export const TAB_IDS = TAB_CONFIGS.map((tab) => tab.id);
 const TAB_CONFIG_BY_ID = Object.fromEntries(TAB_CONFIGS.map((tab) => [tab.id, tab]));
 
@@ -115,6 +128,76 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   // Use controlled mode if props provided, otherwise internal state (backward compat)
   const [internalTab, setInternalTab] = useState('farming');
   const activeTab = controlledTab ?? internalTab;
+  const activeSectionLabel = useMemo(() => getActiveSectionLabel(activeTab), [activeTab]);
+  const sectionTabIds = useMemo(
+    () => getSectionTabIds(activeTab) || TAB_CONFIGS.map((tab) => tab.id),
+    [activeTab]
+  );
+  const visibleTabConfigs = useMemo(
+    () => TAB_CONFIGS.filter((tab) => sectionTabIds.includes(tab.id)),
+    [sectionTabIds]
+  );
+  const gameplaySnapshot = useGameSelector((state) => {
+    const plotRows = Array.isArray(state.plots) ? state.plots : [];
+    const livestock = Array.isArray(state.livestock?.animals) ? state.livestock.animals : [];
+    let readyPlots = 0;
+    let activePlots = 0;
+    let diseasedAnimals = 0;
+
+    for (let i = 0; i < plotRows.length; i += 1) {
+      const plot = plotRows[i];
+      if (!plot) continue;
+      if (plot.state === 'ready') {
+        readyPlots += 1;
+      }
+      if (plot.state !== 'empty') {
+        activePlots += 1;
+      }
+    }
+
+    for (let i = 0; i < livestock.length; i += 1) {
+      const animal = livestock[i];
+      if (!animal || typeof animal !== 'object') continue;
+      if (animal.disease || animal.illness || animal.diseased || animal.healthStatus === 'sick') {
+        diseasedAnimals += 1;
+      }
+    }
+
+    return { activePlots, readyPlots, diseasedAnimals };
+  });
+  const quickActions = useMemo(
+    () => [
+      {
+        key: 'water',
+        label: 'Water all',
+        helper: `${gameplaySnapshot.activePlots} plot${gameplaySnapshot.activePlots === 1 ? '' : 's'}`,
+        disabled: gameplaySnapshot.activePlots === 0,
+      },
+      {
+        key: 'harvest',
+        label: 'Harvest ready',
+        helper: `${gameplaySnapshot.readyPlots} ready`,
+        disabled: gameplaySnapshot.readyPlots === 0,
+      },
+      {
+        key: 'fertilize',
+        label: 'Fertilize',
+        helper: `${gameplaySnapshot.activePlots} plot${gameplaySnapshot.activePlots === 1 ? '' : 's'}`,
+        disabled: gameplaySnapshot.activePlots === 0,
+      },
+      {
+        key: 'treat',
+        label: 'Treat disease',
+        helper: `${gameplaySnapshot.diseasedAnimals} affected`,
+        disabled: gameplaySnapshot.diseasedAnimals === 0,
+      },
+    ],
+    [
+      gameplaySnapshot.activePlots,
+      gameplaySnapshot.readyPlots,
+      gameplaySnapshot.diseasedAnimals,
+    ]
+  );
 
   const handleTabChange = useCallback(
     (tabId) => {
@@ -222,14 +305,24 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   return (
     <Card className="h-fit rounded-2xl shadow-lg border border-gray-100/50 overflow-hidden">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        {/* Tab Navigation - Premium styled scrollable grid */}
+        {/* Section-scoped tab navigation */}
         <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 p-2.5">
+          <div className="px-2 pb-2 pt-1.5 text-[11px] font-semibold text-gray-500 flex items-center justify-between">
+            <span>{activeSectionLabel} tabs</span>
+            <span aria-live="polite" className="text-[10px] font-medium">
+              {visibleTabConfigs.length} tabs
+            </span>
+          </div>
           <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-smart scrollbar-gutter-stable">
-            {TAB_CONFIGS.map((tab) => (
+            {visibleTabConfigs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                tabIndex={activeTab === tab.id ? 0 : -1}
                 data-onboard={tab.id === 'events' ? 'events-tab' : undefined}
+                aria-label={`Open ${TAB_INFO[tab.id]?.label || tab.label}`}
                 className={`
                   text-xs px-2.5 py-2 rounded-lg transition-all duration-200 text-left touch-manipulation
                   ${
@@ -243,6 +336,35 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
                   {renderIcon(TAB_INFO[tab.id]?.icon, TAB_INFO[tab.id]?.emoji)}
                   <span>{TAB_INFO[tab.id]?.label || tab.label}</span>
                 </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Context-aware quick actions */}
+        <div className="border-b border-gray-100 bg-white/80 px-2 py-2">
+          <p className="px-1 text-[11px] uppercase tracking-wide text-gray-500 font-semibold">
+            Quick actions
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-1.5">
+            {quickActions.map((action) => (
+              <button
+                key={action.key}
+                type="button"
+                onClick={() => handleBulkAction(action.key)}
+                disabled={action.disabled}
+                aria-label={`${action.label}, ${action.helper}`}
+                className={`
+                  rounded-lg px-2 py-1.5 text-left text-[11px] transition-all touch-manipulation
+                  ${
+                    action.disabled
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 active:scale-95'
+                  }
+                `}
+              >
+                <span className="font-semibold">{action.label}</span>
+                <span className="block text-[10px] font-medium text-gray-500 mt-0.5">{action.helper}</span>
               </button>
             ))}
           </div>
