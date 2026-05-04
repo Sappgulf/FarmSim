@@ -137,66 +137,73 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
     () => TAB_CONFIGS.filter((tab) => sectionTabIds.includes(tab.id)),
     [sectionTabIds]
   );
-  const gameplaySnapshot = useGameSelector((state) => {
+  const activePlots = useGameSelector((state) => {
     const plotRows = Array.isArray(state.plots) ? state.plots : [];
-    const livestock = Array.isArray(state.livestock?.animals) ? state.livestock.animals : [];
-    let readyPlots = 0;
-    let activePlots = 0;
-    let diseasedAnimals = 0;
+    let count = 0;
 
     for (let i = 0; i < plotRows.length; i += 1) {
       const plot = plotRows[i];
-      if (!plot) continue;
-      if (plot.state === 'ready') {
-        readyPlots += 1;
-      }
-      if (plot.state !== 'empty') {
-        activePlots += 1;
+      if (plot && plot.state !== 'empty') {
+        count += 1;
       }
     }
+
+    return count;
+  });
+  const readyPlots = useGameSelector((state) => {
+    const plotRows = Array.isArray(state.plots) ? state.plots : [];
+    let count = 0;
+
+    for (let i = 0; i < plotRows.length; i += 1) {
+      if (plotRows[i]?.state === 'ready') {
+        count += 1;
+      }
+    }
+
+    return count;
+  });
+  const diseasedAnimals = useGameSelector((state) => {
+    const livestock = Array.isArray(state.livestock?.animals) ? state.livestock.animals : [];
+    let count = 0;
 
     for (let i = 0; i < livestock.length; i += 1) {
       const animal = livestock[i];
       if (!animal || typeof animal !== 'object') continue;
       if (animal.disease || animal.illness || animal.diseased || animal.healthStatus === 'sick') {
-        diseasedAnimals += 1;
+        count += 1;
       }
     }
 
-    return { activePlots, readyPlots, diseasedAnimals };
+    return count;
   });
   const quickActions = useMemo(
     () => [
       {
         key: 'water',
         label: 'Water all',
-        helper: `${gameplaySnapshot.activePlots} plot${gameplaySnapshot.activePlots === 1 ? '' : 's'}`,
-        disabled: gameplaySnapshot.activePlots === 0,
+        helper: `${activePlots} plot${activePlots === 1 ? '' : 's'}`,
+        disabled: activePlots === 0,
       },
       {
         key: 'harvest',
         label: 'Harvest ready',
-        helper: `${gameplaySnapshot.readyPlots} ready`,
-        disabled: gameplaySnapshot.readyPlots === 0,
+        helper: `${readyPlots} ready`,
+        disabled: readyPlots === 0,
       },
       {
         key: 'fertilize',
         label: 'Fertilize',
-        helper: `${gameplaySnapshot.activePlots} plot${gameplaySnapshot.activePlots === 1 ? '' : 's'}`,
-        disabled: gameplaySnapshot.activePlots === 0,
+        helper: `${activePlots} plot${activePlots === 1 ? '' : 's'}`,
+        disabled: activePlots === 0,
       },
       {
         key: 'treat',
         label: 'Treat disease',
-        helper: `${gameplaySnapshot.diseasedAnimals} affected`,
-        disabled: gameplaySnapshot.diseasedAnimals === 0,
+        helper: `${diseasedAnimals} affected`,
+        disabled: diseasedAnimals === 0,
       },
     ],
-    [
-      gameplaySnapshot.activePlots,
-      gameplaySnapshot.readyPlots,
-      gameplaySnapshot.diseasedAnimals,
-    ]
+    [activePlots, readyPlots, diseasedAnimals]
   );
 
   const handleTabChange = useCallback(
