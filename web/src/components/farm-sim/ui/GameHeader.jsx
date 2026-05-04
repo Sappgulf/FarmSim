@@ -118,7 +118,7 @@ const SeasonCountdown = memo(({ lastChangeTime, durationMs = 120000 }) => {
 SeasonCountdown.displayName = 'SeasonCountdown';
 
 // Game Header Component - Memoized for performance
-const GameHeader = memo(() => {
+const GameHeader = memo(({ isFirstRunMode = false, onFocusGameplay }) => {
   const actions = useGameActions();
   const coins = useGameSelector((state) => state.coins || 0);
   const xp = useGameSelector((state) => state.xp || 0);
@@ -272,6 +272,11 @@ const GameHeader = memo(() => {
     }
     setShowStatsDropdown(false);
   }, []);
+  const handleFocusGameplay = useCallback(() => {
+    if (typeof onFocusGameplay === 'function') {
+      onFocusGameplay();
+    }
+  }, [onFocusGameplay]);
 
   const daySummary = useMemo(
     () => ({
@@ -333,11 +338,20 @@ const GameHeader = memo(() => {
               <span className="max-w-[180px] truncate text-sm font-semibold text-gray-900 md:text-base">
                 {farmName}
               </span>
-              <span className="text-xs font-medium" style={{ color: activeTheme.palette.accent }}>
-                {activeTheme.name}
-              </span>
-            </div>
+            <span className="text-xs font-medium" style={{ color: activeTheme.palette.accent }}>
+              {activeTheme.name}
+            </span>
+          </div>
           </button>
+          <span
+            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+              isFirstRunMode
+                ? 'bg-amber-100 text-amber-700 border-amber-200'
+                : 'bg-emerald-100 text-emerald-700 border-emerald-200'
+            }`}
+          >
+            {isFirstRunMode ? 'Starter flow active' : 'Active play mode'}
+          </span>
 
           {/* Core stats with animations */}
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-wrap justify-end lg:justify-start">
@@ -552,6 +566,18 @@ const GameHeader = memo(() => {
               ))}
             </div>
           )}
+
+          {/* Mobile quick focus action */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleFocusGameplay}
+            className="sm:hidden min-h-[40px]"
+            aria-label="Focus gameplay board"
+          >
+            <ChevronDown className="w-3.5 h-3.5" />
+            <span className="text-[11px]">Play</span>
+          </Button>
 
           {/* Achievement indicator */}
           <button

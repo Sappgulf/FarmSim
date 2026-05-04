@@ -129,7 +129,7 @@ export const TAB_INFO = {
   diseases: { label: 'Diseases', assetId: 'tab-diseases', icon: ShieldAlert, emoji: '🐛' },
 };
 
-const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange }) => {
+const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange, isFirstRunMode = false }) => {
   const animalsNeedingCareCount = useGameSelector((state) => {
     const animals = Array.isArray(state.livestock?.animals) ? state.livestock.animals : [];
     let count = 0;
@@ -194,6 +194,10 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
     },
     [activeNotificationCount, animalsNeedingCareCount, unclaimedQuestCount]
   );
+  const modeLabel = isFirstRunMode ? 'Starter flow active' : 'Active play mode';
+  const modeAccent = isFirstRunMode
+    ? 'bg-amber-100 text-amber-700 border-amber-200'
+    : 'bg-emerald-100 text-emerald-700 border-emerald-200';
 
   const handleSectionPress = useCallback(
     (section, isActive) => {
@@ -268,6 +272,12 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange })
       role="navigation"
       aria-label="Game section navigation"
     >
+      <div
+        className={`px-3 py-1.5 text-center border-b border-gray-100/80 text-[10px] font-semibold ${modeAccent}`}
+        aria-live="polite"
+      >
+        {modeLabel}
+      </div>
       {activeSectionHasMultipleTabs && (
         <div className="px-3 pt-2 pb-1 border-b border-gray-100/80 bg-gradient-to-r from-emerald-50/70 to-teal-50/60">
           <button

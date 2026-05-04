@@ -43,6 +43,35 @@ import { getMusicSystem } from '../systems/MusicSystem';
 const PerformanceOverlay = lazy(() => import('../ui/PerformanceOverlay'));
 const DebugStressPanel = lazy(() => import('../ui/DebugStressPanel'));
 const QAModePanel = lazy(() => import('../ui/QAModePanel'));
+const NAV_TAB_IDS = Object.values(NAV_SECTIONS).flatMap((section) => section.tabs);
+const LAST_TAB_STORAGE_KEY = 'farm_sim_active_tab_v1';
+const DEFAULT_ACTIVE_TAB = 'farming';
+
+const isValidTabId = (tabId) => NAV_TAB_IDS.includes(tabId);
+
+const getSectionForTab = (tabId) =>
+  Object.values(NAV_SECTIONS).find((section) => section.tabs.includes(tabId))?.id || null;
+
+const readPersistedActiveTab = () => {
+  if (typeof window === 'undefined') return DEFAULT_ACTIVE_TAB;
+  try {
+    const stored = window.localStorage.getItem(LAST_TAB_STORAGE_KEY);
+    return isValidTabId(stored) ? stored : DEFAULT_ACTIVE_TAB;
+  } catch (error) {
+    return DEFAULT_ACTIVE_TAB;
+  }
+};
+
+const persistActiveTab = (tabId) => {
+  if (typeof window === 'undefined') return;
+  try {
+    if (isValidTabId(tabId)) {
+      window.localStorage.setItem(LAST_TAB_STORAGE_KEY, tabId);
+    }
+  } catch (error) {
+    // best effort: ignore persistence failures on restricted environments
+  }
+};
 
 /**
  * Main FarmSim Component (Orchestrator)
@@ -71,6 +100,9 @@ export function FarmSimCore() {
   const farmThemeId = useGameSelector((state) => state.farmTheme || null);
   const weather = useGameSelector((state) => state.weather || 'sunny');
   const ghostVisitActive = useGameSelector((state) => Boolean(state.ghostVisit?.active));
+  const isFirstRunMode = useGameSelector((state) => {
+    return !state.onboardingSeen && !state.onboardingSkipped && (state.onboardingStep || 0) === 0;
+  });
 
   const debugToolsAllowed = shouldShowDebugTools();
   const debugQueryEnabled = useMemo(() => {
@@ -79,9 +111,9 @@ export function FarmSimCore() {
   }, []);
 
   // Navigation state for new consolidated nav
-  const [activeSection, setActiveSection] = useState('farm');
-  const [activeTab, setActiveTab] = useState('farming');
+  const [activeTab, setActiveTab] = useState(() => readPersistedActiveTab());
   const [timePeriod, setTimePeriod] = useState('day');
+  const [activeSection, setActiveSection] = useState(() => getSectionForTab(readPersistedActiveTab()) || 'farm');
 
   const computeTimePeriod = () => {
     const hour = new Date().getHours();
@@ -91,9 +123,6 @@ export function FarmSimCore() {
     return 'day';
   };
 
-  const findSectionForTab = (tabId) =>
-    Object.values(NAV_SECTIONS).find((section) => section.tabs.includes(tabId))?.id || null;
-
   // Handle section change
   const handleSectionChange = (sectionId) => {
     setActiveSection(sectionId);
@@ -101,14 +130,17 @@ export function FarmSimCore() {
     // Auto-select first tab of section if not already in that section
     const section = NAV_SECTIONS[sectionId];
     if (section && !section.tabs.includes(activeTab)) {
-      setActiveTab(section.tabs[0]);
+      const nextTab = section.tabs[0];
+      setActiveTab(nextTab);
+      persistActiveTab(nextTab);
     }
   };
 
   // Handle tab change
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    const sectionId = findSectionForTab(tabId);
+    persistActiveTab(tabId);
+    const sectionId = getSectionForTab(tabId);
     if (sectionId) {
       setActiveSection(sectionId);
     }
@@ -531,6 +563,25 @@ export function FarmSimCore() {
     actions.recordCozyExpansionEvent?.('weather_changed', { weather });
   }, [actions, dayCount, hasCozyVisualWeather]);
 
+  const focusGameplayArea = React.useCallback(() => {
+    const gameplayArea = document.getElementById('farm-main-content');
+    if (!gameplayArea) return;
+
+    gameplayArea.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+
+    const focusTarget =
+      gameplayArea.querySelector(
+        'button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      ) ||
+      gameplayArea;
+    if (typeof focusTarget.focus === 'function') {
+      focusTarget.focus({ preventScroll: true });
+    }
+  }, []);
+
   const activeTheme = getFarmTheme(farmThemeId);
   const themeVars = getFarmThemeVars(activeTheme);
 
@@ -556,7 +607,7 @@ export function FarmSimCore() {
 
       {/* Game Header */}
       <div className="relative z-20">
-        <GameHeader />
+        <GameHeader isFirstRunMode={isFirstRunMode} onFocusGameplay={focusGameplayArea} />
       </div>
 
       {ghostVisitActive && (
@@ -568,6 +619,7 @@ export function FarmSimCore() {
       {/* Main Game Area - Mobile Optimized with bottom padding for NavBar */}
       <main
         id="farm-main-content"
+        tabIndex={-1}
         className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4"
         aria-label="Farm gameplay and controls"
       >
@@ -578,7 +630,11 @@ export function FarmSimCore() {
 
         {/* Game Sidebar - Shows tabs for active section */}
         <div className="w-full lg:w-80 xl:w-96 order-1 lg:order-2">
-          <GameSidebar activeTab={activeTab} onTabChange={handleTabChange} />
+          <GameSidebar
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            isFirstRunMode={isFirstRunMode}
+          />
         </div>
       </main>
 
@@ -587,6 +643,7 @@ export function FarmSimCore() {
         <NavBar
           activeSection={activeSection}
           activeTab={activeTab}
+          isFirstRunMode={isFirstRunMode}
           onSectionChange={handleSectionChange}
           onTabChange={handleTabChange}
         />

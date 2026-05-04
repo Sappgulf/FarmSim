@@ -95,7 +95,7 @@ export const TAB_IDS = TAB_CONFIGS.map((tab) => tab.id);
 const TAB_CONFIG_BY_ID = Object.fromEntries(TAB_CONFIGS.map((tab) => [tab.id, tab]));
 
 // Game Sidebar Component - Now accepts controlled props
-const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
+const GameSidebar = memo(({ activeTab: controlledTab, onTabChange, isFirstRunMode = false }) => {
   const actions = useGameActions();
   const keyboardShortcutsEnabled = useGameSelector(
     (state) => state.settings?.keyboardShortcuts !== false
@@ -183,24 +183,28 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
         label: 'Water all',
         helper: `${activePlots} plot${activePlots === 1 ? '' : 's'}`,
         disabled: activePlots === 0,
+        stateHint: activePlots === 0 ? 'Plant a crop first' : '',
       },
       {
         key: 'harvest',
         label: 'Harvest ready',
         helper: `${readyPlots} ready`,
         disabled: readyPlots === 0,
+        stateHint: readyPlots === 0 ? 'Harvest crops when ready' : '',
       },
       {
         key: 'fertilize',
         label: 'Fertilize',
         helper: `${activePlots} plot${activePlots === 1 ? '' : 's'}`,
         disabled: activePlots === 0,
+        stateHint: activePlots === 0 ? 'Plant a crop first' : '',
       },
       {
         key: 'treat',
         label: 'Treat disease',
         helper: `${diseasedAnimals} affected`,
         disabled: diseasedAnimals === 0,
+        stateHint: diseasedAnimals === 0 ? 'No diseased animals yet' : '',
       },
     ],
     [activePlots, readyPlots, diseasedAnimals]
@@ -308,6 +312,9 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
 
   const activeConfig = TAB_CONFIG_BY_ID[activeTab] || TAB_CONFIG_BY_ID.farming;
   const ActiveTabComponent = activeConfig.component;
+  const activeTabLabel = TAB_INFO[activeTab]?.label || activeConfig.label || 'Farming';
+  const modeLabel = isFirstRunMode ? 'First-run' : 'Active play';
+  const modeAccent = isFirstRunMode ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200';
 
   return (
     <Card className="h-fit rounded-2xl shadow-lg border border-gray-100/50 overflow-hidden">
@@ -319,6 +326,14 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
             <span aria-live="polite" className="text-[10px] font-medium">
               {visibleTabConfigs.length} tabs
             </span>
+          </div>
+          <p className="px-2 mb-1 text-[11px] text-gray-500 uppercase tracking-wide">
+            {modeLabel}: {activeSectionLabel} · {activeTabLabel}
+          </p>
+          <div
+            className={`mx-2 mb-2 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${modeAccent}`}
+          >
+            {isFirstRunMode ? 'Starter flow active' : 'Active play mode'}
           </div>
           <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-smart scrollbar-gutter-stable">
             {visibleTabConfigs.map((tab) => (
@@ -371,7 +386,14 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
                 `}
               >
                 <span className="font-semibold">{action.label}</span>
-                <span className="block text-[10px] font-medium text-gray-500 mt-0.5">{action.helper}</span>
+                <span className="block text-[10px] font-medium text-gray-500 mt-0.5">
+                  {action.helper}
+                </span>
+                {action.stateHint && (
+                  <span className="block text-[10px] text-amber-600 mt-0.5 font-semibold">
+                    {action.stateHint}
+                  </span>
+                )}
               </button>
             ))}
           </div>
