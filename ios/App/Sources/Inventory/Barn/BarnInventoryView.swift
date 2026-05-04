@@ -25,7 +25,7 @@ struct BarnInventoryView: View {
                             stockCount: totalStockCount,
                             maxCapacity: store.maxInventoryCapacity,
                             onVisitShop: { showingShopCounter = true },
-                            onOpenMarketTab: { appState.selectedTab = .market }
+                            onOpenMarketTab: { appState.selectedTab = .build }
                         )
 
                         BarnCategoryBar(
@@ -85,7 +85,7 @@ struct BarnInventoryView: View {
                         ToolbarItem(placement: .topBarTrailing) {
                             Button("Town Market", systemImage: "storefront.fill") {
                                 showingShopCounter = false
-                                appState.selectedTab = .market
+                                appState.selectedTab = .build
                             }
                         }
                 }

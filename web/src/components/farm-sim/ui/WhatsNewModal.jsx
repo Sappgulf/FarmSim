@@ -5,6 +5,7 @@ import { Button } from '../../ui/button';
 import { getLatestReleaseNotes } from '../../../utils/changelog';
 import { APP_VERSION } from '../../../config/release';
 import { getContentManager } from '../../../content/ContentManager';
+import { ONBOARDING_STEP_COUNT } from '../../../constants/onboardingWalkthrough';
 
 const WhatsNewModal = memo(() => {
   const actions = useGameActions();
@@ -15,11 +16,18 @@ const WhatsNewModal = memo(() => {
   const releaseNotes = useMemo(() => getLatestReleaseNotes(), []);
   const hasNotes = releaseNotes.sections?.length > 0;
   const lastSeenVersion = whatsNew?.lastSeenVersion || null;
-  const shouldShow = hasNotes && lastSeenVersion !== APP_VERSION;
+  const walkthroughComplete = useGameSelector((state) => {
+    const step = state.onboardingStep || 0;
+    return Boolean(state.onboardingSkipped || step >= ONBOARDING_STEP_COUNT);
+  });
+  const shouldShow =
+    hasNotes && lastSeenVersion !== APP_VERSION && walkthroughComplete;
 
   useEffect(() => {
     if (shouldShow) {
       setIsOpen(true);
+    } else {
+      setIsOpen(false);
     }
   }, [shouldShow]);
 

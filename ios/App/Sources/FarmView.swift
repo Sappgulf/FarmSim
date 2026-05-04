@@ -60,13 +60,39 @@ struct FarmView: View {
                     .allowsHitTesting(false)
                 }
                 .ignoresSafeArea()
+
+            HStack {
+                FarmSideRail(
+                    readyCount: store.readyTileCount,
+                    inventoryCount: store.totalInventoryCount,
+                    onInventory: { appState.selectedTab = .inventory },
+                    onAnimals: { appState.selectedTab = .animals },
+                    onBuild: { appState.selectedTab = .build },
+                    onMore: { appState.selectedTab = .more }
+                )
+                .padding(.leading, DS.Space.sm)
+
+                Spacer()
+
+                FarmCameraRail(
+                    onResetView: {
+                        zoom = 1.0
+                        pan = .zero
+                        scene.setViewport(zoom: zoom, pan: pan)
+                    }
+                )
+                .padding(.trailing, DS.Space.sm)
+            }
+            .padding(.top, 360)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
             .safeAreaInset(edge: .top) {
                 VStack(spacing: DS.Space.xs) {
                     topHUD
                 }
                 .padding(.horizontal, DS.Space.md)
-                .padding(.top, DS.Space.xs)
+                .padding(.top, 58)
+                .offset(y: 84)
             }
             .overlay {
                 if showDayRolloverOverlay {
@@ -222,79 +248,20 @@ struct FarmView: View {
     }
 
     private var topHUD: some View {
-        WoodenPanel {
-            VStack(spacing: DS.Space.xs) {
-                HStack {
-                    Button {
-                        appState.openMainMenu()
-                    } label: {
-                        Label("Menu", systemImage: "line.3.horizontal")
-                            .labelStyle(.iconOnly)
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(width: 32, height: 32)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Open game menu")
-                    .accessibilityHint("Return to the main menu or change app-wide settings")
-
-                    Text(store.farmName)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.95))
-                        .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                        .accessibilityAddTraits(.isHeader)
-
-                    Spacer()
-                }
-
-                ViewThatFits {
-                    HStack {
-                        StatPill(icon: "calendar", value: "Day \(store.save.world.day)")
-                        StatPill(icon: store.hudClockSymbol, value: store.hudTimeText)
-                        StatPill(icon: "leaf.fill", value: store.hudSeasonText)
-                        WeatherPill(
-                            weather: weatherSnapshot.weather,
-                            intensity: weatherSnapshot.intensity,
-                            subtitle: weatherSnapshot.windowTitle
-                        )
-                        Spacer()
-                        StatPill(icon: "dollarsign.circle.fill", value: "\(store.save.player.coins)")
-                        StatPill(icon: "star.fill", value: "Lv \(store.playerLevel)")
-                    }
-                    VStack(alignment: .leading, spacing: DS.Space.xs) {
-                        HStack {
-                            StatPill(icon: "calendar", value: "Day \(store.save.world.day)")
-                            StatPill(icon: store.hudClockSymbol, value: store.hudTimeText)
-                            WeatherPill(
-                                weather: weatherSnapshot.weather,
-                                intensity: weatherSnapshot.intensity,
-                                subtitle: weatherSnapshot.windowTitle
-                            )
-                        }
-                        HStack {
-                            StatPill(icon: "leaf.fill", value: store.hudSeasonText)
-                            StatPill(icon: "dollarsign.circle.fill", value: "\(store.save.player.coins)")
-                            StatPill(icon: "star.fill", value: "Lv \(store.playerLevel)")
-                        }
-                    }
-                }
-                WeatherForecastStrip(forecast: Array(store.weatherForecast.prefix(3)))
-
-                ProgressView(value: Double(store.save.player.xp % ProgressionSystem.xpPerLevel), total: Double(ProgressionSystem.xpPerLevel))
-                    .tint(DS.Color.xp)
-                    .accessibilityLabel("Level progress")
-                    .background(Color.black.opacity(0.3))
-                    .clipShape(Capsule())
-
-                ProgressView(value: store.hudTimeProgress, total: 1)
-                    .tint(DS.Color.money)
-                    .accessibilityLabel("Time of day")
-                    .background(Color.black.opacity(0.3))
-                    .clipShape(Capsule())
-            }
-        }
+        FarmHomeHUD(
+            farmName: store.farmName,
+            level: store.playerLevel,
+            xp: store.save.player.xp,
+            day: store.save.world.day,
+            timeText: store.hudTimeText,
+            timeIcon: store.hudClockSymbol,
+            season: store.hudSeasonText,
+            coins: store.save.player.coins,
+            inventory: store.totalInventoryCount,
+            weatherSnapshot: weatherSnapshot,
+            forecast: Array(store.weatherForecast.prefix(3)),
+            onMenu: { appState.openMainMenu() }
+        )
     }
 
     private var statusBar: some View {
@@ -372,23 +339,51 @@ struct FarmView: View {
 
     private var actionBar: some View {
         HStack(spacing: DS.Space.sm) {
-            Button("Gather Crops") {
+            FarmRoundActionButton(
+                title: "Harvest",
+                icon: "scissors",
+                tint: DS.Color.money,
+                disabled: store.readyTileCount == 0
+            ) {
                 store.harvestAll()
             }
-            .buttonStyle(WoodActionStyle(tint: DS.Color.money))
-            .disabled(store.readyTileCount == 0)
-            .accessibilityLabel("Gather all ready crops")
-            .accessibilityHint("Collect every plot that is ready to harvest")
-            .lineLimit(1)
+
+            FarmRoundActionButton(
+                title: "Animals",
+                icon: "pawprint.fill",
+                tint: DS.Color.accent,
+                disabled: false
+            ) {
+                appState.selectedTab = .animals
+            }
+
+            FarmRoundActionButton(
+                title: "Collect",
+                icon: "basket.fill",
+                tint: DS.Color.xp,
+                disabled: false
+            ) {
+                _ = store.collectLivestockProducts()
+            }
+
+            FarmRoundActionButton(
+                title: "Build",
+                icon: "hammer.fill",
+                tint: DS.Color.money,
+                disabled: false
+            ) {
+                appState.selectedTab = .build
+            }
 
             #if DEBUG
-            Button("Fast-forward Day") {
+            FarmRoundActionButton(
+                title: "Next Day",
+                icon: "sunrise.fill",
+                tint: DS.Color.xp,
+                disabled: false
+            ) {
                 store.advanceDays(1)
             }
-            .buttonStyle(WoodActionStyle(tint: DS.Color.xp))
-            .accessibilityLabel("Fast-forward one day")
-            .accessibilityHint("Debug tool for skipping ahead 24 hours")
-            .lineLimit(1)
             #endif
         }
     }
@@ -477,7 +472,7 @@ struct FarmView: View {
         return items
     }
 
-    private struct WeatherForecastStrip: View {
+    fileprivate struct WeatherForecastStrip: View {
         let forecast: [MarketWeatherForecastDay]
 
         var body: some View {
@@ -492,8 +487,9 @@ struct FarmView: View {
                                 .foregroundStyle(.white.opacity(0.76))
                                 .lineLimit(1)
 
-                            Text(entry.weather.icon)
-                                .font(.title3)
+                            Image(systemName: entry.weather.icon)
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(entry.weather.color)
                                 .frame(height: 22)
 
                             Text(entry.weather.rawValue)
@@ -537,6 +533,249 @@ struct FarmView: View {
     private func forecastDayLabel(for entry: MarketWeatherForecastDay) -> String {
         entry.dayOffset == 1 ? "Tomorrow" : "+\(entry.dayOffset)d"
     }
+    }
+}
+
+private struct FarmHomeHUD: View {
+    let farmName: String
+    let level: Int
+    let xp: Int
+    let day: Int
+    let timeText: String
+    let timeIcon: String
+    let season: String
+    let coins: Int
+    let inventory: Int
+    let weatherSnapshot: FarmWeatherSnapshot
+    let forecast: [MarketWeatherForecastDay]
+    let onMenu: () -> Void
+
+    private var xpProgress: Double {
+        Double(xp % ProgressionSystem.xpPerLevel) / Double(ProgressionSystem.xpPerLevel)
+    }
+
+    var body: some View {
+        VStack(spacing: DS.Space.sm) {
+            Color.clear
+                .frame(height: 74)
+
+            HStack(spacing: DS.Space.sm) {
+                Text("👩‍🌾")
+                    .font(.system(size: 34))
+                    .frame(width: 52, height: 52)
+                    .background(
+                        Circle()
+                            .fill(Color(red: 0.95, green: 0.76, blue: 0.38))
+                            .overlay(Circle().strokeBorder(.white.opacity(0.28), lineWidth: 2))
+                    )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(farmName)
+                        .font(Typography.bodyStrong)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .accessibilityAddTraits(.isHeader)
+                    Text("Level \(level)")
+                        .font(Typography.caption)
+                        .foregroundStyle(.white.opacity(0.78))
+
+                    ProgressView(value: xpProgress, total: 1)
+                        .tint(DS.Color.xp)
+                        .background(.black.opacity(0.25), in: Capsule())
+                        .accessibilityLabel("Level progress")
+                }
+
+                Spacer(minLength: 0)
+
+                ViewThatFits {
+                    HStack(spacing: DS.Space.xs) {
+                        FarmResourceBadge(icon: "circle.fill", value: "\(coins)", tint: DS.Color.money)
+                        FarmResourceBadge(icon: "shippingbox.fill", value: "\(inventory)", tint: DS.Color.accent)
+                        FarmResourceBadge(icon: "star.fill", value: "\(level)", tint: DS.Color.xp)
+                    }
+                    VStack(alignment: .trailing, spacing: DS.Space.xs) {
+                        FarmResourceBadge(icon: "circle.fill", value: "\(coins)", tint: DS.Color.money)
+                        FarmResourceBadge(icon: "star.fill", value: "\(level)", tint: DS.Color.xp)
+                    }
+                }
+
+                Button(action: onMenu) {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 42, height: 42)
+                        .background(.black.opacity(0.42), in: RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                                .strokeBorder(.white.opacity(0.16), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Open game menu")
+            }
+
+            ViewThatFits {
+                HStack(spacing: DS.Space.xs) {
+                    FarmResourceBadge(icon: "calendar", value: "Day \(day)", tint: DS.Color.money)
+                    FarmResourceBadge(icon: timeIcon, value: timeText, tint: DS.Color.xp)
+                    FarmResourceBadge(icon: "leaf.fill", value: season, tint: DS.Color.accent)
+                    WeatherPill(
+                        weather: weatherSnapshot.weather,
+                        intensity: weatherSnapshot.intensity,
+                        subtitle: weatherSnapshot.windowTitle
+                    )
+                }
+                VStack(alignment: .leading, spacing: DS.Space.xs) {
+                    HStack(spacing: DS.Space.xs) {
+                        FarmResourceBadge(icon: "calendar", value: "Day \(day)", tint: DS.Color.money)
+                        FarmResourceBadge(icon: timeIcon, value: timeText, tint: DS.Color.xp)
+                    }
+                    HStack(spacing: DS.Space.xs) {
+                        FarmResourceBadge(icon: "leaf.fill", value: season, tint: DS.Color.accent)
+                        WeatherPill(
+                            weather: weatherSnapshot.weather,
+                            intensity: weatherSnapshot.intensity,
+                            subtitle: weatherSnapshot.windowTitle
+                        )
+                    }
+                }
+            }
+
+            FarmView.WeatherForecastStrip(forecast: forecast)
+        }
+        .padding(DS.Space.md)
+        .background(
+            RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous)
+                .fill(.black.opacity(0.52))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous)
+                        .strokeBorder(.white.opacity(0.16), lineWidth: 1)
+                )
+        )
+        .shadow(color: .black.opacity(0.28), radius: 16, y: 6)
+    }
+}
+
+private struct FarmSideRail: View {
+    let readyCount: Int
+    let inventoryCount: Int
+    let onInventory: () -> Void
+    let onAnimals: () -> Void
+    let onBuild: () -> Void
+    let onMore: () -> Void
+
+    var body: some View {
+        VStack(spacing: DS.Space.sm) {
+            railButton(title: "Events", icon: "star.fill", badge: nil, action: onMore)
+            railButton(title: "Quests", icon: "list.clipboard.fill", badge: readyCount > 0 ? "\(readyCount)" : nil, action: onBuild)
+            railButton(title: "Barn", icon: "shippingbox.fill", badge: inventoryCount > 0 ? "\(inventoryCount)" : nil, action: onInventory)
+            railButton(title: "Animals", icon: "pawprint.fill", badge: nil, action: onAnimals)
+        }
+    }
+
+    private func railButton(title: String, icon: String, badge: String?, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: icon)
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(DS.Color.money)
+                        .frame(width: 48, height: 44)
+                    if let badge {
+                        Text(badge)
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Color.red, in: Capsule())
+                            .offset(x: 8, y: -5)
+                    }
+                }
+                Text(title)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .frame(width: 64, height: 68)
+            .background(
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                    .fill(.black.opacity(0.56))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                            .strokeBorder(.white.opacity(0.16), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+    }
+}
+
+private struct FarmCameraRail: View {
+    let onResetView: () -> Void
+
+    var body: some View {
+        VStack(spacing: DS.Space.sm) {
+            railButton(icon: "camera.fill", label: "Camera", action: {})
+            railButton(icon: "arrow.up.left.and.arrow.down.right", label: "Reset view", action: onResetView)
+        }
+    }
+
+    private func railButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.title3.weight(.bold))
+                .foregroundStyle(.white)
+                .frame(width: 48, height: 48)
+                .background(.black.opacity(0.56), in: Circle())
+                .overlay(Circle().strokeBorder(.white.opacity(0.16), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+}
+
+private struct FarmRoundActionButton: View {
+    let title: String
+    let icon: String
+    let tint: Color
+    let disabled: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 54, height: 54)
+                    .background(
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [tint.opacity(disabled ? 0.35 : 0.95), tint.opacity(disabled ? 0.22 : 0.58)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    )
+                    .overlay(Circle().strokeBorder(.white.opacity(disabled ? 0.08 : 0.22), lineWidth: 1))
+                    .shadow(color: disabled ? .clear : tint.opacity(0.35), radius: 8, y: 3)
+
+                Text(title)
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
+        .opacity(disabled ? 0.52 : 1)
+        .accessibilityLabel(title)
     }
 }
 

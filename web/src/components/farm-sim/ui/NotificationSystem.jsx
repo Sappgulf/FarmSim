@@ -4,6 +4,7 @@ import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { logDebugAction } from '../../../utils/debugTools';
+import { ONBOARDING_STEP_COUNT } from '../../../constants/onboardingWalkthrough';
 
 const AUTO_DISMISS_MS = 3500;
 const MAX_VISIBLE = 5;
@@ -142,11 +143,27 @@ NotificationItem.displayName = 'NotificationItem';
 // Main Notification System Component
 const NotificationSystem = memo(() => {
   const actions = useGameActions();
+  const onboardingStep = useGameSelector((state) => state.onboardingStep || 0);
+  const onboardingSkipped = useGameSelector((state) => Boolean(state.onboardingSkipped));
+  const tutorialSuppressesInfoToasts =
+    !onboardingSkipped && onboardingStep < ONBOARDING_STEP_COUNT;
+
   const notifications = useGameSelector((state) =>
     Array.isArray(state.notifications) ? state.notifications : []
   );
-  const visibleNotifications = useMemo(() => notifications.slice(0, MAX_VISIBLE), [notifications]);
-  const overflowCount = notifications.length - visibleNotifications.length;
+  const filteredNotifications = useMemo(() => {
+    if (!tutorialSuppressesInfoToasts) return notifications;
+    return notifications.filter(
+      (n) =>
+        n &&
+        (n.important || n.sticky || n.type === 'error' || n.type === 'warning')
+    );
+  }, [notifications, tutorialSuppressesInfoToasts]);
+  const visibleNotifications = useMemo(
+    () => filteredNotifications.slice(0, MAX_VISIBLE),
+    [filteredNotifications]
+  );
+  const overflowCount = filteredNotifications.length - visibleNotifications.length;
 
   const handleCloseNotification = useCallback(
     (id) => {
@@ -188,8 +205,8 @@ const NotificationSystem = memo(() => {
     return () => clearInterval(sweepId);
   }, [actions, notifications]);
 
-  // Don't render if no notifications
-  if (notifications.length === 0) {
+  // Don't render if no notifications (or all hidden during tutorial)
+  if (filteredNotifications.length === 0) {
     return null;
   }
 

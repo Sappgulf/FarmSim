@@ -2,38 +2,15 @@ import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useGameActions, useGameSelector } from '../context/GameContext';
 import { Button } from '../../ui/button';
 import { Card } from '../../ui/card';
+import { ONBOARDING_STEPS } from '../../../constants/onboardingWalkthrough';
+
+/** Re-export for lazy-loaded modules that resolve via Tutorial barrel. */
+export { ONBOARDING_STEP_COUNT } from '../../../constants/onboardingWalkthrough';
 
 /**
  * Tutorial - Soft onboarding overlay for first-time users
  * Event-driven steps, non-blocking, and skippable
  */
-
-const ONBOARDING_STEPS = [
-  {
-    id: 'plant',
-    title: 'Plant something',
-    description: 'Pick a crop and tap an empty plot to get growing.',
-    emoji: '🌱',
-    target: '[data-onboard="farm-grid"]',
-    placement: 'right',
-  },
-  {
-    id: 'harvest',
-    title: 'Harvest it',
-    description: 'Tap a glowing crop to harvest and earn coins.',
-    emoji: '🧺',
-    target: '[data-onboard="farm-grid"]',
-    placement: 'right',
-  },
-  {
-    id: 'board',
-    title: 'Visit the Town Board',
-    description: 'Open More → Events to see today’s plan.',
-    emoji: '📌',
-    target: '[data-onboard="events-tab"]',
-    placement: 'top',
-  },
-];
 
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
@@ -41,7 +18,6 @@ const Tutorial = memo(() => {
   const actions = useGameActions();
   const onboardingStep = useGameSelector((state) => state.onboardingStep || 0);
   const onboardingSkipped = useGameSelector((state) => Boolean(state.onboardingSkipped));
-  const onboardingSeen = useGameSelector((state) => Boolean(state.onboardingSeen));
   const [targetRect, setTargetRect] = useState(null);
   const [manualPosition, setManualPosition] = useState(null);
   const dragStateRef = useRef(null);
@@ -51,12 +27,6 @@ const Tutorial = memo(() => {
   const totalSteps = ONBOARDING_STEPS.length;
 
   const shouldShow = !onboardingSkipped && stepIndex < totalSteps;
-
-  useEffect(() => {
-    if (shouldShow && !onboardingSeen) {
-      actions.updateOnboarding({ onboardingSeen: true });
-    }
-  }, [shouldShow, onboardingSeen, actions]);
 
   useEffect(() => {
     if (!shouldShow || !currentStep?.target) {

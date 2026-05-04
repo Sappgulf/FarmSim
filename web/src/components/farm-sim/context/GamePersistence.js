@@ -6,6 +6,7 @@
  * Key index: {@link ../../../save/storageInventory.js}.
  */
 import { isDevelopmentMode } from '../../../config/release';
+import { ONBOARDING_STEP_COUNT } from '../../../constants/onboardingWalkthrough';
 import { normalizeEntitlements } from '../entitlements/EntitlementManager';
 import { getLevelFromXp, remapXpToCurrentCurve } from '../systems/progression';
 
@@ -163,7 +164,7 @@ export function migrateSaveData(savedData) {
     // Version 3 → 4: Onboarding state
     if (saveVersion < 4) {
       migratedData.onboardingSeen = true;
-      migratedData.onboardingStep = 3;
+      migratedData.onboardingStep = ONBOARDING_STEP_COUNT;
       migratedData.onboardingSkipped = true;
     }
 
@@ -658,8 +659,8 @@ export function migrateSaveData(savedData) {
     );
     migratedData.onboardingStep = clampNumber(
       migratedData.onboardingStep,
-      saveVersion < 4 ? 3 : 0,
-      { min: 0, max: 3 }
+      saveVersion < 4 ? ONBOARDING_STEP_COUNT : 0,
+      { min: 0, max: ONBOARDING_STEP_COUNT }
     );
     migratedData.onboardingSkipped = ensureBoolean(
       migratedData.onboardingSkipped,

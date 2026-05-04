@@ -22,6 +22,7 @@ import { initialState, gameReducer } from './GameReducer';
 import { initDebugTools, isDebugMode, logDebugAction } from '../../../utils/debugTools';
 import { attachReleaseTools, detachReleaseTools } from '../../../utils/releaseTools';
 import { isDevelopmentMode } from '../../../config/release';
+import { ONBOARDING_STEP_COUNT } from '../../../constants/onboardingWalkthrough';
 import {
   DECORATION_DATA,
   isLightingDecoration,
@@ -721,7 +722,7 @@ export function GameProvider({ children }) {
           board_open: 2,
         };
 
-        const totalSteps = 3;
+        const totalSteps = ONBOARDING_STEP_COUNT;
         const eventStep = onboardingStepMap[eventType];
 
         const hasFirstSeed = !!currentState.memoryFlags?.first_seed;

@@ -16,6 +16,10 @@ describe('NotificationSystem', () => {
     const { result } = renderHook(() => useGame(), { wrapper: NotificationTestWrapper });
 
     act(() => {
+      result.current.actions.updateOnboarding({ onboardingSkipped: true });
+    });
+
+    act(() => {
       for (let i = 0; i < 8; i += 1) {
         result.current.actions.addNotification({
           message: `Queued notification ${i}`,
@@ -32,6 +36,10 @@ describe('NotificationSystem', () => {
     const { result } = renderHook(() => useGame(), { wrapper: NotificationTestWrapper });
 
     act(() => {
+      result.current.actions.updateOnboarding({ onboardingSkipped: true });
+    });
+
+    act(() => {
       result.current.actions.addNotification({
         message: 'Background sync complete',
         type: 'info',
@@ -46,5 +54,21 @@ describe('NotificationSystem', () => {
     expect(notificationRegion).toHaveAttribute('aria-live', 'polite');
     expect(screen.getByRole('status')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toBeInTheDocument();
+  });
+
+  it('hides info toasts during onboarding but still shows errors', () => {
+    const { result } = renderHook(() => useGame(), { wrapper: NotificationTestWrapper });
+
+    act(() => {
+      result.current.actions.updateOnboarding({
+        onboardingSkipped: false,
+        onboardingStep: 0,
+      });
+      result.current.actions.addNotification({ message: 'Almanac tip', type: 'info' });
+      result.current.actions.addNotification({ message: 'Something broke', type: 'error' });
+    });
+
+    expect(screen.queryByText('Almanac tip')).not.toBeInTheDocument();
+    expect(screen.getByText('Something broke')).toBeInTheDocument();
   });
 });

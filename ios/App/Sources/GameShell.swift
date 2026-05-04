@@ -7,15 +7,22 @@ import GameCore
 enum GameTab: String, CaseIterable, Hashable {
     case farm
     case inventory
+    case animals
+    case build
+    case more
+    // Compatibility routes kept for existing App Shortcuts and saved pending routes.
     case market
     case almanac
     case settings
 
     var title: String {
         switch self {
-        case .farm:      return "My Farm"
-        case .inventory: return "Barn"
-        case .market:    return "Town"
+        case .farm:      return "Farm"
+        case .inventory: return "Inventory"
+        case .animals:   return "Animals"
+        case .build:     return "Build"
+        case .more:      return "More"
+        case .market:    return "Market"
         case .almanac:   return "Almanac"
         case .settings:  return "Settings"
         }
@@ -23,8 +30,11 @@ enum GameTab: String, CaseIterable, Hashable {
 
     var icon: String {
         switch self {
-        case .farm:      return "leaf.fill"
-        case .inventory: return "shippingbox.fill"
+        case .farm:      return "house.fill"
+        case .inventory: return "backpack.fill"
+        case .animals:   return "pawprint.fill"
+        case .build:     return "hammer.fill"
+        case .more:      return "square.grid.2x2.fill"
         case .market:    return "storefront.fill"
         case .almanac:   return "book.closed.fill"
         case .settings:  return "gearshape.fill"
@@ -35,6 +45,9 @@ enum GameTab: String, CaseIterable, Hashable {
         switch self {
         case .farm:      return .click
         case .inventory: return .click
+        case .animals:   return .click
+        case .build:     return .click
+        case .more:      return .pageTurn
         case .market:    return .click
         case .almanac:   return .pageTurn
         case .settings:  return .click
@@ -206,17 +219,17 @@ struct GameShell: View {
                 .tabItem { Label(GameTab.inventory.title, systemImage: GameTab.inventory.icon) }
                 .tag(GameTab.inventory)
 
-            TownMarketView(store: store)
-                .tabItem { Label(GameTab.market.title,    systemImage: GameTab.market.icon) }
-                .tag(GameTab.market)
+            AnimalsView(store: store)
+                .tabItem { Label(GameTab.animals.title, systemImage: GameTab.animals.icon) }
+                .tag(GameTab.animals)
 
-            AlmanacView(store: store)
-                .tabItem { Label(GameTab.almanac.title,   systemImage: GameTab.almanac.icon) }
-                .tag(GameTab.almanac)
+            BuildView(store: store)
+                .tabItem { Label(GameTab.build.title, systemImage: GameTab.build.icon) }
+                .tag(GameTab.build)
 
-            SettingsView(store: store, appState: appState)
-                .tabItem { Label(GameTab.settings.title,  systemImage: GameTab.settings.icon) }
-                .tag(GameTab.settings)
+            MoreView(store: store, appState: appState)
+                .tabItem { Label(GameTab.more.title, systemImage: GameTab.more.icon) }
+                .tag(GameTab.more)
         }
         .tint(DS.Color.accent)
         .onChange(of: appState.selectedTab) { old, new in

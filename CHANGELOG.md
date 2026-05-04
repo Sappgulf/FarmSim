@@ -1,16 +1,33 @@
 # Changelog
 
+## [5.5.4] - 2026-05-03
+### UI/UX
+- What's New waits until the **farm tour is finished or skipped** (`onboardingStep` reaches the final step), not merely when the tour first appears—fixing Skip and avoiding release notes over the walkthrough.
+- Single source of truth for walkthrough steps: `src/constants/onboardingWalkthrough.js` (used by Tutorial, notifications, What's New, Events, GameContext, saves).
+- Toast notifications (info/success) pause during the onboarding tutorial so they do not compete with the coach marks; errors and warnings still show.
+- Cleaner dev experience: removed the always-on FPS chip; use **Settings → Show FPS** or **Alt+Shift+P** (Perf HUD) when you need frame metrics.
+- Autosave line in the header uses clearer wording before the first write (instead of "Saved waiting for first save…").
+- What's New historic notes for mobile releases are rewritten in plain language (no internal code names).
+
+### PWA
+- Manifest: `lang`, `dir`, and splash-friendly `background_color` aligned with the emerald UI.
+- Page meta: `application-name` and `color-scheme` for install/browser chrome.
+- Service worker: more reliable offline **navigation** fallback to cached `index.html`.
+- Settings → Install: detects standalone mode (desktop + iOS), disables the button when already installed, and explains iPhone **Add to Home Screen** vs Chromium install prompts.
+
+### Fixed
+- PWA metadata: added `mobile-web-app-capable` alongside the Apple tag to clear the deprecation warning in Chromium-based browsers.
+
 ## [4.2.1] - 2026-02-13
 ### Added
-- New **Premium App Icon**: "Friendly Barn" (text-free, high-quality 3D style).
-- **Wooden Barn Theme**: Comprehensive UI overhaul for `TownMarketView`, `AlmanacView`, and `BarnInventoryView` using cohesive wooden panel aesthetics.
-- **Paper Label Aesthetics**: Redesigned `ItemCardView` to look like organic paper labels on crates.
-- Organic rotation effects to inventory items for a hand-crafted look.
+- New **premium app icon**: "Friendly Barn" (clean, text-free look).
+- **Barn-themed panels** across town market, almanac, and barn inventory—wood-style frames and a cozier layout (mobile app).
+- **Paper-style item labels** on cards and subtle rotation on inventory icons for a hand-crafted feel (mobile app).
 
 ### Changed
-- Refactored `TownMarketView` to use a cleaner, more readable market-board layout.
-- Optimized `DesignSystem` with better shadows and premium wooden gradients.
-- Updated `project.yml` with improved asset catalog management.
+- Clearer **market board** for browsing buys, sells, and upgrades (mobile app).
+- Warmer **shadows and gradients** for readability (mobile app).
+- Under the hood: improved asset catalog setup for native builds.
 
 ## [4.2.0] - 2026-02-13
 

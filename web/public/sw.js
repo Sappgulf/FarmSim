@@ -54,13 +54,30 @@ self.addEventListener('fetch', (event) => {
     if (req.mode === 'navigate') {
       try {
         const res = await fetch(req);
-        cache.put(req, res.clone());
+        if (res.ok) {
+          cache.put(req, res.clone());
+        }
         return res;
       } catch (e) {
-        const cached = await cache.match(req);
-        if (cached) return cached;
-        const root = (await cache.match('/')) || (await cache.match('/index.html'));
-        if (root) return root;
+        const scopeBase = self.registration?.scope || self.location.href;
+        const fallbacks = [
+          req,
+          new Request(new URL('index.html', scopeBase).href),
+          new Request(new URL('./index.html', self.location).href),
+          new Request(new URL('./', self.location).href),
+        ];
+        for (const candidate of fallbacks) {
+          const hit = await cache.match(candidate);
+          if (hit) return hit;
+        }
+        const all = await cache.keys();
+        for (let i = 0; i < all.length; i += 1) {
+          const key = all[i];
+          if (key.url.includes('index.html')) {
+            const hit = await cache.match(key);
+            if (hit) return hit;
+          }
+        }
         throw e;
       }
     }

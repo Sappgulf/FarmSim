@@ -57,6 +57,7 @@ temp/
 .subagents/
 
 # Playwright
+.playwright-mcp/
 web/test-results/
 web/playwright-report/
 web/blob-report/

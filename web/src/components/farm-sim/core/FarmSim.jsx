@@ -53,7 +53,6 @@ export function FarmSimCore() {
   const actions = useGameActions();
   const store = useGameStore();
   const paused = useGameSelector((state) => Boolean(state.gameLoop?.paused));
-  const fps = useGameSelector((state) => state.gameLoop?.fps || 0);
   const musicEnabled = useGameSelector((state) => state.settings?.musicEnabled !== false);
   const soundEnabled = useGameSelector((state) => state.settings?.soundEnabled !== false);
   const reducedMotionEnabled = useGameSelector((state) => state.settings?.reducedMotion === true);
@@ -554,13 +553,6 @@ export function FarmSimCore() {
       <Suspense fallback={null}>
         <WeatherEffects weather={cozyVisualWeather || weather} intensity={0.45} />
       </Suspense>
-
-      {/* Performance monitoring (dev only) */}
-      {isDevelopmentMode() && (
-        <div className="fixed top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded z-50">
-          FPS: {fps}
-        </div>
-      )}
 
       {/* Game Header */}
       <div className="relative z-20">

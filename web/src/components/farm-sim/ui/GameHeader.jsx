@@ -76,21 +76,21 @@ const LastSaveTime = memo(({ lastSavedAt, autoSave, reducedMotion }) => {
     prevSavedRef.current = lastSavedAt;
   }, [lastSavedAt, reducedMotion]);
 
-  const getTimeSinceLastSave = () => {
+  const saveStatusText = (() => {
     if (!lastSavedAt) {
-      return autoSave ? 'waiting for first save…' : 'not saved yet';
+      return autoSave ? 'Autosave · not written yet' : 'Not saved yet';
     }
     const seconds = Math.max(0, Math.floor((currentTime - lastSavedAt) / 1000));
-    if (seconds < 10) return 'just now';
-    if (seconds < 60) return `${seconds}s ago`;
-    return `${Math.floor(seconds / 60)}m ago`;
-  };
+    if (seconds < 10) return 'Saved · just now';
+    if (seconds < 60) return `Saved · ${seconds}s ago`;
+    return `Saved · ${Math.floor(seconds / 60)}m ago`;
+  })();
 
   return (
     <span
       className={`transition-colors duration-300 ${justSaved ? 'font-semibold text-emerald-600' : ''}`}
     >
-      Saved {getTimeSinceLastSave()}
+      {saveStatusText}
     </span>
   );
 });

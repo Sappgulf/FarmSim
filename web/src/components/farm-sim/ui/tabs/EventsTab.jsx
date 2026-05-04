@@ -13,7 +13,7 @@ import { getDailyAlmanacInsight, getDayKey } from '../../../../systems/almanac';
 import { FARM_TITLES, WEEKLY_SPECIAL_DAY } from '../../../../data/cozyExpansion';
 import { getContentManager } from '../../../../content/ContentManager';
 import { getWeekKey } from '../../../../utils/retention';
-import { getDifficultyModifier, getProgressionBand } from '../../systems/progression';
+import { ONBOARDING_STEP_COUNT } from '../../../../constants/onboardingWalkthrough';
 import PerfectHarvestModal from '../minigames/PerfectHarvestModal';
 import FarmCardShareButton from '../FarmCardShareButton';
 import { TabHero, MetricTile } from './TabSurface';
@@ -289,7 +289,8 @@ const EventsTab = memo(() => {
     : playLimit === 'daily'
       ? !playedToday
       : !playedToday;
-  const onboardingActive = !state.onboardingSkipped && (state.onboardingStep || 0) < 3;
+  const onboardingActive =
+    !state.onboardingSkipped && (state.onboardingStep || 0) < ONBOARDING_STEP_COUNT;
   const isFirstDay = (state.almanac?.counters?.dayCount || 0) <= 0;
   const farmCardSpotlight = buildFarmCardData(state).spotlight;
   const activeTitleId = state.cozyExpansion?.farmTitles?.activeId || 'home_grower';

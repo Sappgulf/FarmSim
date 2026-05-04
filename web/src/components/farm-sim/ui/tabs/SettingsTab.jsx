@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useGameActions, useGameSelector, useGameStore } from '../../context/GameContext';
 import {
   BACKUP_SAVE_KEY,
@@ -43,6 +43,26 @@ const SettingsTab = memo(() => {
   const [musicVolume, setMusicVolume] = useState(() =>
     readStoredVolume(MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME, 0.5)
   );
+  const [installPromptReady, setInstallPromptReady] = useState(
+    () => typeof window !== 'undefined' && Boolean(window.__pwaInstallPrompt)
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const sync = () => setInstallPromptReady(Boolean(window.__pwaInstallPrompt));
+    sync();
+    window.addEventListener('beforeinstallprompt', sync);
+    return () => window.removeEventListener('beforeinstallprompt', sync);
+  }, []);
+
+  const isStandaloneMode = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const displayStandalone =
+      window.matchMedia?.('(display-mode: standalone)').matches === true;
+    const iosStandalone =
+      typeof window.navigator !== 'undefined' && window.navigator.standalone === true;
+    return displayStandalone || iosStandalone;
+  }, []);
 
   const soundEnabled = settings.soundEnabled !== false;
   const musicEnabled = settings.musicEnabled !== false;
@@ -323,6 +343,7 @@ const SettingsTab = memo(() => {
   }, [actions, addNotification]);
 
   const handleInstallApp = useCallback(() => {
+    if (isStandaloneMode) return;
     const prompt = window.__pwaInstallPrompt;
     if (prompt) {
       prompt.prompt();
@@ -331,11 +352,15 @@ const SettingsTab = memo(() => {
           addNotification('📲 App installed!', 'success');
         }
         window.__pwaInstallPrompt = null;
+        setInstallPromptReady(false);
       });
       return;
     }
-    addNotification('Use your browser menu to install, or the app is already installed.', 'info');
-  }, [addNotification]);
+    addNotification(
+      'No install prompt yet — try Chrome/Edge (desktop), or iPhone: Share → Add to Home Screen.',
+      'info'
+    );
+  }, [addNotification, isStandaloneMode]);
 
   return (
     <div className="space-y-4">
@@ -513,12 +538,21 @@ const SettingsTab = memo(() => {
             </div>
             <h4 className="text-base font-semibold text-slate-900">Add to home screen</h4>
           </div>
-          <Button onClick={handleInstallApp} variant="outline" size="sm">
-            Install
+          <Button
+            onClick={handleInstallApp}
+            variant="outline"
+            size="sm"
+            disabled={isStandaloneMode}
+          >
+            {isStandaloneMode ? 'Installed' : 'Install'}
           </Button>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
-          Install FarmSim as a standalone app for a more immersive feel.
+          {isStandaloneMode
+            ? 'Running as an installed app. When we ship updates, use Reload on the banner so assets stay in sync.'
+            : installPromptReady
+              ? 'Your browser can install FarmSim as a standalone window—great for quick launch and more screen space.'
+              : 'Install is offered when the browser supports it. On iPhone or iPad: Share → Add to Home Screen. On desktop: watch for the install icon in the address bar (Chrome/Edge).'}
         </p>
       </Card>
 
