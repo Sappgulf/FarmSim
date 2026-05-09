@@ -113,7 +113,9 @@ export function FarmSimCore() {
   // Navigation state for new consolidated nav
   const [activeTab, setActiveTab] = useState(() => readPersistedActiveTab());
   const [timePeriod, setTimePeriod] = useState('day');
-  const [activeSection, setActiveSection] = useState(() => getSectionForTab(readPersistedActiveTab()) || 'farm');
+  const [activeSection, setActiveSection] = useState(
+    () => getSectionForTab(readPersistedActiveTab()) || 'farm'
+  );
 
   const computeTimePeriod = () => {
     const hour = new Date().getHours();
@@ -575,8 +577,7 @@ export function FarmSimCore() {
     const focusTarget =
       gameplayArea.querySelector(
         'button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      ) ||
-      gameplayArea;
+      ) || gameplayArea;
     if (typeof focusTarget.focus === 'function') {
       focusTarget.focus({ preventScroll: true });
     }
@@ -584,6 +585,9 @@ export function FarmSimCore() {
 
   const activeTheme = getFarmTheme(farmThemeId);
   const themeVars = getFarmThemeVars(activeTheme);
+  const playfieldFirst = activeTab === DEFAULT_ACTIVE_TAB;
+  const playfieldOrderClass = playfieldFirst ? 'order-1' : 'order-2';
+  const toolsOrderClass = playfieldFirst ? 'order-2' : 'order-1';
 
   return (
     <div
@@ -607,7 +611,7 @@ export function FarmSimCore() {
 
       {/* Game Header */}
       <div className="relative z-20">
-        <GameHeader isFirstRunMode={isFirstRunMode} onFocusGameplay={focusGameplayArea} />
+        <GameHeader onFocusGameplay={focusGameplayArea} />
       </div>
 
       {ghostVisitActive && (
@@ -624,17 +628,25 @@ export function FarmSimCore() {
         aria-label="Farm gameplay and controls"
       >
         {/* Farm Grid - Full width on mobile, larger on desktop */}
-        <div className="w-full lg:flex-1 order-2 lg:order-1">
+        <div
+          className={`w-full lg:flex-1 ${playfieldOrderClass} lg:order-1`}
+          role="region"
+          aria-label="Farm playfield"
+          data-shell-region="playfield"
+          data-mobile-priority={playfieldFirst ? 'primary' : 'support'}
+        >
           <FarmGrid />
         </div>
 
         {/* Game Sidebar - Shows tabs for active section */}
-        <div className="w-full lg:w-80 xl:w-96 order-1 lg:order-2">
-          <GameSidebar
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            isFirstRunMode={isFirstRunMode}
-          />
+        <div
+          className={`w-full lg:w-80 xl:w-96 ${toolsOrderClass} lg:order-2`}
+          role="complementary"
+          aria-label="Farm tools"
+          data-shell-region="tools"
+          data-mobile-priority={playfieldFirst ? 'support' : 'primary'}
+        >
+          <GameSidebar activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
       </main>
 

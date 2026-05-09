@@ -118,7 +118,7 @@ const SeasonCountdown = memo(({ lastChangeTime, durationMs = 120000 }) => {
 SeasonCountdown.displayName = 'SeasonCountdown';
 
 // Game Header Component - Memoized for performance
-const GameHeader = memo(({ isFirstRunMode = false, onFocusGameplay }) => {
+const GameHeader = memo(({ onFocusGameplay }) => {
   const actions = useGameActions();
   const coins = useGameSelector((state) => state.coins || 0);
   const xp = useGameSelector((state) => state.xp || 0);
@@ -338,21 +338,11 @@ const GameHeader = memo(({ isFirstRunMode = false, onFocusGameplay }) => {
               <span className="max-w-[180px] truncate text-sm font-semibold text-gray-900 md:text-base">
                 {farmName}
               </span>
-            <span className="text-xs font-medium" style={{ color: activeTheme.palette.accent }}>
-              {activeTheme.name}
-            </span>
-          </div>
+              <span className="text-xs font-medium" style={{ color: activeTheme.palette.accent }}>
+                {activeTheme.name}
+              </span>
+            </div>
           </button>
-          <span
-            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-              isFirstRunMode
-                ? 'bg-amber-100 text-amber-700 border-amber-200'
-                : 'bg-emerald-100 text-emerald-700 border-emerald-200'
-            }`}
-          >
-            {isFirstRunMode ? 'Starter flow active' : 'Active play mode'}
-          </span>
-
           {/* Core stats with animations */}
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-wrap justify-end lg:justify-start">
             <button
@@ -368,7 +358,7 @@ const GameHeader = memo(({ isFirstRunMode = false, onFocusGameplay }) => {
               </span>
             </button>
 
-            <div className="flex flex-col gap-1">
+            <div className="hidden sm:flex flex-col gap-1">
               <button
                 type="button"
                 onClick={() => openRelatedTab('analytics')}
@@ -392,13 +382,15 @@ const GameHeader = memo(({ isFirstRunMode = false, onFocusGameplay }) => {
                 </div>
               </div>
               <p className="mt-1 text-[10px] text-gray-500 leading-snug" aria-live="polite">
-                {daySummary.day}: {daySummary.ready} ready, {daySummary.active} growing, {daySummary.empty} empty
+                {daySummary.day}: {daySummary.ready} ready, {daySummary.active} growing,{' '}
+                {daySummary.empty} empty
               </p>
             </div>
 
             <button
               type="button"
               onClick={() => openRelatedTab('achievements')}
+              className="hidden sm:inline-flex"
               title="Open Achievements"
               aria-label={`Open Achievements, level ${level}`}
             >
@@ -426,7 +418,7 @@ const GameHeader = memo(({ isFirstRunMode = false, onFocusGameplay }) => {
               size="sm"
               variant="outline"
               onClick={() => setShowStatsDropdown(!showStatsDropdown)}
-              className="flex items-center gap-1 min-h-[40px]"
+              className="hidden sm:flex items-center gap-1 min-h-[40px]"
               aria-expanded={showStatsDropdown}
               aria-controls="farm-stats-dropdown"
               aria-label="Toggle farm statistics panel"
@@ -583,7 +575,7 @@ const GameHeader = memo(({ isFirstRunMode = false, onFocusGameplay }) => {
           <button
             type="button"
             onClick={() => openRelatedTab('achievements')}
-            className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition min-h-[40px]"
+            className="hidden sm:flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition min-h-[40px]"
             title="Open Achievements"
             aria-label={`Open Achievements, ${unlockedAchievements} unlocked`}
           >

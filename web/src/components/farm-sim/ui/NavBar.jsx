@@ -129,209 +129,210 @@ export const TAB_INFO = {
   diseases: { label: 'Diseases', assetId: 'tab-diseases', icon: ShieldAlert, emoji: '🐛' },
 };
 
-const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange, isFirstRunMode = false }) => {
-  const animalsNeedingCareCount = useGameSelector((state) => {
-    const animals = Array.isArray(state.livestock?.animals) ? state.livestock.animals : [];
-    let count = 0;
-    for (let i = 0; i < animals.length; i++) {
-      const animal = animals[i];
-      if (animal?.hunger < 30 || animal?.happiness < 30 || animal?.productionReady) {
-        count += 1;
+const NavBar = memo(
+  ({ activeSection, activeTab, onSectionChange, onTabChange, isFirstRunMode = false }) => {
+    const animalsNeedingCareCount = useGameSelector((state) => {
+      const animals = Array.isArray(state.livestock?.animals) ? state.livestock.animals : [];
+      let count = 0;
+      for (let i = 0; i < animals.length; i++) {
+        const animal = animals[i];
+        if (animal?.hunger < 30 || animal?.happiness < 30 || animal?.productionReady) {
+          count += 1;
+        }
       }
-    }
-    return count;
-  });
-  const unclaimedQuestCount = useGameSelector((state) => {
-    const challenges = Array.isArray(state.dailyChallenges) ? state.dailyChallenges : [];
-    let count = 0;
-    for (let i = 0; i < challenges.length; i++) {
-      const challenge = challenges[i];
-      if (challenge?.completed && !challenge?.claimed) count += 1;
-    }
-    return count;
-  });
-  const activeNotificationCount = useGameSelector((state) =>
-    Array.isArray(state.notifications) ? state.notifications.length : 0
-  );
-  const [showSubTabs, setShowSubTabs] = useState(false);
-  const subTabRefs = useRef({});
-  const sections = useMemo(() => Object.values(NAV_SECTIONS), []);
-  const activeSectionConfig = useMemo(
-    () => (activeSection ? NAV_SECTIONS[activeSection] : null),
-    [activeSection]
-  );
-  const activeTabInfo = TAB_INFO[activeTab];
-  const activeSectionHasMultipleTabs = Boolean(
-    activeSectionConfig && activeSectionConfig.tabs.length > 1
-  );
-  const activeSectionTabs = useMemo(
-    () => activeSectionConfig?.tabs || [],
-    [activeSectionConfig]
-  );
+      return count;
+    });
+    const unclaimedQuestCount = useGameSelector((state) => {
+      const challenges = Array.isArray(state.dailyChallenges) ? state.dailyChallenges : [];
+      let count = 0;
+      for (let i = 0; i < challenges.length; i++) {
+        const challenge = challenges[i];
+        if (challenge?.completed && !challenge?.claimed) count += 1;
+      }
+      return count;
+    });
+    const activeNotificationCount = useGameSelector((state) =>
+      Array.isArray(state.notifications) ? state.notifications.length : 0
+    );
+    const [showSubTabs, setShowSubTabs] = useState(false);
+    const subTabRefs = useRef({});
+    const sections = useMemo(() => Object.values(NAV_SECTIONS), []);
+    const activeSectionConfig = useMemo(
+      () => (activeSection ? NAV_SECTIONS[activeSection] : null),
+      [activeSection]
+    );
+    const activeTabInfo = TAB_INFO[activeTab];
+    const activeSectionHasMultipleTabs = Boolean(
+      activeSectionConfig && activeSectionConfig.tabs.length > 1
+    );
+    const activeSectionTabs = useMemo(() => activeSectionConfig?.tabs || [], [activeSectionConfig]);
 
-  useEffect(() => {
-    if (!activeSectionHasMultipleTabs) {
+    useEffect(() => {
       setShowSubTabs(false);
-      return;
-    }
-    if (activeSectionConfig.tabs.includes(activeTab)) {
-      setShowSubTabs(true);
-    }
-  }, [activeSectionHasMultipleTabs, activeSectionConfig, activeTab]);
+    }, [activeSection]);
 
-  // Get notification counts for badges
-  const getNotificationCount = useCallback(
-    (sectionId) => {
-      switch (sectionId) {
-        case 'animals':
-          return animalsNeedingCareCount > 0 ? animalsNeedingCareCount : null;
-        case 'more':
-          const totalMoreAlerts = unclaimedQuestCount + activeNotificationCount;
-          return totalMoreAlerts > 0 ? totalMoreAlerts : null;
-        default:
-          return null;
+    useEffect(() => {
+      if (!activeSectionHasMultipleTabs) {
+        setShowSubTabs(false);
       }
-    },
-    [activeNotificationCount, animalsNeedingCareCount, unclaimedQuestCount]
-  );
-  const modeLabel = isFirstRunMode ? 'Starter flow active' : 'Active play mode';
-  const modeAccent = isFirstRunMode
-    ? 'bg-amber-100 text-amber-700 border-amber-200'
-    : 'bg-emerald-100 text-emerald-700 border-emerald-200';
+    }, [activeSectionHasMultipleTabs]);
 
-  const handleSectionPress = useCallback(
-    (section, isActive) => {
-      onSectionChange(section.id);
-      if (section.tabs.length > 1) {
-        setShowSubTabs(isActive ? !showSubTabs : true);
-        return;
-      }
-      setShowSubTabs(false);
-      onTabChange(section.tabs[0]);
-    },
-    [onSectionChange, onTabChange, showSubTabs]
-  );
+    // Get notification counts for badges
+    const getNotificationCount = useCallback(
+      (sectionId) => {
+        switch (sectionId) {
+          case 'animals':
+            return animalsNeedingCareCount > 0 ? animalsNeedingCareCount : null;
+          case 'more':
+            const totalMoreAlerts = unclaimedQuestCount + activeNotificationCount;
+            return totalMoreAlerts > 0 ? totalMoreAlerts : null;
+          default:
+            return null;
+        }
+      },
+      [activeNotificationCount, animalsNeedingCareCount, unclaimedQuestCount]
+    );
+    const handleSectionPress = useCallback(
+      (section, isActive) => {
+        onSectionChange(section.id);
+        if (section.tabs.length > 1) {
+          setShowSubTabs(isActive ? !showSubTabs : false);
+          return;
+        }
+        setShowSubTabs(false);
+        onTabChange(section.tabs[0]);
+      },
+      [onSectionChange, onTabChange, showSubTabs]
+    );
 
-  const handleSubTabKeyDown = useCallback(
-    (event, index) => {
-      if (!activeSectionHasMultipleTabs || activeSectionTabs.length <= 1) return;
+    const handleSubTabKeyDown = useCallback(
+      (event, index) => {
+        if (!activeSectionHasMultipleTabs || activeSectionTabs.length <= 1) return;
 
-      const lastIndex = activeSectionTabs.length - 1;
-      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-        event.preventDefault();
-        const nextIndex = index === lastIndex ? 0 : index + 1;
-        const nextId = activeSectionTabs[nextIndex];
-        if (nextId && subTabRefs.current[nextId]) {
-          subTabRefs.current[nextId].focus();
+        const lastIndex = activeSectionTabs.length - 1;
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          const nextIndex = index === lastIndex ? 0 : index + 1;
+          const nextId = activeSectionTabs[nextIndex];
+          if (nextId && subTabRefs.current[nextId]) {
+            subTabRefs.current[nextId].focus();
+          }
+          if (activeSectionTabs[nextIndex]) {
+            onTabChange(activeSectionTabs[nextIndex]);
+          }
         }
-        if (activeSectionTabs[nextIndex]) {
-          onTabChange(activeSectionTabs[nextIndex]);
-        }
-      }
 
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-        event.preventDefault();
-        const nextIndex = index === 0 ? lastIndex : index - 1;
-        const nextId = activeSectionTabs[nextIndex];
-        if (nextId && subTabRefs.current[nextId]) {
-          subTabRefs.current[nextId].focus();
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          const nextIndex = index === 0 ? lastIndex : index - 1;
+          const nextId = activeSectionTabs[nextIndex];
+          if (nextId && subTabRefs.current[nextId]) {
+            subTabRefs.current[nextId].focus();
+          }
+          if (activeSectionTabs[nextIndex]) {
+            onTabChange(activeSectionTabs[nextIndex]);
+          }
         }
-        if (activeSectionTabs[nextIndex]) {
-          onTabChange(activeSectionTabs[nextIndex]);
-        }
-      }
 
-      if (event.key === 'Home') {
-        event.preventDefault();
-        const firstId = activeSectionTabs[0];
-        if (firstId && subTabRefs.current[firstId]) {
-          subTabRefs.current[firstId].focus();
+        if (event.key === 'Home') {
+          event.preventDefault();
+          const firstId = activeSectionTabs[0];
+          if (firstId && subTabRefs.current[firstId]) {
+            subTabRefs.current[firstId].focus();
+          }
+          if (firstId) {
+            onTabChange(firstId);
+          }
         }
-        if (firstId) {
-          onTabChange(firstId);
-        }
-      }
 
-      if (event.key === 'End') {
-        event.preventDefault();
-        const lastId = activeSectionTabs[lastIndex];
-        if (lastId && subTabRefs.current[lastId]) {
-          subTabRefs.current[lastId].focus();
+        if (event.key === 'End') {
+          event.preventDefault();
+          const lastId = activeSectionTabs[lastIndex];
+          if (lastId && subTabRefs.current[lastId]) {
+            subTabRefs.current[lastId].focus();
+          }
+          if (lastId) {
+            onTabChange(lastId);
+          }
         }
-        if (lastId) {
-          onTabChange(lastId);
-        }
-      }
-    },
-    [activeSectionHasMultipleTabs, activeSectionTabs, onTabChange]
-  );
+      },
+      [activeSectionHasMultipleTabs, activeSectionTabs, onTabChange]
+    );
 
-  return (
-    <nav
-      className="bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-2xl mobile-scroll relative"
-      role="navigation"
-      aria-label="Game section navigation"
-    >
-      <div
-        className={`px-3 py-1.5 text-center border-b border-gray-100/80 text-[10px] font-semibold ${modeAccent}`}
-        aria-live="polite"
+    return (
+      <nav
+        className="bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-2xl mobile-scroll relative"
+        role="navigation"
+        aria-label="Game section navigation"
       >
-        {modeLabel}
-      </div>
-      {activeSectionHasMultipleTabs && (
-        <div className="px-3 pt-2 pb-1 border-b border-gray-100/80 bg-gradient-to-r from-emerald-50/70 to-teal-50/60">
-          <button
-            type="button"
-            onClick={() => setShowSubTabs((value) => !value)}
-            className="w-full flex items-center justify-between gap-2 text-left rounded-lg px-2 py-1.5 hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60"
-            aria-expanded={showSubTabs}
-            aria-controls={`subtabs-${activeSection}`}
-            aria-label={`${activeSectionConfig.label} tabs: ${showSubTabs ? 'hide options' : 'show options'}`}
+        {isFirstRunMode && (
+          <div
+            className="border-b border-amber-200 bg-amber-100 px-3 py-1.5 text-center text-[10px] font-semibold text-amber-700"
+            aria-live="polite"
           >
-            <span className="text-[11px] text-emerald-900/90 font-semibold">
-              {activeSectionConfig.label} section: {activeTabInfo?.label || activeTab} (
-              {activeSectionConfig.tabs.length} tabs)
-            </span>
-            <ChevronDown
-              className={`icon-16 text-emerald-700 transition-transform ${showSubTabs ? 'rotate-180' : ''}`}
-              aria-hidden="true"
-            />
-          </button>
-        </div>
-      )}
+            Starter flow active
+          </div>
+        )}
+        {activeSectionHasMultipleTabs && (
+          <div className="px-3 pt-2 pb-1 border-b border-gray-100/80 bg-gradient-to-r from-emerald-50/70 to-teal-50/60">
+            <button
+              type="button"
+              onClick={() => setShowSubTabs((value) => !value)}
+              className="w-full flex items-center justify-between gap-2 text-left rounded-lg px-2 py-1.5 hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60"
+              aria-expanded={showSubTabs}
+              aria-controls={`subtabs-${activeSection}`}
+              aria-label={`${activeSectionConfig.label} tabs: ${showSubTabs ? 'hide options' : 'show options'}`}
+            >
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate text-[11px] font-semibold text-emerald-900/90">
+                  {activeSectionConfig.label} · {activeTabInfo?.label || activeTab}
+                </span>
+                <span className="text-[10px] font-medium text-emerald-700/80">
+                  {showSubTabs
+                    ? 'Hide options'
+                    : `${activeSectionConfig.tabs.length} tools available`}
+                </span>
+              </span>
+              <ChevronDown
+                className={`icon-16 text-emerald-700 transition-transform ${showSubTabs ? 'rotate-180' : ''}`}
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+        )}
 
-      {/* Sub-tabs panel (slides up when section selected) */}
-      {showSubTabs && activeSectionHasMultipleTabs && (
-        <div
-          id={`subtabs-${activeSection}`}
-          className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 px-2 py-2.5 animate-tab-slide-in"
-          role="tablist"
-          aria-label={`${activeSectionConfig.label} sub-tabs`}
-        >
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-smart scrollbar-gutter-stable">
-            {activeSectionConfig.tabs.map((tabId, index) => {
-              const tabInfo = TAB_INFO[tabId];
-              const isActive = activeTab === tabId;
-              const TabIcon = tabInfo?.icon;
-              return (
-                <button
-                  key={tabId}
-                  ref={(element) => {
-                    if (element) {
-                      subTabRefs.current[tabId] = element;
-                    } else {
-                      delete subTabRefs.current[tabId];
-                    }
-                  }}
-                  onClick={() => onTabChange(tabId)}
-                  data-onboard={tabId === 'events' ? 'events-tab' : undefined}
-                  role="tab"
-                  aria-selected={isActive}
-                  tabIndex={isActive ? 0 : -1}
-                  aria-current={isActive ? 'page' : undefined}
-                  aria-label={tabInfo?.label || tabId}
-                  onKeyDown={(event) => handleSubTabKeyDown(event, index)}
-                  className={`
+        {/* Sub-tabs panel (slides up when section selected) */}
+        {showSubTabs && activeSectionHasMultipleTabs && (
+          <div
+            id={`subtabs-${activeSection}`}
+            className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 px-2 py-2.5 animate-tab-slide-in"
+            role="tablist"
+            aria-label={`${activeSectionConfig.label} sub-tabs`}
+          >
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-smart scrollbar-gutter-stable">
+              {activeSectionConfig.tabs.map((tabId, index) => {
+                const tabInfo = TAB_INFO[tabId];
+                const isActive = activeTab === tabId;
+                const TabIcon = tabInfo?.icon;
+                return (
+                  <button
+                    key={tabId}
+                    ref={(element) => {
+                      if (element) {
+                        subTabRefs.current[tabId] = element;
+                      } else {
+                        delete subTabRefs.current[tabId];
+                      }
+                    }}
+                    onClick={() => onTabChange(tabId)}
+                    data-onboard={tabId === 'events' ? 'events-tab' : undefined}
+                    role="tab"
+                    aria-selected={isActive}
+                    tabIndex={isActive ? 0 : -1}
+                    aria-current={isActive ? 'page' : undefined}
+                    aria-label={tabInfo?.label || tabId}
+                    onKeyDown={(event) => handleSubTabKeyDown(event, index)}
+                    className={`
                     flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold
                     whitespace-nowrap transition-all duration-200 touch-manipulation
                     ${
@@ -340,42 +341,41 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange, i
                         : 'text-gray-600 hover:bg-white/70 hover:text-gray-800 active:scale-95'
                     }
                   `}
-                >
-                  <SoraIcon
-                    id={tabInfo?.assetId}
-                    className="icon-16"
-                    fallbackIcon={TabIcon}
-                    fallbackEmoji={tabInfo?.emoji}
-                  />
-                  <span>{tabInfo?.label || tabId}</span>
-                </button>
-              );
-            })}
+                  >
+                    <SoraIcon
+                      id={tabInfo?.assetId}
+                      className="icon-16"
+                      fallbackIcon={TabIcon}
+                      fallbackEmoji={tabInfo?.emoji}
+                    />
+                    <span>{tabInfo?.label || tabId}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Main section buttons */}
-      <div className="flex justify-around items-center px-2 py-2 safe-area-pb">
-        {sections.map((section) => {
-          const isActive = activeSection === section.id;
-          const notifCount = getNotificationCount(section.id);
-          const SectionIcon = section.icon;
-          const sectionHasMultipleTabs = section.tabs.length > 1;
-          const sectionSubTabsVisible = isActive && sectionHasMultipleTabs && showSubTabs;
-          const sectionSubTabsId = `subtabs-${section.id}`;
+        {/* Main section buttons */}
+        <div className="flex justify-around items-center px-2 py-2 safe-area-pb">
+          {sections.map((section) => {
+            const isActive = activeSection === section.id;
+            const notifCount = getNotificationCount(section.id);
+            const SectionIcon = section.icon;
+            const sectionHasMultipleTabs = section.tabs.length > 1;
+            const sectionSubTabsVisible = isActive && sectionHasMultipleTabs && showSubTabs;
+            const sectionSubTabsId = `subtabs-${section.id}`;
 
-          return (
-            <button
-              key={section.id}
-              onClick={() => handleSectionPress(section, isActive)}
-              aria-pressed={isActive}
-              aria-expanded={sectionHasMultipleTabs ? sectionSubTabsVisible : undefined}
-              aria-controls={sectionHasMultipleTabs ? sectionSubTabsId : undefined}
-              aria-label={`${section.label}. ${section.description}${sectionHasMultipleTabs ? `, ${section.tabs.length} tabs` : ''}`}
-              role="tab"
-              aria-selected={isActive}
-              className={`
+            return (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => handleSectionPress(section, isActive)}
+                aria-expanded={sectionHasMultipleTabs ? sectionSubTabsVisible : undefined}
+                aria-controls={sectionHasMultipleTabs ? sectionSubTabsId : undefined}
+                aria-current={isActive ? 'page' : undefined}
+                aria-label={`${section.label}. ${section.description}${sectionHasMultipleTabs ? `, ${section.tabs.length} tabs` : ''}`}
+                className={`
                 relative flex flex-col items-center justify-center
                 min-w-[64px] min-h-[60px] px-2 py-1.5 rounded-2xl
                 transition-all duration-200 touch-manipulation
@@ -385,48 +385,49 @@ const NavBar = memo(({ activeSection, activeTab, onSectionChange, onTabChange, i
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 active:scale-95'
                 }
               `}
-            >
-              <span
-                className={`flex items-center justify-center ${isActive ? 'drop-shadow-sm' : ''}`}
               >
-                <SoraIcon
-                  id={section.assetId}
-                  className="icon-24"
-                  fallbackIcon={SectionIcon}
-                  fallbackEmoji={section.emoji}
-                />
-              </span>
-              <span
-                className={`text-[11px] mt-0.5 font-semibold ${isActive ? 'text-emerald-700' : 'text-gray-500'}`}
-              >
-                {section.label}
-              </span>
-              {sectionHasMultipleTabs && (
                 <span
-                  className={`text-[9px] leading-none mt-0.5 ${isActive ? 'text-emerald-600' : 'text-gray-400'}`}
+                  className={`flex items-center justify-center ${isActive ? 'drop-shadow-sm' : ''}`}
                 >
-                  {sectionSubTabsVisible ? 'Hide' : `${section.tabs.length} tabs`}
+                  <SoraIcon
+                    id={section.assetId}
+                    className="icon-24"
+                    fallbackIcon={SectionIcon}
+                    fallbackEmoji={section.emoji}
+                  />
                 </span>
-              )}
-
-              {/* Notification badge */}
-              {notifCount && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[20px] h-[20px] flex items-center justify-center bg-gradient-to-br from-red-500 to-rose-600 text-white text-xs font-bold rounded-full px-1 shadow-lg animate-pulse">
-                  {notifCount > 9 ? '9+' : notifCount}
+                <span
+                  className={`text-[11px] mt-0.5 font-semibold ${isActive ? 'text-emerald-700' : 'text-gray-500'}`}
+                >
+                  {section.label}
                 </span>
-              )}
+                {sectionHasMultipleTabs && (
+                  <span
+                    className={`text-[9px] leading-none mt-0.5 ${isActive ? 'text-emerald-600' : 'text-gray-400'}`}
+                  >
+                    {sectionSubTabsVisible ? 'Hide' : `${section.tabs.length} tabs`}
+                  </span>
+                )}
 
-              {/* Active indicator */}
-              {isActive && (
-                <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-10 h-1 bg-gradient-to-r from-emerald-400 to-green-500 rounded-full shadow-sm" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </nav>
-  );
-});
+                {/* Notification badge */}
+                {notifCount && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[20px] h-[20px] flex items-center justify-center bg-gradient-to-br from-red-500 to-rose-600 text-white text-xs font-bold rounded-full px-1 shadow-lg animate-pulse">
+                    {notifCount > 9 ? '9+' : notifCount}
+                  </span>
+                )}
+
+                {/* Active indicator */}
+                {isActive && (
+                  <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-10 h-1 bg-gradient-to-r from-emerald-400 to-green-500 rounded-full shadow-sm" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    );
+  }
+);
 
 NavBar.displayName = 'NavBar';
 

@@ -1,3 +1,5 @@
+Original prompt: use codex skills that make sense and can improve our repo
+
 # FarmSim Native iOS v1 Progress
 
 ## Phase 0 — Read + Plan
@@ -19,3 +21,41 @@
 - [x] Save/load and migration surface checks
 - [x] Validation runs (web + iOS)
 - [x] README + CHANGELOG updates
+
+## 2026-05-08 Codex Skills Improvement Pass
+- [x] Audit active web shell and QA status.
+- [x] Pick one high-confidence player-facing improvement.
+- [x] Verify with tests/build and rendered playtest evidence.
+
+Notes:
+- Restored the web lint gate from failing errors to warning-only success.
+- Added coverage for navigation semantics and refreshed the smoke test to assert accessible roles instead of duplicate visible labels.
+- Rendered preview passed desktop and 390px mobile in the in-app Browser. The standalone web-game Playwright client was attempted but blocked by a missing local Playwright Chromium binary.
+
+## 2026-05-08 Better Everything Follow-Up
+- [x] Made the active Farming shell playfield-first on mobile.
+- [x] Kept multi-tab bottom sections compact until the player explicitly opens the active section drawer.
+- [x] Added regression coverage for the mobile priority contract and compact drawer behavior.
+- [x] Re-ran lint, full tests, production build, and desktop/mobile rendered QA.
+
+Notes:
+- The playfield and tools regions now expose explicit mobile priority data so tests can protect the gameplay-first shell order.
+- Fresh cache-busted browser checks passed with no new console warnings or errors; two earlier dynamic-import errors were stale entries from a cached old tab.
+
+## 2026-05-08 1-12 Web Shell Polish Tranche
+- [x] Collapsed duplicate starter-flow chrome to the bottom navigation signal.
+- [x] Unified farm quick actions into the Farming panel instead of duplicating them in the sidebar.
+- [x] Converted crop choices into real buttons with selected/recommended state and accessible labels.
+- [x] Reduced mobile header bulk by hiding the level chip on narrow viewports.
+- [x] Strengthened empty-farm next action copy around the recommended crop.
+- [x] Added contextual plot hints for selected crops/decor.
+- [x] Replaced static farming tips with state-derived field advice.
+- [x] Tightened active-section drawer copy.
+- [x] Moved settings diagnostics/release info behind an Advanced drawer.
+- [x] Cleaned the active gameplay lint warning slice; lint is now 134 warnings, 0 errors.
+- [x] Saved fresh desktop/mobile proof screenshots in `screenshots/`.
+- [x] Removed extra selector work from `GameSidebar` by dropping the duplicated visual quick-action block.
+
+Notes:
+- Verification passed: `npm run lint`, `npm run test`, `npm run build`, and in-app Browser QA at desktop plus 390px mobile.
+- New screenshot proof: `farmsim-desktop-farm-polish.png`, `farmsim-mobile-first-run-farm-polish.png`, and `farmsim-mobile-items-drawer-polish.png`.

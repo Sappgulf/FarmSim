@@ -20,8 +20,7 @@ const WhatsNewModal = memo(() => {
     const step = state.onboardingStep || 0;
     return Boolean(state.onboardingSkipped || step >= ONBOARDING_STEP_COUNT);
   });
-  const shouldShow =
-    hasNotes && lastSeenVersion !== APP_VERSION && walkthroughComplete;
+  const shouldShow = hasNotes && lastSeenVersion !== APP_VERSION && walkthroughComplete;
 
   useEffect(() => {
     if (shouldShow) {

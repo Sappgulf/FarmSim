@@ -1,4 +1,13 @@
-import React, { memo, useState, lazy, Suspense, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, {
+  memo,
+  useState,
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+} from 'react';
 import { useGameActions, useGameSelector } from '../context/GameContext';
 import { Tabs, TabsContent } from '../../ui/tabs';
 import { Card } from '../../ui/card';
@@ -95,7 +104,7 @@ export const TAB_IDS = TAB_CONFIGS.map((tab) => tab.id);
 const TAB_CONFIG_BY_ID = Object.fromEntries(TAB_CONFIGS.map((tab) => [tab.id, tab]));
 
 // Game Sidebar Component - Now accepts controlled props
-const GameSidebar = memo(({ activeTab: controlledTab, onTabChange, isFirstRunMode = false }) => {
+const GameSidebar = memo(({ activeTab: controlledTab, onTabChange }) => {
   const actions = useGameActions();
   const keyboardShortcutsEnabled = useGameSelector(
     (state) => state.settings?.keyboardShortcuts !== false
@@ -137,79 +146,6 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange, isFirstRunMod
     () => TAB_CONFIGS.filter((tab) => sectionTabIds.includes(tab.id)),
     [sectionTabIds]
   );
-  const activePlots = useGameSelector((state) => {
-    const plotRows = Array.isArray(state.plots) ? state.plots : [];
-    let count = 0;
-
-    for (let i = 0; i < plotRows.length; i += 1) {
-      const plot = plotRows[i];
-      if (plot && plot.state !== 'empty') {
-        count += 1;
-      }
-    }
-
-    return count;
-  });
-  const readyPlots = useGameSelector((state) => {
-    const plotRows = Array.isArray(state.plots) ? state.plots : [];
-    let count = 0;
-
-    for (let i = 0; i < plotRows.length; i += 1) {
-      if (plotRows[i]?.state === 'ready') {
-        count += 1;
-      }
-    }
-
-    return count;
-  });
-  const diseasedAnimals = useGameSelector((state) => {
-    const livestock = Array.isArray(state.livestock?.animals) ? state.livestock.animals : [];
-    let count = 0;
-
-    for (let i = 0; i < livestock.length; i += 1) {
-      const animal = livestock[i];
-      if (!animal || typeof animal !== 'object') continue;
-      if (animal.disease || animal.illness || animal.diseased || animal.healthStatus === 'sick') {
-        count += 1;
-      }
-    }
-
-    return count;
-  });
-  const quickActions = useMemo(
-    () => [
-      {
-        key: 'water',
-        label: 'Water all',
-        helper: `${activePlots} plot${activePlots === 1 ? '' : 's'}`,
-        disabled: activePlots === 0,
-        stateHint: activePlots === 0 ? 'Plant a crop first' : '',
-      },
-      {
-        key: 'harvest',
-        label: 'Harvest ready',
-        helper: `${readyPlots} ready`,
-        disabled: readyPlots === 0,
-        stateHint: readyPlots === 0 ? 'Harvest crops when ready' : '',
-      },
-      {
-        key: 'fertilize',
-        label: 'Fertilize',
-        helper: `${activePlots} plot${activePlots === 1 ? '' : 's'}`,
-        disabled: activePlots === 0,
-        stateHint: activePlots === 0 ? 'Plant a crop first' : '',
-      },
-      {
-        key: 'treat',
-        label: 'Treat disease',
-        helper: `${diseasedAnimals} affected`,
-        disabled: diseasedAnimals === 0,
-        stateHint: diseasedAnimals === 0 ? 'No diseased animals yet' : '',
-      },
-    ],
-    [activePlots, readyPlots, diseasedAnimals]
-  );
-
   const handleTabChange = useCallback(
     (tabId) => {
       if (onTabChange) {
@@ -313,8 +249,7 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange, isFirstRunMod
   const activeConfig = TAB_CONFIG_BY_ID[activeTab] || TAB_CONFIG_BY_ID.farming;
   const ActiveTabComponent = activeConfig.component;
   const activeTabLabel = TAB_INFO[activeTab]?.label || activeConfig.label || 'Farming';
-  const modeLabel = isFirstRunMode ? 'First-run' : 'Active play';
-  const modeAccent = isFirstRunMode ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200';
+  const modeLabel = 'Showing';
 
   return (
     <Card className="h-fit rounded-2xl shadow-lg border border-gray-100/50 overflow-hidden">
@@ -331,22 +266,25 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange, isFirstRunMod
             {modeLabel}: {activeSectionLabel} · {activeTabLabel}
           </p>
           <div
-            className={`mx-2 mb-2 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${modeAccent}`}
+            className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-smart scrollbar-gutter-stable"
+            role="tablist"
+            aria-label={`${activeSectionLabel} tabs`}
+            aria-orientation="horizontal"
           >
-            {isFirstRunMode ? 'Starter flow active' : 'Active play mode'}
-          </div>
-          <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-smart scrollbar-gutter-stable">
             {visibleTabConfigs.map((tab) => (
               <button
                 key={tab.id}
+                type="button"
+                id={`tab-${tab.id}`}
                 onClick={() => handleTabChange(tab.id)}
                 role="tab"
                 aria-selected={activeTab === tab.id}
+                aria-controls={`panel-${tab.id}`}
                 tabIndex={activeTab === tab.id ? 0 : -1}
                 data-onboard={tab.id === 'events' ? 'events-tab' : undefined}
                 aria-label={`Open ${TAB_INFO[tab.id]?.label || tab.label}`}
                 className={`
-                  text-xs px-2.5 py-2 rounded-lg transition-all duration-200 text-left touch-manipulation
+                  text-xs px-2.5 py-2 rounded-lg transition-all duration-200 text-left touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-1
                   ${
                     activeTab === tab.id
                       ? 'bg-white text-emerald-700 font-semibold shadow-md ring-1 ring-emerald-100 scale-[1.02]'
@@ -358,42 +296,6 @@ const GameSidebar = memo(({ activeTab: controlledTab, onTabChange, isFirstRunMod
                   {renderIcon(TAB_INFO[tab.id]?.icon, TAB_INFO[tab.id]?.emoji)}
                   <span>{TAB_INFO[tab.id]?.label || tab.label}</span>
                 </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Context-aware quick actions */}
-        <div className="border-b border-gray-100 bg-white/80 px-2 py-2">
-          <p className="px-1 text-[11px] uppercase tracking-wide text-gray-500 font-semibold">
-            Quick actions
-          </p>
-          <div className="mt-2 grid grid-cols-2 gap-1.5">
-            {quickActions.map((action) => (
-              <button
-                key={action.key}
-                type="button"
-                onClick={() => handleBulkAction(action.key)}
-                disabled={action.disabled}
-                aria-label={`${action.label}, ${action.helper}`}
-                className={`
-                  rounded-lg px-2 py-1.5 text-left text-[11px] transition-all touch-manipulation
-                  ${
-                    action.disabled
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 active:scale-95'
-                  }
-                `}
-              >
-                <span className="font-semibold">{action.label}</span>
-                <span className="block text-[10px] font-medium text-gray-500 mt-0.5">
-                  {action.helper}
-                </span>
-                {action.stateHint && (
-                  <span className="block text-[10px] text-amber-600 mt-0.5 font-semibold">
-                    {action.stateHint}
-                  </span>
-                )}
               </button>
             ))}
           </div>

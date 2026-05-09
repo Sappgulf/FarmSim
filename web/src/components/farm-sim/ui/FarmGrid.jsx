@@ -72,11 +72,13 @@ const FarmPlot = memo(
 
     const getPlotDisplay = () => {
       if (!plot || plot.state === 'empty') {
+        const pendingName = isDecorMode ? selectedDecoration?.name : selectedCrop?.name;
         return {
-          emoji: '🌱',
+          emoji: selectedDecoration?.emoji || selectedCrop?.emoji || '🌱',
           bgColor: 'bg-amber-50',
           borderColor: 'border-amber-300',
-          text: 'Empty',
+          text: pendingName ? 'Tap to place' : 'Empty',
+          subText: pendingName || undefined,
           hoverEffect: 'hover:bg-amber-100 hover:border-amber-400 hover:scale-105',
         };
       }
@@ -156,7 +158,7 @@ const FarmPlot = memo(
           bgColor: 'bg-red-50',
           borderColor: 'border-red-300',
           text: 'Withered',
-          subText: 'Click to clear',
+          subText: `${reason} - click to clear`,
           hoverEffect: 'hover:bg-red-200 hover:scale-105 cursor-pointer',
         };
       }
@@ -535,11 +537,10 @@ const FarmGrid = memo(() => {
   const plotRefs = useRef([]);
   const decorUndoStack = useRef([]);
   const selectedDecoration = selectedDecorationId ? DECORATION_DATA[selectedDecorationId] : null;
-  const plots = ghostActive
-    ? Array.isArray(ghostSnapshotPlots)
-      ? ghostSnapshotPlots
-      : []
-    : farmPlots;
+  const plots = useMemo(() => {
+    if (!ghostActive) return farmPlots;
+    return Array.isArray(ghostSnapshotPlots) ? ghostSnapshotPlots : [];
+  }, [farmPlots, ghostActive, ghostSnapshotPlots]);
   const selectedCrop = useMemo(() => CROP_DATA[selectedCropId] || CROP_LIST[0], [selectedCropId]);
 
   const getPlotCenter = useCallback((index) => {
@@ -1136,9 +1137,9 @@ const FarmGrid = memo(() => {
   return (
     <Card
       data-onboard="farm-grid"
-      className="p-4 sm:p-6 bg-gradient-to-br from-green-50/90 via-emerald-50/80 to-lime-50/70 relative overflow-hidden rounded-2xl shadow-lg border border-green-100/50 backdrop-blur-sm"
+      className="p-3 sm:p-6 bg-gradient-to-br from-green-50/90 via-emerald-50/80 to-lime-50/70 relative overflow-hidden rounded-2xl shadow-lg border border-green-100/50 backdrop-blur-sm"
     >
-      <div className="mb-4 text-center relative z-20">
+      <div className="mb-3 sm:mb-4 text-center relative z-20">
         <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-600 bg-clip-text text-transparent mb-1.5 flex items-center justify-center gap-2">
           <span className="text-2xl sm:text-3xl filter drop-shadow-sm">🌾</span>
           Your Farm
@@ -1164,7 +1165,9 @@ const FarmGrid = memo(() => {
             </span>
             <span className="text-emerald-700 font-medium">{farmAtmosphere.growthStateLabel}</span>
           </div>
-          <p className="text-[11px] sm:text-xs text-gray-500 mt-1">{farmAtmosphere.hint}</p>
+          <p className="hidden sm:block text-[11px] sm:text-xs text-gray-500 mt-1">
+            {farmAtmosphere.hint}
+          </p>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
           <Button
@@ -1314,20 +1317,18 @@ const FarmGrid = memo(() => {
       )}
 
       {/* Keyboard shortcuts hint - Mobile optimized */}
-      <div className="mt-4 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg">
-        <div className="text-xs sm:text-sm text-amber-800">
-          <span className="font-semibold">💡 Quick Tips:</span>
-          <ul className="mt-1 sm:mt-2 space-y-1 ml-4 list-disc">
-            <li className="hidden sm:list-item">
-              <kbd className="px-1 py-0.5 bg-white rounded">Shift</kbd> + Click for multi-select
-            </li>
-            <li className="sm:hidden">Long press plots for details</li>
-            <li>Hover/Tap empty plots to see planting preview</li>
-            <li>Click empty plots to plant selected crop</li>
-            <li>Click ready crops to harvest instantly</li>
-          </ul>
-        </div>
-      </div>
+      <details className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 sm:p-4 sm:text-sm">
+        <summary className="cursor-pointer select-none font-semibold">💡 Quick Tips</summary>
+        <ul className="mt-2 space-y-1 ml-4 list-disc">
+          <li className="hidden sm:list-item">
+            <kbd className="px-1 py-0.5 bg-white rounded">Shift</kbd> + Click for multi-select
+          </li>
+          <li className="sm:hidden">Long press plots for details</li>
+          <li>Hover/Tap empty plots to see planting preview</li>
+          <li>Click empty plots to plant selected crop</li>
+          <li>Click ready crops to harvest instantly</li>
+        </ul>
+      </details>
     </Card>
   );
 });

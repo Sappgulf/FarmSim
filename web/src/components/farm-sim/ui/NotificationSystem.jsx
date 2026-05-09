@@ -145,8 +145,7 @@ const NotificationSystem = memo(() => {
   const actions = useGameActions();
   const onboardingStep = useGameSelector((state) => state.onboardingStep || 0);
   const onboardingSkipped = useGameSelector((state) => Boolean(state.onboardingSkipped));
-  const tutorialSuppressesInfoToasts =
-    !onboardingSkipped && onboardingStep < ONBOARDING_STEP_COUNT;
+  const tutorialSuppressesInfoToasts = !onboardingSkipped && onboardingStep < ONBOARDING_STEP_COUNT;
 
   const notifications = useGameSelector((state) =>
     Array.isArray(state.notifications) ? state.notifications : []
@@ -154,9 +153,7 @@ const NotificationSystem = memo(() => {
   const filteredNotifications = useMemo(() => {
     if (!tutorialSuppressesInfoToasts) return notifications;
     return notifications.filter(
-      (n) =>
-        n &&
-        (n.important || n.sticky || n.type === 'error' || n.type === 'warning')
+      (n) => n && (n.important || n.sticky || n.type === 'error' || n.type === 'warning')
     );
   }, [notifications, tutorialSuppressesInfoToasts]);
   const visibleNotifications = useMemo(

@@ -46,6 +46,7 @@ const SettingsTab = memo(() => {
   const [installPromptReady, setInstallPromptReady] = useState(
     () => typeof window !== 'undefined' && Boolean(window.__pwaInstallPrompt)
   );
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -57,8 +58,7 @@ const SettingsTab = memo(() => {
 
   const isStandaloneMode = useMemo(() => {
     if (typeof window === 'undefined') return false;
-    const displayStandalone =
-      window.matchMedia?.('(display-mode: standalone)').matches === true;
+    const displayStandalone = window.matchMedia?.('(display-mode: standalone)').matches === true;
     const iosStandalone =
       typeof window.navigator !== 'undefined' && window.navigator.standalone === true;
     return displayStandalone || iosStandalone;
@@ -468,8 +468,6 @@ const SettingsTab = memo(() => {
         musicVolume={musicVolume}
       />
 
-      <GameStats />
-
       <Card className="overflow-hidden border-blue-200/70 bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -556,57 +554,88 @@ const SettingsTab = memo(() => {
         </p>
       </Card>
 
-      <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-green-50/40 p-4">
-        <div className="flex items-center justify-between gap-3">
+      <Card className="overflow-hidden border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-emerald-50/30 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600">
-              About
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+              Advanced
             </div>
-            <h4 className="text-base font-semibold text-slate-900">FarmSim</h4>
+            <h4 className="text-base font-semibold text-slate-900">Diagnostics and release info</h4>
+            <p className="mt-1 text-sm leading-relaxed text-slate-600">
+              Keep gameplay settings focused; open this only when checking stats, build mode, or
+              recent technical upgrades.
+            </p>
           </div>
-          <Badge variant="outline" className="bg-white/80 text-slate-600">
-            {getReleaseModeLabel()}
-          </Badge>
-        </div>
-        <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-          <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-sm">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Version</div>
-            <div className="font-medium text-slate-900">{APP_VERSION}</div>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-sm">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Stack</div>
-            <div className="font-medium text-slate-900">React + Vite + Tailwind CSS</div>
-          </div>
-        </div>
-        <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          A modular farm simulation with sound, background music, livestock, fishing, and a growing
-          set of systems that can be tuned without losing the cozy feel.
-        </p>
-
-        <div className="mt-4 border-t border-emerald-100 pt-4">
-          <p className="text-sm font-semibold text-emerald-800">Recent upgrades</p>
-          <ul className="mt-2 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
-              Weekly Operations milestone rewards
-            </li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
-              Streak-based challenge reward boosts
-            </li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
-              Daily Market Focus bonus crop loop
-            </li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
-              Reworked Daily Operations board with reroll
-            </li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
-              Sidebar mounts only active tab content
-            </li>
-            <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
-              Notification Center with saved history
-            </li>
-          </ul>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-expanded={showAdvancedSettings}
+            aria-controls="advanced-settings-panel"
+            onClick={() => setShowAdvancedSettings((value) => !value)}
+          >
+            {showAdvancedSettings ? 'Hide' : 'Show'}
+          </Button>
         </div>
       </Card>
+
+      {showAdvancedSettings && (
+        <div id="advanced-settings-panel" className="space-y-4">
+          <GameStats />
+
+          <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-green-50/40 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600">
+                  About
+                </div>
+                <h4 className="text-base font-semibold text-slate-900">FarmSim</h4>
+              </div>
+              <Badge variant="outline" className="bg-white/80 text-slate-600">
+                {getReleaseModeLabel()}
+              </Badge>
+            </div>
+            <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-sm">
+                <div className="text-xs uppercase tracking-wide text-slate-500">Version</div>
+                <div className="font-medium text-slate-900">{APP_VERSION}</div>
+              </div>
+              <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 shadow-sm">
+                <div className="text-xs uppercase tracking-wide text-slate-500">Stack</div>
+                <div className="font-medium text-slate-900">React + Vite + Tailwind CSS</div>
+              </div>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              A modular farm simulation with sound, background music, livestock, fishing, and a
+              growing set of systems that can be tuned without losing the cozy feel.
+            </p>
+
+            <div className="mt-4 border-t border-emerald-100 pt-4">
+              <p className="text-sm font-semibold text-emerald-800">Recent upgrades</p>
+              <ul className="mt-2 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
+                <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
+                  Weekly Operations milestone rewards
+                </li>
+                <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
+                  Streak-based challenge reward boosts
+                </li>
+                <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
+                  Daily Market Focus bonus crop loop
+                </li>
+                <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
+                  Reworked Daily Operations board with reroll
+                </li>
+                <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
+                  Sidebar mounts only active tab content
+                </li>
+                <li className="rounded-2xl border border-white/80 bg-white/70 px-3 py-2 shadow-sm">
+                  Notification Center with saved history
+                </li>
+              </ul>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 });

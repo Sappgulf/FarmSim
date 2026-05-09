@@ -32,18 +32,20 @@ describe('FarmSim Smoke Test', () => {
       </GameProvider>
     );
 
-    // Check for main game elements
-    // We expect the Header, Grid, and Sidebar to be present
-    // Using simple text matchers for things likely to be in the UI
-
-    // Header usually shows coins/level
     expect(screen.getByText(/Level 1/i)).toBeInTheDocument();
-
-    // Sidebar usually has tabs
-    expect(screen.getByText(/Farming/i)).toBeInTheDocument();
-    expect(screen.getByText(/Shop/i)).toBeInTheDocument();
-
-    // Check if plot grid rendered (might be harder to text-match, so we check existence)
-    // Assuming plots have some identifiable role or class, or we just trust the text checks for now.
+    expect(screen.getByRole('main', { name: 'Farm gameplay and controls' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Farm playfield' })).toHaveAttribute(
+      'data-mobile-priority',
+      'primary'
+    );
+    expect(screen.getByRole('complementary', { name: 'Farm tools' })).toHaveAttribute(
+      'data-mobile-priority',
+      'support'
+    );
+    expect(screen.getByRole('navigation', { name: 'Game section navigation' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Open Farming' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Items\. Items, shop, and processing/i })
+    ).toBeInTheDocument();
   });
 });

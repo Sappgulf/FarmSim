@@ -18,7 +18,9 @@ const FarmingTab = memo(() => {
   const dailyFocus = getDailyCropFocus(state);
   const plotsArray = useMemo(() => (Array.isArray(state.plots) ? state.plots : []), [state.plots]);
   const seasonName = state.season?.config?.name || 'Spring';
+  const seasonKey = String(state.season?.current || seasonName || 'spring').toLowerCase();
   const weatherLabel = state.weather || 'sunny';
+  const coins = Number(state.coins) || 0;
 
   // Get crops available at player's level
   const availableCrops = useMemo(() => getCropsByLevel(state.level), [state.level]);
@@ -38,6 +40,65 @@ const FarmingTab = memo(() => {
       })),
     [crops]
   );
+
+  const inventoryCount = useMemo(() => {
+    const inventory = state.inventory || {};
+    let total = 0;
+    for (const item of Object.values(inventory)) {
+      const count =
+        typeof item === 'number'
+          ? item
+          : typeof item === 'object' && item !== null
+            ? item.count || item.quantity || 0
+            : 0;
+      total += Number(count) || 0;
+    }
+    return total;
+  }, [state.inventory]);
+
+  const recommendedCrop = useMemo(() => {
+    const dailyCrop = dailyFocus?.cropId
+      ? cropList.find((crop) => crop.id === dailyFocus.cropId)
+      : null;
+    if (dailyCrop) return dailyCrop;
+
+    const selectedCrop = state.selectedCrop
+      ? cropList.find((crop) => crop.id === state.selectedCrop)
+      : null;
+    if (selectedCrop) return selectedCrop;
+
+    const seasonalCrops = cropList.filter(
+      (crop) => crop.season === seasonKey || crop.seasonTags?.includes(seasonKey)
+    );
+    const pool = seasonalCrops.length > 0 ? seasonalCrops : cropList;
+
+    return [...pool].sort((a, b) => {
+      const aScore = ((a.baseValue || 0) - (a.cost || 0)) / Math.max(1, a.growthTime || 1);
+      const bScore = ((b.baseValue || 0) - (b.cost || 0)) / Math.max(1, b.growthTime || 1);
+      return bScore - aScore;
+    })[0];
+  }, [cropList, dailyFocus?.cropId, seasonKey, state.selectedCrop]);
+
+  const recommendedCropReason = useMemo(() => {
+    if (!recommendedCrop) return 'No unlocked crop available yet.';
+    if (dailyFocus?.cropId === recommendedCrop.id) {
+      return `Daily market focus: +${Math.round((dailyFocus.bonusMultiplier - 1) * 100)}% sell bonus.`;
+    }
+    if (recommendedCrop.id === state.selectedCrop) {
+      return 'Already selected for planting.';
+    }
+    if (recommendedCrop.season === seasonKey || recommendedCrop.seasonTags?.includes(seasonKey)) {
+      return `Best ${seasonName} fit among unlocked crops.`;
+    }
+    return 'Best unlocked return for the current crop list.';
+  }, [
+    dailyFocus?.bonusMultiplier,
+    dailyFocus?.cropId,
+    recommendedCrop,
+    seasonKey,
+    seasonName,
+    state.selectedCrop,
+  ]);
 
   const farmStats = useMemo(() => {
     const totalPlots = plotsArray.length;
@@ -246,14 +307,11 @@ const FarmingTab = memo(() => {
       };
     }
     if (plotInsights.emptyPlots > 0) {
-      const focusName =
-        dailyFocus?.crop?.name ||
-        cropList.find((crop) => crop.id === state.selectedCrop)?.name ||
-        'your selected crop';
+      const focusName = recommendedCrop?.name || 'a crop';
       return {
         title: 'Planting Opportunity',
         emoji: '🌱',
-        detail: `${plotInsights.emptyPlots} empty plot${plotInsights.emptyPlots === 1 ? '' : 's'} available. Fill them for stronger farm efficiency.`,
+        detail: `${plotInsights.emptyPlots} empty plot${plotInsights.emptyPlots === 1 ? '' : 's'} available. ${focusName} is the best next seed.`,
         cta: `Pick ${focusName}`,
         action: 'SELECT_CROP',
         cardClass: 'from-emerald-50 to-green-50 border-emerald-200',
@@ -273,33 +331,130 @@ const FarmingTab = memo(() => {
       buttonClass: 'bg-violet-600 hover:bg-violet-700 text-white',
     };
   }, [
-    cropList,
-    dailyFocus?.crop?.name,
     plotInsights.activeGrowingPlots,
     plotInsights.diseasedPlots,
     plotInsights.emptyPlots,
     plotInsights.readyPlots,
     plotInsights.thirstyPlots,
-    state.selectedCrop,
+    recommendedCrop?.name,
   ]);
 
   const runAdvisorAction = useCallback(() => {
     if (advisorCard.action === 'SELECT_CROP') {
       const fallbackCrop = cropList[0];
-      const cropId = dailyFocus?.cropId || state.selectedCrop || fallbackCrop?.id;
+      const cropId = recommendedCrop?.id || fallbackCrop?.id;
       if (cropId) {
         handleSelectCrop(cropId);
       }
       return;
     }
     handleBulkAction(advisorCard.action);
+  }, [advisorCard.action, cropList, handleBulkAction, handleSelectCrop, recommendedCrop?.id]);
+
+  const farmingQuickActions = useMemo(
+    () => [
+      {
+        key: 'water',
+        label: 'Water',
+        count: plotInsights.thirstyPlots,
+        action: 'Water All',
+        disabled: plotInsights.thirstyPlots === 0,
+        hint:
+          plotInsights.thirstyPlots === 0
+            ? 'No dry active plots'
+            : `Water ${plotInsights.thirstyPlots} dry plot${plotInsights.thirstyPlots === 1 ? '' : 's'}`,
+      },
+      {
+        key: 'harvest',
+        label: 'Harvest',
+        count: plotInsights.readyPlots,
+        action: 'Harvest All',
+        disabled: plotInsights.readyPlots === 0,
+        hint:
+          plotInsights.readyPlots === 0
+            ? 'No crops ready'
+            : `Harvest ${plotInsights.readyPlots} ready crop${plotInsights.readyPlots === 1 ? '' : 's'}`,
+      },
+      {
+        key: 'fertilize',
+        label: 'Fertilize',
+        count: plotInsights.activeGrowingPlots,
+        action: 'Fertilize All',
+        disabled: plotInsights.activeGrowingPlots === 0,
+        hint:
+          plotInsights.activeGrowingPlots === 0
+            ? 'Plant crops first'
+            : `Boost ${plotInsights.activeGrowingPlots} growing plot${plotInsights.activeGrowingPlots === 1 ? '' : 's'}`,
+      },
+      {
+        key: 'treat',
+        label: 'Treat',
+        count: plotInsights.diseasedPlots,
+        action: 'Pesticide All',
+        disabled: plotInsights.diseasedPlots === 0,
+        hint:
+          plotInsights.diseasedPlots === 0
+            ? 'No diseased crops'
+            : `Treat ${plotInsights.diseasedPlots} diseased crop${plotInsights.diseasedPlots === 1 ? '' : 's'}`,
+      },
+    ],
+    [
+      plotInsights.activeGrowingPlots,
+      plotInsights.diseasedPlots,
+      plotInsights.readyPlots,
+      plotInsights.thirstyPlots,
+    ]
+  );
+
+  const liveAdvice = useMemo(() => {
+    const advice = [];
+
+    if (plotInsights.diseasedPlots > 0) {
+      advice.push(
+        `${plotInsights.diseasedPlots} diseased crop${plotInsights.diseasedPlots === 1 ? ' needs' : 's need'} treatment before yield drops.`
+      );
+    }
+
+    if (plotInsights.readyPlots > 0) {
+      advice.push(
+        `${plotInsights.readyPlots} crop${plotInsights.readyPlots === 1 ? ' is' : 's are'} ready. Harvest before the window closes.`
+      );
+    }
+
+    if (plotInsights.thirstyPlots > 0) {
+      advice.push(
+        `${plotInsights.thirstyPlots} crop${plotInsights.thirstyPlots === 1 ? ' needs' : 's need'} water.`
+      );
+    }
+
+    if (plotInsights.emptyPlots > 0 && recommendedCrop) {
+      advice.push(`Plant ${recommendedCrop.name} next. ${recommendedCropReason}`);
+    }
+
+    if (recommendedCrop && coins < recommendedCrop.cost) {
+      advice.push(`Save ${recommendedCrop.cost - coins} more coins for ${recommendedCrop.name}.`);
+    }
+
+    if (inventoryCount > 75) {
+      advice.push('Storage is getting heavy. Sell or process crops before planting a full board.');
+    }
+
+    if (advice.length === 0) {
+      advice.push(
+        'Farm flow is stable. Watch the board and rotate crops when the next plot opens.'
+      );
+    }
+
+    return advice.slice(0, 4);
   }, [
-    advisorCard.action,
-    cropList,
-    dailyFocus?.cropId,
-    handleBulkAction,
-    handleSelectCrop,
-    state.selectedCrop,
+    inventoryCount,
+    plotInsights.diseasedPlots,
+    plotInsights.emptyPlots,
+    plotInsights.readyPlots,
+    plotInsights.thirstyPlots,
+    recommendedCrop,
+    recommendedCropReason,
+    coins,
   ]);
 
   return (
@@ -353,6 +508,43 @@ const FarmingTab = memo(() => {
         </Card>
       )}
 
+      {/* Quick Actions */}
+      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-slate-900">Quick actions</h3>
+            <p className="text-xs text-slate-500">One action surface for board-wide farm work.</p>
+          </div>
+          <Badge variant="outline" className="bg-white/80 text-slate-600">
+            Farm
+          </Badge>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {farmingQuickActions.map((action) => (
+            <Button
+              key={action.key}
+              type="button"
+              onClick={() => handleBulkAction(action.action)}
+              variant="outline"
+              size="sm"
+              className="min-h-[44px] justify-start text-left text-xs"
+              disabled={action.disabled}
+              title={action.hint}
+              aria-label={`${action.label}, ${action.count}. ${action.hint}`}
+            >
+              <span className="font-semibold">{action.label}</span>
+              <span className="ml-auto tabular-nums text-slate-500">{action.count}</span>
+            </Button>
+          ))}
+        </div>
+        <div className="mt-3 text-[11px] text-slate-500">
+          Hotkeys: <kbd className="px-1 py-0.5 bg-gray-100 rounded">W</kbd> water,{' '}
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded">H</kbd> harvest,{' '}
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded">F</kbd> fertilize,{' '}
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded">T</kbd> treat
+        </div>
+      </Card>
+
       {/* Category Filter */}
       <Card className="overflow-hidden border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/30 to-green-50/40 p-4">
         <h3 className="mb-2 font-semibold text-slate-900">Crop categories</h3>
@@ -382,53 +574,6 @@ const FarmingTab = memo(() => {
           })}
         </div>
       </Card>
-      {/* Quick Actions */}
-      <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
-        <h3 className="mb-3 font-semibold text-slate-900">Quick actions</h3>
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            onClick={() => handleBulkAction('Water All')}
-            variant="outline"
-            size="sm"
-            className="text-xs min-h-[44px]"
-            disabled={plotInsights.thirstyPlots === 0}
-          >
-            💧 Water ({plotInsights.thirstyPlots})
-          </Button>
-          <Button
-            onClick={() => handleBulkAction('Harvest All')}
-            variant="outline"
-            size="sm"
-            className="text-xs min-h-[44px]"
-            disabled={plotInsights.readyPlots === 0}
-          >
-            🌾 Harvest ({plotInsights.readyPlots})
-          </Button>
-          <Button
-            onClick={() => handleBulkAction('Fertilize All')}
-            variant="outline"
-            size="sm"
-            className="text-xs min-h-[44px]"
-          >
-            🌱 Fertilize All
-          </Button>
-          <Button
-            onClick={() => handleBulkAction('Pesticide All')}
-            variant="outline"
-            size="sm"
-            className="text-xs min-h-[44px]"
-            disabled={plotInsights.diseasedPlots === 0}
-          >
-            🐛 Treat ({plotInsights.diseasedPlots})
-          </Button>
-        </div>
-        <div className="mt-3 text-[11px] text-slate-500">
-          Hotkeys: <kbd className="px-1 py-0.5 bg-gray-100 rounded">W</kbd> water,{' '}
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded">H</kbd> harvest,{' '}
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded">F</kbd> fertilize,{' '}
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded">T</kbd> treat
-        </div>
-      </Card>
 
       {/* Available Crops */}
       <Card className="overflow-hidden border-slate-200/70 bg-white/85 p-4">
@@ -453,10 +598,11 @@ const FarmingTab = memo(() => {
               const isSelected = state.selectedCrop === crop.id;
               const isDailyFocusCrop = dailyFocus?.cropId === crop.id;
               return (
-                <div
+                <button
                   key={crop.id}
+                  type="button"
                   className={`
-                    flex items-center justify-between rounded-2xl border p-3 cursor-pointer transition-all
+                    flex w-full items-center justify-between rounded-2xl border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-1
                     ${
                       isSelected
                         ? 'bg-green-50 border-green-500 shadow-md'
@@ -466,6 +612,8 @@ const FarmingTab = memo(() => {
                     }
                   `}
                   onClick={() => handleSelectCrop(crop.id)}
+                  aria-pressed={isSelected}
+                  aria-label={`Select ${crop.name}. Costs ${crop.cost} coins, grows in ${crop.time} seconds, sells for ${crop.value} coins${isDailyFocusCrop ? ', daily market focus' : ''}`}
                 >
                   <div className="flex items-center gap-2 flex-1">
                     <span className="text-2xl">{crop.emoji}</span>
@@ -473,12 +621,19 @@ const FarmingTab = memo(() => {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm">{crop.name}</span>
                         {crop.level > 1 && (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0">
+                          <span className="rounded-full border border-slate-300 bg-white/80 px-1.5 py-0 text-[10px] font-semibold text-slate-600">
                             Lvl {crop.level}
-                          </Badge>
+                          </span>
                         )}
                         {isDailyFocusCrop && (
-                          <Badge className="text-[10px] px-1 py-0 bg-amber-600">Focus</Badge>
+                          <span className="rounded-full border border-amber-600 bg-amber-600 px-1.5 py-0 text-[10px] font-semibold text-white">
+                            Focus
+                          </span>
+                        )}
+                        {recommendedCrop?.id === crop.id && !isDailyFocusCrop && (
+                          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0 text-[10px] font-semibold text-emerald-700">
+                            Recommended
+                          </span>
                         )}
                       </div>
                       <div className="text-xs text-slate-600">
@@ -489,8 +644,12 @@ const FarmingTab = memo(() => {
                       </div>
                     </div>
                   </div>
-                  {isSelected && <Badge className="bg-green-600">✓ Selected</Badge>}
-                </div>
+                  {isSelected && (
+                    <span className="rounded-full bg-green-600 px-2.5 py-0.5 text-xs font-semibold text-white">
+                      ✓ Selected
+                    </span>
+                  )}
+                </button>
               );
             })
           )}
@@ -527,14 +686,20 @@ const FarmingTab = memo(() => {
         </div>
       </Card>
 
-      {/* Farming Tips */}
+      {/* Live Field Advice */}
       <Card className="overflow-hidden border-sky-200/70 bg-gradient-to-br from-white via-sky-50/30 to-blue-50/40 p-4">
-        <h3 className="mb-2 font-semibold text-slate-900">Farming tips</h3>
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <h3 className="font-semibold text-slate-900">Field advice</h3>
+          {recommendedCrop && (
+            <Badge variant="outline" className="bg-white/80 text-slate-600">
+              {recommendedCrop.name}
+            </Badge>
+          )}
+        </div>
         <ul className="space-y-1 text-sm text-slate-700">
-          <li>• Plant crops during optimal seasons for bonus yields</li>
-          <li>• Water crops regularly to prevent withering</li>
-          <li>• Use fertilizers to speed up growth</li>
-          <li>• Monitor weather forecasts for better planning</li>
+          {liveAdvice.map((tip) => (
+            <li key={tip}>• {tip}</li>
+          ))}
         </ul>
       </Card>
     </div>

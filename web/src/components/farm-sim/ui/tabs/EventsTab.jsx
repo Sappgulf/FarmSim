@@ -14,6 +14,7 @@ import { FARM_TITLES, WEEKLY_SPECIAL_DAY } from '../../../../data/cozyExpansion'
 import { getContentManager } from '../../../../content/ContentManager';
 import { getWeekKey } from '../../../../utils/retention';
 import { ONBOARDING_STEP_COUNT } from '../../../../constants/onboardingWalkthrough';
+import { getDifficultyModifier, getProgressionBand } from '../../systems/progression';
 import PerfectHarvestModal from '../minigames/PerfectHarvestModal';
 import FarmCardShareButton from '../FarmCardShareButton';
 import { TabHero, MetricTile } from './TabSurface';
