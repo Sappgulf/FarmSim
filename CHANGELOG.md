@@ -1,5 +1,21 @@
 # Changelog
 
+## [5.5.5] - 2026-05-16
+### Gameplay & UX
+- Added a farm-rhythm panel that summarizes ready crops, dry or diseased plots, claimable rewards, animal care, season/weather implications, farm title, specialization, next unlock, and one next-best action.
+- Renamed the overflow navigation section to `Town`, moved board/reward flows to the front, and corrected the livestock badge so hungry, unhealthy, unhappy, or product-ready animals are counted honestly.
+- Reworked the weather challenge into a forecast drill backed by the live 3-day forecast instead of a random pattern table.
+
+### Architecture & Stability
+- Extracted navigation persistence, audio lifecycle, season transition effects, visual weather rotation, and time-of-day visual state out of `FarmSim.jsx`.
+- Capped active notification toasts while preserving the larger notification history.
+- Fixed analytics progress math so empty or malformed plot/building data cannot emit invalid percentages.
+
+### Documentation
+- Synced save-contract docs with the actual GameCore/web bridge version (`16`) and added `shared/schema/save-example.v16.json`.
+- Refreshed roadmap/parity notes so completed iOS Daily Quests, Events/Festival, and save-version parity are not listed as open work.
+- Updated README dependency badges and quick-start notes to match the current web toolchain and Node `22` runtime.
+
 ## [5.5.4] - 2026-05-03
 ### UI/UX
 - What's New waits until the **farm tour is finished or skipped** (`onboardingStep` reaches the final step), not merely when the tour first appears—fixing Skip and avoiding release notes over the walkthrough.

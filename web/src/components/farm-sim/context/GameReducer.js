@@ -1,5 +1,6 @@
 import { GAME_ACTIONS } from './GameActions';
 import { SAVE_VERSION, initializePlots } from './GamePersistence';
+import { getLevelBandRewards, getLevelFromXp } from '../systems/progression';
 
 const STARTER_INVENTORY = Object.freeze({
   lettuce: 4,
@@ -8,7 +9,7 @@ const STARTER_INVENTORY = Object.freeze({
   pesticide: 2,
   starter_flag: 1,
 });
-import { getLevelBandRewards, getLevelFromXp } from '../systems/progression';
+const MAX_ACTIVE_NOTIFICATIONS = 8;
 
 // Initial game state
 export const initialState = {
@@ -537,7 +538,7 @@ export function gameReducer(state, action) {
       ].slice(-120);
       return {
         ...state,
-        notifications: [...state.notifications, nextNotification],
+        notifications: [...state.notifications, nextNotification].slice(-MAX_ACTIVE_NOTIFICATIONS),
         notificationHistory: nextHistory,
       };
 

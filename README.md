@@ -1,12 +1,12 @@
 # 🌾 FarmLife - Advanced Farm Simulation Game
 
-**Version: 5.5.4** - *Major Content Update: Livestock, Fishing, Sound & Music*
+**Version: 5.5.5** - *Repo truth, farm rhythm, web shell, and iOS parity polish*
 
 A comprehensive React-based farm simulation game featuring a clean modular architecture, advanced genetic breeding systems, dynamic weather mechanics with real-time visual effects, sophisticated agricultural management tools, processing plants, research systems, pet management, daily quests, seasonal cycles, livestock management, fishing mini-games, procedural sound effects, dynamic background music, and premium visual polish with particle effects and animations.
 
-[![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-4.0.0-646CFF.svg)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.3.0-38B2AC.svg)](https://tailwindcss.com/)
+[![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-6.2.6-646CFF.svg)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1.8-38B2AC.svg)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-Private-red.svg)](LICENSE)
 
 ---
@@ -31,6 +31,8 @@ npm run preview
 ```
 
 Open [http://localhost:5173](http://localhost:5173) to start farming!
+
+Node `22` is the expected local and CI runtime (`.nvmrc`).
 
 ### Monorepo Layout
 
@@ -71,10 +73,10 @@ npm run ios:gen
 # Build GameCore tests
 npm run ios:test:core
 
-# Build app for latest available iPhone simulator
+# Build app against a generic iOS Simulator destination
 npm run ios:build
 
-# Build against explicit small + large iPhone simulators
+# Build the small/large lanes; both default to generic simulator builds
 npm run ios:build:small
 npm run ios:build:large
 ```
@@ -85,10 +87,12 @@ If `xcodegen` is missing:
 brew install xcodegen
 ```
 
-If you need an explicit simulator target:
+If you need an explicit simulator target, override the Make destination instead of editing scripts:
 
 ```bash
-xcodebuild -project ios/FarmSim.xcodeproj -scheme FarmSim -destination 'platform=iOS Simulator,name=<Installed Device Name>' build
+IOS_DESTINATION='platform=iOS Simulator,name=<Installed Device Name>' npm run ios:build
+SMALL_DESTINATION='platform=iOS Simulator,name=<Installed Small Device>' npm run ios:build:small
+LARGE_DESTINATION='platform=iOS Simulator,name=<Installed Large Device>' npm run ios:build:large
 ```
 
 ### Shared Content Contract
@@ -101,7 +105,7 @@ xcodebuild -project ios/FarmSim.xcodeproj -scheme FarmSim -destination 'platform
   - `shared/schema/content-contract.md`
   - `shared/schema/save-contract.md`
   - `shared/schema/save-example.v1.json`
-  - `shared/schema/save-example.v5.json`
+  - `shared/schema/save-example.v16.json`
   - `shared/vectors/sim_vectors.json`
 
 ### Add A Crop
@@ -117,7 +121,7 @@ xcodebuild -project ios/FarmSim.xcodeproj -scheme FarmSim -destination 'platform
 2. Keep field contracts aligned with `shared/schema/content-contract.md`.
 3. If save shape changes are required, update:
    - `shared/schema/save-contract.md`
-   - `shared/schema/save-example.v5.json`
+   - `shared/schema/save-example.v16.json`
    - GameCore migration/tests in `ios/GameCore/Sources/GameCore/Persistence.swift` and `ios/GameCore/Tests`.
 
 ### iOS Design System Notes
@@ -859,4 +863,4 @@ For questions or issues:
 
 **Made with 💚 by passionate game developers**
 
-*Version 5.5.4 - May 2026*
+*Version 5.5.5 - May 2026*

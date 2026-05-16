@@ -65,6 +65,7 @@ const FarmPlot = memo(
     gridSize = 3,
     plotRef = null,
     isTrinket = false,
+    showTooltips = true,
   }) => {
     const [showTooltip, setShowTooltip] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
@@ -269,7 +270,9 @@ const FarmPlot = memo(
         `}
           onClick={handleClick}
           onMouseEnter={() => {
-            setShowTooltip(true);
+            if (showTooltips) {
+              setShowTooltip(true);
+            }
             if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
               setShowPreview(true);
             }
@@ -279,7 +282,9 @@ const FarmPlot = memo(
             setShowPreview(false);
           }}
           onTouchStart={() => {
-            setShowTooltip(true);
+            if (showTooltips) {
+              setShowTooltip(true);
+            }
             if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
               setShowPreview(true);
             }
@@ -420,7 +425,7 @@ const FarmPlot = memo(
         </Card>
 
         {/* Enhanced Tooltip */}
-        {showTooltip && plot && (
+        {showTooltips && showTooltip && plot && (
           <div className="absolute z-50 -top-2 left-1/2 transform -translate-x-1/2 -translate-y-full">
             <div className="bg-gray-900 text-white text-xs rounded-lg shadow-2xl p-2 w-40 animate-fade-in">
               <div className="font-semibold mb-1">Plot #{index + 1}</div>
@@ -1295,6 +1300,7 @@ const FarmGrid = memo(() => {
             selectedCrop={selectedCrop}
             selectedDecoration={selectedDecoration}
             isDecorMode={decorMode}
+            showTooltips={showTooltips}
             seasonBonus={seasonBonus}
             growthDifficulty={growthDifficulty}
             greenhouseGrowthBonus={greenhouseGrowthBonus}
@@ -1323,7 +1329,7 @@ const FarmGrid = memo(() => {
           <li className="hidden sm:list-item">
             <kbd className="px-1 py-0.5 bg-white rounded">Shift</kbd> + Click for multi-select
           </li>
-          <li className="sm:hidden">Long press plots for details</li>
+          <li className="sm:hidden">Tap a plot to act with the selected crop or decor</li>
           <li>Hover/Tap empty plots to see planting preview</li>
           <li>Click empty plots to plant selected crop</li>
           <li>Click ready crops to harvest instantly</li>

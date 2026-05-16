@@ -1,6 +1,6 @@
 # FarmSim Web -> iOS Parity Checklist
 
-Generated from current web source inventory on 2026-02-13.
+Generated from current web/iOS source inventory on 2026-05-16.
 
 Legend:
 - `[x]` parity achieved in iOS
@@ -64,10 +64,10 @@ Legend:
 - [x] Events/Town Board (integrated into Town flow)
   - Web: `web/src/components/farm-sim/ui/tabs/EventsTab.jsx`
   - iOS: `ios/App/Sources/TownMarketView.swift` (Season Board section)
-- [x] Weather tab
+- [x] Weather surfacing
   - Web: `web/src/components/farm-sim/ui/tabs/WeatherTab.jsx`
-  - iOS: missing dedicated tab/flow
-  - iOS parity note: available as Forecast section inside `MarketSection` (`ios/App/Sources/TownMarketView.swift`)
+  - iOS: forecast strip on Farm HUD plus Forecast section inside `TownMarketView.swift`
+  - Parity note: not a dedicated tab; deeper disease/disaster/weather-management parity remains open.
 - [ ] Disease management
   - Web: `web/src/components/farm-sim/ui/tabs/DiseaseManagementTab.jsx`
   - iOS: missing dedicated tab/flow
@@ -111,7 +111,7 @@ Legend:
   - iOS: `ios/App/Sources/GameStore.swift`, `ios/App/Sources/TownMarketView.swift`
 - [ ] Weather gameplay effects parity
   - Web: `web/src/components/farm-sim/systems/WeatherSystem.js`, `web/src/components/farm-sim/ui/tabs/WeatherTab.jsx`
-  - iOS: no weather system surfaced in `GameCore`/UI
+  - iOS: forecast UI and growth modifiers are surfaced in `FarmView.swift`, `TownMarketView.swift`, and `GameStore.swift`; disease/disaster/weather-management parity remains incomplete.
 - [ ] Season progression parity
   - Web: `web/src/components/farm-sim/systems/SeasonSystem.js`
   - iOS: simplified seasonal labels only (`TownMarketView`, `MainMenuView`)
@@ -123,7 +123,7 @@ Legend:
   - iOS: `ios/App/Sources/GameStore.swift`, `ios/App/Sources/TownMarketView.swift`
 - [ ] Processing facilities parity
   - Web: `web/src/components/farm-sim/ui/tabs/ProcessingTab.jsx`
-  - iOS: missing
+  - iOS: market-facing processing snapshot exists, but full queue/facilities gameplay is not yet implemented.
 - [x] Research/genetics parity (core loops + UI integrated in Town)
   - Web: `web/src/components/farm-sim/ui/tabs/ResearchTab.jsx`, `web/src/components/farm-sim/ui/tabs/GeneticsTab.jsx`
   - iOS: `ios/App/Sources/TownMarketView.swift`, `ios/App/Sources/GameStore.swift`
@@ -200,14 +200,17 @@ Legend:
 - [x] Pack content loading in iOS (`shared/content/packs/**`)
   - Web: `web/src/content/ContentManager.js` (`import.meta.glob` packs)
   - iOS: `ios/App/Sources/ContentRepository.swift` (`packResourceDirectories`, pack JSON merges)
+- [ ] iOS fallback catalog reduction
+  - iOS: `ios/App/Sources/GameStore.swift` keeps hardcoded default catalogs when shared content is empty.
+  - Decision: keep as resilience fallback for now; migrate or shrink after shared content boot telemetry proves bundle loading is reliable.
 
 ## Save Schema + Migration Parity
-- [ ] Save schema version parity
+- [x] Save schema version parity
   - Web: `saveVersion=16` and migrations in `web/src/components/farm-sim/context/GamePersistence.js`
-  - iOS: `version=5` in `ios/GameCore/Sources/GameCore/Persistence.swift`
+  - iOS: `version=16` in `ios/GameCore/Sources/GameCore/Persistence.swift`
 - [ ] Migration breadth parity
   - Web: v0 -> v16 migration path in `GamePersistence.js`
-  - iOS: partial path (`v1/v2/v3/v4 -> v5`) in `SaveCodec.migrate`
+  - iOS: partial path (`v1...v15 -> v16`) in `SaveCodec.migrate`; the GameCore payload is documented, but web localStorage still has a separate runtime shape.
 - [x] Save contract docs exist
   - `shared/schema/save-contract.md`
   - `shared/schema/save-example.v1.json`
@@ -215,6 +218,7 @@ Legend:
   - `shared/schema/save-example.v3.json`
   - `shared/schema/save-example.v4.json`
   - `shared/schema/save-example.v5.json`
+  - `shared/schema/save-example.v16.json`
 - [x] Time model documented from web runtime
   - `shared/schema/time-model.md`
 

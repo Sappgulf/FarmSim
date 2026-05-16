@@ -63,7 +63,6 @@ struct FarmView: View {
 
             HStack {
                 FarmSideRail(
-                    readyCount: store.readyTileCount,
                     inventoryCount: store.totalInventoryCount,
                     onInventory: { appState.selectedTab = .inventory },
                     onAnimals: { appState.selectedTab = .animals },
@@ -100,7 +99,7 @@ struct FarmView: View {
                         .transition(.opacity)
                         .zIndex(5)
                 }
-                
+
                 if showQuickWheel {
                     QuickWheelView(
                         items: quickWheelItems,
@@ -178,13 +177,11 @@ struct FarmView: View {
                 store.setMenuPresented(showing)
             }
             .onChange(of: store.dayRolloverToken) { _, _ in
-                // Avoid duplicate overlay if already showing
                 guard !showDayRolloverOverlay else { return }
                 showDayRolloverOverlay = true
                 let delay = reducedMotion ? 0.35 : 1.2
                 Task {
                     try? await Task.sleep(for: .seconds(delay))
-                    // Check task cancellation before UI update
                     guard !Task.isCancelled else { return }
                     await MainActor.run {
                         withAnimation(.easeOut(duration: 0.2)) {
@@ -407,7 +404,10 @@ struct FarmView: View {
                     .foregroundStyle(.secondary)
             }
             .padding(DS.Space.lg)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous))
+            .background(
+                .ultraThinMaterial,
+                in: RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous)
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous)
                     .stroke(DS.Color.cardStroke, lineWidth: 0.5)
@@ -658,7 +658,6 @@ private struct FarmHomeHUD: View {
 }
 
 private struct FarmSideRail: View {
-    let readyCount: Int
     let inventoryCount: Int
     let onInventory: () -> Void
     let onAnimals: () -> Void
@@ -667,8 +666,8 @@ private struct FarmSideRail: View {
 
     var body: some View {
         VStack(spacing: DS.Space.sm) {
-            railButton(title: "Events", icon: "star.fill", badge: nil, action: onMore)
-            railButton(title: "Quests", icon: "list.clipboard.fill", badge: readyCount > 0 ? "\(readyCount)" : nil, action: onBuild)
+            railButton(title: "More", icon: "square.grid.2x2.fill", badge: nil, action: onMore)
+            railButton(title: "Build", icon: "hammer.fill", badge: nil, action: onBuild)
             railButton(title: "Barn", icon: "shippingbox.fill", badge: inventoryCount > 0 ? "\(inventoryCount)" : nil, action: onInventory)
             railButton(title: "Animals", icon: "pawprint.fill", badge: nil, action: onAnimals)
         }
@@ -718,7 +717,6 @@ private struct FarmCameraRail: View {
 
     var body: some View {
         VStack(spacing: DS.Space.sm) {
-            railButton(icon: "camera.fill", label: "Camera", action: {})
             railButton(icon: "arrow.up.left.and.arrow.down.right", label: "Reset view", action: onResetView)
         }
     }

@@ -320,6 +320,16 @@ final class GameCoreTests: XCTestCase {
         XCTAssertEqual(SaveCodec.currentVersion, 16)
     }
 
+    func testCurrentSharedSaveExampleDecodes() throws {
+        let exampleURL = try sharedSaveExampleURL()
+        let data = try Data(contentsOf: exampleURL)
+        let decoded = try SaveCodec.decode(data)
+
+        XCTAssertEqual(decoded.version, SaveCodec.currentVersion)
+        XCTAssertEqual(decoded.world.tiles.count, decoded.world.gridWidth * decoded.world.gridHeight)
+        XCTAssertEqual(decoded.meta.favoriteItems.values.allSatisfy { $0 }, true)
+    }
+
     func testContentLoaderAcceptsMatchingSchemaVersion() throws {
         let validJSON = """
         {
@@ -563,6 +573,17 @@ final class GameCoreTests: XCTestCase {
             .deletingLastPathComponent() // ios
             .deletingLastPathComponent() // repo root
         return root.appendingPathComponent("shared/vectors/sim_vectors.json")
+    }
+
+    private func sharedSaveExampleURL() throws -> URL {
+        let fileURL = URL(fileURLWithPath: #filePath)
+        let root = fileURL
+            .deletingLastPathComponent() // GameCoreTests
+            .deletingLastPathComponent() // Tests
+            .deletingLastPathComponent() // GameCore
+            .deletingLastPathComponent() // ios
+            .deletingLastPathComponent() // repo root
+        return root.appendingPathComponent("shared/schema/save-example.v16.json")
     }
 }
 
