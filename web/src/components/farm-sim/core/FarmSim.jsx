@@ -43,6 +43,9 @@ import { useFarmAudioLifecycle } from './useFarmAudioLifecycle';
 import { useSeasonTransitionEffect } from './useSeasonTransitionEffect';
 import { useTimeOfDayVisualState } from './useTimeOfDayVisualState';
 import { useVisualWeatherRotation } from './useVisualWeatherRotation';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('FarmSimCore');
 
 const PerformanceOverlay = lazy(() => import('../ui/PerformanceOverlay'));
 const DebugStressPanel = lazy(() => import('../ui/DebugStressPanel'));
@@ -95,7 +98,7 @@ export function FarmSimCore() {
   const farmingSystem = useMemo(() => {
     const system = new FarmingSystem(null, actions);
     if (isDevelopmentMode()) {
-      console.debug('[farm]', 'FarmingSystem initialized');
+      log.debug('FarmingSystem initialized');
     }
     return system;
   }, [actions]);
@@ -115,7 +118,7 @@ export function FarmSimCore() {
   const livestockSystem = useMemo(() => {
     const system = new LivestockSystem(null, actions);
     if (isDevelopmentMode()) {
-      console.debug('[farm]', 'LivestockSystem initialized');
+      log.debug('LivestockSystem initialized');
     }
     return system;
   }, [actions]);
@@ -123,7 +126,7 @@ export function FarmSimCore() {
   const fishingSystem = useMemo(() => {
     const system = new FishingSystem(null, actions);
     if (isDevelopmentMode()) {
-      console.debug('[farm]', 'FishingSystem initialized');
+      log.debug('FishingSystem initialized');
     }
     return system;
   }, [actions]);

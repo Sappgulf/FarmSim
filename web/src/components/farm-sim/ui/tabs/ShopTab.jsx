@@ -1,6 +1,5 @@
 import React, { memo, useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useGame } from '../../context/GameContext';
-import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { DECORATION_DATA } from '../../constants/decorData';

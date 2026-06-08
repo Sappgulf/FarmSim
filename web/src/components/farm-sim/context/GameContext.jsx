@@ -51,16 +51,13 @@ import {
   DECOR_SETS,
   FARM_TITLES,
   RARE_MOMENTS,
-  VISUAL_WEATHER_ROTATION,
   WEEKLY_SPECIAL_DAY,
 } from '../../../data/cozyExpansion';
 import {
   applyXpTuning,
-  getDifficultyModifier,
   getEconomyRewardModifier,
   getEconomySinkModifier,
   getLevelFromXp,
-  getXpProgress,
 } from '../systems/progression';
 import {
   applyCosmeticFallbacks,
@@ -80,6 +77,9 @@ import { SUPPLY_UNIT_COSTS, planSupplyUsage } from '../../../utils/supplies';
 import { updateQuestProgress } from '../systems/QuestSystem';
 import { useAutoSave } from './useAutoSave';
 import { useVisibilityPause } from './useVisibilityPause';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('GameContext');
 
 const rollChance = (chance = 0) => Math.random() < chance;
 
@@ -107,7 +107,7 @@ export function GameProvider({ children }) {
     const savedState = loadSavedState();
     if (savedState) {
       if (isDevelopmentMode()) {
-        console.debug('[farm]', 'Loaded saved game successfully');
+        log.debug('Loaded saved game successfully');
       }
       const { nextState, fallbackCount } = applyCosmeticFallbacks(savedState);
       if (fallbackCount > 0) {

@@ -213,12 +213,9 @@ export function estimateDisasterDamage(disasterId, farmState) {
 
   // Inventory loss
   if (disaster.effects.inventoryLoss) {
-    const inventoryValue = Object.entries(farmState.inventory || {}).reduce(
-      (sum, [cropId, amount]) => {
-        return sum + amount * avgCropValue;
-      },
-      0
-    );
+    const inventoryValue = Object.entries(farmState.inventory || {}).reduce((sum, [, amount]) => {
+      return sum + amount * avgCropValue;
+    }, 0);
     estimatedDamage += inventoryValue * disaster.effects.inventoryLoss;
   }
 

@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useEffect } from 'react';
 import { useGame } from '../../context/GameContext';
 import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
@@ -254,7 +254,6 @@ const ProcessingTab = memo(() => {
   };
 
   const resolveInput = (facility, facilityData) => {
-    const level = facility.level || 1;
     const ratio = facilityData.ratio;
 
     // Chain recipe: input from processed inventory

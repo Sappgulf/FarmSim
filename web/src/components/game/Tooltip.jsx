@@ -4,8 +4,8 @@
  */
 import React, { memo, useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Clock, Coins, Star, Leaf, Droplet, Zap, TrendingUp, Info } from 'lucide-react';
-import { CROPS, QUALITY_TIERS, RARITY_COLORS, CROP_FAMILIES, ALL_CROPS } from '../../data/crops';
+import { Clock, Coins, Star, Leaf, Zap, TrendingUp, Info } from 'lucide-react';
+import { QUALITY_TIERS, RARITY_COLORS, CROP_FAMILIES, ALL_CROPS } from '../../data/crops';
 import { BUILDINGS } from '../../data/buildings';
 import { formatDisplayLabel } from '../../utils/textFormat';
 

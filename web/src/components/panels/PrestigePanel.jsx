@@ -16,7 +16,6 @@ import {
   Check,
   Gift,
   Sparkles,
-  ChevronRight,
   AlertTriangle,
   Coins,
 } from 'lucide-react';
@@ -146,13 +145,7 @@ const PRESTIGE_UNLOCKS = {
   ],
 };
 
-function PrestigePanelComponent({
-  prestige = 0,
-  totalEarned = 0,
-  coins = 0,
-  onPrestige,
-  stats = {},
-}) {
+function PrestigePanelComponent({ prestige = 0, totalEarned = 0, onPrestige }) {
   // Current and next prestige data
   const currentPrestige = PRESTIGE_LEVELS[prestige] || PRESTIGE_LEVELS[0];
   const nextPrestige = PRESTIGE_LEVELS[prestige + 1];
@@ -337,7 +330,7 @@ function PrestigePanelComponent({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {PRESTIGE_LEVELS.map((level, i) => {
+            {PRESTIGE_LEVELS.map((level) => {
               const isUnlocked = prestige >= level.level;
               const isCurrent = prestige === level.level;
 

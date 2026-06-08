@@ -3,7 +3,7 @@
  * Breed and discover hybrid crops
  */
 import React, { memo, useState, useMemo } from 'react';
-import { Dna, FlaskConical, Sparkles, Lock, Check, ArrowRight } from 'lucide-react';
+import { Dna, FlaskConical, Sparkles, Lock, Check } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -18,7 +18,6 @@ function BreedingPanelComponent({
   breedingQueue = [],
   prestige = 0,
   onStartBreeding,
-  onCollectHybrid,
 }) {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
 

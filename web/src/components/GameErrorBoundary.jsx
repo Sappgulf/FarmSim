@@ -1,5 +1,6 @@
 import React from 'react';
 import { clearFarmCache } from './farm-sim/context/GamePersistence';
+import { APP_VERSION, getReleaseModeLabel } from '../config/release';
 
 class GameErrorBoundary extends React.Component {
   constructor(props) {
@@ -7,7 +8,7 @@ class GameErrorBoundary extends React.Component {
     this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     return { hasError: true };
   }
 
@@ -18,6 +19,7 @@ class GameErrorBoundary extends React.Component {
     });
 
     // Log error for debugging
+
     console.error('[farm]', 'Game Error', error, errorInfo);
   }
 
@@ -84,7 +86,8 @@ class GameErrorBoundary extends React.Component {
             )}
 
             <div className="mt-6 text-center text-sm text-gray-500">
-              FarmLife v4.2.1 - If this persists, try refreshing your browser
+              FarmLife v{APP_VERSION} ({getReleaseModeLabel()}) — If this persists, try refreshing
+              your browser
             </div>
           </div>
         </div>

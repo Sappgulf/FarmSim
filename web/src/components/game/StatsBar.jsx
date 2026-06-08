@@ -2,20 +2,8 @@
  * StatsBar Component
  * Top header showing coins, level, weather, season
  */
-import React, { memo, useMemo, useState, useEffect, useRef } from 'react';
-import {
-  Coins,
-  Target,
-  TrendingUp,
-  Zap,
-  Crown,
-  HelpCircle,
-  Clock,
-  Sun,
-  Moon,
-  Sunrise,
-  Sunset,
-} from 'lucide-react';
+import React, { memo, useState, useEffect, useRef } from 'react';
+import { Target, Zap, Crown, HelpCircle, Sun, Moon, Sunrise, Sunset } from 'lucide-react';
 import { formatTimeRemaining } from '../../utils/time.mjs';
 import { nowSec } from '../../utils/time.mjs';
 
@@ -28,7 +16,6 @@ function AnimatedCounter({ value, duration = 300 }) {
   useEffect(() => {
     if (value !== prevValueRef.current) {
       const diff = value - prevValueRef.current;
-      const isIncrease = diff > 0;
 
       setIsAnimating(true);
 
@@ -78,9 +65,7 @@ function StatsBarComponent({
   levelId,
   levelStatus,
   levelEndsAt,
-  currentSeason,
   seasonData,
-  currentWeather,
   weatherData,
   comboCount,
   comboMultiplier,

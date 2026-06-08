@@ -3,6 +3,9 @@
  * 4 seasons, each lasting 2 minutes (120 seconds)
  */
 import { isDevelopmentMode } from '../../../config/release';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('SeasonSystem');
 
 export const SEASONS = {
   SPRING: 'spring',
@@ -176,7 +179,7 @@ export class SeasonSystem {
     const nextConfig = SEASON_CONFIG[nextSeason];
 
     if (isDevelopmentMode()) {
-      console.debug('[farm]', `Season changed: ${currentSeason} → ${nextSeason}`);
+      log.debug(`Season changed: ${currentSeason} → ${nextSeason}`);
     }
 
     if (this.actions?.recordAlmanacEvent) {

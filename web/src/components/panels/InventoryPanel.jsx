@@ -19,13 +19,7 @@ import { ALL_CROPS } from '../../data/crops';
 import { TOOLS } from '../../data/constants';
 import { formatDisplayLabel } from '../../utils/textFormat';
 
-function InventoryPanelComponent({
-  inventory,
-  selectedSeed,
-  onSelectSeed,
-  onSellItem,
-  onOpenShop,
-}) {
+function InventoryPanelComponent({ inventory, selectedSeed, onSelectSeed, onOpenShop }) {
   // Categorize inventory items
   const categorized = useMemo(() => {
     const seeds = [];

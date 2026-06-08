@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { isDevelopmentMode } from '../../../config/release';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('AudioLifecycle');
 
 export function useFarmAudioLifecycle({
   soundSystem,
@@ -36,7 +39,7 @@ export function useFarmAudioLifecycle({
         document.removeEventListener('touchstart', handleUserInteraction);
       } catch (error) {
         if (isDevelopmentMode()) {
-          console.debug('[farm] Audio resume failed:', error);
+          log.debug('Audio resume failed:', error);
         }
       }
     };
@@ -65,7 +68,7 @@ export function useFarmAudioLifecycle({
       musicSystem.setSeason(seasonCurrent);
       prevSeasonRef.current = seasonCurrent;
       if (isDevelopmentMode()) {
-        console.debug('[farm]', `Music changed to ${seasonCurrent} theme`);
+        log.debug(`Music changed to ${seasonCurrent} theme`);
       }
     }
   }, [musicEnabled, musicSystem, seasonCurrent]);

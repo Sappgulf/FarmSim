@@ -446,6 +446,7 @@ const SettingsTab = memo(() => {
         showWelcomeBackSummary={showWelcomeBackSummary}
         fastMode={fastMode}
         particleEffects={particleEffects}
+        keyboardShortcutsEnabled={keyboardShortcutsEnabled}
         handleToggleAnimations={handleToggleAnimations}
         handleToggleAutoSave={handleToggleAutoSave}
         handleToggleShowFps={handleToggleShowFps}
@@ -455,6 +456,7 @@ const SettingsTab = memo(() => {
         handleToggleWelcomeBackSummary={handleToggleWelcomeBackSummary}
         handleToggleFastMode={handleToggleFastMode}
         handleToggleParticleEffects={handleToggleParticleEffects}
+        handleToggleKeyboardShortcuts={handleToggleKeyboardShortcuts}
       />
 
       <AudioSettings

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { AlertTriangle, CheckCircle, Info, XCircle } from 'lucide-react';
 
 /**

@@ -3,6 +3,9 @@
  * Uses Web Audio API to generate procedural music
  */
 import { isDevelopmentMode } from '../../../config/release';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('MusicSystem');
 
 export class MusicSystem {
   constructor() {
@@ -28,7 +31,7 @@ export class MusicSystem {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       this.audioContext = new AudioContext();
     } catch (error) {
-      console.warn('[farm]', 'Web Audio API not supported', error);
+      log.warn('Web Audio API not supported', error);
       this.enabled = false;
     }
   }
@@ -42,7 +45,7 @@ export class MusicSystem {
     } catch (error) {
       // Silent fail - user might not have interacted yet
       if (isDevelopmentMode()) {
-        console.debug('[farm] MusicSystem resume failed:', error);
+        log.debug('resume failed:', error);
       }
     }
   }
@@ -259,7 +262,7 @@ export class MusicSystem {
       this.nextNoteTime = this.audioContext.currentTime;
       this.scheduler();
       if (isDevelopmentMode()) {
-        console.debug('[farm]', `Music started: ${this.currentSeason} theme`);
+        log.debug(`Music started: ${this.currentSeason} theme`);
       }
     }
   }

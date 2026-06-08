@@ -9,6 +9,9 @@ import { isDevelopmentMode } from '../../../config/release';
 import { ONBOARDING_STEP_COUNT } from '../../../constants/onboardingWalkthrough';
 import { normalizeEntitlements } from '../entitlements/EntitlementManager';
 import { getLevelFromXp, remapXpToCurrentCurve } from '../systems/progression';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('GamePersistence');
 
 // Save schema version (separate from APP_VERSION in src/config/release.js).
 export const SAVE_VERSION = 16;
@@ -101,7 +104,7 @@ export function migrateSaveData(savedData) {
   try {
     // Basic validation
     if (!savedData || typeof savedData !== 'object') {
-      console.warn('[farm]', 'Invalid save data format');
+      log.warn('Invalid save data format');
       return null;
     }
 
@@ -112,7 +115,7 @@ export function migrateSaveData(savedData) {
     // Version 0 → 1: Add save version and any new fields
     if (saveVersion < 1) {
       if (isDevelopmentMode()) {
-        console.debug('[farm]', 'Migrating save from version 0 to 1');
+        log.debug('Migrating save from version 0 to 1');
       }
       migratedData.saveVersion = 1;
 

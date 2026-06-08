@@ -1,5 +1,15 @@
 # Changelog
 
+## [5.5.6] - 2026-06-07
+### Audit & Polish
+- Surfaced the existing keyboard shortcuts as an in-app cheat sheet on **Settings → Gameplay preferences**; toggled on/off with a single switch and listed as 1–9 (tab jump), W/H/F/T (board actions), Space (pause), ⌘/Ctrl+S (save), Alt+Shift+P (perf HUD).
+- Replaced raw `console.*` in the 8 farm-sim systems, persistence, content manager, and the perf/audio lifecycle with the existing `createLogger('…')` utility, so non-error logs drop out in production while dev still sees them.
+- `GameErrorBoundary` now renders `FarmLife v{APP_VERSION} ({getReleaseModeLabel()})` instead of a hardcoded string.
+- Pulled in the Playwright Chromium binary so `npm run test:e2e` runs end-to-end (was previously blocked by a missing browser).
+- Lint cleanup: removed 91 of 132 warnings — most unused lucide-react icons and console statements; the remaining 41 are intentional (hook dep trade-offs, label/click-event a11y nits already tracked).
+- Added `web/src/test/gameplaySettingsHotkeys.test.jsx` to lock the cheat sheet, the "Shortcuts on/paused" badge, and the toggle forwarder (3 tests).
+- Updated README hotkeys section from "Coming Soon" to the actual implemented list.
+
 ## [5.5.5] - 2026-05-16
 ### Gameplay & UX
 - Added a farm-rhythm panel that summarizes ready crops, dry or diseased plots, claimable rewards, animal care, season/weather implications, farm title, specialization, next unlock, and one next-best action.

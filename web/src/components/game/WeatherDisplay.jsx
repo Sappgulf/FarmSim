@@ -244,7 +244,6 @@ function WeatherParticles({ weather }) {
 function WeatherDisplayComponent({
   currentWeather,
   weatherData,
-  currentSeason,
   seasonData,
   forecast,
   onPredictionGame,

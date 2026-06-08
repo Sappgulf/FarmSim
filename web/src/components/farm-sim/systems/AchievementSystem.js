@@ -1,6 +1,9 @@
 /**
  * Achievement System - Handles achievement tracking and unlocking
  */
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('AchievementSystem');
 
 export class AchievementSystem {
   constructor(gameState, gameActions) {
@@ -12,7 +15,7 @@ export class AchievementSystem {
   update(currentState) {
     // FIXED: Update internal state reference
     if (!currentState) {
-      console.error('[farm] AchievementSystem: update() called with null/undefined state');
+      log.error('update() called with null/undefined state');
       return;
     }
 
@@ -29,7 +32,7 @@ export class AchievementSystem {
   checkAchievements() {
     // Safety check - ensure state exists before checking achievements
     if (!this.state) {
-      console.warn('[farm] AchievementSystem: No state available for achievement checks');
+      log.warn('No state available for achievement checks');
       return;
     }
 

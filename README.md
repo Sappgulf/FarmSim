@@ -632,15 +632,21 @@ Progress: ████████░░ 80%
 - Upgrade fishing pond to Master level for rare fish
 - Collect entire fish encyclopedia
 
-### 🎮 Hotkeys (Coming Soon)
+### 🎮 Hotkeys
 
-- **Space** - Harvest all ready crops
-- **W** - Water selected plots
-- **F** - Fertilize selected plots
-- **B** - Toggle bulk selection mode
-- **G** - Quick switch to Genetics tab
-- **S** - Manual save game
-- **1-4** - Quick crop selection
+The `useKeyboardShortcuts` hook (`web/src/hooks/useKeyboardShortcuts.js`) is wired into the
+active gameplay shell. Shortcuts auto-pause when you are typing in a text field and can be
+toggled in **Settings → Gameplay preferences → Keyboard Shortcuts**, with a cheat-sheet
+card on the same screen.
+
+- **1–9** - Jump to the first nine tabs (Farming, Inventory, Shop, …)
+- **W** - Water all plots
+- **H** - Harvest all ready crops
+- **F** - Fertilize all plots
+- **T** - Treat diseased plots
+- **Space** - Pause / resume the game loop
+- **⌘/Ctrl + S** - Manual save game
+- **Alt + Shift + P** - Toggle the dev performance HUD
 
 ---
 

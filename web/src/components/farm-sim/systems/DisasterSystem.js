@@ -7,8 +7,10 @@ import {
   DISASTER_PROTECTIONS,
   calculateDisasterRisk,
   calculateProtection,
-  estimateDisasterDamage,
 } from '../constants/disasterData';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('DisasterSystem');
 
 export class DisasterSystem {
   constructor(gameState, actions) {
@@ -26,7 +28,7 @@ export class DisasterSystem {
   update(currentState) {
     // FIXED: Update internal state reference
     if (!currentState) {
-      console.error('[farm] DisasterSystem: update() called with null/undefined state');
+      log.error('update() called with null/undefined state');
       return;
     }
 
@@ -59,7 +61,7 @@ export class DisasterSystem {
   checkForDisasters() {
     // Safety check
     if (!this.state) {
-      console.warn('[farm] DisasterSystem: No state available for disaster checks');
+      log.warn('No state available for disaster checks');
       return;
     }
 
@@ -169,7 +171,7 @@ export class DisasterSystem {
   applyDisasterEffects(disaster) {
     // Safety check
     if (!this.state) {
-      console.warn('[farm] DisasterSystem: No state available for disaster effects');
+      log.warn('No state available for disaster effects');
       return;
     }
 
