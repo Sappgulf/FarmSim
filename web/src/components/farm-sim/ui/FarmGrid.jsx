@@ -129,6 +129,7 @@ const FarmPlot = memo(
           bgColor: 'bg-green-50',
           borderColor: 'border-green-400',
           text: `Stage ${growthStage}/${totalStages}`,
+          stateTone: 'bg-green-100 text-green-700',
           subText: secondsLeft > 0 ? `${secondsLeft}s left` : 'Almost ready...',
           progress: Math.round(liveProgress * 100),
           liveProgress,
@@ -142,6 +143,7 @@ const FarmPlot = memo(
           bgColor: 'bg-yellow-100',
           borderColor: 'border-yellow-400',
           text: 'Ready! 🎉',
+          stateTone: 'bg-yellow-100 text-yellow-800',
           animation: 'animate-pulse',
           hoverEffect: 'hover:bg-yellow-200 hover:shadow-xl hover:scale-110',
         };
@@ -158,6 +160,7 @@ const FarmPlot = memo(
           emoji: '🥀',
           bgColor: 'bg-red-50',
           borderColor: 'border-red-300',
+          stateTone: 'bg-red-100 text-red-700',
           text: 'Withered',
           subText: `${reason} - click to clear`,
           hoverEffect: 'hover:bg-red-200 hover:scale-105 cursor-pointer',
@@ -301,7 +304,16 @@ const FarmPlot = memo(
           tabIndex={0}
           role="button"
           aria-label={ariaLabel}
+          data-plot-state={plot?.state || 'empty'}
         >
+          <div
+            className={`absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold shadow-sm ${
+              display.stateTone || 'bg-white/85 text-gray-700'
+            }`}
+          >
+            {display.text}
+          </div>
+
           {/* Soil fertility gradient overlay */}
           <div
             className={`absolute inset-0 bg-gradient-to-t ${getSoilGradient()} pointer-events-none`}

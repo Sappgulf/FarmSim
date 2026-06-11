@@ -11,6 +11,7 @@ export const SaveLoadSettings = memo(
     handleImportSave,
     handleClearCache,
     handleResetGame,
+    handleFreshRun,
   }) => {
     const actions = [
       { label: 'Save Game', icon: '💾', onClick: handleSaveGame, variant: 'outline' },
@@ -45,6 +46,7 @@ export const SaveLoadSettings = memo(
               key={action.label}
               type="button"
               onClick={action.onClick}
+              data-qa={`game-state-${action.label.toLowerCase().replace(/\s+/g, '-')}`}
               className="justify-start gap-2"
               variant={action.variant}
             >
@@ -53,10 +55,11 @@ export const SaveLoadSettings = memo(
             </Button>
           ))}
           <div className="sm:col-span-2 border-t border-slate-200/80 pt-3">
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-3">
               <Button
                 type="button"
                 onClick={handleClearCache}
+                data-qa="game-state-clear-cache"
                 className="justify-start gap-2"
                 variant="outline"
               >
@@ -66,7 +69,19 @@ export const SaveLoadSettings = memo(
 
               <Button
                 type="button"
+                onClick={handleFreshRun}
+                data-qa="game-state-fresh-run"
+                className="justify-start gap-2 border-2 border-violet-400/80 bg-violet-50 text-violet-900 hover:bg-violet-100"
+                variant="outline"
+              >
+                <span aria-hidden="true">🧪</span>
+                Fresh Run
+              </Button>
+
+              <Button
+                type="button"
                 onClick={handleResetGame}
+                data-qa="game-state-reset"
                 className="justify-start gap-2 bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-400 hover:to-red-600"
                 variant="destructive"
               >

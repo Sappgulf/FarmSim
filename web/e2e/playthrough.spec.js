@@ -8,7 +8,7 @@ const getRenderState = async (page) => {
   return raw ? JSON.parse(raw) : null;
 };
 
-test('FarmSim can plant and harvest from a fresh state', async ({ page }) => {
+const startFreshGame = async (page) => {
   await page.addInitScript(() => {
     const saveKeys = Object.keys(localStorage).filter(
       (key) => key.startsWith('farm_sim_') || key.startsWith('farmSim_') || key.startsWith('farmLife')
@@ -26,6 +26,25 @@ test('FarmSim can plant and harvest from a fresh state', async ({ page }) => {
   if (await skipTutorial.isVisible({ timeout: 200 }).catch(() => false)) {
     await skipTutorial.click();
   }
+};
+
+const forceAllPlotsReady = async (page) => {
+  await page.evaluate(() => {
+    return typeof window.__farmTestHooks?.forceAllGrowingPlotsReady === 'function'
+      ? window.__farmTestHooks.forceAllGrowingPlotsReady()
+      : false;
+  });
+};
+
+const waitForPlotState = async (page, index, states) => {
+  await expect(async () => {
+    const state = await getRenderState(page);
+    expect(states.includes(state?.plots?.[index]?.state)).toBeTruthy();
+  }).toPass({ timeout: 12000, intervals: [250, 500, 1000] });
+};
+
+test('FarmSim can plant and harvest from a fresh state', async ({ page }) => {
+  await startFreshGame(page);
 
   const startState = await getRenderState(page);
   const startCoins = startState?.coins ?? 0;
@@ -45,11 +64,7 @@ test('FarmSim can plant and harvest from a fresh state', async ({ page }) => {
     expect(['planted', 'growing', 'ready', 'withered', 'empty']).toContain(firstPlotState);
   }).toPass({ timeout: 15000, intervals: [250, 500, 1000] });
 
-  await page.evaluate(() => {
-    return typeof window.__farmTestHooks?.forceAllGrowingPlotsReady === 'function'
-      ? window.__farmTestHooks.forceAllGrowingPlotsReady()
-      : false;
-  });
+  await forceAllPlotsReady(page);
 
   await expect(async () => {
     const state = await getRenderState(page);
@@ -64,4 +79,98 @@ test('FarmSim can plant and harvest from a fresh state', async ({ page }) => {
   }).toPass({ timeout: 10000, intervals: [500, 1000] });
 
   await page.screenshot({ path: 'test-results/farmplaythrough-end.png' });
+});
+
+test('Player can switch crops and harvest multiple plots', async ({ page }) => {
+  await startFreshGame(page);
+
+  const cropButtons = page.locator('[data-crop-button]');
+  await expect.poll(async () => cropButtons.count()).toBeGreaterThan(1);
+
+  const firstCropButton = cropButtons.nth(0);
+  const secondCropButton = cropButtons.nth(1);
+  const firstCropId = (await firstCropButton.getAttribute('data-crop-button')) || '';
+  const secondCropId = (await secondCropButton.getAttribute('data-crop-button')) || '';
+  const firstCropName = (await firstCropButton.getAttribute('data-crop-name')) || '';
+  const secondCropName = (await secondCropButton.getAttribute('data-crop-name')) || '';
+  expect(firstCropId).not.toEqual(secondCropId);
+
+  const firstPlot = page.locator('[data-plot-button="true"]').nth(0);
+
+  await firstCropButton.click();
+  await firstPlot.click();
+  await waitForPlotState(page, 0, ['planted', 'growing', 'ready', 'withered']);
+
+  await expect
+    .poll(async () => {
+      const label = await firstPlot.getAttribute('aria-label');
+      return typeof label === 'string' ? label : '';
+    })
+    .toContain(firstCropName);
+
+  await forceAllPlotsReady(page);
+  await waitForPlotState(page, 0, ['ready']);
+  await firstPlot.click();
+  await waitForPlotState(page, 0, ['empty']);
+
+  await secondCropButton.click();
+  await firstPlot.click();
+
+  await expect
+    .poll(async () => {
+      const label = await firstPlot.getAttribute('aria-label');
+      return typeof label === 'string' ? label : '';
+    })
+    .toContain(secondCropName);
+
+  await forceAllPlotsReady(page);
+  await waitForPlotState(page, 0, ['ready']);
+
+  const startState = await getRenderState(page);
+  const startCoins = startState?.coins ?? 0;
+  await firstPlot.click();
+
+  await expect(async () => {
+    const finalState = await getRenderState(page);
+    expect((finalState?.coins ?? startCoins) > startCoins).toBeTruthy();
+  }).toPass({ timeout: 10000, intervals: [250, 500, 1000] });
+
+  await expect(page.locator('[data-plot-state="empty"]').first()).toBeVisible();
+});
+
+test('Fresh Run button resets farm state from settings', async ({ page }) => {
+  await startFreshGame(page);
+
+  await page.locator('[data-crop-button]').first().click();
+  const firstPlot = page.locator('[data-plot-button="true"]').first();
+  await firstPlot.click();
+  await waitForPlotState(page, 0, ['planted', 'growing', 'ready', 'withered']);
+
+  await forceAllPlotsReady(page);
+  await waitForPlotState(page, 0, ['ready']);
+  await firstPlot.click();
+
+  const stateBeforeFreshRun = await getRenderState(page);
+  const previousCoins = stateBeforeFreshRun?.coins ?? 0;
+
+  page.once('dialog', (dialog) => {
+    if (dialog.type() === 'confirm') {
+      dialog.accept();
+    }
+  });
+
+  await page.evaluate(() => {
+    if (typeof window.switchToTab === 'function') {
+      window.switchToTab('settings');
+    }
+  });
+
+  await expect(page.getByRole('button', { name: /fresh run/i })).toBeVisible({ timeout: 10000 });
+  await page.getByRole('button', { name: /Fresh Run/i }).click();
+
+  await expect(async () => {
+    const postFreshState = await getRenderState(page);
+    expect(postFreshState?.plots?.[0]?.state).toBe('empty');
+    expect(postFreshState?.coins).toBeLessThanOrEqual(previousCoins);
+  }).toPass({ timeout: 12000, intervals: [250, 500, 1000] });
 });

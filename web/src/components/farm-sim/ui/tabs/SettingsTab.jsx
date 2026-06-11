@@ -272,6 +272,25 @@ const SettingsTab = memo(() => {
     }
   }, [addNotification]);
 
+  const handleFreshRun = useCallback(() => {
+    if (
+      window.confirm(
+        'Start a fresh run now? This will clear all current progress and reset the farm to starter state.'
+      )
+    ) {
+      try {
+        const result = clearFarmCache({ preserveKeys: [] });
+        if (!result.success) {
+          addNotification('Failed to start fresh run', 'error');
+          return;
+        }
+        window.location.reload();
+      } catch (error) {
+        addNotification('Failed to start fresh run', 'error');
+      }
+    }
+  }, [addNotification]);
+
   const handleExportSave = useCallback(() => {
     try {
       const saveData = JSON.stringify(createSavePayload(store.getState()), null, 2);
@@ -432,6 +451,7 @@ const SettingsTab = memo(() => {
         handleImportSave={handleImportSave}
         handleClearCache={handleClearCache}
         handleResetGame={handleResetGame}
+        handleFreshRun={handleFreshRun}
       />
 
       <OfflineUpdatesInfo />
