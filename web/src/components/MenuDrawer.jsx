@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { LEVELS } from '../data/constants';
+import { APP_VERSION } from '../config/release';
 
 function MenuDrawerComponent({
   isOpen,
@@ -214,7 +215,7 @@ function MenuDrawerComponent({
             <MenuButton
               icon={Info}
               label="About"
-              sublabel="Version 5.0.0"
+              sublabel={`Version ${APP_VERSION}`}
               onClick={() => {
                 onShowHelp?.('about');
                 onClose();

@@ -279,21 +279,6 @@ export function gameReducer(state, action) {
         return state;
       }
 
-      if (didLevelUp && typeof window !== 'undefined') {
-        setTimeout(() => {
-          const runtimeWindow = typeof globalThis !== 'undefined' ? globalThis.window : undefined;
-          if (!runtimeWindow || typeof runtimeWindow.triggerParticleEffect !== 'function') {
-            return;
-          }
-          const centerX = runtimeWindow.innerWidth / 2;
-          const centerY = runtimeWindow.innerHeight / 3;
-          runtimeWindow.triggerParticleEffect(centerX, centerY, 'levelup', {
-            text: `🎉 Level ${newLevel}!`,
-            shake: true,
-          });
-        }, 100);
-      }
-
       const levelUps = didLevelUp
         ? Array.from({ length: newLevel - state.level }, (_, idx) => state.level + idx + 1)
         : [];

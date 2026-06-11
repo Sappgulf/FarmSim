@@ -5,7 +5,6 @@ enum FarmIntentRouter {
 
     static func setPendingTab(_ tab: String) {
         UserDefaults.standard.set(tab, forKey: Self.pendingTabKey)
-        UserDefaults.standard.synchronize()
     }
 
     static func consumePendingTab() -> String? {
