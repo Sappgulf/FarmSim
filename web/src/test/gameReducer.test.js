@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { gameReducer, initialState } from '../components/farm-sim/context/GameReducer';
 import { GAME_ACTIONS } from '../components/farm-sim/context/GameActions';
 
@@ -41,6 +41,25 @@ describe('gameReducer economy guards', () => {
 
     expect(next.xp).toBe(500);
     expect(next.level).toBeGreaterThan(1);
+  });
+
+  it('keeps SET_XP pure and free of UI side effects', () => {
+    const previousTimeout = vi.spyOn(globalThis, 'setTimeout');
+    const particleSpy = vi.fn();
+
+    window.triggerParticleEffect = particleSpy;
+
+    const next = gameReducer(initialState, {
+      type: GAME_ACTIONS.SET_XP,
+      payload: 500,
+    });
+
+    expect(next.level).toBeGreaterThan(1);
+    expect(previousTimeout).not.toHaveBeenCalled();
+    expect(particleSpy).not.toHaveBeenCalled();
+
+    previousTimeout.mockRestore();
+    delete window.triggerParticleEffect;
   });
 
   it('returns same state reference for no-op game loop merges', () => {

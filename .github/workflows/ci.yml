@@ -32,6 +32,9 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Release surface smoke check
+        run: npm run test:release-surface
+
       - name: Build
         run: npm run build
 
