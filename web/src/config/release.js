@@ -1,6 +1,8 @@
+import APP_RELEASE_INFO from './version.json';
+
 // Single source of truth for the app release version.
 // NOTE: Save schema versioning is handled separately in GamePersistence.SAVE_VERSION.
-export const APP_VERSION = '5.5.4';
+export const APP_VERSION = APP_RELEASE_INFO.version;
 
 const releaseModeFlag = import.meta.env?.VITE_RELEASE_MODE;
 export const APP_RELEASE_MODE = releaseModeFlag === 'true' || import.meta.env?.PROD === true;

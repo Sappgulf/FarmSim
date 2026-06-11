@@ -30,6 +30,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.austinbeatty.farmsim
         PRODUCT_NAME: FarmSim
+        MARKETING_VERSION: 5.5.5
+        CURRENT_PROJECT_VERSION: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_VERSION: 5.10
         INFOPLIST_FILE: App/Info.plist

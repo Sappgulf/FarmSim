@@ -65,6 +65,7 @@ const FarmPlot = memo(
     gridSize = 3,
     plotRef = null,
     isTrinket = false,
+    showTooltips = true,
   }) => {
     const [showTooltip, setShowTooltip] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
@@ -128,6 +129,7 @@ const FarmPlot = memo(
           bgColor: 'bg-green-50',
           borderColor: 'border-green-400',
           text: `Stage ${growthStage}/${totalStages}`,
+          stateTone: 'bg-green-100 text-green-700',
           subText: secondsLeft > 0 ? `${secondsLeft}s left` : 'Almost ready...',
           progress: Math.round(liveProgress * 100),
           liveProgress,
@@ -141,6 +143,7 @@ const FarmPlot = memo(
           bgColor: 'bg-yellow-100',
           borderColor: 'border-yellow-400',
           text: 'Ready! 🎉',
+          stateTone: 'bg-yellow-100 text-yellow-800',
           animation: 'animate-pulse',
           hoverEffect: 'hover:bg-yellow-200 hover:shadow-xl hover:scale-110',
         };
@@ -157,6 +160,7 @@ const FarmPlot = memo(
           emoji: '🥀',
           bgColor: 'bg-red-50',
           borderColor: 'border-red-300',
+          stateTone: 'bg-red-100 text-red-700',
           text: 'Withered',
           subText: `${reason} - click to clear`,
           hoverEffect: 'hover:bg-red-200 hover:scale-105 cursor-pointer',
@@ -269,7 +273,9 @@ const FarmPlot = memo(
         `}
           onClick={handleClick}
           onMouseEnter={() => {
-            setShowTooltip(true);
+            if (showTooltips) {
+              setShowTooltip(true);
+            }
             if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
               setShowPreview(true);
             }
@@ -279,7 +285,9 @@ const FarmPlot = memo(
             setShowPreview(false);
           }}
           onTouchStart={() => {
-            setShowTooltip(true);
+            if (showTooltips) {
+              setShowTooltip(true);
+            }
             if (plot?.state === 'empty' && (selectedCrop || selectedDecoration)) {
               setShowPreview(true);
             }
@@ -292,10 +300,20 @@ const FarmPlot = memo(
           }}
           onKeyDown={handleKeyDown}
           data-plot-button="true"
+          data-plot-index={index}
           tabIndex={0}
           role="button"
           aria-label={ariaLabel}
+          data-plot-state={plot?.state || 'empty'}
         >
+          <div
+            className={`absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold shadow-sm ${
+              display.stateTone || 'bg-white/85 text-gray-700'
+            }`}
+          >
+            {display.text}
+          </div>
+
           {/* Soil fertility gradient overlay */}
           <div
             className={`absolute inset-0 bg-gradient-to-t ${getSoilGradient()} pointer-events-none`}
@@ -420,7 +438,7 @@ const FarmPlot = memo(
         </Card>
 
         {/* Enhanced Tooltip */}
-        {showTooltip && plot && (
+        {showTooltips && showTooltip && plot && (
           <div className="absolute z-50 -top-2 left-1/2 transform -translate-x-1/2 -translate-y-full">
             <div className="bg-gray-900 text-white text-xs rounded-lg shadow-2xl p-2 w-40 animate-fade-in">
               <div className="font-semibold mb-1">Plot #{index + 1}</div>
@@ -1295,6 +1313,7 @@ const FarmGrid = memo(() => {
             selectedCrop={selectedCrop}
             selectedDecoration={selectedDecoration}
             isDecorMode={decorMode}
+            showTooltips={showTooltips}
             seasonBonus={seasonBonus}
             growthDifficulty={growthDifficulty}
             greenhouseGrowthBonus={greenhouseGrowthBonus}
@@ -1323,7 +1342,7 @@ const FarmGrid = memo(() => {
           <li className="hidden sm:list-item">
             <kbd className="px-1 py-0.5 bg-white rounded">Shift</kbd> + Click for multi-select
           </li>
-          <li className="sm:hidden">Long press plots for details</li>
+          <li className="sm:hidden">Tap a plot to act with the selected crop or decor</li>
           <li>Hover/Tap empty plots to see planting preview</li>
           <li>Click empty plots to plant selected crop</li>
           <li>Click ready crops to harvest instantly</li>

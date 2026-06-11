@@ -69,9 +69,11 @@ describe('FarmSim Stress Regressions', () => {
       }
     });
 
-    expect(result.current.state.notifications).toHaveLength(60);
+    expect(result.current.state.notifications).toHaveLength(8);
+    expect(result.current.state.notificationHistory).toHaveLength(60);
 
     const ids = result.current.state.notifications.map((notification) => notification.id);
+    expect(ids).toEqual(Array.from({ length: 8 }, (_, index) => `stress-note-${index + 52}`));
 
     act(() => {
       ids.forEach((id) => {

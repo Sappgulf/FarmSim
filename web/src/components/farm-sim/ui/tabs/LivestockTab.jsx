@@ -6,11 +6,14 @@ import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
 import { LIVESTOCK_TYPES } from '../../systems/LivestockSystem';
 import { isDevelopmentMode } from '../../../../config/release';
+import { createLogger } from '../../../../utils/logger';
 import { TabHero, MetricTile, TabEmptyState } from './TabSurface';
+
+const log = createLogger('LivestockTab');
 
 const LivestockTab = memo(() => {
   const { state, actions, systems } = useGame();
-  const [selectedAnimal, setSelectedAnimal] = useState(null);
+  const [, setSelectedAnimal] = useState(null);
 
   // Get systems from context
   const livestockSystem = systems?.livestockSystem;
@@ -60,7 +63,7 @@ const LivestockTab = memo(() => {
 
   const handleBuyAnimal = (typeId) => {
     if (!livestockSystem) {
-      console.error('[farm]', 'LivestockTab: livestockSystem not available');
+      log.error('livestockSystem not available');
       actions.addNotification({
         message: 'Livestock system not ready yet',
         type: 'error',
@@ -73,7 +76,7 @@ const LivestockTab = memo(() => {
       if (result.success) {
         soundSystem?.playBuildSound();
         if (isDevelopmentMode()) {
-          console.debug('[farm]', 'Animal bought successfully');
+          log.debug('Animal bought successfully');
         }
       } else {
         soundSystem?.playErrorSound();
@@ -81,10 +84,10 @@ const LivestockTab = memo(() => {
           message: result.message,
           type: 'error',
         });
-        console.warn('[farm]', 'Failed to buy animal:', result.message);
+        log.warn('Failed to buy animal:', result.message);
       }
     } catch (error) {
-      console.error('[farm]', 'LivestockTab: Error buying animal', error);
+      log.error('Error buying animal', error);
       actions.addNotification({
         message: 'Error buying animal',
         type: 'error',

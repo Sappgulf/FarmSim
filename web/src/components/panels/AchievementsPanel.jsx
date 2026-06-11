@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Progress } from '../ui/progress';
 import { ACHIEVEMENTS, ACHIEVEMENT_CATEGORIES } from '../../data/achievements';
 
-function AchievementsPanelComponent({ unlockedAchievements = [], stats = {}, onClaimReward }) {
+function AchievementsPanelComponent({ unlockedAchievements = [], stats = {} }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Calculate progress for each achievement
@@ -136,8 +136,6 @@ function AchievementsPanelComponent({ unlockedAchievements = [], stats = {}, onC
         {/* Achievement list */}
         <div className="space-y-2 max-h-[400px] overflow-y-auto">
           {filteredAchievements.map((achievement) => {
-            const category = ACHIEVEMENT_CATEGORIES[achievement.category];
-
             return (
               <div
                 key={achievement.id}

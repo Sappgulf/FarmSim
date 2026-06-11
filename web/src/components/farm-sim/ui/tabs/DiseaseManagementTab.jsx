@@ -134,13 +134,6 @@ const DiseaseManagementTab = memo(() => {
     });
   };
 
-  const getHealthColor = (percent) => {
-    if (percent >= 80) return 'text-green-600';
-    if (percent >= 50) return 'text-yellow-600';
-    if (percent >= 20) return 'text-orange-600';
-    return 'text-red-600';
-  };
-
   const hasBarn = state.buildings?.barn?.built;
 
   return (

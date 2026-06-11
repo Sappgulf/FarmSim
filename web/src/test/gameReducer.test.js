@@ -1,6 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it, vi } from 'vitest';
 import { gameReducer, initialState } from '../components/farm-sim/context/GameReducer';
 import { GAME_ACTIONS } from '../components/farm-sim/context/GameActions';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe('gameReducer economy guards', () => {
   it('bootstraps a starter kit without pre-harvest stockpile bloat', () => {
@@ -41,6 +47,44 @@ describe('gameReducer economy guards', () => {
 
     expect(next.xp).toBe(500);
     expect(next.level).toBeGreaterThan(1);
+  });
+
+  it('keeps SET_XP pure and free of UI side effects', () => {
+    const previousTimeout = vi.spyOn(globalThis, 'setTimeout');
+    const particleSpy = vi.fn();
+    const previousTrigger = window.triggerParticleEffect;
+
+    try {
+      window.triggerParticleEffect = particleSpy;
+
+      const next = gameReducer(initialState, {
+        type: GAME_ACTIONS.SET_XP,
+        payload: 500,
+      });
+
+      expect(next.level).toBeGreaterThan(1);
+      expect(previousTimeout).not.toHaveBeenCalled();
+      expect(particleSpy).not.toHaveBeenCalled();
+    } finally {
+      previousTimeout.mockRestore();
+      if (previousTrigger === undefined) {
+        delete window.triggerParticleEffect;
+      } else {
+        window.triggerParticleEffect = previousTrigger;
+      }
+    }
+  });
+
+  it('does not include reducer-side effect primitives in source', () => {
+    const source = fs.readFileSync(
+      path.join(__dirname, '../components/farm-sim/context/GameReducer.js'),
+      'utf8'
+    );
+
+    expect(source).not.toMatch(/\bsetTimeout\s*\(/);
+    expect(source).not.toMatch(/\bwindow\./);
+    expect(source).not.toMatch(/\blocalStorage\b/);
+    expect(source).not.toMatch(/\bsessionStorage\b/);
   });
 
   it('returns same state reference for no-op game loop merges', () => {

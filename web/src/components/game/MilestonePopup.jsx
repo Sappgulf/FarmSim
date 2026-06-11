@@ -4,7 +4,7 @@
  */
 import React, { memo, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Star, Coins, ChevronRight, Trophy, Sparkles, Gift } from 'lucide-react';
+import { X, Coins, Sparkles, Gift } from 'lucide-react';
 import { Button } from '../ui/button';
 
 // Milestone definitions

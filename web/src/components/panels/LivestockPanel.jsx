@@ -13,10 +13,10 @@ import {
   Clock,
   ShoppingCart,
   Sparkles,
-  Droplet,
   Apple,
   AlertTriangle,
   Check,
+  Droplet,
 } from 'lucide-react';
 import { LIVESTOCK } from '../../data/buildings';
 
@@ -43,8 +43,6 @@ function LivestockPanelComponent({
   onSellAnimal,
   addNotification,
 }) {
-  const [selectedType, setSelectedType] = useState(null);
-
   // Calculate animal happiness based on care
   const getAnimalState = useCallback((animal) => {
     const now = Date.now() / 1000;

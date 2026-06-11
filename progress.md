@@ -59,3 +59,13 @@ Notes:
 Notes:
 - Verification passed: `npm run lint`, `npm run test`, `npm run build`, and in-app Browser QA at desktop plus 390px mobile.
 - New screenshot proof: `farmsim-desktop-farm-polish.png`, `farmsim-mobile-first-run-farm-polish.png`, and `farmsim-mobile-items-drawer-polish.png`.
+
+## 2026-05-16 Repo Truth Pass
+- [x] Rechecked branch alignment (`main` matched `origin/main`) and current web/iOS gates.
+- [x] Fixed stale save-contract truth: GameCore and web are both on save version `16`, while the docs still presented the GameCore contract as `v5`.
+- [x] Added a current `shared/schema/save-example.v16.json`.
+- [x] Refreshed roadmap/parity notes so completed iOS Daily Quests, Events/Festival, and save-version parity are not ranked as open work.
+
+Notes:
+- Verification passed after the full quality pass: `npm run install:web`, `npm run lint` (132 warnings, 0 errors), `npm run test`, `npm run smoke-test`, `npm run build`, `npm run test:e2e`, `npm run ios:test:core`, `npm run ios:build`, `npm run ios:build:small`, and `npm run ios:build:large`.
+- Preview proof saved in `screenshots/farmsim-quality-upgrade-preview.png` and `screenshots/farmsim-quality-upgrade-mobile.png`.

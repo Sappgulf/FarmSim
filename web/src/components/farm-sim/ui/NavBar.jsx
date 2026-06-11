@@ -37,7 +37,7 @@ import SoraIcon from './SoraIcon';
  * - Inventory: Items, Shop, Processing
  * - Build: Buildings, Expand, Research, Genetics
  * - Animals: Livestock, Pets, Fishing
- * - More: Settings, Achievements, Quests, Analytics, Weather, Events, etc.
+ * - Town: Board, records, alerts, and settings
  */
 
 // Section definitions with their sub-tabs
@@ -80,25 +80,25 @@ export const NAV_SECTIONS = {
   },
   more: {
     id: 'more',
-    label: 'More',
+    label: 'Town',
     assetId: 'nav-section-more',
-    icon: Settings,
-    emoji: '⚙️',
+    icon: CalendarDays,
+    emoji: '📌',
     tabs: [
-      'settings',
-      'notifications',
-      'achievements',
-      'almanac',
-      'quests',
-      'analytics',
-      'weather',
       'events',
+      'quests',
       'challenges',
+      'almanac',
+      'weather',
+      'achievements',
+      'analytics',
       'social',
       'mystery',
       'diseases',
+      'notifications',
+      'settings',
     ],
-    description: 'Settings and extras',
+    description: 'Board, records, and settings',
   },
 };
 
@@ -119,11 +119,11 @@ export const TAB_INFO = {
   notifications: { label: 'Inbox', assetId: 'tab-notifications', icon: Bell, emoji: '🔔' },
   achievements: { label: 'Achievements', assetId: 'tab-achievements', icon: Trophy, emoji: '🏆' },
   almanac: { label: 'Almanac', assetId: 'tab-almanac', icon: BookOpen, emoji: '📖' },
-  quests: { label: 'Quests', assetId: 'tab-quests', icon: ClipboardList, emoji: '📋' },
+  quests: { label: 'Daily Board', assetId: 'tab-quests', icon: ClipboardList, emoji: '📋' },
   analytics: { label: 'Analytics', assetId: 'tab-analytics', icon: BarChart3, emoji: '📊' },
   weather: { label: 'Weather', assetId: 'tab-weather', icon: CloudSun, emoji: '🌤️' },
-  events: { label: 'Events', assetId: 'tab-events', icon: CalendarDays, emoji: '🎉' },
-  challenges: { label: 'Challenges', assetId: 'tab-challenges', icon: Target, emoji: '🎯' },
+  events: { label: 'Town Board', assetId: 'tab-events', icon: CalendarDays, emoji: '🎉' },
+  challenges: { label: 'Work Orders', assetId: 'tab-challenges', icon: Target, emoji: '🎯' },
   social: { label: 'Social', assetId: 'tab-social', icon: Users, emoji: '👥' },
   mystery: { label: 'Mystery', assetId: 'tab-mystery', icon: Sparkles, emoji: '🎰' },
   diseases: { label: 'Diseases', assetId: 'tab-diseases', icon: ShieldAlert, emoji: '🐛' },
@@ -136,7 +136,13 @@ const NavBar = memo(
       let count = 0;
       for (let i = 0; i < animals.length; i++) {
         const animal = animals[i];
-        if (animal?.hunger < 30 || animal?.happiness < 30 || animal?.productionReady) {
+        if (
+          animal?.hunger > 70 ||
+          animal?.happiness < 30 ||
+          animal?.health < 55 ||
+          animal?.hasProduct ||
+          animal?.productionReady
+        ) {
           count += 1;
         }
       }

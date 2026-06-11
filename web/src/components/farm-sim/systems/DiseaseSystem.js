@@ -8,6 +8,9 @@ import {
   calculateDiseaseRisk,
   getAdjacentPlots,
 } from '../constants/diseaseData';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('DiseaseSystem');
 
 export class DiseaseSystem {
   constructor(gameState, actions) {
@@ -25,7 +28,7 @@ export class DiseaseSystem {
   update(currentState) {
     // FIXED: Update internal state reference
     if (!currentState) {
-      console.error('[farm] DiseaseSystem: update() called with null/undefined state');
+      log.error('update() called with null/undefined state');
       return;
     }
 
@@ -60,7 +63,7 @@ export class DiseaseSystem {
   spreadDiseases() {
     // Safety check
     if (!this.state || !this.state.plots) {
-      console.warn('[farm] DiseaseSystem: No state or plots available');
+      log.warn('No state or plots available');
       return;
     }
 
@@ -122,7 +125,7 @@ export class DiseaseSystem {
   checkNewDiseases() {
     // Safety check
     if (!this.state || !this.state.plots) {
-      console.warn('[farm] DiseaseSystem: No state or plots available');
+      log.warn('No state or plots available');
       return;
     }
 

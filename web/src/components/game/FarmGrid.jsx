@@ -2,7 +2,7 @@
  * FarmGrid Component
  * The main farm plot grid display
  */
-import React, { memo, useMemo, useCallback } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Sparkles } from 'lucide-react';
 import { PlotTile } from './PlotTile';
 
@@ -10,7 +10,6 @@ function FarmGridComponent({
   gridSize,
   plots,
   getPlotStatus,
-  getCropData,
   onPlant,
   onHarvest,
   onWater,

@@ -1,6 +1,18 @@
 import React, { memo } from 'react';
 import { Card } from '../../../../ui/card';
+import { Badge } from '../../../../ui/badge';
 import { SettingToggleRow } from './SettingToggleRow';
+
+const HOTKEY_ROWS = [
+  { keys: ['1', '9'], description: 'Switch to tabs 1–9 (Farming, Inventory, Shop, …)' },
+  { keys: ['W'], description: 'Water all plots' },
+  { keys: ['H'], description: 'Harvest all ready crops' },
+  { keys: ['F'], description: 'Fertilize all plots' },
+  { keys: ['T'], description: 'Treat diseased plots' },
+  { keys: ['Space'], description: 'Pause / resume the game loop' },
+  { keys: ['⌘', 'S'], description: 'Save manually' },
+  { keys: ['Alt', 'Shift', 'P'], description: 'Toggle the dev performance HUD' },
+];
 
 export const GameplaySettings = memo(
   ({
@@ -13,6 +25,7 @@ export const GameplaySettings = memo(
     showWelcomeBackSummary,
     fastMode,
     particleEffects,
+    keyboardShortcutsEnabled,
     handleToggleAnimations,
     handleToggleAutoSave,
     handleToggleShowFps,
@@ -22,6 +35,7 @@ export const GameplaySettings = memo(
     handleToggleWelcomeBackSummary,
     handleToggleFastMode,
     handleToggleParticleEffects,
+    handleToggleKeyboardShortcuts,
   }) => {
     const experienceRows = [
       {
@@ -52,6 +66,13 @@ export const GameplaySettings = memo(
         description: 'Reduce heavier motion for comfort or testing.',
         enabled: reducedMotion,
         onToggle: handleToggleReducedMotion,
+      },
+      {
+        key: 'keyboard-shortcuts',
+        title: 'Keyboard Shortcuts',
+        description: 'Number keys jump between tabs; W/H/F/T run board-wide actions; Space pauses.',
+        enabled: keyboardShortcutsEnabled,
+        onToggle: handleToggleKeyboardShortcuts,
       },
     ];
 
@@ -141,6 +162,49 @@ export const GameplaySettings = memo(
               />
             ))}
           </div>
+        </Card>
+
+        <Card
+          className="overflow-hidden border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-orange-50/30 p-4"
+          aria-labelledby="hotkey-cheatsheet-heading"
+        >
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-700">
+                Hotkeys
+              </div>
+              <h4 id="hotkey-cheatsheet-heading" className="text-base font-semibold text-slate-900">
+                Cheat sheet
+              </h4>
+            </div>
+            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800">
+              {keyboardShortcutsEnabled ? 'Shortcuts on' : 'Shortcuts paused'}
+            </Badge>
+          </div>
+          <p className="mb-3 text-xs text-slate-600">
+            Shortcuts are disabled while you are typing in a field. Toggle them off in Core
+            preferences if you need to free the keys.
+          </p>
+          <ul className="grid gap-2 sm:grid-cols-2" aria-label="Keyboard shortcuts">
+            {HOTKEY_ROWS.map((row) => (
+              <li
+                key={row.description}
+                className="flex items-center gap-2 rounded-md border border-amber-100 bg-white/70 px-2 py-1.5"
+              >
+                <span className="flex flex-wrap gap-1">
+                  {row.keys.map((key) => (
+                    <kbd
+                      key={key}
+                      className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-amber-900 shadow-sm"
+                    >
+                      {key}
+                    </kbd>
+                  ))}
+                </span>
+                <span className="text-xs text-slate-700">{row.description}</span>
+              </li>
+            ))}
+          </ul>
         </Card>
       </>
     );

@@ -4,6 +4,9 @@
  */
 import { isDevelopmentMode } from '../../../config/release';
 import { normalizeWeatherType } from '../constants/weatherData';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('SoundSystem');
 
 export class SoundSystem {
   constructor() {
@@ -19,7 +22,7 @@ export class SoundSystem {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       this.audioContext = new AudioContext();
     } catch (error) {
-      console.warn('[farm]', 'Web Audio API not supported', error);
+      log.warn('Web Audio API not supported', error);
       this.enabled = false;
     }
   }
@@ -34,7 +37,7 @@ export class SoundSystem {
     } catch (error) {
       // Silent fail - user might not have interacted yet
       if (isDevelopmentMode()) {
-        console.debug('[farm] SoundSystem resume failed:', error);
+        log.debug('resume failed:', error);
       }
     }
   }
@@ -96,8 +99,6 @@ export class SoundSystem {
    */
   playPlantSound() {
     if (!this.enabled || !this.audioContext) return;
-
-    const now = this.audioContext.currentTime;
 
     // Two quick ascending tones
     this.createSound(300, 'sine', 0.08);
@@ -236,8 +237,6 @@ export class SoundSystem {
   playAchievementSound() {
     if (!this.enabled || !this.audioContext) return;
 
-    const now = this.audioContext.currentTime;
-
     // Ascending arpeggio
     const notes = [392, 494, 587, 784]; // G, B, D, G
     notes.forEach((freq, index) => {
@@ -285,8 +284,6 @@ export class SoundSystem {
    */
   playErrorSound() {
     if (!this.enabled || !this.audioContext) return;
-
-    const now = this.audioContext.currentTime;
 
     // Descending tones
     this.createSound(300, 'sawtooth', 0.1);

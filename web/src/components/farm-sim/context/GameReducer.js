@@ -1,5 +1,6 @@
 import { GAME_ACTIONS } from './GameActions';
 import { SAVE_VERSION, initializePlots } from './GamePersistence';
+import { getLevelBandRewards, getLevelFromXp } from '../systems/progression';
 
 const STARTER_INVENTORY = Object.freeze({
   lettuce: 4,
@@ -8,7 +9,7 @@ const STARTER_INVENTORY = Object.freeze({
   pesticide: 2,
   starter_flag: 1,
 });
-import { getLevelBandRewards, getLevelFromXp } from '../systems/progression';
+const MAX_ACTIVE_NOTIFICATIONS = 8;
 
 // Initial game state
 export const initialState = {
@@ -278,21 +279,6 @@ export function gameReducer(state, action) {
         return state;
       }
 
-      if (didLevelUp && typeof window !== 'undefined') {
-        setTimeout(() => {
-          const runtimeWindow = typeof globalThis !== 'undefined' ? globalThis.window : undefined;
-          if (!runtimeWindow || typeof runtimeWindow.triggerParticleEffect !== 'function') {
-            return;
-          }
-          const centerX = runtimeWindow.innerWidth / 2;
-          const centerY = runtimeWindow.innerHeight / 3;
-          runtimeWindow.triggerParticleEffect(centerX, centerY, 'levelup', {
-            text: `🎉 Level ${newLevel}!`,
-            shake: true,
-          });
-        }, 100);
-      }
-
       const levelUps = didLevelUp
         ? Array.from({ length: newLevel - state.level }, (_, idx) => state.level + idx + 1)
         : [];
@@ -537,7 +523,7 @@ export function gameReducer(state, action) {
       ].slice(-120);
       return {
         ...state,
-        notifications: [...state.notifications, nextNotification],
+        notifications: [...state.notifications, nextNotification].slice(-MAX_ACTIVE_NOTIFICATIONS),
         notificationHistory: nextHistory,
       };
 

@@ -11,6 +11,9 @@ import {
 } from '../../../utils/farmUpgrades';
 import { isDevelopmentMode } from '../../../config/release';
 import { getDifficultyModifier } from './progression';
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('FarmingSystem');
 
 /**
  * Farming System - Handles crop growth, planting, harvesting
@@ -43,7 +46,7 @@ export class FarmingSystem {
   update(currentState) {
     // Update our reference to current state
     if (!currentState) {
-      console.error('[farm] FarmingSystem: update() called with null/undefined state');
+      log.error('update() called with null/undefined state');
       return;
     }
 
@@ -51,7 +54,7 @@ export class FarmingSystem {
 
     // Safety check - don't update if no state or no plots
     if (!this.gameState.plots || !Array.isArray(this.gameState.plots)) {
-      console.error('[farm] FarmingSystem: No plots array in gameState');
+      log.error('No plots array in gameState');
       return;
     }
 
@@ -78,7 +81,7 @@ export class FarmingSystem {
   updateCropGrowth() {
     // Safety check
     if (!this.gameState || !this.gameState.plots || !Array.isArray(this.gameState.plots)) {
-      console.error('[farm] FarmingSystem: updateCropGrowth - Invalid gameState');
+      log.error('updateCropGrowth - Invalid gameState');
       return;
     }
 
@@ -104,7 +107,7 @@ export class FarmingSystem {
     }
 
     if (isDevelopmentMode()) {
-      console.debug('[farm]', `Updating ${growingCount} growing crops`);
+      log.debug(`Updating ${growingCount} growing crops`);
     }
 
     let hasChanges = false;
@@ -168,7 +171,7 @@ export class FarmingSystem {
       // Check if ready to harvest - use a more lenient threshold
       if (progress >= 0.9) {
         if (isDevelopmentMode()) {
-          console.debug('[farm]', `🌾 ${plot.crop.name} ready`, {
+          log.debug(`🌾 ${plot.crop.name} ready`, {
             progress,
             timeSince: timeSincePlanted.toFixed(1),
             effective: effectiveGrowthTime.toFixed(1),
@@ -192,8 +195,7 @@ export class FarmingSystem {
           if (Math.random() < 0.01) {
             // Log 1% of the time
             if (isDevelopmentMode()) {
-              console.debug(
-                '[farm]',
+              log.debug(
                 `🌱 ${plot.crop.name} growing: ${(progress * 100).toFixed(1)}%, stage ${currentStage}/${totalStages}, water=${plot.waterLevel}`
               );
             }
@@ -359,7 +361,6 @@ export class FarmingSystem {
     const shouldBoostFirstCrop =
       !this.gameState.memoryFlags?.first_seed && !this.gameState.onboardingSkipped;
     const updatedPlots = [...this.gameState.plots];
-    const fertilityFloor = getPostHarvestFertilityFloor(this.gameState.inventory);
 
     // Build rotation history: keep last 3 crops planted on this plot
     const prevHistory = Array.isArray(plot.rotationHistory) ? plot.rotationHistory : [];
@@ -381,7 +382,7 @@ export class FarmingSystem {
 
     if (isDevelopmentMode()) {
       const uniquePast = new Set(prevHistory.filter((id) => id !== cropData.id)).size;
-      console.debug('[farm]', `Planted ${cropData.name}`, {
+      log.debug(`Planted ${cropData.name}`, {
         plotIndex,
         growthTime: cropData.growthTime,
         rotationUnique: uniquePast,

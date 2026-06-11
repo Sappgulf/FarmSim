@@ -4,7 +4,7 @@ import { Card } from '../../../ui/card';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Progress } from '../../../ui/progress';
-import { Target, Gift, Flame, Calendar, Trophy } from 'lucide-react';
+import { Target, Flame, Calendar, Trophy } from 'lucide-react';
 import { generateDailyQuests, shouldResetDaily, getStreakBonus } from '../../systems/QuestSystem';
 import { logDebugAction } from '../../../../utils/debugTools';
 import { TabHero, MetricTile, TabSection, TabEmptyState } from './TabSurface';

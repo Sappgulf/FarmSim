@@ -2,6 +2,9 @@
  * Weather System - Handles weather changes and effects
  * Includes forecasting and weather impact calculations
  */
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('WeatherSystem');
 
 export class WeatherSystem {
   constructor(gameState, gameActions) {
@@ -31,7 +34,7 @@ export class WeatherSystem {
   update(currentState) {
     // FIXED: Update our reference to current state with validation
     if (!currentState) {
-      console.error('[farm] WeatherSystem: update() called with null/undefined state');
+      log.error('update() called with null/undefined state');
       return;
     }
 
@@ -122,7 +125,7 @@ export class WeatherSystem {
 
     // Safety check
     if (!this.gameState || !Array.isArray(this.gameState.plots)) {
-      console.warn('[farm] WeatherSystem: No valid plots array for immediate weather effects');
+      log.warn('No valid plots array for immediate weather effects');
       return;
     }
 
@@ -202,7 +205,7 @@ export class WeatherSystem {
   applyWeatherEffects(now = Date.now()) {
     // Safety check
     if (!this.gameState || !Array.isArray(this.gameState.plots)) {
-      console.warn('[farm] WeatherSystem: No valid plots array for weather effects');
+      log.warn('No valid plots array for weather effects');
       return;
     }
 

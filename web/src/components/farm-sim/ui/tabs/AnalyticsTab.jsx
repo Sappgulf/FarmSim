@@ -24,6 +24,8 @@ const COLOR_CLASSES = {
   purple: { border: 'border-purple-500', bg: 'bg-purple-100', text: 'text-purple-600' },
   red: { border: 'border-red-500', bg: 'bg-red-100', text: 'text-red-600' },
 };
+const clampPercent = (value) => Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
+const plotSharePercent = (count, total) => clampPercent(total > 0 ? (count / total) * 100 : 0);
 
 const StatCard = memo(({ icon: Icon, label, value, change, trend, color = 'blue' }) => {
   const cls = COLOR_CLASSES[color] || COLOR_CLASSES.blue;
@@ -63,12 +65,12 @@ const AnalyticsTab = memo(() => {
 
   // Calculate comprehensive stats
   const analytics = useMemo(() => {
-    const activePlots = (state.plots || []).filter((p) => p.state !== 'empty');
-    const readyPlots = (state.plots || []).filter((p) => p.state === 'ready');
-    const growingPlots = (state.plots || []).filter(
-      (p) => p.state === 'growing' || p.state === 'planted'
-    );
-    const witheredPlots = (state.plots || []).filter((p) => p.state === 'withered');
+    const plots = Array.isArray(state.plots) ? state.plots : [];
+    const buildings = state.buildings || {};
+    const activePlots = plots.filter((p) => p.state !== 'empty');
+    const readyPlots = plots.filter((p) => p.state === 'ready');
+    const growingPlots = plots.filter((p) => p.state === 'growing' || p.state === 'planted');
+    const witheredPlots = plots.filter((p) => p.state === 'withered');
 
     const cropInventoryEntries = Object.entries(state.inventory || {}).filter(
       ([itemId, quantity]) => CROP_DATA[itemId] && Number(quantity) > 0
@@ -115,8 +117,7 @@ const AnalyticsTab = memo(() => {
     const stockTypeCount = cropInventoryEntries.length + processedInventoryEntries.length;
 
     // Calculate efficiency metrics
-    const plotUtilization =
-      state.plots.length > 0 ? (activePlots.length / state.plots.length) * 100 : 0;
+    const plotUtilization = plots.length > 0 ? (activePlots.length / plots.length) * 100 : 0;
     const harvestReadiness =
       activePlots.length > 0 ? (readyPlots.length / activePlots.length) * 100 : 0;
     const healthRate =
@@ -126,22 +127,21 @@ const AnalyticsTab = memo(() => {
 
     // Crop diversity
     const uniqueCrops = new Set(activePlots.map((p) => p.crop?.id).filter(Boolean));
-    const diversityScore = (uniqueCrops.size / 17) * 100; // Out of 17 total crops
+    const cropCatalogCount = Math.max(1, Object.keys(CROP_DATA).length);
+    const diversityScore = clampPercent((uniqueCrops.size / cropCatalogCount) * 100);
 
     // Building efficiency
-    const buildingsOwned = Object.keys(state.buildings).filter(
-      (id) => state.buildings[id]?.built
-    ).length;
-    const buildingScore = (buildingsOwned / 6) * 100; // Out of 6 total buildings
+    const buildingsOwned = Object.keys(buildings).filter((id) => buildings[id]?.built).length;
+    const buildingScore = clampPercent((buildingsOwned / Math.max(6, buildingsOwned || 1)) * 100);
 
     return {
       plots: {
-        total: state.plots.length,
+        total: plots.length,
         active: activePlots.length,
         ready: readyPlots.length,
         growing: growingPlots.length,
         withered: witheredPlots.length,
-        utilization: plotUtilization,
+        utilization: clampPercent(plotUtilization),
       },
       performance: {
         totalHarvests,
@@ -150,8 +150,8 @@ const AnalyticsTab = memo(() => {
         totalStockValue,
         stockTypeCount,
         queuedBatches: (state.processingQueue || []).length,
-        harvestReadiness,
-        healthRate,
+        harvestReadiness: clampPercent(harvestReadiness),
+        healthRate: clampPercent(healthRate),
       },
       progression: {
         level: state.level,
@@ -409,17 +409,23 @@ const AnalyticsTab = memo(() => {
               <div className="h-4 bg-gray-200 rounded-full overflow-hidden flex">
                 <div
                   className="bg-yellow-500"
-                  style={{ width: `${(analytics.plots.ready / analytics.plots.total) * 100}%` }}
+                  style={{
+                    width: `${plotSharePercent(analytics.plots.ready, analytics.plots.total)}%`,
+                  }}
                   title="Ready"
                 />
                 <div
                   className="bg-green-500"
-                  style={{ width: `${(analytics.plots.growing / analytics.plots.total) * 100}%` }}
+                  style={{
+                    width: `${plotSharePercent(analytics.plots.growing, analytics.plots.total)}%`,
+                  }}
                   title="Growing"
                 />
                 <div
                   className="bg-red-500"
-                  style={{ width: `${(analytics.plots.withered / analytics.plots.total) * 100}%` }}
+                  style={{
+                    width: `${plotSharePercent(analytics.plots.withered, analytics.plots.total)}%`,
+                  }}
                   title="Withered"
                 />
               </div>

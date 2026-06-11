@@ -1,6 +1,9 @@
 /**
  * Economic System - Handles market dynamics, pricing, and economic calculations
  */
+import { createLogger } from '../../../utils/logger';
+
+const log = createLogger('EconomicSystem');
 
 export class EconomicSystem {
   constructor(gameState, gameActions) {
@@ -13,7 +16,7 @@ export class EconomicSystem {
   update(currentState) {
     // FIXED: Update internal state reference
     if (!currentState) {
-      console.error('[farm] EconomicSystem: update() called with null/undefined state');
+      log.error('update() called with null/undefined state');
       return;
     }
 
@@ -33,7 +36,7 @@ export class EconomicSystem {
   updateMarketPrices() {
     // Safety check
     if (!this.state || !this.state.inventory) {
-      console.warn('[farm] EconomicSystem: No state or inventory available');
+      log.warn('No state or inventory available');
       return;
     }
 
@@ -91,7 +94,7 @@ export class EconomicSystem {
 
     // Safety check
     if (!this.state) {
-      console.warn('[farm] EconomicSystem: No state available for sellCrops');
+      log.warn('No state available for sellCrops');
       return { success: false, message: 'State not available' };
     }
 

@@ -6,7 +6,7 @@ import React, { useState, useEffect, memo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
-import { Factory, Clock, Coins, ChevronRight, Package, Sparkles, Lock } from 'lucide-react';
+import { Factory, Clock, Coins, ChevronRight, Sparkles, Lock } from 'lucide-react';
 import { PROCESSING_RECIPES } from '../../data/buildings';
 import { CROPS } from '../../data/crops';
 

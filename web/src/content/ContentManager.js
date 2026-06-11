@@ -15,6 +15,9 @@ import { isDebugMode } from '../utils/debugTools';
 import { MILESTONE_DEFINITIONS } from '../data/milestones';
 import { SEED_CODE_VERSION, validateSeedPayload } from '../utils/seedCode';
 import { SNAPSHOT_VERSION, validateSnapshotPayload } from '../utils/farmSnapshot';
+import { createLogger } from '../utils/logger';
+
+const log = createLogger('ContentManager');
 
 const PACK_META_MODULES = import.meta.glob('@content/packs/**/pack.json', { eager: true });
 const PACK_CROP_MODULES = import.meta.glob('@content/packs/**/crops.json', { eager: true });
@@ -725,10 +728,10 @@ const buildContent = () => {
 
   if (isDebugMode()) {
     if (report.errors.length) {
-      console.warn('[farm]', 'Content validation errors:', report.errors);
+      log.warn('Content validation errors:', report.errors);
     }
     if (report.warnings.length) {
-      console.warn('[farm]', 'Content validation warnings:', report.warnings);
+      log.warn('Content validation warnings:', report.warnings);
     }
   }
 
@@ -752,7 +755,7 @@ export const revalidateContent = () => {
 export const printContentReport = () => {
   const content = getContentManager();
   const { report } = content;
-  console.info('[farm]', 'Content Report', {
+  log.info('Content Report', {
     packCount: report.packs.length,
     packs: report.packs,
     errors: report.errors,

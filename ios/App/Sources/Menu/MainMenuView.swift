@@ -1,5 +1,6 @@
 import SwiftUI
 import GameCore
+import Foundation
 
 // MARK: - MainMenuView
 
@@ -202,7 +203,8 @@ struct MainMenuView: View {
     }
 
     private var versionLabel: some View {
-        Text("v1.0.0 · Swift 5.10")
+        let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+        Text("v\(appVersion) · Swift 5.10")
             .font(Typography.small)
             .foregroundStyle(.white.opacity(0.38))
             .padding(.bottom, 14)

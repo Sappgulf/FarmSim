@@ -9,24 +9,15 @@ import {
   Search,
   Book,
   Leaf,
-  Droplet,
-  Sun,
   Cloud,
   Building2,
   Coins,
-  Trophy,
-  Dna,
-  Zap,
   HelpCircle,
   ChevronRight,
-  ExternalLink,
   Sparkles,
   Info,
 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { CROPS, CROP_FAMILIES, QUALITY_TIERS, RARITY_COLORS } from '../../data/crops';
-import { BUILDINGS, LIVESTOCK } from '../../data/buildings';
-import { SEASON_DATA, WEATHER_TYPES } from '../../data/constants';
 
 // Guide categories
 const CATEGORIES = [
