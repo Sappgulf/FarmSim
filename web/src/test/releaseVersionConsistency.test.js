@@ -14,10 +14,14 @@ describe('Release surface consistency', () => {
     const versionPath = path.join(__dirname, '../config/version.json');
     const swPath = path.join(__dirname, '../../public/sw.js');
     const menuDrawerPath = path.join(__dirname, '../../components/MenuDrawer.jsx');
+    const iosProjectPath = path.join(__dirname, '../../ios/project.yml');
+    const iosInfoPlistPath = path.join(__dirname, '../../ios/App/Info.plist');
     const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
     const versionJson = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
     const swSource = fs.readFileSync(swPath, 'utf8');
     const menuDrawerSource = fs.readFileSync(menuDrawerPath, 'utf8');
+    const iosProjectSource = fs.readFileSync(iosProjectPath, 'utf8');
+    const iosInfoPlistSource = fs.readFileSync(iosInfoPlistPath, 'utf8');
 
     const cacheMatch = swSource.match(/const CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
 
@@ -28,5 +32,11 @@ describe('Release surface consistency', () => {
     expect(cacheMatch[1]).toBe(`farmsim-v${APP_VERSION}`);
     expect(menuDrawerSource).toContain('Version ${APP_VERSION}');
     expect(menuDrawerSource).not.toMatch(/Version\s+5\.5\.4|Version\s+5\.0\.0/);
+
+    const iosMatch = iosProjectSource.match(/MARKETING_VERSION:\s*(?:"([^"]+)"|'([^']+)'|([^\n#]+))/);
+    expect(iosMatch, 'ios project should declare MARKETING_VERSION').not.toBeNull();
+    const iosVersion = iosMatch ? (iosMatch[1] || iosMatch[2] || iosMatch[3]).trim() : '';
+    expect(iosVersion).toBe(APP_VERSION);
+    expect(iosInfoPlistSource).toContain('$(MARKETING_VERSION)');
   });
 });
