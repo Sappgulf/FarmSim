@@ -601,6 +601,9 @@ const FarmingTab = memo(() => {
                 <button
                   key={crop.id}
                   type="button"
+                  data-crop-button={crop.id}
+                  data-crop-name={crop.name}
+                  data-qa="crop-button"
                   className={`
                     flex w-full items-center justify-between rounded-2xl border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-1
                     ${

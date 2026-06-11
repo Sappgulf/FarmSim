@@ -163,6 +163,38 @@ export function GameProvider({ children }) {
     stateRef.current = state;
   }, [state]);
 
+  const buildRenderPayload = useCallback(() => {
+    const currentState = stateRef.current || state;
+    const plots = Array.isArray(currentState.plots) ? currentState.plots : [];
+
+    return {
+      mode: currentState.gameLoop?.paused ? 'paused' : 'playing',
+      coins: Number.isFinite(currentState.coins) ? currentState.coins : 0,
+      xp: Number.isFinite(currentState.xp) ? currentState.xp : 0,
+      level: Number.isFinite(currentState.level) ? currentState.level : 1,
+      dayCount: Number.isFinite(currentState.almanac?.counters?.dayCount)
+        ? currentState.almanac.counters.dayCount
+        : 0,
+      season: currentState.season?.current || 'spring',
+      weather: currentState.weather || 'sunny',
+      selectedCrop: currentState.selectedCrop || null,
+      inventoryKeys: Object.keys(currentState.inventory || {}).length,
+      plotCount: plots.length,
+      plots: plots.slice(0, 9).map((plot, index) => ({
+        index,
+        state: plot?.state || 'empty',
+        cropId: plot?.crop?.id || null,
+        waterLevel: Number.isFinite(plot?.waterLevel) ? plot.waterLevel : null,
+      })),
+      onboarding: {
+        seen: Boolean(currentState.onboardingSeen),
+        skipped: Boolean(currentState.onboardingSkipped),
+        step: Number.isFinite(currentState.onboardingStep) ? currentState.onboardingStep : 0,
+      },
+      timestamp: Date.now(),
+    };
+  }, [state]);
+
   const dispatchRef = useRef(dispatch);
   useEffect(() => {
     dispatchRef.current = dispatch;
@@ -180,6 +212,78 @@ export function GameProvider({ children }) {
   useEffect(() => {
     initDebugTools();
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isDevelopmentMode()) return;
+    const forceReadyPlot = (index = 0) => {
+      const currentState = stateRef.current;
+      const plots = Array.isArray(currentState?.plots) ? [...currentState.plots] : [];
+      const targetIndex = Number(index);
+      if (!Number.isFinite(targetIndex) || targetIndex < 0 || targetIndex >= plots.length) {
+        return false;
+      }
+
+      const plot = plots[targetIndex];
+      if (!plot || plot?.state === 'empty' || plot?.state === 'decor') {
+        return false;
+      }
+
+      const crop = plot.crop;
+      plots[targetIndex] = {
+        ...plot,
+        state: 'ready',
+        growthStage: Math.max(1, plot.crop?.stages || 3),
+        progress: 1,
+        plantedAt: Number.isFinite(plot?.plantedAt) ? plot.plantedAt : Date.now(),
+        readyAt: Date.now(),
+        weatherModifier: 1,
+        growthBoost: 1,
+        crop: crop ? { ...(plot.crop || {}) } : plot.crop,
+      };
+
+      dispatchRef.current({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: plots });
+      return true;
+    };
+
+    const forceAllGrowingPlotsReady = () => {
+      const currentState = stateRef.current;
+      const plots = Array.isArray(currentState?.plots) ? [...currentState.plots] : [];
+      let changed = false;
+      const nextPlots = plots.map((plot) => {
+        if (!plot || !plot.crop || !['planted', 'growing'].includes(plot.state)) {
+          return plot;
+        }
+        changed = true;
+        return {
+          ...plot,
+          state: 'ready',
+          growthStage: Math.max(1, plot.crop?.stages || 3),
+          progress: 1,
+          plantedAt: Number.isFinite(plot?.plantedAt) ? plot.plantedAt : Date.now(),
+          readyAt: Date.now(),
+          weatherModifier: 1,
+          growthBoost: 1,
+        };
+      });
+
+      if (!changed) return false;
+      dispatchRef.current({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: nextPlots });
+      return true;
+    };
+
+    window.__farmRenderState = buildRenderPayload;
+    window.render_game_to_text = () => JSON.stringify(buildRenderPayload());
+    window.__farmTestHooks = {
+      buildRenderState: buildRenderPayload,
+      forceReadyPlot,
+      forceAllGrowingPlotsReady,
+    };
+    return () => {
+      delete window.__farmRenderState;
+      delete window.render_game_to_text;
+      delete window.__farmTestHooks;
+    };
+  }, [buildRenderPayload]);
 
   useEffect(() => {
     if (!isDebugMode()) return undefined;

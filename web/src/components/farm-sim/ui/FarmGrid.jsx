@@ -297,6 +297,7 @@ const FarmPlot = memo(
           }}
           onKeyDown={handleKeyDown}
           data-plot-button="true"
+          data-plot-index={index}
           tabIndex={0}
           role="button"
           aria-label={ariaLabel}
