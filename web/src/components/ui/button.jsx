@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, forwardRef } from 'react';
+import React, { useRef, useState, useCallback, useEffect, forwardRef } from 'react';
 
 /**
  * Premium Button component with juicy animations and ripple effects
@@ -17,7 +17,17 @@ export const Button = forwardRef(function Button(
   forwardedRef
 ) {
   const buttonRef = useRef(null);
+  const pressTimerRef = useRef(null);
   const [isPressed, setIsPressed] = useState(false);
+
+  useEffect(
+    () => () => {
+      if (pressTimerRef.current) {
+        clearTimeout(pressTimerRef.current);
+      }
+    },
+    []
+  );
 
   const baseClasses = `
     relative overflow-hidden inline-flex items-center justify-center
@@ -131,7 +141,10 @@ export const Button = forwardRef(function Button(
   const handleClick = useCallback(
     (event) => {
       setIsPressed(true);
-      setTimeout(() => setIsPressed(false), 150);
+      if (pressTimerRef.current) {
+        clearTimeout(pressTimerRef.current);
+      }
+      pressTimerRef.current = setTimeout(() => setIsPressed(false), 150);
       createRipple(event);
       onClick?.(event);
     },

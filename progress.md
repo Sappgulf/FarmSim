@@ -69,3 +69,46 @@ Notes:
 Notes:
 - Verification passed after the full quality pass: `npm run install:web`, `npm run lint` (132 warnings, 0 errors), `npm run test`, `npm run smoke-test`, `npm run build`, `npm run test:e2e`, `npm run ios:test:core`, `npm run ios:build`, `npm run ios:build:small`, and `npm run ios:build:large`.
 - Preview proof saved in `screenshots/farmsim-quality-upgrade-preview.png` and `screenshots/farmsim-quality-upgrade-mobile.png`.
+
+## 2026-07-30 1-6 Upgrade Tranche
+- [x] Fix tutorial input handling and restore quality gates.
+- [x] Add authored farm art and a stable asset registry.
+- [x] Rebuild the farm board and mobile tool surface around primary play.
+- [x] Add deterministic time stepping and richer render state for QA.
+- [x] Add the first weather/disease preparation decision loop.
+- [x] Run full browser, test, lint, and build verification.
+
+Notes:
+- Weather preparation plans are modeled as simulation state (`observe`, `tend`, `water`, `scout`, `protect`) so the renderer stays separate from gameplay rules.
+- Image generation is unavailable in this environment, so the first asset pass will use reusable code-native vector art with stable semantic keys.
+- The browser regression covered tutorial skip, weather planning, planting, deterministic growth, mobile tool drawer behavior, no horizontal overflow, and all 23 major tabs.
+- Final verification: `39` test files / `112` tests passed; lint passed with `0` errors and `41` existing warnings; production build passed; browser page and console error lists were empty on desktop and mobile.
+- The in-app browser tab remained open, but its control bridge was unavailable to this task, so the same live app URL was verified with a temporary native Playwright harness and the harness was removed afterward.
+
+## 2026-07-30 1-5 Follow-up Tranche
+- [x] Add generated-art-ready crop state slots with a safe vector fallback.
+- [x] Add crop growth motion and harvest feedback.
+- [x] Make forecast beats queueable with carried weather-plan consequences.
+- [x] Add expansion paths, landmarks, and authored decor layers.
+- [x] Strengthen onboarding around planting, watering, forecasting, harvesting, and the Town Board.
+- [x] Run full browser, test, lint, and build verification.
+
+Notes:
+- The image API key is still unavailable, so generated sprite sources remain opt-in manifest slots; no broken image requests are introduced.
+- Farm sprites expose semantic crop/state keys and animated vector fallbacks, with harvest flash/bloom feedback and decorative terrain layers for expansion landmarks.
+- Forecast planning can target the next visible weather beat, carries through the transition, and records landed plans for the decision streak.
+- Browser QA covered the five onboarding gates, deterministic growth and harvest, Town Board navigation, expansion to 4x4 with the well landmark, mobile tools, all 23 major tabs, and no horizontal overflow.
+- Final verification: `41` test files / `117` tests passed; lint passed with `0` errors and `41` warnings; production build passed; `git diff --check` passed.
+- The in-app browser tab remained open, but its control bridge was unavailable to this task, so the same live app URL was verified with a temporary native Playwright harness; the harness was removed afterward.
+
+## 2026-07-30 Atmosphere + Release Tranche
+- [x] Generate and inspect a non-API Meadowlight farm atmosphere asset.
+- [x] Ship the generated art as an optimized WebP through the semantic farm asset registry.
+- [x] Make the atmosphere respond to season and weather without coupling raster art to simulation state.
+- [x] Align Vitest filesystem access with the production Vite boundary.
+- [x] Run release QA, commit, push, and Vercel deployment preflight.
+
+Notes:
+- The generated 1536×1024 scene was converted from 3.0 MB PNG to a 328 KB WebP and placed at `web/public/assets/farm/meadowlight-atmosphere.webp`.
+- Native browser QA verified the asset loads, season/weather data hooks render, all 23 tabs switch cleanly, mobile tools open, and 390px mobile has no horizontal overflow.
+- Final pre-release verification: `npm run qa:full` passed with `41` test files / `117` tests, lint `0` errors / `41` warnings, and production build passed.

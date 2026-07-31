@@ -39,7 +39,11 @@ import {
   isKnownWeatherType,
 } from '../../../systems/almanac';
 import { ensureWeeklyVisits, getWeekKey } from '../../../utils/retention';
-import { calculateHarvestValue } from '../../../utils/farmUpgrades';
+import {
+  calculateHarvestValue,
+  getHydroponicsGrowthBonus,
+  getMiniGreenhouseGrowthBonus,
+} from '../../../utils/farmUpgrades';
 import { getDailyCropFocus } from '../../../utils/dailyFocus';
 import { getContentManager } from '../../../content/ContentManager';
 import { CROP_DATA } from '../constants/cropData';
@@ -57,6 +61,7 @@ import {
   applyXpTuning,
   getEconomyRewardModifier,
   getEconomySinkModifier,
+  getDifficultyModifier,
   getLevelFromXp,
 } from '../systems/progression';
 import {
@@ -163,6 +168,11 @@ export function GameProvider({ children }) {
     stateRef.current = state;
   }, [state]);
 
+  // Live gameplay uses wall-clock timestamps. QA can advance this clock in
+  // controlled bursts so growth and weather-sensitive state can be verified
+  // without waiting for real crop timers.
+  const deterministicClockRef = useRef({ now: Date.now(), lastAdvanceMs: 0 });
+
   const buildRenderPayload = useCallback(() => {
     const currentState = stateRef.current || state;
     const plots = Array.isArray(currentState.plots) ? currentState.plots : [];
@@ -177,6 +187,11 @@ export function GameProvider({ children }) {
         : 0,
       season: currentState.season?.current || 'spring',
       weather: currentState.weather || 'sunny',
+      weatherPlan: currentState.weatherPlan || 'observe',
+      weatherPlanTarget: currentState.weatherPlanTarget || null,
+      weatherPlansLanded: Array.isArray(currentState.weatherPlanHistory)
+        ? currentState.weatherPlanHistory.length
+        : 0,
       selectedCrop: currentState.selectedCrop || null,
       inventoryKeys: Object.keys(currentState.inventory || {}).length,
       plotCount: plots.length,
@@ -186,12 +201,19 @@ export function GameProvider({ children }) {
         cropId: plot?.crop?.id || null,
         waterLevel: Number.isFinite(plot?.waterLevel) ? plot.waterLevel : null,
       })),
+      field: {
+        ready: plots.filter((plot) => plot?.state === 'ready').length,
+        growing: plots.filter((plot) => plot?.state === 'growing' || plot?.state === 'planted')
+          .length,
+        diseased: plots.filter((plot) => Boolean(plot?.disease)).length,
+      },
       onboarding: {
         seen: Boolean(currentState.onboardingSeen),
         skipped: Boolean(currentState.onboardingSkipped),
         step: Number.isFinite(currentState.onboardingStep) ? currentState.onboardingStep : 0,
       },
       timestamp: Date.now(),
+      clock: { ...deterministicClockRef.current },
     };
   }, [state]);
 
@@ -208,6 +230,70 @@ export function GameProvider({ children }) {
   });
 
   const applyFallbacksWithNotification = (stateToCheck) => applyCosmeticFallbacks(stateToCheck);
+
+  const advanceTime = useCallback(
+    (milliseconds = 0) => {
+      const deltaMs = Math.max(0, Number(milliseconds) || 0);
+      const currentState = stateRef.current || state;
+      const wallNow = Date.now();
+      const clock = deterministicClockRef.current;
+      clock.now = Math.max(clock.now, wallNow) + deltaMs;
+      clock.lastAdvanceMs = deltaMs;
+
+      const difficulty = getDifficultyModifier(currentState.level || 1).growthTime || 1;
+      const seasonBonus = currentState.season?.config?.bonuses?.growthSpeed || 1;
+      const greenhouseBonus = getMiniGreenhouseGrowthBonus(currentState.inventory || {});
+      const hydroponicsBonus = getHydroponicsGrowthBonus(currentState.inventory || {});
+      const virtualNow = clock.now;
+      const nextPlots = (Array.isArray(currentState.plots) ? currentState.plots : []).map(
+        (plot) => {
+          if (!plot?.crop || !['planted', 'growing'].includes(plot.state) || !plot.plantedAt) {
+            return plot;
+          }
+
+          const baseGrowthTime = Number(plot.crop.growthTime) || 1;
+          const effectiveGrowthTime =
+            (baseGrowthTime * difficulty) /
+            ((plot.weatherModifier || 1) *
+              seasonBonus *
+              greenhouseBonus *
+              hydroponicsBonus *
+              (plot.growthBoost || 1));
+          const elapsedSeconds = Math.max(0, (virtualNow - Number(plot.plantedAt)) / 1000);
+          const progress = Math.min(1, elapsedSeconds / Math.max(0.001, effectiveGrowthTime));
+          const totalStages = Number(plot.crop.stages) || 3;
+
+          if (progress >= 0.9) {
+            return {
+              ...plot,
+              state: 'ready',
+              growthStage: totalStages,
+              progress: 1,
+              readyAt: wallNow,
+            };
+          }
+
+          return {
+            ...plot,
+            state: 'growing',
+            growthStage: Math.min(totalStages, Math.floor(progress * totalStages) + 1),
+            progress,
+            // Keep the visual renderer aligned with the virtual clock after the hook runs.
+            plantedAt: wallNow - elapsedSeconds * 1000,
+            waterLevel: Math.max(0, (plot.waterLevel || 0) - (deltaMs / 1000) * 0.5),
+          };
+        }
+      );
+
+      dispatchRef.current({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: nextPlots });
+      dispatchRef.current({
+        type: GAME_ACTIONS.UPDATE_GAME_LOOP,
+        payload: { lastUpdate: virtualNow },
+      });
+      return buildRenderPayload();
+    },
+    [buildRenderPayload, state]
+  );
 
   useEffect(() => {
     initDebugTools();
@@ -273,17 +359,24 @@ export function GameProvider({ children }) {
 
     window.__farmRenderState = buildRenderPayload;
     window.render_game_to_text = () => JSON.stringify(buildRenderPayload());
+    window.advanceTime = advanceTime;
     window.__farmTestHooks = {
       buildRenderState: buildRenderPayload,
       forceReadyPlot,
       forceAllGrowingPlotsReady,
+      advanceTime,
+      resetClock: () => {
+        deterministicClockRef.current = { now: Date.now(), lastAdvanceMs: 0 };
+        return buildRenderPayload();
+      },
     };
     return () => {
       delete window.__farmRenderState;
       delete window.render_game_to_text;
+      delete window.advanceTime;
       delete window.__farmTestHooks;
     };
-  }, [buildRenderPayload]);
+  }, [advanceTime, buildRenderPayload]);
 
   useEffect(() => {
     if (!isDebugMode()) return undefined;
@@ -363,6 +456,63 @@ export function GameProvider({ children }) {
 
       // Systems & Metadata
       setWeather: (weather) => dispatch({ type: GAME_ACTIONS.SET_WEATHER, payload: weather }),
+      setWeatherPlan: (plan) =>
+        dispatch({ type: GAME_ACTIONS.SET_WEATHER_PLAN, payload: plan || 'observe' }),
+      prepareWeatherPlan: (targetWeather = null) => {
+        const currentState = stateRef.current;
+        const weather = currentState.weather || 'sunny';
+        const nextForecastWeather = currentState.weatherForecast?.[0]?.type || null;
+        const target = targetWeather || nextForecastWeather || weather;
+        const planByWeather = {
+          stormy: 'protect',
+          drought: 'water',
+          rainy: 'scout',
+          snow: 'protect',
+          windy: 'protect',
+          sunny: 'tend',
+          cloudy: 'tend',
+        };
+        const plan = planByWeather[target] || 'tend';
+        dispatch({
+          type: GAME_ACTIONS.SET_WEATHER_PLAN_TARGET,
+          payload: {
+            weather: target,
+            plan,
+            preparedAt: Date.now(),
+            fromWeather: weather,
+          },
+        });
+        dispatch({ type: GAME_ACTIONS.SET_WEATHER_PLAN, payload: plan });
+
+        if (plan === 'water' && target === weather) {
+          dispatch({
+            type: GAME_ACTIONS.UPDATE_PLOTS,
+            payload: (plots) =>
+              (Array.isArray(plots) ? plots : []).map((plot) =>
+                plot?.state === 'empty'
+                  ? plot
+                  : { ...plot, waterLevel: Math.min(100, (plot.waterLevel || 0) + 35) }
+              ),
+          });
+        }
+
+        const copy = {
+          protect: 'Field plan set: braces are ready for the next storm.',
+          water: 'Field plan set: active plots received a deep watering.',
+          scout: 'Field plan set: disease pressure is being watched.',
+          tend: 'Field plan set: beds are ready for steady growth.',
+        };
+        dispatch({
+          type: GAME_ACTIONS.ADD_NOTIFICATION,
+          payload: {
+            message:
+              target !== weather ? `${copy[plan]} Queued for the next ${target} beat.` : copy[plan],
+            type: 'success',
+          },
+        });
+        actionsRef.current?.recordOnboardingEvent('weather_plan');
+        return plan;
+      },
       updateWeatherForecast: (forecast) =>
         dispatch({ type: GAME_ACTIONS.UPDATE_WEATHER_FORECAST, payload: forecast }),
       updateBuildings: (buildings) =>
@@ -822,8 +972,10 @@ export function GameProvider({ children }) {
 
         const onboardingStepMap = {
           plant: 0,
-          harvest: 1,
-          board_open: 2,
+          water: 1,
+          weather_plan: 2,
+          harvest: 3,
+          board_open: 4,
         };
 
         const totalSteps = ONBOARDING_STEP_COUNT;
@@ -835,6 +987,13 @@ export function GameProvider({ children }) {
 
         if (eventType === 'plant' && !hasFirstSeed) {
           actionsRef.current?.unlockMemory('first_seed');
+        }
+
+        if (eventType === 'weather_plan') {
+          actionsRef.current?.addNotification({
+            message: '🌦️ Forecast plan locked in. Watch for the next weather beat.',
+            type: 'success',
+          });
         }
 
         if (
@@ -1728,19 +1887,27 @@ export function GameProvider({ children }) {
 
       waterAllPlots: () => {
         if (stateRef.current.ghostVisit?.active) return false;
+        const activePlots = (stateRef.current.plots || []).filter(
+          (plot) => plot?.state === 'growing' || plot?.state === 'planted'
+        );
+        if (activePlots.length === 0) return false;
         const currentSystems = systemsRef.current;
         if (currentSystems.farmingSystem?.waterAll) {
           currentSystems.farmingSystem.update(stateRef.current);
           currentSystems.farmingSystem.waterAll();
           logDebugAction('water_all');
-          return;
+          actionsRef.current?.recordOnboardingEvent('water');
+          return true;
         }
-        const updatedPlots = stateRef.current.plots.map((plot) => ({
-          ...plot,
-          waterLevel: Math.min(100, (plot.waterLevel || 0) + 25),
-        }));
+        const updatedPlots = stateRef.current.plots.map((plot) =>
+          plot?.state === 'growing' || plot?.state === 'planted'
+            ? { ...plot, waterLevel: Math.min(100, (plot.waterLevel || 0) + 25) }
+            : plot
+        );
         dispatch({ type: GAME_ACTIONS.UPDATE_PLOTS, payload: updatedPlots });
         logDebugAction('water_all');
+        actionsRef.current?.recordOnboardingEvent('water');
+        return true;
       },
 
       fertilizeAllPlots: () => {

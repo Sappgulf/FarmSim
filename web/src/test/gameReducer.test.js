@@ -9,6 +9,42 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 describe('gameReducer economy guards', () => {
+  it('stores a field plan and resets it when weather changes', () => {
+    const planned = gameReducer(initialState, {
+      type: GAME_ACTIONS.SET_WEATHER_PLAN,
+      payload: 'protect',
+    });
+
+    expect(planned.weatherPlan).toBe('protect');
+
+    const changedWeather = gameReducer(planned, {
+      type: GAME_ACTIONS.SET_WEATHER,
+      payload: 'stormy',
+    });
+
+    expect(changedWeather.weather).toBe('stormy');
+    expect(changedWeather.weatherPlan).toBe('observe');
+  });
+
+  it('carries a queued forecast plan into the next weather beat', () => {
+    const queued = gameReducer(
+      gameReducer(initialState, {
+        type: GAME_ACTIONS.SET_WEATHER_PLAN_TARGET,
+        payload: { weather: 'drought', plan: 'water', preparedAt: 100 },
+      }),
+      { type: GAME_ACTIONS.SET_WEATHER_PLAN, payload: 'water' }
+    );
+
+    const arrived = gameReducer(queued, {
+      type: GAME_ACTIONS.SET_WEATHER,
+      payload: 'drought',
+    });
+
+    expect(arrived.weatherPlan).toBe('water');
+    expect(arrived.weatherPlanTarget).toBeNull();
+    expect(arrived.weatherPlanHistory).toHaveLength(1);
+  });
+
   it('bootstraps a starter kit without pre-harvest stockpile bloat', () => {
     expect(initialState.inventory).toMatchObject({
       lettuce: 4,

@@ -174,8 +174,10 @@ const NavBar = memo(
     const activeSectionTabs = useMemo(() => activeSectionConfig?.tabs || [], [activeSectionConfig]);
 
     useEffect(() => {
-      setShowSubTabs(false);
-    }, [activeSection]);
+      if (!activeSectionHasMultipleTabs) {
+        setShowSubTabs(false);
+      }
+    }, [activeSection, activeSectionHasMultipleTabs]);
 
     useEffect(() => {
       if (!activeSectionHasMultipleTabs) {
@@ -202,7 +204,7 @@ const NavBar = memo(
       (section, isActive) => {
         onSectionChange(section.id);
         if (section.tabs.length > 1) {
-          setShowSubTabs(isActive ? !showSubTabs : false);
+          setShowSubTabs(isActive ? !showSubTabs : true);
           return;
         }
         setShowSubTabs(false);
@@ -377,6 +379,7 @@ const NavBar = memo(
                 key={section.id}
                 type="button"
                 onClick={() => handleSectionPress(section, isActive)}
+                data-onboard={section.id === 'more' ? 'town-board' : undefined}
                 aria-expanded={sectionHasMultipleTabs ? sectionSubTabsVisible : undefined}
                 aria-controls={sectionHasMultipleTabs ? sectionSubTabsId : undefined}
                 aria-current={isActive ? 'page' : undefined}

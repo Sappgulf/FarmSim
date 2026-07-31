@@ -17,6 +17,7 @@ import { CROP_LIST } from '../constants/cropData';
 import { FARM_TITLES } from '../../../data/cozyExpansion';
 import { getDailyCropFocus } from '../../../utils/dailyFocus';
 import { formatDisplayLabel } from '../../../utils/textFormat';
+import WeatherDecisionPanel from './WeatherDecisionPanel';
 
 const countPlots = (plots = []) => {
   const counts = {
@@ -285,6 +286,8 @@ const FarmRhythmPanel = memo(({ onNavigate }) => {
         <RhythmMetric label="Rewards" value={claimableRewards} tone="lime" />
         <RhythmMetric label="Open Plots" value={plotCounts.empty} tone="slate" />
       </div>
+
+      <WeatherDecisionPanel />
 
       <div className="mt-3 grid gap-2 border-t border-slate-100 pt-3 text-xs text-slate-600 sm:grid-cols-3">
         <div>

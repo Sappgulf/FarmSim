@@ -44,6 +44,7 @@ import { useSeasonTransitionEffect } from './useSeasonTransitionEffect';
 import { useTimeOfDayVisualState } from './useTimeOfDayVisualState';
 import { useVisualWeatherRotation } from './useVisualWeatherRotation';
 import { createLogger } from '../../../utils/logger';
+import { Wrench, X } from 'lucide-react';
 
 const log = createLogger('FarmSimCore');
 
@@ -91,7 +92,12 @@ export function FarmSimCore() {
   const { activeTab, activeSection, handleSectionChange, handleTabChange } = useFarmNavigation({
     actions,
   });
+  const [mobileToolsOpen, setMobileToolsOpen] = React.useState(false);
   const timePeriod = useTimeOfDayVisualState(actions);
+
+  useEffect(() => {
+    setMobileToolsOpen(activeTab !== DEFAULT_ACTIVE_TAB);
+  }, [activeTab]);
 
   // Initialize systems ONCE - don't recreate on state changes!
   // We pass current state to update() method, so no need to recreate
@@ -286,7 +292,7 @@ export function FarmSimCore() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000 flex flex-col relative overflow-hidden`}
+      className={`farm-app-shell min-h-screen bg-gradient-to-br ${seasonColors.primary} transition-colors duration-1000 flex flex-col relative overflow-hidden`}
       data-farm-theme={activeTheme.id}
       style={{ ...themeVars, filter: TIME_OF_DAY_VISUALS[timePeriod]?.filter || 'none' }}
     >
@@ -305,7 +311,7 @@ export function FarmSimCore() {
       </Suspense>
 
       {/* Game Header */}
-      <div className="relative z-20">
+      <div className="farm-header-layer relative z-20">
         <GameHeader onFocusGameplay={focusGameplayArea} />
       </div>
 
@@ -319,7 +325,7 @@ export function FarmSimCore() {
       <main
         id="farm-main-content"
         tabIndex={-1}
-        className="relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4"
+        className="farm-game-main relative z-20 flex-1 flex flex-col lg:flex-row gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-24 lg:pb-4"
         aria-label="Farm gameplay and controls"
       >
         {/* Farm Grid - Full width on mobile, larger on desktop */}
@@ -334,9 +340,37 @@ export function FarmSimCore() {
           <FarmGrid />
         </div>
 
+        <button
+          type="button"
+          className="farm-mobile-tools-launch lg:hidden"
+          onClick={() => setMobileToolsOpen((open) => !open)}
+          aria-expanded={mobileToolsOpen}
+          aria-controls="farm-tools-panel"
+        >
+          {mobileToolsOpen ? (
+            <X size={17} aria-hidden="true" />
+          ) : (
+            <Wrench size={17} aria-hidden="true" />
+          )}
+          <span>{mobileToolsOpen ? 'Close tools' : 'Open tools'}</span>
+          <span className="farm-mobile-tools-launch__hint">
+            {mobileToolsOpen ? 'Return to the board' : 'Inventory, build, town'}
+          </span>
+        </button>
+
+        {mobileToolsOpen && (
+          <button
+            type="button"
+            className="farm-tools-backdrop lg:hidden"
+            onClick={() => setMobileToolsOpen(false)}
+            aria-label="Close farm tools"
+          />
+        )}
+
         {/* Game Sidebar - Shows tabs for active section */}
         <div
-          className={`w-full lg:w-80 xl:w-96 ${toolsOrderClass} lg:order-2`}
+          id="farm-tools-panel"
+          className={`farm-tools-shell w-full lg:w-80 xl:w-96 ${toolsOrderClass} lg:order-2 ${mobileToolsOpen ? 'farm-tools-shell--open' : ''}`}
           role="complementary"
           aria-label="Farm tools"
           data-shell-region="tools"

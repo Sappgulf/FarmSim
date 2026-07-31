@@ -12,9 +12,25 @@ export const ONBOARDING_STEPS = [
     placement: 'right',
   },
   {
+    id: 'water',
+    title: 'Water the beds',
+    description: 'Give the growing beds a drink so the crop can keep moving.',
+    emoji: '💧',
+    target: '[data-onboard="field-care"]',
+    placement: 'top',
+  },
+  {
+    id: 'weather-plan',
+    title: 'Read the next beat',
+    description: 'Queue the field plan that matches the next forecast weather.',
+    emoji: '🌦️',
+    target: '[data-onboard="weather-plan"]',
+    placement: 'bottom',
+  },
+  {
     id: 'harvest',
     title: 'Harvest it',
-    description: 'Tap a glowing crop to harvest and earn coins.',
+    description: 'Tap a glowing crop to harvest and turn a good plan into coins.',
     emoji: '🧺',
     target: '[data-onboard="farm-grid"]',
     placement: 'right',
@@ -22,9 +38,9 @@ export const ONBOARDING_STEPS = [
   {
     id: 'board',
     title: 'Visit the Town Board',
-    description: 'Open More → Events to see today’s plan.',
+    description: 'Tap Town, then choose Town Board to see today’s plan.',
     emoji: '📌',
-    target: '[data-onboard="events-tab"]',
+    target: '[data-onboard="town-board"], [aria-label^="Town."]',
     placement: 'top',
   },
 ];

@@ -311,10 +311,10 @@ const GameHeader = memo(({ onFocusGameplay }) => {
   }, []);
 
   return (
-    <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 px-2.5 sm:px-4 py-2 sm:py-3 relative sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+    <header className="farm-game-header bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 px-2.5 sm:px-4 py-2 sm:py-3 relative sticky top-0 z-50">
+      <div className="farm-header-inner max-w-7xl mx-auto flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         {/* Left side - Game title and basic stats */}
-        <div className="flex items-center justify-between lg:justify-start gap-2 sm:gap-4 lg:gap-6 w-full lg:w-auto">
+        <div className="farm-header-identity flex items-center justify-between lg:justify-start gap-2 sm:gap-4 lg:gap-6 w-full lg:w-auto">
           <a
             href="#farm-main-content"
             className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 z-50 bg-emerald-900 text-white px-3 py-2 rounded-lg text-xs"
@@ -344,7 +344,7 @@ const GameHeader = memo(({ onFocusGameplay }) => {
             </div>
           </button>
           {/* Core stats with animations */}
-          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-wrap justify-end lg:justify-start">
+          <div className="farm-header-stats flex items-center gap-2 sm:gap-3 lg:gap-4 flex-wrap justify-end lg:justify-start">
             <button
               type="button"
               onClick={() => openRelatedTab('shop')}
@@ -411,7 +411,7 @@ const GameHeader = memo(({ onFocusGameplay }) => {
         </div>
 
         {/* Right side - Controls and weather */}
-        <div className="w-full lg:w-auto flex flex-wrap items-center justify-between sm:justify-end gap-2">
+        <div className="farm-header-controls w-full lg:w-auto flex flex-wrap items-center justify-between sm:justify-end gap-2">
           {/* Stats Dropdown Button */}
           <div className="relative" ref={statsDropdownRef}>
             <Button

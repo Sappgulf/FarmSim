@@ -19,8 +19,15 @@ export class WeatherSystem {
     const hasGreenhouse = this.gameState.buildings?.greenhouse?.built;
     const hasWell = this.gameState.buildings?.well?.built;
     const hasMiniGreenhouse = (this.gameState.inventory?.greenhouse || 0) > 0;
+    const planIsActive =
+      !this.gameState?.weatherPlanTarget ||
+      this.gameState.weatherPlanTarget.weather === this.gameState.weather;
+    const planProtection = planIsActive && this.gameState?.weatherPlan === 'protect' ? 0.25 : 0;
     const protection =
-      (hasGreenhouse ? 0.7 : 0) + (hasWell ? 0.3 : 0) + (hasMiniGreenhouse ? 0.25 : 0);
+      (hasGreenhouse ? 0.7 : 0) +
+      (hasWell ? 0.3 : 0) +
+      (hasMiniGreenhouse ? 0.25 : 0) +
+      planProtection;
     return Math.min(1, protection);
   }
 
@@ -53,51 +60,59 @@ export class WeatherSystem {
   }
 
   changeWeather() {
-    // Use seasonal weather patterns if available
-    let newWeather;
-    if (this.gameState.season?.config?.weatherWeights) {
-      // Weighted random selection based on season
-      newWeather = this.pickWeightedWeather(this.gameState.season.config.weatherWeights);
-    }
-
-    // Fallback to simple cycle if no season or selection failed
-    if (!newWeather) {
-      const weatherTypes = ['sunny', 'rainy', 'cloudy', 'stormy'];
-      const currentIndex = weatherTypes.indexOf(this.gameState.weather);
-      const nextIndex = (currentIndex + 1) % weatherTypes.length;
-      newWeather = weatherTypes[nextIndex];
+    // The forecast is now a real queue: the first visible beat is the next
+    // weather change, then a fresh beat is appended to keep the horizon full.
+    const queuedForecast = Array.isArray(this.gameState.weatherForecast)
+      ? this.gameState.weatherForecast
+      : [];
+    const newWeather = queuedForecast[0]?.type || this.pickNextWeather();
+    const nextForecast = queuedForecast.length ? queuedForecast.slice(1) : [];
+    while (nextForecast.length < 3) {
+      nextForecast.push(this.createForecastEntry());
     }
 
     this.actions.setWeather(newWeather);
+    this.actions.updateWeatherForecast(nextForecast);
     if (this.actions?.recordAlmanacEvent) {
       this.actions.recordAlmanacEvent('weather_observed', { weather: newWeather });
     }
-
-    // Update weather forecast
-    this.updateForecast();
 
     // Apply immediate weather effects
     this.applyImmediateWeatherEffects(newWeather);
   }
 
   updateForecast() {
-    const forecast = [];
+    this.actions.updateWeatherForecast(this.buildForecast());
+  }
+
+  buildForecast() {
+    return Array.from({ length: 3 }, () => this.createForecastEntry());
+  }
+
+  createForecastEntry() {
     const weatherWeights = this.gameState.season?.config?.weatherWeights || null;
     const fallbackWeatherTypes = ['sunny', 'rainy', 'cloudy', 'stormy'];
+    const randomWeather = weatherWeights
+      ? this.pickWeightedWeather(weatherWeights) ||
+        fallbackWeatherTypes[Math.floor(Math.random() * fallbackWeatherTypes.length)]
+      : fallbackWeatherTypes[Math.floor(Math.random() * fallbackWeatherTypes.length)];
 
-    for (let i = 0; i < 3; i++) {
-      const randomWeather = weatherWeights
-        ? this.pickWeightedWeather(weatherWeights) ||
-          fallbackWeatherTypes[Math.floor(Math.random() * fallbackWeatherTypes.length)]
-        : fallbackWeatherTypes[Math.floor(Math.random() * fallbackWeatherTypes.length)];
-      forecast.push({
-        type: randomWeather,
-        duration: Math.floor(Math.random() * 20) + 15, // 15-35 seconds
-        effects: this.getWeatherEffects(randomWeather),
-      });
-    }
+    return {
+      type: randomWeather,
+      duration: Math.floor(Math.random() * 20) + 15, // 15-35 seconds
+      effects: this.getWeatherEffects(randomWeather),
+    };
+  }
 
-    this.actions.updateWeatherForecast(forecast);
+  pickNextWeather() {
+    // Use seasonal weather patterns if available, with a stable fallback cycle
+    // for saves that predate forecast data.
+    const weighted = this.pickWeightedWeather(this.gameState.season?.config?.weatherWeights);
+    if (weighted) return weighted;
+
+    const weatherTypes = ['sunny', 'rainy', 'cloudy', 'stormy'];
+    const currentIndex = weatherTypes.indexOf(this.gameState.weather);
+    return weatherTypes[(currentIndex + 1) % weatherTypes.length];
   }
 
   pickWeightedWeather(weights) {
@@ -227,6 +242,10 @@ export class WeatherSystem {
     const hasGreenhouse = this.gameState.buildings?.greenhouse?.built;
     const hasMiniGreenhouse = (this.gameState.inventory?.greenhouse || 0) > 0;
     const weatherProtection = this.getWeatherProtection();
+    const planIsActive =
+      !this.gameState.weatherPlanTarget ||
+      this.gameState.weatherPlanTarget.weather === this.gameState.weather;
+    const planDrainReduction = planIsActive && this.gameState.weatherPlan === 'water' ? 0.35 : 0;
 
     // Only apply gradual changes, not state-changing effects
     const updatedPlots = this.gameState.plots.map((plot) => {
@@ -242,7 +261,7 @@ export class WeatherSystem {
 
       // Apply gradual water drain (if any), reduced by well
       if (effects.waterDrainRate) {
-        const drainReduction = hasWell ? 0.5 : 0;
+        const drainReduction = Math.min(0.85, (hasWell ? 0.5 : 0) + planDrainReduction);
         const baseDrain = effects.waterDrainRate * (1 - drainReduction);
         const actualDrain = baseDrain * 0.2 * elapsedSeconds;
         const nextWater = Math.max(0, (plot.waterLevel || 0) - actualDrain);

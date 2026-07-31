@@ -11,7 +11,8 @@ const getRenderState = async (page) => {
 const startFreshGame = async (page) => {
   await page.addInitScript(() => {
     const saveKeys = Object.keys(localStorage).filter(
-      (key) => key.startsWith('farm_sim_') || key.startsWith('farmSim_') || key.startsWith('farmLife')
+      (key) =>
+        key.startsWith('farm_sim_') || key.startsWith('farmSim_') || key.startsWith('farmLife')
     );
     for (const key of saveKeys) {
       localStorage.removeItem(key);
@@ -29,11 +30,21 @@ const startFreshGame = async (page) => {
 };
 
 const forceAllPlotsReady = async (page) => {
-  await page.evaluate(() => {
-    return typeof window.__farmTestHooks?.forceAllGrowingPlotsReady === 'function'
-      ? window.__farmTestHooks.forceAllGrowingPlotsReady()
-      : false;
-  });
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(() => {
+          const forceReady = window.__farmTestHooks?.forceAllGrowingPlotsReady;
+          const forced = typeof forceReady === 'function' ? forceReady() : false;
+          if (forced) return true;
+
+          const raw = window.render_game_to_text?.();
+          const state = raw ? JSON.parse(raw) : null;
+          return Boolean(state?.plots?.some((plot) => plot?.state === 'ready'));
+        }),
+      { timeout: 8000, intervals: [100, 250, 500] }
+    )
+    .toBe(true);
 };
 
 const waitForPlotState = async (page, index, states) => {

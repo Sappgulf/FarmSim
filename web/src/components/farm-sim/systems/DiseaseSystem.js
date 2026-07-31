@@ -149,7 +149,14 @@ export class DiseaseSystem {
       const plotHealth = Math.min((plot.waterLevel || 50) / 100, plot.soilFertility || 1.0);
 
       // Calculate disease risks
-      const risks = calculateDiseaseRisk(this.state.weather, plotHealth, adjacentDiseased);
+      const baseRisks = calculateDiseaseRisk(this.state.weather, plotHealth, adjacentDiseased);
+      const planIsActive =
+        !this.state.weatherPlanTarget ||
+        this.state.weatherPlanTarget.weather === this.state.weather;
+      const scoutMultiplier = planIsActive && this.state.weatherPlan === 'scout' ? 0.45 : 1;
+      const risks = Object.fromEntries(
+        Object.entries(baseRisks).map(([diseaseId, risk]) => [diseaseId, risk * scoutMultiplier])
+      );
 
       // Roll for each disease type
       Object.entries(risks).forEach(([diseaseId, risk]) => {

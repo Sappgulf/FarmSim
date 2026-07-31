@@ -57,6 +57,9 @@ export const initialState = {
 
   // Weather system
   weather: 'sunny',
+  weatherPlan: 'observe',
+  weatherPlanTarget: null,
+  weatherPlanHistory: [],
   weatherForecast: [],
 
   // Season system
@@ -368,7 +371,33 @@ export function gameReducer(state, action) {
       return { ...state, inventory: newInventory };
 
     case GAME_ACTIONS.SET_WEATHER:
-      return { ...state, weather: action.payload };
+      const nextWeather = action.payload;
+      const plannedTarget = state.weatherPlanTarget;
+      const planArrived = plannedTarget?.weather === nextWeather;
+      const nextPlanHistory = planArrived
+        ? [
+            ...(Array.isArray(state.weatherPlanHistory) ? state.weatherPlanHistory : []),
+            {
+              weather: nextWeather,
+              plan: plannedTarget.plan,
+              preparedAt: plannedTarget.preparedAt,
+              activatedAt: Date.now(),
+            },
+          ].slice(-4)
+        : state.weatherPlanHistory;
+      return {
+        ...state,
+        weather: nextWeather,
+        weatherPlan: planArrived ? plannedTarget.plan : 'observe',
+        weatherPlanTarget: null,
+        weatherPlanHistory: nextPlanHistory,
+      };
+
+    case GAME_ACTIONS.SET_WEATHER_PLAN:
+      return { ...state, weatherPlan: action.payload || 'observe' };
+
+    case GAME_ACTIONS.SET_WEATHER_PLAN_TARGET:
+      return { ...state, weatherPlanTarget: action.payload || null };
 
     case GAME_ACTIONS.UPDATE_WEATHER_FORECAST:
       return { ...state, weatherForecast: action.payload };

@@ -14,6 +14,9 @@ import {
   getSoilAnalyzerEnabled,
 } from '../../../utils/farmUpgrades';
 import { getDifficultyModifier } from '../systems/progression';
+import FarmSprite from './FarmSprite';
+import FarmDecorSprite from './FarmDecorSprite';
+import FarmLandscape from './FarmLandscape';
 
 const ReadyCountdown = memo(({ readyAt, harvestWindowMs = 45000 }) => {
   useTick();
@@ -66,6 +69,7 @@ const FarmPlot = memo(
     plotRef = null,
     isTrinket = false,
     showTooltips = true,
+    isHarvesting = false,
   }) => {
     const [showTooltip, setShowTooltip] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
@@ -76,6 +80,8 @@ const FarmPlot = memo(
         const pendingName = isDecorMode ? selectedDecoration?.name : selectedCrop?.name;
         return {
           emoji: selectedDecoration?.emoji || selectedCrop?.emoji || '🌱',
+          assetId: selectedCrop?.id || 'seedling',
+          spriteStage: 0,
           bgColor: 'bg-amber-50',
           borderColor: 'border-amber-300',
           text: pendingName ? 'Tap to place' : 'Empty',
@@ -88,6 +94,7 @@ const FarmPlot = memo(
         const decoration = DECORATION_DATA[plot.decorationId];
         return {
           emoji: decoration?.emoji || '🪴',
+          decorId: plot.decorationId,
           bgColor: 'bg-rose-50',
           borderColor: 'border-rose-300',
           text: decoration?.name || 'Decoration',
@@ -126,6 +133,8 @@ const FarmPlot = memo(
 
         return {
           emoji: plot.crop.emoji || '🌱',
+          assetId: plot.crop.id || 'seedling',
+          spriteStage: growthStage,
           bgColor: 'bg-green-50',
           borderColor: 'border-green-400',
           text: `Stage ${growthStage}/${totalStages}`,
@@ -140,6 +149,8 @@ const FarmPlot = memo(
       if (plot.state === 'ready') {
         return {
           emoji: plot.crop.emoji || '🌾',
+          assetId: plot.crop.id || 'seedling',
+          spriteStage: Math.max(1, plot.crop.stages || 3),
           bgColor: 'bg-yellow-100',
           borderColor: 'border-yellow-400',
           text: 'Ready! 🎉',
@@ -158,6 +169,8 @@ const FarmPlot = memo(
               : 'Withered';
         return {
           emoji: '🥀',
+          assetId: plot.crop?.id || 'seedling',
+          spriteStage: plot.growthStage || 1,
           bgColor: 'bg-red-50',
           borderColor: 'border-red-300',
           stateTone: 'bg-red-100 text-red-700',
@@ -268,6 +281,7 @@ const FarmPlot = memo(
           ${isSelected ? 'ring-4 ring-blue-500 ring-opacity-70 scale-105' : ''}
           ${showPreview && plot?.state === 'empty' ? 'ring-4 ring-emerald-400 ring-opacity-70' : ''}
           ${plot?.state === 'decor' ? 'shadow-inner' : ''}
+          farm-plot-card
           ${isTrinket ? 'trinket-idle' : ''}
           touch-manipulation select-none
         `}
@@ -336,14 +350,39 @@ const FarmPlot = memo(
                       : 'scale(1)',
               }}
             >
-              {display.emoji}
+              {plot?.state === 'decor' && display.decorId ? (
+                <FarmDecorSprite
+                  decorationId={display.decorId}
+                  decoration={DECORATION_DATA[display.decorId]}
+                />
+              ) : display.assetId ? (
+                <FarmSprite
+                  cropId={display.assetId}
+                  stage={display.spriteStage}
+                  state={plot?.state === 'withered' ? 'withered' : plot?.state || 'empty'}
+                />
+              ) : (
+                display.emoji
+              )}
             </div>
+
+            {isHarvesting && (
+              <div className="farm-harvest-feedback" aria-hidden="true">
+                <span>✦</span>
+                <span>+ harvest</span>
+                <span>✦</span>
+              </div>
+            )}
 
             {/* Planting/Decor preview */}
             {showPreview && plot?.state === 'empty' && (selectedCrop || selectedDecoration) && (
               <div className="absolute inset-0 flex items-center justify-center animate-pulse z-20">
                 <div className="text-3xl sm:text-4xl opacity-70">
-                  {selectedDecoration?.emoji || selectedCrop?.emoji}
+                  {isDecorMode ? (
+                    selectedDecoration?.emoji
+                  ) : (
+                    <FarmSprite cropId={selectedCrop?.id || 'seedling'} stage={0} state="empty" />
+                  )}
                 </div>
                 <div className="absolute bottom-1 left-0 right-0 text-center text-[8px] sm:text-[10px] font-bold text-emerald-700">
                   {isDecorMode ? 'Click to decorate' : 'Click to plant'}
@@ -525,6 +564,7 @@ const FarmGrid = memo(() => {
   const weather = useGameSelector((state) => state.weather || 'sunny');
   const level = useGameSelector((state) => state.level || 1);
   const inventory = useGameSelector((state) => state.inventory || {});
+  const buildings = useGameSelector((state) => state.buildings || {});
   const coins = useGameSelector((state) => state.coins || 0);
   const gridSize = useGameSelector((state) => state.gridSize || 3);
   const animationsEnabled = useGameSelector((state) => state.settings?.animationsEnabled !== false);
@@ -551,7 +591,9 @@ const FarmGrid = memo(() => {
   const [decorUndoCount, setDecorUndoCount] = useState(0);
   const [repeatDecorPlacement, setRepeatDecorPlacement] = useState(true);
   const [harvestBloomTick, setHarvestBloomTick] = useState(0);
+  const [harvestFlashIndexes, setHarvestFlashIndexes] = useState(() => new Set());
   const harvestBloomTimerRef = useRef(null);
+  const harvestFlashTimerRef = useRef(null);
   const plotRefs = useRef([]);
   const decorUndoStack = useRef([]);
   const selectedDecoration = selectedDecorationId ? DECORATION_DATA[selectedDecorationId] : null;
@@ -651,9 +693,20 @@ const FarmGrid = memo(() => {
       if (harvestBloomTimerRef.current) {
         clearTimeout(harvestBloomTimerRef.current);
       }
+      if (harvestFlashTimerRef.current) {
+        clearTimeout(harvestFlashTimerRef.current);
+      }
     },
     []
   );
+
+  const triggerHarvestFeedback = useCallback((indexes = []) => {
+    const nextIndexes = new Set(indexes.filter((index) => Number.isInteger(index)));
+    if (!nextIndexes.size) return;
+    setHarvestFlashIndexes(nextIndexes);
+    if (harvestFlashTimerRef.current) clearTimeout(harvestFlashTimerRef.current);
+    harvestFlashTimerRef.current = setTimeout(() => setHarvestFlashIndexes(new Set()), 720);
+  }, []);
 
   useEffect(() => {
     if (!showTooltips || !decorMode || dismissedDecorHint || ghostActive) return;
@@ -1004,6 +1057,7 @@ const FarmGrid = memo(() => {
       // Reset plot
       actions.harvestCrop(index, earnings);
       setHarvestBloomTick(Date.now());
+      triggerHarvestFeedback([index]);
       actions.recordMemoryEvent('crop_harvested', { cropId: crop.id });
       actions.recordCozyExpansionEvent('crop_harvested', { cropId: crop.id });
       actions.recordAlmanacEvent('crop_harvested', {
@@ -1031,6 +1085,7 @@ const FarmGrid = memo(() => {
       inventory,
       seasonCurrent,
       weather,
+      triggerHarvestFeedback,
     ]
   );
 
@@ -1072,6 +1127,11 @@ const FarmGrid = memo(() => {
     if (harvestedCount > 0) {
       actions.updatePlots(updatedPlots);
       setHarvestBloomTick(Date.now());
+      triggerHarvestFeedback(
+        plotsArray
+          .map((plot, index) => (selectedPlots.has(index) && plot?.state === 'ready' ? index : -1))
+          .filter((index) => index >= 0)
+      );
       actions.earnMoney(totalEarnings);
       actions.addXP(totalXp, { source: 'harvest', label: 'Bulk Harvest' });
       actions.updateInventory((inventory) => {
@@ -1138,7 +1198,16 @@ const FarmGrid = memo(() => {
     }
 
     setSelectedPlots(new Set());
-  }, [actions, animationsEnabled, farmPlots, inventory, seasonCurrent, selectedPlots, weather]);
+  }, [
+    actions,
+    animationsEnabled,
+    farmPlots,
+    inventory,
+    seasonCurrent,
+    selectedPlots,
+    triggerHarvestFeedback,
+    weather,
+  ]);
 
   const handleSelectAll = useCallback(() => {
     setSelectedPlots(new Set(farmPlots.map((_, index) => index)));
@@ -1155,11 +1224,17 @@ const FarmGrid = memo(() => {
   return (
     <Card
       data-onboard="farm-grid"
-      className="p-3 sm:p-6 bg-gradient-to-br from-green-50/90 via-emerald-50/80 to-lime-50/70 relative overflow-hidden rounded-2xl shadow-lg border border-green-100/50 backdrop-blur-sm"
+      className="farm-board-shell p-3 sm:p-6 bg-gradient-to-br from-green-50/90 via-emerald-50/80 to-lime-50/70 relative overflow-hidden rounded-2xl shadow-lg border border-green-100/50 backdrop-blur-sm"
     >
+      <FarmLandscape
+        gridSize={gridSize}
+        buildings={buildings}
+        season={seasonCurrent}
+        weather={weather}
+      />
       <div className="mb-3 sm:mb-4 text-center relative z-20">
-        <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-600 bg-clip-text text-transparent mb-1.5 flex items-center justify-center gap-2">
-          <span className="text-2xl sm:text-3xl filter drop-shadow-sm">🌾</span>
+        <h2 className="farm-board-title text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-600 bg-clip-text text-transparent mb-1.5 flex items-center justify-center gap-2">
+          <FarmSprite cropId="seedling" stage={2} state="growing" size="small" />
           Your Farm
           {selectedPlots.size > 0 && (
             <Badge className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white animate-pulse shadow-lg">
@@ -1287,7 +1362,7 @@ const FarmGrid = memo(() => {
 
       {/* Farm Grid - Responsive with larger touch targets on mobile */}
       <div
-        className="grid gap-1.5 sm:gap-2.5 md:gap-4 mx-auto justify-center farm-grid relative w-full"
+        className="farm-field grid gap-1.5 sm:gap-2.5 md:gap-4 mx-auto justify-center farm-grid relative w-full"
         data-harvest-bloom={harvestBloomTick > 0 ? 'on' : 'off'}
         style={{
           gridTemplateColumns: `repeat(${gridSize}, minmax(${gridSize >= 5 ? 52 : 56}px, 1fr))`,
@@ -1322,6 +1397,7 @@ const FarmGrid = memo(() => {
             harvestMultiplier={harvestMultiplier}
             gridSize={gridSize}
             isTrinket={Boolean(DECORATION_DATA[plot?.decorationId]?.tags?.includes('trinket'))}
+            isHarvesting={harvestFlashIndexes.has(index)}
           />
         ))}
       </div>

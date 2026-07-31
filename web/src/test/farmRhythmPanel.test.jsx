@@ -8,6 +8,7 @@ const mockActions = {
   harvestAllReadyCrops: vi.fn(),
   treatAllDiseases: vi.fn(),
   waterAllPlots: vi.fn(),
+  prepareWeatherPlan: vi.fn(),
   setSelectedCrop: vi.fn(),
   addNotification: vi.fn(),
 };
@@ -38,6 +39,8 @@ describe('FarmRhythmPanel', () => {
       coins: 140,
       level: 1,
       weather: 'rainy',
+      weatherPlan: 'observe',
+      weatherForecast: ['sunny', 'cloudy'],
       season: {
         config: {
           name: 'Spring',
@@ -75,5 +78,16 @@ describe('FarmRhythmPanel', () => {
     await user.click(screen.getByRole('button', { name: /Check Animals/i }));
 
     expect(navigate).toHaveBeenCalledWith('livestock');
+  });
+
+  it('runs the weather field plan from the rhythm panel', async () => {
+    const user = userEvent.setup();
+    mockState.weather = 'sunny';
+
+    render(<FarmRhythmPanel onNavigate={vi.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: /Tend the beds/i }));
+
+    expect(mockActions.prepareWeatherPlan).toHaveBeenCalledTimes(1);
   });
 });

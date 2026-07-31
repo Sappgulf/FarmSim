@@ -76,6 +76,14 @@ const Tutorial = memo(() => {
     const cardWidth = Math.min(320, viewportWidth - margin * 2);
     const cardHeight = 190;
 
+    if (viewportWidth < 640) {
+      return {
+        top: clamp(viewportHeight - cardHeight - 96, margin, viewportHeight - cardHeight - margin),
+        left: clamp((viewportWidth - cardWidth) / 2, margin, viewportWidth - cardWidth - margin),
+        width: cardWidth,
+      };
+    }
+
     if (!targetRect) {
       return {
         top: clamp(viewportHeight - cardHeight - 120, margin, viewportHeight - cardHeight - margin),
@@ -153,6 +161,12 @@ const Tutorial = memo(() => {
     dragStateRef.current = null;
   };
 
+  const handleSkipPointerDown = (event) => {
+    // The card only captures pointers from its dedicated drag handle. Keep
+    // touch/click events on controls from being swallowed by the drag surface.
+    event.stopPropagation();
+  };
+
   const handleSkip = () => {
     actions.updateOnboarding({
       onboardingSkipped: true,
@@ -181,13 +195,15 @@ const Tutorial = memo(() => {
         className="absolute"
         style={{ top: position.top, left: position.left, width: position.width }}
       >
-        <Card
-          className="pointer-events-auto p-4 bg-white/95 shadow-xl border border-emerald-100"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-        >
-          <div className="flex items-center justify-between gap-3">
+        <Card className="pointer-events-auto p-4 bg-white/95 shadow-xl border border-emerald-100">
+          <div
+            className="flex cursor-grab touch-none items-center justify-between gap-3 rounded-lg px-1 py-0.5 active:cursor-grabbing"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            aria-label="Drag tutorial card"
+          >
             <div className="flex items-center gap-2">
               <span className="text-xl">{currentStep.emoji}</span>
               <div className="text-sm font-semibold text-gray-900">{currentStep.title}</div>
@@ -200,8 +216,13 @@ const Tutorial = memo(() => {
           <p className="mt-2 text-xs text-gray-600">{currentStep.description}</p>
 
           <div className="mt-3 flex items-center justify-between">
-            <span className="text-[10px] text-gray-400">Drag to move</span>
-            <Button variant="outline" size="sm" onClick={handleSkip}>
+            <span className="text-[10px] text-gray-400">Drag the title to move</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onPointerDown={handleSkipPointerDown}
+              onClick={handleSkip}
+            >
               Skip
             </Button>
           </div>
