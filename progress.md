@@ -106,9 +106,11 @@ Notes:
 - [x] Ship the generated art as an optimized WebP through the semantic farm asset registry.
 - [x] Make the atmosphere respond to season and weather without coupling raster art to simulation state.
 - [x] Align Vitest filesystem access with the production Vite boundary.
-- [x] Run release QA, commit, push, and Vercel deployment preflight.
+- [x] Run release QA, commit, push, and Vercel deployment.
 
 Notes:
 - The generated 1536×1024 scene was converted from 3.0 MB PNG to a 328 KB WebP and placed at `web/public/assets/farm/meadowlight-atmosphere.webp`.
 - Native browser QA verified the asset loads, season/weather data hooks render, all 23 tabs switch cleanly, mobile tools open, and 390px mobile has no horizontal overflow.
 - Final pre-release verification: `npm run qa:full` passed with `41` test files / `117` tests, lint `0` errors / `41` warnings, and production build passed.
+- Playwright e2e passed all 4 repository flows after hardening the force-ready timing helper.
+- Commit `7ea612c` was pushed to `origin/main`; Vercel production deployment `dpl_64QgNP5ZAjMWoBNpJj4L8LA4pAZU` is ready at `https://farm-sim-seven.vercel.app`.
