@@ -10,6 +10,7 @@ export type FarmAction =
   | { type: 'WATER_PLOTS' }
   | { type: 'ADVANCE_DAY' }
   | { type: 'HARVEST_PLOTS' }
+  | { type: 'COLLECT_ANIMAL_PRODUCTS'; product: 'eggs' | 'milk' }
   | { type: 'START_PRODUCTION'; recipe: ProductionRecipeKey }
   | { type: 'COLLECT_PRODUCTION'; id: string }
   | { type: 'CANCEL_PRODUCTION'; id: string }
@@ -40,7 +41,7 @@ function togglePlotSelection(state: FarmState, plotId: number): FarmState {
 
 function reducePlantSelectedPlots(state: FarmState, crop: CropKey): FarmState {
   const selected = state.selectedPlotIds
-  if (selected.length === 0 || new Set(selected).size !== selected.length || selected.some((id) => !state.plots[id]?.available || state.plots[id].crop !== null)) return state
+  if (selected.length === 0 || state.seedStock[crop] < selected.length || new Set(selected).size !== selected.length || selected.some((id) => !state.plots[id]?.available || state.plots[id].crop !== null)) return state
 
   const plots = { ...state.plots }
   selected.forEach((id) => {
@@ -48,7 +49,12 @@ function reducePlantSelectedPlots(state: FarmState, crop: CropKey): FarmState {
     plots[id] = { ...plot, crop, watered: false, growthDays: 0, ready: false }
   })
 
-  return { ...state, selectedPlotIds: [], plots }
+  return {
+    ...state,
+    seedStock: { ...state.seedStock, [crop]: state.seedStock[crop] - selected.length },
+    selectedPlotIds: [],
+    plots,
+  }
 }
 
 function waterPlots(state: FarmState): FarmState {
@@ -72,13 +78,19 @@ function reduceAdvanceFarmDay(state: FarmState): FarmState {
     const plot = plots[id]
     if (!plot.crop) return
     const crop = cropOptions.find((option) => option.key === plot.crop)
-    const growthDays = crop ? Math.min(crop.growthDays, plot.growthDays + (plot.watered ? 1 : 0)) : plot.growthDays
+    const receivesWater = plot.watered || state.weather === 'Rainy'
+    const growthDays = crop ? Math.min(crop.growthDays, plot.growthDays + (receivesWater ? 1 : 0)) : plot.growthDays
     plots[id] = { ...plot, watered: false, growthDays, ready: plot.ready || (crop ? growthDays >= crop.growthDays : false) }
   })
 
   return {
     ...state,
     day: state.day + 1,
+    weather: ['Sunny', 'Cloudy', 'Rainy', 'Sunny', 'Windy'][(state.day + 1) % 5],
+    animalProducts: {
+      eggs: Math.min(12, state.animalProducts.eggs + 2),
+      milk: Math.min(6, state.animalProducts.milk + 1),
+    },
     plots,
     productionQueue: state.productionQueue.map(advanceProductionItem),
   }
@@ -93,12 +105,23 @@ function harvestPlots(state: FarmState): FarmState {
     const id = Number(key)
     const plot = plots[id]
     if (!plot.crop || !plot.ready) return
-    inventory[plot.crop] += 1
+    const crop = cropOptions.find((option) => option.key === plot.crop)
+    inventory[plot.crop] += crop?.harvestYield ?? 1
     plots[id] = { ...plot, crop: null, watered: false, growthDays: 0, ready: false }
     harvested = true
   })
 
   return harvested ? { ...state, inventory, plots, selectedPlotIds: [] } : state
+}
+
+function reduceCollectAnimalProducts(state: FarmState, product: 'eggs' | 'milk'): FarmState {
+  const quantity = state.animalProducts[product]
+  if (quantity <= 0) return state
+  return {
+    ...state,
+    inventory: { ...state.inventory, [product]: state.inventory[product] + quantity },
+    animalProducts: { ...state.animalProducts, [product]: 0 },
+  }
 }
 
 function reduceStartProduction(state: FarmState, recipeKey: ProductionRecipeKey): FarmState {
@@ -192,6 +215,8 @@ export function farmReducer(state: FarmState, action: FarmAction): FarmState {
       return reduceAdvanceFarmDay(state)
     case 'HARVEST_PLOTS':
       return harvestPlots(state)
+    case 'COLLECT_ANIMAL_PRODUCTS':
+      return reduceCollectAnimalProducts(state, action.product)
     case 'START_PRODUCTION':
       return reduceStartProduction(state, action.recipe)
     case 'COLLECT_PRODUCTION':
@@ -210,6 +235,7 @@ export const plantSelectedPlots = (state: FarmState, crop: CropKey) => farmReduc
 export const waterPlantedPlots = (state: FarmState) => farmReducer(state, { type: 'WATER_PLOTS' })
 export const advanceFarmDay = (state: FarmState) => farmReducer(state, { type: 'ADVANCE_DAY' })
 export const harvestReadyPlots = (state: FarmState) => farmReducer(state, { type: 'HARVEST_PLOTS' })
+export const collectAnimalProducts = (state: FarmState, product: 'eggs' | 'milk') => farmReducer(state, { type: 'COLLECT_ANIMAL_PRODUCTS', product })
 export const startProduction = (state: FarmState, recipe: ProductionRecipeKey) => farmReducer(state, { type: 'START_PRODUCTION', recipe })
 export const collectProduction = (state: FarmState, id: string) => farmReducer(state, { type: 'COLLECT_PRODUCTION', id })
 export const shipGoods = (state: FarmState, orderId: string, quantity: number) => farmReducer(state, { type: 'SHIP_GOODS', orderId, quantity })

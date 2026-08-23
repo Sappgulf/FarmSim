@@ -41,6 +41,12 @@ describe('FarmSim persistence', () => {
     expect(loadFarmState(storage)).toEqual(state)
   })
 
+  it('backfills seed stock and animal production for older v2 saves', () => {
+    const migrated = migrateStoredState({ day: 20 })
+    expect(migrated.seedStock).toEqual(initialFarmState.seedStock)
+    expect(migrated.animalProducts).toEqual(initialFarmState.animalProducts)
+  })
+
   it('migrates legacy aggregate plot fields into canonical plot records', () => {
     const storage = new MemoryStorage()
     const legacy: StoredState = {

@@ -1,5 +1,22 @@
 # Changelog
 
+## [Web 0.2.0] - 2026-08-23
+
+### Added
+- Seed stock, crop-specific harvest yields, deterministic weather-assisted growth, and collectible egg/milk production.
+- Browser-readable game state and deterministic time hooks for automated playtesting, plus an `F` fullscreen shortcut.
+- Real gameplay screenshots, installable PWA metadata, working app shortcuts, and offline caching for painterly game assets.
+
+### Changed
+- Reworked the web shell around three honest destinations: Homestead, Fields, and Barn & Market.
+- Added state-driven weather visuals, richer field states, compact mobile Barn/Market tabs, safe-area-aware navigation, and low-height layout fixes.
+- Expanded the default web test gate from 2 suites / 13 tests to 41 suites / 138 tests.
+
+### Fixed
+- Planting no longer ignores seed inventory, animal production is no longer decorative, and rain now has a deterministic gameplay effect.
+- Repaired shared-content glob resolution and restored the legacy Vitest/Jest-DOM setup.
+- Replaced outdated manifest shortcuts and placeholder PWA screenshots.
+
 ## [4.2.1] - 2026-02-13
 ### Added
 - New **Premium App Icon**: "Friendly Barn" (text-free, high-quality 3D style).

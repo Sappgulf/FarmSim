@@ -39,3 +39,16 @@
 - [x] Added `vercel.json` to make Vercel install and build `web/` explicitly (`installCommand`, `buildCommand`, `outputDirectory`).
 - [x] Mobile browser snapshot exposed launch clutter on fresh start: `Tutorial` and `WhatsNewModal` can stack on top of the first playable screen, which reads as crowded on phone-sized viewports. Gate the release-notes modal behind a real returning-player signal so it does not compete with onboarding. ✅ Fixed by introducing persisted `hasLaunchedBefore` session gate + browser validation.
 - [ ] Web runtime has no real GLB/GLTF shipping surface in the current repo scan, so the 3D asset pipeline skill was not directly applicable to this pass.
+
+## 2026-08-23 Web Production Rehaul
+- [x] Audited the active TypeScript parity app, legacy React surface, shared content, PWA metadata, and iOS build/test paths.
+- [x] Preserved the painterly overview asset and unified navigation around the three implemented destinations.
+- [x] Added seed consumption, per-crop yield, deterministic rain growth, daily animal production, and one-time animal collection.
+- [x] Added `render_game_to_text`, `advanceTime`, and fullscreen support for deterministic browser playtesting.
+- [x] Reworked responsive visuals, weather treatments, safe-area navigation, and low-height Barn/Planning behavior.
+- [x] Replaced placeholder manifest screenshots with real 1280x720 and 540x720 gameplay captures.
+- [x] Repaired content globs/aliases and promoted all tracked web suites into the default Vitest gate (41 suites / 138 tests).
+- [x] Verified the clean browser loop: plant -> water -> advance -> harvest -> collect -> produce -> ship, with zero console errors.
+- [x] Verified web build/lint, iOS GameCore tests, and iOS simulator build.
+- [ ] Image generation was unavailable because `OPENAI_API_KEY` was not set; existing local artwork was reused and re-integrated.
+- [ ] `npm audit` reports the pre-existing `vite -> postcss -> nanoid@3.3.16` advisory (GHSA-2v37-7h3g-55p8); no affected custom nanoid generator is used by FarmSim.

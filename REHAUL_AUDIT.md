@@ -1,5 +1,18 @@
 # FarmSim Rehaul Audit
 
+## Production polish follow-up — 2026-08-23
+
+Mode: Polish and ship
+
+- **AP-004 (P1, gameplay) — fixed:** planting did not consume a resource. Seed stock is now saved, migrated, validated, displayed, and consumed atomically.
+- **AP-005 (P1, gameplay) — fixed:** Animal Production was decorative. Eggs and milk now accrue per deterministic day and can be collected once into inventory.
+- **AP-006 (P2, UX) — fixed:** prominent navigation controls led to placeholder announcements. Navigation now exposes only Homestead, Fields, and Barn & Market.
+- **AP-007 (P2, visual/responsive) — fixed:** low-height and narrow layouts obscured Barn/Planning navigation and mixed Barn/Market density. The shell now uses safe-area-aware fixed navigation and mobile tab isolation.
+- **AP-008 (P2, reliability) — fixed:** the default Vitest include pattern excluded 39 tracked suites. The default gate now runs 41 suites / 138 tests.
+- **AP-009 (P3, asset/PWA) — fixed:** install screenshots and shortcuts represented an older UI. They now use real gameplay captures and current hash routes.
+
+Verification evidence: web build/lint, 41-suite Vitest gate, deterministic browser journey with text-state assertions and zero console errors, iOS GameCore test suite, iPhone simulator build, and desktop/mobile screenshot inspection.
+
 Date: 2026-08-01
 Mode: Audit + product/design direction
 Environment: local workspace

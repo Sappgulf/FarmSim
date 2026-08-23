@@ -52,6 +52,10 @@ export default function App() {
       announce('Harvest the current crop before planting another field.')
       return
     }
+    if (state.seedStock[selectedCrop] < state.selectedPlotIds.length) {
+      announce(`You need ${state.selectedPlotIds.length - state.seedStock[selectedCrop]} more ${selectedCrop} seeds.`)
+      return
+    }
     const selectedCount = state.selectedPlotIds.length
     dispatch({ type: 'PLANT_SELECTED_PLOTS', crop: selectedCrop })
     announce(`${selectedCount} plots planted with ${selectedCrop}.`)
@@ -153,7 +157,15 @@ export default function App() {
     announce(`${order.label} sell order removed.`)
   }, [announce, state.sellOrders])
 
-  const handleUnbuilt = useCallback((label: string) => announce(`${label} is mapped for the next farm slice.`), [announce])
+  const collectAnimalProducts = useCallback((product: 'eggs' | 'milk') => {
+    const quantity = state.animalProducts[product]
+    if (quantity < 1) {
+      announce(`No ${product} are ready yet. Advance the day to keep production moving.`)
+      return
+    }
+    dispatch({ type: 'COLLECT_ANIMAL_PRODUCTS', product })
+    announce(`Collected ${quantity} ${product} and moved them into inventory.`)
+  }, [announce, state.animalProducts])
 
   const focusTask = useCallback((task: string) => {
     if (task.includes('Plant') || task.includes('Water') || task.includes('Harvest')) {
@@ -165,13 +177,51 @@ export default function App() {
     }
   }, [announce, navigate])
 
+  useEffect(() => {
+    window.render_game_to_text = () => JSON.stringify({
+      coordinateSystem: 'Farm plots use row-major IDs 0-29, left-to-right and top-to-bottom.',
+      screen,
+      day: state.day,
+      season: state.season,
+      weather: state.weather,
+      money: state.money,
+      selectedCrop,
+      seedStock: state.seedStock,
+      animalProducts: state.animalProducts,
+      selectedPlots: state.selectedPlotIds,
+      plantedPlots: plantedPlotIds(state),
+      wateredPlots: wateredPlotIds(state),
+      readyPlots: readyPlotIds(state),
+      inventory: state.inventory,
+      productionQueue: state.productionQueue.map(({ id, recipe, progress, phase }) => ({ id, recipe, progress, phase })),
+      sellOrders: state.sellOrders.map(({ id, icon, amount, payoutPerUnit }) => ({ id, item: icon, amount, payoutPerUnit })),
+    })
+    window.advanceTime = async () => Promise.resolve()
+    return () => {
+      delete window.render_game_to_text
+      delete window.advanceTime
+    }
+  }, [screen, selectedCrop, state])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== 'f' || event.metaKey || event.ctrlKey || event.altKey) return
+      const target = event.target as HTMLElement | null
+      if (target?.matches('input, textarea, select')) return
+      if (document.fullscreenElement) void document.exitFullscreen()
+      else void document.documentElement.requestFullscreen()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   return (
     <div className="app-frame">
       <TopBar state={state} onHome={() => navigate('overview')} onAdvanceDay={advanceDay} />
       <main>
-        {screen === 'overview' && <FarmOverview state={state} onNavigate={navigate} onUnbuilt={handleUnbuilt} onFocusTask={focusTask} onAdvanceDay={advanceDay} />}
-        {screen === 'planning' && <FieldPlanning state={state} selectedCrop={selectedCrop} onSelectCrop={setSelectedCrop} onTogglePlot={togglePlot} onPlant={plant} onWater={water} onHarvest={harvest} onAdvanceDay={advanceDay} onNavigate={navigate} onUnbuilt={handleUnbuilt} />}
-        {screen === 'barn' && <BarnMarket state={state} focus={barnFocus} onFocusChange={setBarnFocus} onShip={ship} onCancelProduction={cancelQueueItem} onStartProduction={queueRecipe} onCollectProduction={collectQueueItem} onRemoveSellOrder={removeOrder} onNavigate={navigate} onUnbuilt={handleUnbuilt} />}
+        {screen === 'overview' && <FarmOverview state={state} onNavigate={navigate} onFocusTask={focusTask} onAdvanceDay={advanceDay} />}
+        {screen === 'planning' && <FieldPlanning state={state} selectedCrop={selectedCrop} onSelectCrop={setSelectedCrop} onTogglePlot={togglePlot} onPlant={plant} onWater={water} onHarvest={harvest} onAdvanceDay={advanceDay} onNavigate={navigate} />}
+        {screen === 'barn' && <BarnMarket state={state} focus={barnFocus} onFocusChange={setBarnFocus} onShip={ship} onCancelProduction={cancelQueueItem} onStartProduction={queueRecipe} onCollectProduction={collectQueueItem} onCollectAnimalProducts={collectAnimalProducts} onRemoveSellOrder={removeOrder} onNavigate={navigate} />}
       </main>
       <div className={`toast ${toast ? 'is-visible' : ''}`} role="status" aria-live="polite">{toast}</div>
     </div>

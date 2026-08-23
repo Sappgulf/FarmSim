@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { initialFarmState } from './data'
 import { plantedCrop, plantedPlotIds, readyPlotIds, selectedPlotIds, growthDays } from './selectors'
-import { advanceFarmDay, cancelProduction, collectProduction, harvestReadyPlots, plantSelectedPlots, removeSellOrder, startProduction, shipWheat, waterPlantedPlots } from './state'
+import { advanceFarmDay, cancelProduction, collectAnimalProducts, collectProduction, harvestReadyPlots, plantSelectedPlots, removeSellOrder, startProduction, shipWheat, waterPlantedPlots } from './state'
 
 describe('FarmSim state transitions', () => {
   it('plants exactly the selected plots and records the crop', () => {
@@ -11,6 +11,7 @@ describe('FarmSim state transitions', () => {
     expect(plantedCrop(next)).toBe('wheat')
     expect(selectedPlotIds(next)).toEqual([])
     expect(next.plots[6].crop).toBe('wheat')
+    expect(next.seedStock.wheat).toBe(24)
   })
 
   it('ships five wheat and updates money, inventory, and progress', () => {
@@ -66,11 +67,31 @@ describe('FarmSim state transitions', () => {
     for (let day = 0; day < 4; day += 1) state = advanceFarmDay(waterPlantedPlots(state))
 
     const next = harvestReadyPlots(state)
-    expect(next.inventory.wheat).toBe(72)
+    expect(next.inventory.wheat).toBe(84)
     expect(plantedPlotIds(next)).toEqual([])
     expect(readyPlotIds(next)).toEqual([])
     expect(plantedCrop(next)).toBeNull()
     expect(next.plots[6]).toMatchObject({ crop: null, watered: false, growthDays: 0, ready: false })
+  })
+
+  it('rejects planting when seed stock cannot cover the selected field', () => {
+    const state = { ...initialFarmState, seedStock: { ...initialFarmState.seedStock, wheat: 11 } }
+    expect(plantSelectedPlots(state, 'wheat')).toBe(state)
+  })
+
+  it('uses rainy weather to grow crops and rotates weather deterministically', () => {
+    const planted = plantSelectedPlots({ ...initialFarmState, weather: 'Rainy' }, 'wheat')
+    const next = advanceFarmDay(planted)
+    expect(growthDays(next)).toBe(1)
+    expect(next.weather).toBe('Sunny')
+  })
+
+  it('collects ready animal products once and advances production each day', () => {
+    const collected = collectAnimalProducts(initialFarmState, 'eggs')
+    expect(collected.inventory.eggs).toBe(42)
+    expect(collected.animalProducts.eggs).toBe(0)
+    expect(collectAnimalProducts(collected, 'eggs')).toBe(collected)
+    expect(advanceFarmDay(collected).animalProducts.eggs).toBe(2)
   })
 
   it('starts production by consuming inputs and collects ready output once', () => {

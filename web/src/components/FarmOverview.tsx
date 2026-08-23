@@ -7,12 +7,11 @@ import { AppNav } from './AppNav'
 type FarmOverviewProps = {
   state: FarmState
   onNavigate: (screen: Screen) => void
-  onUnbuilt: (label: string) => void
   onFocusTask: (task: string) => void
   onAdvanceDay: () => void
 }
 
-export function FarmOverview({ state, onNavigate, onUnbuilt, onFocusTask, onAdvanceDay }: FarmOverviewProps) {
+export function FarmOverview({ state, onNavigate, onFocusTask, onAdvanceDay }: FarmOverviewProps) {
   const crop = plantedCrop(state)
   const cropLabel = crop === 'tomato' ? 'Tomato' : crop === 'corn' ? 'Corn' : 'Wheat'
   const plantedIds = plantedPlotIds(state)
@@ -26,9 +25,10 @@ export function FarmOverview({ state, onNavigate, onUnbuilt, onFocusTask, onAdva
   const waterComplete = plantedCount > 0 && wateredProgress >= Math.min(plantedCount, 12)
   const nextUp = readyCount > 0 ? `Harvest ${readyCount} ${cropLabel}` : plantedCount > 0 && wateredIds.length < plantedCount ? `Water ${plantedCount} ${cropLabel}` : plantedCount > 0 ? `Advance to Day ${state.day + 1}` : `Plant 12 ${cropLabel}`
 
+  const eggsReady = state.animalProducts.eggs
   const tasks = [
     { label: readyCount > 0 ? `Harvest ${readyCount} ${cropLabel}` : 'Water 12 crops', detail: readyCount > 0 ? `${readyCount} ready` : `${wateredProgress} / 12`, icon: readyCount > 0 ? <Check size={26} className="task-check" /> : <Droplets size={26} className="task-icon-water" />, complete: waterComplete },
-    { label: 'Collect eggs', detail: '6 / 6', icon: <AssetIcon asset="chicken" size={40} />, complete: true },
+    { label: eggsReady > 0 ? 'Collect eggs' : 'Eggs collected', detail: `${eggsReady} / 12 ready`, icon: <AssetIcon asset="chicken" size={40} />, complete: eggsReady === 0 },
     { label: `Plant 12 ${cropLabel}`, detail: `${Math.min(plantedCount, 12)} / 12`, icon: <AssetIcon asset={crop ?? 'wheat'} size={42} />, complete: plantedComplete },
     { label: 'Ship 5 goods', detail: `${Math.min(state.shippedGoods, 5)} / 5`, icon: <Package size={26} />, complete: shippedComplete },
   ]
@@ -36,7 +36,7 @@ export function FarmOverview({ state, onNavigate, onUnbuilt, onFocusTask, onAdva
   return (
     <section className="overview-screen screen-surface" aria-labelledby="overview-heading" aria-describedby="overview-scene-description">
       <p id="overview-scene-description" className="sr-only">A spring farm with a barn, pond, vegetable plots, wheat field, and winding paths.</p>
-      <div className="farm-scene">
+      <div className={`farm-scene weather-${state.weather.toLowerCase()}`}>
         <div className="scene-vignette" />
         <div className="task-panel panel">
           <div className="panel-heading-row">
@@ -52,7 +52,7 @@ export function FarmOverview({ state, onNavigate, onUnbuilt, onFocusTask, onAdva
               </button>
             ))}
           </div>
-          <button className="link-button" type="button" onClick={() => onUnbuilt('View all tasks')}>View all tasks <ChevronRight size={17} /></button>
+          <button className="link-button" type="button" onClick={() => onNavigate('planning')}>Plan today&apos;s field <ChevronRight size={17} /></button>
         </div>
 
         <button className="scene-callout" type="button" aria-live="polite" onClick={() => nextUp.startsWith('Advance') ? onAdvanceDay() : onFocusTask(nextUp)}>
@@ -65,7 +65,7 @@ export function FarmOverview({ state, onNavigate, onUnbuilt, onFocusTask, onAdva
           <span className="plot-sprouts"><i /><i /><i /><i /><i /><i /></span>
         </div>
 
-        <AppNav variant="overview" onNavigate={onNavigate} onUnbuilt={onUnbuilt} />
+        <AppNav variant="overview" onNavigate={onNavigate} />
       </div>
     </section>
   )

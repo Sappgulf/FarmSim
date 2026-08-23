@@ -15,6 +15,7 @@ export type CropOption = {
   waterLevel: 1 | 2 | 3
   growthDays: number
   projectedReturn: number
+  harvestYield: number
 }
 
 export type InventoryItem = {
@@ -67,6 +68,8 @@ export type FarmState = {
   day: number
   season: string
   weather: string
+  seedStock: Record<CropKey, number>
+  animalProducts: { eggs: number; milk: number }
   selectedPlotIds: number[]
   plots: Record<number, PlotState>
   shippedGoods: number
@@ -87,6 +90,7 @@ export const cropOptions: CropOption[] = [
     waterLevel: 1,
     growthDays: 4,
     projectedReturn: 480,
+    harvestYield: 2,
   },
   {
     key: 'tomato',
@@ -99,6 +103,7 @@ export const cropOptions: CropOption[] = [
     waterLevel: 2,
     growthDays: 6,
     projectedReturn: 720,
+    harvestYield: 3,
   },
   {
     key: 'corn',
@@ -111,6 +116,7 @@ export const cropOptions: CropOption[] = [
     waterLevel: 3,
     growthDays: 5,
     projectedReturn: 660,
+    harvestYield: 2,
   },
 ]
 
@@ -157,6 +163,8 @@ export const initialFarmState: FarmState = {
   day: 12,
   season: 'Spring',
   weather: 'Sunny',
+  seedStock: { wheat: 36, tomato: 18, corn: 24 },
+  animalProducts: { eggs: 6, milk: 3 },
   selectedPlotIds: [6, 7, 8, 11, 12, 13, 16, 17, 18, 21, 22, 23],
   plots: createInitialPlots(),
   shippedGoods: 0,

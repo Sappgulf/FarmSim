@@ -15,10 +15,9 @@ type FieldPlanningProps = {
   onHarvest: () => void
   onAdvanceDay: () => void
   onNavigate: (screen: Screen) => void
-  onUnbuilt: (label: string) => void
 }
 
-export function FieldPlanning({ state, selectedCrop, onSelectCrop, onTogglePlot, onPlant, onWater, onHarvest, onAdvanceDay, onNavigate, onUnbuilt }: FieldPlanningProps) {
+export function FieldPlanning({ state, selectedCrop, onSelectCrop, onTogglePlot, onPlant, onWater, onHarvest, onAdvanceDay, onNavigate }: FieldPlanningProps) {
   const activeCrop = cropOptions.find((crop) => crop.key === selectedCrop) ?? cropOptions[0]
   const selectedIds = selectedPlotIds(state)
   const plantedIds = plantedPlotIds(state)
@@ -33,6 +32,7 @@ export function FieldPlanning({ state, selectedCrop, onSelectCrop, onTogglePlot,
   const wateredSet = new Set(wateredIds)
   const readySet = new Set(readyIds)
   const plotCountLabel = selectedCount === 0 ? 'Select plots' : `Plant ${selectedCount} plots`
+  const hasEnoughSeeds = state.seedStock[selectedCrop] >= selectedCount
 
   return (
     <section className="planning-screen screen-surface" aria-labelledby="planning-heading">
@@ -93,12 +93,13 @@ export function FieldPlanning({ state, selectedCrop, onSelectCrop, onTogglePlot,
                 <span className="crop-stat"><span>Growth Time</span><strong><Clock3 size={13} /> {crop.growthTime}</strong></span>
                 <span className="crop-stat"><span>Water Need</span><strong className="water-stat"><Droplets size={13} /> {crop.waterNeed}</strong></span>
                 <span className="crop-stat"><span>Projected Return</span><strong className="return-stat"><span className="coin-dot">$</span>${crop.projectedReturn}</strong></span>
+                <span className="crop-stat seed-stat"><span>Seed Stock</span><strong>{state.seedStock[crop.key]} seeds · {crop.harvestYield}× yield</strong></span>
               </span>
             </button>
           ))}
         </div>
         <p className="field-progress" aria-live="polite">
-          {readyCount > 0 ? `${readyCount} plots are ready to harvest.` : plantedCount > 0 ? `${wateredCount} / ${plantedCount} watered · ${growthDays(state)} / ${activeCrop.growthDays} growth days` : `${selectedCount} plots selected for planting.`}
+          {readyCount > 0 ? `${readyCount} plots are ready to harvest.` : plantedCount > 0 ? `${wateredCount} / ${plantedCount} watered · ${growthDays(state)} / ${activeCrop.growthDays} growth days` : !hasEnoughSeeds ? `Need ${selectedCount - state.seedStock[selectedCrop]} more ${selectedCrop} seeds.` : `${selectedCount} plots selected · ${state.seedStock[selectedCrop]} seeds available.`}
         </p>
         {readyCount > 0 ? (
           <button className="primary-button plant-button" type="button" onClick={onHarvest}><Check size={20} /> Harvest {readyCount} plots</button>
@@ -107,11 +108,11 @@ export function FieldPlanning({ state, selectedCrop, onSelectCrop, onTogglePlot,
         ) : plantedCount > 0 ? (
           <button className="primary-button plant-button" type="button" onClick={onAdvanceDay}><Clock3 size={20} /> Advance to day {state.day + 1}</button>
         ) : (
-          <button className="primary-button plant-button" type="button" disabled={selectedCount === 0} onClick={onPlant}><Sprout size={20} /> {plotCountLabel}</button>
+          <button className="primary-button plant-button" type="button" disabled={selectedCount === 0 || !hasEnoughSeeds} onClick={onPlant}><Sprout size={20} /> {plotCountLabel}</button>
         )}
       </aside>
 
-      <AppNav variant="planning" onNavigate={onNavigate} onUnbuilt={onUnbuilt} />
+      <AppNav variant="planning" onNavigate={onNavigate} />
       <button className="planning-map-link" type="button" onClick={() => onNavigate('overview')}><Map size={16} /> Return to map</button>
       <span className="planning-active-crop" aria-live="polite">{activeCrop.label} selected · {activeCrop.growthDays} days</span>
     </section>

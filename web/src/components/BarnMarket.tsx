@@ -13,12 +13,12 @@ type BarnMarketProps = {
   onCancelProduction: (id: string) => void
   onStartProduction: (recipe: ProductionRecipeKey) => void
   onCollectProduction: (id: string) => void
+  onCollectAnimalProducts: (product: 'eggs' | 'milk') => void
   onRemoveSellOrder: (id: string) => void
   onNavigate: (screen: Screen) => void
-  onUnbuilt: (label: string) => void
 }
 
-export function BarnMarket({ state, focus, onFocusChange, onShip, onCancelProduction, onStartProduction, onCollectProduction, onRemoveSellOrder, onNavigate, onUnbuilt }: BarnMarketProps) {
+export function BarnMarket({ state, focus, onFocusChange, onShip, onCancelProduction, onStartProduction, onCollectProduction, onCollectAnimalProducts, onRemoveSellOrder, onNavigate }: BarnMarketProps) {
   const [shipQuantities, setShipQuantities] = useState<Record<string, number>>({})
   const optionalInventoryItems = [...cropInventoryItems, ...processedInventoryItems].filter((item) => state.inventory[item.key] > 0)
   const displayInventoryItems = [...inventoryItems, ...optionalInventoryItems]
@@ -29,12 +29,12 @@ export function BarnMarket({ state, focus, onFocusChange, onShip, onCancelProduc
   return (
     <section className="barn-screen screen-surface" aria-labelledby="barn-heading">
       <div className="barn-tabs" role="tablist" aria-label="Barn and market focus">
-        <button className={focus === 'barn' ? 'is-active' : ''} type="button" role="tab" aria-selected={focus === 'barn'} onClick={() => onFocusChange('barn')}><Warehouse size={21} /> Barn</button>
-        <button className={focus === 'market' ? 'is-active' : ''} type="button" role="tab" aria-selected={focus === 'market'} onClick={() => onFocusChange('market')}><Store size={21} /> Market</button>
+        <button className={focus === 'barn' ? 'is-active' : ''} type="button" role="tab" aria-selected={focus === 'barn'} aria-controls="barn-operations" onClick={() => onFocusChange('barn')}><Warehouse size={21} /> Barn</button>
+        <button className={focus === 'market' ? 'is-active' : ''} type="button" role="tab" aria-selected={focus === 'market'} aria-controls="market-operations" onClick={() => onFocusChange('market')}><Store size={21} /> Market</button>
       </div>
 
       <div className={`barn-content ${focus === 'barn' ? 'focus-barn' : 'focus-market'}`}>
-        <div className="barn-column">
+        <div className="barn-column" id="barn-operations" role="tabpanel" aria-label="Barn operations">
           <div className="section-title-row"><div><h1 id="barn-heading">Inventory</h1><p>Everything ready to move through the farm.</p></div><Package size={21} /></div>
           <div className="inventory-grid">
             {displayInventoryItems.map((item) => (
@@ -49,8 +49,8 @@ export function BarnMarket({ state, focus, onFocusChange, onShip, onCancelProduc
 
           <section className="production-panel inner-panel" aria-labelledby="animal-production-heading">
             <div className="inner-panel-heading"><h2 id="animal-production-heading">Animal Production</h2><ChevronDown size={16} /></div>
-            <div className="animal-row"><AssetIcon asset="chicken" size={46} /><div className="animal-copy"><strong>Chickens</strong><span>6 / 12</span></div><div className="progress-line"><i style={{ width: '52%' }} /></div><span className="animal-next"><AssetIcon asset="eggs" size={26} /> Next: 2h 15m</span></div>
-            <div className="animal-row"><AssetIcon asset="cow" size={46} /><div className="animal-copy"><strong>Cows</strong><span>3 / 6</span></div><div className="progress-line"><i style={{ width: '44%' }} /></div><span className="animal-next"><AssetIcon asset="milk" size={26} /> Next: 4h 30m</span></div>
+            <div className="animal-row"><AssetIcon asset="chicken" size={46} /><div className="animal-copy"><strong>Chickens</strong><span>{state.animalProducts.eggs} / 12 eggs</span></div><div className="progress-line"><i style={{ width: `${state.animalProducts.eggs / 12 * 100}%` }} /></div><button className="collect-button" type="button" disabled={state.animalProducts.eggs < 1} onClick={() => onCollectAnimalProducts('eggs')}><AssetIcon asset="eggs" size={25} /> Collect {state.animalProducts.eggs}</button></div>
+            <div className="animal-row"><AssetIcon asset="cow" size={46} /><div className="animal-copy"><strong>Cows</strong><span>{state.animalProducts.milk} / 6 milk</span></div><div className="progress-line"><i style={{ width: `${state.animalProducts.milk / 6 * 100}%` }} /></div><button className="collect-button" type="button" disabled={state.animalProducts.milk < 1} onClick={() => onCollectAnimalProducts('milk')}><AssetIcon asset="milk" size={25} /> Collect {state.animalProducts.milk}</button></div>
           </section>
 
           <section className="production-panel inner-panel" aria-labelledby="queue-heading">
@@ -75,7 +75,7 @@ export function BarnMarket({ state, focus, onFocusChange, onShip, onCancelProduc
           </section>
         </div>
 
-        <aside className="market-column">
+        <aside className="market-column" id="market-operations" role="tabpanel" aria-label="Market operations">
           <section className="market-trends inner-panel" aria-labelledby="market-trends-heading">
             <div className="inner-panel-heading"><h2 id="market-trends-heading">Market Trends</h2><BarChart3 size={16} /></div>
             <svg className="trend-chart" viewBox="0 0 300 70" role="img" aria-label="Market trend chart rising over the last seven days">
@@ -128,7 +128,7 @@ export function BarnMarket({ state, focus, onFocusChange, onShip, onCancelProduc
         </aside>
       </div>
 
-      <AppNav variant="barn" onNavigate={onNavigate} onUnbuilt={onUnbuilt} />
+      <AppNav variant="barn" onNavigate={onNavigate} />
     </section>
   )
 }

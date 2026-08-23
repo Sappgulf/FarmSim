@@ -117,6 +117,8 @@ export function migrateStoredState(parsed: StoredState): FarmState {
     day: parsed.day ?? initialFarmState.day,
     season: parsed.season ?? initialFarmState.season,
     weather: parsed.weather ?? initialFarmState.weather,
+    seedStock: { ...initialFarmState.seedStock, ...(parsed.seedStock ?? {}) },
+    animalProducts: { ...initialFarmState.animalProducts, ...(parsed.animalProducts ?? {}) },
     selectedPlotIds: parsed.selectedPlotIds ?? parsed.selectedPlots ?? initialFarmState.selectedPlotIds,
     plots: migratePlots(parsed),
     shippedGoods: parsed.shippedGoods ?? initialFarmState.shippedGoods,
