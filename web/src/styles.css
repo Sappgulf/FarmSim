@@ -59,7 +59,7 @@ p { color: var(--ink-soft); font-size: .8rem; line-height: 1.45; }
 /* Overview */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .safe-area-pr { padding-right: env(safe-area-inset-right, 0px); }
-.farm-scene { position: relative; min-height: inherit; overflow: hidden; background: #7c9d58 url('/assets/farm-overview.webp') center center / cover no-repeat; isolation: isolate; }
+.farm-scene { position: relative; min-height: inherit; overflow: hidden; background: #6f8f4e url('/assets/farm-overview-v2.webp') center center / cover no-repeat; isolation: isolate; }
 .farm-scene::before { content: ''; position: absolute; z-index: 1; inset: 0; pointer-events: none; opacity: 0; transition: opacity .35s ease; }
 .farm-scene.weather-cloudy::before { opacity: .28; background: linear-gradient(rgba(67, 79, 72, .42), rgba(90, 101, 84, .14)); }
 .farm-scene.weather-rainy::before { opacity: .42; background: repeating-linear-gradient(108deg, transparent 0 17px, rgba(205, 231, 235, .52) 18px 19px, transparent 20px 37px), linear-gradient(rgba(45, 70, 68, .3), rgba(48, 70, 64, .12)); background-size: 180px 180px, auto; animation: rain-drift .8s linear infinite; }
@@ -92,7 +92,7 @@ p { color: var(--ink-soft); font-size: .8rem; line-height: 1.45; }
 .scene-callout small { color: var(--ink-soft); font-size: .67rem; font-weight: 700; }
 .scene-callout strong { font-size: .78rem; }
 .scene-callout > svg { margin-left: auto; color: var(--terracotta); }
-.plot-highlight { position: absolute; z-index: 1; left: 47%; top: 66%; width: 164px; height: 95px; border: 4px solid #edc342; border-radius: 13px; background: rgba(255, 210, 59, .12); box-shadow: 0 0 0 5px rgba(255, 227, 89, .22), 0 10px 18px rgba(70, 49, 14, .23); transform: rotate(-13deg); pointer-events: none; }
+.plot-highlight { position: absolute; z-index: 1; left: 60%; top: 67%; width: 21%; height: 17%; border: 4px solid #edc342; border-radius: 13px; background: rgba(255, 210, 59, .12); box-shadow: 0 0 0 5px rgba(255, 227, 89, .22), 0 10px 18px rgba(70, 49, 14, .23); transform: rotate(1deg); pointer-events: none; }
 .plot-highlight.is-planted { border-color: #9bb868; box-shadow: 0 0 0 5px rgba(187, 213, 121, .18); }
 .plot-sprouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 26px; padding: 20px 24px; opacity: .8; }
 .plot-sprouts i { width: 12px; height: 19px; border-radius: 90% 0 90% 0; background: #648b3e; transform: rotate(-30deg); }
@@ -115,16 +115,20 @@ p { color: var(--ink-soft); font-size: .8rem; line-height: 1.45; }
 .icon-button, .mini-icon-button { display: inline-grid; place-items: center; border: 1px solid #d5b779; border-radius: 10px; background: rgba(255, 250, 235, .88); cursor: pointer; }
 .icon-button { width: 36px; height: 36px; color: var(--ink); }
 .icon-button:hover, .mini-icon-button:hover { border-color: var(--forest); color: var(--forest); }
-.field-art { position: relative; min-height: clamp(420px, calc(100vh - 280px), 565px); overflow: hidden; border: 1px solid #c5a165; border-radius: 17px; background: #789657 url('/assets/field-planning.webp') center center / cover no-repeat; box-shadow: var(--shadow); }
+.field-art { position: relative; min-height: clamp(420px, calc(100vh - 280px), 565px); overflow: hidden; border: 1px solid #c5a165; border-radius: 17px; background: #789657 url('/assets/field-planning-v2.webp') center center / cover no-repeat; box-shadow: var(--shadow); }
 .field-art-wash { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(42, 65, 31, .17), transparent 34%, rgba(249, 227, 166, .08)); }
-.plot-grid { position: absolute; z-index: 1; left: 17%; top: 15%; display: grid; grid-template-columns: repeat(5, minmax(35px, 1fr)); width: 62%; height: 67%; gap: 3px; transform: rotate(-2deg); }
+.plot-grid { position: absolute; z-index: 1; left: 25%; top: 21%; display: grid; grid-template-columns: repeat(5, minmax(35px, 1fr)); width: 50%; height: 64%; gap: 4px; }
 .plot-tile { position: relative; display: grid; place-items: center; border: 1px solid rgba(107, 75, 38, .75); border-radius: 5px; background: linear-gradient(180deg, #805c34, #624523); color: rgba(215, 235, 164, .95); box-shadow: inset 0 1px 2px rgba(255,255,255,.18), inset 0 -5px 10px rgba(55, 33, 13, .16); cursor: pointer; transition: background .16s ease, transform .16s ease, box-shadow .16s ease; }
 .plot-tile:hover:not(:disabled) { transform: scale(1.04); background: #8c6330; }
 .plot-tile.is-selected { background: linear-gradient(180deg, rgba(138, 178, 77, .98), rgba(102, 143, 54, .98)); border-color: #e6d05c; box-shadow: inset 0 0 0 2px rgba(217, 237, 160, .32), 0 0 0 2px rgba(239, 201, 66, .5); }
 .plot-tile.is-unavailable { background: rgba(84, 78, 60, .72); opacity: .76; cursor: not-allowed; }
-.plot-tile.is-planted { background: #7d9a4f; }
-.plot-tile.is-watered { background: #5d8f65; border-color: #b6d09a; }
-.plot-tile.is-ready { background: #c49536; border-color: #f6d775; color: #fff8d8; box-shadow: inset 0 0 0 2px rgba(255, 237, 160, .3); }
+.plot-tile.is-planted { background: #6b4829; }
+.plot-tile.is-watered { background: #4f6d52; border-color: #b6d09a; }
+.plot-tile.is-ready { background: #8b672f; border-color: #f6d775; color: #fff8d8; box-shadow: inset 0 0 0 2px rgba(255, 237, 160, .3), 0 0 0 1px rgba(235, 183, 55, .4); }
+.crop-stage-icon { position: absolute; inset: 2px; border-radius: 3px; background: #65411f url('/assets/crop-stages-v2.webp') no-repeat; background-size: 400% 300%; filter: saturate(.98) contrast(1.03); }
+.plot-state-mark { position: absolute; z-index: 2; right: 3px; top: 3px; padding: 2px; border-radius: 50%; color: white; filter: drop-shadow(0 1px 1px rgba(35, 27, 14, .5)); }
+.is-watered-mark { background: rgba(47, 112, 135, .9); }
+.is-ready-mark { background: rgba(49, 93, 54, .92); }
 .plot-tile:disabled { cursor: not-allowed; }
 .field-fence { position: absolute; z-index: 2; left: 11%; width: 75%; height: 15px; border-top: 3px solid rgba(92, 65, 33, .82); border-bottom: 3px solid rgba(92, 65, 33, .65); transform: rotate(-2deg); pointer-events: none; }
 .field-fence::after { content: ''; position: absolute; inset: -9px 0; background: repeating-linear-gradient(90deg, transparent 0 22px, rgba(92,65,33,.8) 23px 28px, transparent 29px 51px); opacity: .55; }
@@ -253,15 +257,15 @@ p { color: var(--ink-soft); font-size: .8rem; line-height: 1.45; }
 
 @media (max-width: 820px) {
   .app-frame { width: 100%; min-height: 100vh; margin: 0; border-radius: 0; border-left: 0; border-right: 0; }.topbar { min-height: 68px; padding: 11px 15px; gap: 12px; }.brand-word { font-size: 1.72rem; }.brand-sprig { width: 29px; }.topbar-context { gap: 6px; overflow-x: auto; }.status-chip { min-height: 34px; padding: 0 9px; font-size: .74rem; }.status-chip svg { width: 14px; }.weather-chip { width: 33px; }.weather-chip svg { width: 24px; }
-  .screen-surface { min-height: calc(100vh - 68px); }.farm-scene { min-height: calc(100vh - 68px); background-position: 56% center; }.task-panel { top: 14px; left: 14px; width: min(260px, calc(100% - 28px)); }.scene-callout { left: auto; right: 22px; top: auto; bottom: 152px; }.plot-highlight { left: 50%; top: 56%; }.scene-location { top: 17px; right: 15px; }
+  .screen-surface { min-height: calc(100vh - 68px); }.farm-scene { min-height: calc(100vh - 68px); background-position: 58% center; }.task-panel { top: 14px; left: 14px; width: min(260px, calc(100% - 28px)); }.scene-callout { left: auto; right: 22px; top: auto; bottom: 152px; }.plot-highlight { left: 59%; top: 63%; width: 29%; height: 16%; }.scene-location { top: 17px; right: 15px; }
   .app-nav { position: fixed; z-index: 10; bottom: max(11px, env(safe-area-inset-bottom, 0px)); width: calc(100% - 22px); max-width: 520px; overflow-x: auto; }.nav-item { flex: 1; min-width: 96px; min-height: 61px; padding-left: 8px; padding-right: 8px; }.nav-item span { font-size: .65rem; }
   .planning-screen { display: flex; flex-direction: column; gap: 12px; min-height: calc(100vh - 68px); padding: 17px 14px 92px; }.field-art { min-height: 480px; }.crop-chooser { min-height: auto; }.crop-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }.crop-card { display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; }.crop-card-copy { width: 100%; }.crop-stat { font-size: .57rem; }.crop-stat strong { font-size: .59rem; }.crop-fit-badge { display: none; }.plant-button { margin-top: 11px; }.planning-map-link, .planning-active-crop { bottom: 77px; }
   .barn-screen { min-height: calc(100vh - 68px); padding: 17px 14px 92px; }.barn-content { display: flex; flex-direction: column; }.barn-content.focus-barn .market-column, .barn-content.focus-market .barn-column { display: none; }.market-column { display: grid; grid-template-columns: 1fr 1fr; }.ship-button { grid-column: 1 / -1; }.barn-tabs { margin-bottom: 12px; }
 }
 
 @media (max-width: 560px) {
-  .status-chip span { display: none; }.status-chip { width: 34px; padding: 0; }.money-chip { width: 44px; }.money-chip span { display: inline; font-size: .65rem; }.weather-chip { display: none; }.advance-day-button { width: 34px; min-width: 34px; padding: 0; }.advance-day-button span { display: none; }.task-panel { width: calc(100% - 28px); }.task-row { min-height: 57px; }.scene-callout { left: 18px; right: auto; bottom: 145px; }.plot-highlight { left: 45%; top: 61%; transform: rotate(-13deg) scale(.8); transform-origin: center; }.scene-location { display: none; }
+  .status-chip span { display: none; }.status-chip { width: 34px; padding: 0; }.money-chip { width: 44px; }.money-chip span { display: inline; font-size: .65rem; }.weather-chip { display: none; }.advance-day-button { width: 34px; min-width: 34px; padding: 0; }.advance-day-button span { display: none; }.task-panel { width: calc(100% - 28px); }.task-row { min-height: 57px; }.scene-callout { left: 18px; right: auto; bottom: 145px; }.plot-highlight { left: 57%; top: 62%; width: 34%; height: 14%; transform: rotate(1deg) scale(.8); transform-origin: center; }.scene-location { display: none; }
   .nav-item { min-width: 88px; }.nav-item svg { width: 19px; height: 19px; }.nav-item span { font-size: .59rem; }
-  .planning-heading-row h1 { font-size: 1.2rem; }.field-art { min-height: 390px; }.plot-grid { left: 11%; width: 76%; top: 20%; height: 63%; }.crop-options { grid-template-columns: 1fr; }.crop-card { display: grid; grid-template-columns: 65px 1fr; gap: 7px; text-align: left; }.crop-card .asset-icon { justify-self: center; }.crop-fit-badge { display: inline-flex; }.planning-map-link, .planning-active-crop { display: none; }
+  .planning-heading-row h1 { font-size: 1.2rem; }.field-art { min-height: 390px; }.plot-grid { left: 18%; width: 64%; top: 20%; height: 64%; }.crop-options { grid-template-columns: 1fr; }.crop-card { display: grid; grid-template-columns: 65px 1fr; gap: 7px; text-align: left; }.crop-card .asset-icon { justify-self: center; }.crop-fit-badge { display: inline-flex; }.planning-map-link, .planning-active-crop { display: none; }
   .inventory-grid { grid-template-columns: repeat(2, 1fr); }.market-column { grid-template-columns: 1fr; }.animal-row { grid-template-columns: 44px 1fr auto; }.animal-row .progress-line { grid-column: 2 / -1; }.collect-button { grid-column: 3; grid-row: 1; }.recipe-actions { grid-template-columns: 1fr; }.recipe-button { display: grid; grid-template-columns: 38px 1fr; min-height: 44px; }.queue-row { grid-template-columns: 42px 56px minmax(45px, 1fr) 27px; }.queue-time { grid-column: 3; grid-row: 2; }.queue-row .mini-icon-button { grid-column: 4; grid-row: 1 / span 2; }.barn-tabs button { font-size: .96rem; }
 }

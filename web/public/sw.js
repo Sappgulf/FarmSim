@@ -7,7 +7,7 @@
  * Strategy: navigation requests try network first, fall back to cached shell; other GETs use
  * cache-if-available then refresh cache when network succeeds.
  */
-const CACHE_NAME = 'farmsim-sw-v0.2.0';
+const CACHE_NAME = 'farmsim-sw-v0.2.1';
 
 const ASSETS = [
   './',
@@ -16,8 +16,9 @@ const ASSETS = [
   './icons/favicon.svg',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './assets/farm-overview.webp',
-  './assets/field-planning.webp',
+  './assets/farm-overview-v2.webp',
+  './assets/field-planning-v2.webp',
+  './assets/crop-stages-v2.webp',
   './assets/farm-assets-sheet-alpha.webp',
   './screenshots/narrow.png',
   './screenshots/wide.png',

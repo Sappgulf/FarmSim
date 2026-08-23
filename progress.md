@@ -52,3 +52,11 @@
 - [x] Verified web build/lint, iOS GameCore tests, and iOS simulator build.
 - [ ] Image generation was unavailable because `OPENAI_API_KEY` was not set; existing local artwork was reused and re-integrated.
 - [ ] `npm audit` reports the pre-existing `vite -> postcss -> nanoid@3.3.16` advisory (GHSA-2v37-7h3g-55p8); no affected custom nanoid generator is used by FarmSim.
+
+## 2026-08-23 Imagegen Board + Asset Pass
+- [x] Generated and integrated a new premium storybook homestead overview with UI-safe composition and a state-neutral workable plot.
+- [x] Generated and integrated a field-planning background built around the real 30-plot interaction surface.
+- [x] Generated a 12-state wheat/tomato/corn growth atlas and connected plot art directly to simulation growth state.
+- [x] Rejected two item-sheet variants that failed genuine-alpha validation; retained the existing production inventory sheet.
+- [x] Refreshed exact-size PWA screenshots and advanced the offline cache to Web 0.2.1.
+- [x] Verified 41 suites / 138 tests, type-check, lint, production build, desktop/mobile composition, crop progression, and zero browser console errors.

@@ -4,6 +4,7 @@ import { cropOptions, unavailablePlots } from '../data'
 import { growthDays, plantedPlotIds, readyPlotIds, selectedPlotIds, wateredPlotIds } from '../selectors'
 import { AssetIcon } from './AssetIcon'
 import { AppNav } from './AppNav'
+import { CropStageIcon } from './CropStageIcon'
 
 type FieldPlanningProps = {
   state: FarmState
@@ -52,6 +53,7 @@ export function FieldPlanning({ state, selectedCrop, onSelectCrop, onTogglePlot,
               const isPlanted = plantedSet.has(index)
               const isWatered = wateredSet.has(index)
               const isReady = readySet.has(index)
+              const cropDefinition = cropOptions.find((crop) => crop.key === plot?.crop)
               const plotStatus = isUnavailable ? 'unavailable' : isReady ? 'ready to harvest' : isWatered ? 'watered' : isPlanted ? 'planted' : isSelected ? 'selected' : 'available'
               return (
                 <button
@@ -63,7 +65,13 @@ export function FieldPlanning({ state, selectedCrop, onSelectCrop, onTogglePlot,
                   onClick={() => onTogglePlot(index)}
                   key={index}
                 >
-                  {isReady ? <Check size={17} strokeWidth={2.6} aria-hidden="true" /> : (isSelected || isPlanted) && <Sprout size={17} strokeWidth={2.4} aria-hidden="true" />}
+                  {plot?.crop && cropDefinition ? (
+                    <>
+                      <CropStageIcon crop={plot.crop} growthDays={plot.growthDays} totalDays={cropDefinition.growthDays} ready={isReady} />
+                      {isWatered && !isReady && <Droplets className="plot-state-mark is-watered-mark" size={13} strokeWidth={2.6} aria-hidden="true" />}
+                      {isReady && <Check className="plot-state-mark is-ready-mark" size={14} strokeWidth={3} aria-hidden="true" />}
+                    </>
+                  ) : isSelected ? <Sprout size={17} strokeWidth={2.4} aria-hidden="true" /> : null}
                 </button>
               )
             })}

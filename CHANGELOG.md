@@ -1,5 +1,15 @@
 # Changelog
 
+## [Web 0.2.1] - 2026-08-23
+
+### Added
+- New Imagegen-built homestead overview, field-planning board, and 12-state crop growth atlas.
+- Crop-specific plot visuals for wheat, tomato, and corn across seedling, young, mature, and harvest-ready stages.
+
+### Changed
+- Repositioned the overview plot highlight against the redesigned farm composition and aligned the 30-plot interaction grid to the new soil board.
+- Refreshed PWA screenshots and advanced the offline asset cache for the new art release.
+
 ## [Web 0.2.0] - 2026-08-23
 
 ### Added
