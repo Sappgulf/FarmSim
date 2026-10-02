@@ -66,7 +66,6 @@ struct MarketLivestockSection: View {
     private var collectPanel: some View {
         WoodenPanel {
             Button {
-                SoundManager.shared.play(.sell, haptic: .heavy)
                 _ = store.collectLivestockProducts()
             } label: {
                 HStack {
@@ -75,10 +74,10 @@ struct MarketLivestockSection: View {
                         .foregroundStyle(DS.Color.money)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Collect All Products")
+                        Text(store.livestockProductsReady ? "Collect All Products" : "Collected Today")
                             .font(Typography.bodyStrong)
                             .foregroundStyle(.white)
-                        Text("Gathers goods from all animals")
+                        Text(store.livestockProductsReady ? "One collection per farm day" : "More products ready tomorrow")
                             .font(Typography.small)
                             .foregroundStyle(.white.opacity(0.60))
                     }
@@ -97,6 +96,8 @@ struct MarketLivestockSection: View {
                 }
             }
             .buttonStyle(.plain)
+            .disabled(!store.livestockProductsReady)
+            .opacity(store.livestockProductsReady ? 1 : 0.6)
         }
     }
 

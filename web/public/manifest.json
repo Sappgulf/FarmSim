@@ -38,15 +38,15 @@
     ],
     "screenshots": [
         {
-            "src": "./screenshots/narrow.png",
-            "sizes": "540x720",
-            "type": "image/png",
+            "src": "./screenshots/narrow-v3.jpg",
+            "sizes": "390x844",
+            "type": "image/jpeg",
             "form_factor": "narrow"
         },
         {
-            "src": "./screenshots/wide.png",
-            "sizes": "1280x720",
-            "type": "image/png",
+            "src": "./screenshots/wide-v3.jpg",
+            "sizes": "1280x982",
+            "type": "image/jpeg",
             "form_factor": "wide"
         }
     ],

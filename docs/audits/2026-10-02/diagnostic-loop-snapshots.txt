@@ -1,0 +1,199 @@
+Browser tab: 1, Title: "FarmSim — Field Command", URL: "http://127.0.0.1:5187/#planning".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 116
+~			5 text Growth is in progress
+~					23 checkbox (disabled) Description: Plot 7: watered, Value: 0
+~					24 checkbox (disabled) Description: Plot 8: watered, Value: 0
+~					25 checkbox (disabled) Description: Plot 9: watered, Value: 0
+~					28 checkbox (disabled) Description: Plot 12: watered, Value: 0
+~					29 checkbox (disabled) Description: Plot 13: watered, Value: 0
+~					30 checkbox (disabled) Description: Plot 14: watered, Value: 0
+~					33 checkbox (disabled) Description: Plot 17: watered, Value: 0
+~					34 checkbox (disabled) Description: Plot 18: watered, Value: 0
+~					35 checkbox (disabled) Description: Plot 19: watered, Value: 0
+~					38 checkbox (disabled) Description: Plot 22: watered, Value: 0
+~					39 checkbox (disabled) Description: Plot 23: watered, Value: 0
+~					40 checkbox (disabled) Description: Plot 24: watered, Value: 0
+~					51 text Advance day to finish growth Tomato is already the optimal pick.
+~				105 text 12 / 12 watered · 0 / 6 growth days
+~				106 button Advance to day 13
+~					114 text Advance to day
+~					115 text 13
++		119 text 12 crops watered. Advance the day to grow them.
+The focused UI element is 106 button Advance to day 13
+
+Browser tab: 1, Title: "FarmSim — Field Command", URL: "http://127.0.0.1:5187/#planning".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~			5 text 12 planted plots need water
+~				7 text Day  13 Spring $ 2,430
+~					23 checkbox (disabled) Description: Plot 7: planted, Value: 0
+~					24 checkbox (disabled) Description: Plot 8: planted, Value: 0
+~					25 checkbox (disabled) Description: Plot 9: planted, Value: 0
+~					28 checkbox (disabled) Description: Plot 12: planted, Value: 0
+~					29 checkbox (disabled) Description: Plot 13: planted, Value: 0
+~					30 checkbox (disabled) Description: Plot 14: planted, Value: 0
+~					33 checkbox (disabled) Description: Plot 17: planted, Value: 0
+~					34 checkbox (disabled) Description: Plot 18: planted, Value: 0
+~					35 checkbox (disabled) Description: Plot 19: planted, Value: 0
+~					38 checkbox (disabled) Description: Plot 22: planted, Value: 0
+~					39 checkbox (disabled) Description: Plot 23: planted, Value: 0
+~					40 checkbox (disabled) Description: Plot 24: planted, Value: 0
+~					51 text Water 12 active plots Tomato is already the optimal pick.
+~				105 text 0 / 12 watered · 1 / 6 growth days
+~				106 button Water 12 plots
+~					114 text Water
+~					115 text 12
++					120 text  plots
+~		119 text Day 13 started. Production queue moved forward.
+The focused UI element is 9 button Advance to next day
+
+Browser tab: 1, Title: "FarmSim — Field Command", URL: "http://127.0.0.1:5187/#planning".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 120
+~			5 text Growth is in progress
+~					23 checkbox (disabled) Description: Plot 7: watered, Value: 0
+~					24 checkbox (disabled) Description: Plot 8: watered, Value: 0
+~					25 checkbox (disabled) Description: Plot 9: watered, Value: 0
+~					28 checkbox (disabled) Description: Plot 12: watered, Value: 0
+~					29 checkbox (disabled) Description: Plot 13: watered, Value: 0
+~					30 checkbox (disabled) Description: Plot 14: watered, Value: 0
+~					33 checkbox (disabled) Description: Plot 17: watered, Value: 0
+~					34 checkbox (disabled) Description: Plot 18: watered, Value: 0
+~					35 checkbox (disabled) Description: Plot 19: watered, Value: 0
+~					38 checkbox (disabled) Description: Plot 22: watered, Value: 0
+~					39 checkbox (disabled) Description: Plot 23: watered, Value: 0
+~					40 checkbox (disabled) Description: Plot 24: watered, Value: 0
+~					51 text Advance day to finish growth Tomato is already the optimal pick.
+~				105 text 12 / 12 watered · 1 / 6 growth days
+~				106 button Advance to day 14
+~					114 text Advance to day
+~					115 text 14
+~		119 text 12 crops watered. Advance the day to grow them.
+The focused UI element is 106 button Advance to day 14
+
+Browser tab: 1, Title: "FarmSim — Field Command", URL: "http://127.0.0.1:5187/#planning".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~			5 text 12 planted plots need water
+~				7 text Day  14 Spring $ 2,430
+~				8 image Description: Weather: Windy, Help: Windy
+~					23 checkbox (disabled) Description: Plot 7: planted, Value: 0
+~					24 checkbox (disabled) Description: Plot 8: planted, Value: 0
+~					25 checkbox (disabled) Description: Plot 9: planted, Value: 0
+~					28 checkbox (disabled) Description: Plot 12: planted, Value: 0
+~					29 checkbox (disabled) Description: Plot 13: planted, Value: 0
+~					30 checkbox (disabled) Description: Plot 14: planted, Value: 0
+~					33 checkbox (disabled) Description: Plot 17: planted, Value: 0
+~					34 checkbox (disabled) Description: Plot 18: planted, Value: 0
+~					35 checkbox (disabled) Description: Plot 19: planted, Value: 0
+~					38 checkbox (disabled) Description: Plot 22: planted, Value: 0
+~					39 checkbox (disabled) Description: Plot 23: planted, Value: 0
+~					40 checkbox (disabled) Description: Plot 24: planted, Value: 0
+~					51 text Water 12 active plots Tomato is already the optimal pick.
+~				105 text 0 / 12 watered · 2 / 6 growth days
+~				106 button Water 12 plots
+~					114 text Water
+~					115 text 12
++					120 text  plots
+~		119 text Day 14 started. Production queue moved forward.
+The focused UI element is 9 button Advance to next day
+
+Browser tab: 1, Title: "FarmSim — Field Command", URL: "http://127.0.0.1:5187/#planning".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 120
+~			5 text Growth is in progress
+~					23 checkbox (disabled) Description: Plot 7: watered, Value: 0
+~					24 checkbox (disabled) Description: Plot 8: watered, Value: 0
+~					25 checkbox (disabled) Description: Plot 9: watered, Value: 0
+~					28 checkbox (disabled) Description: Plot 12: watered, Value: 0
+~					29 checkbox (disabled) Description: Plot 13: watered, Value: 0
+~					30 checkbox (disabled) Description: Plot 14: watered, Value: 0
+~					33 checkbox (disabled) Description: Plot 17: watered, Value: 0
+~					34 checkbox (disabled) Description: Plot 18: watered, Value: 0
+~					35 checkbox (disabled) Description: Plot 19: watered, Value: 0
+~					38 checkbox (disabled) Description: Plot 22: watered, Value: 0
+~					39 checkbox (disabled) Description: Plot 23: watered, Value: 0
+~					40 checkbox (disabled) Description: Plot 24: watered, Value: 0
+~					51 text Advance day to finish growth Tomato is already the optimal pick.
+~				105 text 12 / 12 watered · 2 / 6 growth days
+~				106 button Advance to day 15
+~					114 text Advance to day
+~					115 text 15
+~		119 text 12 crops watered. Advance the day to grow them.
+The focused UI element is 106 button Advance to day 15
+
+Browser tab: 1, Title: "FarmSim — Field Command", URL: "http://127.0.0.1:5187/#planning".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~			5 text 12 planted plots need water
+~				7 text Day  15 Spring $ 2,430
+~				8 image Description: Weather: Sunny, Help: Sunny
+~					23 checkbox (disabled) Description: Plot 7: planted, Value: 0
+~					24 checkbox (disabled) Description: Plot 8: planted, Value: 0
+~					25 checkbox (disabled) Description: Plot 9: planted, Value: 0
+~					28 checkbox (disabled) Description: Plot 12: planted, Value: 0
+~					29 checkbox (disabled) Description: Plot 13: planted, Value: 0
+~					30 checkbox (disabled) Description: Plot 14: planted, Value: 0
+~					33 checkbox (disabled) Description: Plot 17: planted, Value: 0
+~					34 checkbox (disabled) Description: Plot 18: planted, Value: 0
+~					35 checkbox (disabled) Description: Plot 19: planted, Value: 0
+~					38 checkbox (disabled) Description: Plot 22: planted, Value: 0
+~					39 checkbox (disabled) Description: Plot 23: planted, Value: 0
+~					40 checkbox (disabled) Description: Plot 24: planted, Value: 0
+~					51 text Water 12 active plots Tomato is already the optimal pick.
+~				105 text 0 / 12 watered · 3 / 6 growth days
+~				106 button Water 12 plots
+~					114 text Water
+~					115 text 12
++					120 text  plots
+~		119 text Day 15 started. Production queue moved forward.
+The focused UI element is 9 button Advance to next day
+
+Browser tab: 1, Title: "FarmSim — Field Command", URL: "http://127.0.0.1:5187/#planning".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 120
+~			5 text Growth is in progress
+~					23 checkbox (disabled) Description: Plot 7: watered, Value: 0
+~					24 checkbox (disabled) Description: Plot 8: watered, Value: 0
+~					25 checkbox (disabled) Description: Plot 9: watered, Value: 0
+~					28 checkbox (disabled) Description: Plot 12: watered, Value: 0
+~					29 checkbox (disabled) Description: Plot 13: watered, Value: 0
+~					30 checkbox (disabled) Description: Plot 14: watered, Value: 0
+~					33 checkbox (disabled) Description: Plot 17: watered, Value: 0
+~					34 checkbox (disabled) Description: Plot 18: watered, Value: 0
+~					35 checkbox (disabled) Description: Plot 19: watered, Value: 0
+~					38 checkbox (disabled) Description: Plot 22: watered, Value: 0
+~					39 checkbox (disabled) Description: Plot 23: watered, Value: 0
+~					40 checkbox (disabled) Description: Plot 24: watered, Value: 0
+~					51 text Advance day to finish growth Tomato is already the optimal pick.
+~				105 text 12 / 12 watered · 3 / 6 growth days
+~				106 button Advance to day 16
+~					114 text Advance to day
+~					115 text 16
+~		119 text 12 crops watered. Advance the day to grow them.
+The focused UI element is 106 button Advance to day 16
+
+Browser tab: 1, Title: "FarmSim — Field Command", URL: "http://127.0.0.1:5187/#planning".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~			5 text 12 plots are ready
+~				7 text Day  16 Spring $ 2,430
+~				8 image Description: Weather: Cloudy, Help: Cloudy
+~					23 checkbox (disabled) Description: Plot 7: ready to harvest, Value: 0
+~					24 checkbox (disabled) Description: Plot 8: ready to harvest, Value: 0
+~					25 checkbox (disabled) Description: Plot 9: ready to harvest, Value: 0
+~					28 checkbox (disabled) Description: Plot 12: ready to harvest, Value: 0
+~					29 checkbox (disabled) Description: Plot 13: ready to harvest, Value: 0
+~					30 checkbox (disabled) Description: Plot 14: ready to harvest, Value: 0
+~					33 checkbox (disabled) Description: Plot 17: ready to harvest, Value: 0
+~					34 checkbox (disabled) Description: Plot 18: ready to harvest, Value: 0
+~					35 checkbox (disabled) Description: Plot 19: ready to harvest, Value: 0
+~					38 checkbox (disabled) Description: Plot 22: ready to harvest, Value: 0
+~					39 checkbox (disabled) Description: Plot 23: ready to harvest, Value: 0
+~					40 checkbox (disabled) Description: Plot 24: ready to harvest, Value: 0
+~				48 text Selected ( 0 ) Planted ( 12 ) Ready ( 12 ) Available Unavailable
+~					51 text Harvest 12 ready plots Tomato is already the optimal pick.
+~				105 text 12 plots are ready to harvest.
+~				106 button Harvest 12 plots
+~					114 text Harvest
+~					115 text 12
++					120 text  plots
+~		119 text Day 16: 12 crops are ready to harvest.
+The focused UI element is 9 button Advance to next day

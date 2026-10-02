@@ -1,11 +1,11 @@
-# Save Contract (v5)
+# Save Contract (v17)
 
 Canonical iOS/GameCore save payload.
 
 ## Versioning
 
 - Required top-level integer: `version`.
-- Current version: `5`.
+- Current version: `17`.
 - Required deterministic RNG state seed: `daySeed` (uint64 encoded as JSON number).
 - Readers may load older versions through explicit migrations.
 
@@ -49,6 +49,7 @@ Canonical iOS/GameCore save payload.
 - `discoveredHybrids`: map of `recipeId -> boolean`
 - `expansionPurchases`: integer (>= 0)
 - `livestockCounts`: map of `livestockId -> integer`
+- `lastLivestockCollectionDay`: integer (>= -1), last rewarded world day; -1 means unclaimed
 - `petLevels`: map of `petId -> integer`
 - `fishCaughtCounts`: map of `fishId -> integer`
 - `fishingPondLevel`: integer (>= 1)
@@ -68,4 +69,5 @@ Canonical iOS/GameCore save payload.
 - `v2 -> v3`: adds livestock/pet/fishing/challenge meta fields.
 - `v3 -> v4`: adds persisted `meta.time` state for automatic time progression + offline catch-up.
 - `v4 -> v5`: adds persisted `meta.favoriteItems` for Barn favorites.
+- `v16 -> v17`: adds the persisted daily livestock claim. Missing claims decode to -1; all existing inventory and progression are preserved.
 - Add per-version transforms there before changing `currentVersion`.

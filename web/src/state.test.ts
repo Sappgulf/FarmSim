@@ -16,7 +16,7 @@ describe('FarmSim state transitions', () => {
 
   it('ships five wheat and updates money, inventory, and progress', () => {
     const next = shipWheat(initialFarmState, 5)
-    expect(next.money).toBe(2540)
+    expect(next.money).toBe(2441)
     expect(next.inventory.wheat).toBe(55)
     expect(next.shippedGoods).toBe(5)
     expect(next.sellOrders.find((order) => order.id === 'wheat-order')?.amount).toBe(55)
@@ -67,7 +67,7 @@ describe('FarmSim state transitions', () => {
     for (let day = 0; day < 4; day += 1) state = advanceFarmDay(waterPlantedPlots(state))
 
     const next = harvestReadyPlots(state)
-    expect(next.inventory.wheat).toBe(84)
+    expect(next.inventory.wheat).toBe(96)
     expect(plantedPlotIds(next)).toEqual([])
     expect(readyPlotIds(next)).toEqual([])
     expect(plantedCrop(next)).toBeNull()

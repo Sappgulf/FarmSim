@@ -16,6 +16,8 @@ export type CropOption = {
   growthDays: number
   projectedReturn: number
   harvestYield: number
+  seedPrice: number
+  preferredSeason: string
 }
 
 export type InventoryItem = {
@@ -76,6 +78,8 @@ export type FarmState = {
   inventory: Record<InventoryKey, number>
   productionQueue: ProductionItem[]
   sellOrders: SellOrder[]
+  xp: number
+  harvestedPlots: number
 }
 
 export const cropOptions: CropOption[] = [
@@ -91,6 +95,8 @@ export const cropOptions: CropOption[] = [
     growthDays: 4,
     projectedReturn: 480,
     harvestYield: 2,
+    seedPrice: 1,
+    preferredSeason: 'Spring',
   },
   {
     key: 'tomato',
@@ -104,6 +110,8 @@ export const cropOptions: CropOption[] = [
     growthDays: 6,
     projectedReturn: 720,
     harvestYield: 3,
+    seedPrice: 3,
+    preferredSeason: 'Summer',
   },
   {
     key: 'corn',
@@ -117,6 +125,8 @@ export const cropOptions: CropOption[] = [
     growthDays: 5,
     projectedReturn: 660,
     harvestYield: 2,
+    seedPrice: 2,
+    preferredSeason: 'Fall',
   },
 ]
 
@@ -148,12 +158,12 @@ export const processedInventoryItems: InventoryItem[] = [
 
 export const productionRecipes: ProductionRecipe[] = [
   { key: 'cheese', label: 'Cheese', icon: 'cheese', input: 'milk', inputAmount: 2, outputAmount: 1 },
-  { key: 'bread', label: 'Bread', icon: 'bread', input: 'grain', inputAmount: 3, outputAmount: 1 },
+  { key: 'bread', label: 'Bread', icon: 'bread', input: 'wheat', inputAmount: 2, outputAmount: 1 },
   { key: 'butter', label: 'Butter', icon: 'butter', input: 'milk', inputAmount: 1, outputAmount: 1 },
 ]
 
 export const initialSellOrders: SellOrder[] = [
-  { id: 'wheat-order', label: 'Wheat', icon: 'wheat', amount: 60, price: 2.2, payoutPerUnit: 22 },
+  { id: 'wheat-order', label: 'Wheat', icon: 'wheat', amount: 60, price: 2.2, payoutPerUnit: 2.2 },
   { id: 'eggs-order', label: 'Eggs', icon: 'eggs', amount: 24, price: 4.5, payoutPerUnit: 4.5 },
   { id: 'milk-order', label: 'Milk', icon: 'milk', amount: 12, price: 6.2, payoutPerUnit: 6.2 },
 ]
@@ -168,6 +178,8 @@ export const initialFarmState: FarmState = {
   selectedPlotIds: [6, 7, 8, 11, 12, 13, 16, 17, 18, 21, 22, 23],
   plots: createInitialPlots(),
   shippedGoods: 0,
+  xp: 0,
+  harvestedPlots: 0,
   inventory: {
     wheat: 60,
     tomato: 0,
@@ -188,14 +200,35 @@ export const initialFarmState: FarmState = {
   sellOrders: initialSellOrders,
 }
 
-export const marketTrends = [
-  { label: 'Wheat', icon: 'wheat' as const, note: 'High demand', change: '+12%', direction: 'up' as const },
-  { label: 'Eggs', icon: 'eggs' as const, note: 'Steady', change: '+8%', direction: 'up' as const },
-  { label: 'Milk', icon: 'milk' as const, note: 'Low supply', change: '-5%', direction: 'down' as const },
-  { label: 'Corn', icon: 'corn' as const, note: 'High demand', change: '+15%', direction: 'up' as const },
-]
+export const allInventoryItems = [...cropInventoryItems, ...inventoryItems, ...processedInventoryItems]
+export const SEASON_LENGTH = 28
+export const seasons = ['Spring', 'Summer', 'Fall', 'Winter']
+export const seasonForDay = (day: number) => seasons[Math.floor((day - 1) / SEASON_LENGTH) % seasons.length]
+export const seasonDay = (day: number) => (day - 1) % SEASON_LENGTH + 1
+export const farmLevel = (state: FarmState) => Math.floor(state.xp / 60) + 1
+export const cropYield = (crop: CropOption, season: string) => crop.harvestYield + (crop.preferredSeason === season ? 1 : 0)
+export const cropProfit = (crop: CropOption, season: string) => {
+  const price = cropInventoryItems.find((item) => item.key === crop.key)!.price
+  return Math.round((cropYield(crop, season) * price - crop.seedPrice) * 100) / 100
+}
+export const formatMoney = (money: number) => money.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+export function createNewFarmState(): FarmState {
+  return {
+    ...initialFarmState,
+    day: 1,
+    money: 120,
+    seedStock: { wheat: 8, tomato: 8, corn: 8 },
+    animalProducts: { eggs: 2, milk: 1 },
+    selectedPlotIds: [6, 7, 8, 11],
+    inventory: Object.fromEntries(allInventoryItems.map((item) => [item.key, 0])) as FarmState['inventory'],
+    productionQueue: [],
+    plots: createInitialPlots(),
+    sellOrders: initialSellOrders.map((order) => ({ ...order })),
+  }
+}
 
 export const screenFromHash = (): Screen => {
-  const hash = window.location.hash.replace('#', '')
+  const hash = window.location.hash.replace('#', '').split('/')[0]
   return hash === 'planning' || hash === 'barn' ? hash : 'overview'
 }

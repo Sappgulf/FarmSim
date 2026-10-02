@@ -1,76 +1,42 @@
-import { ArrowRight, Check, ChevronRight, Droplets, Package, Sprout } from 'lucide-react'
-import type { FarmState, Screen } from '../data'
-import { plantedCrop, plantedPlotIds, readyPlotIds, wateredPlotIds } from '../selectors'
-import { AssetIcon } from './AssetIcon'
+import { ArrowRight, Check, Droplets, Package, Sprout, Warehouse } from 'lucide-react'
+import type { CropKey, FarmState, Screen } from '../data'
+import { farmLevel, formatMoney, seasonDay } from '../data'
+import { plantedPlots, plotList, readyPlotIds } from '../selectors'
 import { AppNav } from './AppNav'
+import { FarmPlots } from './FarmPlots'
 
-type FarmOverviewProps = {
-  state: FarmState
-  onNavigate: (screen: Screen) => void
-  onFocusTask: (task: string) => void
-  onAdvanceDay: () => void
-}
+type GameplayCoach = { title: string; detail: string; actionLabel: string; actionCommand: string | null; tone: 'positive' | 'warning' | 'info'; recommendedCrop: CropKey }
+type Props = { state: FarmState; onNavigate: (screen: Screen) => void; onFocusTask: (task: string) => void; onAdvanceDay: () => void; coach: GameplayCoach; onInteractPlot: (id: number) => void; onExpand: () => void }
 
-export function FarmOverview({ state, onNavigate, onFocusTask, onAdvanceDay }: FarmOverviewProps) {
-  const crop = plantedCrop(state)
-  const cropLabel = crop === 'tomato' ? 'Tomato' : crop === 'corn' ? 'Corn' : 'Wheat'
-  const plantedIds = plantedPlotIds(state)
-  const readyIds = readyPlotIds(state)
-  const wateredIds = wateredPlotIds(state)
-  const plantedCount = plantedIds.length
-  const readyCount = readyIds.length
-  const wateredProgress = plantedCount === 0 ? 8 : Math.min(wateredIds.length, 12)
-  const plantedComplete = plantedCount >= 12
-  const shippedComplete = state.shippedGoods >= 5
-  const waterComplete = plantedCount > 0 && wateredProgress >= Math.min(plantedCount, 12)
-  const nextUp = readyCount > 0 ? `Harvest ${readyCount} ${cropLabel}` : plantedCount > 0 && wateredIds.length < plantedCount ? `Water ${plantedCount} ${cropLabel}` : plantedCount > 0 ? `Advance to Day ${state.day + 1}` : `Plant 12 ${cropLabel}`
-
-  const eggsReady = state.animalProducts.eggs
-  const tasks = [
-    { label: readyCount > 0 ? `Harvest ${readyCount} ${cropLabel}` : 'Water 12 crops', detail: readyCount > 0 ? `${readyCount} ready` : `${wateredProgress} / 12`, icon: readyCount > 0 ? <Check size={26} className="task-check" /> : <Droplets size={26} className="task-icon-water" />, complete: waterComplete },
-    { label: eggsReady > 0 ? 'Collect eggs' : 'Eggs collected', detail: `${eggsReady} / 12 ready`, icon: <AssetIcon asset="chicken" size={40} />, complete: eggsReady === 0 },
-    { label: `Plant 12 ${cropLabel}`, detail: `${Math.min(plantedCount, 12)} / 12`, icon: <AssetIcon asset={crop ?? 'wheat'} size={42} />, complete: plantedComplete },
-    { label: 'Ship 5 goods', detail: `${Math.min(state.shippedGoods, 5)} / 5`, icon: <Package size={26} />, complete: shippedComplete },
-  ]
-
-  return (
-    <section className="overview-screen screen-surface" aria-labelledby="overview-heading" aria-describedby="overview-scene-description">
-      <p id="overview-scene-description" className="sr-only">A spring farm with a barn, pond, vegetable plots, wheat field, and winding paths.</p>
-      <div className={`farm-scene weather-${state.weather.toLowerCase()}`}>
-        <div className="scene-vignette" />
-        <div className="task-panel panel">
-          <div className="panel-heading-row">
-            <h1 id="overview-heading">Tasks</h1>
-            <ClipboardGlyph />
-          </div>
-          <div className="task-list">
-            {tasks.map((task) => (
-              <button className={`task-row ${task.complete ? 'is-complete' : ''} ${task.label.includes('Plant') && !task.complete ? 'is-highlighted' : ''}`} key={task.label} type="button" onClick={() => onFocusTask(task.label)}>
-                <span className="task-visual">{task.icon}</span>
-                <span className="task-copy"><strong>{task.label}</strong><small>{task.detail}</small></span>
-                {task.complete ? <Check size={20} className="task-check" aria-label="Complete" /> : <ChevronRight size={18} className="task-chevron" aria-hidden="true" />}
-              </button>
-            ))}
-          </div>
-          <button className="link-button" type="button" onClick={() => onNavigate('planning')}>Plan today&apos;s field <ChevronRight size={17} /></button>
-        </div>
-
-        <button className="scene-callout" type="button" aria-live="polite" onClick={() => nextUp.startsWith('Advance') ? onAdvanceDay() : onFocusTask(nextUp)}>
-            <span className="callout-pin"><Sprout size={19} /></span>
-            <span><small>Next Up</small><strong>{nextUp}</strong></span>
-            <ArrowRight size={18} />
-        </button>
-
-        <div className={`plot-highlight ${plantedComplete ? 'is-planted' : ''}`} aria-hidden="true">
-          <span className="plot-sprouts"><i /><i /><i /><i /><i /><i /></span>
-        </div>
-
-        <AppNav variant="overview" onNavigate={onNavigate} />
-      </div>
-    </section>
-  )
-}
-
-function ClipboardGlyph() {
-  return <span className="clipboard-glyph" aria-hidden="true"><span /></span>
+export function FarmOverview({ state, onNavigate, onFocusTask, onAdvanceDay, coach, onInteractPlot, onExpand }: Props) {
+  const plots = plotList(state)
+  const planted = plantedPlots(state)
+  const ready = readyPlotIds(state).length
+  const thirsty = state.weather === 'Rainy' ? 0 : planted.filter((plot) => !plot.ready && !plot.watered).length
+  const free = plots.filter((plot) => plot.available && !plot.crop).length
+  const locked = plots.filter((plot) => !plot.available).length
+  const level = farmLevel(state)
+  return <section className="overview-screen screen-surface" aria-labelledby="overview-heading">
+    <div className="homestead-heading"><div><p className="eyebrow">Your little corner of the countryside</p><h1 id="overview-heading">A new day on the homestead</h1></div><span>{state.season} {seasonDay(state.day)} / 28 · Level {level}</span></div>
+    <div className={`farm-scene live-world weather-${state.weather.toLowerCase()}`}>
+      <div className="scene-vignette" />
+      <aside className="task-panel panel farm-journal" aria-label="Farm journal">
+        <p className="eyebrow">Farm journal</p>
+        <h2>{coach.title}</h2><p>{coach.detail}</p>
+        {coach.actionCommand && <button className="primary-button journal-action" type="button" onClick={() => onFocusTask(coach.actionCommand!)}>{coach.actionLabel}<ArrowRight size={17} /></button>}
+        <div className="journal-metrics"><span><Check size={16} />{ready} ready</span><span><Droplets size={16} />{thirsty} need water</span><span><Sprout size={16} />{free} empty plots</span></div>
+        <div className="level-progress"><span>Level {level} · {state.xp % 60} / 60 XP</span><div role="progressbar" aria-label="Progress to next farm level" aria-valuenow={state.xp % 60} aria-valuemin={0} aria-valuemax={60}><i style={{ width: `${state.xp % 60 / 60 * 100}%` }} /></div></div>
+        <p className="journal-note">Plant → water → end day → harvest → sell. In-season crops yield one extra unit per plot.</p>
+      </aside>
+      <FarmPlots state={state} onPlot={onInteractPlot} interactiveCrops />
+      <div className="world-hint">Tap a crop to water or harvest · Empty soil opens your planting plan</div>
+    </div>
+    <div className="farm-dock">
+      <button type="button" onClick={() => onNavigate('barn')}><Warehouse size={20} /><span><strong>Visit the barn</strong><small>{state.animalProducts.eggs} eggs · {state.animalProducts.milk} milk ready</small></span><ArrowRight size={17} /></button>
+      <button type="button" onClick={() => onFocusTask('Sell goods')}><Package size={20} /><span><strong>Town market</strong><small>Sell your harvest & stock up on seeds</small></span><ArrowRight size={17} /></button>
+      {locked > 0 ? <button type="button" onClick={onExpand} disabled={level < 2 || state.money < 500}><Sprout size={20} /><span><strong>Clear {Math.min(5, locked)} new plots</strong><small>Level 2 · {formatMoney(500)}</small></span></button> : <span className="farm-complete">All 30 plots are yours.</span>}
+      <button type="button" className="end-day-dock" onClick={onAdvanceDay}>End day <ArrowRight size={17} /></button>
+    </div>
+    <AppNav variant="overview" onNavigate={onNavigate} />
+  </section>
 }

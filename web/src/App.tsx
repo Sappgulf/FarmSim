@@ -1,25 +1,103 @@
-import { useCallback, useEffect, useRef, useReducer, useState } from 'react'
-import type { CropKey, ProductionRecipeKey, Screen } from './data'
-import { cropOptions, productionRecipes, screenFromHash } from './data'
+import { useCallback, useEffect, useMemo, useRef, useReducer, useState } from 'react'
+import type { CropKey, FarmState, InventoryKey, ProductionRecipeKey, Screen } from './data'
+import { cropOptions, cropProfit, formatMoney, productionRecipes, screenFromHash } from './data'
 import { farmReducer, type FarmAction } from './state'
-import { plantedCrop, plantedPlotIds, readyPlotIds, wateredPlotIds } from './selectors'
-import { loadFarmState, saveFarmState } from './storage'
+import { plantedCrop, plantedPlotIds, plantedPlots, readyPlotIds, wateredPlotIds } from './selectors'
+import { loadFarmSession, saveFarmState } from './storage'
 import { BarnMarket } from './components/BarnMarket'
 import { FarmOverview } from './components/FarmOverview'
 import { FieldPlanning } from './components/FieldPlanning'
 import { TopBar } from './components/TopBar'
 import './styles.css'
 
+type GameplayCoach = {
+  title: string
+  detail: string
+  actionLabel: string
+  actionCommand: string | null
+  tone: 'positive' | 'warning' | 'info'
+  recommendedCrop: CropKey
+}
+
+const getDisplayCropLabel = (crop: CropKey) => cropOptions.find((item) => item.key === crop)!.label
+
+const pickRecommendedCrop = (state: FarmState, fallback: CropKey): CropKey => {
+  const crops = cropOptions.filter((crop) => state.seedStock[crop.key] > 0)
+  return crops.sort((a, b) => cropProfit(b, state.season) / b.growthDays - cropProfit(a, state.season) / a.growthDays)[0]?.key ?? fallback
+}
+
+const buildGameplayCoach = (state: FarmState, selectedCrop: CropKey): GameplayCoach => {
+  const ready = readyPlotIds(state)
+  const planted = plantedPlotIds(state)
+  const watered = wateredPlotIds(state)
+  const readyCount = ready.length
+  const plantedCount = planted.length
+  const wateredCount = state.weather === 'Rainy' ? plantedCount : watered.length
+  const readyLabel = 'crops'
+  const recommendedCrop = pickRecommendedCrop(state, selectedCrop)
+
+  if (readyCount > 0) {
+    return {
+      title: `${readyCount} ${readyCount === 1 ? 'plot is' : 'plots are'} ready`,
+      detail: `Collect now to keep momentum and turn growth into coins quickly.`,
+      actionLabel: `Harvest ${readyCount}`,
+      actionCommand: `Harvest ${readyCount} ${readyLabel}`,
+      tone: 'positive',
+      recommendedCrop,
+    }
+  }
+
+  if (plantedCount > 0 && wateredCount < plantedCount) {
+    return {
+      title: `${plantedCount - wateredCount} planted plots need water`,
+      detail: `Water now to preserve growth and avoid stalled progression.`,
+      actionLabel: `Water ${plantedCount - wateredCount} plots`,
+      actionCommand: `Water ${plantedCount} ${readyLabel}`,
+      tone: 'warning',
+      recommendedCrop,
+    }
+  }
+
+  if (plantedCount > 0) {
+    return {
+      title: 'Growth is in progress',
+      detail: `Watered crops grow when you end the day. Rain waters every planted plot.`,
+      actionLabel: 'End day',
+      actionCommand: 'Advance day',
+      tone: 'info',
+      recommendedCrop,
+    }
+  }
+
+  const recommendedLabel = getDisplayCropLabel(recommendedCrop)
+
+  return {
+    title: `Your ${state.season.toLowerCase()} planting plan`,
+    detail: `${recommendedLabel} has the best profit per growing day among your stocked seeds.`,
+    actionLabel: `Plant ${recommendedLabel}`,
+    actionCommand: `Plant ${recommendedLabel}`,
+    tone: 'info',
+    recommendedCrop,
+  }
+}
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>(() => screenFromHash())
-  const [state, dispatch] = useReducer(farmReducer, undefined, loadFarmState)
+  const [session] = useState(() => loadFarmSession())
+  const [state, dispatch] = useReducer(farmReducer, session.state)
+  const [saveWarning, setSaveWarning] = useState(session.warning)
   const [selectedCrop, setSelectedCrop] = useState<CropKey>('wheat')
-  const [barnFocus, setBarnFocus] = useState<'barn' | 'market'>('barn')
+  const [barnFocus, setBarnFocus] = useState<'barn' | 'market'>(() => window.location.hash.endsWith('/market') ? 'market' : 'barn')
   const [toast, setToast] = useState('')
   const toastTimer = useRef<number | undefined>(undefined)
+  const recommendedCrop = useMemo(() => pickRecommendedCrop(state, selectedCrop), [state, selectedCrop])
+  const gameplayCoach = useMemo(() => buildGameplayCoach(state, selectedCrop), [state, selectedCrop])
 
   useEffect(() => {
-    const onHashChange = () => setScreen(screenFromHash())
+    const onHashChange = () => {
+      setScreen(screenFromHash())
+      setBarnFocus(window.location.hash.endsWith('/market') ? 'market' : 'barn')
+    }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
@@ -35,21 +113,22 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    saveFarmState(state)
-  }, [state])
+    if (session.canSave && !saveFarmState(state)) setSaveWarning('Changes are not saving. Keep this tab open and retry when storage is available.')
+  }, [state, session.canSave])
 
-  const navigate = useCallback((nextScreen: Screen) => {
+  const navigate = useCallback((nextScreen: Screen, focus?: 'barn' | 'market') => {
     setScreen(nextScreen)
-    window.history.replaceState(null, '', `#${nextScreen}`)
-  }, [])
+    const nextFocus = focus ?? barnFocus
+    if (focus) setBarnFocus(focus)
+    const hash = nextScreen === 'barn' ? `#barn/${nextFocus}` : `#${nextScreen}`
+    if (window.location.hash !== hash) window.history.pushState(null, '', hash)
+    document.getElementById('game-main')?.focus({ preventScroll: true })
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [barnFocus])
 
   const plant = useCallback(() => {
     if (state.selectedPlotIds.length === 0) {
       announce('Select at least one available plot to plant.')
-      return
-    }
-    if (plantedPlotIds(state).length > 0) {
-      announce('Harvest the current crop before planting another field.')
       return
     }
     if (state.seedStock[selectedCrop] < state.selectedPlotIds.length) {
@@ -63,21 +142,17 @@ export default function App() {
 
   const water = useCallback(() => {
     const planted = plantedPlotIds(state)
-    const watered = wateredPlotIds(state)
+    const thirsty = state.weather === 'Rainy' ? [] : plantedPlots(state).filter((plot) => !plot.ready && !plot.watered)
     if (planted.length === 0) {
       announce('Plant a crop before watering the field.')
       return
     }
-    if (readyPlotIds(state).length > 0) {
-      announce('Those crops are ready to harvest.')
-      return
-    }
-    if (watered.length === planted.length) {
+    if (thirsty.length === 0) {
       announce('All planted crops are watered for today.')
       return
     }
     dispatch({ type: 'WATER_PLOTS' })
-    announce(`${planted.length} crops watered. Advance the day to grow them.`)
+    announce(`${thirsty.length} ${thirsty.length === 1 ? 'crop' : 'crops'} watered. Advance the day to grow them.`)
   }, [announce, state])
 
   const advanceDay = useCallback(() => {
@@ -86,8 +161,9 @@ export default function App() {
     const next = farmReducer(state, action)
     dispatch(action)
     if (readyPlotIds(next).length > beforeReady) {
-      announce(`Day ${next.day}: ${readyPlotIds(next).length} crops are ready to harvest.`)
-    } else if (plantedPlotIds(state).length > 0 && wateredPlotIds(state).length < plantedPlotIds(state).length) {
+      const count = readyPlotIds(next).length
+      announce(`Day ${next.day}: ${count} ${count === 1 ? 'crop is' : 'crops are'} ready to harvest.`)
+    } else if (state.weather !== 'Rainy' && plantedPlots(state).some((plot) => !plot.ready && !plot.watered)) {
       announce(`Day ${next.day}: the unwatered crops did not grow.`)
     } else {
       announce(`Day ${next.day} started. Production queue moved forward.`)
@@ -101,9 +177,8 @@ export default function App() {
       announce('No crops are ready to harvest yet.')
       return
     }
-    const cropLabel = cropOptions.find((option) => option.key === crop)?.label.toLowerCase() ?? 'crop'
     dispatch({ type: 'HARVEST_PLOTS' })
-    announce(`${ready.length} ${cropLabel} plots harvested and added to inventory.`)
+    announce(`${ready.length} plots harvested and added to inventory. Seasonal yield bonuses included.`)
   }, [announce, state])
 
   const togglePlot = useCallback((plotId: number) => {
@@ -125,7 +200,7 @@ export default function App() {
   const cancelQueueItem = useCallback((id: string) => {
     const item = state.productionQueue.find((entry) => entry.id === id)
     dispatch({ type: 'CANCEL_PRODUCTION', id })
-    announce(`${item?.label ?? 'Production item'} removed from the queue.`)
+    announce(item?.progress === 0 ? `${item.label} cancelled; ingredients returned.` : `${item?.label ?? 'Production'} cancelled. Ingredients already in use cannot be returned.`)
   }, [announce, state.productionQueue])
 
   const queueRecipe = useCallback((recipe: ProductionRecipeKey) => {
@@ -168,14 +243,43 @@ export default function App() {
   }, [announce, state.animalProducts])
 
   const focusTask = useCallback((task: string) => {
-    if (task.includes('Plant') || task.includes('Water') || task.includes('Harvest')) {
+    if (task.startsWith('Advance')) advanceDay()
+    else if (task.startsWith('Water')) water()
+    else if (task.startsWith('Harvest')) harvest()
+    else if (task.startsWith('Plant')) {
+      setSelectedCrop(recommendedCrop)
       navigate('planning')
-    } else if (task.includes('Ship') || task.includes('Collect')) {
-      navigate('barn')
-    } else {
-      announce(`${task} is mapped for the next farm slice.`)
+    } else if (task.startsWith('Ship') || task.startsWith('Sell')) {
+      navigate('barn', 'market')
+    } else if (task.includes('Collect')) {
+      navigate('barn', 'barn')
     }
-  }, [announce, navigate])
+  }, [advanceDay, harvest, navigate, recommendedCrop, water])
+
+  const transact = useCallback((action: FarmAction, message: string) => {
+    if (farmReducer(state, action) === state) {
+      announce('That action is unavailable. Check your stock, balance, and farm level.')
+      return
+    }
+    dispatch(action)
+    announce(message)
+  }, [announce, state])
+
+  const buySeeds = (crop: CropKey, quantity: number) => transact({ type: 'BUY_SEEDS', crop, quantity }, `${quantity} ${crop} seeds added to your seed box.`)
+  const sellInventory = (item: InventoryKey, quantity: number) => {
+    const next = farmReducer(state, { type: 'SELL_INVENTORY', item, quantity })
+    transact({ type: 'SELL_INVENTORY', item, quantity }, `Sold ${quantity} ${item} for ${formatMoney(next.money - state.money)}.`)
+  }
+  const expand = () => transact({ type: 'EXPAND_FARM' }, 'New plots cleared! Open Fields to plant them.')
+  const interactPlot = (id: number) => {
+    const plot = state.plots[id]
+    if (plot.ready) transact({ type: 'HARVEST_PLOT', plotId: id }, `Plot ${id + 1} harvested.`)
+    else if (plot.crop) transact({ type: 'WATER_PLOT', plotId: id }, `Plot ${id + 1} watered.`)
+    else {
+      dispatch({ type: 'TOGGLE_PLOT_SELECTION', plotId: id })
+      navigate('planning')
+    }
+  }
 
   useEffect(() => {
     window.render_game_to_text = () => JSON.stringify({
@@ -207,21 +311,23 @@ export default function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== 'f' || event.metaKey || event.ctrlKey || event.altKey) return
       const target = event.target as HTMLElement | null
-      if (target?.matches('input, textarea, select')) return
-      if (document.fullscreenElement) void document.exitFullscreen()
-      else void document.documentElement.requestFullscreen()
+      if (target?.matches('input, textarea, select') || target?.isContentEditable) return
+      if (document.fullscreenElement) void document.exitFullscreen().catch(() => announce('Could not exit fullscreen.'))
+      else if (document.documentElement.requestFullscreen) void document.documentElement.requestFullscreen().catch(() => announce('Fullscreen is unavailable in this browser.'))
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
   return (
-    <div className="app-frame">
-      <TopBar state={state} onHome={() => navigate('overview')} onAdvanceDay={advanceDay} />
-      <main>
-        {screen === 'overview' && <FarmOverview state={state} onNavigate={navigate} onFocusTask={focusTask} onAdvanceDay={advanceDay} />}
-        {screen === 'planning' && <FieldPlanning state={state} selectedCrop={selectedCrop} onSelectCrop={setSelectedCrop} onTogglePlot={togglePlot} onPlant={plant} onWater={water} onHarvest={harvest} onAdvanceDay={advanceDay} onNavigate={navigate} />}
-        {screen === 'barn' && <BarnMarket state={state} focus={barnFocus} onFocusChange={setBarnFocus} onShip={ship} onCancelProduction={cancelQueueItem} onStartProduction={queueRecipe} onCollectProduction={collectQueueItem} onCollectAnimalProducts={collectAnimalProducts} onRemoveSellOrder={removeOrder} onNavigate={navigate} />}
+      <div className="app-frame">
+      <a className="skip-link" href="#game-main" onClick={(event) => { event.preventDefault(); document.getElementById('game-main')?.focus() }}>Skip to game</a>
+      <TopBar state={state} coach={gameplayCoach} onHome={() => navigate('overview')} onAdvanceDay={advanceDay} />
+      {saveWarning && <div className="save-warning" role="alert">{saveWarning}{session.canSave && <button type="button" onClick={() => { if (saveFarmState(state)) setSaveWarning('') }}>Retry save</button>}</div>}
+      <main id="game-main" tabIndex={-1}>
+        {screen === 'overview' && <FarmOverview state={state} coach={gameplayCoach} onNavigate={navigate} onFocusTask={focusTask} onAdvanceDay={advanceDay} onInteractPlot={interactPlot} onExpand={expand} />}
+        {screen === 'planning' && <FieldPlanning state={state} selectedCrop={selectedCrop} onSelectCrop={setSelectedCrop} onTogglePlot={togglePlot} onPlant={plant} onWater={water} onHarvest={harvest} onAdvanceDay={advanceDay} onNavigate={navigate} recommendedCrop={recommendedCrop} onBuySeeds={buySeeds} />}
+        {screen === 'barn' && <BarnMarket state={state} focus={barnFocus} onFocusChange={(focus) => navigate('barn', focus)} onShip={ship} onCancelProduction={cancelQueueItem} onStartProduction={queueRecipe} onCollectProduction={collectQueueItem} onCollectAnimalProducts={collectAnimalProducts} onRemoveSellOrder={removeOrder} onNavigate={navigate} onBuySeeds={buySeeds} onSellInventory={sellInventory} />}
       </main>
       <div className={`toast ${toast ? 'is-visible' : ''}`} role="status" aria-live="polite">{toast}</div>
     </div>

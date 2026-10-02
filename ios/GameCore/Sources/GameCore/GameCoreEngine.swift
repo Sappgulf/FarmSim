@@ -399,6 +399,18 @@ public struct GameCoreEngine: Sendable {
         save.meta.livestockCounts[id] = max(0, count)
     }
 
+    /// One payout per world day, including after a save/reload.
+    @discardableResult
+    public mutating func collectLivestockIncome(_ coins: Int) -> Bool {
+        guard coins > 0,
+              save.meta.livestockCounts.values.contains(where: { $0 > 0 }),
+              save.meta.lastLivestockCollectionDay < save.world.day else { return false }
+        save.meta.lastLivestockCollectionDay = save.world.day
+        addCoins(coins)
+        addXP(max(5, coins / 10))
+        return true
+    }
+
     public func petLevel(for id: String) -> Int {
         max(0, save.meta.petLevels[id] ?? 0)
     }

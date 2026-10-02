@@ -1,5 +1,5 @@
-import { cropOptions, productionRecipes } from './data'
-import type { CropKey, FarmState, ProductionItem, ProductionPhase, ProductionRecipeKey } from './data'
+import { allInventoryItems, cropOptions, cropYield, farmLevel, initialSellOrders, productionRecipes, seasonForDay } from './data'
+import type { CropKey, FarmState, InventoryKey, ProductionItem, ProductionPhase, ProductionRecipeKey } from './data'
 
 export const STORAGE_KEY = 'farmsim-state-v2'
 export const LEGACY_STORAGE_KEY = 'farmsim-state-v1'
@@ -16,6 +16,14 @@ export type FarmAction =
   | { type: 'CANCEL_PRODUCTION'; id: string }
   | { type: 'SHIP_GOODS'; orderId: string; quantity: number }
   | { type: 'REMOVE_SELL_ORDER'; id: string }
+  | { type: 'BUY_SEEDS'; crop: CropKey; quantity: number }
+  | { type: 'SELL_INVENTORY'; item: InventoryKey; quantity: number }
+  | { type: 'EXPAND_FARM' }
+  | { type: 'HARVEST_PLOT'; plotId: number }
+  | { type: 'WATER_PLOT'; plotId: number }
+
+const validQuantity = (quantity: number) => Number.isSafeInteger(quantity) && quantity > 0
+const ledger = (money: number) => Math.round(money * 100) / 100
 
 function advanceProductionItem(item: ProductionItem): ProductionItem {
   if (item.phase === 'ready') return item
@@ -25,6 +33,7 @@ function advanceProductionItem(item: ProductionItem): ProductionItem {
     ...item,
     progress,
     phase,
+    status: `${Math.round(progress * 2)} / 2 days`,
     remaining: phase === 'ready' ? 'Ready to collect' : phase === 'in-progress' ? 'Ready tomorrow' : 'Queued',
   }
 }
@@ -41,7 +50,7 @@ function togglePlotSelection(state: FarmState, plotId: number): FarmState {
 
 function reducePlantSelectedPlots(state: FarmState, crop: CropKey): FarmState {
   const selected = state.selectedPlotIds
-  if (selected.length === 0 || state.seedStock[crop] < selected.length || new Set(selected).size !== selected.length || selected.some((id) => !state.plots[id]?.available || state.plots[id].crop !== null)) return state
+  if (!cropOptions.some((item) => item.key === crop) || selected.length === 0 || state.seedStock[crop] < selected.length || new Set(selected).size !== selected.length || selected.some((id) => !state.plots[id]?.available || state.plots[id].crop !== null)) return state
 
   const plots = { ...state.plots }
   selected.forEach((id) => {
@@ -54,16 +63,17 @@ function reducePlantSelectedPlots(state: FarmState, crop: CropKey): FarmState {
     seedStock: { ...state.seedStock, [crop]: state.seedStock[crop] - selected.length },
     selectedPlotIds: [],
     plots,
+    xp: state.xp + selected.length,
   }
 }
 
-function waterPlots(state: FarmState): FarmState {
+function waterPlots(state: FarmState, target?: number): FarmState {
   const plots = { ...state.plots }
   let changed = false
   Object.keys(plots).forEach((key) => {
     const id = Number(key)
     const plot = plots[id]
-    if (plot.crop !== null && !plot.ready && !plot.watered) {
+    if ((target === undefined || id === target) && plot.crop !== null && !plot.ready && !plot.watered) {
       plots[id] = { ...plot, watered: true }
       changed = true
     }
@@ -86,6 +96,7 @@ function reduceAdvanceFarmDay(state: FarmState): FarmState {
   return {
     ...state,
     day: state.day + 1,
+    season: seasonForDay(state.day + 1),
     weather: ['Sunny', 'Cloudy', 'Rainy', 'Sunny', 'Windy'][(state.day + 1) % 5],
     animalProducts: {
       eggs: Math.min(12, state.animalProducts.eggs + 2),
@@ -93,25 +104,28 @@ function reduceAdvanceFarmDay(state: FarmState): FarmState {
     },
     plots,
     productionQueue: state.productionQueue.map(advanceProductionItem),
+    sellOrders: state.sellOrders.length === 0 ? initialSellOrders.map((order) => ({ ...order })) : state.sellOrders,
   }
 }
 
-function harvestPlots(state: FarmState): FarmState {
+function harvestPlots(state: FarmState, target?: number): FarmState {
   const plots = { ...state.plots }
   const inventory = { ...state.inventory }
   let harvested = false
+  let count = 0
 
   Object.keys(plots).forEach((key) => {
     const id = Number(key)
     const plot = plots[id]
-    if (!plot.crop || !plot.ready) return
+    if ((target !== undefined && id !== target) || !plot.crop || !plot.ready) return
     const crop = cropOptions.find((option) => option.key === plot.crop)
-    inventory[plot.crop] += crop?.harvestYield ?? 1
+    inventory[plot.crop] += crop ? cropYield(crop, state.season) : 1
     plots[id] = { ...plot, crop: null, watered: false, growthDays: 0, ready: false }
     harvested = true
+    count += 1
   })
 
-  return harvested ? { ...state, inventory, plots, selectedPlotIds: [] } : state
+  return harvested ? { ...state, inventory, plots, xp: state.xp + count * 4, harvestedPlots: state.harvestedPlots + count } : state
 }
 
 function reduceCollectAnimalProducts(state: FarmState, product: 'eggs' | 'milk'): FarmState {
@@ -150,8 +164,8 @@ function reduceStartProduction(state: FarmState, recipeKey: ProductionRecipeKey)
         icon: recipe.icon,
         progress: 0,
         phase: 'queued',
-        status: `0 / ${recipe.outputAmount}`,
-        remaining: 'Queued',
+        status: '0 / 2 days',
+        remaining: '2 days',
       },
     ],
   }
@@ -174,7 +188,7 @@ function reduceCollectProduction(state: FarmState, id: string): FarmState {
 
 function reduceShipGoods(state: FarmState, orderId: string, quantity: number): FarmState {
   const order = state.sellOrders.find((entry) => entry.id === orderId)
-  if (!order || quantity <= 0 || order.amount < quantity || state.inventory[order.icon] < quantity) return state
+  if (!order || !validQuantity(quantity) || order.amount < quantity || state.inventory[order.icon] < quantity) return state
 
   const remainingAmount = order.amount - quantity
   const sellOrders = remainingAmount === 0
@@ -183,7 +197,8 @@ function reduceShipGoods(state: FarmState, orderId: string, quantity: number): F
 
   return {
     ...state,
-    money: state.money + quantity * order.payoutPerUnit,
+    money: ledger(state.money + quantity * order.price),
+    xp: state.xp + quantity,
     shippedGoods: state.shippedGoods + quantity,
     inventory: {
       ...state.inventory,
@@ -194,8 +209,30 @@ function reduceShipGoods(state: FarmState, orderId: string, quantity: number): F
 }
 
 function reduceCancelProduction(state: FarmState, id: string): FarmState {
-  if (!state.productionQueue.some((item) => item.id === id)) return state
-  return { ...state, productionQueue: state.productionQueue.filter((item) => item.id !== id) }
+  const item = state.productionQueue.find((entry) => entry.id === id)
+  const recipe = productionRecipes.find((entry) => entry.key === item?.recipe)
+  if (!item || !recipe || item.phase === 'ready') return state
+  return { ...state, inventory: item.progress === 0 ? { ...state.inventory, [recipe.input]: state.inventory[recipe.input] + recipe.inputAmount } : state.inventory, productionQueue: state.productionQueue.filter((item) => item.id !== id) }
+}
+
+function buySeeds(state: FarmState, cropKey: CropKey, quantity: number): FarmState {
+  const crop = cropOptions.find((item) => item.key === cropKey)
+  if (!crop || !validQuantity(quantity) || quantity > 1000 || state.money < quantity * crop.seedPrice) return state
+  return { ...state, money: ledger(state.money - quantity * crop.seedPrice), seedStock: { ...state.seedStock, [cropKey]: state.seedStock[cropKey] + quantity } }
+}
+
+function sellInventory(state: FarmState, itemKey: InventoryKey, quantity: number): FarmState {
+  const item = allInventoryItems.find((entry) => entry.key === itemKey)
+  if (!item || !validQuantity(quantity) || state.inventory[itemKey] < quantity) return state
+  return { ...state, money: ledger(state.money + quantity * item.price), inventory: { ...state.inventory, [itemKey]: state.inventory[itemKey] - quantity }, shippedGoods: state.shippedGoods + quantity, xp: state.xp + quantity }
+}
+
+function expandFarm(state: FarmState): FarmState {
+  const locked = Object.values(state.plots).filter((plot) => !plot.available).slice(0, 5)
+  if (farmLevel(state) < 2 || state.money < 500 || locked.length === 0) return state
+  const plots = { ...state.plots }
+  locked.forEach((plot) => { plots[plot.id] = { ...plot, available: true } })
+  return { ...state, plots, money: ledger(state.money - 500) }
 }
 
 function reduceRemoveSellOrder(state: FarmState, id: string): FarmState {
@@ -205,6 +242,16 @@ function reduceRemoveSellOrder(state: FarmState, id: string): FarmState {
 
 export function farmReducer(state: FarmState, action: FarmAction): FarmState {
   switch (action.type) {
+    case 'HARVEST_PLOT':
+      return harvestPlots(state, action.plotId)
+    case 'WATER_PLOT':
+      return waterPlots(state, action.plotId)
+    case 'BUY_SEEDS':
+      return buySeeds(state, action.crop, action.quantity)
+    case 'SELL_INVENTORY':
+      return sellInventory(state, action.item, action.quantity)
+    case 'EXPAND_FARM':
+      return expandFarm(state)
     case 'TOGGLE_PLOT_SELECTION':
       return togglePlotSelection(state, action.plotId)
     case 'PLANT_SELECTED_PLOTS':

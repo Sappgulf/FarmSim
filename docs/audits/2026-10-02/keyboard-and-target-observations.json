@@ -1,0 +1,57 @@
+{
+  "documentHeadingVisible": false,
+  "smallButtons": [
+    {
+      "height": 0,
+      "label": "Collect Bread",
+      "width": 0
+    },
+    {
+      "height": 0,
+      "label": "Collect Butter",
+      "width": 0
+    },
+    {
+      "height": 27,
+      "label": "Ship 5 Wheat",
+      "width": 27
+    },
+    {
+      "height": 27,
+      "label": "Remove Wheat sell order",
+      "width": 27
+    },
+    {
+      "height": 27,
+      "label": "Ship 5 Eggs",
+      "width": 27
+    },
+    {
+      "height": 27,
+      "label": "Remove Eggs sell order",
+      "width": 27
+    },
+    {
+      "height": 27,
+      "label": "Ship 5 Milk",
+      "width": 27
+    },
+    {
+      "height": 27,
+      "label": "Remove Milk sell order",
+      "width": 27
+    }
+  ],
+  "tabs": [
+    {
+      "label": " Barn",
+      "selected": "false",
+      "tabIndex": 0
+    },
+    {
+      "label": " Market",
+      "selected": "true",
+      "tabIndex": 0
+    }
+  ]
+}

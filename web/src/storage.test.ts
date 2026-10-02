@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { initialFarmState } from './data'
+import { createNewFarmState, initialFarmState } from './data'
 import { LEGACY_STORAGE_KEY, STORAGE_KEY } from './state'
-import { loadFarmState, migrateStoredState, saveFarmState, type StoredState } from './storage'
+import { loadFarmSession, loadFarmState, migrateStoredState, saveFarmState, type StoredState } from './storage'
 
 class MemoryStorage implements Storage {
   private values = new Map<string, string>()
@@ -32,13 +32,13 @@ class MemoryStorage implements Storage {
 }
 
 describe('FarmSim persistence', () => {
-  it('writes and reads an explicit v2 farm envelope', () => {
+  it('writes and reads an explicit v3 farm envelope', () => {
     const storage = new MemoryStorage()
     const state = { ...initialFarmState, day: 19, money: 2710 }
 
     expect(saveFarmState(state, storage)).toBe(true)
-    expect(JSON.parse(storage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({ schemaVersion: 2, farm: { day: 19, money: 2710 } })
-    expect(loadFarmState(storage)).toEqual(state)
+    expect(JSON.parse(storage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({ schemaVersion: 3, farm: { day: 19, money: 2710 } })
+    expect(loadFarmState(storage)).toEqual(migrateStoredState(state))
   })
 
   it('backfills seed stock and animal production for older v2 saves', () => {
@@ -65,7 +65,7 @@ describe('FarmSim persistence', () => {
     const migrated = loadFarmState(storage)
     expect(migrated.day).toBe(14)
     expect(migrated.money).toBe(2500)
-    expect(migrated.selectedPlotIds).toEqual([6, 7])
+    expect(migrated.selectedPlotIds).toEqual([])
     expect(migrated.plots[6]).toMatchObject({ crop: 'tomato', watered: true, growthDays: 2, ready: false })
     expect(migrated.plots[7]).toMatchObject({ crop: 'tomato', watered: false, growthDays: 2, ready: false })
     expect(migrated.plots[5].crop).toBeNull()
@@ -79,6 +79,7 @@ describe('FarmSim persistence', () => {
 
     const storage = new MemoryStorage()
     storage.setItem(STORAGE_KEY, '{not valid json')
-    expect(loadFarmState(storage)).toEqual(initialFarmState)
+    expect(loadFarmState(storage)).toEqual(createNewFarmState())
+    expect(storage.length).toBe(2)
   })
 })

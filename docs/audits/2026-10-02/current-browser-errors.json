@@ -1,0 +1,38 @@
+[
+  {
+    "level": "error",
+    "message": "TypeError: state.plots.filter is not a function\n    at FarmOverview (http://127.0.0.1:5186/src/components/FarmOverview.tsx:21:37)\n    at Object.react_stack_bottom_frame (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:12864:12)\n    at renderWithHooks (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:4211:19)\n    at updateFunctionComponent (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:5567:16)\n    at beginWork (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:6138:20)\n    at runWithFiberInDEV (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:850:66)\n    at performUnitOfWork (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:8427:92)\n    at workLoopSync (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:8323:37)\n    at renderRootSync (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:8307:6)\n    at performWorkOnRoot (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:7992:27)",
+    "timestamp": "2026-10-02T15:54:06.563Z",
+    "url": "http://127.0.0.1:5186/src/components/FarmOverview.tsx"
+  },
+  {
+    "level": "warn",
+    "message": "%s\n\n%s\n An error occurred in the <FarmOverview> component. Consider adding an error boundary to your tree to customize error handling behavior.\nVisit https://react.dev/link/error-boundaries to learn more about error boundaries.",
+    "timestamp": "2026-10-02T15:54:06.564Z",
+    "url": "http://127.0.0.1:5186/@vite/client"
+  },
+  {
+    "level": "error",
+    "message": "TypeError: state.plots.filter is not a function\n    at FieldPlanning (http://127.0.0.1:5186/src/components/FieldPlanning.tsx:19:41)\n    at Object.react_stack_bottom_frame (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:12864:12)\n    at renderWithHooks (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:4211:19)\n    at updateFunctionComponent (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:5567:16)\n    at beginWork (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:6138:20)\n    at runWithFiberInDEV (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:850:66)\n    at performUnitOfWork (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:8427:92)\n    at workLoopSync (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:8323:37)\n    at renderRootSync (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:8307:6)\n    at performWorkOnRoot (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:7992:27)",
+    "timestamp": "2026-10-02T16:04:44.822Z",
+    "url": "http://127.0.0.1:5186/src/components/FieldPlanning.tsx"
+  },
+  {
+    "level": "warn",
+    "message": "%s\n\n%s\n An error occurred in the <FieldPlanning> component. Consider adding an error boundary to your tree to customize error handling behavior.\nVisit https://react.dev/link/error-boundaries to learn more about error boundaries.",
+    "timestamp": "2026-10-02T16:04:44.824Z",
+    "url": "http://127.0.0.1:5186/@vite/client"
+  },
+  {
+    "level": "error",
+    "message": "TypeError: state.plots.filter is not a function\n    at FieldPlanning (http://127.0.0.1:5186/src/components/FieldPlanning.tsx:19:41)\n    at Object.react_stack_bottom_frame (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:12864:12)\n    at renderWithHooks (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:4211:19)\n    at updateFunctionComponent (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:5567:16)\n    at beginWork (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:6138:20)\n    at runWithFiberInDEV (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:850:66)\n    at performUnitOfWork (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:8427:92)\n    at workLoopSync (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:8323:37)\n    at renderRootSync (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:8307:6)\n    at performWorkOnRoot (http://127.0.0.1:5186/node_modules/.vite/deps/react-dom_client.js?v=dca158df:7992:27)",
+    "timestamp": "2026-10-02T16:04:45.032Z",
+    "url": "http://127.0.0.1:5186/src/components/FieldPlanning.tsx"
+  },
+  {
+    "level": "warn",
+    "message": "%s\n\n%s\n An error occurred in the <FieldPlanning> component. Consider adding an error boundary to your tree to customize error handling behavior.\nVisit https://react.dev/link/error-boundaries to learn more about error boundaries.",
+    "timestamp": "2026-10-02T16:04:45.032Z",
+    "url": "http://127.0.0.1:5186/@vite/client"
+  }
+]

@@ -5,6 +5,8 @@ import GameCore
 @Observable
 @MainActor
 final class GameStore {
+    @ObservationIgnored private var fishingEncounter: (id: UUID, fish: FishTypePlan)?
+
     private static let defaultBuildingCatalog: [BuildingPlan] = [
         BuildingPlan(
             id: "barn",
@@ -267,6 +269,7 @@ final class GameStore {
     @ObservationIgnored private var pondUpgradesByLevel: [Int: PondUpgradePlan] = [:]
     @ObservationIgnored private var cachedReadyTileCount: Int = 0
     @ObservationIgnored private var cachedPlantedTileCount: Int = 0
+    @ObservationIgnored private var cachedWateredTileCount: Int = 0
     @ObservationIgnored private var cachedSeedInventoryCount: Int = 0
     @ObservationIgnored private var cachedCropInventoryCount: Int = 0
     @ObservationIgnored private var cachedBuiltStructureCount: Int = 0
@@ -412,6 +415,14 @@ final class GameStore {
         cachedPlantedTileCount
     }
 
+    var wateredPlantedTileCount: Int {
+        cachedWateredTileCount
+    }
+
+    var unwateredPlantedTileCount: Int {
+        max(0, plantedTileCount - cachedWateredTileCount)
+    }
+
     var totalInventoryCount: Int {
         cachedSeedInventoryCount + cachedCropInventoryCount
     }
@@ -501,10 +512,9 @@ final class GameStore {
         let contentLoadDurationMs = PerfTelemetry.elapsedMs(since: contentLoadStart)
         PerfTelemetry.end("content_load", contentLoadInterval)
         let sortedDefs = loadedContent.cropDefs.sorted { $0.id < $1.id }
-        let firstSeed = sortedDefs.first?.id ?? ""
 
         let saveStore = SaveFileStore(fileURL: SavePaths.defaultSaveURL(appName: "FarmSim"))
-        let starterSeeds = Dictionary(uniqueKeysWithValues: sortedDefs.prefix(4).map { ($0.id, 4) })
+        let starterSeeds = Self.starterSeedStock(crops: sortedDefs, display: loadedContent.cropDisplay)
         let fallbackSave = GameCoreEngine.defaultSave(
             gridWidth: 4,
             gridHeight: 4,
@@ -512,7 +522,7 @@ final class GameStore {
             daySeed: 20260212
         )
 
-        let initialSave: SaveGame
+        var initialSave: SaveGame
         var loadError: String?
         let saveLoadInterval = PerfTelemetry.begin("save_load")
         let saveLoadStart = ContinuousClock.now
@@ -524,6 +534,17 @@ final class GameStore {
         }
         let saveLoadDurationMs = PerfTelemetry.elapsedMs(since: saveLoadStart)
         PerfTelemetry.end("save_load", saveLoadInterval)
+
+        // Older starter saves could contain only level-locked seeds and no way to earn coins.
+        let usableSeed = Self.preferredStockedSeed(crops: sortedDefs, display: loadedContent.cropDisplay, save: initialSave)
+        if initialSave.player.xp == 0,
+           initialSave.player.coins == 0,
+           initialSave.player.inventory.crops.values.allSatisfy({ $0 == 0 }),
+           initialSave.world.tiles.allSatisfy({ $0.planted == nil }),
+           !usableSeed.isEmpty,
+           (initialSave.player.inventory.seeds[usableSeed] ?? 0) == 0 {
+            initialSave.player.inventory.seeds[usableSeed] = 4
+        }
 
         var engine = GameCoreEngine(save: initialSave, cropDefs: sortedDefs, seed: initialSave.daySeed)
         var initialTimeState = initialSave.meta.time
@@ -576,7 +597,7 @@ final class GameStore {
         self.challengePlansByID = Dictionary(uniqueKeysWithValues: resolvedChallengeCatalog.map { ($0.id, $0) })
         self.pondUpgradesByLevel = Dictionary(uniqueKeysWithValues: resolvedPondUpgradeCatalog.map { ($0.level, $0) })
 
-        self.selectedSeedID = firstSeed
+        self.selectedSeedID = Self.preferredStockedSeed(crops: sortedDefs, display: loadedContent.cropDisplay, save: initialSave)
         self.statusText = ""
         self.contentErrorMessage = loadedContent.contentErrorMessage
         self.lastContentLoadDurationMs = contentLoadDurationMs
@@ -1082,6 +1103,10 @@ final class GameStore {
         return true
     }
 
+    var livestockProductsReady: Bool {
+        usedLivestockCapacity > 0 && save.meta.lastLivestockCollectionDay < save.world.day
+    }
+
     @discardableResult
     func collectLivestockProducts() -> Int {
         var totalCoins = 0
@@ -1092,12 +1117,10 @@ final class GameStore {
             let maintenance = count * max(0, plan.maintenanceCost)
             totalCoins += max(0, gross - maintenance)
         }
-        guard totalCoins > 0 else {
-            syncState(statusOverride: "No livestock products ready.", emitHaptic: false, emitHarvest: false)
+        guard engine.collectLivestockIncome(totalCoins) else {
+            syncState(statusOverride: "No livestock products ready. Animals produce once each day.", emitHaptic: false, emitHarvest: false)
             return 0
         }
-        engine.addCoins(totalCoins)
-        engine.addXP(max(5, totalCoins / 10))
         SoundManager.shared.play(.sell, haptic: .medium)
         syncState(statusOverride: "Collected livestock goods for \(totalCoins) coins.", emitHaptic: true, emitHarvest: true)
         return totalCoins
@@ -1211,11 +1234,10 @@ final class GameStore {
         cachedTotalFishCaught
     }
 
-    @discardableResult
-    func castFishingLine() -> Bool {
+    func beginFishingEncounter() -> (id: UUID, fish: FishTypePlan)? {
         guard !fishPlans.isEmpty else {
             syncState(statusOverride: "No fish data loaded.", emitHaptic: false, emitHarvest: false)
-            return false
+            return nil
         }
 
         let rarityBonus = max(1.0, currentPondUpgrade.rarityBonus)
@@ -1236,6 +1258,21 @@ final class GameStore {
             }
         }
 
+        let encounter = (id: UUID(), fish: chosen)
+        fishingEncounter = encounter
+        return encounter
+    }
+
+    func cancelFishingEncounter(_ id: UUID) {
+        if fishingEncounter?.id == id { fishingEncounter = nil }
+    }
+
+    @discardableResult
+    func completeFishingEncounter(_ id: UUID, caught: Bool) -> Bool {
+        guard let encounter = fishingEncounter, encounter.id == id else { return false }
+        fishingEncounter = nil
+        guard caught else { return false }
+        let chosen = encounter.fish
         let value = max(1, Int((Double(chosen.baseValue) * sellBonusMultiplier).rounded(.down)))
         engine.addCoins(value)
         engine.addXP(max(4, chosen.difficulty * 4))
@@ -1637,7 +1674,7 @@ final class GameStore {
         pendingSaveTask?.cancel()
         pendingSaveTask = nil
 
-        let starterSeeds = Dictionary(uniqueKeysWithValues: cropDefs.prefix(4).map { ($0.id, 4) })
+        let starterSeeds = Self.starterSeedStock(crops: cropDefs, display: cropDisplay)
         let fresh = GameCoreEngine.defaultSave(
             gridWidth: 4,
             gridHeight: 4,
@@ -1655,7 +1692,7 @@ final class GameStore {
         engine.setTimeState(timeEngine.state)
         save = engine.save
         renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
-        selectedSeedID = cropDefs.first?.id ?? selectedSeedID
+        selectedSeedID = Self.preferredStockedSeed(crops: cropDefs, display: cropDisplay, save: fresh)
         lastPlayerLevel = ProgressionSystem.level(forXP: fresh.player.xp)
         syncState(statusOverride: "Save reset.", emitHaptic: false, emitHarvest: false)
         refreshHUDTime(force: true, now: Date().timeIntervalSince1970)
@@ -1972,6 +2009,53 @@ final class GameStore {
         }
     }
 
+    private func gameplayStatusHint() -> String {
+        let readyCount = readyTileCount
+        let plantedCount = plantedTileCount
+        let unwateredCount = unwateredPlantedTileCount
+        let freePlots = max(0, totalTileCount - plantedCount)
+
+        if readyCount > 0 {
+            return "\(readyCount) crop\(readyCount == 1 ? "" : "s") ready to harvest."
+        }
+
+        if plantedCount > 0 {
+            if unwateredCount > 0 {
+                return "\(unwateredCount) planted crop\(unwateredCount == 1 ? "" : "s") need\(unwateredCount == 1 ? "s" : "") water."
+            }
+
+            if freePlots > 0 {
+                return "All \(plantedCount) planted crop\(plantedCount == 1 ? "" : "s") are watered. Advance the day to continue growth."
+            }
+
+            return "Planted crops are fully active. Keep advancing days to harvest."
+        }
+
+        if isInventoryFull {
+            return "Silo is full. Sell crops or expand before harvesting more."
+        }
+
+        if let suggestedCropID = nextAvailableSeedIDForActionHint(),
+           let crop = engine.cropDefsByID[suggestedCropID] {
+            if seedCount(for: suggestedCropID) > 0 {
+                return "\(crop.name) is selected. Tap a tile to plant."
+            }
+            return "\(crop.name) is next on the map. Gather seeds to plant it."
+        }
+
+        return "Tap a tile to manage crops."
+    }
+
+    private func nextAvailableSeedIDForActionHint() -> String? {
+        if isUnlocked(cropID: selectedSeedID) {
+            return selectedSeedID
+        }
+        if let stocked = cropDefs.first(where: { isUnlocked(cropID: $0.id) && seedCount(for: $0.id) > 0 }) {
+            return stocked.id
+        }
+        return cropDefs.first(where: { isUnlocked(cropID: $0.id) })?.id
+    }
+
     private func syncState(statusOverride: String?, emitHaptic: Bool, emitHarvest: Bool) {
         let upgradeMessage = applyProgressionUnlocksIfNeeded()
 
@@ -2004,13 +2088,13 @@ final class GameStore {
         }
 
         if let statusOverride {
-            if let upgradeMessage {
-                statusText = "\(statusOverride) \(upgradeMessage)"
-            } else {
-                statusText = statusOverride
-            }
-        } else if let upgradeMessage {
-            statusText = upgradeMessage
+            statusText = statusOverride
+        } else {
+            statusText = gameplayStatusHint()
+        }
+
+        if let upgradeMessage {
+            statusText = "\(statusText) \(upgradeMessage)"
         }
 
         schedulePersist()
@@ -2026,11 +2110,13 @@ final class GameStore {
     private func recomputeDerivedStateCaches() {
         var planted = 0
         var ready = 0
+        var watered = 0
         let defsByID = engine.cropDefsByID
 
         for tile in save.world.tiles {
             guard let plantedCrop = tile.planted else { continue }
             planted += 1
+            if tile.state.watered { watered += 1 }
             if let def = defsByID[plantedCrop.cropID],
                plantedCrop.growthProgress >= Double(def.daysToGrow) {
                 ready += 1
@@ -2039,6 +2125,7 @@ final class GameStore {
 
         cachedPlantedTileCount = planted
         cachedReadyTileCount = ready
+        cachedWateredTileCount = watered
         cachedSeedInventoryCount = save.player.inventory.seeds.values.reduce(0, +)
         cachedCropInventoryCount = save.player.inventory.crops.values.reduce(0, +)
         cachedBuiltStructureCount = buildingCatalog.reduce(0) { partial, plan in
@@ -2081,6 +2168,22 @@ final class GameStore {
         userDefaults.removeObject(forKey: Self.claimedLevelsKey)
         userDefaults.removeObject(forKey: Self.onboardingKey)
         onboardingRequired = true
+    }
+
+    private static func starterSeedStock(crops: [CropDef], display: [String: CropDisplayInfo]) -> [String: Int] {
+        let usable = crops.filter { (display[$0.id]?.level ?? 1) <= 1 }
+            .sorted { left, right in
+                if (left.id == "wheat") != (right.id == "wheat") { return left.id == "wheat" }
+                return left.id < right.id
+            }
+        return Dictionary(uniqueKeysWithValues: usable.prefix(4).map { ($0.id, 4) })
+    }
+
+    private static func preferredStockedSeed(crops: [CropDef], display: [String: CropDisplayInfo], save: SaveGame) -> String {
+        let level = ProgressionSystem.level(forXP: save.player.xp)
+        let unlocked = crops.filter { (display[$0.id]?.level ?? 1) <= level }
+        let stocked = unlocked.filter { (save.player.inventory.seeds[$0.id] ?? 0) > 0 }
+        return stocked.first(where: { $0.id == "wheat" })?.id ?? stocked.first?.id ?? unlocked.first(where: { $0.id == "wheat" })?.id ?? unlocked.first?.id ?? ""
     }
 
     private static func loadSettings(defaults: UserDefaults) -> GameUserSettings {

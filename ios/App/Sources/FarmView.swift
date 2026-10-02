@@ -279,14 +279,18 @@ struct FarmView: View {
 
     private var statusBar: some View {
         WoodenPanel {
-            Text(store.statusText)
-                .font(compactBottomLayout ? .caption : .footnote)
-                .foregroundStyle(.white.opacity(0.95))
-                .shadow(color: .black.opacity(0.4), radius: 1)
-                .lineLimit(compactBottomLayout ? 1 : 2)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityLabel("Status")
-                .accessibilityValue(store.statusText)
+            VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                Text(store.statusText)
+                    .font(compactBottomLayout ? .caption : .footnote)
+                    .foregroundStyle(.white.opacity(0.95))
+                    .shadow(color: .black.opacity(0.4), radius: 1)
+                    .lineLimit(compactBottomLayout ? 1 : 2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityLabel("Status")
+                    .accessibilityValue(store.statusText)
+
+                fieldStatusStrip
+            }
         }
     }
 
@@ -349,6 +353,25 @@ struct FarmView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg))
         .shadow(color: .black.opacity(0.3), radius: 5, y: 2)
+    }
+
+    private var fieldStatusStrip: some View {
+        let freePlots = max(0, store.totalTileCount - store.plantedTileCount)
+
+        return HStack(spacing: DS.Space.xs) {
+            StatPill(icon: "leaf.fill", value: "\(store.readyTileCount) ready")
+            if store.plantedTileCount > 0 {
+                StatPill(icon: "drop.fill", value: "\(store.wateredPlantedTileCount)/\(store.plantedTileCount) watered")
+            }
+            if freePlots > 0 || compactBottomLayout {
+                StatPill(icon: "square.grid.3x3", value: "\(freePlots) free")
+            }
+        }
+        .font(compactBottomLayout ? .caption2 : .caption)
+        .foregroundStyle(.white.opacity(0.95))
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var actionBar: some View {

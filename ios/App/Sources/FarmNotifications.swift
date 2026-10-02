@@ -51,8 +51,12 @@ enum FarmNotifications {
     }
 
     static func clearCropsReadyReminder() {
-        let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [cropsReadyIdentifier])
-        center.removeDeliveredNotifications(withIdentifiers: [cropsReadyIdentifier])
+        // These legacy calls can synchronously wait for the notification daemon.
+        // They own no UI state and must never delay app activation on MainActor.
+        Task { @concurrent in
+            let center = UNUserNotificationCenter.current()
+            center.removePendingNotificationRequests(withIdentifiers: [cropsReadyIdentifier])
+            center.removeDeliveredNotifications(withIdentifiers: [cropsReadyIdentifier])
+        }
     }
 }

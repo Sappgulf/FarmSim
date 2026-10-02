@@ -1,7 +1,7 @@
 {
   "name": "farmsim",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,10 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit",
-    "qa:full": "npm run test && npm run build"
+    "qa:full": "npm run test && npm run build",
+    "test:ui": "vitest run src/App.test.tsx",
+    "test:watch": "vitest",
+    "smoke-test": "vitest run src/App.test.tsx src/overhaul.test.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

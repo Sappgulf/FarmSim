@@ -6,6 +6,7 @@ import GameCore
 /// Polished fishing section: pond status, interactive mini-game, stats, pond upgrade.
 struct FishingSection: View {
     @Bindable var store: GameStore
+    @Environment(\.scenePhase) private var scenePhase
 
     // MARK: Mini-game State
     private enum FishPhase: Equatable {
@@ -24,6 +25,8 @@ struct FishingSection: View {
     @State private var elapsed: Double = 0
     @State private var fishPhaseAngle: Double = 0
     @State private var currentFish: FishTypePlan? = nil
+    @State private var encounterID: UUID?
+    @State private var lastTickTime: TimeInterval = 0
     @State private var tickTask: Task<Void, Never>? = nil
     @State private var castTask: Task<Void, Never>? = nil
     @State private var resultTask: Task<Void, Never>? = nil
@@ -51,6 +54,10 @@ struct FishingSection: View {
             if store.nextPondUpgrade != nil {
                 upgradeCard
             }
+        }
+        .onDisappear { cancelSession() }
+        .onChange(of: scenePhase) { _, next in
+            if next != .active { cancelSession() }
         }
     }
 
@@ -419,23 +426,13 @@ struct FishingSection: View {
     }
 
     private func beginMinigame() {
-        // Pick a random fish from catalog using weighted rarity
-        let rarityBonus = max(1.0, pond.rarityBonus)
-        var totalWeight = 0.0
-        for fish in store.fishPlans {
-            let adjusted = fish.rarity <= 0.1 ? fish.rarity * rarityBonus : fish.rarity
-            totalWeight += max(0.0001, adjusted)
+        guard let encounter = store.beginFishingEncounter() else {
+            phase = .result(false, "No fish data available.")
+            return
         }
-
-        var cursor = Double.random(in: 0...1) * totalWeight
-        var chosen = store.fishPlans[0]
-        for fish in store.fishPlans {
-            let adjusted = fish.rarity <= 0.1 ? fish.rarity * rarityBonus : fish.rarity
-            cursor -= max(0.0001, adjusted)
-            if cursor <= 0 { chosen = fish; break }
-        }
-
-        currentFish = chosen
+        encounterID = encounter.id
+        currentFish = encounter.fish
+        lastTickTime = ProcessInfo.processInfo.systemUptime
         fishPos = Double.random(in: 0.2...0.8)
         fishVel = Double.random(in: -0.2...0.2)
         playerPos = 0.5
@@ -452,6 +449,7 @@ struct FishingSection: View {
             let ns = UInt64(1_000_000_000 / 30) // 30 fps
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: ns)
+                guard !Task.isCancelled else { return }
                 await MainActor.run { tickMinigame() }
             }
         }
@@ -459,8 +457,11 @@ struct FishingSection: View {
 
     private func tickMinigame() {
         guard case .minigame = phase else { tickTask?.cancel(); return }
-        let dt = 1.0 / 30.0
-        elapsed += dt
+        let now = ProcessInfo.processInfo.systemUptime
+        let actualDelta = max(0, now - lastTickTime)
+        lastTickTime = now
+        let dt = min(0.1, actualDelta)
+        elapsed += actualDelta
         fishPhaseAngle += dt
 
         // Fish movement
@@ -500,12 +501,14 @@ struct FishingSection: View {
     }
 
     private func endMinigame(caught: Bool, reason: String) {
+        guard case .minigame = phase, let id = encounterID else { return }
+        encounterID = nil
         tickTask?.cancel()
         tickTask = nil
+        let rewarded = store.completeFishingEncounter(id, caught: caught)
 
         let message: String
-        if caught, currentFish != nil {
-            store.castFishingLine()  // GameStore handles reward + XP + fish count
+        if rewarded {
             let lastStatus = store.statusText
             SoundManager.shared.play(.harvest, haptic: .medium)
             message = lastStatus
@@ -521,17 +524,31 @@ struct FishingSection: View {
         }
 
         withAnimation(DS.Animation.standard) {
-            phase = .result(caught, message)
+            phase = .result(rewarded, message)
         }
 
         // Auto-return to idle after 4 seconds
         resultTask = Task {
             try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
             await MainActor.run {
                 withAnimation(DS.Animation.standard) { phase = .idle }
             }
         }
     }
+    private func cancelSession() {
+        castTask?.cancel()
+        tickTask?.cancel()
+        resultTask?.cancel()
+        castTask = nil
+        tickTask = nil
+        resultTask = nil
+        if let id = encounterID { store.cancelFishingEncounter(id) }
+        encounterID = nil
+        currentFish = nil
+        phase = .idle
+    }
+
 }
 
 // MARK: - PondWaterBackground

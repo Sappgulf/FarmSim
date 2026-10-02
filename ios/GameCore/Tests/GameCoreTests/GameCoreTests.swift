@@ -295,7 +295,7 @@ final class GameCoreTests: XCTestCase {
     }
 
     func testSaveCodecCurrentVersionMatchesSharedSchemaBridge() {
-        XCTAssertEqual(SaveCodec.currentVersion, 16)
+        XCTAssertEqual(SaveCodec.currentVersion, 17)
     }
 
     func testContentLoaderAcceptsMatchingSchemaVersion() throws {

@@ -1,0 +1,17 @@
+# Ship only application sources needed for the web build.
+ios/
+docs/
+.buddy-data/
+.deskbuddy/
+.subagents/
+.git/
+node_modules/
+web/node_modules/
+web/dist/
+web/qa-out/
+web/playwright-report/
+web/test-results/
+output/
+tmp/
+temp/
+*.log

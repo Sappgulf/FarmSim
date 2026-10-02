@@ -40,7 +40,9 @@ The following methods are the allowed mutation surface for tabs:
   - `collectLivestockProducts()`
   - `adoptPet(_:)`
   - `trainPet(_:)`
-  - `castFishingLine()`
+  - `beginFishingEncounter()`
+  - `completeFishingEncounter(_:caught:)`
+  - `cancelFishingEncounter(_:)`
   - `upgradePond()`
   - `claimChallenge(_:)`
 - Settings/meta intents:
@@ -129,3 +131,16 @@ Tabs may read, but must not write, these properties:
 - Direct state writes from views into `save` or `engine`.
 - Per-tab duplicate content loaders.
 - Renderer-side simulation decisions (renderer must be view-only).
+
+## 2026-10-02 overhaul integration
+
+Main-session integration changes (no concurrent subagents):
+- GameCore v17 persists `lastLivestockCollectionDay`; `collectLivestockIncome(_:)` atomically grants one payout per world day. Old saves default the claim to -1.
+- `GameStore.livestockProductsReady` controls native market readiness; collection remains a GameStore intent.
+- Fishing now uses `beginFishingEncounter()`, `completeFishingEncounter(_:caught:)`, and `cancelFishingEncounter(_:)`. A UUID identifies one store-owned fish and can be consumed only once. `FishingSection` cancels sessions on disappearance/background and measures elapsed time using system uptime.
+- Repaired the action-hint seed fallback's unmatched parenthesis.
+- SpriteKit now shares the v3 transparent atlas for wheat, tomato, and corn, using cached normalized texture regions. Other native crop IDs retain their existing fallback; no simulation decisions moved into the renderer.
+- Fixed missing schemaVersion in the season pack's crops/decor/festivals, which crashed Debug launches. BundledContentTests exercises base and pack catalogs through the runtime loader.
+- FarmNotifications.clearCropsReadyReminder now runs its blocking notification-daemon calls in an explicitly concurrent task. A sampled native startup showed MainActor waiting inside that service call; no UI state crosses the task boundary.
+- New/reset farms receive only level-one usable seeds (including wheat when present). Initial selection prefers stocked unlocked seeds, so existing farms no longer open on a locked alphabetical crop; existing seed inventories are preserved.
+- Untouched legacy starter saves with zero XP, zero coins, no planted/harvested crops, and no stocked usable seed receive four usable seeds. This additive repair prevents the old alphabetical seed grant from stranding a farm.
