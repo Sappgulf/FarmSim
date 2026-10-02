@@ -21,6 +21,8 @@ This implementation follows the [baseline audit](../../audits/2026-10-02/AUDIT.m
 - Native app target: Build iOS Apps plugin built, installed, and launched successfully on an isolated iPhone 18 Pro / iOS 27 simulator. Onboarding and the farm opened; the stranded-save recovery and planting wheat through the plot sheet were observed. Shared wheat artwork rendered.
 - Browser: active UI exercised through planting, watering, rain growth, mixed crops, harvesting, market sales/restocking, paid land expansion, reload, and Barn/Market route restoration. Captures cover 390 × 844 phone and a 1280 × 720 desktop viewport (full-page capture 1280 × 982). PWA screenshot metadata now points to captures of the actual v3 UI.
 - Existing unrelated workspace files remain excluded from the release. Existing farm-coaching edits are integrated and verified with the complete native build.
+- Production: published to [farm-sim-seven.vercel.app](https://farm-sim-seven.vercel.app). Observed the new UI with an existing save, the Market URL restored on reload, and a warm offline reload passed. No browser console errors were captured in these hosted checks.
+- Dependency follow-up: updated the lockfile to patched nanoid/undici and Vitest 5.0.3, repaired the getter-only localStorage test mock, and reran all 157 tests plus the production build successfully. `npm audit` reports zero known vulnerabilities.
 
 Screenshots show a diagnostic farm preserved from the audit, including its historical cash balance; they are not the new-game starting state. New-game behavior is tested separately.
 
@@ -30,7 +32,7 @@ Screenshots show a diagnostic farm preserved from the audit, including its histo
 2. Complete native artwork beyond wheat/tomato/corn, and add world layers for owned buildings, animals, and upgrades.
 3. Add complete research timing/effects, livestock ready balances, recurring objectives, and stronger harvest/upgrade feedback where those systems are still incomplete.
 4. Finish native VoiceOver tile actions, dynamic-type/safe-area/device coverage, and a full fishing gameplay/cancellation playtest. Fishing correctness was built and reviewed, not played end to end here.
-5. Validate production offline cold/warm starts and service-worker updates, cross-tab saving/recovery export, and profile actual renderers on representative physical devices.
+5. Validate first install, offline cold starts and service-worker updates beyond the verified warm reload, cross-tab saving/recovery export, and profile actual renderers on representative physical devices.
 6. Playtest pacing/economy with people. The 120-day deterministic test proves continuity/invariants, not that the pacing is enjoyable or balanced.
 
 This is a substantial playable overhaul, not completion of every item in the original audit.

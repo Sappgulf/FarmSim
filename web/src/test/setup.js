@@ -35,7 +35,11 @@ const localStorageMock = (() => {
   };
 })();
 
-global.localStorage = localStorageMock;
+Object.defineProperty(globalThis, 'localStorage', {
+  configurable: true,
+  writable: true,
+  value: localStorageMock,
+});
 
 // Mock window.matchMedia (for responsive tests)
 Object.defineProperty(window, 'matchMedia', {
