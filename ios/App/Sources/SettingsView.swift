@@ -22,39 +22,44 @@ struct SettingsView: View {
                         iconColor: Theme.seasonSpring
                     ) {
                         VStack(spacing: 0) {
-                            SettingRow(
-                                icon: "textformat.abc",
-                                title: "Farm Name",
-                                subtitle: farmNameInput.count > 24
-                                    ? "\(farmNameInput.count)/32 characters"
-                                    : "What should we call your homestead?",
-                                iconBackground: Theme.leafGreen
-                            ) {
-                                TextField("Name", text: $farmNameInput)
+                            VStack(alignment: .leading, spacing: DS.Space.sm) {
+                                HStack(spacing: DS.Space.sm) {
+                                    Image(systemName: "textformat.abc")
+                                        .font(.system(.body, weight: .medium))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 36, height: 36)
+                                        .background(Theme.leafGreen, in: RoundedRectangle(cornerRadius: DS.Radius.sm))
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Farm Name")
+                                            .font(.system(.body, design: .rounded, weight: .medium))
+                                            .foregroundStyle(MarketPalette.ink)
+                                        Text(farmNameInput.count > 24
+                                            ? "\(farmNameInput.count)/32 characters"
+                                            : "What should we call your homestead?")
+                                            .font(.system(.caption, design: .rounded))
+                                            .foregroundStyle(MarketPalette.muted)
+                                    }
+                                }
+                                TextField("Your farm's name", text: $farmNameInput)
                                     .textInputAutocapitalization(.words)
                                     .autocorrectionDisabled()
                                     .submitLabel(.done)
-                                    .multilineTextAlignment(.trailing)
                                     .font(.system(.body, design: .rounded))
-                                    .foregroundStyle(farmNameInput.count > 28 ? DS.Color.money : DS.Color.textPrimary)
-                                    .frame(width: 130)
+                                    .foregroundStyle(MarketPalette.ink)
+                                    .tint(MarketPalette.leaf)
+                                    .padding(.horizontal, DS.Space.sm)
+                                    .frame(minHeight: 48)
+                                    .background(MarketPalette.canvas, in: RoundedRectangle(cornerRadius: DS.Radius.sm))
                                     .accessibilityLabel("Farm name")
                                     .accessibilityHint("Rename your homestead")
-                                    .onSubmit {
-                                        let trimmed = farmNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                                        if !trimmed.isEmpty {
-                                            store.setFarmName(trimmed)
-                                            farmNameInput = trimmed
-                                        } else {
-                                            farmNameInput = store.farmName
-                                        }
-                                    }
+                                    .onSubmit(commitFarmName)
                                     .onChange(of: farmNameInput) { _, value in
                                         if value.count > 32 {
                                             farmNameInput = String(value.prefix(32))
                                         }
                                     }
                             }
+                            .padding(DS.Space.md)
                         }
                     }
 
@@ -86,7 +91,7 @@ struct SettingsView: View {
                                     }
                                 }
                                 .pickerStyle(.menu)
-                                .tint(DS.Color.textPrimary)
+                                .tint(MarketPalette.ink)
                                 .accessibilityLabel("Farm colors")
                                 .accessibilityValue(store.settings.palette.title)
                             }
@@ -118,7 +123,7 @@ struct SettingsView: View {
                             )
 
                             Divider()
-                                .background(SwiftUI.Color.white.opacity(0.1))
+                                .background(MarketPalette.border.opacity(0.22))
                                 .padding(.horizontal, DS.Space.md)
 
                             ToggleRow(
@@ -201,7 +206,7 @@ struct SettingsView: View {
                             ) {
                                 Image(systemName: "chevron.right")
                                     .font(.system(.caption, weight: .semibold))
-                                    .foregroundStyle(DS.Color.textSecondary)
+                                    .foregroundStyle(MarketPalette.muted)
                             }
                         }
                         .buttonStyle(.plain)
@@ -285,11 +290,11 @@ struct SettingsView: View {
                         VStack(spacing: DS.Space.xs) {
                             Text("Happy farming! May your fields be ever green.")
                                 .font(.system(.footnote, design: .rounded))
-                                .foregroundStyle(DS.Color.textSecondary)
+                                .foregroundStyle(MarketPalette.muted)
 
-                            Text("FarmSim v1.0 · Swift 5.10 · iOS 17+")
+                            Text("FarmSim v1.0")
                                 .font(.caption2)
-                                .foregroundStyle(DS.Color.textSecondary.opacity(0.7))
+                                .foregroundStyle(MarketPalette.muted)
                         }
                         .multilineTextAlignment(.center)
                     }
@@ -332,8 +337,27 @@ struct SettingsView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .farmBackground(palette: store.settings.palette)
+            .tint(MarketPalette.leaf)
+            .environment(\.colorScheme, .light)
+            .background {
+                ZStack {
+                    MarketPalette.canvas.ignoresSafeArea()
+                    GameMaterialSurface(material: "grass")
+                        .opacity(0.055)
+                        .ignoresSafeArea()
+                }
+            }
         }
+    }
+
+    private func commitFarmName() {
+        let trimmed = farmNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            farmNameInput = store.farmName
+            return
+        }
+        store.setFarmName(trimmed)
+        farmNameInput = trimmed
     }
 
     // MARK: - Header Card
@@ -361,26 +385,26 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
                     Text(store.farmName.isEmpty ? "Your Farm" : store.farmName)
                         .font(.system(.title2, design: .rounded, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(MarketPalette.ink)
 
                         HStack(spacing: DS.Space.md) {
                         HStack(spacing: DS.Space.xs) {
                             Image(systemName: "dollarsign.circle.fill")
-                                .foregroundStyle(DS.Color.money)
+                                .foregroundStyle(MarketPalette.leaf)
                             AnimatedNumber(
                                 value: store.save.player.coins,
                                 font: .system(.subheadline, design: .rounded, weight: .semibold),
-                                color: DS.Color.money
+                                color: MarketPalette.leaf
                             )
                         }
 
                         HStack(spacing: DS.Space.xs) {
                             Image(systemName: "star.circle.fill")
-                                .foregroundStyle(DS.Color.xp)
+                                .foregroundStyle(MarketPalette.info)
                             AnimatedNumber(
                                 value: store.save.player.xp,
                                 font: .system(.subheadline, design: .rounded, weight: .semibold),
-                                color: DS.Color.xp
+                                color: MarketPalette.info
                             )
                         }
                     }
@@ -392,26 +416,10 @@ struct SettingsView: View {
         .padding(DS.Space.lg)
         .background(
             RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            SwiftUI.Color.white.opacity(0.15),
-                            SwiftUI.Color.white.opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(MarketPalette.paper)
                 .overlay(
                     RoundedRectangle(cornerRadius: DS.Radius.xl, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [SwiftUI.Color.white.opacity(0.20), SwiftUI.Color.white.opacity(0.05)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+                        .strokeBorder(MarketPalette.border.opacity(0.30), lineWidth: 1)
                 )
         )
         .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 6)
@@ -519,7 +527,7 @@ private struct ToggleRow: View {
             subtitle: subtitle,
             iconBackground: iconBackground
         ) {
-            Toggle(title, isOn: $isOn)
+            Toggle("", isOn: $isOn)
                 .toggleStyle(FarmToggleStyle())
                 .labelsHidden()
         }
@@ -543,19 +551,19 @@ private struct InfoRow: View {
             HStack(spacing: DS.Space.sm) {
                 Image(systemName: icon)
                     .font(.system(.caption, weight: .medium))
-                    .foregroundStyle(DS.Color.textSecondary)
+                    .foregroundStyle(MarketPalette.muted)
                     .frame(width: 20)
 
                 Text(title)
                     .font(.system(.body, design: .rounded))
-                    .foregroundStyle(DS.Color.textSecondary)
+                    .foregroundStyle(MarketPalette.muted)
             }
 
             Spacer()
 
             Text(value)
                 .font(.system(.body, design: .rounded, weight: .medium))
-                .foregroundStyle(DS.Color.textPrimary)
+                .foregroundStyle(MarketPalette.ink)
         }
         .padding(.horizontal, DS.Space.md)
         .padding(.vertical, DS.Space.xs)

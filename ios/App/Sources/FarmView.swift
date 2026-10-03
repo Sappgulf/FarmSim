@@ -230,7 +230,7 @@ struct FarmView: View {
                     Spacer()
                 }
 
-                ViewThatFits {
+                ViewThatFits(in: .horizontal) {
                     HStack {
                         StatPill(icon: "calendar", value: "Day \(store.save.world.day)")
                         StatPill(icon: store.hudClockSymbol, value: store.hudTimeText)
@@ -244,6 +244,7 @@ struct FarmView: View {
                         StatPill(icon: "dollarsign.circle.fill", value: "\(store.save.player.coins)")
                         StatPill(icon: "star.fill", value: "Lv \(store.playerLevel)")
                     }
+                    .fixedSize(horizontal: true, vertical: false)
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
                         HStack {
                             StatPill(icon: "calendar", value: "Day \(store.save.world.day)")
@@ -259,6 +260,23 @@ struct FarmView: View {
                             StatPill(icon: "dollarsign.circle.fill", value: "\(store.save.player.coins)")
                             StatPill(icon: "star.fill", value: "Lv \(store.playerLevel)")
                         }
+                    }
+                    .fixedSize(horizontal: true, vertical: false)
+                    VStack(alignment: .leading, spacing: DS.Space.xs) {
+                        HStack {
+                            StatPill(icon: "calendar", value: "Day \(store.save.world.day)")
+                            StatPill(icon: store.hudClockSymbol, value: store.hudTimeText)
+                        }
+                        HStack {
+                            StatPill(icon: "leaf.fill", value: store.hudSeasonText)
+                            StatPill(icon: "dollarsign.circle.fill", value: "\(store.save.player.coins)")
+                            StatPill(icon: "star.fill", value: "Lv \(store.playerLevel)")
+                        }
+                        WeatherPill(
+                            weather: weatherSnapshot.weather,
+                            intensity: weatherSnapshot.intensity,
+                            subtitle: weatherSnapshot.windowTitle
+                        )
                     }
                 }
 
@@ -279,22 +297,30 @@ struct FarmView: View {
 
     private var statusBar: some View {
         WoodenPanel {
-            Text(store.statusText)
-                .font(compactBottomLayout ? .caption : .footnote)
-                .foregroundStyle(.white.opacity(0.95))
-                .shadow(color: .black.opacity(0.4), radius: 1)
-                .lineLimit(compactBottomLayout ? 1 : 2)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityLabel("Status")
-                .accessibilityValue(store.statusText)
+            VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                Text(store.statusText)
+                    .font(compactBottomLayout ? .caption : .footnote)
+                    .foregroundStyle(.white.opacity(0.95))
+                    .shadow(color: .black.opacity(0.4), radius: 1)
+                    .lineLimit(compactBottomLayout ? 1 : 2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityLabel("Status")
+                    .accessibilityValue(store.statusText)
+
+                fieldStatusStrip
+            }
         }
     }
 
 
+    private var seedTrayCrops: [CropDef] {
+        store.orderedSeedChoices
+    }
+
     private var seedTray: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: DS.Space.xs) {
-                ForEach(store.cropDefs, id: \.id) { crop in
+                ForEach(seedTrayCrops, id: \.id) { crop in
                     let selected = store.selectedSeedID == crop.id
                     let count = store.seedCount(for: crop.id)
                     let unlocked = store.isUnlocked(cropID: crop.id)
@@ -303,8 +329,8 @@ struct FarmView: View {
                         store.selectSeed(id: crop.id)
                     } label: {
                         VStack(spacing: DS.Space.xxs) {
-                            Text(store.emoji(for: crop.id))
-                                .font(compactBottomLayout ? .headline : .title3)
+                            GameAssetIcon(id: crop.id, fallback: store.emoji(for: crop.id),
+                                          size: compactBottomLayout ? 26 : 30)
                             Text("\(count)")
                                 .font((compactBottomLayout ? Font.caption2 : Font.caption).monospacedDigit().weight(.semibold))
                         }
@@ -349,6 +375,25 @@ struct FarmView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg))
         .shadow(color: .black.opacity(0.3), radius: 5, y: 2)
+    }
+
+    private var fieldStatusStrip: some View {
+        let freePlots = max(0, store.totalTileCount - store.plantedTileCount)
+
+        return HStack(spacing: DS.Space.xs) {
+            StatPill(icon: "leaf.fill", value: "\(store.readyTileCount) ready")
+            if store.plantedTileCount > 0 {
+                StatPill(icon: "drop.fill", value: "\(store.wateredPlantedTileCount)/\(store.plantedTileCount) watered")
+            }
+            if freePlots > 0 || compactBottomLayout {
+                StatPill(icon: "square.grid.3x3", value: "\(freePlots) free")
+            }
+        }
+        .font(compactBottomLayout ? .caption2 : .caption)
+        .foregroundStyle(.white.opacity(0.95))
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var actionBar: some View {
@@ -647,8 +692,7 @@ struct TileActionSheet: View {
                                 store.selectSeed(id: crop.id)
                             } label: {
                                 VStack(spacing: DS.Space.xxs) {
-                                    Text(store.emoji(for: crop.id))
-                                        .font(.title3)
+                                    GameAssetIcon(id: crop.id, fallback: store.emoji(for: crop.id), size: 30)
                                     Text(crop.name)
                                         .font(.caption2)
                                         .lineLimit(1)

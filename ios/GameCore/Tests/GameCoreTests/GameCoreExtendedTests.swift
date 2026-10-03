@@ -748,7 +748,9 @@ final class InventoryCapacityTests: XCTestCase {
         
         let harvested = engine.harvestAll(maxCapacity: 101)
         
-        XCTAssertEqual(harvested, 1, "Should harvest 1 when capacity allows 1 more")
+        XCTAssertEqual(harvested, 2, "99 stored items leave room for 2 more at capacity 101")
+        XCTAssertEqual(engine.save.player.inventory.crops["carrot"], 101)
+        XCTAssertEqual(engine.save.world.tiles.filter { $0.planted != nil }.count, 2)
     }
 }
 

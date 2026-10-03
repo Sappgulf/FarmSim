@@ -1,0 +1,9 @@
+{
+  "scratchRoot": "/var/folders/v3/zfm9cp_s2wg136512093lt_80000gn/T/farmsim-audit-20261002-ctqn6oah",
+  "port": 5187,
+  "sourceChanges": [
+    "FarmOverview.tsx: Object.values for plot count and filter",
+    "FieldPlanning.tsx: Object.values for plot filter"
+  ],
+  "scope": "Temporary diagnostic copy only; original application files unchanged"
+}

@@ -5,6 +5,8 @@ import GameCore
 @Observable
 @MainActor
 final class GameStore {
+    @ObservationIgnored private var fishingEncounter: (id: UUID, fish: FishTypePlan)?
+
     private static let defaultBuildingCatalog: [BuildingPlan] = [
         BuildingPlan(
             id: "barn",
@@ -267,6 +269,7 @@ final class GameStore {
     @ObservationIgnored private var pondUpgradesByLevel: [Int: PondUpgradePlan] = [:]
     @ObservationIgnored private var cachedReadyTileCount: Int = 0
     @ObservationIgnored private var cachedPlantedTileCount: Int = 0
+    @ObservationIgnored private var cachedWateredTileCount: Int = 0
     @ObservationIgnored private var cachedSeedInventoryCount: Int = 0
     @ObservationIgnored private var cachedCropInventoryCount: Int = 0
     @ObservationIgnored private var cachedBuiltStructureCount: Int = 0
@@ -307,7 +310,8 @@ final class GameStore {
     var yieldMultiplier: Double {
         let base = ProgressionSystem.yieldMultiplier(forLevel: playerLevel)
         let prestigeBonus = engine.getPrestigeBonus()
-        return base * buildingYieldMultiplier * researchYieldMultiplier * petYieldMultiplier * prestigeBonus
+        // GameCore applies research yield once, including automated harvest callers.
+        return base * buildingYieldMultiplier * petYieldMultiplier * prestigeBonus
     }
 
     // MARK: - Foreman Settings
@@ -412,6 +416,14 @@ final class GameStore {
         cachedPlantedTileCount
     }
 
+    var wateredPlantedTileCount: Int {
+        cachedWateredTileCount
+    }
+
+    var unwateredPlantedTileCount: Int {
+        max(0, plantedTileCount - cachedWateredTileCount)
+    }
+
     var totalInventoryCount: Int {
         cachedSeedInventoryCount + cachedCropInventoryCount
     }
@@ -422,6 +434,19 @@ final class GameStore {
 
     var buildingPlans: [BuildingPlan] {
         buildingCatalog
+    }
+
+    var orderedSeedChoices: [CropDef] {
+        cropDefs.sorted { left, right in
+            let leftUnlocked = isUnlocked(cropID: left.id)
+            let rightUnlocked = isUnlocked(cropID: right.id)
+            if leftUnlocked != rightUnlocked { return leftUnlocked }
+            if (left.id == "wheat") != (right.id == "wheat") { return left.id == "wheat" }
+            let leftLevel = cropDisplay[left.id]?.level ?? 0
+            let rightLevel = cropDisplay[right.id]?.level ?? 0
+            if leftLevel != rightLevel { return leftLevel < rightLevel }
+            return left.name.localizedStandardCompare(right.name) == .orderedAscending
+        }
     }
 
     var buildingSynergyPlans: [BuildingSynergy] {
@@ -490,9 +515,12 @@ final class GameStore {
         buildingSellMultiplier * researchSellMultiplier * petSellMultiplier
     }
 
-    init(userDefaults: UserDefaults = .standard) {
+    init(userDefaults: UserDefaults = .standard, saveFileURL: URL? = nil,
+         nowTimestamp: TimeInterval = Date().timeIntervalSince1970) {
         self.userDefaults = userDefaults
-        self.settings = Self.loadSettings(defaults: userDefaults)
+        let loadedSettings = Self.loadSettings(defaults: userDefaults)
+        self.settings = loadedSettings
+        SoundManager.shared.updateSettings(sound: loadedSettings.soundEnabled, haptics: loadedSettings.hapticsEnabled)
         self.onboardingRequired = userDefaults.bool(forKey: Self.onboardingKey) == false
 
         let contentLoadInterval = PerfTelemetry.begin("content_load")
@@ -501,10 +529,9 @@ final class GameStore {
         let contentLoadDurationMs = PerfTelemetry.elapsedMs(since: contentLoadStart)
         PerfTelemetry.end("content_load", contentLoadInterval)
         let sortedDefs = loadedContent.cropDefs.sorted { $0.id < $1.id }
-        let firstSeed = sortedDefs.first?.id ?? ""
 
-        let saveStore = SaveFileStore(fileURL: SavePaths.defaultSaveURL(appName: "FarmSim"))
-        let starterSeeds = Dictionary(uniqueKeysWithValues: sortedDefs.prefix(4).map { ($0.id, 4) })
+        let saveStore = SaveFileStore(fileURL: saveFileURL ?? SavePaths.defaultSaveURL(appName: "FarmSim"))
+        let starterSeeds = Self.starterSeedStock(crops: sortedDefs, display: loadedContent.cropDisplay)
         let fallbackSave = GameCoreEngine.defaultSave(
             gridWidth: 4,
             gridHeight: 4,
@@ -512,7 +539,7 @@ final class GameStore {
             daySeed: 20260212
         )
 
-        let initialSave: SaveGame
+        var initialSave: SaveGame
         var loadError: String?
         let saveLoadInterval = PerfTelemetry.begin("save_load")
         let saveLoadStart = ContinuousClock.now
@@ -525,15 +552,26 @@ final class GameStore {
         let saveLoadDurationMs = PerfTelemetry.elapsedMs(since: saveLoadStart)
         PerfTelemetry.end("save_load", saveLoadInterval)
 
+        // Older starter saves could contain only level-locked seeds and no way to earn coins.
+        let usableSeed = Self.preferredStockedSeed(crops: sortedDefs, display: loadedContent.cropDisplay, save: initialSave)
+        if initialSave.player.xp == 0,
+           initialSave.player.coins == 0,
+           initialSave.player.inventory.crops.values.allSatisfy({ $0 == 0 }),
+           initialSave.world.tiles.allSatisfy({ $0.planted == nil }),
+           !usableSeed.isEmpty,
+           (initialSave.player.inventory.seeds[usableSeed] ?? 0) == 0 {
+            initialSave.player.inventory.seeds[usableSeed] = 4
+        }
+
         var engine = GameCoreEngine(save: initialSave, cropDefs: sortedDefs, seed: initialSave.daySeed)
         var initialTimeState = initialSave.meta.time
         initialTimeState.dayIndex = max(initialSave.world.day, initialTimeState.dayIndex)
         var timeEngine = TimeEngine(config: Self.defaultTimeConfig, state: initialTimeState)
-        let nowTimestamp = Date().timeIntervalSince1970
         let offlineCatchup = timeEngine.applyOfflineCatchup(now: nowTimestamp, maxCatchupDays: 14)
         
         timeEngine.setLastRealWorldTimestamp(nowTimestamp)
-        engine.setTimeState(timeEngine.state)
+        // Align the starting day before simulating catch-up, not the future clock day.
+        engine.setTimeState(initialTimeState)
 
         self.saveStore = saveStore
         self.timeEngine = timeEngine
@@ -576,7 +614,7 @@ final class GameStore {
         self.challengePlansByID = Dictionary(uniqueKeysWithValues: resolvedChallengeCatalog.map { ($0.id, $0) })
         self.pondUpgradesByLevel = Dictionary(uniqueKeysWithValues: resolvedPondUpgradeCatalog.map { ($0.level, $0) })
 
-        self.selectedSeedID = firstSeed
+        self.selectedSeedID = Self.preferredStockedSeed(crops: sortedDefs, display: loadedContent.cropDisplay, save: initialSave)
         self.statusText = ""
         self.contentErrorMessage = loadedContent.contentErrorMessage
         self.lastContentLoadDurationMs = contentLoadDurationMs
@@ -595,12 +633,14 @@ final class GameStore {
 
         if offlineCatchup.dayDelta > 0 {
             for _ in 0..<offlineCatchup.dayDelta {
-                self.engine.advanceDay(growthMultiplier: self.growthMultiplier)
+                self.engine.advanceDay(growthMultiplier: self.buildingGrowthMultiplier)
+                autoSellCrops()
             }
             self.save = self.engine.save
             self.renderSnapshot = Self.makeSnapshot(save: self.save, cropDefsByID: self.engine.cropDefsByID)
-            autoSellCrops()
         }
+
+        self.engine.setTimeState(timeEngine.state)
 
         // Build startup status with welcome back info
         var startupStatus: String?
@@ -611,12 +651,12 @@ final class GameStore {
             let welcomeInfo = WelcomeBackInfo(
                 daysAway: offlineCatchup.dayDelta,
                 hoursAway: hoursAway,
-                coinsEarned: 0,
-                xpEarned: offlineCatchup.dayDelta * 5,
+                coinsEarned: max(0, self.engine.save.player.coins - initialSave.player.coins),
+                xpEarned: max(0, self.engine.save.player.xp - initialSave.player.xp),
                 cropsGrown: 0,
                 cropsReady: readyTileCount,
-                streakMaintained: !loginResult.streakBroken,
-                streakBonus: loginResult.streakIncreased ? min(100, loginResult.streak * 10) : 0
+                streakMaintained: loginResult.streak > 1 && !loginResult.streakBroken,
+                streakBonus: 0
             )
             _ = milestoneManager.createWelcomeBackEvent(info: welcomeInfo)
 
@@ -743,9 +783,9 @@ final class GameStore {
         let oldSeasonIndex = (max(0, engine.save.world.day) / 7) % 4
 
         for _ in 0..<safeCount {
-            engine.advanceDay(growthMultiplier: growthMultiplier)
+            engine.advanceDay(growthMultiplier: buildingGrowthMultiplier)
+            autoSellCrops()
         }
-        autoSellCrops()
         engine.setTimeState(timeEngine.state)
 
         let earnedCoins = max(0, engine.save.player.coins - preCoins)
@@ -970,9 +1010,11 @@ final class GameStore {
     }
 
     func canCompleteResearch(_ plan: ResearchPlan) -> Bool {
-        guard !isResearchCompleted(plan.id) else { return false }
-        guard save.player.coins >= plan.cost else { return false }
-        return plan.prerequisites.allSatisfy { isResearchCompleted($0) }
+        engine.canCompleteResearch(plan.id, cost: plan.cost, prerequisites: plan.prerequisites)
+    }
+
+    func researchBenefitSummary(_ id: String) -> String {
+        ResearchBenefits.summary(for: id) ?? "This research is not available in this build."
     }
 
     @discardableResult
@@ -982,9 +1024,7 @@ final class GameStore {
             syncState(statusOverride: "Research requirements not met for \(plan.name).", emitHaptic: false, emitHarvest: false)
             return false
         }
-        guard engine.spendCoins(plan.cost) else { return false }
-        engine.markResearchCompleted(plan.id)
-        engine.addXP(max(10, plan.cost / 2))
+        guard engine.completeResearch(plan.id, cost: plan.cost, prerequisites: plan.prerequisites) else { return false }
 
         // Track first research milestone
         if milestoneManager.checkMilestone(.firstResearch) {
@@ -1082,6 +1122,10 @@ final class GameStore {
         return true
     }
 
+    var livestockProductsReady: Bool {
+        usedLivestockCapacity > 0 && save.meta.lastLivestockCollectionDay < save.world.day
+    }
+
     @discardableResult
     func collectLivestockProducts() -> Int {
         var totalCoins = 0
@@ -1092,12 +1136,10 @@ final class GameStore {
             let maintenance = count * max(0, plan.maintenanceCost)
             totalCoins += max(0, gross - maintenance)
         }
-        guard totalCoins > 0 else {
-            syncState(statusOverride: "No livestock products ready.", emitHaptic: false, emitHarvest: false)
+        guard engine.collectLivestockIncome(totalCoins) else {
+            syncState(statusOverride: "No livestock products ready. Animals produce once each day.", emitHaptic: false, emitHarvest: false)
             return 0
         }
-        engine.addCoins(totalCoins)
-        engine.addXP(max(5, totalCoins / 10))
         SoundManager.shared.play(.sell, haptic: .medium)
         syncState(statusOverride: "Collected livestock goods for \(totalCoins) coins.", emitHaptic: true, emitHarvest: true)
         return totalCoins
@@ -1211,11 +1253,10 @@ final class GameStore {
         cachedTotalFishCaught
     }
 
-    @discardableResult
-    func castFishingLine() -> Bool {
+    func beginFishingEncounter() -> (id: UUID, fish: FishTypePlan)? {
         guard !fishPlans.isEmpty else {
             syncState(statusOverride: "No fish data loaded.", emitHaptic: false, emitHarvest: false)
-            return false
+            return nil
         }
 
         let rarityBonus = max(1.0, currentPondUpgrade.rarityBonus)
@@ -1236,10 +1277,28 @@ final class GameStore {
             }
         }
 
-        let value = max(1, Int((Double(chosen.baseValue) * sellBonusMultiplier).rounded(.down)))
-        engine.addCoins(value)
-        engine.addXP(max(4, chosen.difficulty * 4))
-        engine.addFishCaught(for: chosen.id, quantity: 1)
+        let encounter = (id: UUID(), fish: chosen)
+        fishingEncounter = encounter
+        return encounter
+    }
+
+    func cancelFishingEncounter(_ id: UUID) {
+        if fishingEncounter?.id == id { fishingEncounter = nil }
+    }
+
+    @discardableResult
+    func completeFishingEncounter(_ id: UUID, caught: Bool) -> Bool {
+        guard let encounter = fishingEncounter, encounter.id == id else { return false }
+        fishingEncounter = nil
+        guard caught else { return false }
+        let chosen = encounter.fish
+        let value = engine.awardFishCatch(fishID: chosen.id, baseValue: chosen.baseValue,
+                                         xp: max(4, chosen.difficulty * 4),
+                                         sellMultiplier: buildingSellMultiplier * petSellMultiplier)
+        guard value > 0 else {
+            syncState(statusOverride: "The fishing reward could not be settled.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
 
         // Track first fish milestone
         if milestoneManager.checkMilestone(.firstFish) {
@@ -1637,7 +1696,7 @@ final class GameStore {
         pendingSaveTask?.cancel()
         pendingSaveTask = nil
 
-        let starterSeeds = Dictionary(uniqueKeysWithValues: cropDefs.prefix(4).map { ($0.id, 4) })
+        let starterSeeds = Self.starterSeedStock(crops: cropDefs, display: cropDisplay)
         let fresh = GameCoreEngine.defaultSave(
             gridWidth: 4,
             gridHeight: 4,
@@ -1655,7 +1714,7 @@ final class GameStore {
         engine.setTimeState(timeEngine.state)
         save = engine.save
         renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
-        selectedSeedID = cropDefs.first?.id ?? selectedSeedID
+        selectedSeedID = Self.preferredStockedSeed(crops: cropDefs, display: cropDisplay, save: fresh)
         lastPlayerLevel = ProgressionSystem.level(forXP: fresh.player.xp)
         syncState(statusOverride: "Save reset.", emitHaptic: false, emitHarvest: false)
         refreshHUDTime(force: true, now: Date().timeIntervalSince1970)
@@ -1741,35 +1800,7 @@ final class GameStore {
     }
 
     var growthMultiplier: Double {
-        buildingGrowthMultiplier * researchGrowthMultiplier
-    }
-
-    private var researchGrowthMultiplier: Double {
-        var multiplier = 1.0
-        if isResearchCompleted("climate_control") {
-            multiplier *= 1.15
-        }
-        return multiplier
-    }
-
-    private var researchYieldMultiplier: Double {
-        var multiplier = 1.0
-        if isResearchCompleted("hybrid_crops") {
-            multiplier *= 1.05
-        }
-        if isResearchCompleted("soil_enhancement") {
-            multiplier *= 1.15
-        }
-        if isResearchCompleted("pest_genetics") {
-            multiplier *= 1.1
-        }
-        if isResearchCompleted("automation_core") {
-            multiplier *= 1.1
-        }
-        if isResearchCompleted("climate_control") {
-            multiplier *= 1.1
-        }
-        return min(4.0, max(1.0, multiplier))
+        buildingGrowthMultiplier * engine.researchBenefits.growthMultiplier
     }
 
     var maxInventoryCapacity: Int {
@@ -1831,11 +1862,7 @@ final class GameStore {
     }
 
     private var researchSellMultiplier: Double {
-        var multiplier = 1.0
-        if isResearchCompleted("market_analytics") {
-            multiplier *= 1.2
-        }
-        return multiplier
+        engine.researchBenefits.saleMultiplier
     }
 
     private var petYieldMultiplier: Double {
@@ -1864,21 +1891,11 @@ final class GameStore {
             break
         }
 
-        if isResearchCompleted("irrigation_system") {
-            discount *= 0.95
-        }
-        if isResearchCompleted("automation_core") {
-            discount *= 0.9
-        }
-        if isResearchCompleted("climate_control") {
-            discount *= 0.95
-        }
-
         if let cropID, dailySpecialSeedIDs.contains(cropID) {
             discount *= 0.8
         }
 
-        return max(1, Int((Double(baseCost) * discount).rounded(.down)))
+        return engine.researchBenefits.seedCost(for: baseCost, otherMultiplier: discount)
     }
 
     private func dailySellMultiplierForDay(cropID: String, day: Int) -> Double {
@@ -1972,45 +1989,91 @@ final class GameStore {
         }
     }
 
-    private func syncState(statusOverride: String?, emitHaptic: Bool, emitHarvest: Bool) {
-        let upgradeMessage = applyProgressionUnlocksIfNeeded()
+    private func gameplayStatusHint() -> String {
+        let readyCount = readyTileCount
+        let plantedCount = plantedTileCount
+        let unwateredCount = unwateredPlantedTileCount
+        let freePlots = max(0, totalTileCount - plantedCount)
 
-        engine.setTimeState(timeEngine.state)
-        save = engine.save
-        recomputeDerivedStateCaches()
-        renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
+        if readyCount > 0 {
+            return "\(readyCount) crop\(readyCount == 1 ? "" : "s") ready to harvest."
+        }
 
-        // Check for level up
-        let currentLevel = playerLevel
-        if currentLevel > lastPlayerLevel {
-            _ = milestoneManager.createLevelUpEvent(level: currentLevel)
-
-            // Check level milestones
-            let _ = milestoneManager.checkLevelMilestones(level: currentLevel)
-
-            // Check for unclaimed level milestone rewards
-            let unclaimed = milestoneManager.unclaimedLevelMilestones(currentLevel: currentLevel)
-            for milestone in unclaimed {
-                engine.addCoins(milestone.rewardCoins)
-                engine.addXP(milestone.rewardXP)
-                for (cropID, count) in milestone.rewardSeeds {
-                    engine.grantSeeds(cropID: cropID, quantity: count)
-                }
-                _ = milestoneManager.claimLevelMilestone(milestone)
+        if plantedCount > 0 {
+            if unwateredCount > 0 {
+                return "\(unwateredCount) planted crop\(unwateredCount == 1 ? "" : "s") need\(unwateredCount == 1 ? "s" : "") water."
             }
 
+            if freePlots > 0 {
+                return "All \(plantedCount) planted crop\(plantedCount == 1 ? "" : "s") are watered. Advance the day to continue growth."
+            }
+
+            return "Planted crops are fully active. Keep advancing days to harvest."
+        }
+
+        if isInventoryFull {
+            return "Silo is full. Sell crops or expand before harvesting more."
+        }
+
+        if let suggestedCropID = nextAvailableSeedIDForActionHint(),
+           let crop = engine.cropDefsByID[suggestedCropID] {
+            if seedCount(for: suggestedCropID) > 0 {
+                return "\(crop.name) is selected. Tap a tile to plant."
+            }
+            return "\(crop.name) is next on the map. Gather seeds to plant it."
+        }
+
+        return "Tap a tile to manage crops."
+    }
+
+    private func nextAvailableSeedIDForActionHint() -> String? {
+        if isUnlocked(cropID: selectedSeedID) {
+            return selectedSeedID
+        }
+        if let stocked = cropDefs.first(where: { isUnlocked(cropID: $0.id) && seedCount(for: $0.id) > 0 }) {
+            return stocked.id
+        }
+        return cropDefs.first(where: { isUnlocked(cropID: $0.id) })?.id
+    }
+
+    private func syncState(statusOverride: String?, emitHaptic: Bool, emitHarvest: Bool) {
+        engine.setTimeState(timeEngine.state)
+        var currentLevel = ProgressionSystem.level(forXP: engine.save.player.xp)
+        if currentLevel > lastPlayerLevel {
+            // Reward XP can unlock another milestone; settle the entire chain before
+            // publishing the ledger to views or building the render snapshot.
+            while true {
+                let unclaimed = milestoneManager.unclaimedLevelMilestones(currentLevel: currentLevel)
+                guard !unclaimed.isEmpty else { break }
+                for milestone in unclaimed {
+                    engine.addCoins(milestone.rewardCoins)
+                    engine.addXP(milestone.rewardXP)
+                    for (cropID, count) in milestone.rewardSeeds {
+                        engine.grantSeeds(cropID: cropID, quantity: count)
+                    }
+                    _ = milestoneManager.claimLevelMilestone(milestone)
+                }
+                currentLevel = ProgressionSystem.level(forXP: engine.save.player.xp)
+            }
+            _ = milestoneManager.createLevelUpEvent(level: currentLevel)
+            _ = milestoneManager.checkLevelMilestones(level: currentLevel)
             lastPlayerLevel = currentLevel
             SoundManager.shared.play(.levelUp, haptic: .heavy)
         }
 
+        let upgradeMessage = applyProgressionUnlocksIfNeeded()
+        save = engine.save
+        recomputeDerivedStateCaches()
+        renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
+
         if let statusOverride {
-            if let upgradeMessage {
-                statusText = "\(statusOverride) \(upgradeMessage)"
-            } else {
-                statusText = statusOverride
-            }
-        } else if let upgradeMessage {
-            statusText = upgradeMessage
+            statusText = statusOverride
+        } else {
+            statusText = gameplayStatusHint()
+        }
+
+        if let upgradeMessage {
+            statusText = "\(statusText) \(upgradeMessage)"
         }
 
         schedulePersist()
@@ -2026,11 +2089,13 @@ final class GameStore {
     private func recomputeDerivedStateCaches() {
         var planted = 0
         var ready = 0
+        var watered = 0
         let defsByID = engine.cropDefsByID
 
         for tile in save.world.tiles {
             guard let plantedCrop = tile.planted else { continue }
             planted += 1
+            if tile.state.watered { watered += 1 }
             if let def = defsByID[plantedCrop.cropID],
                plantedCrop.growthProgress >= Double(def.daysToGrow) {
                 ready += 1
@@ -2039,6 +2104,7 @@ final class GameStore {
 
         cachedPlantedTileCount = planted
         cachedReadyTileCount = ready
+        cachedWateredTileCount = watered
         cachedSeedInventoryCount = save.player.inventory.seeds.values.reduce(0, +)
         cachedCropInventoryCount = save.player.inventory.crops.values.reduce(0, +)
         cachedBuiltStructureCount = buildingCatalog.reduce(0) { partial, plan in
@@ -2055,7 +2121,7 @@ final class GameStore {
 
     @discardableResult
     private func applyProgressionUnlocksIfNeeded() -> String? {
-        let unlockedGrid = ProgressionSystem.unlockedGrid(forLevel: playerLevel)
+        let unlockedGrid = ProgressionSystem.unlockedGrid(forLevel: ProgressionSystem.level(forXP: engine.save.player.xp))
         if unlockedGrid > engine.save.world.gridWidth {
             engine.resizeGrid(width: unlockedGrid, height: unlockedGrid)
             return "Grid expanded to \(unlockedGrid)x\(unlockedGrid)."
@@ -2081,6 +2147,22 @@ final class GameStore {
         userDefaults.removeObject(forKey: Self.claimedLevelsKey)
         userDefaults.removeObject(forKey: Self.onboardingKey)
         onboardingRequired = true
+    }
+
+    private static func starterSeedStock(crops: [CropDef], display: [String: CropDisplayInfo]) -> [String: Int] {
+        let usable = crops.filter { (display[$0.id]?.level ?? 1) <= 1 }
+            .sorted { left, right in
+                if (left.id == "wheat") != (right.id == "wheat") { return left.id == "wheat" }
+                return left.id < right.id
+            }
+        return Dictionary(uniqueKeysWithValues: usable.prefix(4).map { ($0.id, 4) })
+    }
+
+    private static func preferredStockedSeed(crops: [CropDef], display: [String: CropDisplayInfo], save: SaveGame) -> String {
+        let level = ProgressionSystem.level(forXP: save.player.xp)
+        let unlocked = crops.filter { (display[$0.id]?.level ?? 1) <= level }
+        let stocked = unlocked.filter { (save.player.inventory.seeds[$0.id] ?? 0) > 0 }
+        return stocked.first(where: { $0.id == "wheat" })?.id ?? stocked.first?.id ?? unlocked.first(where: { $0.id == "wheat" })?.id ?? unlocked.first?.id ?? ""
     }
 
     private static func loadSettings(defaults: UserDefaults) -> GameUserSettings {

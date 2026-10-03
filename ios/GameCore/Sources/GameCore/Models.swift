@@ -346,6 +346,7 @@ public struct MetaState: Codable, Hashable, Sendable {
     public var discoveredHybrids: [String: Bool]
     public var expansionPurchases: Int
     public var livestockCounts: [String: Int]
+    public var lastLivestockCollectionDay: Int
     public var petLevels: [String: Int]
     public var fishCaughtCounts: [String: Int]
     public var fishingPondLevel: Int
@@ -364,6 +365,7 @@ public struct MetaState: Codable, Hashable, Sendable {
         discoveredHybrids: [String: Bool] = [:],
         expansionPurchases: Int = 0,
         livestockCounts: [String: Int] = [:],
+        lastLivestockCollectionDay: Int = -1,
         petLevels: [String: Int] = [:],
         fishCaughtCounts: [String: Int] = [:],
         fishingPondLevel: Int = 1,
@@ -381,6 +383,7 @@ public struct MetaState: Codable, Hashable, Sendable {
         self.discoveredHybrids = discoveredHybrids
         self.expansionPurchases = max(0, expansionPurchases)
         self.livestockCounts = livestockCounts
+        self.lastLivestockCollectionDay = max(-1, lastLivestockCollectionDay)
         self.petLevels = petLevels
         self.fishCaughtCounts = fishCaughtCounts
         self.fishingPondLevel = max(1, fishingPondLevel)
@@ -400,6 +403,7 @@ public struct MetaState: Codable, Hashable, Sendable {
         case discoveredHybrids
         case expansionPurchases
         case livestockCounts
+        case lastLivestockCollectionDay
         case petLevels
         case fishCaughtCounts
         case fishingPondLevel
@@ -420,6 +424,7 @@ public struct MetaState: Codable, Hashable, Sendable {
         discoveredHybrids = try container.decodeIfPresent([String: Bool].self, forKey: .discoveredHybrids) ?? [:]
         expansionPurchases = max(0, try container.decodeIfPresent(Int.self, forKey: .expansionPurchases) ?? 0)
         livestockCounts = try container.decodeIfPresent([String: Int].self, forKey: .livestockCounts) ?? [:]
+        lastLivestockCollectionDay = max(-1, try container.decodeIfPresent(Int.self, forKey: .lastLivestockCollectionDay) ?? -1)
         petLevels = try container.decodeIfPresent([String: Int].self, forKey: .petLevels) ?? [:]
         fishCaughtCounts = try container.decodeIfPresent([String: Int].self, forKey: .fishCaughtCounts) ?? [:]
         fishingPondLevel = max(1, try container.decodeIfPresent(Int.self, forKey: .fishingPondLevel) ?? 1)

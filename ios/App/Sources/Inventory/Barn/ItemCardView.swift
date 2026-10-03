@@ -10,11 +10,10 @@ struct ItemCardView: View {
                 Label {
                     Text(item.title)
                         .font(.subheadline.weight(.bold))
-                        .lineLimit(1)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
                 } icon: {
-                    Text(item.emoji)
-                        .font(.title3)
-                        .accessibilityHidden(true)
+                    GameAssetIcon(id: item.itemID, fallback: item.emoji, size: 28)
                 }
                 .labelStyle(.titleAndIcon)
                 .foregroundStyle(Color(red: 0.25, green: 0.15, blue: 0.05)) // Dark brown text on paper
@@ -32,7 +31,8 @@ struct ItemCardView: View {
             Text(item.subtitle)
                 .font(.caption)
                 .foregroundStyle(Color(red: 0.35, green: 0.25, blue: 0.15))
-                .lineLimit(1)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
 
             Spacer(minLength: 0)
 
@@ -54,7 +54,8 @@ struct ItemCardView: View {
             }
         }
         .padding(DS.Space.sm)
-        .frame(width: 170, height: 110, alignment: .topLeading)
+        .frame(width: 170)
+        .frame(minHeight: 120, alignment: .topLeading)
         .background(
             ZStack {
                 // Paper label background

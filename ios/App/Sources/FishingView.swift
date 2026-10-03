@@ -6,6 +6,7 @@ import GameCore
 /// Polished fishing section: pond status, interactive mini-game, stats, pond upgrade.
 struct FishingSection: View {
     @Bindable var store: GameStore
+    @Environment(\.scenePhase) private var scenePhase
 
     // MARK: Mini-game State
     private enum FishPhase: Equatable {
@@ -24,6 +25,8 @@ struct FishingSection: View {
     @State private var elapsed: Double = 0
     @State private var fishPhaseAngle: Double = 0
     @State private var currentFish: FishTypePlan? = nil
+    @State private var encounterID: UUID?
+    @State private var lastTickTime: TimeInterval = 0
     @State private var tickTask: Task<Void, Never>? = nil
     @State private var castTask: Task<Void, Never>? = nil
     @State private var resultTask: Task<Void, Never>? = nil
@@ -52,20 +55,23 @@ struct FishingSection: View {
                 upgradeCard
             }
         }
+        .onDisappear { cancelSession() }
+        .onChange(of: scenePhase) { _, next in
+            if next != .active { cancelSession() }
+        }
     }
 
     // MARK: - Pond Header
 
     private var pondHeaderCard: some View {
-        WoodenPanel {
+        MarketPanel {
             HStack(spacing: DS.Space.sm) {
                 // Pond icon with animated ripple
                 ZStack {
                     Circle()
                         .fill(Color(red: 0.22, green: 0.55, blue: 0.78).opacity(0.18))
                         .frame(width: 52, height: 52)
-                    Text("🎣")
-                        .font(.system(size: 28))
+                    GameAssetIcon(id: "pond", fallback: "🎣", size: 48)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -74,16 +80,16 @@ struct FishingSection: View {
                         .foregroundStyle(.primary)
                     Text("Rarity Bonus ×\(String(format: "%.1f", pond.rarityBonus))")
                         .font(Typography.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(MarketPalette.muted)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("\(store.totalFishCaught)")
                         .font(Typography.title)
-                        .foregroundStyle(DS.Color.accent)
+                        .foregroundStyle(MarketPalette.leaf)
                     Text("total caught")
                         .font(Typography.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(MarketPalette.muted)
                 }
             }
         }
@@ -92,11 +98,12 @@ struct FishingSection: View {
     // MARK: - Cast Card (idle)
 
     private var castCard: some View {
-        WoodenPanel {
+        MarketPanel {
             VStack(spacing: DS.Space.md) {
                 PondWaterBackground()
                     .frame(height: 120)
                     .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md))
+                    .overlay(GameAssetIcon(id: "pond", fallback: "🎣", size: 110))
 
                 Button {
                     startCast()
@@ -107,7 +114,7 @@ struct FishingSection: View {
                             .font(Typography.label)
                     }
                 }
-                .buttonStyle(PrimaryButtonStyle())
+                .buttonStyle(MarketActionStyle())
                 .accessibilityLabel("Cast line")
                 .accessibilityHint("Start a fishing attempt")
             }
@@ -117,20 +124,19 @@ struct FishingSection: View {
     // MARK: - Casting Animation (brief pause)
 
     private var castingAnimationCard: some View {
-        WoodenPanel {
+        MarketPanel {
             VStack(spacing: DS.Space.sm) {
                 PondWaterBackground()
                     .frame(height: 100)
                     .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md))
                     .overlay(
-                        Text("🎣")
-                            .font(.system(size: 32))
+                        GameAssetIcon(id: "fishing_float", fallback: "🎣", size: 40)
                             .shadow(color: .white.opacity(0.6), radius: 4)
                             .transition(.scale)
                     )
                 Text("Casting…")
                     .font(Typography.label)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(MarketPalette.muted)
                 ProgressView()
                     .tint(DS.Color.accent)
             }
@@ -141,23 +147,24 @@ struct FishingSection: View {
 
     @ViewBuilder
     private func minigameCard(fish: FishTypePlan) -> some View {
-        WoodenPanel {
+        MarketPanel {
             VStack(spacing: DS.Space.sm) {
                 // Title row
                 HStack {
-                    Text("\(fish.icon) \(fish.name) on the line!")
+                    GameAssetIcon(id: fish.id, fallback: fish.icon, size: 32)
+                    Text("\(fish.name) on the line!")
                         .font(Typography.label)
                     Spacer()
                     Text(timeText)
                         .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(elapsed > timeLimit * 0.75 ? .red : .secondary)
+                        .foregroundStyle(elapsed > timeLimit * 0.75 ? MarketPalette.danger : MarketPalette.muted)
                 }
 
                 // Tension bar
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Line Tension")
                         .font(Typography.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(MarketPalette.muted)
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 4)
@@ -179,7 +186,7 @@ struct FishingSection: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Reel Progress")
                         .font(Typography.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(MarketPalette.muted)
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 4)
@@ -198,7 +205,7 @@ struct FishingSection: View {
                     Button { movePlayer(-0.08) } label: {
                         Image(systemName: "arrow.left.circle.fill")
                             .font(.system(size: 44))
-                            .foregroundStyle(DS.Color.accent)
+                            .foregroundStyle(MarketPalette.leaf)
                     }
                     .buttonRepeatBehavior(.enabled)
                     .accessibilityLabel("Move hook left")
@@ -207,17 +214,17 @@ struct FishingSection: View {
                     VStack(spacing: 2) {
                         Text("DRAG TRACK")
                             .font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(MarketPalette.muted)
                         Text("or use arrows")
                             .font(.system(size: 9))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(MarketPalette.muted)
                     }
                     .frame(maxWidth: .infinity)
 
                     Button { movePlayer(0.08) } label: {
                         Image(systemName: "arrow.right.circle.fill")
                             .font(.system(size: 44))
-                            .foregroundStyle(DS.Color.accent)
+                            .foregroundStyle(MarketPalette.leaf)
                     }
                     .buttonRepeatBehavior(.enabled)
                     .accessibilityLabel("Move hook right")
@@ -256,16 +263,14 @@ struct FishingSection: View {
                     .position(x: fishX, y: h * 0.5)
                     .animation(.linear(duration: 0.05), value: fishPos)
 
-                // Fish emoji
-                Text(fish.icon)
-                    .font(.system(size: 24))
+                // The fish illustration follows the same position as its catch zone.
+                GameAssetIcon(id: fish.id, fallback: fish.icon, size: 36)
                     .shadow(color: .black.opacity(0.3), radius: 2)
                     .position(x: fishX, y: h * 0.42)
                     .animation(.linear(duration: 0.05), value: fishPos)
 
                 // Player hook
-                Text("🪝")
-                    .font(.system(size: 20))
+                GameAssetIcon(id: "fishing_float", fallback: "🪝", size: 28)
                     .position(x: playerX, y: h * 0.65)
                     .animation(.linear(duration: 0.08), value: playerPos)
             }
@@ -284,17 +289,23 @@ struct FishingSection: View {
 
     @ViewBuilder
     private func resultCard(caught: Bool, message: String) -> some View {
-        WoodenPanel {
+        MarketPanel {
             VStack(spacing: DS.Space.sm) {
-                Text(caught ? "🎉" : "😔")
-                    .font(.system(size: 48))
+                if caught, let fish = currentFish {
+                    GameAssetIcon(id: fish.id, fallback: fish.icon, size: 72)
+                } else {
+                    Image(systemName: "fish")
+                        .font(.system(size: 48))
+                        .foregroundStyle(MarketPalette.muted)
+                        .accessibilityHidden(true)
+                }
                 Text(message)
                     .font(Typography.label)
                     .multilineTextAlignment(.center)
                 Button("Cast Again 🎣") {
                     withAnimation(DS.Animation.standard) { phase = .idle }
                 }
-                .buttonStyle(PrimaryButtonStyle())
+                .buttonStyle(MarketActionStyle())
                 .accessibilityHint("Return to the pond and try again")
             }
             .frame(maxWidth: .infinity)
@@ -304,7 +315,7 @@ struct FishingSection: View {
     // MARK: - Stats Card
 
     private var statsCard: some View {
-        WoodenPanel {
+        MarketPanel {
             VStack(alignment: .leading, spacing: DS.Space.sm) {
                 Text("Catch Log")
                     .font(Typography.label)
@@ -315,10 +326,10 @@ struct FishingSection: View {
                     HStack {
                         Text("☞")
                             .font(.system(size: 18))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(MarketPalette.muted)
                         Text("No fish caught yet. Cast your line!")
                             .font(Typography.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(MarketPalette.muted)
                     }
                 } else {
                     LazyVGrid(
@@ -329,13 +340,13 @@ struct FishingSection: View {
                             let count = store.fishCaughtCount(for: fish.id)
                             if count > 0 {
                                 HStack(spacing: DS.Space.xs) {
-                                    Text(fish.icon)
+                                    GameAssetIcon(id: fish.id, fallback: fish.icon, size: 34)
                                     VStack(alignment: .leading, spacing: 0) {
                                         Text(fish.name)
                                             .font(Typography.caption)
                                         Text("×\(count)")
                                             .font(.system(size: 11))
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(MarketPalette.muted)
                                     }
                                     Spacer()
                                 }
@@ -356,7 +367,7 @@ struct FishingSection: View {
     // MARK: - Upgrade Card
 
     private var upgradeCard: some View {
-        WoodenPanel {
+        MarketPanel {
             VStack(alignment: .leading, spacing: DS.Space.sm) {
                 if let next = store.nextPondUpgrade {
                     HStack {
@@ -365,10 +376,10 @@ struct FishingSection: View {
                                 .font(Typography.label)
                             Text(next.name)
                                 .font(Typography.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(MarketPalette.muted)
                             Text("Capacity \(next.capacity) · Rarity ×\(String(format: "%.1f", next.rarityBonus))")
                                 .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(MarketPalette.muted)
                         }
                         Spacer()
                         Button {
@@ -378,9 +389,8 @@ struct FishingSection: View {
                             Text("\(next.cost) 🪙")
                                 .font(Typography.label)
                         }
-                        .buttonStyle(PrimaryButtonStyle())
+                        .buttonStyle(MarketActionStyle())
                         .disabled(store.save.player.coins < next.cost)
-                        .opacity(store.save.player.coins < next.cost ? 0.5 : 1)
                         .accessibilityLabel("Upgrade pond")
                         .accessibilityHint("Spend coins to increase fishing capacity")
                     }
@@ -419,23 +429,13 @@ struct FishingSection: View {
     }
 
     private func beginMinigame() {
-        // Pick a random fish from catalog using weighted rarity
-        let rarityBonus = max(1.0, pond.rarityBonus)
-        var totalWeight = 0.0
-        for fish in store.fishPlans {
-            let adjusted = fish.rarity <= 0.1 ? fish.rarity * rarityBonus : fish.rarity
-            totalWeight += max(0.0001, adjusted)
+        guard let encounter = store.beginFishingEncounter() else {
+            phase = .result(false, "No fish data available.")
+            return
         }
-
-        var cursor = Double.random(in: 0...1) * totalWeight
-        var chosen = store.fishPlans[0]
-        for fish in store.fishPlans {
-            let adjusted = fish.rarity <= 0.1 ? fish.rarity * rarityBonus : fish.rarity
-            cursor -= max(0.0001, adjusted)
-            if cursor <= 0 { chosen = fish; break }
-        }
-
-        currentFish = chosen
+        encounterID = encounter.id
+        currentFish = encounter.fish
+        lastTickTime = ProcessInfo.processInfo.systemUptime
         fishPos = Double.random(in: 0.2...0.8)
         fishVel = Double.random(in: -0.2...0.2)
         playerPos = 0.5
@@ -452,6 +452,7 @@ struct FishingSection: View {
             let ns = UInt64(1_000_000_000 / 30) // 30 fps
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: ns)
+                guard !Task.isCancelled else { return }
                 await MainActor.run { tickMinigame() }
             }
         }
@@ -459,8 +460,11 @@ struct FishingSection: View {
 
     private func tickMinigame() {
         guard case .minigame = phase else { tickTask?.cancel(); return }
-        let dt = 1.0 / 30.0
-        elapsed += dt
+        let now = ProcessInfo.processInfo.systemUptime
+        let actualDelta = max(0, now - lastTickTime)
+        lastTickTime = now
+        let dt = min(0.1, actualDelta)
+        elapsed += actualDelta
         fishPhaseAngle += dt
 
         // Fish movement
@@ -500,12 +504,14 @@ struct FishingSection: View {
     }
 
     private func endMinigame(caught: Bool, reason: String) {
+        guard case .minigame = phase, let id = encounterID else { return }
+        encounterID = nil
         tickTask?.cancel()
         tickTask = nil
+        let rewarded = store.completeFishingEncounter(id, caught: caught)
 
         let message: String
-        if caught, currentFish != nil {
-            store.castFishingLine()  // GameStore handles reward + XP + fish count
+        if rewarded {
             let lastStatus = store.statusText
             SoundManager.shared.play(.harvest, haptic: .medium)
             message = lastStatus
@@ -521,17 +527,31 @@ struct FishingSection: View {
         }
 
         withAnimation(DS.Animation.standard) {
-            phase = .result(caught, message)
+            phase = .result(rewarded, message)
         }
 
         // Auto-return to idle after 4 seconds
         resultTask = Task {
             try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
             await MainActor.run {
                 withAnimation(DS.Animation.standard) { phase = .idle }
             }
         }
     }
+    private func cancelSession() {
+        castTask?.cancel()
+        tickTask?.cancel()
+        resultTask?.cancel()
+        castTask = nil
+        tickTask = nil
+        resultTask = nil
+        if let id = encounterID { store.cancelFishingEncounter(id) }
+        encounterID = nil
+        currentFish = nil
+        phase = .idle
+    }
+
 }
 
 // MARK: - PondWaterBackground

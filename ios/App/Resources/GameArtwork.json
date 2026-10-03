@@ -1,0 +1,2254 @@
+{
+  "regions": {
+    "crop:artichoke:0": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        45,
+        731,
+        136,
+        92
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:artichoke:1": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        225,
+        649,
+        205,
+        181
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:artichoke:2": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        448,
+        648,
+        193,
+        186
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:artichoke:3": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        660,
+        640,
+        213,
+        196
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:blueberry:0": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        53,
+        700,
+        98,
+        122
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:blueberry:1": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        222,
+        641,
+        194,
+        197
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:blueberry:2": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        454,
+        638,
+        191,
+        200
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:blueberry:3": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        677,
+        635,
+        191,
+        203
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:broccoli:0": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        50,
+        513,
+        117,
+        92
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:broccoli:1": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        228,
+        430,
+        189,
+        185
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:broccoli:2": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        450,
+        429,
+        192,
+        190
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:broccoli:3": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        660,
+        428,
+        209,
+        193
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:cabbage:0": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        59,
+        293,
+        106,
+        93
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:cabbage:1": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        234,
+        238,
+        184,
+        162
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:cabbage:2": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        450,
+        231,
+        194,
+        176
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:cabbage:3": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        663,
+        235,
+        209,
+        170
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:carrot:0": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        59,
+        118,
+        98,
+        92
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:carrot:1": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        251,
+        47,
+        153,
+        164
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:carrot:2": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        452,
+        19,
+        185,
+        194
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:carrot:3": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        674,
+        17,
+        193,
+        202
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:cherry:0": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        43,
+        1092,
+        125,
+        142
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:cherry:1": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        230,
+        1041,
+        173,
+        198
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:cherry:2": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        453,
+        1042,
+        189,
+        197
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:cherry:3": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        671,
+        1036,
+        200,
+        205
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:chili:0": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        56,
+        122,
+        93,
+        77
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:chili:1": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        222,
+        34,
+        173,
+        169
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:chili:2": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        435,
+        23,
+        190,
+        181
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:chili:3": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        650,
+        19,
+        208,
+        186
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:corn:0": {
+      "atlas": "crop_stages_v3",
+      "bounds": [
+        55,
+        982,
+        189,
+        176
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "crop:corn:1": {
+      "atlas": "crop_stages_v3",
+      "bounds": [
+        323,
+        856,
+        263,
+        317
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "crop:corn:2": {
+      "atlas": "crop_stages_v3",
+      "bounds": [
+        622,
+        795,
+        284,
+        382
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "crop:corn:3": {
+      "atlas": "crop_stages_v3",
+      "bounds": [
+        927,
+        789,
+        300,
+        402
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "crop:cranberry:0": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        43,
+        912,
+        119,
+        98
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:cranberry:1": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        224,
+        868,
+        194,
+        146
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:cranberry:2": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        451,
+        862,
+        197,
+        153
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:cranberry:3": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        673,
+        859,
+        199,
+        154
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:dragon_pepper:0": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        51,
+        1400,
+        88,
+        86
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:dragon_pepper:1": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        215,
+        1301,
+        190,
+        194
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:dragon_pepper:2": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        429,
+        1296,
+        200,
+        203
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:dragon_pepper:3": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        651,
+        1290,
+        214,
+        211
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:eggplant:0": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        42,
+        95,
+        115,
+        110
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:eggplant:1": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        227,
+        25,
+        182,
+        182
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:eggplant:2": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        451,
+        21,
+        189,
+        190
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:eggplant:3": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        673,
+        20,
+        198,
+        193
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:frost_potato:0": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        62,
+        1599,
+        105,
+        83
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:frost_potato:1": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        234,
+        1496,
+        183,
+        190
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:frost_potato:2": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        446,
+        1488,
+        199,
+        199
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:frost_potato:3": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        671,
+        1484,
+        201,
+        206
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:garlic:0": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        65,
+        926,
+        82,
+        107
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:garlic:1": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        234,
+        851,
+        177,
+        184
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:garlic:2": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        452,
+        838,
+        185,
+        199
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:garlic:3": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        675,
+        840,
+        193,
+        200
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:ginger_root:0": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        66,
+        1368,
+        98,
+        92
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:ginger_root:1": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        241,
+        1268,
+        166,
+        194
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:ginger_root:2": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        452,
+        1256,
+        198,
+        207
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:ginger_root:3": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        683,
+        1256,
+        183,
+        213
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:golden_tomato:0": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        47,
+        1169,
+        95,
+        97
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:golden_tomato:1": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        213,
+        1068,
+        190,
+        206
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:golden_tomato:2": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        432,
+        1070,
+        186,
+        206
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:golden_tomato:3": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        644,
+        1065,
+        224,
+        212
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:golden_wheat:0": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        49,
+        308,
+        101,
+        91
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:golden_wheat:1": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        225,
+        245,
+        168,
+        168
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:golden_wheat:2": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        426,
+        218,
+        198,
+        198
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:golden_wheat:3": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        654,
+        215,
+        214,
+        202
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:leek:0": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        70,
+        942,
+        86,
+        100
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:leek:1": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        249,
+        868,
+        156,
+        182
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:leek:2": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        452,
+        850,
+        189,
+        207
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:leek:3": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        671,
+        849,
+        191,
+        208
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:lettuce:0": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        63,
+        116,
+        98,
+        71
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:lettuce:1": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        252,
+        63,
+        153,
+        129
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:lettuce:2": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        450,
+        37,
+        191,
+        162
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:lettuce:3": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        667,
+        48,
+        196,
+        153
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:mango:0": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        33,
+        1332,
+        141,
+        145
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:mango:1": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        212,
+        1260,
+        211,
+        220
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:mango:2": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        443,
+        1259,
+        210,
+        221
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:mango:3": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        670,
+        1256,
+        205,
+        225
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:moonberry:0": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        59,
+        514,
+        100,
+        90
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:moonberry:1": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        223,
+        444,
+        178,
+        167
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:moonberry:2": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        436,
+        433,
+        184,
+        189
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:moonberry:3": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        656,
+        430,
+        213,
+        194
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:okra:0": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        57,
+        1379,
+        116,
+        94
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:okra:1": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        235,
+        1315,
+        179,
+        165
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:okra:2": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        440,
+        1292,
+        206,
+        191
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:okra:3": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        663,
+        1287,
+        202,
+        197
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:onion:0": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        63,
+        723,
+        96,
+        101
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:onion:1": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        248,
+        652,
+        152,
+        173
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:onion:2": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        462,
+        638,
+        165,
+        187
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:onion:3": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        677,
+        637,
+        185,
+        195
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:parsley:0": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        65,
+        1170,
+        99,
+        89
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:parsley:1": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        247,
+        1098,
+        165,
+        170
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:parsley:2": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        442,
+        1081,
+        197,
+        191
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:parsley:3": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        663,
+        1074,
+        210,
+        200
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:parsnip:0": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        59,
+        516,
+        103,
+        102
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:parsnip:1": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        246,
+        449,
+        162,
+        173
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:parsnip:2": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        455,
+        426,
+        185,
+        197
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:parsnip:3": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        672,
+        422,
+        197,
+        207
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:potato:0": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        60,
+        310,
+        101,
+        96
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:potato:1": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        238,
+        235,
+        174,
+        175
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:potato:2": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        448,
+        228,
+        196,
+        184
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:potato:3": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        668,
+        229,
+        205,
+        184
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:pumpkin:0": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        40,
+        1578,
+        130,
+        109
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:pumpkin:1": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        219,
+        1532,
+        203,
+        183
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:pumpkin:2": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        442,
+        1516,
+        207,
+        195
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:pumpkin:3": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        664,
+        1513,
+        207,
+        208
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:rainbow_corn:0": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        49,
+        933,
+        106,
+        111
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:rainbow_corn:1": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        222,
+        851,
+        178,
+        202
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:rainbow_corn:2": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        432,
+        846,
+        191,
+        212
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:rainbow_corn:3": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        644,
+        842,
+        222,
+        215
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:rice:0": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        70,
+        1571,
+        90,
+        129
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:rice:1": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        232,
+        1505,
+        178,
+        200
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:rice:2": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        435,
+        1499,
+        208,
+        210
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:rice:3": {
+      "atlas": "crop_greens_v4",
+      "bounds": [
+        661,
+        1495,
+        207,
+        215
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:snowdrop:0": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        53,
+        1605,
+        108,
+        111
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:snowdrop:1": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        213,
+        1533,
+        199,
+        194
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:snowdrop:2": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        439,
+        1518,
+        186,
+        219
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:snowdrop:3": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        653,
+        1511,
+        209,
+        231
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:strawberry:0": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        38,
+        292,
+        121,
+        105
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:strawberry:1": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        236,
+        249,
+        177,
+        159
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:strawberry:2": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        452,
+        242,
+        195,
+        174
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:strawberry:3": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        672,
+        242,
+        199,
+        172
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:super_carrot:0": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        53,
+        726,
+        102,
+        89
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:super_carrot:1": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        227,
+        644,
+        174,
+        173
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:super_carrot:2": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        430,
+        641,
+        187,
+        185
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:super_carrot:3": {
+      "atlas": "crop_specials_v4",
+      "bounds": [
+        642,
+        637,
+        228,
+        198
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:tomato:0": {
+      "atlas": "crop_stages_v3",
+      "bounds": [
+        78,
+        599,
+        150,
+        134
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "crop:tomato:1": {
+      "atlas": "crop_stages_v3",
+      "bounds": [
+        328,
+        512,
+        252,
+        263
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "crop:tomato:2": {
+      "atlas": "crop_stages_v3",
+      "bounds": [
+        615,
+        465,
+        285,
+        304
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "crop:tomato:3": {
+      "atlas": "crop_stages_v3",
+      "bounds": [
+        921,
+        442,
+        314,
+        335
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "crop:turnip:0": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        58,
+        1148,
+        107,
+        88
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:turnip:1": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        240,
+        1077,
+        175,
+        161
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:turnip:2": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        446,
+        1052,
+        191,
+        189
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:turnip:3": {
+      "atlas": "crop_roots_v4",
+      "bounds": [
+        661,
+        1049,
+        215,
+        200
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:watermelon:0": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        38,
+        499,
+        130,
+        96
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:watermelon:1": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        217,
+        471,
+        195,
+        128
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:watermelon:2": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        447,
+        445,
+        201,
+        167
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:watermelon:3": {
+      "atlas": "crop_fruits_v4",
+      "bounds": [
+        669,
+        440,
+        205,
+        175
+      ],
+      "sourceSize": [
+        887,
+        1774
+      ]
+    },
+    "crop:wheat:0": {
+      "atlas": "crop_stages_v3",
+      "bounds": [
+        73,
+        224,
+        150,
+        137
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "crop:wheat:1": {
+      "atlas": "crop_stages_v3",
+      "bounds": [
+        348,
+        145,
+        206,
+        229
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "crop:wheat:2": {
+      "atlas": "crop_stages_v3",
+      "bounds": [
+        624,
+        62,
+        268,
+        320
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "crop:wheat:3": {
+      "atlas": "crop_stages_v3",
+      "bounds": [
+        935,
+        45,
+        308,
+        351
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "fish:catfish": {
+      "atlas": "pond_fish_v4",
+      "bounds": [
+        1102,
+        113,
+        326,
+        214
+      ],
+      "sourceSize": [
+        1448,
+        1086
+      ]
+    },
+    "fish:common": {
+      "atlas": "pond_fish_v4",
+      "bounds": [
+        375,
+        134,
+        320,
+        161
+      ],
+      "sourceSize": [
+        1448,
+        1086
+      ]
+    },
+    "fish:crystal_sturgeon": {
+      "atlas": "pond_fish_v4",
+      "bounds": [
+        720,
+        792,
+        424,
+        136
+      ],
+      "sourceSize": [
+        1448,
+        1086
+      ]
+    },
+    "fish:epic": {
+      "atlas": "pond_fish_v4",
+      "bounds": [
+        1093,
+        443,
+        340,
+        170
+      ],
+      "sourceSize": [
+        1448,
+        1086
+      ]
+    },
+    "fish:fishing_float": {
+      "atlas": "pond_fish_v4",
+      "bounds": [
+        1222,
+        731,
+        129,
+        260
+      ],
+      "sourceSize": [
+        1448,
+        1086
+      ]
+    },
+    "fish:koi": {
+      "atlas": "pond_fish_v4",
+      "bounds": [
+        733,
+        445,
+        339,
+        199
+      ],
+      "sourceSize": [
+        1448,
+        1086
+      ]
+    },
+    "fish:legendary": {
+      "atlas": "pond_fish_v4",
+      "bounds": [
+        19,
+        719,
+        354,
+        269
+      ],
+      "sourceSize": [
+        1448,
+        1086
+      ]
+    },
+    "fish:mythic": {
+      "atlas": "pond_fish_v4",
+      "bounds": [
+        378,
+        730,
+        317,
+        244
+      ],
+      "sourceSize": [
+        1448,
+        1086
+      ]
+    },
+    "fish:rainbow_perch": {
+      "atlas": "pond_fish_v4",
+      "bounds": [
+        368,
+        438,
+        338,
+        200
+      ],
+      "sourceSize": [
+        1448,
+        1086
+      ]
+    },
+    "fish:rare": {
+      "atlas": "pond_fish_v4",
+      "bounds": [
+        18,
+        442,
+        328,
+        169
+      ],
+      "sourceSize": [
+        1448,
+        1086
+      ]
+    },
+    "fish:sunfish": {
+      "atlas": "pond_fish_v4",
+      "bounds": [
+        24,
+        104,
+        315,
+        226
+      ],
+      "sourceSize": [
+        1448,
+        1086
+      ]
+    },
+    "fish:uncommon": {
+      "atlas": "pond_fish_v4",
+      "bounds": [
+        728,
+        112,
+        347,
+        192
+      ],
+      "sourceSize": [
+        1448,
+        1086
+      ]
+    },
+    "object:barn": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        627,
+        10,
+        300,
+        300
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:bee_hive": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        634,
+        952,
+        276,
+        254
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:cat": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        43,
+        939,
+        212,
+        266
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:chicken": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        675,
+        352,
+        212,
+        274
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:chicken_pet": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        675,
+        352,
+        212,
+        274
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:cow": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        21,
+        634,
+        286,
+        290
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:dog": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        996,
+        658,
+        226,
+        263
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:goat": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        340,
+        628,
+        255,
+        293
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:greenhouse": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        19,
+        340,
+        302,
+        281
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:pig": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        951,
+        387,
+        261,
+        231
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:pond": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        949,
+        947,
+        290,
+        259
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:rabbit": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        373,
+        942,
+        186,
+        256
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:sheep": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        651,
+        658,
+        263,
+        261
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:silo": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        365,
+        11,
+        206,
+        308
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:well": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        33,
+        39,
+        247,
+        279
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:windmill": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        377,
+        322,
+        202,
+        298
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "object:workshop": {
+      "atlas": "farm_objects_v4",
+      "bounds": [
+        951,
+        49,
+        287,
+        272
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "terrain:grass": {
+      "atlas": "terrain_tiles_v4",
+      "bounds": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "terrain:soil": {
+      "atlas": "terrain_tiles_v4",
+      "bounds": [
+        627,
+        0,
+        627,
+        627
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "terrain:stone": {
+      "atlas": "terrain_tiles_v4",
+      "bounds": [
+        0,
+        627,
+        627,
+        627
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    },
+    "terrain:wood": {
+      "atlas": "terrain_tiles_v4",
+      "bounds": [
+        627,
+        627,
+        627,
+        627
+      ],
+      "sourceSize": [
+        1254,
+        1254
+      ]
+    }
+  },
+  "version": 4
+}

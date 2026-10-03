@@ -20,6 +20,8 @@ final class FarmScene: SKScene {
     private var tileBaseColors: [Int: SKColor] = [:]
     private var cropEmojiByID: [String: String] = [:]
     private var textureCache: [String: SKTexture] = [:]
+    private var artworkAtlases: [String: SKTexture] = [:]
+    private var artworkTextures: [String: SKTexture] = [:]
 
     private let boardNode = SKNode()
     private let backgroundNode = SKNode()
@@ -253,7 +255,7 @@ final class FarmScene: SKScene {
         backgroundNode.removeAllChildren()
 
         // Background - Grass Texture
-        let grassTexture = SKTexture(imageNamed: "grass")
+        let grassTexture = artworkTexture(for: "terrain:grass") ?? SKTexture(imageNamed: "grass")
         let tileSize = grassTexture.size()
         
         let cols = Int(ceil(size.width / tileSize.width)) + 1
@@ -369,14 +371,10 @@ final class FarmScene: SKScene {
 
     private func makeTile(index: Int, rect: CGRect) -> TileVisual {
         // Use texture from asset catalog if available, fallback to generated.
-        let tex = SKTexture(imageNamed: "soil")
+        let tex = artworkTexture(for: "terrain:soil") ?? SKTexture(imageNamed: "soil")
         let tile = SKSpriteNode(texture: tex)
         tile.position = CGPoint(x: rect.midX, y: rect.midY)
         tile.size = rect.size
-        
-        // Slight randomization of rotation/color for natural look
-        let randomRot = CGFloat(Int(index * 13) % 4) * (.pi / 2)
-        tile.zRotation = randomRot
         
         // Subtle color variation
         let colorVar = CGFloat((index % 7) - 3) * 0.02
@@ -397,6 +395,14 @@ final class FarmScene: SKScene {
         emoji.horizontalAlignmentMode = .center
         emoji.fontSize = max(16, rect.width * 0.45) // Larger emojis
         emoji.zPosition = 8
+
+        let cropSprite = SKSpriteNode()
+        cropSprite.name = "crop_\(index)"
+        cropSprite.anchorPoint = CGPoint(x: 0.5, y: 0)
+        cropSprite.position = CGPoint(x: 0, y: -rect.height * 0.28)
+        cropSprite.size = CGSize(width: rect.width * 0.72, height: rect.height * 0.96)
+        cropSprite.zPosition = 8
+        cropSprite.isHidden = true
 
         let plus = SKLabelNode(text: "+")
         plus.name = "tile_\(index)"
@@ -459,6 +465,7 @@ final class FarmScene: SKScene {
         tile.addChild(fill)
         tile.addChild(plus)
         tile.addChild(emoji)
+        tile.addChild(cropSprite)
         tile.addChild(indexLabel)
         tile.addChild(water)
         tile.addChild(readyBadge)
@@ -467,6 +474,7 @@ final class FarmScene: SKScene {
         return TileVisual(
             tile: tile,
             emoji: emoji,
+            cropSprite: cropSprite,
             plus: plus,
             indexLabel: indexLabel,
             progressTrack: track,
@@ -490,6 +498,19 @@ final class FarmScene: SKScene {
             visual.plus.isHidden = true
             visual.emoji.isHidden = false
             visual.emoji.text = cropEmojiByID[cropID] ?? "🌱"
+            if let texture = cropTexture(for: cropID, progress: newTile.progress, ready: newTile.isReady) {
+                visual.cropSprite.texture = texture
+                let stage = GameArtworkCatalog.growthStage(progress: newTile.progress, ready: newTile.isReady)
+                let stageScale: CGFloat = [0.50, 0.68, 0.84, 1.0][stage]
+                let source = texture.size()
+                let fit = min(visual.tile.size.width * 0.82 / max(1, source.width),
+                              visual.tile.size.height * 0.82 / max(1, source.height)) * stageScale
+                visual.cropSprite.size = CGSize(width: source.width * fit, height: source.height * fit)
+                visual.cropSprite.isHidden = false
+                visual.emoji.isHidden = true
+            } else {
+                visual.cropSprite.isHidden = true
+            }
             visual.progressTrack.isHidden = false
             visual.progressFill.isHidden = false
 
@@ -513,6 +534,7 @@ final class FarmScene: SKScene {
         } else {
             visual.plus.isHidden = false
             visual.emoji.isHidden = true
+            visual.cropSprite.isHidden = true
             visual.progressTrack.isHidden = true
             visual.progressFill.isHidden = true
             
@@ -556,6 +578,28 @@ final class FarmScene: SKScene {
             guard !reduceMotion else { return }
             spawnSparkle(at: visual.tile.position)
         }
+    }
+
+    private func cropTexture(for cropID: String, progress: Double, ready: Bool) -> SKTexture? {
+        let stage = GameArtworkCatalog.growthStage(progress: progress, ready: ready)
+        return artworkTexture(for: GameArtworkCatalog.cropKey(cropID, stage: stage))
+    }
+
+    private func artworkTexture(for key: String) -> SKTexture? {
+        if let cached = artworkTextures[key] { return cached }
+        guard let region = GameArtworkCatalog.regions[key] else { return nil }
+        let atlas: SKTexture
+        if let cached = artworkAtlases[region.atlas] {
+            atlas = cached
+        } else {
+            atlas = SKTexture(imageNamed: region.atlas)
+            atlas.filteringMode = .linear
+            artworkAtlases[region.atlas] = atlas
+        }
+        let texture = SKTexture(rect: region.spriteKitRect, in: atlas)
+        texture.filteringMode = .linear
+        artworkTextures[key] = texture
+        return texture
     }
 
     private func generateTextures(in view: SKView) {
@@ -897,6 +941,7 @@ final class FarmScene: SKScene {
 private struct TileVisual {
     let tile: SKSpriteNode
     let emoji: SKLabelNode
+    let cropSprite: SKSpriteNode
     let plus: SKLabelNode
     let indexLabel: SKLabelNode
     let progressTrack: SKSpriteNode

@@ -95,7 +95,8 @@ struct AlmanacView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color(red: 0.88, green: 0.80, blue: 0.66), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
+            .tint(inkRed)
             .searchable(text: $query, prompt: "Search records…")
             .onAppear {
                 withAnimation(DS.Animation.springBounce.delay(0.12)) {
@@ -157,8 +158,7 @@ struct AlmanacView: View {
         ParchmentCard {
             VStack(alignment: .leading, spacing: DS.Space.sm) {
                 HStack(alignment: .top, spacing: DS.Space.sm) {
-                    Text(display?.emoji ?? store.emoji(for: crop.id))
-                        .font(.title2)
+                    GameAssetIcon(id: crop.id, fallback: display?.emoji ?? store.emoji(for: crop.id), size: 38)
                         .grayscale(isUnlocked ? 0 : 1)
                         .opacity(isUnlocked ? 1 : 0.35)
 

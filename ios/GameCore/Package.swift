@@ -19,7 +19,8 @@ let package = Package(
         ),
         .testTarget(
             name: "GameCoreTests",
-            dependencies: ["GameCore"]
+            dependencies: ["GameCore"],
+            exclude: ["Info.plist"]
         ),
     ]
 )

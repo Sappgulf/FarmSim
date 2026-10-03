@@ -1,0 +1,75 @@
+[
+  {
+    "id": "wheat-price",
+    "displayedTotal": 11,
+    "actualPayout": 110
+  },
+  {
+    "id": "fractional-shipment",
+    "accepted": true,
+    "inventory": 59.5
+  },
+  {
+    "id": "nan-shipment",
+    "accepted": true,
+    "moneyIsNaN": true,
+    "inventoryIsNaN": true
+  },
+  {
+    "id": "season-progression",
+    "day": 112,
+    "season": "Spring"
+  },
+  {
+    "id": "seed-exhaustion",
+    "harvests": 78,
+    "day": 384,
+    "seedStock": {
+      "wheat": 0,
+      "tomato": 0,
+      "corn": 0
+    }
+  },
+  {
+    "id": "order-exhaustion",
+    "remainingOrders": 0,
+    "day": 42
+  },
+  {
+    "id": "cancel-input-loss",
+    "milkBefore": 18,
+    "milkAfterCancel": 16
+  },
+  {
+    "id": "save-validation",
+    "money": -50,
+    "day": -3,
+    "wheatSeeds": -8,
+    "eggs": -4,
+    "selectedPlots": [
+      999
+    ]
+  },
+  {
+    "id": "future-save-envelope",
+    "loadedMoney": 2430,
+    "returnedStarterFarm": true
+  },
+  {
+    "id": "unknown-crop-save",
+    "plot": {
+      "id": 6,
+      "available": true,
+      "crop": "alien-crop",
+      "watered": false,
+      "growthDays": -30,
+      "ready": false
+    },
+    "loadErrors": []
+  },
+  {
+    "id": "storage-getter",
+    "throws": true,
+    "message": "Simulated storage access denied"
+  }
+]

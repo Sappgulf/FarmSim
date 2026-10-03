@@ -96,13 +96,15 @@ public struct GameCoreEngine: Sendable {
     @discardableResult
     public mutating func plant(tileIndex: Int, cropID: String) -> Bool {
         guard let crop = cropDefsByID[cropID] else { return false }
-        return PlantSystem.plant(
+        let planted = PlantSystem.plant(
             world: &save.world,
             inventory: &save.player.inventory,
             tileIndex: tileIndex,
             crop: crop,
             currentDay: save.world.day
         )
+        if planted && researchBenefits.automaticWatering { _ = water(tileIndex: tileIndex) }
+        return planted
     }
 
     @discardableResult
@@ -122,7 +124,11 @@ public struct GameCoreEngine: Sendable {
     }
 
     public mutating func advanceDay(growthMultiplier: Double = 1.0) {
-        lastDailyRoll = SimTickSystem.advanceDay(world: &save.world, rng: &rng, growthMultiplier: growthMultiplier)
+        let benefits = researchBenefits
+        applyResearchIrrigation()
+        lastDailyRoll = SimTickSystem.advanceDay(world: &save.world, rng: &rng, growthMultiplier: growthMultiplier * benefits.growthMultiplier)
+        addCoins(benefits.honeyCoinsPerDay)
+        applyResearchIrrigation()
         save.daySeed = rng.currentState
         if save.meta.time.dayIndex < save.world.day {
             save.meta.time.dayIndex = save.world.day
@@ -134,7 +140,7 @@ public struct GameCoreEngine: Sendable {
         guard let planted = save.world.tiles[tileIndex].planted,
               let cropDef = cropDefsByID[planted.cropID] else { return 0 }
 
-        let quantity = resolvedYieldQuantity(multiplier: yieldMultiplier)
+        let quantity = resolvedYieldQuantity(multiplier: yieldMultiplier * researchBenefits.yieldMultiplier)
         let success = HarvestSystem.harvest(
             world: &save.world,
             inventory: &save.player.inventory,
@@ -197,7 +203,7 @@ public struct GameCoreEngine: Sendable {
             )
         }
 
-        let unitCost = pricing.unitCostForSeed(itemID, default: crop.seedCost)
+        let unitCost = pricing.unitCostForSeed(itemID, default: researchBenefits.seedCost(for: crop.seedCost))
         let totalCost = unitCost * qty
         guard EconomySystem.buySeed(player: &save.player, cropID: itemID, unitCost: unitCost, quantity: qty) else {
             return MarketTradeResult(
@@ -278,10 +284,9 @@ public struct GameCoreEngine: Sendable {
         var totalHarvested = 0
         if let maxCapacity {
             for i in 0..<save.world.tiles.count {
-                let remainingCapacity = maxCapacity - totalHarvested
-                guard remainingCapacity > 0 else { break }
+                guard save.player.inventory.crops.values.reduce(0, +) < maxCapacity else { break }
                 guard isTileReady(i) else { continue }
-                let harvested = harvest(tileIndex: i, yieldMultiplier: yieldMultiplier, maxCapacity: remainingCapacity)
+                let harvested = harvest(tileIndex: i, yieldMultiplier: yieldMultiplier, maxCapacity: maxCapacity)
                 guard harvested > 0 else { break }
                 totalHarvested += harvested
             }
@@ -375,6 +380,44 @@ public struct GameCoreEngine: Sendable {
         save.meta.completedResearch[id] ?? false
     }
 
+    public var researchBenefits: ResearchBenefits { ResearchBenefits(completed: save.meta.completedResearch) }
+
+    public func canCompleteResearch(_ id: String, cost: Int, prerequisites: [String]) -> Bool {
+        ResearchBenefits.supports(id) && cost >= 0 && !isResearchCompleted(id)
+            && save.player.coins >= cost && prerequisites.allSatisfy(isResearchCompleted)
+    }
+
+    @discardableResult
+    public mutating func completeResearch(_ id: String, cost: Int, prerequisites: [String]) -> Bool {
+        guard canCompleteResearch(id, cost: cost, prerequisites: prerequisites) else { return false }
+        save.player.coins -= cost
+        markResearchCompleted(id)
+        addXP(max(10, cost / 2))
+        applyResearchIrrigation()
+        return true
+    }
+
+    private mutating func applyResearchIrrigation() {
+        guard researchBenefits.automaticWatering else { return }
+        for index in save.world.tiles.indices where save.world.tiles[index].planted != nil {
+            save.world.tiles[index].state.watered = true
+        }
+    }
+
+    /// Encounter identity is consumed by GameStore before this ledger transaction.
+    @discardableResult
+    public mutating func awardFishCatch(fishID: String, baseValue: Int, xp: Int, sellMultiplier: Double = 1) -> Int {
+        let benefits = researchBenefits
+        let value = Double(baseValue) * sellMultiplier * benefits.saleMultiplier * benefits.fishValueMultiplier
+        guard !fishID.isEmpty, baseValue > 0, xp >= 0, sellMultiplier.isFinite, sellMultiplier > 0,
+              value.isFinite, value > 0, value < Double(Int.max) else { return 0 }
+        let payout = max(1, Int(value.rounded(.down)))
+        addCoins(payout)
+        addXP(xp)
+        addFishCaught(for: fishID, quantity: 1)
+        return payout
+    }
+
     public mutating func markResearchCompleted(_ id: String) {
         save.meta.completedResearch[id] = true
     }
@@ -397,6 +440,18 @@ public struct GameCoreEngine: Sendable {
 
     public mutating func setLivestockCount(_ count: Int, for id: String) {
         save.meta.livestockCounts[id] = max(0, count)
+    }
+
+    /// One payout per world day, including after a save/reload.
+    @discardableResult
+    public mutating func collectLivestockIncome(_ coins: Int) -> Bool {
+        guard coins > 0,
+              save.meta.livestockCounts.values.contains(where: { $0 > 0 }),
+              save.meta.lastLivestockCollectionDay < save.world.day else { return false }
+        save.meta.lastLivestockCollectionDay = save.world.day
+        addCoins(coins)
+        addXP(max(5, coins / 10))
+        return true
     }
 
     public func petLevel(for id: String) -> Int {

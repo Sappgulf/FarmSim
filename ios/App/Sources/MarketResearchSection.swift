@@ -17,11 +17,11 @@ struct MarketResearchSection: View {
     // MARK: - Header
 
     private var headerPanel: some View {
-        WoodenPanel {
+        MarketPanel {
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 Text("RESEARCH LAB")
                     .font(Typography.small.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(MarketPalette.muted)
 
                 let completedCount = store.researchPlans.filter {
                     store.isResearchCompleted($0.id)
@@ -29,13 +29,13 @@ struct MarketResearchSection: View {
                 let total = store.researchPlans.count
 
                 HStack {
-                    Text("Research unlocks permanent farming improvements.")
+                    Text("Research purchases unlock permanent improvements immediately.")
                         .font(Typography.caption)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(MarketPalette.ink)
                     Spacer()
                     Text("\(completedCount)/\(total)")
                         .font(Typography.caption.weight(.bold))
-                        .foregroundStyle(DS.Color.xp)
+                        .foregroundStyle(MarketPalette.info)
                 }
             }
         }
@@ -47,62 +47,39 @@ struct MarketResearchSection: View {
         let isDone = store.isResearchCompleted(plan.id)
         let prereqsMet = plan.prerequisites.allSatisfy { store.isResearchCompleted($0) }
         let canAfford = store.save.player.coins >= plan.cost
-        let canDo = !isDone && prereqsMet && canAfford
+        let canDo = store.canCompleteResearch(plan)
 
-        return WoodenPanel {
+        return MarketPanel {
             VStack(alignment: .leading, spacing: DS.Space.sm) {
                 HStack(alignment: .top, spacing: DS.Space.sm) {
                     // Icon with state indicator
                     ZStack {
                         Circle()
-                            .fill(isDone ? DS.Color.accent.opacity(0.25) : .white.opacity(0.10))
+                            .fill(isDone ? DS.Color.accent.opacity(0.25) : MarketPalette.ink.opacity(0.10))
                             .frame(width: 44, height: 44)
 
                         if isDone {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.title3)
-                                .foregroundStyle(DS.Color.accent)
+                                .foregroundStyle(MarketPalette.leaf)
                         } else if !prereqsMet {
                             Image(systemName: "lock.fill")
                                 .font(.title3)
-                                .foregroundStyle(.white.opacity(0.40))
+                                .foregroundStyle(MarketPalette.muted)
                         } else {
-                            Text(plan.icon).font(.title3)
+                            researchIcon(plan.id)
                         }
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(plan.name)
                             .font(Typography.bodyStrong)
-                            .foregroundStyle(isDone ? .white.opacity(0.50) : .white)
+                            .foregroundStyle(MarketPalette.ink)
 
-                        Text(plan.description)
+                        Text(store.researchBenefitSummary(plan.id))
                             .font(Typography.caption)
-                            .foregroundStyle(.white.opacity(0.72))
+                            .foregroundStyle(MarketPalette.muted)
 
-                        if !isDone {
-                            // Cost + duration row
-                            HStack(spacing: DS.Space.sm) {
-                                Label("\(plan.cost)", systemImage: "circle.fill")
-                                    .font(Typography.small.weight(.bold))
-                                    .foregroundStyle(canAfford ? DS.Color.money : .red.opacity(0.80))
-
-                                let mins = plan.durationSeconds / 60
-                                if mins > 0 {
-                                    Label("\(mins) min", systemImage: "clock")
-                                        .font(Typography.small)
-                                        .foregroundStyle(.white.opacity(0.55))
-                                }
-
-                                // Category badge
-                                Text(plan.category.capitalized)
-                                    .font(Typography.small.weight(.semibold))
-                                    .foregroundStyle(DS.Color.xp.opacity(0.85))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(DS.Color.xp.opacity(0.15), in: Capsule())
-                            }
-                        }
                     }
 
                     Spacer()
@@ -111,7 +88,7 @@ struct MarketResearchSection: View {
                     if isDone {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.title3)
-                            .foregroundStyle(DS.Color.accent)
+                            .foregroundStyle(MarketPalette.leaf)
                     } else if prereqsMet {
                         Button {
                             SoundManager.shared.play(.purchase, haptic: .medium)
@@ -124,10 +101,25 @@ struct MarketResearchSection: View {
                                     .font(Typography.small.weight(.bold))
                             }
                         }
-                        .buttonStyle(WoodActionStyle(tint: canDo ? DS.Color.xp : .gray))
+                        .buttonStyle(MarketActionStyle())
                         .frame(width: 90)
                         .disabled(!canDo)
                     }
+                }
+
+                if !isDone {
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: DS.Space.sm) {
+                            priceAndTiming(plan, canAfford: canAfford)
+                            categoryBadge(plan)
+                        }
+                        .fixedSize(horizontal: true, vertical: false)
+                        VStack(alignment: .leading, spacing: DS.Space.xs) {
+                            priceAndTiming(plan, canAfford: canAfford)
+                            categoryBadge(plan)
+                        }
+                    }
+                    .padding(.leading, 52)
                 }
 
                 // Prerequisites notice
@@ -137,27 +129,52 @@ struct MarketResearchSection: View {
                     }
                     Label("Requires: " + prereqNames.joined(separator: ", "), systemImage: "arrow.up.right.circle.fill")
                         .font(Typography.small)
-                        .foregroundStyle(.orange.opacity(0.85))
+                        .foregroundStyle(MarketPalette.warning)
                         .padding(.leading, 52)
                 }
 
-                // Unlocks list
-                if !isDone && !plan.unlocks.isEmpty {
-                    let unlockLabels = plan.unlocks.map {
-                        $0.replacingOccurrences(of: "_", with: " ").capitalized
-                    }
-                    HStack(spacing: DS.Space.xs) {
-                        Image(systemName: "sparkles")
-                            .font(.caption)
-                            .foregroundStyle(DS.Color.xp.opacity(0.75))
-                        Text("Unlocks: " + unlockLabels.joined(separator: ", "))
-                            .font(Typography.small)
-                            .foregroundStyle(DS.Color.xp.opacity(0.85))
-                    }
-                    .padding(.leading, 52)
-                }
             }
         }
-        .opacity(isDone ? 0.70 : 1.0)
+    }
+
+    @ViewBuilder
+    private func researchIcon(_ id: String) -> some View {
+        if id == "beekeeping" {
+            GameAssetIcon(id: "bee_hive", fallback: "🐝", size: 36)
+        } else if id == "aquaponics" {
+            GameAssetIcon(id: "pond", fallback: "🐟", size: 36)
+        } else {
+            let symbols = [
+                "hybrid_crops": "leaf.fill", "irrigation_system": "drop.fill",
+                "pest_genetics": "shield.fill", "market_analytics": "chart.line.uptrend.xyaxis",
+                "climate_control": "sun.max.fill", "soil_enhancement": "leaf.circle.fill",
+                "automation_core": "gearshape.2.fill", "composting": "arrow.triangle.2.circlepath"
+            ]
+            Image(systemName: symbols[id] ?? "flask.fill")
+                .font(.title3)
+                .foregroundStyle(MarketPalette.leaf)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private func priceAndTiming(_ plan: ResearchPlan, canAfford: Bool) -> some View {
+        HStack(spacing: DS.Space.sm) {
+            Label("\(plan.cost)", systemImage: "circle.fill")
+                .font(Typography.small.weight(.bold))
+                .foregroundStyle(canAfford ? MarketPalette.leaf : MarketPalette.danger)
+            Label("Instant", systemImage: "bolt.fill")
+                .font(Typography.small)
+                .foregroundStyle(MarketPalette.muted)
+        }
+        .fixedSize(horizontal: true, vertical: true)
+    }
+
+    private func categoryBadge(_ plan: ResearchPlan) -> some View {
+        Text(plan.category.capitalized)
+            .font(Typography.small.weight(.semibold))
+            .foregroundStyle(MarketPalette.info)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(DS.Color.xp.opacity(0.15), in: Capsule())
     }
 }

@@ -1,0 +1,113 @@
+{
+  "version": 4,
+  "provider": "built-in ImageGen",
+  "assets": [
+    {
+      "id": "crop_roots_v4",
+      "path": "ios/App/Assets.xcassets/crop_roots_v4.imageset/crop_roots_v4.png",
+      "generatedSource": "exec-8a3d2dd9-bffe-46a6-9cbd-ff5639e45034.png",
+      "width": 887,
+      "height": 1774,
+      "mode": "RGBA",
+      "sha256": "eaea0a5c246260b57a7289934e464c8c6bdf662b560377043a7df81520711816",
+      "bytes": 1864955
+    },
+    {
+      "id": "crop_greens_v4",
+      "path": "ios/App/Assets.xcassets/crop_greens_v4.imageset/crop_greens_v4.png",
+      "generatedSource": "exec-7afded8d-c1a1-4a8b-af27-85248a71de96.png",
+      "width": 887,
+      "height": 1774,
+      "mode": "RGBA",
+      "sha256": "172bc296e311cf2efd230a7922c9d80d9ae947582cfb447b64afd3c4cb807267",
+      "bytes": 1896084
+    },
+    {
+      "id": "crop_fruits_v4",
+      "path": "ios/App/Assets.xcassets/crop_fruits_v4.imageset/crop_fruits_v4.png",
+      "generatedSource": "exec-0949ad97-bce2-446b-8548-3924d1e97820.png",
+      "width": 887,
+      "height": 1774,
+      "mode": "RGBA",
+      "sha256": "95fca2342658d74fadfd19f5b974056e95e531ba9d760d99f24f788e4b4d2b3d",
+      "bytes": 2063387
+    },
+    {
+      "id": "crop_specials_v4",
+      "path": "ios/App/Assets.xcassets/crop_specials_v4.imageset/crop_specials_v4.png",
+      "generatedSource": "exec-1e849b87-8d98-46a5-89e3-8630c1f94d52.png",
+      "width": 887,
+      "height": 1774,
+      "mode": "RGBA",
+      "sha256": "e55b4e97d3361816c3266b833aa4ffed317bbafc3d3e7261ab81d5e4283ea3ca",
+      "bytes": 2037788
+    },
+    {
+      "id": "farm_objects_v4",
+      "path": "ios/App/Assets.xcassets/farm_objects_v4.imageset/farm_objects_v4.png",
+      "generatedSource": "exec-4b290d58-e76d-41d3-b0bb-004209f92c47.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "396fdca83506b82f564acb54b76725e40fc802316f509ddbbf65755b9e8157ad",
+      "bytes": 1978772
+    },
+    {
+      "id": "pond_fish_v4",
+      "path": "ios/App/Assets.xcassets/pond_fish_v4.imageset/pond_fish_v4.png",
+      "generatedSource": "exec-ee809e36-5bdf-4fc4-9cf2-3e74b7e25ea1.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "b08d1b582ed8ea8baf9f940271d0ad2f52b22c6ec470a736145348c50114a7fc",
+      "bytes": 1316495
+    },
+    {
+      "id": "menu_landscape_v4",
+      "path": "ios/App/Assets.xcassets/menu_landscape_v4.imageset/menu_landscape_v4.png",
+      "generatedSource": "exec-72801346-d348-4f10-8132-eb4de3641651.png",
+      "width": 971,
+      "height": 1619,
+      "mode": "RGB",
+      "sha256": "69c9d061843bd45dac4a101368546ff2d800b03096e71d908aaaef445ffa3e41",
+      "bytes": 2318237
+    },
+    {
+      "id": "terrain_tiles_v4",
+      "path": "ios/App/Assets.xcassets/terrain_tiles_v4.imageset/terrain_tiles_v4.png",
+      "generatedSource": "exec-3880086d-e416-4ffb-a03e-6d0701dfc57d.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "sha256": "41b1774a76cb20ed17825d0d5413870c13fc7afb422e1801315125afff5fc217",
+      "bytes": 2509727
+    },
+    {
+      "id": "AppIconV4",
+      "path": "ios/App/Assets.xcassets/AppIconV4.appiconset/AppIconV4.png",
+      "generatedSource": "exec-2d1624c1-209f-4ec2-ae3a-3e271427d06a.png",
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGB",
+      "sha256": "0c467f75e40dccd65d0fb70b058104a85e16828105f1dd2f2644e8beada60f74",
+      "bytes": 1749728
+    },
+    {
+      "id": "market_stall_v4",
+      "path": "ios/App/Assets.xcassets/market_stall_v4.imageset/market_stall_v4.png",
+      "generatedSource": "exec-d9f4d56f-e8b8-4c89-85a4-f43c585b8efd.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "0dfcf3dc56cf2f208bce4a8bc968310ab12c3c22b0f9c1c6fe0829786ed803e0",
+      "bytes": 1796046
+    }
+  ],
+  "regionCount": 173,
+  "validation": {
+    "generatedSpritesHaveAlpha": true,
+    "iconOpaque1024Square": true,
+    "originalsPreserved": true,
+    "nativeRuntime": "verified: native farm, menu and Market captures; 140-stage FarmScene rendering"
+  }
+}

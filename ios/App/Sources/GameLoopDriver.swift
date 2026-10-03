@@ -43,19 +43,15 @@ final class GameLoopDriver {
 final class SoundManager {
     static let shared = SoundManager()
 
-    var soundEnabled: Bool = true
-    var hapticsEnabled: Bool = true
-
-    private let engine = AVAudioEngine()
-    private let mixerNode = AVAudioMixerNode()
+    private(set) var soundEnabled: Bool = true
+    private(set) var hapticsEnabled: Bool = true
+    private(set) var lastAudioError: String?
+    private let playback: any SoundPlayback
+    private var generation: UInt = 0
+    private var pending: [UUID: Task<Void, Never>] = [:]
     private var hapticGenerators: [UIImpactFeedbackGenerator.FeedbackStyle: UIImpactFeedbackGenerator] = [:]
-    private var buffers: [SoundEffect: AVAudioPCMBuffer] = [:]
-    private let sampleRate: Double = 44100
-    // Node pool to reduce allocation overhead
-    private var availableNodes: [AVAudioPlayerNode] = []
-    private let maxPooledNodes = 5
 
-    enum SoundEffect: CaseIterable {
+    enum SoundEffect: CaseIterable, Sendable {
         case click
         case success
         case error
@@ -71,53 +67,122 @@ final class SoundManager {
         case welcome
     }
 
-    private init() {
-        configureAudioSession()
-        setupEngine()
-        prerenderBuffers()
-    }
+    init(playback: any SoundPlayback = SynthesizedSoundPlayback()) { self.playback = playback }
+
+    deinit { for task in pending.values { task.cancel() } }
 
     // MARK: - Public API
 
-    func play(_ effect: SoundEffect, haptic: UIImpactFeedbackGenerator.FeedbackStyle? = nil) {
+    @discardableResult
+    func play(_ effect: SoundEffect, haptic: UIImpactFeedbackGenerator.FeedbackStyle? = nil) -> Task<Void, Never>? {
         if let haptic, hapticsEnabled {
             let gen = impactGenerator(for: haptic)
             gen.prepare()
             gen.impactOccurred()
         }
-        guard soundEnabled, let buffer = buffers[effect] else { return }
-        scheduleBuffer(buffer)
+        return enqueue(effect)
+    }
+
+    @discardableResult
+    private func enqueue(_ effect: SoundEffect?) -> Task<Void, Never>? {
+        guard soundEnabled else { return nil }
+        let id = UUID()
+        let requestedGeneration = generation
+        pending[id] = Task { [weak self, playback] in
+            defer { self?.pending[id] = nil }
+            // Reading UI-owned settings before suspension keeps this entry on MainActor.
+            guard !Task.isCancelled, self?.soundEnabled == true else { return }
+            let failure = await playback.prepare()
+            guard !Task.isCancelled, let self, self.soundEnabled,
+                  self.generation == requestedGeneration else { return }
+            self.lastAudioError = failure
+            guard failure == nil else { return }
+            if let effect { await playback.play(effect) }
+        }
+        return pending[id]
     }
 
     func updateSettings(sound: Bool, haptics: Bool) {
+        if soundEnabled != sound {
+            generation &+= 1
+            if !sound {
+                for task in pending.values { task.cancel() }
+                pending.removeAll()
+                Task { [playback] in await playback.stop() }
+            }
+        }
         soundEnabled = sound
         hapticsEnabled = haptics
+        if sound { enqueue(nil) }
     }
+
+    private func impactGenerator(for style: UIImpactFeedbackGenerator.FeedbackStyle) -> UIImpactFeedbackGenerator {
+        if let gen = hapticGenerators[style] { return gen }
+        let gen = UIImpactFeedbackGenerator(style: style)
+        hapticGenerators[style] = gen
+        return gen
+    }
+}
+
+protocol SoundPlayback: Sendable {
+    func prepare() async -> String?
+    func play(_ effect: SoundManager.SoundEffect) async
+    func stop() async
+}
+
+/// AVFoundation objects stay on this actor; only effect IDs and error text cross to UI.
+actor SynthesizedSoundPlayback: SoundPlayback {
+    private(set) var preparationWasOnMainThread: Bool?
+    private var engine: AVAudioEngine?
+    private var mixerNode: AVAudioMixerNode?
+    private var buffers: [SoundManager.SoundEffect: AVAudioPCMBuffer] = [:]
+    private let sampleRate: Double = 44100
+    private var availableNodes: [AVAudioPlayerNode] = []
+    private var activeNodes: [UUID: AVAudioPlayerNode] = [:]
+    private let maxPooledNodes = 5
 
     // MARK: - Engine Setup
 
-    private func configureAudioSession() {
+    func prepare() -> String? {
+        if engine?.isRunning == true { return nil }
+        preparationWasOnMainThread = Thread.isMainThread
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
             try session.setActive(true)
+            if engine == nil {
+                let newEngine = AVAudioEngine()
+                let mixer = AVAudioMixerNode()
+                newEngine.attach(mixer)
+                newEngine.connect(mixer, to: newEngine.mainMixerNode, format: nil)
+                mixer.outputVolume = 0.70
+                engine = newEngine
+                mixerNode = mixer
+                prerenderBuffers()
+            }
+            try engine?.start()
+            return nil
         } catch {
-            // Silently continue — audio is non-critical
+            return "Audio unavailable: \(error.localizedDescription)"
         }
     }
 
-    private func setupEngine() {
-        engine.attach(mixerNode)
-        engine.connect(mixerNode, to: engine.mainMixerNode, format: nil)
-        mixerNode.outputVolume = 0.70
-        do {
-            try engine.start()
-        } catch {
-            // Silently continue
-        }
+    func play(_ effect: SoundManager.SoundEffect) {
+        guard let buffer = buffers[effect], engine?.isRunning == true else { return }
+        scheduleBuffer(buffer)
+    }
+
+    func stop() {
+        guard let engine else { return }
+        for node in activeNodes.values { node.stop(); engine.detach(node) }
+        activeNodes.removeAll()
+        engine.stop()
+        do { try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation) }
+        catch { print("Audio deactivation failed: \(error.localizedDescription)") }
     }
 
     private func scheduleBuffer(_ buffer: AVAudioPCMBuffer) {
+        guard let engine, let mixerNode else { return }
         // Use node pooling to reduce allocation overhead
         let playerNode: AVAudioPlayerNode
         if let pooled = availableNodes.popLast() {
@@ -128,20 +193,20 @@ final class SoundManager {
             engine.connect(playerNode, to: mixerNode, format: buffer.format)
         }
         
-        playerNode.scheduleBuffer(buffer, at: nil, options: .interrupts) { [weak self] in
-            Task { @MainActor [weak self] in
-                guard let self = self else { return }
-                playerNode.stop()
-                // Return to pool if under limit, otherwise detach
-                if self.availableNodes.count < self.maxPooledNodes {
-                    self.availableNodes.append(playerNode)
-                } else {
-                    self.engine.detach(playerNode)
-                }
-            }
+        let id = UUID()
+        activeNodes[id] = playerNode
+        playerNode.scheduleBuffer(buffer, at: nil, options: .interrupts,
+                                  completionCallbackType: .dataPlayedBack) { [weak self] _ in
+            Task { await self?.recycle(id) }
         }
-        if !engine.isRunning { try? engine.start() }
         playerNode.play()
+    }
+
+    private func recycle(_ id: UUID) {
+        guard let node = activeNodes.removeValue(forKey: id) else { return }
+        node.stop()
+        if availableNodes.count < maxPooledNodes { availableNodes.append(node) }
+        else { engine?.detach(node) }
     }
 
     // MARK: - Buffer Pre-rendering
@@ -286,12 +351,4 @@ final class SoundManager {
         return 1.0
     }
 
-    // MARK: - Haptics
-
-    private func impactGenerator(for style: UIImpactFeedbackGenerator.FeedbackStyle) -> UIImpactFeedbackGenerator {
-        if let gen = hapticGenerators[style] { return gen }
-        let gen = UIImpactFeedbackGenerator(style: style)
-        hapticGenerators[style] = gen
-        return gen
-    }
 }
