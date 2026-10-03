@@ -1,6 +1,6 @@
 # Gameplay QA and improvements — 2026-10-02
 
-This pass audits the active React application, native SwiftUI/SpriteKit source, and GameCore. It follows the earlier [overhaul](../../overhaul/2026-10-02/PROGRESS.md). Web version 0.3.1 is local and unpublished. The earlier audit and publication records are historical.
+This pass audits the active React application, native SwiftUI/SpriteKit source, and GameCore. It follows the earlier [overhaul](../../overhaul/2026-10-02/PROGRESS.md). At the time of the original audit, web version 0.3.1 was local and unpublished. Earlier audit and publication records are historical.
 
 ## Implemented findings
 
@@ -43,7 +43,7 @@ This pass audits the active React application, native SwiftUI/SpriteKit source, 
 1. **Web/native rules remain different.** Manual web days versus native real-time days, watering, livestock settlement, content and save formats need a deliberate parity decision. The active web game does not include all disconnected legacy features.
 2. **Native runtime coverage remains partial.** The real store verifies fishing settlement/cancellation and research purchase/reload, but every optional feature has not been played through its complete UI. Farm plot controls now have VoiceOver labels and action hints, but activation through VoiceOver, larger Dynamic Type, additional devices and physical-device performance remain open. Passing tests and a build do not close these gaps.
 3. **Artwork coverage has explicit boundaries.** All active crop and Town subject catalogs have illustrations. Buildings/animals are not yet state-driven residents of the farm scene; unused decor entries and future content retain fallback icons. Texture edge continuity and physical-device asset memory/energy require further measurement.
-4. **PWA update coverage remains partial.** Fresh installation and cold offline gameplay are verified; cache-install failure and namespace pruning have regression coverage. A hosted multi-version update and installed-device upgrade journey remain unverified. This pass was not deployed.
+4. **PWA update coverage remains partial.** Fresh installation and cold offline gameplay are verified; cache-install failure and namespace pruning have regression coverage. A hosted multi-version update and installed-device web PWA upgrade journey remain unverified.
 5. **Enjoyment and pacing need human playtests.** The existing deterministic 120-day economy simulation proves continuity, not that progression is enjoyable. Market text/action token contrast is checked at 4.5:1; this is not a complete accessibility compliance audit. No frame-time or energy claim is made.
 
 ## Inspected captures
