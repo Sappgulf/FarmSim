@@ -30,18 +30,18 @@ This pass audits the active React application, native SwiftUI/SpriteKit source, 
 ## Verification
 
 - Baseline: 157 web tests and 112 GameCore tests passed before changes.
-- Final web gate: **177 tests passed in 44 suites**, including 14 mounted active-App workflows; TypeScript checking and production build passed. Existing legacy tests remain included and are not evidence that their features are connected to the active App.
+- Final web gate: **178 tests passed in 44 suites**, including 15 mounted active-App workflows; TypeScript checking and production build passed. Existing legacy tests remain included and are not evidence that their features are connected to the active App.
 - GameCore: **124 tests passed, zero failures**. The package no longer treats the Xcode test Info.plist as an unhandled source file.
 - Native app: **25 app tests passed, zero failures or skips** on the isolated iPhone 18 Pro / iOS 27 simulator: ten real-store, four audio, nine artwork and two Market presentation tests. The renderer test covers all 140 crop stages; measured bounds prevent neighboring-row fragments and thumbnails stay within 192 pixels. The latest test run emitted no warnings or compiler errors. The subsequent simulator build and launch succeeded in 20.1 seconds. Result bundle: `test_sim_2026-10-02T23-57-57-222Z_pid44256_867f7e85.xcresult` in the local XcodeBuildMCP workspace.
 - Browser journeys: planting, watering, rain, harvest, sales, seed purchases, livestock collection, production/cancellation, menu close/focus return, download, validated restoration, reload, routes, save conflicts, and first-install offline use. All four active routes were inspected at representative desktop/tablet/phone widths without horizontal page overflow.
 - Native computer checks: full-screen start menu, Credits open/close, Settings open/Done, Continue, welcome-back dismissal, rendered farm and harvesting; all ten Town departments; pinned scrolling and seed filter; Sell All confirmation/dismissal, a 27-coin wheat sale and empty basket; a two-seed/28-coin purchase; and a Common Fish catch/log/20-coin payout. Settings was reopened and the Almanac was revisited after the final native build. The Barn was inspected after the card update, including the full long decor title. DeviceHub's displayed accessibility state could become stale; coordinate input plus direct Build iOS Apps captures provided dependable visual verification. Reset and every optional purchase/fishing outcome are not claimed. [Market before/after and journey evidence](market-redesign/README.md).
 - A resource-constrained run timed out in UI tests. After stopping this task's temporary simulator session, the full suite passed with unchanged deadlines/assertions. Expected offline network-refresh failures appeared in the browser console; the cached game remained playable with no captured JavaScript exception.
-- Existing unrelated `.buddy-data/` and `.deskbuddy/` files were preserved. No deployment, notification enrollment, player reset, or production-data mutation was performed.
+- Existing unrelated `.buddy-data/` and `.deskbuddy/` files were preserved. During the original audit, no deployment, notification enrollment, player reset, or production-data mutation was performed.
 
 ## Remaining findings and coverage limits
 
 1. **Web/native rules remain different.** Manual web days versus native real-time days, watering, livestock settlement, content and save formats need a deliberate parity decision. The active web game does not include all disconnected legacy features.
-2. **Native runtime coverage remains partial.** The real store verifies fishing settlement/cancellation and research purchase/reload, but every optional feature has not been played through its complete UI. VoiceOver plot actions, larger Dynamic Type, additional devices and physical-device performance remain open. Passing tests and a build do not close these gaps.
+2. **Native runtime coverage remains partial.** The real store verifies fishing settlement/cancellation and research purchase/reload, but every optional feature has not been played through its complete UI. Farm plot controls now have VoiceOver labels and action hints, but activation through VoiceOver, larger Dynamic Type, additional devices and physical-device performance remain open. Passing tests and a build do not close these gaps.
 3. **Artwork coverage has explicit boundaries.** All active crop and Town subject catalogs have illustrations. Buildings/animals are not yet state-driven residents of the farm scene; unused decor entries and future content retain fallback icons. Texture edge continuity and physical-device asset memory/energy require further measurement.
 4. **PWA update coverage remains partial.** Fresh installation and cold offline gameplay are verified; cache-install failure and namespace pruning have regression coverage. A hosted multi-version update and installed-device upgrade journey remain unverified. This pass was not deployed.
 5. **Enjoyment and pacing need human playtests.** The existing deterministic 120-day economy simulation proves continuity, not that progression is enjoyable. Market text/action token contrast is checked at 4.5:1; this is not a complete accessibility compliance audit. No frame-time or energy claim is made.
@@ -59,3 +59,21 @@ Phone Fields and the desktop guide/save menu were captured from the running game
 ![Barn cards showing the full three-line “Autumn Harvest Wreath” title](gameplay-quality/native-barn-cards-after.jpg)
 
 ![All 35 crops rendered through FarmScene at four stages](gameplay-quality/native-all-crop-stages.png)
+
+## Follow-up runtime pass — 2026-10-02
+
+During the browser playthrough, an unwatered crop correctly failed to grow, but its toast named the next day. Day advancement applies current weather and care before generating the next day, so the message now names the day that ended. A mounted-App regression checks the toast and confirms the crop and saved day remain correct.
+
+- Interactive web journey: planted and watered wheat, advanced through dry and rainy weather, harvested, collected livestock products, completed and collected a bread batch, bought a wheat seed, shipped wheat, and reloaded to confirm state and route persistence. The existing save began on Day 12 and ended on Day 20 with $2,431.20.
+- Visual inspection: farm overview and Field Planning at 1280×720, plus Field Planning and Market at 390×844. No horizontal overflow; the fixed navigation left market controls reachable on the phone viewport.
+- Verification after the message fix: **178 web tests passed in 44 files**, TypeScript checking and Vite production build passed. The separate GameCore suite passed **124 tests** using an isolated scratch directory; iOS simulator tests passed **25 tests**, and the native app built and launched.
+- Native runtime: Continue opened the saved Day 28 farm, and its 368×800 portrait scene was visually inspected. The accessibility snapshot exposed no plot-tile action, and a Town-tab tap left the screen unchanged; native planting and harvesting were not verified in this pass. The saved day remained 28.
+- Browser save: the in-app browser origin already contained a populated farm before the journey. Its test save is now at Day 20 with $2,431.20; it was not reset or restored.
+
+## Native plot accessibility follow-up — 2026-10-02
+
+The SpriteKit farm had no semantic control for its visible plots. `FarmView` now supplies a SwiftUI accessibility representation with one button per plot, unique `farm.plot.N` identifiers, crop/readiness/water labels, and hints for planting, watering, harvesting, or inspecting. Each button routes through the existing tile-sheet intent, so simulation mutations remain in `GameStore`.
+
+- The iPhone simulator accessibility snapshot showed all 16 plot buttons with distinct labels and identifiers.
+- The simulator build succeeded; the native app suite passed **25 tests**, GameCore passed **124 tests**, and the web gate remained green at **178 tests** with TypeScript checking and the production build.
+- A simulator bridge coordinate tap did not confirm activation of the virtual plot button; VoiceOver activation is still an explicit runtime coverage gap.

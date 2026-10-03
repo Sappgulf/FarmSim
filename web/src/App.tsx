@@ -178,7 +178,7 @@ export default function App() {
       const count = readyPlotIds(next).length
       announce(`Day ${next.day}: ${count} ${count === 1 ? 'crop is' : 'crops are'} ready to harvest.`)
     } else if (state.weather !== 'Rainy' && plantedPlots(state).some((plot) => !plot.ready && !plot.watered)) {
-      announce(`Day ${next.day}: the unwatered crops did not grow.`)
+      announce(`Day ${state.day} ended: the unwatered crops did not grow.`)
     } else {
       announce(`Day ${next.day} started. Production queue moved forward.`)
     }

@@ -34,10 +34,60 @@ struct FarmView: View {
         )
     }
 
+    private var farmPlotAccessibilityGrid: some View {
+        let columns = max(1, store.renderSnapshot.gridWidth)
+        let tileCount = store.renderSnapshot.tiles.count
+        let rows = (tileCount + columns - 1) / columns
+
+        return Grid(horizontalSpacing: DS.Space.xs, verticalSpacing: DS.Space.xs) {
+            ForEach(0..<rows, id: \.self) { row in
+                GridRow {
+                    ForEach(0..<columns, id: \.self) { column in
+                        let index = row * columns + column
+                        if let tile = store.tileSheetState(for: index) {
+                            Button {
+                                appState.openTileSheet(for: index)
+                            } label: {
+                                Text(plotAccessibilityLabel(for: tile))
+                            }
+                            .accessibilityHint(plotAccessibilityHint(for: tile))
+                            .accessibilityIdentifier("farm.plot.\(index + 1)")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func plotAccessibilityLabel(for tile: TileSheetState) -> String {
+        let plot = "Plot \(tile.index + 1)"
+        guard tile.cropID != nil else { return "\(plot), empty" }
+
+        let condition = tile.isReady
+            ? "ready to harvest"
+            : tile.watered ? "watered and growing" : "needs water and is growing"
+        return "\(plot), \(tile.cropName), \(condition)"
+    }
+
+    private func plotAccessibilityHint(for tile: TileSheetState) -> String {
+        guard tile.cropID != nil else {
+            return "Open planting options for this empty plot."
+        }
+        if tile.isReady {
+            return "Open plot actions to harvest this crop."
+        }
+        return tile.watered
+            ? "Open plot actions to inspect this growing crop."
+            : "Open plot actions to water or inspect this crop."
+    }
+
 
     var body: some View {
         ZStack {
             SpriteView(scene: scene, options: [.ignoresSiblingOrder, .allowsTransparency])
+                .accessibilityRepresentation {
+                    farmPlotAccessibilityGrid
+                }
                 .ignoresSafeArea()
                 .simultaneousGesture(dragGesture)
                 .simultaneousGesture(magnificationGesture)

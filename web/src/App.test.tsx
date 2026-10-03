@@ -82,6 +82,20 @@ describe('Active FarmSim player workflows', () => {
     expect(saved.farm.plots[6].growthDays).toBe(1)
   })
 
+  it('attributes missed crop growth to the day that just ended', () => {
+    const farm = createNewFarmState()
+    farm.weather = 'Sunny'
+    farm.plots[6] = { ...farm.plots[6], crop: 'wheat', growthDays: 0, watered: false }
+    farm.selectedPlotIds = []
+    saveFarmState(farm)
+    render(<App />)
+    click('Advance to next day')
+    expect(screen.getByText('Day 1 ended: the unwatered crops did not grow.')).toBeVisible()
+    const saved = JSON.parse(localStorage.getItem('farmsim-state-v2')!)
+    expect(saved.farm.day).toBe(2)
+    expect(saved.farm.plots[6].growthDays).toBe(0)
+  })
+
   it('shows a persistent warning when saving is disabled by a newer file', () => {
     const file = JSON.stringify({ schemaVersion: 999, farm: { money: 999 } })
     localStorage.setItem('farmsim-state-v2', file)
