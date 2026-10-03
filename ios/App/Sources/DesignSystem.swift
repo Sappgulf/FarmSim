@@ -174,6 +174,9 @@ struct WoodenPanel<Content: View>: View {
                                 endPoint: .bottom
                             )
                         )
+                    GameMaterialSurface(material: "wood")
+                        .opacity(0.16)
+                        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
                     RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                         .strokeBorder(SwiftUI.Color(red: 0.35, green: 0.20, blue: 0.05), lineWidth: 3)
                     // Inner shine
@@ -214,7 +217,7 @@ struct SettingsSection<Content: View>: View {
 
                 Text(title)
                     .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                    .foregroundStyle(DS.Color.textPrimary)
+                    .foregroundStyle(MarketPalette.ink)
             }
             .padding(.horizontal, DS.Space.sm)
 
@@ -222,21 +225,13 @@ struct SettingsSection<Content: View>: View {
             VStack(spacing: 0) {
                 content
             }
+            .padding(.vertical, DS.Space.xxs)
             .background(
                 RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                SwiftUI.Color.white.opacity(0.12),
-                                SwiftUI.Color.white.opacity(0.04)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(MarketPalette.paper)
                     .overlay(
                         RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
-                            .strokeBorder(SwiftUI.Color.white.opacity(0.10), lineWidth: 1)
+                            .strokeBorder(MarketPalette.border.opacity(0.30), lineWidth: 1)
                     )
             )
             .shadow(
@@ -279,12 +274,12 @@ struct SettingRow<Control: View>: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(.body, design: .rounded, weight: .medium))
-                    .foregroundStyle(DS.Color.textPrimary)
+                    .foregroundStyle(MarketPalette.ink)
 
                 if let subtitle = subtitle {
                     Text(subtitle)
                         .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(DS.Color.textSecondary)
+                        .foregroundStyle(MarketPalette.muted)
                         .lineLimit(1)
                 }
             }
@@ -308,7 +303,7 @@ struct FarmToggleStyle: ToggleStyle {
             Spacer()
             Button(action: { configuration.isOn.toggle() }) {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(configuration.isOn ? DS.Color.accent : SwiftUI.Color.white.opacity(0.15))
+                    .fill(configuration.isOn ? MarketPalette.leaf : MarketPalette.canvas)
                     .frame(width: 52, height: 32)
                     .overlay(
                         Circle()
@@ -320,7 +315,7 @@ struct FarmToggleStyle: ToggleStyle {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(SwiftUI.Color.white.opacity(0.20), lineWidth: 1)
+                            .strokeBorder(MarketPalette.border.opacity(0.35), lineWidth: 1)
                     )
             }
             .buttonStyle(.plain)

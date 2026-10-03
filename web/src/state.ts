@@ -21,6 +21,9 @@ export type FarmAction =
   | { type: 'EXPAND_FARM' }
   | { type: 'HARVEST_PLOT'; plotId: number }
   | { type: 'WATER_PLOT'; plotId: number }
+  | { type: 'SELECT_EMPTY_PLOTS' }
+  | { type: 'CLEAR_PLOT_SELECTION' }
+  | { type: 'RESTORE_FARM'; farm: FarmState }
 
 const validQuantity = (quantity: number) => Number.isSafeInteger(quantity) && quantity > 0
 const ledger = (money: number) => Math.round(money * 100) / 100
@@ -68,6 +71,7 @@ function reducePlantSelectedPlots(state: FarmState, crop: CropKey): FarmState {
 }
 
 function waterPlots(state: FarmState, target?: number): FarmState {
+  if (state.weather === 'Rainy') return state
   const plots = { ...state.plots }
   let changed = false
   Object.keys(plots).forEach((key) => {
@@ -242,6 +246,14 @@ function reduceRemoveSellOrder(state: FarmState, id: string): FarmState {
 
 export function farmReducer(state: FarmState, action: FarmAction): FarmState {
   switch (action.type) {
+    case 'RESTORE_FARM':
+      return action.farm
+    case 'SELECT_EMPTY_PLOTS': {
+      const selectedPlotIds = Object.values(state.plots).filter((plot) => plot.available && plot.crop === null).map((plot) => plot.id)
+      return { ...state, selectedPlotIds }
+    }
+    case 'CLEAR_PLOT_SELECTION':
+      return state.selectedPlotIds.length ? { ...state, selectedPlotIds: [] } : state
     case 'HARVEST_PLOT':
       return harvestPlots(state, action.plotId)
     case 'WATER_PLOT':

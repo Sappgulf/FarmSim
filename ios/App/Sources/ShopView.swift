@@ -63,8 +63,7 @@ struct ShopView: View {
 
         return VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(display.emoji)
-                    .font(.system(size: 32))
+                GameAssetIcon(id: def.id, fallback: display.emoji, size: 38)
                 Spacer()
                 if !unlocked {
                     Image(systemName: "lock.fill")

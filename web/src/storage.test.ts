@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createNewFarmState, initialFarmState } from './data'
 import { LEGACY_STORAGE_KEY, STORAGE_KEY } from './state'
-import { loadFarmSession, loadFarmState, migrateStoredState, saveFarmState, type StoredState } from './storage'
+import { loadFarmSession, loadFarmState, migrateStoredState, parseFarmBackup, serializeFarmState, saveFarmState, writeFarmState, type StoredState } from './storage'
 
 class MemoryStorage implements Storage {
   private values = new Map<string, string>()
@@ -32,6 +32,51 @@ class MemoryStorage implements Storage {
 }
 
 describe('FarmSim persistence', () => {
+  it('checks the loaded save even when no storage event has been delivered', () => {
+    const storage = new MemoryStorage()
+    saveFarmState(createNewFarmState(), storage)
+    const session = loadFarmSession(storage)
+    saveFarmState({ ...createNewFarmState(), money: 450 }, storage)
+    const otherSave = storage.getItem(STORAGE_KEY)
+    expect(writeFarmState(session.state, session.savedValue, storage).status).toBe('conflict')
+    expect(storage.getItem(STORAGE_KEY)).toBe(otherSave)
+  })
+
+  it('round trips current backups and rejects unsupported, incomplete, or invalid farms', () => {
+    const farm = createNewFarmState()
+    expect(parseFarmBackup(serializeFarmState(farm))).toEqual(farm)
+    expect(() => parseFarmBackup('{broken')).toThrow()
+    expect(() => parseFarmBackup(JSON.stringify({ schemaVersion: 99, farm }))).toThrow()
+    expect(() => parseFarmBackup(JSON.stringify({ schemaVersion: 3, farm: {} }))).toThrow()
+    expect(() => parseFarmBackup(serializeFarmState({ ...farm, money: -1 }))).toThrow()
+    expect(() => parseFarmBackup(serializeFarmState({ ...farm, seedStock: { ...farm.seedStock, wheat: 1.5 } }))).toThrow()
+  })
+
+  it('refuses a restore if its recovery copy cannot be kept', () => {
+    const storage = new MemoryStorage()
+    saveFarmState(createNewFarmState(), storage)
+    const before = storage.getItem(STORAGE_KEY)
+    const failing = { getItem: storage.getItem.bind(storage), setItem: () => { throw new Error('Full') } } as unknown as Storage
+    expect(writeFarmState({ ...createNewFarmState(), money: 450 }, before, failing, true).status).toBe('unavailable')
+    expect(storage.getItem(STORAGE_KEY)).toBe(before)
+  })
+
+  it('keeps separate recovery files for two restores in the same millisecond', () => {
+    const storage = new MemoryStorage()
+    const farm = createNewFarmState()
+    saveFarmState(farm, storage)
+    const first = storage.getItem(STORAGE_KEY)!
+    const time = vi.spyOn(Date, 'now').mockReturnValue(42)
+    let second: string
+    try {
+      writeFarmState({ ...farm, money: 450 }, first, storage, true)
+      second = storage.getItem(STORAGE_KEY)!
+      writeFarmState({ ...farm, money: 600 }, second, storage, true)
+    } finally { time.mockRestore() }
+    const recoveryKeys = Array.from({ length: storage.length }, (_, index) => storage.key(index)!).filter((key) => key.includes('-recovery-'))
+    expect(recoveryKeys).toHaveLength(2)
+    expect(recoveryKeys.map((key) => storage.getItem(key))).toEqual([first, second])
+  })
   it('writes and reads an explicit v3 farm envelope', () => {
     const storage = new MemoryStorage()
     const state = { ...initialFarmState, day: 19, money: 2710 }

@@ -310,7 +310,8 @@ final class GameStore {
     var yieldMultiplier: Double {
         let base = ProgressionSystem.yieldMultiplier(forLevel: playerLevel)
         let prestigeBonus = engine.getPrestigeBonus()
-        return base * buildingYieldMultiplier * researchYieldMultiplier * petYieldMultiplier * prestigeBonus
+        // GameCore applies research yield once, including automated harvest callers.
+        return base * buildingYieldMultiplier * petYieldMultiplier * prestigeBonus
     }
 
     // MARK: - Foreman Settings
@@ -435,6 +436,19 @@ final class GameStore {
         buildingCatalog
     }
 
+    var orderedSeedChoices: [CropDef] {
+        cropDefs.sorted { left, right in
+            let leftUnlocked = isUnlocked(cropID: left.id)
+            let rightUnlocked = isUnlocked(cropID: right.id)
+            if leftUnlocked != rightUnlocked { return leftUnlocked }
+            if (left.id == "wheat") != (right.id == "wheat") { return left.id == "wheat" }
+            let leftLevel = cropDisplay[left.id]?.level ?? 0
+            let rightLevel = cropDisplay[right.id]?.level ?? 0
+            if leftLevel != rightLevel { return leftLevel < rightLevel }
+            return left.name.localizedStandardCompare(right.name) == .orderedAscending
+        }
+    }
+
     var buildingSynergyPlans: [BuildingSynergy] {
         buildingSynergies
     }
@@ -501,9 +515,12 @@ final class GameStore {
         buildingSellMultiplier * researchSellMultiplier * petSellMultiplier
     }
 
-    init(userDefaults: UserDefaults = .standard) {
+    init(userDefaults: UserDefaults = .standard, saveFileURL: URL? = nil,
+         nowTimestamp: TimeInterval = Date().timeIntervalSince1970) {
         self.userDefaults = userDefaults
-        self.settings = Self.loadSettings(defaults: userDefaults)
+        let loadedSettings = Self.loadSettings(defaults: userDefaults)
+        self.settings = loadedSettings
+        SoundManager.shared.updateSettings(sound: loadedSettings.soundEnabled, haptics: loadedSettings.hapticsEnabled)
         self.onboardingRequired = userDefaults.bool(forKey: Self.onboardingKey) == false
 
         let contentLoadInterval = PerfTelemetry.begin("content_load")
@@ -513,7 +530,7 @@ final class GameStore {
         PerfTelemetry.end("content_load", contentLoadInterval)
         let sortedDefs = loadedContent.cropDefs.sorted { $0.id < $1.id }
 
-        let saveStore = SaveFileStore(fileURL: SavePaths.defaultSaveURL(appName: "FarmSim"))
+        let saveStore = SaveFileStore(fileURL: saveFileURL ?? SavePaths.defaultSaveURL(appName: "FarmSim"))
         let starterSeeds = Self.starterSeedStock(crops: sortedDefs, display: loadedContent.cropDisplay)
         let fallbackSave = GameCoreEngine.defaultSave(
             gridWidth: 4,
@@ -550,11 +567,11 @@ final class GameStore {
         var initialTimeState = initialSave.meta.time
         initialTimeState.dayIndex = max(initialSave.world.day, initialTimeState.dayIndex)
         var timeEngine = TimeEngine(config: Self.defaultTimeConfig, state: initialTimeState)
-        let nowTimestamp = Date().timeIntervalSince1970
         let offlineCatchup = timeEngine.applyOfflineCatchup(now: nowTimestamp, maxCatchupDays: 14)
         
         timeEngine.setLastRealWorldTimestamp(nowTimestamp)
-        engine.setTimeState(timeEngine.state)
+        // Align the starting day before simulating catch-up, not the future clock day.
+        engine.setTimeState(initialTimeState)
 
         self.saveStore = saveStore
         self.timeEngine = timeEngine
@@ -616,12 +633,14 @@ final class GameStore {
 
         if offlineCatchup.dayDelta > 0 {
             for _ in 0..<offlineCatchup.dayDelta {
-                self.engine.advanceDay(growthMultiplier: self.growthMultiplier)
+                self.engine.advanceDay(growthMultiplier: self.buildingGrowthMultiplier)
+                autoSellCrops()
             }
             self.save = self.engine.save
             self.renderSnapshot = Self.makeSnapshot(save: self.save, cropDefsByID: self.engine.cropDefsByID)
-            autoSellCrops()
         }
+
+        self.engine.setTimeState(timeEngine.state)
 
         // Build startup status with welcome back info
         var startupStatus: String?
@@ -632,12 +651,12 @@ final class GameStore {
             let welcomeInfo = WelcomeBackInfo(
                 daysAway: offlineCatchup.dayDelta,
                 hoursAway: hoursAway,
-                coinsEarned: 0,
-                xpEarned: offlineCatchup.dayDelta * 5,
+                coinsEarned: max(0, self.engine.save.player.coins - initialSave.player.coins),
+                xpEarned: max(0, self.engine.save.player.xp - initialSave.player.xp),
                 cropsGrown: 0,
                 cropsReady: readyTileCount,
-                streakMaintained: !loginResult.streakBroken,
-                streakBonus: loginResult.streakIncreased ? min(100, loginResult.streak * 10) : 0
+                streakMaintained: loginResult.streak > 1 && !loginResult.streakBroken,
+                streakBonus: 0
             )
             _ = milestoneManager.createWelcomeBackEvent(info: welcomeInfo)
 
@@ -764,9 +783,9 @@ final class GameStore {
         let oldSeasonIndex = (max(0, engine.save.world.day) / 7) % 4
 
         for _ in 0..<safeCount {
-            engine.advanceDay(growthMultiplier: growthMultiplier)
+            engine.advanceDay(growthMultiplier: buildingGrowthMultiplier)
+            autoSellCrops()
         }
-        autoSellCrops()
         engine.setTimeState(timeEngine.state)
 
         let earnedCoins = max(0, engine.save.player.coins - preCoins)
@@ -991,9 +1010,11 @@ final class GameStore {
     }
 
     func canCompleteResearch(_ plan: ResearchPlan) -> Bool {
-        guard !isResearchCompleted(plan.id) else { return false }
-        guard save.player.coins >= plan.cost else { return false }
-        return plan.prerequisites.allSatisfy { isResearchCompleted($0) }
+        engine.canCompleteResearch(plan.id, cost: plan.cost, prerequisites: plan.prerequisites)
+    }
+
+    func researchBenefitSummary(_ id: String) -> String {
+        ResearchBenefits.summary(for: id) ?? "This research is not available in this build."
     }
 
     @discardableResult
@@ -1003,9 +1024,7 @@ final class GameStore {
             syncState(statusOverride: "Research requirements not met for \(plan.name).", emitHaptic: false, emitHarvest: false)
             return false
         }
-        guard engine.spendCoins(plan.cost) else { return false }
-        engine.markResearchCompleted(plan.id)
-        engine.addXP(max(10, plan.cost / 2))
+        guard engine.completeResearch(plan.id, cost: plan.cost, prerequisites: plan.prerequisites) else { return false }
 
         // Track first research milestone
         if milestoneManager.checkMilestone(.firstResearch) {
@@ -1273,10 +1292,13 @@ final class GameStore {
         fishingEncounter = nil
         guard caught else { return false }
         let chosen = encounter.fish
-        let value = max(1, Int((Double(chosen.baseValue) * sellBonusMultiplier).rounded(.down)))
-        engine.addCoins(value)
-        engine.addXP(max(4, chosen.difficulty * 4))
-        engine.addFishCaught(for: chosen.id, quantity: 1)
+        let value = engine.awardFishCatch(fishID: chosen.id, baseValue: chosen.baseValue,
+                                         xp: max(4, chosen.difficulty * 4),
+                                         sellMultiplier: buildingSellMultiplier * petSellMultiplier)
+        guard value > 0 else {
+            syncState(statusOverride: "The fishing reward could not be settled.", emitHaptic: false, emitHarvest: false)
+            return false
+        }
 
         // Track first fish milestone
         if milestoneManager.checkMilestone(.firstFish) {
@@ -1778,35 +1800,7 @@ final class GameStore {
     }
 
     var growthMultiplier: Double {
-        buildingGrowthMultiplier * researchGrowthMultiplier
-    }
-
-    private var researchGrowthMultiplier: Double {
-        var multiplier = 1.0
-        if isResearchCompleted("climate_control") {
-            multiplier *= 1.15
-        }
-        return multiplier
-    }
-
-    private var researchYieldMultiplier: Double {
-        var multiplier = 1.0
-        if isResearchCompleted("hybrid_crops") {
-            multiplier *= 1.05
-        }
-        if isResearchCompleted("soil_enhancement") {
-            multiplier *= 1.15
-        }
-        if isResearchCompleted("pest_genetics") {
-            multiplier *= 1.1
-        }
-        if isResearchCompleted("automation_core") {
-            multiplier *= 1.1
-        }
-        if isResearchCompleted("climate_control") {
-            multiplier *= 1.1
-        }
-        return min(4.0, max(1.0, multiplier))
+        buildingGrowthMultiplier * engine.researchBenefits.growthMultiplier
     }
 
     var maxInventoryCapacity: Int {
@@ -1868,11 +1862,7 @@ final class GameStore {
     }
 
     private var researchSellMultiplier: Double {
-        var multiplier = 1.0
-        if isResearchCompleted("market_analytics") {
-            multiplier *= 1.2
-        }
-        return multiplier
+        engine.researchBenefits.saleMultiplier
     }
 
     private var petYieldMultiplier: Double {
@@ -1901,21 +1891,11 @@ final class GameStore {
             break
         }
 
-        if isResearchCompleted("irrigation_system") {
-            discount *= 0.95
-        }
-        if isResearchCompleted("automation_core") {
-            discount *= 0.9
-        }
-        if isResearchCompleted("climate_control") {
-            discount *= 0.95
-        }
-
         if let cropID, dailySpecialSeedIDs.contains(cropID) {
             discount *= 0.8
         }
 
-        return max(1, Int((Double(baseCost) * discount).rounded(.down)))
+        return engine.researchBenefits.seedCost(for: baseCost, otherMultiplier: discount)
     }
 
     private func dailySellMultiplierForDay(cropID: String, day: Int) -> Double {
@@ -2057,35 +2037,34 @@ final class GameStore {
     }
 
     private func syncState(statusOverride: String?, emitHaptic: Bool, emitHarvest: Bool) {
-        let upgradeMessage = applyProgressionUnlocksIfNeeded()
-
         engine.setTimeState(timeEngine.state)
-        save = engine.save
-        recomputeDerivedStateCaches()
-        renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
-
-        // Check for level up
-        let currentLevel = playerLevel
+        var currentLevel = ProgressionSystem.level(forXP: engine.save.player.xp)
         if currentLevel > lastPlayerLevel {
-            _ = milestoneManager.createLevelUpEvent(level: currentLevel)
-
-            // Check level milestones
-            let _ = milestoneManager.checkLevelMilestones(level: currentLevel)
-
-            // Check for unclaimed level milestone rewards
-            let unclaimed = milestoneManager.unclaimedLevelMilestones(currentLevel: currentLevel)
-            for milestone in unclaimed {
-                engine.addCoins(milestone.rewardCoins)
-                engine.addXP(milestone.rewardXP)
-                for (cropID, count) in milestone.rewardSeeds {
-                    engine.grantSeeds(cropID: cropID, quantity: count)
+            // Reward XP can unlock another milestone; settle the entire chain before
+            // publishing the ledger to views or building the render snapshot.
+            while true {
+                let unclaimed = milestoneManager.unclaimedLevelMilestones(currentLevel: currentLevel)
+                guard !unclaimed.isEmpty else { break }
+                for milestone in unclaimed {
+                    engine.addCoins(milestone.rewardCoins)
+                    engine.addXP(milestone.rewardXP)
+                    for (cropID, count) in milestone.rewardSeeds {
+                        engine.grantSeeds(cropID: cropID, quantity: count)
+                    }
+                    _ = milestoneManager.claimLevelMilestone(milestone)
                 }
-                _ = milestoneManager.claimLevelMilestone(milestone)
+                currentLevel = ProgressionSystem.level(forXP: engine.save.player.xp)
             }
-
+            _ = milestoneManager.createLevelUpEvent(level: currentLevel)
+            _ = milestoneManager.checkLevelMilestones(level: currentLevel)
             lastPlayerLevel = currentLevel
             SoundManager.shared.play(.levelUp, haptic: .heavy)
         }
+
+        let upgradeMessage = applyProgressionUnlocksIfNeeded()
+        save = engine.save
+        recomputeDerivedStateCaches()
+        renderSnapshot = Self.makeSnapshot(save: engine.save, cropDefsByID: engine.cropDefsByID)
 
         if let statusOverride {
             statusText = statusOverride
@@ -2142,7 +2121,7 @@ final class GameStore {
 
     @discardableResult
     private func applyProgressionUnlocksIfNeeded() -> String? {
-        let unlockedGrid = ProgressionSystem.unlockedGrid(forLevel: playerLevel)
+        let unlockedGrid = ProgressionSystem.unlockedGrid(forLevel: ProgressionSystem.level(forXP: engine.save.player.xp))
         if unlockedGrid > engine.save.world.gridWidth {
             engine.resizeGrid(width: unlockedGrid, height: unlockedGrid)
             return "Grid expanded to \(unlockedGrid)x\(unlockedGrid)."

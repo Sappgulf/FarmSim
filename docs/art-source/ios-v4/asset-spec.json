@@ -1,0 +1,166 @@
+{
+  "version": 4,
+  "engine": "SwiftUI/SpriteKit",
+  "provider": "built-in ImageGen",
+  "created": "2026-10-02",
+  "status": "integrated",
+  "note": "Original assets are preserved. Generated sheets were visually inspected, measured, registered, and checked in the native renderer. Runtime and test evidence is linked in README.md.",
+  "assets": [
+    {
+      "id": "crop_roots_v4",
+      "type": "crop-stage-atlas",
+      "transparent": true,
+      "columns": 4,
+      "rows": 8,
+      "ids": [
+        "carrot",
+        "potato",
+        "parsnip",
+        "onion",
+        "garlic",
+        "turnip",
+        "ginger_root",
+        "frost_potato"
+      ],
+      "reference": "ios/App/Assets.xcassets/crop_stages_v3.imageset/crop_stages_v3.png",
+      "prompt": "Use case: stylized-concept. Asset type: production transparent 2D crop sprite atlas for FarmSim iOS SpriteKit and inventory thumbnails. Edit the reference atlas into a NEW atlas of the following eight crops; use the reference only to preserve its warm hand-painted, crisp, richly shaded farming-game style and slightly elevated three-quarter view. Replace its subjects and grid with EXACTLY 4 equal-width columns by 8 equal-height rows, 32 separate sprites total, portrait 1024 x 2048 canvas. All 32 cells must exist. Columns left to right: tiny seedling, young growing plant, mature unripe plant, harvest-ready plant with recognizable produce. Rows top to bottom, in exact order: 1. Carrot with orange roots; 2. Potato with earthy tan tubers; 3. Parsnip with cream tapering roots; 4. Onion with golden round bulbs; 5. Garlic with ivory garlic bulbs; 6. Turnip with purple-topped white bulbs; 7. Ginger with knobbly ginger roots and lance-shaped leaves; 8. Frost Potato with pale icy-blue tubers and cool teal leaves. For each row, all four stages are the SAME crop. Healthy foliage, believable species silhouettes, warm sunlight from upper left, soft painterly highlights, readable at 48 pixels. A rooted planted specimen in every cell, not loose detached produce. Root crops may show their mature bulbs/tubers beside foliage for clear game recognition. Shared bottom-center anchor at 88% of each cell height; mature stage fills at most 78% of cell width and height; seedlings are intentionally smaller but share the anchor. Keep at least 10% transparent clearance to every cell edge. The complete image background must be genuinely transparent alpha, including all spaces between plants. NO scenery, soil tile, ground patch, labels, words, numbers, grid lines, border, shadows extending outside the cell, extra objects, watermark, or poster composition. Produce the whole exact strip grid in ONE coherent pass; no missing, merged, or repeated columns."
+    },
+    {
+      "id": "crop_greens_v4",
+      "type": "crop-stage-atlas",
+      "transparent": true,
+      "columns": 4,
+      "rows": 8,
+      "ids": [
+        "lettuce",
+        "cabbage",
+        "broccoli",
+        "artichoke",
+        "leek",
+        "parsley",
+        "okra",
+        "rice"
+      ],
+      "reference": "ios/App/Assets.xcassets/crop_stages_v3.imageset/crop_stages_v3.png",
+      "prompt": "Use case: stylized-concept. Asset type: production transparent 2D crop sprite atlas for FarmSim iOS SpriteKit and inventory thumbnails. Edit the reference atlas into a NEW atlas of the following eight crops; use the reference only to preserve its warm hand-painted, crisp, richly shaded farming-game style and slightly elevated three-quarter view. Replace its subjects and grid with EXACTLY 4 equal-width columns by 8 equal-height rows, 32 separate sprites total, portrait 1024 x 2048 canvas. All 32 cells must exist. Columns left to right: tiny seedling, young growing plant, mature unripe plant, harvest-ready plant with recognizable produce. Rows top to bottom, in exact order: 1. Lettuce with a soft light-green leafy rosette; 2. Cabbage with a dense rounded blue-green head; 3. Broccoli with dark-green florets; 4. Artichoke with green pointed globe buds; 5. Leek with long green leaves and pale stalks; 6. Parsley with finely divided leafy stems; 7. Okra with upright green ridged pods; 8. Rice with thin arching leaves and golden drooping grain panicles. For each row, all four stages are the SAME crop. Healthy foliage, believable species silhouettes, warm sunlight from upper left, soft painterly highlights, readable at 48 pixels. A rooted planted specimen in every cell, not loose detached produce. Root crops may show their mature bulbs/tubers beside foliage for clear game recognition. Shared bottom-center anchor at 88% of each cell height; mature stage fills at most 78% of cell width and height; seedlings are intentionally smaller but share the anchor. Keep at least 10% transparent clearance to every cell edge. The complete image background must be genuinely transparent alpha, including all spaces between plants. NO scenery, soil tile, ground patch, labels, words, numbers, grid lines, border, shadows extending outside the cell, extra objects, watermark, or poster composition. Produce the whole exact strip grid in ONE coherent pass; no missing, merged, or repeated columns."
+    },
+    {
+      "id": "crop_fruits_v4",
+      "type": "crop-stage-atlas",
+      "transparent": true,
+      "columns": 4,
+      "rows": 8,
+      "ids": [
+        "eggplant",
+        "strawberry",
+        "watermelon",
+        "blueberry",
+        "cranberry",
+        "cherry",
+        "mango",
+        "pumpkin"
+      ],
+      "reference": "ios/App/Assets.xcassets/crop_stages_v3.imageset/crop_stages_v3.png",
+      "prompt": "Use case: stylized-concept. Asset type: production transparent 2D crop sprite atlas for FarmSim iOS SpriteKit and inventory thumbnails. Edit the reference atlas into a NEW atlas of the following eight crops; use the reference only to preserve its warm hand-painted, crisp, richly shaded farming-game style and slightly elevated three-quarter view. Replace its subjects and grid with EXACTLY 4 equal-width columns by 8 equal-height rows, 32 separate sprites total, portrait 1024 x 2048 canvas. All 32 cells must exist. Columns left to right: tiny seedling, young growing plant, mature unripe plant, harvest-ready plant with recognizable produce. Rows top to bottom, in exact order: 1. Eggplant with plump glossy purple eggplants; 2. Strawberry with small red berries, white flowers and serrated low leaves; 3. Watermelon with curling ground vines and green striped watermelons; 4. Blueberry with small dusky-blue berries on a shrub; 5. Cranberry with small ruby-red berries and delicate low vines; 6. Cherry as a compact small cherry tree with red paired cherries; 7. Mango as a compact small mango tree with orange-yellow mangoes; 8. Pumpkin with orange ribbed pumpkins on broad leafy vines. For each row, all four stages are the SAME crop. Healthy foliage, believable species silhouettes, warm sunlight from upper left, soft painterly highlights, readable at 48 pixels. A rooted planted specimen in every cell, not loose detached produce. Root crops may show their mature bulbs/tubers beside foliage for clear game recognition. Shared bottom-center anchor at 88% of each cell height; mature stage fills at most 78% of cell width and height; seedlings are intentionally smaller but share the anchor. Keep at least 10% transparent clearance to every cell edge. The complete image background must be genuinely transparent alpha, including all spaces between plants. NO scenery, soil tile, ground patch, labels, words, numbers, grid lines, border, shadows extending outside the cell, extra objects, watermark, or poster composition. Produce the whole exact strip grid in ONE coherent pass; no missing, merged, or repeated columns."
+    },
+    {
+      "id": "crop_specials_v4",
+      "type": "crop-stage-atlas",
+      "transparent": true,
+      "columns": 4,
+      "rows": 8,
+      "ids": [
+        "chili",
+        "golden_wheat",
+        "moonberry",
+        "super_carrot",
+        "rainbow_corn",
+        "golden_tomato",
+        "dragon_pepper",
+        "snowdrop"
+      ],
+      "reference": "ios/App/Assets.xcassets/crop_stages_v3.imageset/crop_stages_v3.png",
+      "prompt": "Use case: stylized-concept. Asset type: production transparent 2D crop sprite atlas for FarmSim iOS SpriteKit and inventory thumbnails. Edit the reference atlas into a NEW atlas of the following eight crops; use the reference only to preserve its warm hand-painted, crisp, richly shaded farming-game style and slightly elevated three-quarter view. Replace its subjects and grid with EXACTLY 4 equal-width columns by 8 equal-height rows, 32 separate sprites total, portrait 1024 x 2048 canvas. All 32 cells must exist. Columns left to right: tiny seedling, young growing plant, mature unripe plant, harvest-ready plant with recognizable produce. Rows top to bottom, in exact order: 1. Chili Pepper with curved red chilies; 2. Golden Wheat with luminous amber-gold grain and golden leaf tips; 3. Moonberry with silvery violet leaves and softly glowing midnight-blue berries; 4. Super Carrot with robust orange roots and lush emerald tops; 5. Rainbow Corn with multicolored jewel-tone kernels on healthy green corn stalks; 6. Golden Tomato with amber-gold tomatoes and green leafy stems; 7. Dragon Pepper with deep crimson pointed peppers and subtle purple-tipped leaves; 8. Snowdrop with slender leaves and delicate white drooping bell flowers. For each row, all four stages are the SAME crop. Healthy foliage, believable species silhouettes, warm sunlight from upper left, soft painterly highlights, readable at 48 pixels. A rooted planted specimen in every cell, not loose detached produce. Root crops may show their mature bulbs/tubers beside foliage for clear game recognition. Shared bottom-center anchor at 88% of each cell height; mature stage fills at most 78% of cell width and height; seedlings are intentionally smaller but share the anchor. Keep at least 10% transparent clearance to every cell edge. The complete image background must be genuinely transparent alpha, including all spaces between plants. NO scenery, soil tile, ground patch, labels, words, numbers, grid lines, border, shadows extending outside the cell, extra objects, watermark, or poster composition. Produce the whole exact strip grid in ONE coherent pass; no missing, merged, or repeated columns."
+    },
+    {
+      "id": "farm_objects_v4",
+      "type": "object-atlas",
+      "transparent": true,
+      "columns": 4,
+      "rows": 4,
+      "ids": [
+        "well",
+        "silo",
+        "barn",
+        "workshop",
+        "greenhouse",
+        "windmill",
+        "chicken",
+        "pig",
+        "cow",
+        "goat",
+        "sheep",
+        "dog",
+        "cat",
+        "rabbit",
+        "bee_hive",
+        "pond"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: production transparent 2D farm object atlas for the FarmSim iOS game. Create EXACTLY 16 separate game sprites on a 4 by 4 equal-cell square 2048 x 2048 transparent canvas. Cozy hand-painted farming-game art, clean detailed silhouettes, soft three-quarter elevated view, warm sunlight from upper left, gentle amber wood and moss-green palette, matching lush painterly crop sprites. Row 1 left to right: stone water well with wooden roof and bucket; tall wooden grain silo with metal cap; warm red barn with cream trim; small wooden workshop with a workbench and tools. Row 2: glass greenhouse with green plants; timber windmill with cream sails; white farm chicken with red comb; friendly pink pig. Row 3: black-and-white dairy cow; tan goat with small horns; fluffy cream sheep; friendly brown-and-white farm dog. Row 4: ginger farm cat; cream rabbit; wooden honeybee hive with a tiny bee; little blue fishing pond with reeds and a wooden dock. Every subject is complete and separate, bottom-center anchored at 86% of its cell height, fills 75% of the cell, with at least 10% transparent clearance from all cell edges. Animals have consistent warm characterful proportions and face three-quarter toward the viewer. Buildings have a shared perspective. Genuine transparent alpha everywhere outside the subjects. No words, letters, labels, numbers, grid lines, border, ground tile, large scenery, duplicated objects, extra cells, watermark, or UI."
+    },
+    {
+      "id": "pond_fish_v4",
+      "type": "fish-atlas",
+      "transparent": true,
+      "columns": 4,
+      "rows": 3,
+      "ids": [
+        "sunfish",
+        "common",
+        "uncommon",
+        "catfish",
+        "rare",
+        "rainbow_perch",
+        "koi",
+        "epic",
+        "legendary",
+        "mythic",
+        "crystal_sturgeon",
+        "fishing_float"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: production transparent 2D pond fish atlas for FarmSim iOS fishing and fish collection. EXACTLY 12 distinct sprites arranged in 4 equal columns and 3 equal rows on a landscape 2048 x 1536 canvas. Cozy detailed hand-painted game illustrations, rich but gentle colors, soft highlights, clean readable silhouettes. Fish face left in a consistent side view, fins and tails fully visible, anchored and centered in each cell, occupy no more than 78% of width or height, at least 10% transparent clearance to every cell boundary. Row 1 left to right: orange-and-green sunfish with round body; small silver-blue common pond fish; olive-green largemouth bass; blue-gray whiskered catfish. Row 2: speckled rainbow trout; vibrant rainbow-colored perch; white and coral-red koi carp; elegant silver salmon with rosy side. Row 3: luminous golden koi with long flowing fins; slender midnight-purple moon eel with subtle silver glow; long blue-silver crystal sturgeon with crystalline dorsal scutes; a red-and-cream fishing bobber with a small curved brass hook. All fish must be biologically distinct, expressive but without human faces. Genuine transparent background alpha, no water rectangle, scenery, bubbles, labels, text, cell lines, outlines of grid, duplicates, watermark, or UI. Keep all twelve cells separate and correctly ordered."
+    },
+    {
+      "id": "menu_landscape_v4",
+      "type": "menu-background",
+      "transparent": false,
+      "prompt": "Use case: illustration-story. Asset type: full-height portrait background artwork for the FarmSim iOS main menu. Create a polished cozy hand-painted farming-game landscape in portrait 1536 x 2560 format, deliberately composed for a phone UI. Warm golden morning sunlight, soft cream clouds in a broad tranquil turquoise sky across the TOP 55%, rolling moss-green hills. In the LOWER HALF, a charming small red barn with cream trim off to the right, a timber windmill on a distant hill, a winding dirt footpath and low split-rail fence; sunflower clusters and soft wildflowers at the bottom corners. Keep the CENTRAL area from 28% through 85% of image height visually quiet and relatively low contrast for large game-title and button overlays. Use layered watercolor/gouache shapes with subtle brush texture, beautiful natural colors, detailed but uncluttered. The artwork is scenery ONLY. No crops on precise farm plot grids, no characters, no UI panels, no written title, words, lettering, logo, watermark, border, or baked interface elements. Preserve a friendly sunlit identity consistent with a cozy farming game."
+    },
+    {
+      "id": "terrain_tiles_v4",
+      "type": "terrain-atlas",
+      "transparent": false,
+      "columns": 2,
+      "rows": 2,
+      "ids": [
+        "grass",
+        "soil",
+        "stone",
+        "wood"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: four production ground/material textures for a cozy hand-painted farming game. Create a precise 2 by 2 equal-square material atlas on a square 2048 x 2048 canvas, no gaps or borders. Upper left: lush soft moss-green grass, subtle small blades and occasional tiny light-green clover, even lighting. Upper right: warm cultivated chocolate-brown soil with fine crumbly texture and gentle narrow furrow suggestions, no seeds, crops or rocks. Lower left: warm muted gray-tan cobblestone path with rounded stones, natural worn shading. Lower right: honey-brown aged wooden planks with fine grain and subtle knots, soft even shading. Each quadrant must individually tile seamlessly at its own opposite edges. Top-down orthographic material views; gentle painterly texture, readable and calm, no noisy sharp photographic detail, no directional light gradient, no cast shadows, no objects, text, letters, marks, frame, grid line, watermark, or perspective. These are runtime material surfaces, not a poster."
+    },
+    {
+      "id": "AppIconV4",
+      "type": "app-icon",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Asset type: final 1024 x 1024 full-bleed iOS app icon for FarmSim. A distinctive polished cozy farming-game icon: one charming warm red barn with cream trim, a golden roof highlight and open doorway, a small lush green vegetable garden and two sunflowers in the foreground, a soft turquoise sky and golden sun behind. Strong simple centered silhouette readable at 40 pixels; soft hand-painted 3D volume, warm morning lighting, rich but controlled red/amber/moss/turquoise palette. Full square opaque canvas with all artwork extending to the edges; do NOT bake rounded corners or a border. No words, letter F, labels, game title, numbers, tiny scattered decoration, realistic photo, watermark, or UI. This is a branded app icon, not a landscape with many distant buildings. Deliver an exact square 1024 x 1024 image."
+    },
+    {
+      "id": "market_stall_v4",
+      "type": "market-header-illustration",
+      "transparent": true,
+      "promptFile": "market-stall-prompt.txt"
+    }
+  ]
+}

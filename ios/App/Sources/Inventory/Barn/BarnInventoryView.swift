@@ -557,9 +557,7 @@ private struct BarnItemDetailSheet: View {
                 VStack(alignment: .leading, spacing: DS.Space.lg) {
                     // Hero header
                     HStack(alignment: .center, spacing: DS.Space.md) {
-                        Text(item.emoji)
-                            .font(.system(size: 52))
-                            .accessibilityHidden(true)
+                        GameAssetIcon(id: item.itemID, fallback: item.emoji, size: 64)
                             .scaleEffect(appeared ? 1.0 : 0.7)
                             .animation(DS.Animation.springBounce.delay(0.06), value: appeared)
 

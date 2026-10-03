@@ -18,7 +18,7 @@ struct PetsSection: View {
     // MARK: - Header
 
     private var petsHeaderCard: some View {
-        WoodenPanel {
+        MarketPanel {
             HStack(spacing: DS.Space.sm) {
                 ZStack {
                     Circle()
@@ -33,17 +33,17 @@ struct PetsSection: View {
                         .font(Typography.label)
                     Text("Adopt pets for passive farm bonuses.")
                         .font(Typography.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(MarketPalette.muted)
                 }
                 Spacer()
                 let adoptedCount = store.petPlans.filter { store.petLevel(for: $0.id) > 0 }.count
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("\(adoptedCount)")
                         .font(Typography.title)
-                        .foregroundStyle(DS.Color.accent)
+                        .foregroundStyle(MarketPalette.leaf)
                     Text("adopted")
                         .font(Typography.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(MarketPalette.muted)
                 }
             }
         }
@@ -55,7 +55,7 @@ struct PetsSection: View {
     private var activeBonusesCard: some View {
         let activePets = store.petPlans.filter { store.petLevel(for: $0.id) > 0 }
         if !activePets.isEmpty {
-            WoodenPanel {
+            MarketPanel {
                 VStack(alignment: .leading, spacing: DS.Space.sm) {
                     Text("Active Bonuses")
                         .font(Typography.label)
@@ -68,6 +68,7 @@ struct PetsSection: View {
                             let level = store.petLevel(for: pet.id)
                             let bonus = pet.bonusPerLevel * Double(level)
                             bonusChip(
+                                id: pet.id,
                                 icon: pet.icon,
                                 label: pet.bonusLabel,
                                 value: "+\(Int(bonus * 100))%"
@@ -76,24 +77,24 @@ struct PetsSection: View {
                     }
                     Text("Bonuses grow with each training level.")
                         .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(MarketPalette.muted)
                 }
             }
         }
     }
 
     @ViewBuilder
-    private func bonusChip(icon: String, label: String, value: String) -> some View {
+    private func bonusChip(id: String, icon: String, label: String, value: String) -> some View {
         HStack(spacing: DS.Space.xs) {
-            Text(icon).font(.system(size: 14))
+            GameAssetIcon(id: id, fallback: icon, size: 20)
             Text(label)
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(MarketPalette.muted)
                 .lineLimit(1)
             Spacer(minLength: 0)
             Text(value)
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(DS.Color.accent)
+                .foregroundStyle(MarketPalette.leaf)
         }
         .padding(.horizontal, DS.Space.xs)
         .padding(.vertical, 5)
@@ -119,7 +120,7 @@ struct PetsSection: View {
         let isMaxLevel = level >= maxLevel
         let trainCost = max(25, pet.cost / 2) * level
 
-        WoodenPanel {
+        MarketPanel {
             VStack(spacing: DS.Space.sm) {
                 // Top row: icon + info + badge
                 HStack(alignment: .top, spacing: DS.Space.sm) {
@@ -131,8 +132,7 @@ struct PetsSection: View {
                                 : Color(red: 0.2, green: 0.1, blue: 0.05).opacity(0.06)
                             )
                             .frame(width: 56, height: 56)
-                        Text(pet.icon)
-                            .font(.system(size: 30))
+                        GameAssetIcon(id: pet.id, fallback: pet.icon, size: 48)
                     }
 
                     VStack(alignment: .leading, spacing: 3) {
@@ -140,12 +140,12 @@ struct PetsSection: View {
                             .font(Typography.label)
                         Text(pet.description)
                             .font(Typography.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(MarketPalette.muted)
                             .lineLimit(2)
                         if adopted {
                             Text("Lv \(level) / \(maxLevel) · \(pet.bonusLabel)")
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(DS.Color.accent)
+                                .foregroundStyle(MarketPalette.leaf)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -166,7 +166,7 @@ struct PetsSection: View {
                         Spacer()
                         Text(isMaxLevel ? "MAX" : "Next: \(trainCost)🪙")
                             .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(isMaxLevel ? DS.Color.accent : .secondary)
+                            .foregroundStyle(isMaxLevel ? MarketPalette.leaf : MarketPalette.muted)
                     }
                 }
 
@@ -188,21 +188,20 @@ struct PetsSection: View {
                         }
                         .font(Typography.label)
                     }
-                    .buttonStyle(PrimaryButtonStyle())
+                    .buttonStyle(MarketActionStyle())
                     .disabled(!canAfford || !levelOK)
-                    .opacity((!canAfford || !levelOK) ? 0.5 : 1)
                     .accessibilityLabel("Adopt \(pet.name)")
                     .accessibilityHint(levelOK ? "Spend coins to adopt this companion" : "Reach the required level first")
 
                     if !levelOK {
                         Text("Requires level \(pet.requiredLevel)")
                             .font(Typography.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(MarketPalette.muted)
                             .frame(maxWidth: .infinity, alignment: .center)
                     } else if !canAfford {
                         Text("Not enough coins")
                             .font(Typography.caption)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(MarketPalette.warning)
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
                 } else if isMaxLevel {
@@ -211,7 +210,7 @@ struct PetsSection: View {
                             .foregroundStyle(.yellow)
                         Text("Companion fully trained!")
                             .font(Typography.caption)
-                            .foregroundStyle(DS.Color.accent)
+                            .foregroundStyle(MarketPalette.leaf)
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                 } else {
@@ -229,16 +228,15 @@ struct PetsSection: View {
                         }
                         .font(Typography.label)
                     }
-                    .buttonStyle(PrimaryButtonStyle())
+                    .buttonStyle(MarketActionStyle())
                     .disabled(!canAfford)
-                    .opacity(canAfford ? 1 : 0.5)
                     .accessibilityLabel("Train \(pet.name)")
                     .accessibilityHint(isMaxLevel ? "This companion is already fully trained" : "Spend coins to increase this pet's bonus")
 
                     if !canAfford {
                         Text("Need \(trainCost - store.save.player.coins) more coins")
                             .font(Typography.caption)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(MarketPalette.warning)
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
@@ -251,17 +249,16 @@ struct PetsSection: View {
         VStack(spacing: 1) {
             Text("LV")
                 .font(.system(size: 8, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(level >= max ? MarketPalette.ink : .white)
             Text("\(level)")
                 .font(.system(size: 16, weight: .black))
-                .foregroundStyle(.white)
+                .foregroundStyle(level >= max ? MarketPalette.ink : .white)
         }
         .frame(width: 36, height: 36)
         .background(
             RoundedRectangle(cornerRadius: DS.Radius.sm)
                 .fill(level >= max
-                    ? LinearGradient(colors: [.yellow, Color(red: 0.95, green: 0.62, blue: 0.10)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    : LinearGradient(colors: [DS.Color.accent, DS.Color.accent.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    ? MarketPalette.honey : MarketPalette.leaf
                 )
         )
     }

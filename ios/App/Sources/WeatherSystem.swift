@@ -524,14 +524,18 @@ struct WeatherPill: View {
                     .symbolEffect(.pulse, options: .repeating, value: weather)
             }
             
-            Text(weather.rawValue)
-                .font(.system(.subheadline, weight: .medium))
-                .foregroundStyle(.white)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(weather.rawValue)
+                    .font(.system(.subheadline, weight: .medium))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
 
-            if let subtitle, !subtitle.isEmpty {
-                Text(subtitle)
-                    .font(.system(.caption2, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.72))
+                if let subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.system(.caption2, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.72))
+                }
             }
             
             if intensity < 1.0 {
@@ -540,6 +544,7 @@ struct WeatherPill: View {
                     .foregroundStyle(.white.opacity(0.7))
             }
         }
+        .fixedSize(horizontal: true, vertical: true)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(

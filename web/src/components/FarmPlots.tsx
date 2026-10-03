@@ -13,7 +13,7 @@ export function FarmPlots({ state, onPlot, interactiveCrops = false }: Props) {
       const status = !plot.available ? 'locked' : plot.ready ? `${crop?.label}, ready to harvest` : crop ? `${crop.label}, ${plot.growthDays} of ${crop.growthDays} growth days, ${plot.watered ? 'watered' : state.weather === 'Rainy' ? 'rain watered' : 'needs water'}` : selected ? 'selected for planting' : 'empty'
       return <button type="button" key={plot.id} className={`live-plot ${!plot.available ? 'locked' : ''} ${selected ? 'selected' : ''} ${plot.crop ? 'planted' : ''} ${plot.watered ? 'watered' : ''} ${plot.ready ? 'ready' : ''}`}
         aria-label={`Plot ${plot.id + 1}: ${status}`} aria-pressed={plot.crop ? undefined : selected}
-        disabled={!plot.available || (!interactiveCrops && !!plot.crop) || (interactiveCrops && !!plot.crop && !plot.ready && plot.watered)}
+        disabled={!plot.available || (!interactiveCrops && !!plot.crop) || (interactiveCrops && !!plot.crop && !plot.ready && (plot.watered || state.weather === 'Rainy'))}
         onClick={() => onPlot(plot.id)}>
         {crop ? <CropStageIcon crop={crop.key} growthDays={plot.growthDays} totalDays={crop.growthDays} ready={plot.ready} /> : !plot.available ? <LockKeyhole size={14} aria-hidden="true" /> : selected ? <Sprout size={21} aria-hidden="true" /> : <span className="plot-number">{plot.id + 1}</span>}
         {plot.ready && <Check className="live-plot-mark" size={16} aria-hidden="true" />}

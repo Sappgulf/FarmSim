@@ -17,6 +17,7 @@
     "ios:build:small": "make -C ios ios-build-small",
     "ios:build:large": "make -C ios ios-build-large",
     "ios:test:core": "swift test --package-path ios/GameCore",
+    "ios:test:app": "make -C ios app-tests",
     "sora:prompts": "node scripts/sora/build-icon-prompts.mjs",
     "agents:run": "bash scripts/subagents/run-parallel.sh",
     "agents:status": "bash scripts/subagents/status.sh",

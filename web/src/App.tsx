@@ -3,11 +3,14 @@ import type { CropKey, FarmState, InventoryKey, ProductionRecipeKey, Screen } fr
 import { cropOptions, cropProfit, formatMoney, productionRecipes, screenFromHash } from './data'
 import { farmReducer, type FarmAction } from './state'
 import { plantedCrop, plantedPlotIds, plantedPlots, readyPlotIds, wateredPlotIds } from './selectors'
-import { loadFarmSession, saveFarmState } from './storage'
+import { loadFarmSession, readSavedFarmFile, serializeFarmState } from './storage'
+import { useFarmSave } from './hooks/useFarmSave'
 import { BarnMarket } from './components/BarnMarket'
 import { FarmOverview } from './components/FarmOverview'
 import { FieldPlanning } from './components/FieldPlanning'
 import { TopBar } from './components/TopBar'
+import { GameMenu } from './components/GameMenu'
+import { GameDialog } from './components/GameDialog'
 import './styles.css'
 
 type GameplayCoach = {
@@ -69,6 +72,17 @@ const buildGameplayCoach = (state: FarmState, selectedCrop: CropKey): GameplayCo
     }
   }
 
+  if (cropOptions.every((crop) => state.seedStock[crop.key] === 0)) {
+    return {
+      title: 'Your seed box is empty',
+      detail: 'Visit the seed shop to restock. Collect and sell animal goods if you need more coins.',
+      actionLabel: 'Restock seeds',
+      actionCommand: 'Buy seeds',
+      tone: 'warning',
+      recommendedCrop,
+    }
+  }
+
   const recommendedLabel = getDisplayCropLabel(recommendedCrop)
 
   return {
@@ -85,7 +99,9 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>(() => screenFromHash())
   const [session] = useState(() => loadFarmSession())
   const [state, dispatch] = useReducer(farmReducer, session.state)
-  const [saveWarning, setSaveWarning] = useState(session.warning)
+  const saves = useFarmSave(state, session)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [pendingCancellation, setPendingCancellation] = useState<string | null>(null)
   const [selectedCrop, setSelectedCrop] = useState<CropKey>('wheat')
   const [barnFocus, setBarnFocus] = useState<'barn' | 'market'>(() => window.location.hash.endsWith('/market') ? 'market' : 'barn')
   const [toast, setToast] = useState('')
@@ -112,18 +128,16 @@ export default function App() {
     toastTimer.current = window.setTimeout(() => setToast(''), 3400)
   }, [])
 
-  useEffect(() => {
-    if (session.canSave && !saveFarmState(state)) setSaveWarning('Changes are not saving. Keep this tab open and retry when storage is available.')
-  }, [state, session.canSave])
-
-  const navigate = useCallback((nextScreen: Screen, focus?: 'barn' | 'market') => {
+  const navigate = useCallback((nextScreen: Screen, focus?: 'barn' | 'market', moveFocus = true) => {
     setScreen(nextScreen)
     const nextFocus = focus ?? barnFocus
     if (focus) setBarnFocus(focus)
     const hash = nextScreen === 'barn' ? `#barn/${nextFocus}` : `#${nextScreen}`
     if (window.location.hash !== hash) window.history.pushState(null, '', hash)
-    document.getElementById('game-main')?.focus({ preventScroll: true })
-    window.scrollTo({ top: 0, behavior: 'instant' })
+    if (moveFocus) {
+      document.getElementById('game-main')?.focus({ preventScroll: true })
+      window.scrollTo({ top: 0, behavior: 'instant' })
+    }
   }, [barnFocus])
 
   const plant = useCallback(() => {
@@ -199,8 +213,10 @@ export default function App() {
 
   const cancelQueueItem = useCallback((id: string) => {
     const item = state.productionQueue.find((entry) => entry.id === id)
+    if (!item || item.phase === 'ready') return
+    if (item.progress > 0) { setPendingCancellation(id); return }
     dispatch({ type: 'CANCEL_PRODUCTION', id })
-    announce(item?.progress === 0 ? `${item.label} cancelled; ingredients returned.` : `${item?.label ?? 'Production'} cancelled. Ingredients already in use cannot be returned.`)
+    announce(`${item.label} cancelled; ingredients returned.`)
   }, [announce, state.productionQueue])
 
   const queueRecipe = useCallback((recipe: ProductionRecipeKey) => {
@@ -249,7 +265,7 @@ export default function App() {
     else if (task.startsWith('Plant')) {
       setSelectedCrop(recommendedCrop)
       navigate('planning')
-    } else if (task.startsWith('Ship') || task.startsWith('Sell')) {
+    } else if (task.startsWith('Ship') || task.startsWith('Sell') || task.startsWith('Buy')) {
       navigate('barn', 'market')
     } else if (task.includes('Collect')) {
       navigate('barn', 'barn')
@@ -271,6 +287,25 @@ export default function App() {
     transact({ type: 'SELL_INVENTORY', item, quantity }, `Sold ${quantity} ${item} for ${formatMoney(next.money - state.money)}.`)
   }
   const expand = () => transact({ type: 'EXPAND_FARM' }, 'New plots cleared! Open Fields to plant them.')
+  const downloadFile = (value: string, filename: string) => {
+    try {
+      const url = URL.createObjectURL(new Blob([value], { type: 'application/json' }))
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = filename
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+      announce('Backup download started. Keep the file somewhere safe.')
+    } catch { announce('Could not download the backup in this browser. Keep the farm open and try again.') }
+  }
+  const downloadFarm = () => downloadFile(serializeFarmState(state), `farmsim-day-${state.day}.json`)
+  const downloadSaved = () => {
+    const saved = readSavedFarmFile()
+    if (saved) downloadFile(saved, 'farmsim-saved-file.json')
+    else announce('No saved file is available. Download this farm to keep the current session.')
+  }
   const interactPlot = (id: number) => {
     const plot = state.plots[id]
     if (plot.ready) transact({ type: 'HARVEST_PLOT', plotId: id }, `Plot ${id + 1} harvested.`)
@@ -311,7 +346,7 @@ export default function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== 'f' || event.metaKey || event.ctrlKey || event.altKey) return
       const target = event.target as HTMLElement | null
-      if (target?.matches('input, textarea, select') || target?.isContentEditable) return
+      if (target?.matches('input, textarea, select') || target?.isContentEditable || document.querySelector('dialog[open]')) return
       if (document.fullscreenElement) void document.exitFullscreen().catch(() => announce('Could not exit fullscreen.'))
       else if (document.documentElement.requestFullscreen) void document.documentElement.requestFullscreen().catch(() => announce('Fullscreen is unavailable in this browser.'))
     }
@@ -322,13 +357,15 @@ export default function App() {
   return (
       <div className="app-frame">
       <a className="skip-link" href="#game-main" onClick={(event) => { event.preventDefault(); document.getElementById('game-main')?.focus() }}>Skip to game</a>
-      <TopBar state={state} coach={gameplayCoach} onHome={() => navigate('overview')} onAdvanceDay={advanceDay} />
-      {saveWarning && <div className="save-warning" role="alert">{saveWarning}{session.canSave && <button type="button" onClick={() => { if (saveFarmState(state)) setSaveWarning('') }}>Retry save</button>}</div>}
+      <TopBar state={state} coach={gameplayCoach} onHome={() => navigate('overview')} onAdvanceDay={advanceDay} onOpenMenu={() => setMenuOpen(true)} />
+      {saves.warning && <div className="save-warning" role="alert"><span>{saves.warning}</span><div className="save-warning-actions"><button type="button" onClick={downloadFarm}>Download backup</button>{saves.canRetry && <button type="button" onClick={saves.retry}>Retry save</button>}<button type="button" onClick={() => setMenuOpen(true)}>Save & recovery</button></div></div>}
       <main id="game-main" tabIndex={-1}>
         {screen === 'overview' && <FarmOverview state={state} coach={gameplayCoach} onNavigate={navigate} onFocusTask={focusTask} onAdvanceDay={advanceDay} onInteractPlot={interactPlot} onExpand={expand} />}
-        {screen === 'planning' && <FieldPlanning state={state} selectedCrop={selectedCrop} onSelectCrop={setSelectedCrop} onTogglePlot={togglePlot} onPlant={plant} onWater={water} onHarvest={harvest} onAdvanceDay={advanceDay} onNavigate={navigate} recommendedCrop={recommendedCrop} onBuySeeds={buySeeds} />}
-        {screen === 'barn' && <BarnMarket state={state} focus={barnFocus} onFocusChange={(focus) => navigate('barn', focus)} onShip={ship} onCancelProduction={cancelQueueItem} onStartProduction={queueRecipe} onCollectProduction={collectQueueItem} onCollectAnimalProducts={collectAnimalProducts} onRemoveSellOrder={removeOrder} onNavigate={navigate} onBuySeeds={buySeeds} onSellInventory={sellInventory} />}
+        {screen === 'planning' && <FieldPlanning state={state} selectedCrop={selectedCrop} onSelectCrop={setSelectedCrop} onTogglePlot={togglePlot} onSelectEmpty={() => dispatch({ type: 'SELECT_EMPTY_PLOTS' })} onClearSelection={() => dispatch({ type: 'CLEAR_PLOT_SELECTION' })} onPlant={plant} onWater={water} onHarvest={harvest} onAdvanceDay={advanceDay} onNavigate={navigate} recommendedCrop={recommendedCrop} onBuySeeds={buySeeds} />}
+        {screen === 'barn' && <BarnMarket state={state} focus={barnFocus} onFocusChange={(focus) => navigate('barn', focus, false)} onShip={ship} onCancelProduction={cancelQueueItem} onStartProduction={queueRecipe} onCollectProduction={collectQueueItem} onCollectAnimalProducts={collectAnimalProducts} onRemoveSellOrder={removeOrder} onNavigate={navigate} onBuySeeds={buySeeds} onSellInventory={sellInventory} />}
       </main>
+      {menuOpen && <GameMenu state={state} warning={saves.warning} canRestore={saves.canRestore} onClose={() => setMenuOpen(false)} onDownload={downloadFarm} onDownloadSaved={downloadSaved} onRestore={async (farm) => { if (!await saves.restore(farm)) return false; dispatch({ type: 'RESTORE_FARM', farm }); announce(`Backup restored. Welcome back to day ${farm.day}.`); return true }} />}
+      {pendingCancellation && <GameDialog title="Cancel this batch?" onClose={() => setPendingCancellation(null)}><p className="menu-intro">The ingredients are already in use and will not be returned. Keep the batch to collect its goods after two days.</p><div className="menu-actions"><button type="button" className="secondary-button" onClick={() => setPendingCancellation(null)}>Keep batch</button><button type="button" className="primary-button" onClick={() => { transact({ type: 'CANCEL_PRODUCTION', id: pendingCancellation }, 'Batch cancelled. Ingredients already in use could not be returned.'); setPendingCancellation(null) }}>Cancel batch anyway</button></div></GameDialog>}
       <div className={`toast ${toast ? 'is-visible' : ''}`} role="status" aria-live="polite">{toast}</div>
     </div>
   )

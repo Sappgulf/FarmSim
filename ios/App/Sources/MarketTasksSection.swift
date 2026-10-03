@@ -8,17 +8,17 @@ struct MarketTasksSection: View {
 
     var body: some View {
         VStack(spacing: DS.Space.md) {
-            WoodenPanel {
+            MarketPanel {
                 VStack(spacing: DS.Space.xs) {
                     Image(systemName: "checklist.checked")
                         .font(.title3)
-                        .foregroundStyle(DS.Color.xp)
+                        .foregroundStyle(MarketPalette.info)
                     Text("Daily Tasks")
                         .font(Typography.section)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(MarketPalette.ink)
                     Text("Three new tasks each morning. Complete them for bonus coins and XP.")
                         .font(Typography.caption)
-                        .foregroundStyle(.white.opacity(0.72))
+                        .foregroundStyle(MarketPalette.muted)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
@@ -38,31 +38,31 @@ struct MarketTasksSection: View {
         let isReady = store.canClaimDailyTask(task)
         let pct = min(1.0, Double(progress) / Double(max(1, task.target)))
 
-        return WoodenPanel {
+        return MarketPanel {
             VStack(alignment: .leading, spacing: DS.Space.sm) {
                 HStack {
                     ZStack {
                         Circle()
-                            .fill(isClaimed ? DS.Color.accent.opacity(0.25) : .white.opacity(0.10))
+                            .fill(isClaimed ? DS.Color.accent.opacity(0.25) : MarketPalette.ink.opacity(0.10))
                             .frame(width: 42, height: 42)
                         if isClaimed {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 16, weight: .bold))
-                                .foregroundStyle(DS.Color.accent)
+                                .foregroundStyle(MarketPalette.leaf)
                         } else {
                             taskIcon(for: task.metric)
                                 .font(.system(size: 18))
-                                .foregroundStyle(isReady ? DS.Color.xp : .white.opacity(0.70))
+                                .foregroundStyle(isReady ? MarketPalette.info : MarketPalette.muted)
                         }
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(task.title)
                             .font(Typography.bodyStrong)
-                            .foregroundStyle(isClaimed ? .white.opacity(0.45) : .white)
+                            .foregroundStyle(MarketPalette.ink)
                         Text(task.detail)
                             .font(Typography.caption)
-                            .foregroundStyle(.white.opacity(0.65))
+                            .foregroundStyle(MarketPalette.muted)
                             .lineLimit(2)
                     }
 
@@ -76,10 +76,10 @@ struct MarketTasksSection: View {
                         VStack(alignment: .trailing, spacing: 2) {
                             Label("\(task.rewardCoins)", systemImage: "circle.fill")
                                 .font(Typography.caption.weight(.bold))
-                                .foregroundStyle(DS.Color.money)
+                                .foregroundStyle(MarketPalette.leaf)
                             Label("\(task.rewardXP) XP", systemImage: "sparkles")
                                 .font(Typography.small.weight(.bold))
-                                .foregroundStyle(DS.Color.xp)
+                                .foregroundStyle(MarketPalette.info)
                         }
                     }
                 }
@@ -93,11 +93,11 @@ struct MarketTasksSection: View {
                             Text("\(progress) / \(task.target)")
                                 .font(Typography.small.weight(.bold))
                         }
-                        .foregroundStyle(.white.opacity(0.55))
+                        .foregroundStyle(MarketPalette.muted)
 
                         GeometryReader { g in
                             ZStack(alignment: .leading) {
-                                Capsule().fill(.white.opacity(0.10))
+                                Capsule().fill(MarketPalette.ink.opacity(0.10))
                                 Capsule()
                                     .fill(
                                         LinearGradient(
@@ -123,7 +123,7 @@ struct MarketTasksSection: View {
                         Text(isReady ? "Claim Reward" : "In Progress")
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(WoodActionStyle(tint: isReady ? DS.Color.xp : .gray))
+                    .buttonStyle(MarketActionStyle())
                     .disabled(!isReady)
                 }
             }

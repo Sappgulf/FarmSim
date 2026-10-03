@@ -18,7 +18,6 @@ struct MainMenuView: View {
     @State private var buttonsAppeared = false
     @State private var bgScale = 1.0
     @State private var glowPulse = false
-    @State private var subtitleAppeared = false
 
     private var reducedMotion: Bool {
         accessibilityReduceMotion || store.settings.reducedMotion
@@ -31,20 +30,23 @@ struct MainMenuView: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            ZStack {
-                backgroundLayer(proxy: proxy)
-                AmbientParticleLayer(size: proxy.size, reducedMotion: reducedMotion)
-                    .allowsHitTesting(false)
-
-                VStack(spacing: 0) {
-                    settingsButton
-                    Spacer()
-                    titleBlock
-                    Spacer()
-                    menuButtons
-                    versionLabel
+        ZStack {
+            GeometryReader { proxy in
+                ZStack {
+                    backgroundLayer(proxy: proxy)
+                    AmbientParticleLayer(size: proxy.size, reducedMotion: reducedMotion)
+                        .allowsHitTesting(false)
                 }
+            }
+            .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                settingsButton
+                Spacer()
+                titleBlock
+                Spacer()
+                menuButtons
+                versionLabel
             }
         }
         .onAppear { runEntranceSequence() }
@@ -63,12 +65,13 @@ struct MainMenuView: View {
 
     private func backgroundLayer(proxy: GeometryProxy) -> some View {
         ZStack {
-            Image("menu_bg")
+            Image("menu_landscape_v4")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .frame(width: proxy.size.width, height: proxy.size.height)
                 .scaleEffect(bgScale)
-                .ignoresSafeArea()
+                .clipped()
+                .accessibilityHidden(true)
                 .onAppear {
                     guard !reducedMotion else { return }
                     withAnimation(.easeInOut(duration: 22).repeatForever(autoreverses: true)) {
@@ -166,12 +169,6 @@ struct MainMenuView: View {
             .scaleEffect(titleAppeared ? 1.0 : 0.78)
             .opacity(titleAppeared ? 1.0 : 0)
 
-            Text("Cozy Living")
-                .font(.system(size: 24, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white)
-                .shadow(color: .black.opacity(0.55), radius: 5, x: 0, y: 2)
-                .opacity(subtitleAppeared ? 1.0 : 0)
-                .offset(y: subtitleAppeared ? 0 : 8)
         }
         .padding(.top, 12)
     }
@@ -218,7 +215,7 @@ struct MainMenuView: View {
     }
 
     private var versionLabel: some View {
-        Text("v1.0.0 · Swift 5.10")
+        Text("v1.0.0")
         .font(Typography.small)
         .foregroundStyle(.white.opacity(0.38))
         .padding(.bottom, 14)
@@ -253,9 +250,6 @@ struct MainMenuView: View {
     private func runEntranceSequence() {
         withAnimation(reducedMotion ? .easeOut(duration: 0.15) : DS.Animation.springBounce) {
             titleAppeared = true
-        }
-        withAnimation((reducedMotion ? .easeOut(duration: 0.15) : DS.Animation.standard).delay(reducedMotion ? 0.05 : 0.20)) {
-            subtitleAppeared = true
         }
         withAnimation((reducedMotion ? .easeOut(duration: 0.15) : DS.Animation.springBounce).delay(reducedMotion ? 0.08 : 0.28)) {
             buttonsAppeared = true

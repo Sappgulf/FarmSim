@@ -2,6 +2,8 @@
 
 This implementation follows the [baseline audit](../../audits/2026-10-02/AUDIT.md). The audit remains a historical record; its unchecked backlog is superseded by this status report where work overlaps.
 
+The subsequent [gameplay QA and improvement pass](../../audits/2026-10-02/GAMEPLAY-QA.md) adds guide/save recovery, tab conflict protection, field/shop conveniences, truthful native reward messages, cold offline startup, implemented native research effects, audio preparation off the main thread, a complete native crop/feature asset catalog, and the rebuilt Town Market. That report contains current verification and remaining gaps. Its local web version is 0.3.1; the 0.3.0 publication recorded below is historical and has not been redeployed by this follow-up.
+
 ## Implemented
 
 - Restored active web Overview/Fields rendering and native compilation/startup. Native launches had both invalid pack envelopes and a main-thread notification-daemon wait; pack metadata and notification execution were repaired.
@@ -29,8 +31,8 @@ Screenshots show a diagnostic farm preserved from the audit, including its histo
 ## Remaining priorities
 
 1. Choose and implement shared web/native clock/content/rule parity. Web manual days and native real-time days currently differ.
-2. Complete native artwork beyond wheat/tomato/corn, and add world layers for owned buildings, animals, and upgrades.
-3. Add complete research timing/effects, livestock ready balances, recurring objectives, and stronger harvest/upgrade feedback where those systems are still incomplete.
+2. Add world layers for owned buildings, animals, and upgrades. The follow-up completes native crop/feature artwork; see its [asset catalog](../../art-source/ios-v4/README.md).
+3. Extend objectives and harvest/upgrade feedback where still incomplete. The follow-up implements all supported native research effects and verifies their immediate purchase contract; timed research would be a separate product change.
 4. Finish native VoiceOver tile actions, dynamic-type/safe-area/device coverage, and a full fishing gameplay/cancellation playtest. Fishing correctness was built and reviewed, not played end to end here.
 5. Validate first install, offline cold starts and service-worker updates beyond the verified warm reload, cross-tab saving/recovery export, and profile actual renderers on representative physical devices.
 6. Playtest pacing/economy with people. The 120-day deterministic test proves continuity/invariants, not that the pacing is enjoyable or balanced.

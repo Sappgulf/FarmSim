@@ -240,7 +240,7 @@ public final class MilestoneManager: ObservableObject {
         }
 
         if info.streakMaintained {
-            messageParts.append("Daily streak maintained: \(info.streakBonus) day\(info.streakBonus == 1 ? "" : "s")!")
+            messageParts.append("Your daily login streak is still going!")
         } else if info.streakBonus > 0 {
             messageParts.append("Streak bonus: \(info.streakBonus) coins!")
         }
@@ -262,14 +262,13 @@ public final class MilestoneManager: ObservableObject {
     public func createDailyStreakEvent(streak: Int) -> MilestoneEvent? {
         guard streak > 1 else { return nil }
 
-        let bonusCoins = min(100, streak * 10)
         let event = MilestoneEvent(
             type: .dailyStreak(streak),
             title: "\(streak)-Day Streak!",
-            message: "Keep it up! Daily login bonus: \(bonusCoins) coins",
+            message: "Keep it up! Your daily visits are keeping the streak alive.",
             icon: "🔥",
-            coins: bonusCoins,
-            xp: min(50, streak * 5)
+            coins: 0,
+            xp: 0
         )
         pendingCelebrations.append(event)
         return event

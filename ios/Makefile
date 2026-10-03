@@ -1,4 +1,4 @@
-.PHONY: ios-gen ios-build ios-build-small ios-build-large ios-run core-tests
+.PHONY: ios-gen ios-build ios-build-small ios-build-large ios-run core-tests app-tests
 
 LATEST_DEVICE ?= iPhone 17
 SMALL_DEVICE ?= iPhone 16e
@@ -22,3 +22,6 @@ ios-run:
 
 core-tests:
 	swift test --package-path GameCore
+
+app-tests: ios-gen
+	xcodebuild -project FarmSim.xcodeproj -scheme FarmSim -destination 'platform=iOS Simulator,name=$(IOS_DEVICE)' -parallel-testing-enabled NO test

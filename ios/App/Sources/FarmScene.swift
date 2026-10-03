@@ -20,8 +20,8 @@ final class FarmScene: SKScene {
     private var tileBaseColors: [Int: SKColor] = [:]
     private var cropEmojiByID: [String: String] = [:]
     private var textureCache: [String: SKTexture] = [:]
-    private let cropAtlas = SKTexture(imageNamed: "crop_stages_v3")
-    private var cropStageTextures: [String: SKTexture] = [:]
+    private var artworkAtlases: [String: SKTexture] = [:]
+    private var artworkTextures: [String: SKTexture] = [:]
 
     private let boardNode = SKNode()
     private let backgroundNode = SKNode()
@@ -255,7 +255,7 @@ final class FarmScene: SKScene {
         backgroundNode.removeAllChildren()
 
         // Background - Grass Texture
-        let grassTexture = SKTexture(imageNamed: "grass")
+        let grassTexture = artworkTexture(for: "terrain:grass") ?? SKTexture(imageNamed: "grass")
         let tileSize = grassTexture.size()
         
         let cols = Int(ceil(size.width / tileSize.width)) + 1
@@ -371,14 +371,10 @@ final class FarmScene: SKScene {
 
     private func makeTile(index: Int, rect: CGRect) -> TileVisual {
         // Use texture from asset catalog if available, fallback to generated.
-        let tex = SKTexture(imageNamed: "soil")
+        let tex = artworkTexture(for: "terrain:soil") ?? SKTexture(imageNamed: "soil")
         let tile = SKSpriteNode(texture: tex)
         tile.position = CGPoint(x: rect.midX, y: rect.midY)
         tile.size = rect.size
-        
-        // Slight randomization of rotation/color for natural look
-        let randomRot = CGFloat(Int(index * 13) % 4) * (.pi / 2)
-        tile.zRotation = randomRot
         
         // Subtle color variation
         let colorVar = CGFloat((index % 7) - 3) * 0.02
@@ -401,8 +397,9 @@ final class FarmScene: SKScene {
         emoji.zPosition = 8
 
         let cropSprite = SKSpriteNode()
-        cropSprite.name = "tile_\(index)"
-        cropSprite.position = CGPoint(x: 0, y: 4)
+        cropSprite.name = "crop_\(index)"
+        cropSprite.anchorPoint = CGPoint(x: 0.5, y: 0)
+        cropSprite.position = CGPoint(x: 0, y: -rect.height * 0.28)
         cropSprite.size = CGSize(width: rect.width * 0.72, height: rect.height * 0.96)
         cropSprite.zPosition = 8
         cropSprite.isHidden = true
@@ -503,6 +500,12 @@ final class FarmScene: SKScene {
             visual.emoji.text = cropEmojiByID[cropID] ?? "🌱"
             if let texture = cropTexture(for: cropID, progress: newTile.progress, ready: newTile.isReady) {
                 visual.cropSprite.texture = texture
+                let stage = GameArtworkCatalog.growthStage(progress: newTile.progress, ready: newTile.isReady)
+                let stageScale: CGFloat = [0.50, 0.68, 0.84, 1.0][stage]
+                let source = texture.size()
+                let fit = min(visual.tile.size.width * 0.82 / max(1, source.width),
+                              visual.tile.size.height * 0.82 / max(1, source.height)) * stageScale
+                visual.cropSprite.size = CGSize(width: source.width * fit, height: source.height * fit)
                 visual.cropSprite.isHidden = false
                 visual.emoji.isHidden = true
             } else {
@@ -578,15 +581,24 @@ final class FarmScene: SKScene {
     }
 
     private func cropTexture(for cropID: String, progress: Double, ready: Bool) -> SKTexture? {
-        guard let row = ["wheat": 0, "tomato": 1, "corn": 2][cropID] else { return nil }
-        let stage = ready ? 3 : progress <= 0 ? 0 : min(2, Int(ceil(progress * 2)))
-        let key = "\(cropID)-\(stage)"
-        if let texture = cropStageTextures[key] { return texture }
-        // SpriteKit texture coordinates start at the bottom left; atlas rows start at the top.
-        let region = CGRect(x: Double(stage) / 4, y: Double(2 - row) / 3, width: 0.25, height: 1.0 / 3)
-        let texture = SKTexture(rect: region, in: cropAtlas)
+        let stage = GameArtworkCatalog.growthStage(progress: progress, ready: ready)
+        return artworkTexture(for: GameArtworkCatalog.cropKey(cropID, stage: stage))
+    }
+
+    private func artworkTexture(for key: String) -> SKTexture? {
+        if let cached = artworkTextures[key] { return cached }
+        guard let region = GameArtworkCatalog.regions[key] else { return nil }
+        let atlas: SKTexture
+        if let cached = artworkAtlases[region.atlas] {
+            atlas = cached
+        } else {
+            atlas = SKTexture(imageNamed: region.atlas)
+            atlas.filteringMode = .linear
+            artworkAtlases[region.atlas] = atlas
+        }
+        let texture = SKTexture(rect: region.spriteKitRect, in: atlas)
         texture.filteringMode = .linear
-        cropStageTextures[key] = texture
+        artworkTextures[key] = texture
         return texture
     }
 

@@ -21,11 +21,11 @@ struct MarketGeneticsSection: View {
     // MARK: - Header
 
     private var headerPanel: some View {
-        WoodenPanel {
+        MarketPanel {
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 Text("GENETICS LAB")
                     .font(Typography.small.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(MarketPalette.muted)
 
                 if researchDone {
                     let discovered = store.geneticsRecipes.filter {
@@ -34,7 +34,7 @@ struct MarketGeneticsSection: View {
                     HStack {
                         Text("Combine parent seeds to breed hybrid varieties.")
                             .font(Typography.caption)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(MarketPalette.ink)
                         Spacer()
                         Text("\(discovered)/\(store.geneticsRecipes.count)")
                             .font(Typography.caption.weight(.bold))
@@ -46,7 +46,7 @@ struct MarketGeneticsSection: View {
                         systemImage: "lock.fill"
                     )
                     .font(Typography.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(MarketPalette.warning)
                 }
             }
         }
@@ -60,11 +60,10 @@ struct MarketGeneticsSection: View {
         let canBreed = store.canBreed(recipe)
         let parents = recipe.requiredParents()
 
-        return WoodenPanel {
+        return MarketPanel {
             VStack(alignment: .leading, spacing: DS.Space.sm) {
                 HStack(alignment: .top, spacing: DS.Space.sm) {
-                    Text(recipe.icon)
-                        .font(.system(size: 38))
+                    GameAssetIcon(id: recipe.outputCropID, fallback: recipe.icon, size: 44)
                         .opacity(isDiscovered ? 0.60 : (isLevelLocked || !researchDone) ? 0.35 : 1.0)
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -72,24 +71,24 @@ struct MarketGeneticsSection: View {
                         HStack(spacing: DS.Space.xs) {
                             Text(recipe.name)
                                 .font(Typography.bodyStrong)
-                                .foregroundStyle(isDiscovered ? .white.opacity(0.50) : .white)
+                                .foregroundStyle(MarketPalette.ink)
 
                             if isDiscovered {
                                 Image(systemName: "checkmark.seal.fill")
                                     .font(.caption)
-                                    .foregroundStyle(DS.Color.accent)
+                                    .foregroundStyle(MarketPalette.leaf)
                             }
 
                             if isLevelLocked {
                                 Label("Lv \(recipe.levelRequirement)", systemImage: "lock.fill")
                                     .font(Typography.small)
-                                    .foregroundStyle(DS.Color.accent.opacity(0.85))
+                                    .foregroundStyle(MarketPalette.leaf)
                             }
                         }
 
                         Text(recipe.notes)
                             .font(Typography.caption)
-                            .foregroundStyle(.white.opacity(0.72))
+                            .foregroundStyle(MarketPalette.muted)
 
                         // Parent seeds needed
                         HStack(spacing: DS.Space.xs) {
@@ -101,12 +100,12 @@ struct MarketGeneticsSection: View {
                                 let name = store.cropName(for: cropID)
 
                                 HStack(spacing: 3) {
-                                    Text(emoji).font(.caption)
+                                    GameAssetIcon(id: cropID, fallback: emoji, size: 20)
                                     Text("\(name): \(have)/\(needed)")
                                         .font(Typography.small.weight(.semibold))
                                         .foregroundStyle(
-                                            isDiscovered ? .white.opacity(0.40) :
-                                            hasEnough ? DS.Color.accent : .red.opacity(0.85)
+                                            isDiscovered ? MarketPalette.muted :
+                                            hasEnough ? MarketPalette.leaf : MarketPalette.danger
                                         )
                                 }
                                 .padding(.horizontal, 6)
@@ -115,7 +114,7 @@ struct MarketGeneticsSection: View {
                                     Capsule()
                                         .fill(hasEnough && !isDiscovered
                                               ? DS.Color.accent.opacity(0.15)
-                                              : .white.opacity(0.08))
+                                              : MarketPalette.ink.opacity(0.08))
                                 )
                             }
                         }
@@ -128,10 +127,10 @@ struct MarketGeneticsSection: View {
                         VStack(spacing: 2) {
                             Image(systemName: "checkmark.seal.fill")
                                 .font(.title3)
-                                .foregroundStyle(DS.Color.accent)
+                                .foregroundStyle(MarketPalette.leaf)
                             Text("Known")
                                 .font(Typography.small.weight(.bold))
-                                .foregroundStyle(DS.Color.accent.opacity(0.75))
+                                .foregroundStyle(MarketPalette.leaf)
                         }
                     } else if researchDone && !isLevelLocked {
                         Button {
@@ -145,7 +144,7 @@ struct MarketGeneticsSection: View {
                                     .font(Typography.caption.weight(.bold))
                             }
                         }
-                        .buttonStyle(WoodActionStyle(tint: canBreed ? Color.purple.opacity(0.85) : .gray))
+                        .buttonStyle(MarketActionStyle())
                         .frame(width: 74)
                         .disabled(!canBreed)
                         .accessibilityLabel("Breed \(recipe.name)")

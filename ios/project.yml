@@ -23,6 +23,8 @@ targets:
     sources:
       - path: App/Sources
       - path: App/Assets.xcassets
+      - path: App/Resources
+        buildPhase: resources
       - path: ../shared/content
         type: folder
         buildPhase: resources
@@ -30,7 +32,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.austinbeatty.farmsim
         PRODUCT_NAME: FarmSim
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIconV4
         SWIFT_VERSION: 5.10
         INFOPLIST_FILE: App/Info.plist
         TARGETED_DEVICE_FAMILY: "1,2"
@@ -49,16 +51,36 @@ targets:
     dependencies:
       - package: GameCore
         product: GameCore
+  FarmSimAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: AppTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.austinbeatty.farmsim.app-tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/FarmSim.app/FarmSim"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+    dependencies:
+      - target: FarmSim
+      - package: GameCore
+        product: GameCore
 schemes:
   FarmSim:
     build:
       targets:
         FarmSim: all
         FarmSimTests: test
+        FarmSimAppTests: test
     run:
       config: Debug
     archive:
       config: Release
+    test:
+      config: Debug
+      targets:
+        - FarmSimAppTests
   GameCoreTests:
     build:
       targets:
